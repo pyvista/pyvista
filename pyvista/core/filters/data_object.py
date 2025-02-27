@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -12,6 +13,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
@@ -23,9 +25,13 @@ from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from pyvista import DataSet
+    from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PolyData
+    from pyvista import RectilinearGrid
     from pyvista import RotationLike
     from pyvista import TransformLike
+    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
@@ -2413,3 +2419,454 @@ class DataObjectFilters:
                 raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
+
+    def voxelize_as(
+        self: DataSet,
+        mesh_type: [
+            ImageData
+            | RectilinearGrid
+            | PolyData
+            | UnstructuredGrid
+            | MultiBlock
+            | Literal['image', 'rectilinear', 'poly', 'unstructured', 'multi']
+        ],
+        voxel_type: Literal['points', 'cells'],
+        *,
+        background_value: float = 0,
+        foreground_value: float = 1,
+        reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        progress_bar: bool = False,
+    ):
+        """Voxelize a mesh as regularly-spaced point or cell geometry.
+
+        The binary mask is a point data array where points inside and outside of the
+        input surface are labelled with ``foreground_value`` and ``background_value``,
+        respectively.
+
+        This filter implements `vtkPolyDataToImageStencil
+        <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+        algorithm operates as follows:
+
+        * The algorithm iterates through the z-slice of the ``reference_volume``.
+        * For each slice, it cuts the input :class:`~pyvista.PolyData` surface to create
+          2D polylines at that z position. It attempts to close any open polylines.
+        * For each x position along the polylines, the corresponding y positions are
+          determined.
+        * For each slice, the grid points are labelled as foreground or background based
+          on their xy coordinates.
+
+        The voxelization can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output mask's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        mask fits the bounds of the input surface.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``1/100`` of the input mesh's length.
+
+        .. versionadded:: 0.45.0
+
+        .. note::
+            For best results, ensure the input surface is a closed surface. The
+            surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
+
+        .. note::
+            This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+            This differs from :func:`voxelize` and :func:`voxelize_rectilinear`
+            which return meshes with voxel cells. See :ref:`image_representations_example`
+            for examples demonstrating the difference.
+
+        .. note::
+            This filter does not discard internal surfaces, due, for instance, to
+            intersecting meshes. Instead, the intersection will be considered as
+            background which may produce unexpected results. See `Examples`.
+
+        Parameters
+        ----------
+        mesh_type : ImageData | RectilinearGrid | PolyData | UnstructuredGrid | str
+            Return type of the voxelied mesh. Specify the class or the class name as
+            a string. The full class name or a shortned version are both accepted, e.g.
+            either ``'ImageData'`` or ``'image'`` for :class:`~pyvista.ImageData`.
+
+        voxel_type : 'points' | 'cells'
+            Type of voxels to generate.
+
+        background_value : float, default: 0
+            Background value of the voxelized mesh. Has no effect when the output
+            ``mesh_type`` is :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+
+        foreground_value : float, optional
+            Foreground value of the voxelize mesh. By default, this value is ``1``
+            when the ``mesh_type`` is :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid`,
+            for :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid` since
+            these types have both foreground and background voxels.
+
+            For :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`, no
+            scalar values are included by default. Set this value to include a scalar
+            array with this value for these mesh types.
+
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated voxelized mesh. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
+
+            .. note::
+
+                Dimensions is the number of points along each axis, not cells. Set
+                dimensions to ``N+1`` instead for ``N`` cells along each axis.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated voxelized mesh. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Generated binary mask with a ``'mask'``  point data array. The data array
+            has dtype :class:`numpy.uint8` if the foreground and background values are
+            unsigned and less than 256.
+
+        See Also
+        --------
+        voxelize
+            Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
+            :attr:`~pyvista.CellType.VOXEL` cells.
+
+        voxelize_rectilinear
+            Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
+
+        pyvista.ImageDataFilters.contour_labels
+            Filter that generates surface contours from labeled image data. Can be
+            loosely considered as an inverse of this filter.
+
+        pyvista.ImageDataFilters.points_to_cells
+            Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
+            cells.
+
+        ImageData
+            Class used to build custom ``reference_volume``.
+
+        Examples
+        --------
+        Create a voxelized mesh with uniform spacing.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> vox = mesh.voxelize(spacing=0.01)
+        >>> vox.plot(show_edges=True)
+
+        Create a voxelized mesh using non-uniform spacing.
+
+        >>> vox = mesh.voxelize(spacing=(0.01, 0.005, 0.002))
+        >>> vox.plot(show_edges=True)
+
+        The bounds of the voxelized mesh always match the bounds of the input.
+
+        >>> mesh.bounds
+        BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09850578755140305)
+
+        >>> vox.bounds
+        BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09650979936122894)
+
+        Create a voxelized mesh with ``3 x 4 x 5`` cells. Since ``dimensions`` is the
+        number of points, not cells, we need to add ``1`` to get the number of desired cells.
+
+        >>> mesh = pv.Box()
+        >>> cell_dimensions = np.array((3, 4, 5))
+        >>> vox = mesh.voxelize(dimensions=cell_dimensions + 1)
+        >>> vox.plot(show_edges=True)
+
+        """
+        _validation.check_contains(['points', 'cells'], must_contain=voxel_type, name='voxel_type')
+        if isinstance(mesh_type, str):
+            # Allow capital letters and partial matches, e.g. 'ImageData' or 'image'
+            mesh_type = mesh_type.lower()
+            if 'image' in mesh_type:
+                mesh_type_ = pyvista.ImageData
+            elif 'rectilinear' in mesh_type:
+                mesh_type_ = pyvista.RectilinearGrid
+            elif 'poly' in mesh_type:
+                mesh_type_ = pyvista.PolyData
+            elif 'unstructured' in mesh_type:
+                mesh_type_ = pyvista.UnstructuredGrid
+        else:
+            mesh_type_ = mesh_type
+        _validation.check_contains(
+            [
+                pyvista.ImageData,
+                pyvista.RectilinearGrid,
+                pyvista.PolyData,
+                pyvista.UnstructuredGrid,
+                'image',
+                'rectilinear',
+                'poly',
+                'unstructured',
+            ],
+            must_contain=mesh_type,
+            name='output_type',
+        )
+
+        if voxel_type == 'cells' and dimensions is not None:
+            # points_to_cells increases dimensions by 1 later so we reduce by 1 here
+            dimensions_ = _validation.validate_array3(
+                dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
+            )
+            dimensions = cast(NumpyArray[int], dimensions_) - 1
+
+        # Voxelize as image points
+        image_voxels = self._voxelize_as_image_points(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+
+        # Convert to voxel cells
+        if voxel_type == 'cells' or mesh_type_ in [pyvista.PolyData, pyvista.UnstructuredGrid]:
+            image_voxels = image_voxels.points_to_cells(dimensionality='3D', copy=False)
+
+        # Convert mesh type
+        if mesh_type_ is pyvista.ImageData:
+            return image_voxels
+        elif mesh_type_ is pyvista.RectilinearGrid:
+            return image_voxels.cast_to_rectilinear_grid()
+
+        ugrid = image_voxels.threshold(0.5)
+        del ugrid.cell_data['mask']
+        if voxel_type == 'points':
+            poly = pyvista.PolyData(ugrid.cell_centers())
+            return poly if mesh_type_ is pyvista.PolyData else poly.cast_to_unstructured_grid()
+        return ugrid if mesh_type_ is pyvista.UnstructuredGrid else ugrid.extract_geometry()
+
+    def _voxelize_as_image_points(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        *,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
+        reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        progress_bar: bool = False,
+    ):
+        surface = self if isinstance(self, pyvista.PolyData) else wrap(self).extract_geometry()
+        if not (surface.faces.size or surface.strips.size):
+            # we have a point cloud or an empty mesh
+            raise ValueError('Input mesh must have faces for voxelization.')
+
+        def _preprocess_polydata(poly_in):
+            return poly_in.compute_normals().triangulate()
+
+        if reference_volume is not None:
+            if (
+                dimensions is not None
+                or spacing is not None
+                or rounding_func is not None
+                or cell_length_percentile is not None
+                or cell_length_sample_size is not None
+            ):
+                raise TypeError(
+                    'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                )
+            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            # The image stencil filters do not support orientation, so we apply the
+            # inverse direction matrix to "remove" orientation from the polydata
+            poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = _preprocess_polydata(poly_ijk)
+        else:
+            # Compute reference volume geometry
+            if spacing is not None and dimensions is not None:
+                raise TypeError('Spacing and dimensions cannot both be set. Set one or the other.')
+
+            # Need to preprocess so that we have a triangle mesh for computing
+            # cell length percentile
+            poly_ijk = _preprocess_polydata(surface)
+
+            if spacing is None:
+                less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
+                if (
+                    cell_length_percentile is not None or cell_length_sample_size is not None
+                ) and less_than_vtk92:
+                    raise TypeError(
+                        'Cell length percentile and sample size requires VTK 9.2 or greater.'
+                    )
+
+                if less_than_vtk92:
+                    # Compute spacing from mesh length
+                    spacing = surface.length / 100
+                else:
+                    # Estimate spacing from cell length percentile
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    cell_length_sample_size = (
+                        100_000 if cell_length_sample_size is None else cell_length_sample_size
+                    )
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
+            # Spacing is specified directly. Make sure other params are not set.
+            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+                raise TypeError(
+                    'Spacing and cell length options cannot both be set. Set one or the other.'
+                )
+
+            # Get initial spacing (will be adjusted later)
+            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+
+            # Get size of poly data for computing dimensions
+            bnds = surface.bounds
+            x_size = bnds.x_max - bnds.x_min
+            y_size = bnds.y_max - bnds.y_min
+            z_size = bnds.z_max - bnds.z_min
+            sizes = np.array((x_size, y_size, z_size))
+
+            if dimensions is None:
+                rounding_func = np.round if rounding_func is None else rounding_func
+                initial_dimensions = sizes / initial_spacing
+                # Make sure we don't round dimensions to zero, make it one instead
+                initial_dimensions[initial_dimensions < 1] = 1
+                dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+            elif rounding_func is not None:
+                raise TypeError(
+                    'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+                )
+
+            reference_volume = pyvista.ImageData()
+            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            # Dimensions are now fixed, now adjust spacing to match poly data bounds
+            # Since we are dealing with voxels as points, we want the bounds of the
+            # points to be 1/2 spacing width smaller than the polydata bounds
+            final_spacing = sizes / np.array(reference_volume.dimensions)
+            reference_volume.spacing = final_spacing
+            reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
+
+        # Init output structure. The image stencil filters do not support
+        # orientation, so we do not set the direction matrix
+        binary_mask = pyvista.ImageData()
+        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+
+        # Init output scalars. Use uint8 dtype if possible.
+        scalars_shape = (binary_mask.n_points,)
+        scalars_dtype: type[np.uint8 | float | int]
+        if all(
+            isinstance(val, int) and val < 256 and val >= 0
+            for val in (background_value, foreground_value)
+        ):
+            scalars_dtype = np.uint8
+        elif all(round(val) == val for val in (background_value, foreground_value)):
+            scalars_dtype = np.int_
+        else:
+            scalars_dtype = np.float64
+        scalars = (  # Init with background value
+            np.zeros(scalars_shape, dtype=scalars_dtype)
+            if background_value == 0
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+        )
+        binary_mask['mask'] = scalars  # type: ignore[assignment]
+
+        # Make sure that we have a clean triangle-strip polydata
+        # Note: Poly was partially pre-processed earlier
+        poly_ijk = poly_ijk.strip()
+
+        # Convert polydata to stencil
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(poly_ijk)
+        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
+        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
+        _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
+
+        # Convert stencil to image
+        stencil = _vtk.vtkImageStencil()
+        stencil.SetInputData(binary_mask)
+        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
+        stencil.ReverseStencilOn()
+        stencil.SetBackgroundValue(foreground_value)
+        _update_alg(stencil, progress_bar, 'Generating binary mask')
+        output_volume = _get_output(stencil)
+
+        # Set the orientation of the output
+        output_volume.direction_matrix = reference_volume.direction_matrix
+
+        return output_volume
+
+
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
+    percentile = _validation.validate_number(
+        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+    )
+    distribution = _vtk.vtkLengthDistribution()
+    distribution.SetInputData(poly)
+    distribution.SetSampleSize(cell_length_sample_size)
+    _update_alg(distribution, progress_bar, 'Computing cell length distribution')
+    return distribution.GetLengthQuantile(percentile)

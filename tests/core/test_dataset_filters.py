@@ -4040,32 +4040,32 @@ def test_voxelize_binary_mask_raises(sphere):
 
 
 def test_voxelize_rectilinear(ant):
-    vox = ant.voxelize_('rectilinear', 'cells')
+    vox = ant.voxelize_as('rectilinear', 'cells')
     assert isinstance(vox, pv.RectilinearGrid)
 
     # Test dimensions
     dims = np.array((10, 20, 30))
-    vox = ant.voxelize_('rectilinear', 'cells', dimensions=dims)
+    vox = ant.voxelize_as('rectilinear', 'cells', dimensions=dims)
     assert np.array_equal(vox.dimensions, dims)
 
     # Test spacing by voxelizing as a single cell
     bnds = ant.bounds
     size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
     single_cell_dims = np.array((2, 2, 2))
-    vox = ant.voxelize_('rectilinear', 'cells', spacing=size)
+    vox = ant.voxelize_as('rectilinear', 'cells', spacing=size)
     assert np.allclose(vox.dimensions, single_cell_dims)
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test reference volume - specify both dimensions and spacing
     reference_volume = pv.ImageData(dimensions=single_cell_dims - 1, spacing=size)
-    vox = ant.voxelize_('rectilinear', 'cells', reference_volume=reference_volume)
+    vox = ant.voxelize_as('rectilinear', 'cells', reference_volume=reference_volume)
     assert np.allclose(vox.dimensions, single_cell_dims)
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test scalar values
     foreground = 2
     background = 3
-    vox = ant.voxelize_(
+    vox = ant.voxelize_as(
         'rectilinear', 'cells', foreground_value=foreground, background_value=background
     )
     assert 'mask' in vox.cell_data
@@ -4075,49 +4075,49 @@ def test_voxelize_rectilinear(ant):
 
     # Test other keywords
     if pv.vtk_version_info >= (9, 2):
-        vox = ant.voxelize_('rectilinear', 'cells', cell_length_percentile=0.5)
+        vox = ant.voxelize_as('rectilinear', 'cells', cell_length_percentile=0.5)
         assert vox.n_cells
-        vox = ant.voxelize_('rectilinear', 'cells', cell_length_sample_size=ant.n_cells)
+        vox = ant.voxelize_as('rectilinear', 'cells', cell_length_sample_size=ant.n_cells)
         assert vox.n_cells
     assert vox.n_cells
-    vox = ant.voxelize_('rectilinear', 'cells', progress_bar=True)
+    vox = ant.voxelize_as('rectilinear', 'cells', progress_bar=True)
     assert vox.n_cells
-    vox = ant.voxelize_('rectilinear', 'cells', spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    vox = ant.voxelize_as('rectilinear', 'cells', spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
     assert vox.n_cells
 
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
-        ant.voxelize_('rectilinear', 'cells', spacing={0.5, 0.3})
+        ant.voxelize_as('rectilinear', 'cells', spacing={0.5, 0.3})
 
 
 def test_voxelize(ant):
-    vox = ant.voxelize_('unstructured', 'cells')
+    vox = ant.voxelize_as('unstructured', 'cells')
     assert isinstance(vox, pv.UnstructuredGrid)
     assert vox.array_names == []
 
     # Test dimensions
     dims = np.array((10, 20, 30))
-    vox = pv.Cube().voxelize_('unstructured', 'cells', dimensions=dims)
+    vox = pv.Cube().voxelize_as('unstructured', 'cells', dimensions=dims)
     assert np.array_equal(vox.n_points, np.prod(dims))
 
     # Test spacing by voxelizing as a single cell
     bnds = ant.bounds
     size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
-    vox = ant.voxelize_('unstructured', 'cells', spacing=size)
+    vox = ant.voxelize_as('unstructured', 'cells', spacing=size)
     assert np.allclose(vox.n_cells, 1)
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test other keywords
     if pv.vtk_version_info >= (9, 2):
-        vox = ant.voxelize_('unstructured', 'cells', cell_length_percentile=0.5)
+        vox = ant.voxelize_as('unstructured', 'cells', cell_length_percentile=0.5)
         assert vox.n_cells
-        vox = ant.voxelize_('unstructured', 'cells', cell_length_sample_size=ant.n_cells)
+        vox = ant.voxelize_as('unstructured', 'cells', cell_length_sample_size=ant.n_cells)
         assert vox.n_cells
-    vox = ant.voxelize_('unstructured', 'cells', progress_bar=True)
+    vox = ant.voxelize_as('unstructured', 'cells', progress_bar=True)
     assert vox.n_cells
-    vox = ant.voxelize_('unstructured', 'cells', spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    vox = ant.voxelize_as('unstructured', 'cells', spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
     assert vox.n_cells
 
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
-        ant.voxelize_('unstructured', 'cells', spacing={0.5, 0.3})
+        ant.voxelize_as('unstructured', 'cells', spacing={0.5, 0.3})

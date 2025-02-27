@@ -25,7 +25,7 @@ poly = examples.download_bunny_coarse()
 
 # Voxelize the surface mesh as a binary image mask.
 # Represent the voxels as points, which is the standard format for 2D/3D images.
-mask = poly.voxelize_('image', 'points')
+mask = poly.voxelize_as('image', 'points')
 
 # The mask is stored as pyvista.ImageData with point data scalars
 # (zeros for background, ones for foreground).
@@ -48,12 +48,12 @@ plot.show()
 
 # Repeat the previous example with a finer mesh.
 poly = examples.download_bunny()
-mask = poly.voxelize_('image', 'points')
+mask = poly.voxelize_as('image', 'points')
 plot = mask_and_polydata_plotter(mask, poly)
 plot.show()
 
 # Control the spacing manually.
-mask = poly.voxelize_('image', 'points', spacing=(0.01, 0.04, 0.02))
+mask = poly.voxelize_as('image', 'points', spacing=(0.01, 0.04, 0.02))
 plot = mask_and_polydata_plotter(mask, poly)
 plot.show()
 
@@ -61,11 +61,11 @@ plot.show()
 mask.spacing
 
 # Use rounding_func=np.floor to force all spacing values to be greater.
-mask = poly.voxelize_('image', 'points', spacing=(0.01, 0.04, 0.02), rounding_func=np.floor)
+mask = poly.voxelize_as('image', 'points', spacing=(0.01, 0.04, 0.02), rounding_func=np.floor)
 mask.spacing
 
 # Set the dimensions instead of the spacing.
-mask = poly.voxelize_('image', 'points', dimensions=(10, 20, 30))
+mask = poly.voxelize_as('image', 'points', dimensions=(10, 20, 30))
 plot = mask_and_polydata_plotter(mask, poly)
 plot.show()
 
@@ -75,7 +75,7 @@ volume = examples.load_frog_tissues()
 poly = volume.contour_labels()
 
 # Now create the mask from the polydata using the volume as a reference.
-mask = poly.voxelize_('image', 'points', reference_volume=volume)
+mask = poly.voxelize_as('image', 'points', reference_volume=volume)
 plot = mask_and_polydata_plotter(mask, poly)
 plot.show()
 
@@ -85,7 +85,7 @@ plot.show()
 # represented as cells. By default, the spacing is automatically estimated.
 
 mesh = pv.examples.load_nut()
-vox = mesh.voxelize_('rectilinear', 'cells')
+vox = mesh.voxelize_as('rectilinear', 'cells')
 
 # Plot the mesh together with its volume.
 pl = pv.Plotter()
@@ -97,7 +97,7 @@ pl.show()
 mesh = examples.download_cow()
 
 # Create an equal density voxel volume and plot the result.
-vox = mesh.voxelize_('rectilinear', 'cells', spacing=0.15)
+vox = mesh.voxelize_as('rectilinear', 'cells', spacing=0.15)
 cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
 vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
@@ -106,7 +106,7 @@ slices = vox.slice_orthogonal()
 slices.plot(scalars='mask', show_edges=True)
 
 # Create a voxel volume from unequal density dimensions and plot the result.
-vox = mesh.voxelize_('rectilinear', 'cells', spacing=(0.15, 0.15, 0.5))
+vox = mesh.voxelize_as('rectilinear', 'cells', spacing=(0.15, 0.15, 0.5))
 vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
 # Slice the unequal density voxel volume to view the mask scalars.
@@ -121,11 +121,11 @@ ant = examples.load_ant()
 # Voxelize it as :class:`~pyvista.PolyData` cells. This generates a surface with
 # :attr:`~pyvista.CellType.QUAD` cells that is hollow inside.
 cpos = [(11.6, 57.3, 28.0), (0.65, -0.78, 1.19), (-0.55, 0.43, -0.71)]
-vox = ant.voxelize_('poly', 'cells', spacing=0.5)
+vox = ant.voxelize_as('poly', 'cells', spacing=0.5)
 vox.plot(cpos=cpos)
 
 # Voxelize it as a dense point cloud instead.
-vox = ant.voxelize_('poly', 'points', spacing=0.5)
+vox = ant.voxelize_as('poly', 'points', spacing=0.5)
 
 # Plot the point cloud and show the original mesh for context.
 pl = pv.Plotter()
@@ -196,7 +196,7 @@ p.show(cpos=cpos)
 
 # Visualize the effect of internal surfaces.
 mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
-binary_mask = mesh.voxelize_('image', 'points', dimensions=(1, 100, 50)).points_to_cells()
+binary_mask = mesh.voxelize_as('image', 'points', dimensions=(1, 100, 50)).points_to_cells()
 plot = pv.Plotter()
 plot.add_mesh(binary_mask)
 plot.add_mesh(mesh.slice(), color='red')
@@ -212,10 +212,10 @@ reference_volume = pv.ImageData(
     origin=(0, -0.5 + 0.0175 / 2, -0.5 + 0.02 / 2),
 )
 
-binary_mask_1 = cylinder_1.voxelize_(
+binary_mask_1 = cylinder_1.voxelize_as(
     'image', 'points', reference_volume=reference_volume
 ).points_to_cells()
-binary_mask_2 = cylinder_2.voxelize_(
+binary_mask_2 = cylinder_2.voxelize_as(
     'image', 'points', reference_volume=reference_volume
 ).points_to_cells()
 
@@ -229,7 +229,7 @@ plot.show(cpos='yz')
 
 # Visualize nested internal surfaces.
 mesh = pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
-binary_mask = mesh.voxelize_('image', 'points', dimensions=(1, 50, 50)).points_to_cells()
+binary_mask = mesh.voxelize_as('image', 'points', dimensions=(1, 50, 50)).points_to_cells()
 plot = pv.Plotter()
 plot.add_mesh(binary_mask)
 plot.add_mesh(mesh.slice(), color='red')
