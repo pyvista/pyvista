@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
+        os: [ ubuntu-20.04, ubuntu-22.04-arm ]
         python-version: [3.9, "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4

@@ -23,7 +23,7 @@ jobs:
   # For now this is just MNE-Python, but others could be added
   mne:
     name: MNE-Python
-    os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
+    runs-on: ubuntu-22.04
     env:
       DISPLAY: ":99.0"
       MNE_LOGGING_LEVEL: "info"
