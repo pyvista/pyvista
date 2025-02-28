@@ -1142,6 +1142,18 @@ class DatasetCard:
         return func, func_name
 
     @staticmethod
+    def _generate_dataset_name(dataset_name: str):
+        # Format dataset name for indexing and section heading
+        index_name = dataset_name + '_dataset'
+        header = ' '.join([word.capitalize() for word in index_name.split('_')])
+
+        # Get the card's header info
+        func, func_name = DatasetCard._get_dataset_function(dataset_name)
+        func_ref = f':func:`~{_get_fullname(func)}`'
+        func_doc = _get_doc(func)
+        return index_name, header, func_ref, func_doc, func_name
+
+    @staticmethod
     def _generate_cross_references(dataset_name: str, index_name: str, header_name):
         def find_seealso_refs(func: FunctionType) -> list[str]:
             """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
@@ -1213,18 +1225,6 @@ class DatasetCard:
         )
 
         return ', '.join(keep_refs)
-
-    @staticmethod
-    def _generate_dataset_name(dataset_name: str):
-        # Format dataset name for indexing and section heading
-        index_name = dataset_name + '_dataset'
-        header = ' '.join([word.capitalize() for word in index_name.split('_')])
-
-        # Get the card's header info
-        func, func_name = DatasetCard._get_dataset_function(dataset_name)
-        func_ref = f':func:`~{_get_fullname(func)}`'
-        func_doc = _get_doc(func)
-        return index_name, header, func_ref, func_doc, func_name
 
     @staticmethod
     def _generate_carousel_badges(badges: list[_BaseDatasetBadge]):
@@ -1406,8 +1406,6 @@ class DatasetCard:
     @classmethod
     def _create_seealso_block(cls, cross_references):
         if cross_references:
-            # indent links one level from the dropdown directive in template
-            # datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
             return cls._format_and_indent_from_template(
                 cross_references,
                 template=cls.seealso_template,
@@ -1637,7 +1635,7 @@ class DatasetCardFetcher:
                 # Create a card for this dataset
                 dataset_name = name.replace('_dataset_', '')
                 dataset_loader = item
-                # Store module and function as a dynamic property for access later
+                # Store module as a dynamic property for access later
                 dataset_loader._module = module
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
