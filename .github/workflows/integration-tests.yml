@@ -61,7 +61,7 @@ jobs:
 
   pyvistaqt:
     name: PyVistaQt
-    os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
+    os: [ ubuntu-20.04, ubuntu-22.04-arm ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,7 +81,7 @@ jobs:
 
   geovista:
     name: GeoVista
-    os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
+    os: [ ubuntu-20.04, ubuntu-22.04-arm ]
     defaults:
       run:
         shell: bash -l {0}
@@ -114,7 +114,7 @@ jobs:
 
   trame:
     name: Trame
-    os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
+    os: [ ubuntu-20.04, ubuntu-22.04-arm ]
     defaults:
       run:
         shell: bash -l {0}
