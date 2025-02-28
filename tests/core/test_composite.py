@@ -1182,7 +1182,7 @@ def _make_nested_multiblock(
     return root
 
 
-def test_move_nested_field_data_to_root_duplicate_key_errors():
+def test_move_nested_field_data_to_root_safe_update():
     NAME1 = 'name1'
     VALUE1 = 'value1'
     NAME2 = 'name2'
