@@ -716,7 +716,7 @@ class MultiBlock(
                         )
                         raise ValueError(msg)
 
-                    if user_dict_mode in 'preserve':
+                    if user_dict_mode == 'preserve':
                         if safe_update:
                             # Check if the keys already exist before updating
                             root_user_dict_keys = root_user_dict.keys()
