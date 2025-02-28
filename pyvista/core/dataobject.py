@@ -8,6 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
+import warnings
 
 import numpy as np
 
@@ -156,6 +157,17 @@ class DataObject:
 
         """
 
+        def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
+            for index, name, nested_multiblock in mesh.recursive_iterator(
+                'all', node_type='parent'
+            ):
+                index_fmt = ''.join([f'[{ind}]' for ind in index])
+                if len(nested_multiblock.field_data.keys()) > 0:
+                    warnings.warn(
+                        f"Nested MultiBlock at index {index_fmt} with name '{name}' has field data which will not be saved.\n"
+                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414'
+                    )
+
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
@@ -192,6 +204,8 @@ class DataObject:
 
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
+            if isinstance(self, pyvista.MultiBlock):
+                _warn_multiblock_nested_field_data(self)
             _write_vtk(self)
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)

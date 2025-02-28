@@ -4,6 +4,7 @@ from collections import UserDict
 import json
 import multiprocessing
 import pickle
+import re
 
 import numpy as np
 import pytest
@@ -109,6 +110,22 @@ def test_metadata_save(hexbeam, tmpdir):
 
     # metadata should be removed from the field data
     assert not hexbeam_in.field_data
+
+
+def test_save_nested_multiblock_field_data(tmp_path):
+    filename = 'mesh.vtm'
+    nested = pv.MultiBlock()
+    nested.field_data['foo'] = 'bar'
+    root = pv.MultiBlock([nested])
+    match = (
+        "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
+        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414'
+    )
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        root.save(tmp_path / filename)
+
+    loaded = pv.read(root)
+    assert loaded[0].field_data.keys() == []
 
 
 @pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
