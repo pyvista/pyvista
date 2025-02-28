@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
@@ -158,14 +159,17 @@ class DataObject:
         """
 
         def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
-            for index, name, nested_multiblock in mesh.recursive_iterator(
-                'all', node_type='parent'
-            ):
+            iterator = mesh.recursive_iterator('all', node_type='parent')
+            typed_iterator = cast(
+                Iterator[tuple[tuple[int, ...], str, pyvista.MultiBlock]], iterator
+            )
+            for index, name, nested_multiblock in typed_iterator:
                 index_fmt = ''.join([f'[{ind}]' for ind in index])
                 if len(nested_multiblock.field_data.keys()) > 0:
                     warnings.warn(
                         f"Nested MultiBlock at index {index_fmt} with name '{name}' has field data which will not be saved.\n"
-                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414'
+                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
                     )
 
         def _write_vtk(mesh_: DataObject) -> None:

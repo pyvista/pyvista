@@ -119,7 +119,8 @@ def test_save_nested_multiblock_field_data(tmp_path):
     root = pv.MultiBlock([nested])
     match = (
         "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
-        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414'
+        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         root.save(tmp_path / filename)
