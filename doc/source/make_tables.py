@@ -873,9 +873,7 @@ class DatasetCard:
 
     seealso_template = _aligned_dedent(
         """
-        |.. seealso::
-        |
-        |   {}
+        |See also {}
         """,
     )[1:-1]
 
