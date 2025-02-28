@@ -359,14 +359,46 @@ class AffineWidget3D:
                 vec_current /= np.linalg.norm(vec_current)
                 vec_init /= np.linalg.norm(vec_init)
                 angle = get_angle(vec_init, vec_current)
+
+                # Get the camera's direction of projection
+                view_direction = np.array(
+                    interactor.GetRenderWindow()
+                    .GetRenderers()
+                    .GetFirstRenderer()
+                    .GetActiveCamera()
+                    .GetDirectionOfProjection()
+                )
+
+                # Project the X, Y, and Z axes onto the screen plane (normal to the view direction)
+                proj_x = self.axes[0] - np.dot(self.axes[0], view_direction) * view_direction
+                proj_y = self.axes[1] - np.dot(self.axes[1], view_direction) * view_direction
+                proj_z = self.axes[2] - np.dot(self.axes[2], view_direction) * view_direction
+
+                # Normalize the projections
+                proj_x /= np.linalg.norm(proj_x)
+                proj_y /= np.linalg.norm(proj_y)
+                proj_z /= np.linalg.norm(proj_z)
+
+                # Check the "handedness" of the projected screen axes
+                screen_handedness_xy = np.dot(np.cross(proj_x, proj_y), view_direction)
+                screen_handedness_yz = np.dot(np.cross(proj_y, proj_z), view_direction)
+                screen_handedness_zx = np.dot(np.cross(proj_z, proj_x), view_direction)
+
+                # Compute the cross product of the initial and current vectors
                 cross = np.cross(vec_init, vec_current)
-                if cross[index] < 0:
+
+                # Flip the angle if the screen-projected axes handedness flips
+                if np.dot(cross, normal) < 0:
+                    angle = -angle
+
+                # Correct the sign based on screen-handedness in all directions
+                if screen_handedness_xy < 0 or screen_handedness_yz < 0 or screen_handedness_zx < 0:
                     angle = -angle
 
                 trans = _vtk.vtkTransform()
                 trans.Translate(self._origin)  # type: ignore[call-overload]
                 trans.RotateWXYZ(
-                    angle,
+                    -angle,
                     self._axes[index][0],
                     self._axes[index][1],
                     self._axes[index][2],
