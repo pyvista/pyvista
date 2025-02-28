@@ -123,6 +123,9 @@ def test_save_nested_multiblock_field_data(tmp_path):
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         root.save(tmp_path / filename)
+    # Try again without field data
+    nested.clear_field_data()
+    root.save(tmp_path / filename)
 
     loaded = pv.read(root)
     assert loaded[0].field_data.keys() == []
