@@ -1366,3 +1366,34 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
         multiblock_all_with_nested_and_none.generic_filter(
             test_generic_filter_raises,
         )
+
+
+def test_block_types(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    types = {
+        type(None),
+        pv.RectilinearGrid,
+        pv.ImageData,
+        pv.PolyData,
+        pv.UnstructuredGrid,
+        pv.StructuredGrid,
+    }
+    assert multi.nested_block_types == types
+    types.add(pv.MultiBlock)
+    assert multi.block_types == types
+
+
+def test_is_homogeneous_is_heterogeneous(multiblock_all_with_nested_and_none):
+    # Empty case
+    assert pv.MultiBlock().is_homogeneous is False
+    assert pv.MultiBlock().is_heterogeneous is False
+
+    # Heterogeneous case
+    heterogeneous = multiblock_all_with_nested_and_none
+    assert heterogeneous.is_homogeneous is False
+    assert heterogeneous.is_heterogeneous is True
+
+    # Homogeneous case
+    homogeneous = multiblock_all_with_nested_and_none.as_polydata_blocks()
+    assert homogeneous.is_homogeneous is True
+    assert homogeneous.is_heterogeneous is False

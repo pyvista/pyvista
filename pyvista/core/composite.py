@@ -2136,6 +2136,139 @@ class MultiBlock(
         """
         return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
 
+    @property
+    def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01
+        """Return a set of all block type(s).
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        nested_block_types
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        The dataset has eight nested multi-block blocks, so the block types
+        only contains :class:`MultiBlock`.
+
+        >>> multi.block_types
+        {<class 'pyvista.core.composite.MultiBlock'>}
+
+        The nested blocks only contain a single mesh type so the nested block types
+        only contains :class:`~pyvista.UnstructuredGrid`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        """
+        return {type(block) for block in self}
+
+    @property
+    def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
+        """Return a set of all nested block type(s).
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        block_types
+        is_homogeneous
+        is_heterogeneous
+        recursive_iterator
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        The dataset has eight nested multi-block blocks, so the block types
+        only contains :class:`MultiBlock`.
+
+        >>> multi.block_types
+        {<class 'pyvista.core.composite.MultiBlock'>}
+
+        The nested blocks only contain a single mesh type so the nested block types
+        only contains :class:`~pyvista.UnstructuredGrid`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        """
+        return {
+            type(block) for block in cast(Iterator[Union[DataSet, None]], self.recursive_iterator())
+        }
+
+    @property
+    def is_homogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if all nested blocks have the same type.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        is_heterogeneous
+        nested_block_types
+        recursive_iterator
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        Show the :attr:`nested_block_types`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        Since there is only one type, the dataset is homogeneous.
+
+        >>> multi.is_homogeneous
+        True
+
+        """
+        return len(self.nested_block_types) == 1
+
+    @property
+    def is_heterogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` any two nested blocks have different type.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        is_homogeneous
+        nested_block_types
+        recursive_iterator
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_mug`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_mug()
+
+        Show the :attr:`nested_block_types`.
+
+        >>> multi.nested_block_types  # doctest:+SKIP
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'NoneType'>}
+
+        Since there is more than one type, the dataset is heterogeneous.
+
+        >>> multi.is_heterogeneous
+        True
+
+        """
+        return len(self.nested_block_types) > 1
+
     def _activate_plotting_scalars(
         self: MultiBlock,
         scalars_name: str,
