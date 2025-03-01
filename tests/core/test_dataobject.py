@@ -113,11 +113,14 @@ def test_metadata_save(hexbeam, tmpdir):
     assert not hexbeam_in.field_data
 
 
-def test_save_nested_multiblock_field_data(tmp_path):
-    filename = 'mesh.vtm'
+@pytest.mark.parametrize('extension', ['.pkl', '.vtm'])
+def test_save_nested_multiblock_field_data(tmp_path, extension):
+    filename = 'mesh' + extension
     nested = pv.MultiBlock()
     nested.field_data['foo'] = 'bar'
     root = pv.MultiBlock([nested])
+
+    # Save the multiblock and expect a warning
     match = (
         "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
@@ -125,12 +128,14 @@ def test_save_nested_multiblock_field_data(tmp_path):
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         root.save(tmp_path / filename)
-    # Try again without field data
-    nested.clear_field_data()
-    root.save(tmp_path / filename)
 
+    # Check that the bug exists, and that the field data is not loaded
     loaded = pv.read(root)
     assert loaded[0].field_data.keys() == []
+
+    # Save again without field data, no warning is emitted
+    nested.clear_field_data()
+    root.save(tmp_path / filename)
 
 
 @pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])

@@ -207,10 +207,11 @@ class DataObject:
         # store complex and bitarray types as field data
         self._store_metadata()
 
+        if isinstance(self, pyvista.MultiBlock):
+            _warn_multiblock_nested_field_data(self)
+
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
-            if isinstance(self, pyvista.MultiBlock):
-                _warn_multiblock_nested_field_data(self)
             _write_vtk(self)
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
