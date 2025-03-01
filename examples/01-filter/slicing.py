@@ -22,7 +22,7 @@ from pyvista import examples
 # view sections through the volume of data.
 #
 # One of the most common slicing filters used in PyVista is the
-# :func:`pyvista.DataSetFilters.slice_orthogonal` filter which creates three
+# :func:`pyvista.DataObjectFilters.slice_orthogonal` filter which creates three
 # orthogonal slices through the dataset parallel to the three Cartesian planes.
 # For example, let's slice through the sample geostatistical training image
 # volume. First, load up the volume and preview it:
@@ -50,7 +50,7 @@ slices = mesh.slice_orthogonal(x=20, y=20, z=30)
 slices.plot(cmap=cmap)
 # %%
 # We can also add just a single slice of the volume by specifying the origin
-# and normal of the slicing plane with the :func:`pyvista.DataSetFilters.slice`
+# and normal of the slicing plane with the :func:`pyvista.DataObjectFilters.slice`
 # filter:
 
 # Single slice - origin defaults to the center of the mesh
@@ -62,7 +62,7 @@ p.add_mesh(single_slice, cmap=cmap)
 p.show()
 # %%
 # Adding slicing planes uniformly across an axial direction can also be
-# automated with the :func:`pyvista.DataSetFilters.slice_along_axis` filter:
+# automated with the :func:`pyvista.DataObjectFilters.slice_along_axis` filter:
 
 slices = mesh.slice_along_axis(n=7, axis='y')
 
@@ -74,7 +74,7 @@ slices.plot(cmap=cmap)
 # ++++++++++++++++
 #
 # We can also slice a dataset along a :func:`pyvista.Spline` or
-# :func:`pyvista.Line` using the :func:`pyvista.DataSetFilters.slice_along_line` filter.
+# :func:`pyvista.Line` using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
 #
 # First, define a line source through the dataset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while

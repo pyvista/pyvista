@@ -76,7 +76,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
     See Also
     --------
-    :meth:`pyvista.DataSetFilters.transform`
+    pyvista.DataObjectFilters.transform
         Apply a transformation to a mesh.
 
     Examples
@@ -398,6 +398,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
         """
         return self._point
 
@@ -506,7 +507,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.scale`
+        pyvista.DataObjectFilters.scale
             Scale a mesh.
 
         Examples
@@ -602,7 +603,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.reflect`
+        pyvista.DataObjectFilters.reflect
             Reflect a mesh.
 
         Examples
@@ -668,7 +669,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_x
+        pyvista.DataObjectFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -728,7 +729,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_y
+        pyvista.DataObjectFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -788,7 +789,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_z
+        pyvista.DataObjectFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -842,7 +843,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.translate`
+        pyvista.DataObjectFilters.translate
             Translate a mesh.
 
         Examples
@@ -912,7 +913,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate
+        pyvista.DataObjectFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -1009,7 +1010,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_x
+        pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1076,7 +1077,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_y
+        pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1143,7 +1144,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_z
+        pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1214,7 +1215,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_vector
+        pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
@@ -1475,7 +1476,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
             Points with integer values are cast to a float type before the
             transformation is applied. A similar casting is also performed when
-            transforming datasets. See also the notes at :func:`~pyvista.DataSetFilters.transform`
+            transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
         Parameters
@@ -1505,7 +1506,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.transform
+        pyvista.DataObjectFilters.transform
             Transform a dataset.
 
         Examples

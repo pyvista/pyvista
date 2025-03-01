@@ -30,6 +30,7 @@ from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import parse_field_choice
 from .utilities.geometric_objects import Box
@@ -39,6 +40,8 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Literal
+
+    from pyvista import PolyData
 
     from ._typing_core import NumpyArray
 
@@ -181,15 +184,16 @@ class MultiBlock(
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
         order: Literal['nested_first', 'nested_last'] | None = None,
         *,
-        skip_none: bool = True,
-        skip_empty: bool = True,
+        node_type: Literal['parent' | 'child'] = 'child',
+        skip_none: bool = False,
+        skip_empty: bool = False,
         nested_ids: bool | None = None,
         prepend_names: bool = False,
         separator: str = '::',
     ) -> (
-        Iterator[int | tuple[int, ...] | str | DataSet | None]
-        | Iterator[tuple[str | None, DataSet | None]]
-        | Iterator[tuple[int | tuple[int, ...], str | None, DataSet | None]]
+        Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
+        | Iterator[tuple[str | None, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, _TypeMultiBlockLeaf]]
     ):
         """Iterate over all nested blocks recursively.
 
@@ -209,7 +213,7 @@ class MultiBlock(
             .. note::
 
                 Use the ``nested_ids`` and ``prepend_names`` options to modify how
-                the blocks ids and names are represented, respectively.
+                the block ids and names are represented, respectively.
 
         order : 'nested_first', 'nested_last', optional
             Order in which to iterate through nested blocks.
@@ -218,13 +222,22 @@ class MultiBlock(
             - ``'nested_last'``: Iterate through nested ``MultiBlock`` blocks last.
 
             By default, the ``MultiBlock`` is iterated recursively as-is without
-            changing the order.
+            changing the order. This option only applies when ``node_type`` is ``'child'``.
 
-        skip_none : bool, default: True
-            Do not include ``None`` blocks in the iterator.
+        node_type : 'parent' | 'child', default: 'child'
+            Type of node blocks to generate ``contents`` from. If ``'parent'``, the
+            contents are generated from :class:`MultiBlock` nodes.  If ``'child'``, the
+            contents are generated from :class:`~pyvista.DataSet` and ``None`` nodes.
 
-        skip_empty : bool, default: True
-            Do not include empty meshes in the iterator.
+        skip_none : bool, default: False
+            If ``True``, do not include ``None`` blocks in the iterator. This option
+            only applies when ``node_type`` is ``'child'``.
+
+        skip_empty : bool, default: False
+            If ``True``, do not include empty meshes in the iterator. If ``node_type``
+            is ``'parent'``, any :class:`MultiBlock` block with length ``0`` is skipped.
+            If ``node_type`` is ``'child'``, any :class:`~pyvista.DataSet` block with
+            ``0`` points is skipped.
 
         nested_ids : bool, default: True
             Prepend parent block indices to the child block indices. If ``True``, a
@@ -248,7 +261,11 @@ class MultiBlock(
         See Also
         --------
         flatten
+            Uses the iterator internally to flatten a :class:`MultiBlock`.
+        pyvista.CompositeFilters.generic_filter
+            Uses the iterator internally to apply filters to all blocks.
         clean
+            Remove ``None`` and/or empty mesh blocks.
 
         Examples
         --------
@@ -275,8 +292,8 @@ class MultiBlock(
         >>> len(list(iterator))
         59
 
-        By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
-        objects. Empty meshes are also excluded by default.
+        Check if all blocks are class:`~pyvista.DataSet` objects. Note that ``None``
+        blocks are included by default, so this may not be ``True`` in all cases.
 
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
@@ -321,12 +338,42 @@ class MultiBlock(
         >>> next(iterator)
         (0, 0)
 
-        Use the iterator to replace all blocks with new blocks. Similar to a previous
+        Use :meth:`get_block` and get the next block indicated by the nested ids.
+
+        >>> multi.get_block(next(iterator))
+        UnstructuredGrid ...
+
+        Use the iterator to :attr:`replace` all blocks with new blocks. Similar to a previous
         example, we use a filter but this time the operation is not performed in place.
 
         >>> iterator = multi.recursive_iterator('all', nested_ids=True)
         >>> for ids, _, block in iterator:
         ...     multi.replace(ids, block.connectivity())
+
+        Use ``node_type='parent'`` to get information about :class:`MultiBlock` nodes.
+
+        >>> iterator = multi.recursive_iterator(node_type='parent')
+
+        The iterator has ``8`` items. In this case this matches the number of blocks
+        in the root block.
+
+        >>> len(list(iterator))
+        8
+
+        Use ``skip_empty`` to skip :class:`MultiBlock` nodes which have length ``0``
+        and return their block ids.
+
+        >>> iterator = multi.recursive_iterator(
+        ...     'ids', node_type='parent', skip_empty=True
+        ... )
+        >>> ids = list(iterator)
+
+        There are two non-empty blocks at index ``0`` and ``4``.
+
+        >>> len(ids)
+        2
+        >>> ids
+        [(0,), (4,)]
 
         """
         _validation.check_contains(
@@ -340,12 +387,18 @@ class MultiBlock(
             raise ValueError('Nested ids option only applies when ids are returned.')
         if prepend_names and contents not in ['names', 'items', 'all']:
             raise ValueError('Prepend names option only applies when names are returned.')
+        if node_type == 'parent':
+            if skip_none:
+                raise ValueError("Cannot skip None blocks when the node type is 'parent'.")
+            if order is not None:
+                raise TypeError("Cannot set order when the node type is 'parent'.")
 
         return self._recursive_iterator(
             ids=[[i] for i in range(self.n_blocks)],
             names=self.keys(),
             contents=contents,
             order=order,
+            node_type=node_type,
             skip_none=skip_none,
             skip_empty=skip_empty,
             nested_ids=nested_ids,
@@ -360,15 +413,16 @@ class MultiBlock(
         names: Iterable[str | None],
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'],
         order: Literal['nested_first', 'nested_last'] | None = None,
+        node_type: Literal['parent', 'child'] = 'child',
         skip_none: bool,
         skip_empty: bool,
         nested_ids: bool,
         prepend_names: bool,
         separator: str,
     ) -> (
-        Iterator[int | tuple[int, ...] | str | DataSet | None]
-        | Iterator[tuple[str | None, DataSet | None]]
-        | Iterator[tuple[int | tuple[int, ...], str | None, DataSet | None]]
+        Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
+        | Iterator[tuple[str | None, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, _TypeMultiBlockLeaf]]
     ):
         # Determine ordering of blocks and names to iterate through
         if order is None:
@@ -419,18 +473,25 @@ class MultiBlock(
                 else:
                     ids = [[i] for i in range(block.n_blocks)]
 
-                yield from block._recursive_iterator(
-                    ids=ids,
-                    names=names,
-                    contents=contents,
-                    order=order,
-                    skip_none=skip_none,
-                    skip_empty=skip_empty,
-                    nested_ids=nested_ids,
-                    prepend_names=prepend_names,
-                    separator=separator,
-                )
-            elif contents == 'ids':
+                # Yield from multiblock but fall-through in some cases for 'parent' mode
+                if node_type == 'child' or block.is_nested or (len(block) == 0 and skip_empty):
+                    yield from block._recursive_iterator(
+                        ids=ids,
+                        names=names,
+                        contents=contents,
+                        order=order,
+                        node_type=node_type,
+                        skip_none=skip_none,
+                        skip_empty=skip_empty,
+                        nested_ids=nested_ids,
+                        prepend_names=prepend_names,
+                        separator=separator,
+                    )
+                    continue
+            elif node_type == 'parent':
+                continue
+
+            if contents == 'ids':
                 yield tuple(id_) if nested_ids else id_[0]
             elif contents == 'names':
                 yield name
@@ -505,6 +566,7 @@ class MultiBlock(
         See Also
         --------
         recursive_iterator
+        pyvista.CompositeFilters.generic_filter
         clean
 
         Examples
@@ -591,6 +653,33 @@ class MultiBlock(
                 name = None
             output.append(block, name)
         return output
+
+    @property
+    def is_nested(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if any blocks are a :class:`MultiBlock`.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        Create a simple :class:`MultiBlock`:
+
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock([pv.Sphere()])
+
+        It only contains a :class:`~pyvista.DataSet`, so it is not nested.
+
+        >>> multi.is_nested
+        False
+
+        Nest it inside another MultiBlock.
+
+        >>> nested = pv.MultiBlock([multi])
+        >>> nested.is_nested
+        True
+
+        """
+        return any(isinstance(block, pyvista.MultiBlock) for block in self)
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
@@ -740,17 +829,28 @@ class MultiBlock(
         return sum(block.volume for block in self if block)
 
     def get_data_range(  # type: ignore[override]
-        self: MultiBlock, name: str, allow_missing: bool = False
+        self: MultiBlock,
+        name: str | None,
+        allow_missing: bool = False,
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
         ----------
-        name : str
-            Name of the array.
+        name : str, optional
+            The name of the array to get the range. If ``None``, the
+            active scalars are used.
 
         allow_missing : bool, default: False
             Allow a block to be missing the named array.
+
+        preference : str, default: "cell"
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -765,7 +865,7 @@ class MultiBlock(
                 continue
             # get the scalars if available - recursive
             try:
-                tmi, tma = data.get_data_range(name)
+                tmi, tma = data.get_data_range(name, preference=preference)
             except KeyError:
                 if allow_missing:
                     continue
@@ -1711,7 +1811,7 @@ class MultiBlock(
         return field_asc, scalars
 
     def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:
-        """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
+        """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
         ----------
@@ -1725,6 +1825,13 @@ class MultiBlock(
         pyvista.MultiBlock
             MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
+        See Also
+        --------
+        is_all_polydata
+            Check if all blocks are :class:`~pyvista.PolyData`.
+        :meth:`~pyvista.CompositeFilters.extract_geometry`
+            Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
+
         Notes
         -----
         Null blocks are converted to empty :class:`pyvista.PolyData`
@@ -1732,49 +1839,174 @@ class MultiBlock(
         MultiBlocks with null blocks.
 
         """
-        # we make a shallow copy here to avoid modifying the original dataset
-        dataset = self.copy(deep=False)
 
-        # Loop through the multiblock and convert to polydata
-        for i, block in enumerate(dataset):
-            if block is not None:
-                if isinstance(block, MultiBlock):
-                    dataset.replace(i, block.as_polydata_blocks(copy=copy))
-                elif isinstance(block, pyvista.PointSet):
-                    dataset.replace(i, block.cast_to_polydata(deep=True))
-                elif not isinstance(block, pyvista.PolyData):
-                    dataset.replace(i, block.extract_surface())
-                elif copy:
-                    # dataset is a PolyData
-                    dataset.replace(i, block.copy(deep=False))
+        # Define how to process each block
+        def block_filter(block: DataSet | None) -> PolyData:
+            if block is None:
+                return pyvista.PolyData()
+            elif isinstance(block, pyvista.PointSet):
+                return block.cast_to_polydata(deep=True)
+            elif isinstance(block, pyvista.PolyData):
+                return block.copy(deep=False) if copy else block
             else:
-                # must have empty polydata within these datasets as some
-                # downstream filters don't work on null pointers (i.e. None)
-                dataset[i] = pyvista.PolyData()
+                return block.extract_surface()  # type: ignore[misc]
 
-        return dataset
+        return self.generic_filter(block_filter, _skip_none=False)
 
     @property
     def is_all_polydata(self: MultiBlock) -> bool:
-        """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
+        """Return ``True`` when all the blocks are :class:`~pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also
-        :class:`pyvista.PolyData`.
+        :class:`~pyvista.PolyData`.
 
         Returns
         -------
         bool
-            Return ``True`` when all blocks are :class:`pyvista.PolyData`.
+            Return ``True`` when all blocks are :class:`~pyvista.PolyData`.
+
+        See Also
+        --------
+        as_polydata_blocks
+            Convert all blocks to :class:`~pyvista.PolyData`.
+        :meth:`~pyvista.CompositeFilters.extract_geometry`
+            Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
-        for block in self:
-            if isinstance(block, MultiBlock):
-                if not block.is_all_polydata:
-                    return False
-            elif not isinstance(block, pyvista.PolyData):
-                return False
+        return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
 
-        return True
+    @property
+    def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01
+        """Return a set of all block type(s).
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        nested_block_types
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        The dataset has eight nested multi-block blocks, so the block types
+        only contains :class:`MultiBlock`.
+
+        >>> multi.block_types
+        {<class 'pyvista.core.composite.MultiBlock'>}
+
+        The nested blocks only contain a single mesh type so the nested block types
+        only contains :class:`~pyvista.UnstructuredGrid`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        """
+        return {type(block) for block in self}
+
+    @property
+    def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
+        """Return a set of all nested block type(s).
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        block_types
+        is_homogeneous
+        is_heterogeneous
+        recursive_iterator
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        The dataset has eight nested multi-block blocks, so the block types
+        only contains :class:`MultiBlock`.
+
+        >>> multi.block_types
+        {<class 'pyvista.core.composite.MultiBlock'>}
+
+        The nested blocks only contain a single mesh type so the nested block types
+        only contains :class:`~pyvista.UnstructuredGrid`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        """
+        return {
+            type(block) for block in cast(Iterator[Union[DataSet, None]], self.recursive_iterator())
+        }
+
+    @property
+    def is_homogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if all nested blocks have the same type.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        is_heterogeneous
+        nested_block_types
+        recursive_iterator
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        Show the :attr:`nested_block_types`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        Since there is only one type, the dataset is homogeneous.
+
+        >>> multi.is_homogeneous
+        True
+
+        """
+        return len(self.nested_block_types) == 1
+
+    @property
+    def is_heterogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` any two nested blocks have different type.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        is_homogeneous
+        nested_block_types
+        recursive_iterator
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_mug`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_mug()
+
+        Show the :attr:`nested_block_types`.
+
+        >>> multi.nested_block_types  # doctest:+SKIP
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'NoneType'>}
+
+        Since there is more than one type, the dataset is heterogeneous.
+
+        >>> multi.is_heterogeneous
+        True
+
+        """
+        return len(self.nested_block_types) > 1
 
     def _activate_plotting_scalars(
         self: MultiBlock,
