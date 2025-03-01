@@ -984,18 +984,17 @@ class Text3DSource(vtkVectorText):
             if not np.array_equal(old_value, value):
                 object.__setattr__(self, name, value)
                 object.__setattr__(self, '_modified', True)
+        # Do not allow setting attributes.
+        # This is similar to using @no_new_attr decorator but without
+        # the __setattr__ override since this class defines its own override
+        # for setting the modified flag
+        elif name in Text3DSource._new_attr_exceptions:
+            object.__setattr__(self, name, value)
         else:
-            # Do not allow setting attributes.
-            # This is similar to using @no_new_attr decorator but without
-            # the __setattr__ override since this class defines its own override
-            # for setting the modified flag
-            if name in Text3DSource._new_attr_exceptions:
-                object.__setattr__(self, name, value)
-            else:
-                raise AttributeError(
-                    f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}',
-                )
+            raise AttributeError(
+                f'Attribute "{name}" does not exist and cannot be added to type '
+                f'{self.__class__.__name__}',
+            )
 
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
@@ -4424,7 +4423,7 @@ class CubeFacesSource(CubeSource):
                 points += vector
 
             # Set poly as a single quad cell
-            face_poly.points = points  # type: ignore[union-attr]
+            face_poly.points = points  # type: ignore[union-attr, has-type]
             face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
 
             if frame_width is not None:
@@ -4434,7 +4433,7 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points  # type: ignore[union-attr]
+                face_poly.points = frame_points  # type: ignore[union-attr, has-type]
                 face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property

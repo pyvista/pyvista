@@ -6,7 +6,7 @@ Examples
 PyVista contains a variety of built-in demos and downloadable example
 datasets.
 
-Built-in
+Built-In
 --------
 Several built-in datasets are included and are available for offline use.
 For example, load the built-in :func:`~pyvista.examples.examples.load_random_hills`
