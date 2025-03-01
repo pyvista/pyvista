@@ -585,7 +585,7 @@ class MultiBlock(
                 is at least two levels of nesting.
 
         separator : str, default: '::'
-            String separator to use when ``'prepend'`` mode is enabled for either field 
+            String separator to use when ``'prepend'`` mode is enabled for either field
             data or for the user-dict. The separator is inserted between parent and child
             block names.
 
