@@ -17,12 +17,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args:
-          [
-            "-L nd",
-            "doc examples examples_trame pyvista tests",
-            "*.py *.rst *.md",
-          ]
+        args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
         exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
