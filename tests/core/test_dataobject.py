@@ -113,11 +113,9 @@ def test_metadata_save(hexbeam, tmpdir):
     assert not hexbeam_in.field_data
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 @pytest.mark.parametrize('file_ext', ['.pkl', '.vtm'])
 def test_save_nested_multiblock_field_data(tmp_path, file_ext):
-    if file_ext == '.vtk' and pv.vtk_version_info < (9, 3):
-        pytest.xfail('VTK version not supported.')
-
     filename = 'mesh' + file_ext
     nested = pv.MultiBlock()
     nested.field_data['foo'] = 'bar'
