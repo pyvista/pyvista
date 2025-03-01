@@ -207,6 +207,7 @@ class DataObject:
         # store complex and bitarray types as field data
         self._store_metadata()
 
+        # warn if data will be lost
         if isinstance(self, pyvista.MultiBlock):
             _warn_multiblock_nested_field_data(self)
 
