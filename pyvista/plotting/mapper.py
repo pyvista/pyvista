@@ -835,7 +835,7 @@ class _DataSetMapper(_BaseMapper):
             msg = (
                 f'Opacity array size ({opacity.size}) does not equal '
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                f'number of cells ({self.dataset.n_cells}).',
+                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
             )
             raise ValueError(msg)
 
