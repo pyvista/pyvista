@@ -91,9 +91,10 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar: bool = False):
         """Perform boolean operation."""
-        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined, has-type]
-            msg = 'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.'
-            raise ValueError(msg)
+        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
+            raise ValueError(
+                'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.',
+            )
         if not isinstance(other_mesh, pyvista.PolyData):
             msg = 'Input mesh must be PolyData.'
             raise TypeError(msg)
@@ -2551,7 +2552,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined, has-type]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2809,7 +2810,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Regenerate face and point arrays
         uni = np.unique(f.compress(fmask, 0), return_inverse=True)
-        new_points = self.points.take(uni[0], 0)  # type: ignore[has-type]
+        new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
         faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
@@ -3245,7 +3246,7 @@ class PolyDataFilters(DataSetFilters):
         plane = generate_plane(normal, origin)
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
-        np.apply_along_axis(f, 1, mesh.points)  # type: ignore[call-overload, has-type]
+        np.apply_along_axis(f, 1, mesh.points)
         return mesh
 
     def ribbon(
