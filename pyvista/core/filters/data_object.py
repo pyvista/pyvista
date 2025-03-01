@@ -31,10 +31,13 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
+
+    points: pyvista_ndarray
 
     def transform(
         self: ConcreteDataSetType | MultiBlock,

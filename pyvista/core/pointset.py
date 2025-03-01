@@ -2085,7 +2085,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             )  # pragma: no cover
         faces = self.GetPolyhedronFaces()  # vtkCellArray
         if faces is None:
-            return np.array([], dtype=int)
+            return np.array([], dtype=int)  # type: ignore[unreachable]
         return convert_array(faces.GetData())
 
     @property
@@ -2125,7 +2125,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             )  # pragma: no cover
         faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
         if faces is None:
-            return np.array([], dtype=int)
+            return np.array([], dtype=int)  # type: ignore[unreachable]
         return convert_array(faces.GetData())
 
     @property

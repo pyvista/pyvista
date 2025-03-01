@@ -71,7 +71,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             Center of the active renderer.
 
         """
-        return self.GetCenter()
+        return self.GetCenter()  # type: ignore[attr-defined]
 
     def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
@@ -830,7 +830,7 @@ class _DataSetMapper(_BaseMapper):
             raise ValueError(
                 f'Opacity array size ({opacity.size}) does not equal '
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
+                f'number of cells ({self.dataset.n_cells}).',
             )
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
