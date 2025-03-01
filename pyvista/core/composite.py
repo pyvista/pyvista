@@ -1736,7 +1736,7 @@ class MultiBlock(
         ----------
         copy : bool, default: False
             Option to create a shallow copy of any datasets that are already a
-            :class:`pyvista.PolyData`. When ``False``, any datasets that are
+            :class:`~pyvista.PolyData`. When ``False``, any datasets that are
             already PolyData will not be copied.
 
         Returns
@@ -1781,11 +1781,10 @@ class MultiBlock(
 
         Parameters
         ----------
-        copy : bool | 'deep' | 'shallow', default: False
-            Option to create a deep or shallow copy of any datasets that are already a
+        copy : bool, default: False
+            Option to create a shallow copy of any datasets that are already a
             :class:`~pyvista.UnstructuredGrid`. When ``False``, any datasets that are
-            already UnstructuredGrid will not be copied. If ``True`` or ``'deep'``, a
-            deep copy is made. Use ``'shallow'`` for a shallow copy.
+            already UnstructuredGrid will not be copied.
 
         Returns
         -------
@@ -1808,10 +1807,8 @@ class MultiBlock(
         def block_filter(block: DataSet | None) -> DataSet:
             if block is None:
                 return pyvista.UnstructuredGrid()
-            if isinstance(block, pyvista.UnstructuredGrid):
-                if copy:
-                    return block.copy(deep=copy is True or copy == 'deep')
-                return block  # Do nothing
+            elif isinstance(block, pyvista.UnstructuredGrid):
+                return block.copy(deep=False) if copy else block
             else:
                 return block.cast_to_unstructured_grid()
 
