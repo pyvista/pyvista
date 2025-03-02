@@ -4,7 +4,10 @@ from dataclasses import dataclass
 import re
 from typing import TYPE_CHECKING
 
-import numpy as np
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import pytest
 
 import pyvista as pv
@@ -17,22 +20,34 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_plotting
 
 
-def test_wrap_image_raises(mocker: MockerFixture):
-    with pytest.raises(
-        ValueError,
-        match=re.escape('Expecting a X by Y by (3 or 4) array'),
-    ):
-        pv.wrap_image_array(np.array([0]))
-
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(ndim=st.integers().filter(lambda x: x != 3))
+def test_wrap_image_array_raises_ndim(mocker: MockerFixture, ndim):
     m = mocker.MagicMock()
-    m.ndim = 3
-    m.shape = [0, 0, 0]
+    m.ndim = ndim
     with pytest.raises(
         ValueError,
         match=re.escape('Expecting a X by Y by (3 or 4) array'),
     ):
         pv.wrap_image_array(m)
 
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(shape=st.integers().filter(lambda x: x not in (3, 4)))
+def test_wrap_image_array_raises_shape(mocker: MockerFixture, shape):
+    m = mocker.MagicMock()
+    m.ndim = 3
+    m.shape.__getitem__.return_value = shape
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Expecting a X by Y by (3 or 4) array'),
+    ):
+        pv.wrap_image_array(m)
+
+
+def test_wrap_image_array_raises_dtype(mocker: MockerFixture):
+    m = mocker.MagicMock()
+    m.ndim = 3
     m.shape = [0, 0, 3]
     m.dtype = float
     with pytest.raises(
