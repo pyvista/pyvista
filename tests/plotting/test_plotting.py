@@ -4950,6 +4950,8 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
         mesh = pv.MultiBlock([mesh])
 
     clipped = mesh.clip('x', crinkle=True, return_clipped=return_clipped)
+    if isinstance(clipped, tuple):
+        clipped = pv.MultiBlock(clipped)
 
     pl = pv.Plotter()
     pl.add_mesh(clipped, show_edges=True)
