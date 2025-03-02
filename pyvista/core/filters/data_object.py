@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -1037,8 +1038,74 @@ class DataObjectFilters:
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
-            # Add Cell IDs
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            CELL_IDS_KEY = '_temp_cell_ids'
+            INT_DTYPE = np.int64
+            ITER_KWARGS = dict(skip_none=True)
+
+            def extract_cells(dataset, ids):
+                # Extract cells and remove arrays
+                output = dataset.extract_cells(ids)
+                if (pids := 'vtkOriginalPointIds') in (pdata := output.point_data):
+                    pdata.remove(pids)
+                if (cids := 'vtkOriginalCellIds') in (cdata := output.cell_data):
+                    cdata.remove(cids)
+                if CELL_IDS_KEY in cdata:
+                    cdata.remove(CELL_IDS_KEY)
+                return output
+
+            def extract_crinkle_cells(dataset, a_, b_):
+                if b_ is None:
+                    # Extract cells when `return_clipped=False`
+                    def extract_cells_from_block(block_, clipped_a, clipped_b):
+                        return extract_cells(block_, np.unique(clipped_a.cell_data[CELL_IDS_KEY]))
+                else:
+                    # Extract cells when `return_clipped=True`
+                    def extract_cells_from_block(block_, clipped_a, clipped_b):
+                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
+                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
+
+                        # Need to cast as int dtype explicitly to ensure empty arrays have
+                        # the right type required by extract_cells
+                        array_a = np.array(list(set_a), dtype=INT_DTYPE)
+                        array_b = np.array(list(set_b), dtype=INT_DTYPE)
+
+                        clipped_a = extract_cells(block_, array_a)
+                        clipped_b = extract_cells(block_, array_b)
+                        return clipped_a, clipped_b
+
+                def extract_cells_from_multiblock(multi_in, multi_a, multi_b):
+                    # Iterate though input and output multiblocks
+                    # `multi_b` may be None depending on `return_clipped`
+                    self_iter = multi_in.recursive_iterator('all', **ITER_KWARGS)
+                    a_iter = multi_a.recursive_iterator(**ITER_KWARGS)
+                    b_iter = (
+                        multi_b.recursive_iterator(**ITER_KWARGS)
+                        if multi_b is not None
+                        else itertools.repeat(None)
+                    )
+
+                    for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):
+                        crinkled = extract_cells_from_block(block_self, block_a, block_b)
+                        # Replace blocks with crinkled ones
+                        if block_b is None:
+                            # Only need to replace one block
+                            multi_a.replace(ids, crinkled)
+                        else:
+                            multi_a.replace(ids, crinkled[0])
+                            multi_b.replace(ids, crinkled[1])
+                    return multi_a if multi_b is None else (multi_a, multi_b)
+
+                if isinstance(dataset, pyvista.MultiBlock):
+                    return extract_cells_from_multiblock(dataset, a_, b_)
+                return extract_cells_from_block(dataset, a_, b_)
+
+            # Add Cell IDs to all blocks
+            if isinstance(self, pyvista.MultiBlock):
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[arg-type]
+            else:
+                blocks = [self]  # type: ignore[assignment]
+            for block in blocks:
+                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)  # type: ignore[union-attr]
 
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
@@ -1058,14 +1125,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                set_a = set(a.cell_data['cell_ids'])
-                set_b = set(b.cell_data['cell_ids']) - set_a
-                a = self.extract_cells(list(set_a))  # type: ignore[union-attr]
-                b = self.extract_cells(list(set_b))  # type: ignore[union-attr]
+                a, b = extract_crinkle_cells(self, a, b)
             return a, b
         clipped = _get_output(alg)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))  # type: ignore[union-attr]
+            clipped = extract_crinkle_cells(self, clipped, None)
         return clipped
 
     def clip(
