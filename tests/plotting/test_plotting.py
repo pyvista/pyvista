@@ -4941,12 +4941,16 @@ def test_plot_logo():
     logo_plotter.show()
 
 
-@pytest.mark.parametrize('as_multiblock', [True])
-@pytest.mark.parametrize('return_clipped', [False])
-def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
+@pytest.mark.parametrize('as_multiblock', [True, False])
+@pytest.mark.parametrize('return_clipped', [True, False])
+def test_clip_multiblock_crinkle(return_clipped, as_multiblock, verify_image_cache):
     mesh = examples.download_bunny_coarse()
     if as_multiblock:
         mesh = pv.MultiBlock([mesh])
+
+        # Skip verify image. Scalars are mapped incorrectly on Windows.
+        verify_image_cache.windows_skip_image_cache = True
+
     clipped = mesh.clip('x', crinkle=True, return_clipped=return_clipped)
 
     # Combine as a single multiblock for plotting
