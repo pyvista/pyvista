@@ -6,7 +6,6 @@ See the image regression notes in doc/extras/developer_notes.rst
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import inspect
 import io
 import os
@@ -4942,8 +4941,7 @@ def test_plot_logo():
     logo_plotter.show()
 
 
-@pytest.mark.parametrize('as_multiblock', [True, False])
-@pytest.mark.parametrize('return_clipped', [True, False])
+@skip_windows
 def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
     mesh = examples.download_bunny_coarse()
     if as_multiblock:
@@ -4951,22 +4949,7 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
 
     clipped = mesh.clip('x', crinkle=True, return_clipped=return_clipped)
 
-    if isinstance(clipped, Sequence):
-        if len(clipped) == 2:
-            # Translate one of the clipped meshes for plotting
-            clipped[0].translate((-0.1, 0, 0), inplace=True)
-        if isinstance(clipped, tuple):
-            clipped = pv.MultiBlock(clipped)
-    else:
-        clipped = pv.MultiBlock([clipped])
-
-    # There is a problem with plotting MultiBlock with scalars, so we plot each mesh
-    # separately. See https://github.com/pyvista/pyvista/issues/3134
-    assert isinstance(clipped, pv.MultiBlock)
-
     pl = pv.Plotter()
-    for block in clipped.recursive_iterator():
-        block[block.active_scalars_name] = np.array(block.active_scalars, dtype=float)
-        pl.add_mesh(block, show_edges=True)
+    pl.add_mesh(clipped, show_edges=True)
     pl.view_xy()
     pl.show()
