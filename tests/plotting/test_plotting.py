@@ -4939,3 +4939,19 @@ def test_bitwise_and_or_of_polydata(operator):
 def test_plot_logo():
     logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
     logo_plotter.show()
+
+
+@pytest.mark.parametrize('as_multiblock', [True, False])
+@pytest.mark.parametrize('return_clipped', [True, False])
+def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
+    mesh = examples.download_bunny_coarse()
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+    clipped = mesh.clip('x', crinkle=True, return_clipped=return_clipped)
+
+    # Combine as a single multiblock for plotting
+    if isinstance(clipped, tuple):
+        clipped = pv.MultiBlock(clipped)
+        clipped[0].translate((-0.1, 0, 0), inplace=True)
+
+    clipped.plot(show_edges=True, cpos='xy')

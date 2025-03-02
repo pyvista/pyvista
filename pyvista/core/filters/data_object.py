@@ -1031,9 +1031,16 @@ class DataObjectFilters:
         crinkle: bool = False,
     ):
         """Clip using an implicit function (internal helper)."""
+        CELL_IDS_KEY = 'cell_ids'
+        INT_DTYPE = np.int64
         if crinkle:
-            # Add Cell IDs
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            # Add Cell IDs to all blocks
+            if isinstance(self, pyvista.MultiBlock):
+                blocks = self.recursive_iterator('blocks', skip_none=True)
+            else:
+                blocks = [self]
+            for block in blocks:
+                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
 
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
@@ -1053,14 +1060,36 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                set_a = set(a.cell_data['cell_ids'])
-                set_b = set(b.cell_data['cell_ids']) - set_a
-                a = self.extract_cells(list(set_a))  # type: ignore[union-attr]
-                b = self.extract_cells(list(set_b))  # type: ignore[union-attr]
+
+                def extract_crinkle_cells(block_: DataSet, a_, b_):
+                    set_a = set(a_.cell_data[CELL_IDS_KEY])
+                    set_b = set(b_.cell_data[CELL_IDS_KEY]) - set_a
+
+                    # Need to cast as int dtype explicitly to ensure empty arrays have
+                    # the right type required by extract_cells
+                    array_a = np.array(list(set_a), dtype=INT_DTYPE)
+                    array_b = np.array(list(set_b), dtype=INT_DTYPE)
+
+                    a_ = block_.extract_cells(array_a)  # type: ignore[union-attr]
+                    b_ = block_.extract_cells(array_b)  # type: ignore[union-attr]
+                    return a_, b_
+
+                if isinstance(self, pyvista.MultiBlock):
+                    iter_kwargs = dict(skip_none=True, skip_empty=True)
+                    self_iter = self.recursive_iterator('all', **iter_kwargs)
+                    a_iter = a.recursive_iterator(**iter_kwargs)
+                    b_iter = b.recursive_iterator(**iter_kwargs)
+                    for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):
+                        crinkled_a, crinkled_b = extract_crinkle_cells(block_self, block_a, block_b)
+                        # Replace blocks with crinkled ones
+                        a.replace(ids, crinkled_a)
+                        b.replace(ids, crinkled_b)
+                else:
+                    a, b = extract_crinkle_cells(self, a, b)
             return a, b
         clipped = _get_output(alg)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))  # type: ignore[union-attr]
+            clipped = self.extract_cells(np.unique(clipped.cell_data[CELL_IDS_KEY]))  # type: ignore[union-attr]
         return clipped
 
     def clip(
