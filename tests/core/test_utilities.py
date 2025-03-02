@@ -38,6 +38,8 @@ from pyvista.core.utilities.arrays import raise_has_duplicates
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.features import create_grid
+from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import _classproperty
@@ -56,6 +58,33 @@ from tests.conftest import NUMPY_VERSION_INFO
 @pytest.fixture
 def transform():
     return Transform()
+
+
+def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
+    with monkeypatch.context() as m:
+        m.setattr(os, 'name', 'nt')
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.int64)
+
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.uint64)
+
+        with pytest.raises(
+            ValueError,
+            match='Invalid output_type 1',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=1)
+
+
+def test_create_grid_raises():
+    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+        create_grid(pv.Sphere(), dimensions=None)
 
 
 def test_parse_field_choice_raises():
