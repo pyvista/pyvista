@@ -42,7 +42,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
 @abstract_class
-class DataObject:
+class DataObject(_vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
