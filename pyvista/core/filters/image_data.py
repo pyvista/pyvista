@@ -69,7 +69,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,7 +307,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -879,10 +879,11 @@ class ImageDataFilters(DataSetFilters):
             .. code-block:: python
 
                 image.contour_labels(
+                    boundary_style='strict_external',  # old filter strictly computes external polygons
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
-                    compute_normals=False,  # old filter does not compute normals
+                    orient_faces=False,  # old filter does not orient faces
                     simplify_output=False,  # old filter returns multi-component scalars
                 )
 
@@ -1012,7 +1013,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
-        boundary_style: Literal['external', 'internal', 'all'] = 'external',
+        boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
         *,
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
@@ -1020,7 +1021,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        compute_normals: bool = True,
+        orient_faces: bool = True,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1058,9 +1059,8 @@ class ImageDataFilters(DataSetFilters):
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal`'' contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
 
         .. note::
@@ -1071,11 +1071,24 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        boundary_style : 'external' | 'internal' | 'all', default: 'external'
+        boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
             Style of boundary polygons to generate. ``'internal'`` polygons are generated
             between two connected foreground regions. ``'external'`` polygons are
-            generated between foreground background. ``'all'``  includes both internal
-            and external boundary polygons.
+            generated between foreground and background regions. ``'all'``  includes
+            both internal and external boundary polygons.
+
+            These styles are generated such that ``internal + external = all``.
+            Internally, the filter computes all boundary polygons by default and
+            then removes any undesired polygons in post-processing.
+            This improves the quality of the output, but can negatively affect the
+            filter's performance since all boundaries are always initially computed.
+
+            The ``'strict_external'`` style can be used as a fast alternative to
+            ``'external'``. This style `strictly` generates external polygons and does
+            not compute or consider internal boundaries. This computation is fast, but
+            also results in jagged, non-smooth boundaries between regions. The
+            ``select_inputs`` and ``select_outputs`` options cannot be used with this
+            style.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -1140,12 +1153,16 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        compute_normals : bool, default: True
-            Compute point and cell normals for the contoured output using
-            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
-            enabled by default. If ``False``, the generated polygons may have
-            inconsistent ordering and orientation (and may negatively impact
-            the shading used for rendering).
+        orient_faces : bool, default: True
+            Orient the faces of the generated contours so that they have consistent
+            ordering and face outward. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation, which can negatively impact
+            downstream calculations and the shading used for rendering.
+
+            .. note::
+
+                Orienting the faces can be computationally expensive for large meshes.
+                Consider disabling this option to improve this filter's performance.
 
             .. warning::
 
@@ -1179,7 +1196,7 @@ class ImageDataFilters(DataSetFilters):
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
-            ``'external'``, and is not simplified otherwise.
+            ``'external'`` or ``'strict_external'``, and is not simplified otherwise.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1218,7 +1235,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.PolyDataFilters.voxelize_binary_mask`
+        :meth:`~pyvista.DataSetFilters.voxelize_binary_mask`
             Filter that generates binary labeled :class:`~pyvista.ImageData` from
             :class:`~pyvista.PolyData` surface contours. Can beloosely considered as
             an inverse of this filter.
@@ -1235,6 +1252,9 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.pack_labels`
             Function used internally by SurfaceNets to generate contiguous label data.
+
+        :meth:`~pyvista.DataSetFilters.color_labels`
+            Color labeled data, e.g. labeled volumes or contours.
 
         :ref:`contouring_example`, :ref:`anatomical_groups_example`
             Additional examples using this filter.
@@ -1270,8 +1290,9 @@ class ImageDataFilters(DataSetFilters):
         >>> image.dimensions
         (35, 35, 16)
 
-        Plot the cropped image for context. Configure the color map to generate
-        consistent coloring of the regions for all plots.
+        Plot the cropped image for context. Use :meth:`~pyvista.DataSetFilters.color_labels`
+        to generate consistent coloring of the regions for all plots. Negative indexing
+        is used for plotting internal boundaries.
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
@@ -1336,7 +1357,8 @@ class ImageDataFilters(DataSetFilters):
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
-        visualize the result.
+        visualize the result with :meth:`~pyvista.DataSetFilters.color_labels` using
+        the ``negative_indexing`` option.
 
         >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
@@ -1384,6 +1406,15 @@ class ImageDataFilters(DataSetFilters):
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> labels_plotter(surf, zoom=1.5).show()
+
+        Use the ``'strict_external'`` style to compute external contours quickly. Note
+        that this produces jagged and non-smooth boundaries between regions, which may
+        not be desirable. Also note how the top of the surface is perfectly flat compared
+        to the default ``'external'`` style (see first example above) since the strict
+        style ignores the smoothing effects of all internal boundaries.
+
+        >>> surf = image.contour_labels('strict_external')
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
@@ -1529,7 +1560,9 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         _validation.check_contains(
-            ['all', 'internal', 'external'], must_contain=boundary_style, name='boundary_style'
+            ['all', 'internal', 'external', 'strict_external'],
+            must_contain=boundary_style,
+            name='boundary_style',
         )
         _validation.check_contains(
             [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
@@ -1545,12 +1578,19 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        _configure_boundaries(
-            alg,
-            cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
-            select_inputs,
-            select_outputs,
-        )
+        if boundary_style == 'strict_external':
+            # Use default alg parameters
+            if select_inputs is not None or select_outputs is not None:
+                raise TypeError(
+                    'Selecting inputs and/or outputs is not supported by `strict_external`.'
+                )
+        else:
+            _configure_boundaries(
+                alg,
+                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                select_inputs,
+                select_outputs,
+            )
         _configure_smoothing(
             alg,
             alg_input.spacing,
@@ -1590,11 +1630,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
+        is_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = boundary_style == 'external'
+            simplify_output = is_external
         if simplify_output:
             # Simplify scalars to a single component
-            if boundary_style != 'external':
+            if not is_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -1622,8 +1663,16 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        if compute_normals and output.n_cells > 0:
-            output.compute_normals(auto_orient_normals=True, inplace=True)
+        if orient_faces and output.n_cells > 0:
+            # Orient the faces but discard the normals array
+            output.compute_normals(
+                cell_normals=True,
+                point_normals=False,
+                consistent_normals=True,
+                auto_orient_normals=True,
+                inplace=True,
+            )
+            del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -1672,9 +1721,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         cells_to_points
             Inverse of this filter to represent cells as points.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
 
         Parameters
@@ -1870,9 +1919,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         points_to_cells
             Inverse of this filter to represent points as cells.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
 
         Parameters
@@ -2093,14 +2142,13 @@ class ImageDataFilters(DataSetFilters):
                     f' output {new_image.dimensions} and would require to map'
                     f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
-        else:  # cells_to_points
-            if new_image.n_points != self.n_cells:
-                raise ValueError(
-                    'Cannot re-mesh cells to points. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'
-                    f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_cells} cells on {new_image.n_points} points.'
-                )
+        elif new_image.n_points != self.n_cells:
+            raise ValueError(
+                'Cannot re-mesh cells to points. The dimensions of the input'
+                f' {self.dimensions} is not compatible with the dimensions of the'
+                f' output {new_image.dimensions} and would require to map'
+                f' {self.n_cells} cells on {new_image.n_points} points.'
+            )
 
         # Copy field data
         new_image.field_data.update(self.field_data)
@@ -2728,8 +2776,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetSeedData(point_seeds)
         else:
             raise ValueError(
-                f'Invalid `extraction_mode` "{extraction_mode}",'
-                ' use "all", "largest", or "seeded".'
+                f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
 
         if label_mode == 'size':
@@ -2931,10 +2978,13 @@ class ImageDataFilters(DataSetFilters):
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
-        interpolation: Literal['nearest', 'linear', 'cubic'] = 'nearest',
+        interpolation: Literal[
+            'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
+        ] = 'nearest',
         *,
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
+        anti_aliasing: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
@@ -2974,16 +3024,22 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', default: 'nearest'
+        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman', default: 'nearest'
             Interpolation mode to use. By default, ``'nearest'`` is used which
             duplicates (if upsampling) or removes (if downsampling) values but
-            does not modify them. The ``'linear'`` and ``'cubic'`` options use linear
-            and cubic interpolation, respectively, and may modify the values.
+            does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
+            and cubic interpolation, respectively, and may modify the values. The
+            ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+            and may be used to preserve sharp details and/or reduce image artifacts.
 
-            .. note:
+            .. note::
 
-                Integer scalars are converted to floats if ``'linear'`` or
-                ``'cubic'`` interpolation is used.
+                - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
+                - use ``'linear'`` for speed-critical tasks
+                - use ``'cubic'`` for upscaling or general-purpose resampling
+                - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
+                - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
+                - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
@@ -3001,6 +3057,10 @@ class ImageDataFilters(DataSetFilters):
                 `cell` data, each dimension should be one more than the number of
                 desired output cells (since there are ``N`` cells and ``N+1`` points
                 along each axis). See examples.
+
+        anti_aliasing : bool, default: False
+            Enable antialiasing. This will blur the image as part of the resampling
+            to reduce image artifacts when down-sampling. Has no effect when up-sampling.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -3034,7 +3094,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.sample`
+        :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
         :meth:`~pyvista.DataSetFilters.interpolate`
@@ -3080,17 +3140,18 @@ class ImageDataFilters(DataSetFilters):
         Use ``sample_rate`` to up-sample the image. ``'nearest'`` interpolation is
         used by default.
 
-        >>> upsampled = image.resample(sample_rate=2)
+        >>> upsampled = image.resample(sample_rate=2.0)
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Use ``'linear'`` interpolation instead.
+        Use ``'linear'`` interpolation. Note that the argument names ``sample_rate``
+        and ``interpolation`` may be omitted.
 
-        >>> upsampled = image.resample(sample_rate=2, interpolation='linear')
+        >>> upsampled = image.resample(2.0, 'linear')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Use ``'cubic'`` interpolation instead. Here we also specify the output
+        Use ``'cubic'`` interpolation. Here we also specify the output
         ``dimensions`` explicitly instead of using ``sample_rate``.
 
         >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
@@ -3252,21 +3313,36 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.dimensions
         (1600, 1200, 1)
 
-        Downsample the puppy image to 1/10th its original resolution.
+        Downsample the puppy image to 1/10th its original resolution using ``'lanczos'``
+        interpolation.
 
-        >>> downsampled = puppy.resample(0.1)
+        >>> downsampled = puppy.resample(0.1, 'lanczos')
         >>> downsampled.dimensions
         (160, 120, 1)
 
         Compare the downsampled image to the original and zoom in to show detail.
 
-        >>> plt = pv.Plotter(shape=(1, 2))
-        >>> _ = plt.add_mesh(puppy, rgba=True, show_edges=False, lighting=False)
-        >>> plt.subplot(0, 1)
-        >>> _ = plt.add_mesh(downsampled, rgba=True, show_edges=False, lighting=False)
-        >>> plt.link_views()
-        >>> plt.view_xy()
-        >>> plt.camera.zoom(3.0)
+        >>> def compare_images_plotter(image1, image2):
+        ...     plt = pv.Plotter(shape=(1, 2))
+        ...     _ = plt.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
+        ...     plt.subplot(0, 1)
+        ...     _ = plt.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
+        ...     plt.link_views()
+        ...     plt.view_xy()
+        ...     plt.camera.zoom(3.0)
+        ...     return plt
+
+        >>> plt = compare_images_plotter(puppy, downsampled)
+        >>> plt.show()
+
+        Note that downsampling can create image artifacts caused by aliasing. Enable
+        anti-aliasing to smooth the image before resampling.
+
+        >>> downsampled2 = puppy.resample(0.1, 'lanczos', anti_aliasing=True)
+
+        Compare down-sampling with aliasing (left) to without aliasing (right).
+
+        >>> plt = compare_images_plotter(downsampled, downsampled2)
         >>> plt.show()
 
         """
@@ -3281,12 +3357,14 @@ class ImageDataFilters(DataSetFilters):
 
         # Validate interpolation and modify scalars as needed
         input_dtype = active_scalars.dtype
-        has_int_scalars = np.issubdtype(input_dtype, np.integer)
+        has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
+            ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman'],
+            must_contain=interpolation,
+            name='interpolation',
         )
         if has_int_scalars:
-            # Need floats for interpolation but also to avoid crashing in some cases
+            # int (long long) is not supported by the filter so we cast to float
             input_image = self.copy(deep=False)
             input_image[name] = active_scalars.astype(float)
         else:
@@ -3322,9 +3400,7 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
-        # Ideally vtkImageResample would directly support setting output dimensions
-        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
-        # stuck using SetMagnificationFactors to indirectly set the dimensions.
+        # Use SetMagnificationFactors to indirectly set the dimensions.
         # To compute the magnification factors we first define input (old) and output
         # (new) dimensions.
         old_dimensions = np.array(input_image.dimensions)
@@ -3350,7 +3426,7 @@ class ImageDataFilters(DataSetFilters):
                 reference_image.dimensions = dimensions_  # type: ignore[assignment]
             new_dimensions = np.array(reference_image.dimensions)
 
-        # Compute the magnification factors to use with vtkImageResample
+        # Compute the magnification factors to use with the filter
         # Note that SetMagnificationFactors will multiply the factors by the extent
         # but we want to multiply the dimensions. These values are off by one.
         singleton_dims = old_dimensions == 1
@@ -3359,21 +3435,45 @@ class ImageDataFilters(DataSetFilters):
             magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
         magnification_factors[singleton_dims] = 1
 
-        resample = _vtk.vtkImageResample()
-        resample.SetInputData(input_image)
-        resample.SetMagnificationFactors(*magnification_factors)
+        resize_filter = _vtk.vtkImageResize()
+        resize_filter.SetInputData(input_image)
+        resize_filter.SetResizeMethodToMagnificationFactors()
+        resize_filter.SetMagnificationFactors(*magnification_factors)
 
         # Set interpolation mode
-        if interpolation == 'linear':
-            resample.SetInterpolationModeToLinear()
+        interpolator: _vtk.vtkAbstractImageInterpolator
+        if interpolation == 'nearest':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToNearest()
+        elif interpolation == 'linear':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToLinear()
         elif interpolation == 'cubic':
-            resample.SetInterpolationModeToCubic()
-        else:  # 'nearest'
-            resample.SetInterpolationModeToNearestNeighbor()
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToCubic()
+        elif interpolation == 'lanczos':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToLanczos()
+        elif interpolation == 'hamming':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToHamming()
+        elif interpolation == 'blackman':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToBlackman()
+        else:  # pragma: no cover
+            raise RuntimeError(f"Unexpected interpolation mode '{interpolation}'.")
+
+        if anti_aliasing and np.any(magnification_factors < 1.0):
+            if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
+                interpolator.AntialiasingOn()
+            else:
+                resize_filter.SetInputData(input_image.gaussian_smooth())
+
+        resize_filter.SetInterpolator(interpolator)
 
         # Get output
-        _update_alg(resample, progress_bar=progress_bar)
-        output_image = _get_output(resample).copy(deep=False)
+        _update_alg(resize_filter, progress_bar=progress_bar)
+        output_image = _get_output(resize_filter).copy(deep=False)
 
         # Set geometry from the reference
         output_image.direction_matrix = reference_image.direction_matrix
@@ -3408,7 +3508,7 @@ class ImageDataFilters(DataSetFilters):
                     (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
                 )
                 if processing_cell_scalars:
-                    new_spacing = (size + input_image.spacing) / (output_dimensions)
+                    new_spacing = (size + input_image.spacing) / output_dimensions
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
                         # Ignore division by zero, this is fixed with singleton_dims on the next line
@@ -3421,7 +3521,7 @@ class ImageDataFilters(DataSetFilters):
         if output_image.active_scalars_name == 'ImageScalars':
             output_image.rename_array('ImageScalars', name)
 
-        if has_int_scalars and interpolation == 'nearest':
+        if has_int_scalars:
             # Can safely cast to int to match input
             output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
 

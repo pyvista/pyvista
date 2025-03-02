@@ -20,7 +20,15 @@ def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
         # Generate a separate test case for each downloadable dataset
-        test_cases = _generate_dataset_loader_test_cases_from_module(pv.examples.downloads)
+        test_cases_downloads = _generate_dataset_loader_test_cases_from_module(
+            pv.examples.downloads
+        )
+        test_cases_planets = _generate_dataset_loader_test_cases_from_module(pv.examples.planets)
+        # Exclude `load` functions
+        test_cases_planets = [
+            case for case in test_cases_planets if case.dataset_function[0].startswith('download')
+        ]
+        test_cases = [*test_cases_downloads, *test_cases_planets]
         ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 

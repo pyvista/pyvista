@@ -346,7 +346,7 @@ class Table(DataObject, _vtk.vtkTable):
             "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
         )
 
-    def get_data_range(
+    def get_data_range(  # type: ignore[override]
         self,
         arr: str | None = None,
         preference: FieldLiteral | RowLiteral = 'row',

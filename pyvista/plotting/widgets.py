@@ -66,8 +66,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     if interaction_event not in event_map:
         expected = ', '.join(f'`{e}`' for e in event_map)
         raise ValueError(
-            f'Expected value for `interaction_event` is {expected}.'
-            f' {interaction_event} was given.',
+            f'Expected value for `interaction_event` is {expected}. {interaction_event} was given.',
         )
 
     return event_map[interaction_event]
@@ -2494,7 +2493,7 @@ class WidgetHelper:
         After interacting with the actor, the transform will be stored within
         :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
         dataset. Use this matrix in conjunction with
-        :func:`pyvista.DataSetFilters.transform` to transform the dataset.
+        :func:`pyvista.DataObjectFilters.transform` to transform the dataset.
 
         Examples
         --------

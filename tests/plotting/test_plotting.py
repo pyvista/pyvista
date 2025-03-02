@@ -151,6 +151,7 @@ def test_import_gltf(verify_image_cache):
         pl.import_gltf('not a file')
 
     pl.import_gltf(filename)
+    assert np.allclose(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 
@@ -187,6 +188,7 @@ def test_import_vrml():
         pl.import_vrml('not a file')
 
     pl.import_vrml(filename)
+    assert np.allclose(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 
@@ -213,6 +215,17 @@ def test_import_3ds():
         pl.import_3ds('not a file')
 
     pl.import_3ds(filename)
+    assert np.allclose(
+        pl.bounds,
+        (
+            -5.379246234893799,
+            5.364696979522705,
+            -1.9769330024719238,
+            2.731842041015625,
+            -7.883847236633301,
+            5.437096118927002,
+        ),
+    )
     pl.show()
 
 
@@ -225,6 +238,7 @@ def test_import_obj():
         pl.import_obj('not a file')
 
     pl.import_obj(download_obj_file)
+    assert np.allclose(pl.bounds, (-10.0, 10.0, 0.0, 4.5, -10.0, 10.0))
     pl.show()
 
 
@@ -2466,10 +2480,9 @@ def test_where_is():
         assert isinstance(loc, tuple)
 
 
-def test_log_scale():
-    mesh = examples.load_uniform()
+def test_log_scale(uniform):
     plotter = pv.Plotter()
-    plotter.add_mesh(mesh, log_scale=True)
+    plotter.add_mesh(uniform, log_scale=True, clim=[-1, uniform.get_data_range()[1]])
     plotter.show()
 
 
@@ -3919,6 +3932,20 @@ def test_color_cycler():
         pl.set_color_cycler(5)
 
 
+def test_color_cycler_true():
+    pv.global_theme.color_cycler = 'default'
+    a = pv.Wavelet().clip(invert=True)
+    b = pv.Wavelet().clip(invert=False)
+
+    pl = pv.Plotter()
+    a0 = pl.add_mesh(a, color=True)
+    a1 = pl.add_mesh(b, color=True)
+    pl.show()
+
+    assert a0.prop.color.hex_rgb == matplotlib_default_colors[0]
+    assert a1.prop.color.hex_rgb == matplotlib_default_colors[1]
+
+
 def test_plotter_render_callback():
     n_ren = [0]
 
@@ -4508,7 +4535,7 @@ def test_direction_objects(direction_obj_test_case):
     # Test Capsule separately based on vtk version
     if 'Capsule' in name:
         legacy_vtk = pv.vtk_version_info < (9, 3)
-        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
             pytest.xfail(
                 'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
             )
@@ -4571,9 +4598,9 @@ def test_direction_objects(direction_obj_test_case):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-@pytest.mark.parametrize('compute_normals', [True, False])
-def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+@pytest.mark.parametrize('orient_faces', [True, False])
+def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4637,7 +4664,7 @@ def test_contour_labels_boundary_style(
     fixed_kwargs = dict(
         smoothing_distance=0.3,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
         simplify_output=False,
     )
 
@@ -4690,7 +4717,7 @@ def test_contour_labels_smoothing_constraint(
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
         pad_background=False,
-        compute_normals=False,
+        orient_faces=False,
     )
 
     # Translate so origin is in bottom left corner
@@ -4723,7 +4750,7 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         smoothing=smoothing,
         smoothing_distance=0.8,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
     )
     mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
     mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import operator
 import re
+import time
 
 import numpy as np
 import pytest
@@ -208,7 +209,7 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     scalars,
 ):
     # Determine expected output
-    if output_mesh_type == 'triangles' or output_mesh_type is None and smoothing:
+    if output_mesh_type == 'triangles' or (output_mesh_type is None and smoothing):
         expected_celltype = pv.CellType.TRIANGLE
         cell_multiplier = 2  # quads are subdivided into 2 triangles
     else:
@@ -369,6 +370,28 @@ def test_contour_labels_cell_data(channels):
     voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_strict_external(channels):
+    start = time.perf_counter()
+    channels.contour_labels('external', orient_faces=False)
+    time_slow = time.perf_counter() - start
+
+    start = time.perf_counter()
+    contours = channels.contour_labels('strict_external', orient_faces=False)
+    time_fast = time.perf_counter() - start
+    assert time_fast < time_slow / 1.5
+
+    # Test output is simplified correctly
+    assert contours.active_scalars.ndim == 1
+    assert np.all(contours.active_scalars > 0)
+
+    match = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
+    with pytest.raises(TypeError, match=match):
+        channels.contour_labels('strict_external', select_inputs=[0])
+    with pytest.raises(TypeError, match=match):
+        channels.contour_labels('strict_external', select_outputs=[0])
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -1157,16 +1180,31 @@ def test_resample_extend_border(uniform, extend_border, name, value):
         assert np.allclose(resampled.bounds, uniform.bounds)
 
 
-@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
-@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
-def test_resample_interpolation(uniform, interpolation, dtype):
+@pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
+@pytest.mark.parametrize(
+    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
+)
+@pytest.mark.parametrize('sample_rate', [0.5, 2.0])
+def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
     array = uniform.active_scalars
     uniform[uniform.active_scalars_name] = array.astype(dtype)
-    resampled = uniform.resample(interpolation=interpolation)
+    resampled = uniform.resample(sample_rate, interpolation=interpolation)
 
-    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
     actual_dtype = resampled.active_scalars.dtype
-    assert actual_dtype == expected_dtype
+    assert actual_dtype == dtype
+
+    # Test anti-aliasing
+    anti_aliased = uniform.resample(sample_rate, interpolation=interpolation, anti_aliasing=True)
+    expected_dimensions = np.array(uniform.dimensions) * sample_rate
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+
+    # expect different result if down-sampling only
+    resampled_array = resampled.active_scalars
+    anti_aliased_array = anti_aliased.active_scalars
+    if sample_rate < 1.0:
+        assert not np.allclose(resampled_array, anti_aliased_array)
+    else:
+        assert np.allclose(resampled_array, anti_aliased_array)
 
 
 @pytest.mark.parametrize(

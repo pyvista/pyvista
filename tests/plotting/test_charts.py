@@ -22,7 +22,7 @@ skip_mac = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: PT004
+def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
 
 
@@ -625,9 +625,9 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     sz = 5
     st, st_inv = 'o', '^'
     l = 'Scatter'
-    assert (
-        st_inv not in charts.ScatterPlot2D.MARKER_STYLES
-    ), 'New marker styles added? Change this test.'
+    assert st_inv not in charts.ScatterPlot2D.MARKER_STYLES, (
+        'New marker styles added? Change this test.'
+    )
 
     # Test constructor
     plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
