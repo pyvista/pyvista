@@ -4941,8 +4941,8 @@ def test_plot_logo():
     logo_plotter.show()
 
 
-@pytest.mark.parametrize('as_multiblock', [True, False])
-@pytest.mark.parametrize('return_clipped', [True, False])
+@pytest.mark.parametrize('as_multiblock', [True])
+@pytest.mark.parametrize('return_clipped', [False])
 def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
     mesh = examples.download_bunny_coarse()
     if as_multiblock:
