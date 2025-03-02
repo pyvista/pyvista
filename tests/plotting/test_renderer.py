@@ -548,3 +548,34 @@ def test_show_bounds_padding_raises(padding):
         match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
     ):
         pl.renderer.show_bounds(padding=padding)
+
+
+@pytest.mark.parametrize('groups', [1, object(), True])
+def test_init_renderers_groups_raises(groups):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            f'"groups" should be a list or tuple, not {type(groups).__name__}.',
+        ),
+    ):
+        pv.Plotter(groups=groups)
+
+
+@pytest.mark.parametrize('group', [1, object(), True])
+def test_init_renderers_groups_item_raises(group):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            f'Each group entry should be a list or tuple, not {type(group).__name__}.',
+        ),
+    ):
+        pv.Plotter(groups=[group])
+
+
+@given(groups=st.lists(st.integers()).filter(lambda x: len(x) != 2))
+def test_init_renderers_groups_item_len_raises(groups):
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Each group entry must have length 2.'),
+    ):
+        pv.Plotter(groups=[groups])
