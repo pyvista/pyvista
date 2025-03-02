@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING
 import weakref
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 import vtk
@@ -1719,3 +1722,32 @@ def test_grid_dimensionality(grid_class, dimensionality, dimensions):
 
     assert grid.dimensionality == dimensionality
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+@pytest.mark.parametrize('arg', [1, True, object()])
+def test_rect_grid_raises(arg):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Type ({type(arg)}) not understood by `RectilinearGrid`'),
+    ):
+        pv.RectilinearGrid(arg)
+
+
+@given(args=st.lists(st.none()).filter(lambda x: len(x) in [2, 3]))
+def test_rect_grid_raises_args(args):
+    with pytest.raises(
+        TypeError,
+        match=re.escape('Arguments not understood by `RectilinearGrid`.'),
+    ):
+        pv.RectilinearGrid(*args)
+
+
+def test_rect_grid_dimensions_raises():
+    g = pv.RectilinearGrid()
+    with pytest.raises(
+        AttributeError,
+        match=re.escape(
+            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
+        ),
+    ):
+        g.dimensions = 1
