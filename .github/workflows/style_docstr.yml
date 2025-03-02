@@ -35,8 +35,10 @@ jobs:
         run: |
           pip install -e .[test]
 
-      - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@v3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+        with:
+          packages: libgl1-mesa-glx xvfb
+          version: 3.0
 
       - name: Software Report
         run: |
@@ -45,10 +47,10 @@ jobs:
           pip list
 
       - name: Test Package Docstrings
-        run: make doctest-modules
+        run: xvfb-run -s '-maxclients 2048' -a make doctest-modules
 
       - name: Test Package Docstrings with Local Namespace
-        run: make doctest-modules-local-namespace
+        run: xvfb-run -s '-maxclients 2048' -a make doctest-modules-local-namespace
 
   vale:
     name: Vale
