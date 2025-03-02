@@ -4955,14 +4955,16 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
         if len(clipped) == 2:
             # Translate one of the clipped meshes for plotting
             clipped[0].translate((-0.1, 0, 0), inplace=True)
+        if isinstance(clipped, tuple):
+            clipped = pv.MultiBlock(clipped)
     else:
-        # Make sure we have a sequence
-        clipped = [clipped]
+        clipped = pv.MultiBlock([clipped])
 
     # There is a problem with plotting MultiBlock with scalars, so we plot each mesh
     # separately. See https://github.com/pyvista/pyvista/issues/3134
+    assert isinstance(clipped, pv.MultiBlock)
+
     pl = pv.Plotter()
-    for m in clipped:
-        pl.add_mesh(m, show_edges=True)
+    pl.add_mesh(clipped, show_edges=True)
     pl.view_xy()
     pl.show()
