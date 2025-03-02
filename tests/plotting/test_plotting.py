@@ -4941,7 +4941,6 @@ def test_plot_logo():
     logo_plotter.show()
 
 
-@skip_windows
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 @pytest.mark.parametrize('return_clipped', ['return_clipped', None])
 def test_clip_multiblock_crinkle(return_clipped, as_multiblock):

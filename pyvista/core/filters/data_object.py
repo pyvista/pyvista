@@ -1037,60 +1037,71 @@ class DataObjectFilters:
         crinkle: bool = False,
     ):
         """Clip using an implicit function (internal helper)."""
-        CELL_IDS_KEY = 'cell_ids'
-        INT_DTYPE = np.int64
-
-        def extract_crinkle_cells(dataset, a_, b_):
-            if b_ is None:
-                # Extract cells when `return_clipped=False`
-                def extract_cells_from_block(block_, clipped_a, clipped_b):
-                    return block_.extract_cells(np.unique(clipped_a.cell_data[CELL_IDS_KEY]))
-            else:
-                # Extract cells when `return_clipped=True`
-                def extract_cells_from_block(block_, clipped_a, clipped_b):
-                    set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
-                    set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
-
-                    # Need to cast as int dtype explicitly to ensure empty arrays have
-                    # the right type required by extract_cells
-                    array_a = np.array(list(set_a), dtype=INT_DTYPE)
-                    array_b = np.array(list(set_b), dtype=INT_DTYPE)
-
-                    clipped_a = block_.extract_cells(array_a)
-                    clipped_b = block_.extract_cells(array_b)
-                    return clipped_a, clipped_b
-
-            def extract_cells_from_multiblock(multi_in, multi_a, multi_b):
-                # Iterate though input and output multiblocks
-                # `multi_b` may be None depending on `return_clipped`
-                iter_kwargs = dict(skip_none=True)
-                self_iter = multi_in.recursive_iterator('all', **iter_kwargs)
-                a_iter = multi_a.recursive_iterator(**iter_kwargs)
-                b_iter = (
-                    multi_b.recursive_iterator(**iter_kwargs)
-                    if multi_b is not None
-                    else itertools.repeat(None)
-                )
-
-                for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):
-                    crinkled = extract_cells_from_block(block_self, block_a, block_b)
-                    # Replace blocks with crinkled ones
-                    if block_b is None:
-                        # Only need to replace one block
-                        multi_a.replace(ids, crinkled)
-                    else:
-                        multi_a.replace(ids, crinkled[0])
-                        multi_b.replace(ids, crinkled[1])
-                return multi_a if multi_b is None else (multi_a, multi_b)
-
-            if isinstance(dataset, pyvista.MultiBlock):
-                return extract_cells_from_multiblock(dataset, a_, b_)
-            return extract_cells_from_block(dataset, a_, b_)
-
         if crinkle:
+            CELL_IDS_KEY = 'cell_ids'
+            INT_DTYPE = np.int64
+            ITER_KWARGS = dict(skip_none=True)
+
+            def extract_cells(dataset, ids):
+                # Extract cells and remove arrays
+                output = dataset.extract_cells(ids)
+                if (pids := 'vtkOriginalPointIds') in (pdata := output.point_data):
+                    pdata.remove(pids)
+                if (cids := 'vtkOriginalCellIds') in (cdata := output.cell_data):
+                    cdata.remove(cids)
+                if CELL_IDS_KEY in cdata:
+                    cdata.remove(CELL_IDS_KEY)
+                return output
+
+            def extract_crinkle_cells(dataset, a_, b_):
+                if b_ is None:
+                    # Extract cells when `return_clipped=False`
+                    def extract_cells_from_block(block_, clipped_a, clipped_b):
+                        return extract_cells(block_, np.unique(clipped_a.cell_data[CELL_IDS_KEY]))
+                else:
+                    # Extract cells when `return_clipped=True`
+                    def extract_cells_from_block(block_, clipped_a, clipped_b):
+                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
+                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
+
+                        # Need to cast as int dtype explicitly to ensure empty arrays have
+                        # the right type required by extract_cells
+                        array_a = np.array(list(set_a), dtype=INT_DTYPE)
+                        array_b = np.array(list(set_b), dtype=INT_DTYPE)
+
+                        clipped_a = extract_cells(block_, array_a)
+                        clipped_b = extract_cells(block_, array_b)
+                        return clipped_a, clipped_b
+
+                def extract_cells_from_multiblock(multi_in, multi_a, multi_b):
+                    # Iterate though input and output multiblocks
+                    # `multi_b` may be None depending on `return_clipped`
+                    self_iter = multi_in.recursive_iterator('all', **ITER_KWARGS)
+                    a_iter = multi_a.recursive_iterator(**ITER_KWARGS)
+                    b_iter = (
+                        multi_b.recursive_iterator(**ITER_KWARGS)
+                        if multi_b is not None
+                        else itertools.repeat(None)
+                    )
+
+                    for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):
+                        crinkled = extract_cells_from_block(block_self, block_a, block_b)
+                        # Replace blocks with crinkled ones
+                        if block_b is None:
+                            # Only need to replace one block
+                            multi_a.replace(ids, crinkled)
+                        else:
+                            multi_a.replace(ids, crinkled[0])
+                            multi_b.replace(ids, crinkled[1])
+                    return multi_a if multi_b is None else (multi_a, multi_b)
+
+                if isinstance(dataset, pyvista.MultiBlock):
+                    return extract_cells_from_multiblock(dataset, a_, b_)
+                return extract_cells_from_block(dataset, a_, b_)
+
             # Add Cell IDs to all blocks
             if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', skip_none=True)
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)
             else:
                 blocks = [self]  # type: ignore[assignment]
             for block in blocks:
