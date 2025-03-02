@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import re
+import platform
 from typing import TYPE_CHECKING
 from typing import Literal
 from unittest.mock import ANY
@@ -806,6 +806,10 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason='MacOS CI produces a slightly different camera position. Needs investigation.',
+)
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_camera3d_widget(verify_image_cache):
     sphere = pv.Sphere()
