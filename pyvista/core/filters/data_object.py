@@ -1038,7 +1038,7 @@ class DataObjectFilters:
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
-            CELL_IDS_KEY = 'cell_ids'
+            CELL_IDS_KEY = '_temp_cell_ids'
             INT_DTYPE = np.int64
             ITER_KWARGS = dict(skip_none=True)
 
