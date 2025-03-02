@@ -1101,7 +1101,7 @@ class DataObjectFilters:
 
             # Add Cell IDs to all blocks
             if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[arg-type]
             else:
                 blocks = [self]  # type: ignore[assignment]
             for block in blocks:
