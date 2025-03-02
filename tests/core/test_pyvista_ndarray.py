@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from unittest import mock
 
 import numpy as np
@@ -96,3 +97,14 @@ def test_add_1d():
     pv_arr = pyvista_ndarray([1]) + pyvista_ndarray([1])
     np_arr = np.array([1]) + np.array([1])
     assert np.array_equal(pv_arr, np_arr)
+
+
+@pytest.mark.parametrize('val', [1, True, None])
+def test_raises(val):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            f'pyvista_ndarray got an invalid type {type(val)}. Expected an Iterable or vtk.vtkAbstractArray'
+        ),
+    ):
+        pyvista_ndarray(val)

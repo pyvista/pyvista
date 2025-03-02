@@ -45,6 +45,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
 
+    from pytest_mock import MockerFixture
+
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
 
@@ -138,6 +140,23 @@ def multicomp_poly():
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
     return data
+
+
+def test_plotting_module_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotting
+
+    m = mocker.patch.object(plotting, 'inspect')
+    m.getattr_static.side_effect = AttributeError
+
+    with (
+        pytest.raises(
+            AttributeError,
+            match=re.escape(
+                'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `foo`'
+            ),
+        ),
+    ):
+        plotting.foo  # noqa: B018
 
 
 def test_import_gltf(verify_image_cache):

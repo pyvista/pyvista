@@ -105,6 +105,9 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     with pytest.raises(ValueError, match='Cannot nest a composite dataset in itself.'):
         multi.append(multi)
 
+    with pytest.raises(TypeError, match='dataset should not be or contain an array'):
+        multi.append(vtk.vtkFloatArray())
+
 
 def test_multi_block_set_get_ers():
     """This puts all of the example data objects into a a MultiBlock container"""

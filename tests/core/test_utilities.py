@@ -28,12 +28,18 @@ from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import has_duplicates
+from pyvista.core.utilities.arrays import parse_field_choice
 from pyvista.core.utilities.arrays import raise_has_duplicates
+from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.features import create_grid
+from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import _classproperty
@@ -52,6 +58,65 @@ from tests.conftest import NUMPY_VERSION_INFO
 @pytest.fixture
 def transform():
     return Transform()
+
+
+def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
+    with monkeypatch.context() as m:
+        m.setattr(os, 'name', 'nt')
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.int64)
+
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.uint64)
+
+        with pytest.raises(
+            ValueError,
+            match='Invalid output_type 1',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=1)
+
+
+def test_create_grid_raises():
+    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+        create_grid(pv.Sphere(), dimensions=None)
+
+
+def test_parse_field_choice_raises():
+    with pytest.raises(ValueError, match=re.escape('Data field (foo) not supported.')):
+        parse_field_choice('foo')
+
+    with pytest.raises(TypeError, match=re.escape('Data field (1) not supported.')):
+        parse_field_choice(1)
+
+
+def test_convert_array_raises():
+    with pytest.raises(TypeError, match=re.escape("Invalid input array type (<class 'int'>).")):
+        convert_array(1)
+
+
+def test_get_array_raises():
+    with pytest.raises(
+        KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
+    ):
+        get_array(vtk.vtkTable(), 'foo', err=True)
+
+    with pytest.raises(
+        KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
+    ):
+        get_array_association(vtk.vtkTable(), 'foo', err=True)
+
+
+def test_raise_not_matching_raises():
+    with pytest.raises(
+        ValueError, match=re.escape('Number of scalars (1) must match number of rows (0).')
+    ):
+        raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
 def test_version():
@@ -281,6 +346,17 @@ def test_is_inside_bounds():
     assert not is_inside_bounds((5, 12, 5), bnds)
     assert not is_inside_bounds((5, 5, 12), bnds)
     assert not is_inside_bounds((12, 12, 12), bnds)
+
+
+def test_is_inside_bounds_raises():
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0,))
+
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0, 1, 3, 4, 5))
+
+    with pytest.raises(TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")):
+        is_inside_bounds(point=None, bounds=(0,))
 
 
 def test_voxelize(uniform):
