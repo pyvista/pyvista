@@ -69,7 +69,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,7 +307,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -883,7 +883,7 @@ class ImageDataFilters(DataSetFilters):
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
-                    compute_normals=False,  # old filter does not compute normals
+                    orient_faces=False,  # old filter does not orient faces
                     simplify_output=False,  # old filter returns multi-component scalars
                 )
 
@@ -1021,7 +1021,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        compute_normals: bool = True,
+        orient_faces: bool = True,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1153,12 +1153,16 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        compute_normals : bool, default: True
-            Compute point and cell normals for the contoured output using
-            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
-            enabled by default. If ``False``, the generated polygons may have
-            inconsistent ordering and orientation (and may negatively impact
-            the shading used for rendering).
+        orient_faces : bool, default: True
+            Orient the faces of the generated contours so that they have consistent
+            ordering and face outward. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation, which can negatively impact
+            downstream calculations and the shading used for rendering.
+
+            .. note::
+
+                Orienting the faces can be computationally expensive for large meshes.
+                Consider disabling this option to improve this filter's performance.
 
             .. warning::
 
@@ -1659,8 +1663,16 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        if compute_normals and output.n_cells > 0:
-            output.compute_normals(auto_orient_normals=True, inplace=True)
+        if orient_faces and output.n_cells > 0:
+            # Orient the faces but discard the normals array
+            output.compute_normals(
+                cell_normals=True,
+                point_normals=False,
+                consistent_normals=True,
+                auto_orient_normals=True,
+                inplace=True,
+            )
+            del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -1709,9 +1721,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         cells_to_points
             Inverse of this filter to represent cells as points.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
 
         Parameters
@@ -1907,9 +1919,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         points_to_cells
             Inverse of this filter to represent points as cells.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
 
         Parameters
@@ -3082,7 +3094,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.sample`
+        :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
         :meth:`~pyvista.DataSetFilters.interpolate`
