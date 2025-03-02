@@ -545,6 +545,8 @@ class MultiBlock(
             This operation only applies to nested :class:`MultiBlock` blocks. Field data
             associated with :class:`~pyvista.DataSet` blocks is `not` affected.
 
+        .. versionadded:: 0.45
+
         Parameters
         ----------
         copy : bool, optional
