@@ -1062,9 +1062,9 @@ class DataObjectFilters:
 
             def extract_cells_from_multiblock(multi_in, multi_a, multi_b):
                 # Iterate though input and output multiblocks
-                # `clipped_b` may be None depending on `return_clipped`
+                # `multi_b` may be None depending on `return_clipped`
                 iter_kwargs = dict(skip_none=True)
-                self_iter = multi_in.recursive_iterator('all', **iter_kwargs)  # type: ignore[arg-type]
+                self_iter = multi_in.recursive_iterator('all', **iter_kwargs)
                 a_iter = multi_a.recursive_iterator(**iter_kwargs)
                 b_iter = (
                     multi_b.recursive_iterator(**iter_kwargs)
@@ -1072,7 +1072,7 @@ class DataObjectFilters:
                     else itertools.repeat(None)
                 )
 
-                for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):  # type: ignore[misc, attr-defined]
+                for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):
                     crinkled = extract_cells_from_block(block_self, block_a, block_b)
                     # Replace blocks with crinkled ones
                     if block_b is None:
