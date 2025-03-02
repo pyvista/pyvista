@@ -40,7 +40,7 @@ from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
@@ -907,7 +907,7 @@ class DataSet(DataSetFilters, DataObject):
             return self.point_data.active_normals
         return self.cell_data.active_normals
 
-    def get_data_range(
+    def get_data_range(  # type: ignore[override]
         self: Self,
         arr_var: str | NumpyArray[float] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
@@ -1697,7 +1697,7 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         pass_cell_data : bool, default: False
             Run the :func:`cell_data_to_point_data()
-            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            <pyvista.DataObjectFilters.cell_data_to_point_data>` filter and pass
             cell data fields to the new pointset.
 
         Returns
@@ -1736,7 +1736,7 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         pass_cell_data : bool, default: False
             Run the :func:`cell_data_to_point_data()
-            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            <pyvista.DataObjectFilters.cell_data_to_point_data>` filter and pass
             cell data fields to the new pointset.
 
         Returns

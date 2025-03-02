@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING
 from .helpers import wrap
 from .misc import check_valid_vector
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid

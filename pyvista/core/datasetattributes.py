@@ -21,7 +21,7 @@ from .utilities.arrays import copy_vtk_array
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from typing_extensions import Self
@@ -909,6 +909,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         with contextlib.suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
+        if hasattr(self.dataset, '_user_dict'):
+            del self.dataset._user_dict
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 

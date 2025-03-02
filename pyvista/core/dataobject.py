@@ -27,7 +27,7 @@ from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any
     from typing import ClassVar
@@ -38,6 +38,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
 @abstract_class
@@ -230,7 +231,9 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self: Self) -> tuple[float, float]:  # pragma: no cover
+    def get_data_range(
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
             f'{type(self)} mesh type does not have a `get_data_range` method.',
@@ -293,7 +296,7 @@ class DataObject:
 
         # now make a call on the object to get its attributes as a list of len
         # 2 tuples
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
@@ -542,6 +545,8 @@ class DataObject:
             not guaranteed, as it's possible that some filters may modify or clear
             field data. Use with caution.
 
+        .. versionadded:: 0.44
+
         Returns
         -------
         UserDict
@@ -602,8 +607,11 @@ class DataObject:
         dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None,
     ) -> None:
         # Setting None removes the field data array
-        if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
-            del self.field_data['_PYVISTA_USER_DICT']
+        if dict_ is None:
+            if hasattr(self, '_user_dict'):
+                del self._user_dict
+            if USER_DICT_KEY in self.field_data.keys():
+                del self.field_data[USER_DICT_KEY]
             return
 
         self._config_user_dict()
@@ -618,15 +626,14 @@ class DataObject:
 
     def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
-        field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
             # Init
             self._user_dict = _SerializedDictArray()
 
-        if field_name in field_data.keys():
-            if isinstance(array := field_data[field_name], pyvista_ndarray):
+        if USER_DICT_KEY in field_data.keys():
+            if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
@@ -642,7 +649,7 @@ class DataObject:
         # Set field data array directly instead of calling 'set_array'
         # This skips the call to '_prepare_array' which will otherwise
         # do all kinds of casting/conversions and mangle this array
-        self._user_dict.SetName(field_name)
+        self._user_dict.SetName(USER_DICT_KEY)
         field_data.VTKObject.AddArray(self._user_dict)
         field_data.VTKObject.Modified()
 

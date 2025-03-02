@@ -73,7 +73,8 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_logo = './_static/pyvista_logo_sm.png'
+html_logo = './_static/pyvista_logo.svg'
+html_favicon = './_static/pyvista_logo.svg'
 
 sys.path.append(str(Path('./_ext').resolve()))
 
@@ -204,6 +205,9 @@ autodoc_type_aliases = {
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
+
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']

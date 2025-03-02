@@ -16,7 +16,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from .geometric_sources import translate
 from .helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike

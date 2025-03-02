@@ -22,7 +22,7 @@ from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core.dataset import DataSet
 
 
@@ -1003,11 +1003,11 @@ def test_get_data_range(grid):
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
-    rng = grid.get_data_range('sample_point_scalars')
+    rng = grid.get_data_range('sample_point_scalars', preference='point')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
-    rng = grid.get_data_range('sample_cell_scalars')
+    rng = grid.get_data_range('sample_cell_scalars', preference='cell')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
 

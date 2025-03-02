@@ -34,7 +34,7 @@ from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._typing import ColorLike
 
 IPYGANY_MAP = {
@@ -744,7 +744,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: float | np.floating[Any] | str,
+        val: float | np.floating[Any] | np.integer[Any] | str,
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
@@ -763,18 +763,29 @@ class Color:
             ``0`` and ``255``).
 
         """
+        # Check for numpy inputs to avoid unnecessary calls to np.issubdtype
+        arr = None
+        if isinstance(val, (np.ndarray, np.generic)):
+            arr = np.asanyarray(val)
+
+        # Convert non-integers to int
         if isinstance(val, str):
             # From hexadecimal value
             val = int(Color.strip_hex_prefix(val), 16)
-        elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
-            # From float
+        elif isinstance(val, float) or (
+            arr is not None and np.issubdtype(arr.dtype, np.floating) and arr.ndim == 0
+        ):
             val = int(round(255 * val))
-        if (
-            np.issubdtype(np.asarray(val).dtype, np.integer)
-            and np.size(val) == 1
+
+        # Check integers
+        if isinstance(val, int) and 0 <= val <= 255:
+            return val  # type: ignore[return-value]
+        elif isinstance(val, np.uint8) or (
+            arr is not None
+            and np.issubdtype(arr.dtype, np.integer)
+            and arr.ndim == 0
             and 0 <= val <= 255
         ):
-            # From integer
             return int(val)
         else:
             raise ValueError(f'Unsupported color channel value provided: {val}')

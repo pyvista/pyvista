@@ -30,7 +30,7 @@ import numpy.typing as npt
 
 from pyvista.core._validation._cast_array import _cast_to_numpy
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumberType
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -698,8 +698,7 @@ def check_ndim(
             check_integer(ndim, strict=True, name='ndim')
             expected = f'one of {ndim}'
         msg = (
-            f'{name} has the incorrect number of dimensions. '
-            f'Got {array_ndim}, expected {expected}.'
+            f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
         )
         raise ValueError(msg)
 
@@ -1177,13 +1176,11 @@ def check_length(
 
     if min_length is not None and array_len < min_length:
         raise ValueError(
-            f'{name} must have a minimum length of {min_length}. '
-            f'Got length {array_len} instead.',
+            f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.',
         )
     if max_length is not None and array_len > max_length:
         raise ValueError(
-            f'{name} must have a maximum length of {max_length}. '
-            f'Got length {array_len} instead.',
+            f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.',
         )
 
 

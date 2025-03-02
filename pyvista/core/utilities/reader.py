@@ -25,7 +25,7 @@ from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format'
@@ -2119,6 +2119,22 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     def _set_defaults_post(self) -> None:
         self.set_active_time_point(0)
 
+    def enable_merge_points(self):
+        """Enable merging coincident GLL points from different spectral elements on read."""
+        self.reader.CleanGridOn()
+
+    def disable_merge_points(self):
+        """Disable merging coincident GLL points from different spectral elements on read."""
+        self.reader.CleanGridOff()
+
+    def enable_spectral_element_ids(self):
+        """Enable spectral element IDs to be shown as cell data."""
+        self.reader.SpectralElementIdsOn()
+
+    def disable_spectral_element_ids(self):
+        """Disable spectral element IDs to be shown as cell data."""
+        self.reader.SpectralElementIdsOff()
+
     @property
     def number_time_points(self):
         """Return number of time points or iterations available to read.
@@ -2144,7 +2160,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         )
         key = vtkStreaming.TIME_STEPS()
 
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
     def time_point_value(self, time_point):
@@ -2175,7 +2191,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.UPDATE_TIME_STEP()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
 
     @property
@@ -2202,10 +2218,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.UPDATE_TIME_STEP()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
-
-        self.reader.Update()
 
     def set_active_time_point(self, time_point):
         """Set active time or iteration by index.
@@ -2218,7 +2232,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         """
         if time_point < 0 or time_point >= self.number_time_points:
             raise ValueError(
-                f'Time point ({time_point}) out of range [0, {self.number_time_points-1}]'
+                f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
             )
 
         self.set_active_time_value(self.time_values[time_point])
@@ -2490,7 +2504,16 @@ class HDRReader(BaseReader):
     'parched_canal_4k.hdr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> mesh
+    ImageData (...)
+      N Cells:      8382465
+      N Points:     8388608
+      X Bounds:     0.000e+00, 4.095e+03
+      Y Bounds:     0.000e+00, 2.047e+03
+      Z Bounds:     0.000e+00, 0.000e+00
+      Dimensions:   4096, 2048, 1
+      Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+      N Arrays:     1
 
     """
 
@@ -3163,7 +3186,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetApplyDisplacements(True)
         self.reader.SetDisplacementMagnitude(displacement_magnitude)
-        self.reader.Update()
 
     def disable_displacements(self):
         """Nodal positions are not 'displaced'."""
@@ -3378,7 +3400,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.TIME_STEPS()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
     def time_point_value(self, time_point):
@@ -3435,7 +3457,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         self.reader.SetTimeStep(time_point)
-        self.reader.Update()
 
 
 class ExodusIIBlockSet:

@@ -10,7 +10,7 @@ import numpy as np
 
 from pyvista.core import _validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike

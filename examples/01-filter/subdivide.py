@@ -18,7 +18,7 @@ from pyvista import examples
 
 # %%
 # First, let's load a **triangulated** mesh to subdivide. We can use the
-# :func:`pyvista.DataSetFilters.triangulate` filter to ensure the mesh we are
+# :func:`pyvista.DataObjectFilters.triangulate` filter to ensure the mesh we are
 # using is purely triangles.
 mesh = examples.download_bunny_coarse().triangulate()
 

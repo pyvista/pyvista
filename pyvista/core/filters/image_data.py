@@ -26,7 +26,7 @@ from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import ImageData
@@ -69,7 +69,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,7 +307,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -879,10 +879,11 @@ class ImageDataFilters(DataSetFilters):
             .. code-block:: python
 
                 image.contour_labels(
+                    boundary_style='strict_external',  # old filter strictly computes external polygons
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
-                    compute_normals=False,  # old filter does not compute normals
+                    orient_faces=False,  # old filter does not orient faces
                     simplify_output=False,  # old filter returns multi-component scalars
                 )
 
@@ -1012,7 +1013,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
-        boundary_style: Literal['external', 'internal', 'all'] = 'external',
+        boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
         *,
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
@@ -1020,7 +1021,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        compute_normals: bool = True,
+        orient_faces: bool = True,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1058,9 +1059,8 @@ class ImageDataFilters(DataSetFilters):
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal`'' contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
 
         .. note::
@@ -1071,11 +1071,24 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        boundary_style : 'external' | 'internal' | 'all', default: 'external'
+        boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
             Style of boundary polygons to generate. ``'internal'`` polygons are generated
             between two connected foreground regions. ``'external'`` polygons are
-            generated between foreground background. ``'all'``  includes both internal
-            and external boundary polygons.
+            generated between foreground and background regions. ``'all'``  includes
+            both internal and external boundary polygons.
+
+            These styles are generated such that ``internal + external = all``.
+            Internally, the filter computes all boundary polygons by default and
+            then removes any undesired polygons in post-processing.
+            This improves the quality of the output, but can negatively affect the
+            filter's performance since all boundaries are always initially computed.
+
+            The ``'strict_external'`` style can be used as a fast alternative to
+            ``'external'``. This style `strictly` generates external polygons and does
+            not compute or consider internal boundaries. This computation is fast, but
+            also results in jagged, non-smooth boundaries between regions. The
+            ``select_inputs`` and ``select_outputs`` options cannot be used with this
+            style.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -1140,12 +1153,16 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        compute_normals : bool, default: True
-            Compute point and cell normals for the contoured output using
-            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
-            enabled by default. If ``False``, the generated polygons may have
-            inconsistent ordering and orientation (and may negatively impact
-            the shading used for rendering).
+        orient_faces : bool, default: True
+            Orient the faces of the generated contours so that they have consistent
+            ordering and face outward. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation, which can negatively impact
+            downstream calculations and the shading used for rendering.
+
+            .. note::
+
+                Orienting the faces can be computationally expensive for large meshes.
+                Consider disabling this option to improve this filter's performance.
 
             .. warning::
 
@@ -1179,7 +1196,7 @@ class ImageDataFilters(DataSetFilters):
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
-            ``'external'``, and is not simplified otherwise.
+            ``'external'`` or ``'strict_external'``, and is not simplified otherwise.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1218,7 +1235,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.PolyDataFilters.voxelize_binary_mask`
+        :meth:`~pyvista.DataSetFilters.voxelize_binary_mask`
             Filter that generates binary labeled :class:`~pyvista.ImageData` from
             :class:`~pyvista.PolyData` surface contours. Can beloosely considered as
             an inverse of this filter.
@@ -1235,6 +1252,9 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.pack_labels`
             Function used internally by SurfaceNets to generate contiguous label data.
+
+        :meth:`~pyvista.DataSetFilters.color_labels`
+            Color labeled data, e.g. labeled volumes or contours.
 
         :ref:`contouring_example`, :ref:`anatomical_groups_example`
             Additional examples using this filter.
@@ -1270,8 +1290,9 @@ class ImageDataFilters(DataSetFilters):
         >>> image.dimensions
         (35, 35, 16)
 
-        Plot the cropped image for context. Configure the color map to generate
-        consistent coloring of the regions for all plots.
+        Plot the cropped image for context. Use :meth:`~pyvista.DataSetFilters.color_labels`
+        to generate consistent coloring of the regions for all plots. Negative indexing
+        is used for plotting internal boundaries.
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
@@ -1336,7 +1357,8 @@ class ImageDataFilters(DataSetFilters):
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
-        visualize the result.
+        visualize the result with :meth:`~pyvista.DataSetFilters.color_labels` using
+        the ``negative_indexing`` option.
 
         >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
@@ -1384,6 +1406,15 @@ class ImageDataFilters(DataSetFilters):
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> labels_plotter(surf, zoom=1.5).show()
+
+        Use the ``'strict_external'`` style to compute external contours quickly. Note
+        that this produces jagged and non-smooth boundaries between regions, which may
+        not be desirable. Also note how the top of the surface is perfectly flat compared
+        to the default ``'external'`` style (see first example above) since the strict
+        style ignores the smoothing effects of all internal boundaries.
+
+        >>> surf = image.contour_labels('strict_external')
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
@@ -1529,7 +1560,9 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         _validation.check_contains(
-            ['all', 'internal', 'external'], must_contain=boundary_style, name='boundary_style'
+            ['all', 'internal', 'external', 'strict_external'],
+            must_contain=boundary_style,
+            name='boundary_style',
         )
         _validation.check_contains(
             [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
@@ -1545,12 +1578,19 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        _configure_boundaries(
-            alg,
-            cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
-            select_inputs,
-            select_outputs,
-        )
+        if boundary_style == 'strict_external':
+            # Use default alg parameters
+            if select_inputs is not None or select_outputs is not None:
+                raise TypeError(
+                    'Selecting inputs and/or outputs is not supported by `strict_external`.'
+                )
+        else:
+            _configure_boundaries(
+                alg,
+                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                select_inputs,
+                select_outputs,
+            )
         _configure_smoothing(
             alg,
             alg_input.spacing,
@@ -1590,11 +1630,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
+        is_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = boundary_style == 'external'
+            simplify_output = is_external
         if simplify_output:
             # Simplify scalars to a single component
-            if boundary_style != 'external':
+            if not is_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -1622,8 +1663,16 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        if compute_normals and output.n_cells > 0:
-            output.compute_normals(auto_orient_normals=True, inplace=True)
+        if orient_faces and output.n_cells > 0:
+            # Orient the faces but discard the normals array
+            output.compute_normals(
+                cell_normals=True,
+                point_normals=False,
+                consistent_normals=True,
+                auto_orient_normals=True,
+                inplace=True,
+            )
+            del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -1672,9 +1721,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         cells_to_points
             Inverse of this filter to represent cells as points.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
 
         Parameters
@@ -1774,13 +1823,13 @@ class ImageDataFilters(DataSetFilters):
         output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells when ``dimensions`` is
         set to ``'preserve'``.
 
-        >>> image2D = examples.load_logo()
+        >>> image2D = examples.download_beach()
         >>> image2D.dimensions
-        (1920, 718, 1)
+        (100, 100, 1)
 
         >>> pixel_cells_image = image2D.points_to_cells(dimensionality='preserve')
         >>> pixel_cells_image.dimensions
-        (1921, 719, 1)
+        (101, 101, 1)
         >>> pixel_cells_image.get_cell(0).type
         <CellType.PIXEL: 8>
 
@@ -1788,7 +1837,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> pixel_cells_image = image2D.points_to_cells(dimensionality='2D')
         >>> pixel_cells_image.dimensions
-        (1921, 719, 1)
+        (101, 101, 1)
         >>> pixel_cells_image.get_cell(0).type
         <CellType.PIXEL: 8>
 
@@ -1798,7 +1847,7 @@ class ImageDataFilters(DataSetFilters):
         ...     dimensionality=(True, True, True)
         ... )
         >>> voxel_cells_image.dimensions
-        (1921, 719, 2)
+        (101, 101, 2)
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
@@ -1806,7 +1855,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> voxel_cells_image = image2D.points_to_cells(dimensionality='3D')
         >>> voxel_cells_image.dimensions
-        (1921, 719, 2)
+        (101, 101, 2)
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
@@ -1870,9 +1919,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         points_to_cells
             Inverse of this filter to represent points as cells.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
 
         Parameters
@@ -2093,14 +2142,13 @@ class ImageDataFilters(DataSetFilters):
                     f' output {new_image.dimensions} and would require to map'
                     f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
-        else:  # cells_to_points
-            if new_image.n_points != self.n_cells:
-                raise ValueError(
-                    'Cannot re-mesh cells to points. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'
-                    f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_cells} cells on {new_image.n_points} points.'
-                )
+        elif new_image.n_points != self.n_cells:
+            raise ValueError(
+                'Cannot re-mesh cells to points. The dimensions of the input'
+                f' {self.dimensions} is not compatible with the dimensions of the'
+                f' output {new_image.dimensions} and would require to map'
+                f' {self.n_cells} cells on {new_image.n_points} points.'
+            )
 
         # Copy field data
         new_image.field_data.update(self.field_data)
@@ -2264,24 +2312,24 @@ class ImageDataFilters(DataSetFilters):
         Pad a color image using multi-component color vectors. Here, RGBA values are
         used.
 
-        >>> color_image = examples.load_logo()
-        >>> red = (255, 0, 0, 255)  # RGBA
-        >>> padded = color_image.pad_image(pad_value=red, pad_size=200)
+        >>> color_image = examples.download_beach()
+        >>> red = (255, 0, 0)  # RGB
+        >>> padded = color_image.pad_image(pad_value=red, pad_size=50)
         >>>
         >>> plot_kwargs = dict(cpos='xy', zoom='tight', rgb=True, show_axes=False)
         >>> padded.plot(**plot_kwargs)
 
         Pad each edge of the image separately with a different color.
 
-        >>> orange = pv.Color('orange').int_rgba
-        >>> purple = pv.Color('purple').int_rgba
-        >>> blue = pv.Color('blue').int_rgba
-        >>> green = pv.Color('green').int_rgba
+        >>> orange = pv.Color('orange').int_rgb
+        >>> purple = pv.Color('purple').int_rgb
+        >>> blue = pv.Color('blue').int_rgb
+        >>> green = pv.Color('green').int_rgb
         >>>
-        >>> padded = color_image.pad_image(orange, pad_size=(100, 0, 0, 0))
-        >>> padded = padded.pad_image(purple, pad_size=(0, 100, 0, 0))
-        >>> padded = padded.pad_image(blue, pad_size=(0, 0, 100, 0))
-        >>> padded = padded.pad_image(green, pad_size=(0, 0, 0, 100))
+        >>> padded = color_image.pad_image(orange, pad_size=(25, 0, 0, 0))
+        >>> padded = padded.pad_image(purple, pad_size=(0, 25, 0, 0))
+        >>> padded = padded.pad_image(blue, pad_size=(0, 0, 25, 0))
+        >>> padded = padded.pad_image(green, pad_size=(0, 0, 0, 25))
         >>>
         >>> padded.plot(**plot_kwargs)
 
@@ -2728,8 +2776,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetSeedData(point_seeds)
         else:
             raise ValueError(
-                f'Invalid `extraction_mode` "{extraction_mode}",'
-                ' use "all", "largest", or "seeded".'
+                f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
 
         if label_mode == 'size':
@@ -2927,3 +2974,570 @@ class ImageDataFilters(DataSetFilters):
             )
 
         return dimensions_mask, dimensions_result
+
+    def resample(  # type: ignore[misc]
+        self: ImageData,
+        sample_rate: float | VectorLike[float] | None = None,
+        interpolation: Literal[
+            'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
+        ] = 'nearest',
+        *,
+        reference_image: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        anti_aliasing: bool = False,
+        extend_border: bool | None = None,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Resample the image to modify its dimensions and spacing.
+
+        The resampling can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_image``.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``sample_rate`` explicitly.
+
+        Use ``reference_image`` for full control of the resampled geometry. For
+        all other options, the geometry is implicitly defined such that the resampled
+        image fits the bounds of the input.
+
+        This filter may be used to resample either point or cell data. For point data,
+        this filter assumes the data is from discrete samples in space which represent
+        pixels or voxels; the resampled bounds are therefore extended by 1/2 voxel
+        spacing by default though this may be disabled.
+
+        .. note::
+
+            Singleton dimensions are not resampled by this filter, e.g. 2D images
+            will remain 2D.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        sample_rate : float | VectorLike[float], optional
+            Sampling rate(s) to use. Can be a single value or vector of three values
+            for each axis. Values greater than ``1.0`` will up-sample the axis and
+            values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
+
+        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman', default: 'nearest'
+            Interpolation mode to use. By default, ``'nearest'`` is used which
+            duplicates (if upsampling) or removes (if downsampling) values but
+            does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
+            and cubic interpolation, respectively, and may modify the values. The
+            ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+            and may be used to preserve sharp details and/or reduce image artifacts.
+
+            .. note::
+
+                - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
+                - use ``'linear'`` for speed-critical tasks
+                - use ``'cubic'`` for upscaling or general-purpose resampling
+                - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
+                - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
+                - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
+
+        reference_image : ImageData, optional
+            Reference image to use. If specified, the input is resampled
+            to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
+            :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
+            :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
+            of the resampled image will all match the reference image.
+
+        dimensions : VectorLike[int]
+            Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
+
+            .. note::
+
+                Dimensions is the number of `points` along each axis. If resampling
+                `cell` data, each dimension should be one more than the number of
+                desired output cells (since there are ``N`` cells and ``N+1`` points
+                along each axis). See examples.
+
+        anti_aliasing : bool, default: False
+            Enable antialiasing. This will blur the image as part of the resampling
+            to reduce image artifacts when down-sampling. Has no effect when up-sampling.
+
+        extend_border : bool, optional
+            Extend the apparent input border by approximately half the
+            :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
+            resampled points will be larger than the input image bounds.
+            Enabling this option also has the effect that the re-sampled spacing
+            will directly correlate with the resampled dimensions, e.g. if
+            the dimensions are doubled the spacing will be halved. See examples.
+
+            This option is enabled by default when resampling point data. Has no effect
+            when resampling cell data or when a ``reference_image`` is provided.
+
+        scalars : str, optional
+            Name of scalars to resample. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When scalars is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        inplace : bool, default: False
+            If ``True``, resample the image inplace. By default, a new
+            :class:`~pyvista.ImageData` instance is returned.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Resampled image.
+
+        See Also
+        --------
+        :meth:`~pyvista.DataObjectFilters.sample`
+            Resample array data from one mesh onto another.
+
+        :meth:`~pyvista.DataSetFilters.interpolate`
+            Interpolate values from one mesh onto another.
+
+        :ref:`image_representations_example`
+            Compare images represented as points vs. cells.
+
+        Examples
+        --------
+        Create a small 2D grayscale image with dimensions ``3 x 2`` for demonstration.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> image = pv.ImageData(dimensions=(3, 2, 1))
+        >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
+
+        Define a custom plotter to show the image. Although the image data is defined
+        as point data, we use uses :meth:`points_to_cells` to display the image as
+        :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
+        instead. Grayscale coloring is used and the camera is adjusted to fit the image.
+
+        >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
+        ...     pl = pv.Plotter()
+        ...     image = image.points_to_cells()
+        ...     pl.add_mesh(
+        ...         image,
+        ...         lighting=False,
+        ...         show_edges=True,
+        ...         cmap='grey',
+        ...         show_scalar_bar=False,
+        ...     )
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
+
+        Show the image.
+
+        >>> plot = image_plotter(image)
+        >>> plot.show()
+
+        Use ``sample_rate`` to up-sample the image. ``'nearest'`` interpolation is
+        used by default.
+
+        >>> upsampled = image.resample(sample_rate=2.0)
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Use ``'linear'`` interpolation. Note that the argument names ``sample_rate``
+        and ``interpolation`` may be omitted.
+
+        >>> upsampled = image.resample(2.0, 'linear')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Use ``'cubic'`` interpolation. Here we also specify the output
+        ``dimensions`` explicitly instead of using ``sample_rate``.
+
+        >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Compare the relative physical size of the image before and after resampling.
+
+        >>> image
+        ImageData (...)
+          N Cells:      2
+          N Points:     6
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   3, 2, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+        >>> upsampled
+        ImageData (...)
+          N Cells:      15
+          N Points:     24
+          X Bounds:     -2.500e-01, 2.250e+00
+          Y Bounds:     -2.500e-01, 1.250e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   6, 4, 1
+          Spacing:      5.000e-01, 5.000e-01, 1.000e+00
+          N Arrays:     1
+
+        Note that the upsampled :attr:`~pyvista.ImageData.dimensions` are doubled and
+        the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
+        however, that the physical bounds of the input differ from the output.
+        The upsampled :attr:`~pyvista.ImageData.origin` also differs:
+
+        >>> image.origin
+        (0.0, 0.0, 0.0)
+        >>> upsampled.origin
+        (-0.25, -0.25, 0.0)
+
+        This is because the resampling is done with ``extend_border`` enabled by default
+        which adds a half cell-width border to the image and adjusts the origin and
+        spacing such that the bounds match when the image is represented as cells.
+
+        Apply :meth:`points_to_cells` to the input and resampled images and show that
+        the bounds match.
+
+        >>> image_as_cells = image.points_to_cells()
+        >>> image_as_cells.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        >>> upsampled_as_cells = upsampled.points_to_cells()
+        >>> upsampled_as_cells.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        Plot the two images together as wireframe to visualize them. The original is in
+        red, and the resampled image is in black.
+
+        >>> plt = pv.Plotter()
+        >>> _ = plt.add_mesh(
+        ...     image_as_cells, style='wireframe', color='red', line_width=10
+        ... )
+        >>> _ = plt.add_mesh(
+        ...     upsampled_as_cells, style='wireframe', color='black', line_width=2
+        ... )
+        >>> plt.view_xy()
+        >>> plt.camera.tight()
+        >>> plt.show()
+
+        Disable ``extend_border`` to force the input and output bounds of the points
+        to be the same instead.
+
+        >>> upsampled = image.resample(sample_rate=2, extend_border=False)
+
+        Compare the two images again.
+
+        >>> image
+        ImageData (...)
+          N Cells:      2
+          N Points:     6
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   3, 2, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+        >>> upsampled
+        ImageData (...)
+          N Cells:      15
+          N Points:     24
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   6, 4, 1
+          Spacing:      4.000e-01, 3.333e-01, 1.000e+00
+          N Arrays:     1
+
+        This time the input and output bounds match without any further processing.
+        Like before, the dimensions have doubled; unlike before, however, the spacing is
+        not halved, but is instead smaller than half which is necessaru to ensure the
+        bounds remain the same. Also unlike before, the origin is unaffected:
+
+        >>> image.origin
+        (0.0, 0.0, 0.0)
+        >>> upsampled.origin
+        (0.0, 0.0, 0.0)
+
+        All the above examples are with 2D images with point data. However, the filter
+        also works with 3D volumes and will also work with cell data.
+
+        Convert the 2D image with point data into a 3D volume with cell data and plot
+        it for context.
+
+        >>> volume = image.points_to_cells(dimensionality='3D')
+        >>> volume.plot(show_edges=True, cmap='grey')
+
+        Up-sample the volume. Set the sampling rate for each axis separately.
+
+        >>> resampled = volume.resample(sample_rate=(3.0, 2.0, 1.0))
+        >>> resampled.plot(show_edges=True, cmap='grey')
+
+        Alternatively, we could have set the dimensions explicitly. Since we want
+        ``9 x 4 x 1`` cells along the x-y-z axes (respectively), we set the dimensions
+        to ``(10, 5, 2)``, i.e. one more than the desired number of cells.
+
+        >>> resampled = volume.resample(dimensions=(10, 5, 2))
+        >>> resampled.plot(show_edges=True, cmap='grey')
+
+        Compare the bounds before and after resampling. Unlike with point data, the
+        bounds are not (and cannot be) extended.
+
+        >>> volume.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+        >>> resampled.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+
+        Use a reference image to control the resampling instead. Here we load two
+        images with different dimensions:
+        :func:`~pyvista.examples.downloads.download_puppy` and
+        :func:`~pyvista.examples.downloads.download_gourds`.
+
+        >>> puppy = examples.download_puppy()
+        >>> puppy.dimensions
+        (1600, 1200, 1)
+
+        >>> gourds = examples.download_gourds()
+        >>> gourds.dimensions
+        (640, 480, 1)
+
+        Use ``reference_image`` to resample the puppy to match the gourds geometry or
+        vice-versa.
+
+        >>> puppy_resampled = puppy.resample(reference_image=gourds)
+        >>> puppy_resampled.dimensions
+        (640, 480, 1)
+
+        >>> gourds_resampled = gourds.resample(reference_image=puppy)
+        >>> gourds_resampled.dimensions
+        (1600, 1200, 1)
+
+        Downsample the puppy image to 1/10th its original resolution using ``'lanczos'``
+        interpolation.
+
+        >>> downsampled = puppy.resample(0.1, 'lanczos')
+        >>> downsampled.dimensions
+        (160, 120, 1)
+
+        Compare the downsampled image to the original and zoom in to show detail.
+
+        >>> def compare_images_plotter(image1, image2):
+        ...     plt = pv.Plotter(shape=(1, 2))
+        ...     _ = plt.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
+        ...     plt.subplot(0, 1)
+        ...     _ = plt.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
+        ...     plt.link_views()
+        ...     plt.view_xy()
+        ...     plt.camera.zoom(3.0)
+        ...     return plt
+
+        >>> plt = compare_images_plotter(puppy, downsampled)
+        >>> plt.show()
+
+        Note that downsampling can create image artifacts caused by aliasing. Enable
+        anti-aliasing to smooth the image before resampling.
+
+        >>> downsampled2 = puppy.resample(0.1, 'lanczos', anti_aliasing=True)
+
+        Compare down-sampling with aliasing (left) to without aliasing (right).
+
+        >>> plt = compare_images_plotter(downsampled, downsampled2)
+        >>> plt.show()
+
+        """
+        # Process scalars
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = self.get_array_association(scalars, preference=preference)
+
+        active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
+
+        # Validate interpolation and modify scalars as needed
+        input_dtype = active_scalars.dtype
+        has_int_scalars = input_dtype == np.int64
+        _validation.check_contains(
+            ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman'],
+            must_contain=interpolation,
+            name='interpolation',
+        )
+        if has_int_scalars:
+            # int (long long) is not supported by the filter so we cast to float
+            input_image = self.copy(deep=False)
+            input_image[name] = active_scalars.astype(float)
+        else:
+            input_image = self
+
+        # Make sure we have point scalars
+        processing_cell_scalars = field == FieldAssociation.CELL
+        if processing_cell_scalars:
+            if extend_border:
+                raise ValueError('`extend_border` cannot be set when resampling cell data.')
+            dimensionality = input_image.dimensionality
+            input_image = input_image.cells_to_points(scalars=scalars, copy=False)
+
+        # Set default extend_border value
+        if extend_border is None:
+            # Only extend border with point data
+            extend_border = not processing_cell_scalars
+        elif extend_border and reference_image is not None:
+            raise ValueError('`extend_border` cannot be set when a `image_reference` is provided.')
+
+        # Setup reference image
+        if reference_image is None:
+            # Use the input as a reference
+            reference_image = pyvista.ImageData()
+            reference_image.copy_structure(input_image)
+            reference_image_provided = False
+        else:
+            if dimensions is not None or sample_rate is not None:
+                raise ValueError(
+                    'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+                    '`reference_image` must define the geometry exclusively.'
+                )
+            _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
+            reference_image_provided = True
+
+        # Use SetMagnificationFactors to indirectly set the dimensions.
+        # To compute the magnification factors we first define input (old) and output
+        # (new) dimensions.
+        old_dimensions = np.array(input_image.dimensions)
+        if sample_rate is not None:
+            if reference_image_provided or dimensions is not None:
+                raise ValueError(
+                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+                    '`sample_rate` must define the sampling geometry exclusively.'
+                )
+            # Set reference dimensions from the sample rate
+            sample_rate_ = _validation.validate_array3(
+                sample_rate,
+                broadcast=True,
+                must_be_in_range=[0, np.inf],
+                strict_lower_bound=True,
+                name='sample_rate',
+            )
+            new_dimensions = old_dimensions * sample_rate_
+        else:
+            if dimensions is not None:
+                dimensions_ = np.array(dimensions)
+                dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
+                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+            new_dimensions = np.array(reference_image.dimensions)
+
+        # Compute the magnification factors to use with the filter
+        # Note that SetMagnificationFactors will multiply the factors by the extent
+        # but we want to multiply the dimensions. These values are off by one.
+        singleton_dims = old_dimensions == 1
+        with np.errstate(divide='ignore', invalid='ignore'):
+            # Ignore division by zero, this is fixed with singleton_dims on the next line
+            magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
+        magnification_factors[singleton_dims] = 1
+
+        resize_filter = _vtk.vtkImageResize()
+        resize_filter.SetInputData(input_image)
+        resize_filter.SetResizeMethodToMagnificationFactors()
+        resize_filter.SetMagnificationFactors(*magnification_factors)
+
+        # Set interpolation mode
+        interpolator: _vtk.vtkAbstractImageInterpolator
+        if interpolation == 'nearest':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToNearest()
+        elif interpolation == 'linear':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToLinear()
+        elif interpolation == 'cubic':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToCubic()
+        elif interpolation == 'lanczos':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToLanczos()
+        elif interpolation == 'hamming':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToHamming()
+        elif interpolation == 'blackman':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToBlackman()
+        else:  # pragma: no cover
+            raise RuntimeError(f"Unexpected interpolation mode '{interpolation}'.")
+
+        if anti_aliasing and np.any(magnification_factors < 1.0):
+            if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
+                interpolator.AntialiasingOn()
+            else:
+                resize_filter.SetInputData(input_image.gaussian_smooth())
+
+        resize_filter.SetInterpolator(interpolator)
+
+        # Get output
+        _update_alg(resize_filter, progress_bar=progress_bar)
+        output_image = _get_output(resize_filter).copy(deep=False)
+
+        # Set geometry from the reference
+        output_image.direction_matrix = reference_image.direction_matrix
+        output_image.origin = reference_image.origin
+        output_image.offset = reference_image.offset
+
+        if reference_image_provided:
+            output_image.spacing = reference_image.spacing
+        else:
+            # Need to fixup the spacing
+            old_spacing = np.array(input_image.spacing)
+            output_dimensions = np.array(output_image.dimensions)
+
+            if extend_border and not processing_cell_scalars:
+                # Compute spacing to have the same effective sample rate as the dimensions
+                actual_sample_rate = output_dimensions / old_dimensions
+                new_spacing = old_spacing / actual_sample_rate
+
+                # This will enlarge the image, so we need to shift the origin accordingly
+                # Shift the origin by 1/2 of the old and new spacing, but keep the spacing
+                # unchanged for singleton dimensions.
+                shift_old = old_spacing[~singleton_dims] / 2
+                shift_new = new_spacing[~singleton_dims] / 2
+                new_origin = np.array(input_image.origin)
+                new_origin[~singleton_dims] += shift_new - shift_old
+
+                output_image.origin = new_origin
+            else:
+                # Compute spacing to match bounds of input and dimensions of output
+                bnds = input_image.bounds
+                size = np.array(
+                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                )
+                if processing_cell_scalars:
+                    new_spacing = (size + input_image.spacing) / output_dimensions
+                else:
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        # Ignore division by zero, this is fixed with singleton_dims on the next line
+                        new_spacing = size / (output_dimensions - 1)
+
+            # For singleton dimensions, keep the original spacing value
+            new_spacing[singleton_dims] = old_spacing[singleton_dims]
+            output_image.spacing = new_spacing
+
+        if output_image.active_scalars_name == 'ImageScalars':
+            output_image.rename_array('ImageScalars', name)
+
+        if has_int_scalars:
+            # Can safely cast to int to match input
+            output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
+
+        if processing_cell_scalars:
+            # Convert back to cells. This modifies origin so we need to reset it.
+            output_image = output_image.points_to_cells(
+                scalars=name, copy=False, dimensionality=dimensionality
+            )
+            output_image.origin = (
+                reference_image.origin if reference_image_provided else self.origin
+            )
+            output_image.point_data.clear()
+        else:
+            output_image.cell_data.clear()
+
+        if inplace:
+            self.copy_from(output_image)
+            return self
+        return output_image

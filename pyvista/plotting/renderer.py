@@ -33,6 +33,7 @@ from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
+from .prop_collection import _PropCollection
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
@@ -41,7 +42,7 @@ from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ..core.pointset import PolyData
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
@@ -286,7 +287,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors: dict[str, _vtk.vtkActor] = {}
+        self._actors = _PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -350,6 +351,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
 
+        .. note::
+            If a mesh has scalar data, set ``color=True`` in the call to :meth:`~pyvista.Plotter.add_mesh`
+            to color the mesh with the next color in the cycler. Otherwise the mesh's
+            scalars are used to color the mesh by default.
+
         Parameters
         ----------
         color_cycler : str | cycler.Cycler | sequence[ColorLike]
@@ -366,6 +372,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
         >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
+
+        Load a mesh with active scalars and split it into two separate meshes.
+
+        >>> mesh = pv.Wavelet()
+        >>> mesh.active_scalars_name
+        'RTData'
+
+        >>> a = mesh.clip(invert=True)
+        >>> b = mesh.clip(invert=False)
+
+        Enable color cycling and set ``color=True`` to force the meshes to be colored with the
+        cycler's colors.
+
+        >>> pv.global_theme.color_cycler = 'default'
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(a, color=True)
+        >>> _ = pl.add_mesh(b, color=True)
         >>> pl.show()
 
         """
@@ -461,34 +485,100 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of all actors present in the rendering window."""
+        """Return the bounds of all VISIBLE actors present in the rendering window.
+
+        Actors with :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled are `not` included in the bounds.
+
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
+
+        """
+        bounds = self.ComputeVisiblePropBounds()
+        return _fixup_bounds(bounds)
+
+    def compute_bounds(
+        self,
+        *,
+        force_visibility: bool = False,
+        force_use_bounds: bool = False,
+        ignore_actors: Sequence[str | _vtk.vtkProp | type[_vtk.vtkProp]] | None = None,
+    ) -> BoundsTuple:
+        """Return the bounds of actors present in the renderer.
+
+        By default, only visible actors are included in the bounds computation.
+        Optionally, the bounds of all actors may be computed, regardless if they
+        have their :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled. Specific actors may also be removed from the computation.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        force_visibility : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.visibility` disabled in the
+            computation. By default, invisible actors are excluded.
+
+        force_use_bounds : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.use_bounds` disabled in the
+            computation. By default, actors with use bounds disabled are excluded.
+
+        ignore_actors : sequence[str | vtkProp | type[vtkProp]]
+            List of actors to ignore. The bounds of any actors included will be ignored.
+            Specify actors by name, type, or by instance.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of selected actors in the active renderer.
+
+        See Also
+        --------
+        bounds
+            Bounds of all specified actors.
+
+        """
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        if ignore_actors is None:
+            ignore_actors = []
+
+        ignored_types = [actor_type for actor_type in ignore_actors if isinstance(actor_type, type)]
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
-                if bounds[ax * 2] < the_bounds[ax * 2]:
-                    the_bounds[ax * 2] = bounds[ax * 2]
-                if bounds[ax * 2 + 1] > the_bounds[ax * 2 + 1]:
-                    the_bounds[ax * 2 + 1] = bounds[ax * 2 + 1]
+                the_bounds[ax * 2] = min(bounds[ax * 2], the_bounds[ax * 2])
+                the_bounds[ax * 2 + 1] = max(bounds[ax * 2 + 1], the_bounds[ax * 2 + 1])
 
             for ax in range(3):
                 update_axis(ax)
 
-        for actor in self._actors.values():
-            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+        for name, actor in self._actors.items():
+            if not actor.GetUseBounds() and not force_use_bounds:
                 continue
-            if (
-                hasattr(actor, 'GetBounds')
-                and actor.GetBounds() is not None
-                and id(actor) != id(self.bounding_box_actor)
+            if not actor.GetVisibility() and not force_visibility:
+                continue
+            if (  # Check if the actor should be ignored
+                name in ignore_actors
+                or actor in ignore_actors
+                or any(isinstance(actor, actor_type) for actor_type in ignored_types)
             ):
-                _update_bounds(actor.GetBounds())
+                continue
+            if hasattr(actor, 'GetBounds') and (actor_bounds := actor.GetBounds()) is not None:
+                _update_bounds(actor_bounds)
 
-        if np.any(np.abs(the_bounds)):
-            the_bounds[the_bounds == np.inf] = -1.0
-            the_bounds[the_bounds == -np.inf] = 1.0
-
-        return BoundsTuple(*the_bounds.tolist())
+        return _fixup_bounds(the_bounds)
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -795,9 +885,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             cast(Charts, self._charts).remove_chart(chart_or_index)
 
     @property
-    def actors(self):  # numpydoc ignore=RT01
-        """Return a dictionary of actors assigned to this renderer."""
-        return self._actors
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
+        """Return a dictionary of actors assigned to this renderer.
+
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
+
+        """
+        return dict(self._actors.items())
 
     def add_actor(
         self,
@@ -859,23 +957,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, _vtk.vtkMapper):
             actor = Actor(mapper=actor, name=name)
 
-        if isinstance(actor, Actor) and name:
-            # WARNING: this will override the name if already set on Actor
-            actor.name = name
-
         if name is None:
-            # Fallback for non-wrapped actors
-            # e.g., vtkScalarBarActor
-            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString('')
-
+            name = (
+                actor.name
+                if (hasattr(actor, 'name') and actor.name)
+                else f'{type(actor).__name__}({actor.GetAddressAsString("")})'
+            )
+        actor.name = name
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
         if hasattr(actor, 'SetScale'):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
-        self._actors[name] = actor
 
-        if reset_camera or not self.camera_set and reset_camera is None and not rv:
+        if reset_camera or (not self.camera_set and reset_camera is None and not rv):
             self.reset_camera(render)
         elif render:
             self.parent.render()
@@ -969,8 +1064,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             labels_off=labels_off,
         )
         self.AddActor(self._marker_actor)
-        memory_address = self._marker_actor.GetAddressAsString('')
-        self._actors[memory_address] = self._marker_actor
         self.Modified()
         return self._marker_actor
 
@@ -2630,7 +2723,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        name: str | None = None
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())
@@ -2659,15 +2751,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         with contextlib.suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
-
-        if name is None:
-            for k, v in self._actors.items():
-                if v == actor:
-                    name = k
-        if name is not None:
-            self._actors.pop(name, None)
         self.update_bounds_axes()
-        if reset_camera or not self.camera_set and reset_camera is None:
+        if reset_camera or (not self.camera_set and reset_camera is None):
             self.reset_camera(render=render)
         elif render:
             self.parent.render()
@@ -3493,6 +3578,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
+        # Remove ref to `vtkPropCollection` held by vtkRenderer
+        if hasattr(self, '_actors'):
+            del self._actors
+
     def on_plotter_render(self) -> None:
         """Notify renderer components of explicit plotter render call."""
         if self._charts is not None:
@@ -3530,7 +3619,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
-        self._actors = {}
         self._camera = None
         self._bounding_box = None  # type: ignore[assignment]
         self._marker_actor = None
@@ -4228,3 +4316,10 @@ def _line_for_legend():
     legendface.points = np.array(points)  # type: ignore[assignment]
     legendface.faces = [4, 0, 1, 2, 3]  # type: ignore[assignment]
     return legendface
+
+
+def _fixup_bounds(bounds) -> BoundsTuple:
+    the_bounds = np.asarray(bounds)
+    if np.any(the_bounds[::2] > the_bounds[1::2]):
+        the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    return BoundsTuple(*the_bounds.tolist())

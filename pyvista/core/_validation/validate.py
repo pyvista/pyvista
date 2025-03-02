@@ -42,7 +42,7 @@ from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core._vtk_core import vtkTransform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy.typing as npt
@@ -454,11 +454,10 @@ def validate_axes(
         axes_array[1] = validate_array3(axes[1], name=f'{name} Vector[1]')
         if len(axes) == 3:
             axes_array[2] = validate_array3(axes[2], name=f'{name} Vector[2]')
-        else:  # len(axes) == 2
-            if must_have_orientation == 'right':
-                axes_array[2] = np.cross(axes_array[0], axes_array[1])
-            else:
-                axes_array[2] = np.cross(axes_array[1], axes_array[0])
+        elif must_have_orientation == 'right':
+            axes_array[2] = np.cross(axes_array[0], axes_array[1])
+        else:
+            axes_array[2] = np.cross(axes_array[1], axes_array[0])
     check_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
