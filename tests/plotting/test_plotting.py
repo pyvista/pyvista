@@ -4965,7 +4965,8 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
     assert isinstance(clipped, pv.MultiBlock)
 
     pl = pv.Plotter()
-    for block in clipped:
+    for block in clipped.recursive_iterator():
+        block[block.active_scalars_name] = np.array(block.active_scalars, dtype=float)
         pl.add_mesh(block, show_edges=True)
     pl.view_xy()
     pl.show()
