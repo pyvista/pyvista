@@ -66,14 +66,16 @@ def test_clip_filter_normal(datasets):
 
 def test_clip_filter_crinkle():
     # crinkle clip
+    key = 'ids'
     mesh = pv.Wavelet()
+    mesh[key] = np.arange(mesh.n_cells)
     clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
     clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
-    set_a = set(clp1.cell_data['cell_ids'])
-    set_b = set(clp2.cell_data['cell_ids'])
+    set_a = set(clp1.cell_data[key])
+    set_b = set(clp2.cell_data[key])
     assert set_a.isdisjoint(set_b)
     assert set_a.union(set_b) == set(range(mesh.n_cells))
 
