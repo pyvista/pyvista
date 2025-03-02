@@ -1035,14 +1035,14 @@ class DataObjectFilters:
         CELL_IDS_KEY = 'cell_ids'
         INT_DTYPE = np.int64
 
-        def extract_crinkle_cells(dataset: DataSet | MultiBlock, a_, b_):
+        def extract_crinkle_cells(dataset, a_, b_):
             if b_ is None:
                 # Extract cells when `return_clipped=False`
-                def extract_cells_from_block(block_: DataSet, a_: DataSet, b_: type(None)):
+                def extract_cells_from_block(block_, a_, b_):
                     return block_.extract_cells(np.unique(a_.cell_data[CELL_IDS_KEY]))
             else:
                 # Extract cells when `return_clipped=True`
-                def extract_cells_from_block(block_: DataSet, clipped_a_, clipped_b_):
+                def extract_cells_from_block(block_, clipped_a_, clipped_b_):
                     set_a = set(clipped_a_.cell_data[CELL_IDS_KEY])
                     set_b = set(clipped_b_.cell_data[CELL_IDS_KEY]) - set_a
 
@@ -1051,22 +1051,23 @@ class DataObjectFilters:
                     array_a = np.array(list(set_a), dtype=INT_DTYPE)
                     array_b = np.array(list(set_b), dtype=INT_DTYPE)
 
-                    clipped_a_ = block_.extract_cells(array_a)  # type: ignore[union-attr]
-                    clipped_b_ = block_.extract_cells(array_b)  # type: ignore[union-attr]
+                    clipped_a_ = block_.extract_cells(array_a)
+                    clipped_b_ = block_.extract_cells(array_b)
                     return clipped_a_, clipped_b_
 
             if isinstance(dataset, pyvista.MultiBlock):
                 # Iterate though input and output multiblocks
                 # Output `b` may be None depending on `return_clipped`
                 iter_kwargs = dict(skip_none=True)
-                self_iter = dataset.recursive_iterator('all', **iter_kwargs)
+                self_iter = dataset.recursive_iterator('all', **iter_kwargs)  # type: ignore[arg-type]
                 a_iter = a_.recursive_iterator(**iter_kwargs)
                 b_iter = (
                     b_.recursive_iterator(**iter_kwargs)
                     if b_ is not None
                     else itertools.repeat(None)
                 )
-                for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):
+
+                for (ids, _, block_self), block_a, block_b in zip(self_iter, a_iter, b_iter):  # type: ignore[misc, attr-defined]
                     crinkled = extract_cells_from_block(block_self, block_a, block_b)
                     # Replace blocks with crinkled ones
                     if block_b is None:
@@ -1084,9 +1085,9 @@ class DataObjectFilters:
             if isinstance(self, pyvista.MultiBlock):
                 blocks = self.recursive_iterator('blocks', skip_none=True)
             else:
-                blocks = [self]
+                blocks = [self]  # type: ignore[assignment]
             for block in blocks:
-                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
+                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)  # type: ignore[union-attr]
 
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
@@ -1110,7 +1111,7 @@ class DataObjectFilters:
             return a, b
         clipped = _get_output(alg)
         if crinkle:
-            clipped = extract_crinkle_cells(self, clipped, None)  # type: ignore[union-attr]
+            clipped = extract_crinkle_cells(self, clipped, None)
         return clipped
 
     def clip(
