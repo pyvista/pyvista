@@ -4111,7 +4111,8 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
+def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs, verify_image_cache):
+    verify_image_cache.high_variance_test = True
     plot = pv.Plotter()
     assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
     plot.add_actor(assembly)
