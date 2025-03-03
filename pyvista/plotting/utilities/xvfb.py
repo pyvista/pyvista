@@ -35,8 +35,8 @@ def start_xvfb(wait=3, window_size=None):
 
     Notes
     -----
-    Only available on Linux.  Be sure to install ``
-    xvfb`` in your package manager.
+    Only available on Linux.  Be sure to install ``xvfb``
+    in your package manager.
 
     Examples
     --------
