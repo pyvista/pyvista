@@ -4940,3 +4940,9 @@ def test_bitwise_and_or_of_polydata(operator):
 def test_plot_logo():
     logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
     logo_plotter.show()
+
+
+@skip_mesa
+def test_plot_wireframe_style():
+    sphere = pv.Sphere()
+    sphere.plot(style='wireframe')
