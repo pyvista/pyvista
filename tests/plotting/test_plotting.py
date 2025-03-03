@@ -860,10 +860,10 @@ def test_add_scalar_bar_with_unconstrained_font_size(sphere):
 
 
 def test_plot_list():
-    sphere_a = pv.Sphere(0.5)
-    sphere_b = pv.Sphere(1.0)
-    sphere_c = pv.Sphere(2.0)
-    pv.plot([sphere_a, sphere_b, sphere_c], style='wireframe')
+    sphere_a = pv.Sphere(center=(0, 0, 0), radius=0.75)
+    sphere_b = pv.Sphere(center=(1, 0, 0), radius=0.5)
+    sphere_c = pv.Sphere(center=(2, 0, 0), radius=0.25)
+    pv.plot([sphere_a, sphere_b, sphere_c], color="tan")
 
 
 def test_add_lines_invalid():
