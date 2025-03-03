@@ -16,7 +16,7 @@ jobs:
       )
     permissions:
       pull-requests: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: hmarr/auto-approve-action@v4
         with:
