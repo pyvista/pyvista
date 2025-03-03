@@ -4917,8 +4917,14 @@ def test_bounding_box(oblique_cone, box_style):
 @pytest.mark.parametrize('operator', ['or', 'and', 'ior', 'iand'])
 def test_bitwise_and_or_of_polydata(operator):
     radius = 0.5
-    sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
-    sphere_shifted = pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    shift = [0.25, 0.25, 0.25]
+    kwargs = dict(theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=radius, **kwargs)
+    sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
+    # Expand the wireframe ever so slightly to avoid rendering artifacts
+    wireframe = pv.Sphere(radius + 0.001, **kwargs).extract_all_edges()
+    wireframe_shifted = pv.Sphere(radius=radius + 0.001, center=shift, **kwargs).extract_all_edges()
+
     if operator == 'or':
         result = sphere | sphere_shifted
     elif operator == 'and':
@@ -4930,8 +4936,8 @@ def test_bitwise_and_or_of_polydata(operator):
         result = sphere.copy()
         result &= sphere_shifted
     pl = pv.Plotter()
-    pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
-    pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
+    pl.add_mesh(wireframe, color='r', line_width=2)
+    pl.add_mesh(wireframe_shifted, color='b', line_width=2)
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
     pl.show()
