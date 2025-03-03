@@ -11,10 +11,10 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 XVFB_INSTALL_NOTES = """Please install Xvfb with:
 
 Debian
-$ sudo apt install  xvfb
+$ sudo apt install libgl1-mesa-glx xvfb
 
 CentOS / RHL
-$ sudo yum install  xvfb
+$ sudo yum install libgl1-mesa-glx xvfb
 
 """
 
@@ -36,7 +36,7 @@ def start_xvfb(wait=3, window_size=None):
     Notes
     -----
     Only available on Linux.  Be sure to install ``xvfb``
-    in your package manager.
+    and ``libgl1-mesa-glx`` in your package manager.
 
     Examples
     --------
