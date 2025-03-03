@@ -357,7 +357,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
         text='this is a sphere',
         show_bounds=True,
         color='r',
-        style='wireframe',
+        style='surface',
         line_width=2,
         scalars=scalars,
         flip_scalars=True,
