@@ -833,6 +833,14 @@ class Camera(_vtk.vtkCamera):
         bounds : (x_min, x_max, y_min, y_max, z_min, z_max), optional
             Manually specify bounds instead of calculating them from existing actors.
 
+            .. versionadded:: 0.45
+
+        See Also
+        --------
+        :attr:`~pyvista.Plotter.bounds`
+        :meth:`~pyvista.Plotter.compute_bounds`
+        :meth:`~pyvista.Plotter.reset_camera`
+
         Notes
         -----
         This resets the view direction to look at a plane with parallel projection.
