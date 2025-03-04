@@ -1699,9 +1699,9 @@ class Transform(_vtk.vtkTransform):
     ) -> ConcreteDataSetOrMultiBlockType:
         """Apply the current transformation :attr:`matrix` to a dataset.
 
-        This is equivalent to ``apply(dataset, 'all_vectors')`` and is similar to
-        :meth:`pyvista.DataObjectFilters.transform`. See :meth:`apply` for details and
-        examples.
+        This is equivalent to ``apply(dataset, mode)`` where ``mode`` is ``'all_vectors'``
+        when ``transform_all_input_vectors=True``. See :meth:`apply` for details and
+        examples. This method is also similar to :meth:`pyvista.DataObjectFilters.transform`.
 
         Parameters
         ----------
