@@ -1293,6 +1293,8 @@ def test_select_values(uniform):
     assert selected is not uniform
     assert np.allclose(selected.active_scalars, uniform.active_scalars)
 
+
+def test_select_values_split(uniform):
     unique_values = np.unique(uniform.active_scalars)
     selected = uniform.select_values(values=unique_values, split=True)
     assert isinstance(selected, pv.MultiBlock)
