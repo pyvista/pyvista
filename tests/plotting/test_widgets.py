@@ -546,7 +546,6 @@ def test_get_angle():
 
 @flaky_test
 def test_affine_widget(sphere):
-    print()
     interact_calls = []
     release_calls = []
 
@@ -585,19 +584,14 @@ def test_affine_widget(sphere):
 
     # move in the center and ensure that an actor is selected
     width, height = pl.window_size
-    print('moving to the center')
     pl.iren._mouse_move(width // 2, height // 2)
     assert widget._selected_actor in widget._arrows + widget._circles
     assert widget._selected_actor.prop.color == pv.Color(DARK_YELLOW)
-    print()
 
-    print('0,0 move')
     # ensure that the actor gets deselected
     pl.iren._mouse_move(0, 0)
     assert not widget._selected_actor
-    print()
 
-    print('X translation')
     # test X axis translation
     pl.iren._mouse_left_button_press(width // 2 - 4, height // 2 - 4)
     assert widget._selected_actor is widget._arrows[0]
@@ -607,10 +601,8 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release(width, height // 2)
     assert actor.user_matrix[0, 3] < 0
     assert not widget._pressing_down
-    print(f'{actor.user_matrix[0, 3] = }')
     widget._reset()
     assert np.allclose(widget._cached_matrix, np.eye(4))
-    print()
 
     # test callback called
     assert len(interact_calls) == 2
@@ -618,7 +610,6 @@ def test_affine_widget(sphere):
     assert len(release_calls) == 1
     assert release_calls[0].shape == (4, 4)
 
-    print('Y translation')
     # test Y axis translation
     pl.iren._mouse_left_button_press(width // 2 + 2, height // 2 - 3)
     assert widget._selected_actor is widget._arrows[1]
@@ -628,12 +619,9 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release()
     assert actor.user_matrix[1, 3] > 0
     assert not widget._pressing_down
-    print(f'{actor.user_matrix[1, 3] = }')
     widget._reset()
     assert np.allclose(widget._cached_matrix, np.eye(4))
-    print()
 
-    print('Z translation')
     # test Z axis translation
     pl.iren._mouse_left_button_press(width // 2, height // 2 + 5)
     assert widget._selected_actor is widget._arrows[2]
@@ -643,13 +631,9 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release()
     assert actor.user_matrix[2, 3] < 0
     assert not widget._pressing_down
-    print(f'{actor.user_matrix[2, 3] = }')
-    print(f'{actor.user_matrix[0:3, 3] = }')
     widget._reset()
     assert np.allclose(widget._cached_matrix, np.eye(4))
-    print()
 
-    print('X rotation')
     # test X axis rotation, counterclockwise
     pl.iren._mouse_left_button_press(width // 2 + 30, height // 2)
     assert widget._selected_actor is widget._circles[0]
@@ -662,9 +646,7 @@ def test_affine_widget(sphere):
     assert not widget._pressing_down
     widget._reset()
     assert np.allclose(widget._cached_matrix, np.eye(4))
-    print()
 
-    print('Y rotation')
     # test Y axis rotation, counterclockwise
     pl.iren._mouse_left_button_press(width // 2 - 20, height // 2 + 20)
     assert widget._selected_actor is widget._circles[1]
@@ -676,9 +658,7 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
-    print()
 
-    print('Z rotation')
     # test Z axis rotation, clockwise
     pl.iren._mouse_left_button_press(width // 2, height // 2 - 29)
     assert widget._selected_actor is widget._circles[2]
@@ -690,7 +670,6 @@ def test_affine_widget(sphere):
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
-    print()
 
     # test change axes
     axes = np.array(
@@ -699,7 +678,6 @@ def test_affine_widget(sphere):
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
 
-    print('X translation new')
     # test X axis translation with new axes
     pl.iren._mouse_left_button_press(width // 2, height // 2 - 38)
     assert widget._selected_actor is widget._arrows[0]
@@ -708,7 +686,6 @@ def test_affine_widget(sphere):
     assert actor.user_matrix[0, 3] > 0
     pl.iren._mouse_left_button_release(width, height // 2 - 50)
     assert actor.user_matrix[0, 3] > 0
-    print()
 
     # test origin
     origin = np.random.default_rng().random(3)
