@@ -1817,7 +1817,7 @@ class MultiBlock(
         ----------
         copy : bool, default: False
             Option to create a shallow copy of any datasets that are already a
-            :class:`pyvista.PolyData`. When ``False``, any datasets that are
+            :class:`~pyvista.PolyData`. When ``False``, any datasets that are
             already PolyData will not be copied.
 
         Returns
@@ -1827,6 +1827,8 @@ class MultiBlock(
 
         See Also
         --------
+        as_unstructured_grid_blocks
+            Convert all blocks to :class:`~pyvista.UnstructuredGrid`.
         is_all_polydata
             Check if all blocks are :class:`~pyvista.PolyData`.
         :meth:`~pyvista.CompositeFilters.extract_geometry`
@@ -1850,6 +1852,46 @@ class MultiBlock(
                 return block.copy(deep=False) if copy else block
             else:
                 return block.extract_surface()  # type: ignore[misc]
+
+        return self.generic_filter(block_filter, _skip_none=False)
+
+    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:
+        """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        copy : bool, default: False
+            Option to create a shallow copy of any datasets that are already a
+            :class:`~pyvista.UnstructuredGrid`. When ``False``, any datasets that are
+            already UnstructuredGrid will not be copied.
+
+        Returns
+        -------
+        MultiBlock
+            MultiBlock containing only :class:`~pyvista.UnstructuredGrid` datasets.
+
+        See Also
+        --------
+        as_polydata_blocks
+
+        Notes
+        -----
+        Null blocks are converted to empty :class:`~pyvista.UnstructuredGrid`
+        objects. Downstream filters that operate on UnstructuredGrid may not accept
+        MultiBlocks with null blocks.
+
+        """
+
+        # Define how to process each block
+        def block_filter(block: DataSet | None) -> DataSet:
+            if block is None:
+                return pyvista.UnstructuredGrid()
+            elif isinstance(block, pyvista.UnstructuredGrid):
+                return block.copy(deep=False) if copy else block
+            else:
+                return block.cast_to_unstructured_grid()
 
         return self.generic_filter(block_filter, _skip_none=False)
 
