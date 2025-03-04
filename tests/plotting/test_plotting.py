@@ -4976,4 +4976,3 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
     pl.add_mesh(clipped, show_edges=True)
     pl.view_xy()
     pl.show()
-
