@@ -1239,7 +1239,7 @@ def test_move_nested_field_data_user_dict_mode(user_dict_mode):
     if user_dict_mode == 'flat':
         expected_user_dict[block_name1] = nested_dict1
         expected_user_dict[block_name2] = nested_dict2
-    if user_dict_mode == 'prepend':
+    elif user_dict_mode == 'prepend':
         expected_user_dict[block_name1] = nested_dict1
         expected_user_dict[block_name1 + separator + block_name2] = nested_dict2
     elif user_dict_mode == 'preserve':
