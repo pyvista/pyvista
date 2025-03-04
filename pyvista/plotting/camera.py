@@ -830,7 +830,7 @@ class Camera(_vtk.vtkCamera):
         negative : bool, default: False
             Whether to view in opposite direction.
 
-        bounds : ('x0', 'y0', 'x1', 'y1', 'z0', 'z1') | None, default: None
+        bounds : (x_min, x_max, y_min, y_max, z_min, z_max), optional
             Manually specify bounds instead of calculating them from existing actors.
 
         Notes
