@@ -650,11 +650,11 @@ def test_affine_widget(sphere):
     print()
 
     print('X rotation')
-    # test X axis rotation
+    # test X axis rotation, counterclockwise
     pl.iren._mouse_left_button_press(width // 2 + 30, height // 2)
     assert widget._selected_actor is widget._circles[0]
     assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 + 30, height // 2 + 1)
+    pl.iren._mouse_move(width // 2 + 21, height // 2 + 17)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
     assert x_r > 0
     assert np.allclose([y_r, z_r], 0)
@@ -665,11 +665,11 @@ def test_affine_widget(sphere):
     print()
 
     print('Y rotation')
-    # test Y axis rotation
-    pl.iren._mouse_left_button_press(width // 2 - 30, height // 2)
+    # test Y axis rotation, counterclockwise
+    pl.iren._mouse_left_button_press(width // 2 - 20, height // 2 + 20)
     assert widget._selected_actor is widget._circles[1]
     assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 30, height // 2 - 1)
+    pl.iren._mouse_move(width // 2 - 30, height // 2 + 4)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
     assert y_r > 0
     assert np.allclose([x_r, z_r], 0)
@@ -679,11 +679,11 @@ def test_affine_widget(sphere):
     print()
 
     print('Z rotation')
-    # test Z axis rotation
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 28)
+    # test Z axis rotation, clockwise
+    pl.iren._mouse_left_button_press(width // 2, height // 2 - 29)
     assert widget._selected_actor is widget._circles[2]
     assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
+    pl.iren._mouse_move(width // 2 - 12, height // 2 - 23)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
     assert z_r < 0
     assert np.allclose([x_r, y_r], 0)
@@ -701,12 +701,12 @@ def test_affine_widget(sphere):
 
     print('X translation new')
     # test X axis translation with new axes
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 30)
+    pl.iren._mouse_left_button_press(width // 2, height // 2 - 38)
     assert widget._selected_actor is widget._arrows[0]
     assert widget._pressing_down
-    pl.iren._mouse_move(width // 2, height // 2 - 32)
+    pl.iren._mouse_move(width // 2, height // 2 - 50)
     assert actor.user_matrix[0, 3] > 0
-    pl.iren._mouse_left_button_release(width, height // 2 - 32)
+    pl.iren._mouse_left_button_release(width, height // 2 - 50)
     assert actor.user_matrix[0, 3] > 0
     print()
 
