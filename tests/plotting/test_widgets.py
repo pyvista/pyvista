@@ -644,42 +644,47 @@ def test_affine_widget(sphere):
         direction='neg',
     )
 
+    def test_rotation(
+        press_pos: tuple[float, float],
+        move_pos: tuple[float, float],
+        idx: int,
+        rotation: Literal['ccw', 'cw'],
+    ):
+        pl.iren._mouse_left_button_press(*press_pos)
+        assert widget._selected_actor is widget._circles[idx]
+        assert widget._pressing_down
+        pl.iren._mouse_move(*move_pos)
+        euler_angles = r_mat_to_euler_angles(actor.user_matrix)
+        assert euler_angles[idx] > 0 if rotation == 'ccw' else euler_angles[idx] < 0
+        assert np.count_nonzero(np.isclose(euler_angles, 0)) == len(euler_angles) - 1
+        pl.iren._mouse_left_button_release()
+        assert not widget._pressing_down
+        widget._reset()
+        assert np.allclose(widget._cached_matrix, np.eye(4))
+
     # test X axis rotation, counterclockwise
-    pl.iren._mouse_left_button_press(width // 2 + 30, height // 2)
-    assert widget._selected_actor is widget._circles[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 + 21, height // 2 + 17)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert x_r > 0
-    assert np.allclose([y_r, z_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
-    assert np.allclose(widget._cached_matrix, np.eye(4))
+    test_rotation(
+        press_pos=(width // 2 + 30, height // 2),
+        move_pos=(width // 2 + 21, height // 2 + 17),
+        idx=0,
+        rotation='ccw',
+    )
 
     # test Y axis rotation, counterclockwise
-    pl.iren._mouse_left_button_press(width // 2 - 20, height // 2 + 20)
-    assert widget._selected_actor is widget._circles[1]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 30, height // 2 + 4)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert y_r > 0
-    assert np.allclose([x_r, z_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
+    test_rotation(
+        press_pos=(width // 2 - 20, height // 2 + 20),
+        move_pos=(width // 2 - 30, height // 2 + 4),
+        idx=1,
+        rotation='ccw',
+    )
 
     # test Z axis rotation, clockwise
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 29)
-    assert widget._selected_actor is widget._circles[2]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 12, height // 2 - 23)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert z_r < 0
-    assert np.allclose([x_r, y_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
+    test_rotation(
+        press_pos=(width // 2, height // 2 - 29),
+        move_pos=(width // 2 - 12, height // 2 - 23),
+        idx=2,
+        rotation='cw',
+    )
 
     # test change axes
     axes = np.array(
