@@ -20,6 +20,7 @@ from ._array_like import NumpyArray as NumpyArray
 if TYPE_CHECKING:
     # Avoid circular imports
     from ._dataset_types import ConcreteDataObjectType as ConcreteDataObjectType
+    from ._dataset_types import ConcreteDataSetOrMultiBlockType as ConcreteDataSetOrMultiBlockType
     from ._dataset_types import ConcreteDataSetType as ConcreteDataSetType
     from ._dataset_types import ConcreteGridType as ConcreteGridType
     from ._dataset_types import ConcretePointGridType as ConcretePointGridType

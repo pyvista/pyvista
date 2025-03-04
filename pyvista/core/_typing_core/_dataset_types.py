@@ -49,6 +49,15 @@ ConcreteDataSetAlias = Union[ConcreteGridAlias, ConcretePointSetAlias]
 ConcreteDataSetType = TypeVar('ConcreteDataSetType', bound=ConcreteDataSetAlias)
 ConcreteDataSetType.__doc__ = """Type variable of all concrete :class:`~pyvista.DataSet` classes."""
 
+ConcreteDataSetOrMultiBlockAlias = Union[
+    ConcreteDataSetAlias,
+    MultiBlock,
+]
+ConcreteDataSetOrMultiBlockType = TypeVar(
+    'ConcreteDataSetOrMultiBlockType', bound=ConcreteDataSetOrMultiBlockAlias
+)
+ConcreteDataSetOrMultiBlockType.__doc__ = """Type variable of all concrete :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` :classes."""
+
 ConcreteDataObjectAlias = Union[
     ConcreteDataSetAlias,
     Table,
