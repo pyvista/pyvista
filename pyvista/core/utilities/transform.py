@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import cast
 from typing import overload
 
 import numpy as np
@@ -13,7 +12,6 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import ConcreteDataSetOrMultiBlockType
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transformations import apply_transformation_to_points
@@ -22,6 +20,7 @@ from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:
+    from pyvista.core._typing_core import ConcreteDataSetOrMultiBlockType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -1569,7 +1568,6 @@ class Transform(_vtk.vtkTransform):
             if mode not in ['all_vectors', None]:
                 raise ValueError(f"Transformation mode '{mode}' is not supported for datasets.")
 
-            obj = cast(ConcreteDataSetOrMultiBlockType, obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
@@ -1702,8 +1700,8 @@ class Transform(_vtk.vtkTransform):
         """Apply the current transformation :attr:`matrix` to a dataset.
 
         This is equivalent to ``apply(dataset, 'all_vectors')`` and is similar to
-        :meth:`pyvista.DataObjectFilters.transform` but with the transform and dataset
-        arguments reversed. See :meth:`apply` for details and examples.
+        :meth:`pyvista.DataObjectFilters.transform`. See :meth:`apply` for details and
+        examples.
 
         Parameters
         ----------
