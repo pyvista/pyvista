@@ -288,7 +288,7 @@ class AffineWidget3D:
         independent.
 
         """
-        x, y = interactor.GetLastEventPosition()
+        x, y = interactor.GetEventPosition()
         print(f'Rot coord ({x = }, {y = }), {when = }')
         coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToDisplay()
@@ -309,7 +309,7 @@ class AffineWidget3D:
         translation.
 
         """
-        x, y = interactor.GetLastEventPosition()
+        x, y = interactor.GetEventPosition()
         print(f'Trans coord ({x = }, {y = }), {when = }')
         ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
 
