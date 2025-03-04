@@ -42,6 +42,7 @@ from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
@@ -583,10 +584,29 @@ def test_observer():
         obs.observe(alg)
 
 
+@pytest.mark.parametrize('point', [1, object(), None])
+def test_valid_vector_raises(point):
+    with pytest.raises(TypeError, match='foo must be a length three iterable of floats.'):
+        check_valid_vector(point=point, name='foo')
+
+
 def test_check_valid_vector():
     with pytest.raises(ValueError, match='length three'):
         check_valid_vector([0, 1])
+
     check_valid_vector([0, 1, 2])
+
+
+@pytest.mark.parametrize('value', [object(), None, [], ()])
+def test_annotated_int_enum_from_any_raises(value):
+    class Foo(AnnotatedIntEnum):
+        BAR = (0, 'foo')
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'{Foo.__name__} has no value matching {value}'),
+    ):
+        Foo.from_any(value)
 
 
 def test_cells_dict_utils():
