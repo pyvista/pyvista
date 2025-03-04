@@ -26,34 +26,56 @@ from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 
 
-def test_clip_filter(datasets):
+@pytest.mark.parametrize('return_clipped', [True, False])
+def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset in enumerate(datasets):
-        clp = dataset.clip(normal=normals[i], invert=True)
+    # Remove None blocks in the root block but keep the none block in the nested MultiBlock
+    multi = multiblock_all_with_nested_and_none
+    for i, block in enumerate(multi):
+        if block is None:
+            del multi[i]
+    assert None not in multi
+
+    for dataset in multi:
+        clp = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
         assert clp is not None
-        if isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
+
+        if return_clipped:
+            assert isinstance(clp, tuple)
+            assert len(clp) == 2
         else:
-            assert isinstance(clp, pv.UnstructuredGrid)
+            assert isinstance(clp, pv.DataObject)
+            # Make dataset iterable
+            clp = [clp]
 
-    # clip with get_clipped=True
-    for i, dataset in enumerate(datasets):
-        clp1, clp2 = dataset.clip(normal=normals[i], invert=True, return_clipped=True)
-        for clp in (clp1, clp2):
+        for clipped in clp:
             if isinstance(dataset, pv.PolyData):
-                assert isinstance(clp, pv.PolyData)
+                assert isinstance(clipped, pv.PolyData)
+            elif isinstance(dataset, pv.MultiBlock):
+                assert isinstance(clipped, pv.MultiBlock)
+                assert clipped.n_blocks == dataset.n_blocks
             else:
-                assert isinstance(clp, pv.UnstructuredGrid)
+                assert isinstance(clipped, pv.UnstructuredGrid)
 
+
+def test_clip_filter_normal(datasets):
+    # Test no errors are raised
+    for i, dataset in enumerate(datasets):
+        dataset.clip(normal=normals[i], invert=True)
+
+
+def test_clip_filter_crinkle():
     # crinkle clip
+    cell_ids = 'cell_ids'
     mesh = pv.Wavelet()
+    mesh[cell_ids] = np.arange(mesh.n_cells)
     clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
     clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
-    set_a = set(clp1.cell_data['cell_ids'])
-    set_b = set(clp2.cell_data['cell_ids'])
+    set_a = set(clp1.cell_data[cell_ids])
+    set_b = set(clp2.cell_data[cell_ids])
     assert set_a.isdisjoint(set_b)
     assert set_a.union(set_b) == set(range(mesh.n_cells))
 
