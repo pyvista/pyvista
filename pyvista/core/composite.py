@@ -1856,9 +1856,11 @@ class MultiBlock(
         return self.generic_filter(block_filter, _skip_none=False)
 
     def as_unstructured_grid_blocks(
-        self: MultiBlock, copy: bool | Literal['deep', 'shallow'] = False
+        self: MultiBlock, copy: bool = False
     ) -> MultiBlock:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------
