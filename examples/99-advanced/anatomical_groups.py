@@ -59,7 +59,7 @@ ids_to_colors = dataset.user_dict['ids_to_colors']
 print('{')
 for name, (R, G, B) in names_to_colors.items():
     key = f"'{name}'"
-    print(f'{key:>32}: ({R:>3}, {G:>3}, {B:>3}),')
+    print(f'{key:<32}: ({R:>3}, {G:>3}, {B:>3}),')
 print('}')
 
 # %%
