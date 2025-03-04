@@ -280,7 +280,7 @@ class AffineWidget3D:
                 actor.mapper.SetResolveCoincidentTopologyToPolygonOffset()
                 actor.mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
 
-    def _get_world_coord_rot(self, interactor):
+    def _get_world_coord_rot(self, interactor, when: str):
         """Get the world coordinates given an interactor.
 
         Unlike ``_get_world_coord_trans``, these coordinates are physically
@@ -289,6 +289,7 @@ class AffineWidget3D:
 
         """
         x, y = interactor.GetLastEventPosition()
+        print(f'Rot coord ({x = }, {y = }), {when = }')
         coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToDisplay()
         coordinate.SetValue(x, y, 0)
@@ -300,7 +301,7 @@ class AffineWidget3D:
             point = ray_plane_intersection(point, to_widget, self._origin, self.axes[index])
         return point
 
-    def _get_world_coord_trans(self, interactor):
+    def _get_world_coord_trans(self, interactor, when: str):
         """Get the world coordinates given an interactor.
 
         This uses a modified scaled approach to get the world coordinates that
@@ -309,6 +310,7 @@ class AffineWidget3D:
 
         """
         x, y = interactor.GetLastEventPosition()
+        print(f'Trans coord ({x = }, {y = }), {when = }')
         ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
 
         # Get normalized view coordinates (-1, 1)
@@ -334,6 +336,7 @@ class AffineWidget3D:
     def _move_callback(self, interactor, _event):
         """Process actions for the move mouse event."""
         click_x, click_y = interactor.GetEventPosition()
+        print(f'move cbck ({click_x = }, {click_y = })')
         click_z = 0
         picker = interactor.GetPicker()
         renderer = interactor.GetInteractorStyle()._parent()._plotter.iren.get_poked_renderer()
@@ -342,14 +345,14 @@ class AffineWidget3D:
 
         if self._pressing_down:
             if self._selected_actor in self._arrows:
-                current_pos = self._get_world_coord_trans(interactor)
+                current_pos = self._get_world_coord_trans(interactor, when='move cbck')
                 index = self._arrows.index(self._selected_actor)
                 diff = current_pos - self.init_position
                 trans_matrix = np.eye(4)
                 trans_matrix[:3, -1] = self.axes[index] * np.dot(diff, self.axes[index])
                 matrix = trans_matrix @ self._cached_matrix
             elif self._selected_actor in self._circles:
-                current_pos = self._get_world_coord_rot(interactor)
+                current_pos = self._get_world_coord_rot(interactor, when='move cbck')
                 index = self._circles.index(self._selected_actor)
                 vec_current = current_pos - self._origin
                 vec_init = self.init_position - self._origin
@@ -411,9 +414,9 @@ class AffineWidget3D:
             self._pl.enable_trackball_actor_style()
             self._pressing_down = True
             if self._selected_actor in self._circles:
-                self.init_position = self._get_world_coord_rot(interactor)
+                self.init_position = self._get_world_coord_rot(interactor, when='press')
             else:
-                self.init_position = self._get_world_coord_trans(interactor)
+                self.init_position = self._get_world_coord_trans(interactor, when='press')
 
     def _release_callback(self, _interactor, _event):
         """Process actions for the mouse button release event."""
