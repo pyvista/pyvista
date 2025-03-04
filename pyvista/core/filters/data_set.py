@@ -764,8 +764,13 @@ class DataSetFilters(DataObjectFilters):
         See Also
         --------
         threshold_percent
-        :meth:`~pyvista.ImageDataFilters.image_threshold`
+            Threshold a dataset by a percentage of its scalar range.
         :meth:`~pyvista.DataSetFilters.extract_values`
+            Threshold-like filter for extracting specific values and ranges.
+        :meth:`~pyvista.ImageDataFilters.image_threshold`
+            Similar method for thresholding :class:`~pyvista.ImageData`.
+        :meth:`~pyvista.ImageDataFilters.select_values`
+            Threshold-like filter for :class:`~pyvista.ImageData` to keep some values and replace others.
 
         Returns
         -------
@@ -817,7 +822,8 @@ class DataSetFilters(DataObjectFilters):
         ...     show_edges=True,
         ... )
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`common_filter_example` and :ref:`image_representations_example`
+        for more examples using this filter.
 
         """
         # set the scalars to threshold on
@@ -932,6 +938,11 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.UnstructuredGrid
             Dataset containing geometry that meets the threshold requirements.
+
+        See Also
+        --------
+        threshold
+            Threshold a dataset by value.
 
         Examples
         --------
@@ -4268,18 +4279,18 @@ class DataSetFilters(DataObjectFilters):
 
     def extract_values(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        values: None
-        | (
+        values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        ) = None,
+        )
+        | None = None,
         *,
-        ranges: None
-        | (
+        ranges: (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
             | dict[tuple[float, float], str]
-        ) = None,
+        )
+        | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -4341,7 +4352,7 @@ class DataSetFilters(DataObjectFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : array_like | dict, optional
+        ranges : ArrayLike[float] | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -4423,7 +4434,18 @@ class DataSetFilters(DataObjectFilters):
 
         See Also
         --------
-        split_values, extract_points, extract_cells, threshold, partition
+        split_values
+            Wrapper around this filter to split values and return a :class:`~pyvista.MultiBlock` by default.
+        :meth:`~pyvista.ImageDataFilters.select_values`
+            Similar filter specialized for :class:`~pyvista.ImageData`.
+        extract_points
+            Extract a subset of a mesh's points.
+        extract_cells
+            Extract a subset of a mesh's cells.
+        threshold
+            Similar filter for thresholding a mesh by value.
+        partition
+            Split a mesh into a number of sub-parts.
 
         Returns
         -------
@@ -4556,11 +4578,17 @@ class DataSetFilters(DataObjectFilters):
             component_mode=component_mode,
             split=split,
         )
-        if isinstance(validated, dict):
-            valid_values = validated.pop('values')
-            valid_ranges = validated.pop('ranges')
-            value_names = validated.pop('value_names')
-            range_names = validated.pop('range_names')
+        if isinstance(validated, tuple):
+            (
+                valid_values,
+                valid_ranges,
+                value_names,
+                range_names,
+                array,
+                _,
+                association,
+                component_logic,
+            ) = validated
         else:
             # Return empty dataset
             return validated
@@ -4570,45 +4598,46 @@ class DataSetFilters(DataObjectFilters):
             include_cells = self.n_cells > 0
 
         kwargs = dict(
-            **validated,
+            values=valid_values,
+            ranges=valid_ranges,
+            array=array,
+            association=association,
+            component_logic=component_logic,
+            invert=invert,
             adjacent_cells=adjacent_cells,
             include_cells=include_cells,
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
-            invert=invert,
         )
 
         if split:
             return self._split_values(
-                values=valid_values,
-                ranges=valid_ranges,
+                method=self._extract_values,
                 value_names=value_names,
                 range_names=range_names,
                 **kwargs,
             )
 
-        return self._extract_values(
-            values=valid_values,
-            ranges=valid_ranges,
-            **kwargs,
-        )
+        return self._extract_values(**kwargs)
 
     def _validate_extract_values(  # type: ignore[misc]
         self: ConcreteDataSetType,
+        *,
         values,
         ranges,
         scalars,
         preference,
         component_mode,
         split,
+        mesh_type=None,
     ):
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
             scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
             array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
-            return array_, association_
+            return array_, scalars_, association_
 
         def _validate_component_mode(array_, component_mode_):
             # Validate component mode and return logic function
@@ -4713,7 +4742,8 @@ class DataSetFilters(DataObjectFilters):
 
         if self.n_points == 0:
             # Empty input, return empty output
-            out = pyvista.UnstructuredGrid()
+            mesh_type = pyvista.UnstructuredGrid if mesh_type is None else mesh_type
+            out = mesh_type()
             if split:
                 # Do basic validation just to get num blocks for multiblock
                 _, values_ = _get_inputs_from_dict(values)
@@ -4723,7 +4753,7 @@ class DataSetFilters(DataObjectFilters):
                 return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
             return out
 
-        array, association = _validate_scalar_array(scalars, preference)
+        array, array_name, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
         value_names, values = _get_inputs_from_dict(values)
         range_names, ranges = _get_inputs_from_dict(ranges)
@@ -4735,45 +4765,40 @@ class DataSetFilters(DataObjectFilters):
             component_mode,
         )
 
-        return dict(
-            values=valid_values,
-            ranges=valid_ranges,
-            value_names=value_names,
-            range_names=range_names,
-            array=array,
-            association=association,
-            component_logic=component_logic,
+        return (
+            valid_values,
+            valid_ranges,
+            value_names,
+            range_names,
+            array,
+            array_name,
+            association,
+            component_logic,
         )
 
     def _split_values(  # type:ignore[misc]
-        self: ConcreteDataSetType, values, ranges, value_names, range_names, **kwargs
+        self: ConcreteDataSetType, *, method, values, ranges, value_names, range_names, **kwargs
     ):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
         if values is not None:
             value_names = value_names if value_names else [None] * len(values)
             for name, val in zip(value_names, values):
-                multi.append(self._extract_values(values=[val], **kwargs), name)
+                multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
             range_names = range_names if range_names else [None] * len(ranges)
             for name, rng in zip(range_names, ranges):
-                multi.append(self._extract_values(ranges=[rng], **kwargs), name)
+                multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
-    def _extract_values(  # type: ignore[misc]
+    def _apply_component_logic_to_array(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        values=None,
-        ranges=None,
         *,
+        values,
+        ranges,
         array,
-        association,
         component_logic,
         invert,
-        adjacent_cells,
-        include_cells,
-        progress_bar,
-        pass_point_ids,
-        pass_cell_ids,
     ):
         """Extract values using validated input.
 
@@ -4807,7 +4832,30 @@ class DataSetFilters(DataObjectFilters):
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
 
-        id_mask = np.invert(id_mask) if invert else id_mask
+        return np.invert(id_mask) if invert else id_mask
+
+    def _extract_values(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        *,
+        values,
+        ranges,
+        array,
+        component_logic,
+        invert,
+        association,
+        adjacent_cells,
+        include_cells,
+        progress_bar,
+        pass_point_ids,
+        pass_cell_ids,
+    ):
+        id_mask = self._apply_component_logic_to_array(
+            values=values,
+            ranges=ranges,
+            array=array,
+            component_logic=component_logic,
+            invert=invert,
+        )
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:
