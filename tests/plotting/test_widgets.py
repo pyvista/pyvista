@@ -599,13 +599,17 @@ def test_affine_widget(sphere):
 
     print('X translation')
     # test X axis translation
-    pl.iren._mouse_left_button_press(width // 2 - 1, height // 2 - 1)
+    pl.iren._mouse_left_button_press(width // 2 - 4, height // 2 - 4)
     assert widget._selected_actor is widget._arrows[0]
     assert widget._pressing_down
     pl.iren._mouse_move(width, height // 2)
     assert actor.user_matrix[0, 3] < 0
     pl.iren._mouse_left_button_release(width, height // 2)
     assert actor.user_matrix[0, 3] < 0
+    assert not widget._pressing_down
+    print(f'{actor.user_matrix[0, 3] = }')
+    widget._reset()
+    assert np.allclose(widget._cached_matrix, np.eye(4))
     print()
 
     # test callback called
@@ -616,13 +620,17 @@ def test_affine_widget(sphere):
 
     print('Y translation')
     # test Y axis translation
-    pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
+    pl.iren._mouse_left_button_press(width // 2 + 2, height // 2 - 3)
     assert widget._selected_actor is widget._arrows[1]
     assert widget._pressing_down
     pl.iren._mouse_move(width, height // 2)
-    assert actor.user_matrix[1, 3] < 0
+    assert actor.user_matrix[1, 3] > 0
     pl.iren._mouse_left_button_release()
-    assert actor.user_matrix[1, 3] < 0
+    assert actor.user_matrix[1, 3] > 0
+    assert not widget._pressing_down
+    print(f'{actor.user_matrix[1, 3] = }')
+    widget._reset()
+    assert np.allclose(widget._cached_matrix, np.eye(4))
     print()
 
     print('Z translation')
@@ -631,9 +639,14 @@ def test_affine_widget(sphere):
     assert widget._selected_actor is widget._arrows[2]
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2, 0)
-    assert actor.user_matrix[3, 3] > 0
+    assert actor.user_matrix[2, 3] < 0
     pl.iren._mouse_left_button_release()
-    assert actor.user_matrix[3, 3] > 0
+    assert actor.user_matrix[2, 3] < 0
+    assert not widget._pressing_down
+    print(f'{actor.user_matrix[2, 3] = }')
+    print(f'{actor.user_matrix[0:3, 3] = }')
+    widget._reset()
+    assert np.allclose(widget._cached_matrix, np.eye(4))
     print()
 
     print('X rotation')
@@ -672,7 +685,7 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert z_r > 0
+    assert z_r < 0
     assert np.allclose([x_r, y_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
