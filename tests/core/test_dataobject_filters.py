@@ -39,24 +39,24 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
 
     for dataset in multi:
         clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
-        assert clp is not None
+        assert clips is not None
 
         if return_clipped:
-            assert isinstance(clp, tuple)
-            assert len(clp) == 2
+            assert isinstance(clips, tuple)
+            assert len(clips) == 2
         else:
-            assert isinstance(clp, pv.DataObject)
+            assert isinstance(clips, pv.DataObject)
             # Make dataset iterable
-            clp = [clp]
+            clips = [clips]
 
         for clip in clips:
             if isinstance(dataset, pv.PolyData):
-                assert isinstance(clipped, pv.PolyData)
+                assert isinstance(clip, pv.PolyData)
             elif isinstance(dataset, pv.MultiBlock):
-                assert isinstance(clipped, pv.MultiBlock)
-                assert clipped.n_blocks == dataset.n_blocks
+                assert isinstance(clip, pv.MultiBlock)
+                assert clip.n_blocks == dataset.n_blocks
             else:
-                assert isinstance(clipped, pv.UnstructuredGrid)
+                assert isinstance(clip, pv.UnstructuredGrid)
 
 
 def test_clip_filter_normal(datasets):
