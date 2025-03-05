@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
-          packages: libgl1-mesa-glx xvfb
+          packages: xvfb
           version: 3.0
       - uses: actions/checkout@v4
         with:

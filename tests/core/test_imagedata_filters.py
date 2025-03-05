@@ -1285,3 +1285,30 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+
+def test_select_values(uniform):
+    selected = uniform.select_values(ranges=uniform.get_data_range())
+    assert isinstance(selected, pv.ImageData)
+    assert selected is not uniform
+    assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+def test_select_values_split(uniform):
+    unique_values = np.unique(uniform.active_scalars)
+    selected = uniform.select_values(values=unique_values, split=True)
+    assert isinstance(selected, pv.MultiBlock)
+    assert isinstance(selected[0], pv.ImageData)
+    assert len(selected) == len(unique_values)
+
+
+def test_select_values_empty_input():
+    selected = pv.ImageData().select_values()
+    assert isinstance(selected, pv.ImageData)
+
+
+@pytest.mark.parametrize('dtype', [np.uint16, int, float])
+def test_select_values_dtype(uniform, dtype):
+    uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
+    selected = uniform.select_values([0])
+    assert selected.active_scalars.dtype == dtype
