@@ -830,8 +830,9 @@ class Camera(_vtk.vtkCamera):
         negative : bool, default: False
             Whether to view in opposite direction.
 
-        bounds : (x_min, x_max, y_min, y_max, z_min, z_max), optional
+        bounds : sequence[float], optional
             Manually specify bounds instead of calculating them from existing actors.
+            Bounds must have the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
             .. versionadded:: 0.45
 
