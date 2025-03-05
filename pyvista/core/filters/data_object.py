@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
-from typing import reveal_type
 import warnings
 
 import numpy as np
@@ -237,7 +236,7 @@ class DataObjectFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         if isinstance(self, pyvista.RectilinearGrid):
-            output: _DataSetOrMultiBlockType = pyvista.StructuredGrid()
+            output: DataSet | MultiBlock = pyvista.StructuredGrid()
         elif inplace:
             output = self
         else:
@@ -1041,7 +1040,7 @@ class DataObjectFilters:
             # Add Cell IDs
             self.cell_data['cell_ids'] = np.arange(self.n_cells)
 
-        if isinstance(self, _vtk.vtkPolyData):
+        if isinstance(self, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
@@ -1061,8 +1060,8 @@ class DataObjectFilters:
             if crinkle:
                 set_a = set(a.cell_data['cell_ids'])
                 set_b = set(b.cell_data['cell_ids']) - set_a
-                a = self.extract_cells(list(set_a))  # type: ignore[union-attr]
-                b = self.extract_cells(list(set_b))  # type: ignore[union-attr]
+                a = self.extract_cells(list(set_a))
+                b = self.extract_cells(list(set_b))
             return a, b
         clipped = _get_output(alg)
         if crinkle:
@@ -2014,7 +2013,6 @@ class DataObjectFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
-        reveal_type(self)
         input_mesh = self.cast_to_poly_points() if isinstance(self, pyvista.PointSet) else self
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(input_mesh)
