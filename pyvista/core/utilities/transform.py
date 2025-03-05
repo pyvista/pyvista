@@ -1507,9 +1507,9 @@ class Transform(_vtk.vtkTransform):
             Equivalent to ``apply(obj, 'points')`` for point-array inputs.
         apply_to_vectors
             Equivalent to ``apply(obj, 'vectors')`` for vector-array inputs.
-        apply_to_vectors
+        apply_to_dataset
             Equivalent to ``apply(obj, mode)`` for dataset inputs where ``mode`` may be
-            ``'all_vectors'``.
+            ``'all_vectors'`` or ``None``.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
@@ -1608,7 +1608,7 @@ class Transform(_vtk.vtkTransform):
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
-        """Apply the current transformation :attr:`matrix` to points.
+        """Apply the current transformation :attr:`matrix` to a point or points.
 
         This is equivalent to ``apply(points, 'points')``. See :meth:`apply` for
         details and examples.
@@ -1631,7 +1631,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         np.ndarray
-            Transformed array.
+            Transformed points.
 
         See Also
         --------
@@ -1652,7 +1652,7 @@ class Transform(_vtk.vtkTransform):
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
-        """Apply the current transformation :attr:`matrix` to vectors.
+        """Apply the current transformation :attr:`matrix` to a vector or vectors.
 
         This is equivalent to ``apply(vectors, 'vectors')``. See :meth:`apply` for
         details and examples.
@@ -1675,7 +1675,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         np.ndarray
-            Transformed array.
+            Transformed vectors.
 
         See Also
         --------
@@ -1693,9 +1693,9 @@ class Transform(_vtk.vtkTransform):
         self,
         dataset: ConcreteDataSetOrMultiBlockType,
         /,
+        all_vectors: bool = False,
         copy: bool = True,
         inverse: bool = False,
-        transform_all_input_vectors: bool = False,
     ) -> ConcreteDataSetOrMultiBlockType:
         """Apply the current transformation :attr:`matrix` to a dataset.
 
@@ -1708,6 +1708,12 @@ class Transform(_vtk.vtkTransform):
         dataset : DataSet | MultiBlock
             Object to apply the transformation to.
 
+        all_vectors : bool, default: False
+            When ``True``, all arrays with three components are
+            transformed. Otherwise, only the normals and vectors are
+            transformed. See the warning in :meth:`pyvista.DataObjectFilters.transform`
+            for more details.
+
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
             :attr:`matrix`.
@@ -1715,12 +1721,6 @@ class Transform(_vtk.vtkTransform):
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
             ``False`` to transform the input directly and return it.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all arrays with three components are
-            transformed. Otherwise, only the normals and vectors are
-            transformed. See the warning in :meth:`pyvista.DataObjectFilters.transform`
-            for more details.
 
         Returns
         -------
@@ -1732,14 +1732,14 @@ class Transform(_vtk.vtkTransform):
         apply
             Apply this transformation to any input.
         apply_to_points
-            Apply this transformation to vectors.
+            Apply this transformation to points.
         apply_to_vectors
             Apply this transformation to vectors.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
         """
-        mode: Literal['all_vectors'] | None = 'all_vectors' if transform_all_input_vectors else None
+        mode: Literal['all_vectors'] | None = 'all_vectors' if all_vectors else None
         return self.apply(dataset, mode, inverse=inverse, copy=copy)
 
     def decompose(
