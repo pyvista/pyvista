@@ -12,6 +12,8 @@ import shutil
 from unittest import mock
 import warnings
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 from pytest_cases import parametrize
@@ -24,8 +26,10 @@ from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
+from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
+from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.arrays import convert_array
@@ -49,7 +53,6 @@ from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
-from pyvista.core.utilities.points import vector_poly_data
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
@@ -137,9 +140,12 @@ def test_version():
 
 def test_createvectorpolydata_error():
     orig = np.random.default_rng().random((3, 1))
+    with pytest.raises(ValueError, match='orig array must be 3D'):
+        vector_poly_data(orig, [0, 1, 2])
+
     vec = np.random.default_rng().random((3, 1))
-    with pytest.raises(ValueError):  # noqa: PT011
-        vector_poly_data(orig, vec)
+    with pytest.raises(ValueError, match='vec array must be 3D'):
+        vector_poly_data([0, 1, 2], vec)
 
 
 def test_createvectorpolydata_1D():
@@ -607,6 +613,15 @@ def test_annotated_int_enum_from_any_raises(value):
         match=re.escape(f'{Foo.__name__} has no value matching {value}'),
     ):
         Foo.from_any(value)
+
+
+@given(points=st.lists(st.integers()).filter(lambda x: bool(len(x) % 2)))
+def test_lines_segments_from_points(points):
+    with pytest.raises(
+        ValueError,
+        match='An even number of points must be given to define each segment.',
+    ):
+        line_segments_from_points(points=points)
 
 
 def test_cells_dict_utils():

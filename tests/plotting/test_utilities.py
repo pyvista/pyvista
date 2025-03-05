@@ -6,9 +6,11 @@ import re
 from typing import TYPE_CHECKING
 
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities import xvfb
 
 if TYPE_CHECKING:
@@ -48,3 +50,13 @@ def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixtur
         pytest.warns(PyVistaDeprecationWarning),
     ):
         pv.start_xvfb()
+
+
+def test_algo_to_mesh_handler_raises(mocker: MockerFixture):
+    m = mocker.patch.object(algorithms, 'wrap')
+    m.return_value = None
+
+    with pytest.raises(
+        pv.PyVistaPipelineError, match='The passed algorithm is failing to produce an output.'
+    ):
+        algorithms.algorithm_to_mesh_handler(vtk.vtkAlgorithm())

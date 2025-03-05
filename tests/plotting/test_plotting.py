@@ -30,6 +30,9 @@ from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import BackgroundPlotter
+from pyvista.plotting import QtDeprecationError
+from pyvista.plotting import QtInteractor
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -140,6 +143,16 @@ def multicomp_poly():
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
     return data
+
+
+def test_pyvista_qt_raises():
+    match = re.escape(QtDeprecationError.message.format(*[BackgroundPlotter.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        BackgroundPlotter()
+
+    match = re.escape(QtDeprecationError.message.format(*[QtInteractor.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        QtInteractor()
 
 
 def test_plotting_module_raises(mocker: MockerFixture):

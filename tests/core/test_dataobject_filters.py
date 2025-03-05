@@ -64,6 +64,18 @@ def test_clip_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_transform_raises():
+    tr = pv.Transform()
+    m = tr.matrix
+    m[3, 3] = 0
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Transform element (3,3), the inverse scale term, is zero'),
+    ):
+        pv.Sphere().transform(trans=pv.Transform(m), inplace=False)
+
+
 def test_clip_box(datasets):
     for dataset in datasets:
         clp = dataset.clip_box(invert=True, progress_bar=True)
