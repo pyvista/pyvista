@@ -38,7 +38,7 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     assert None in multi.recursive_iterator()
 
     for dataset in multi:
-        clp = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
+        clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
         assert clp is not None
 
         if return_clipped:
