@@ -865,23 +865,56 @@ def test_set_active_scalars_mixed(multiblock_poly):
             assert block.point_data.active_scalars_name == 'data'
 
 
-def test_to_polydata(multiblock_all_with_nested_and_none):
+def test_as_polydata_blocks(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
     if pv.vtk_version_info >= (9, 1, 0):
         multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
     assert not multi.is_all_polydata
+    # Get a polydata block for copy test
+    poly_index = 3
+    poly = multi[poly_index]
+    assert isinstance(poly, pv.PolyData)
 
     dataset_a = multi.as_polydata_blocks()
+    assert dataset_a[poly_index] is poly
     if pv.vtk_version_info >= (9, 1, 0):
         assert dataset_a[-1].n_points == 1
     assert not multi.is_all_polydata
     assert dataset_a.is_all_polydata
+
+    # Test shallow copy
+    dataset_copy = multi.as_polydata_blocks(copy=True)
+    assert dataset_copy[poly_index] is not poly
+    copied_points = dataset_copy[poly_index].points
+    expected_points = poly.points
+    assert np.shares_memory(copied_points, expected_points)
 
     # verify nested works
     nested_mblock = pv.MultiBlock([multi, multi])
     assert not nested_mblock.is_all_polydata
     dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
+
+
+def test_as_unstructured_grid_blocks(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    if pv.vtk_version_info >= (9, 1, 0):
+        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    # Get a UnstructuredGrid block for copy test
+    grid_index = 2
+    grid = multi[grid_index]
+    assert isinstance(grid, pv.UnstructuredGrid)
+
+    new_multi = multi.as_unstructured_grid_blocks()
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in new_multi.recursive_iterator())
+    assert new_multi[grid_index] is grid
+
+    # Test shallow copy
+    dataset_copy = multi.as_unstructured_grid_blocks(copy=True)
+    assert dataset_copy[grid_index] is not grid
+    copied_points = dataset_copy[grid_index].points
+    expected_points = grid.points
+    assert np.shares_memory(copied_points, expected_points)
 
 
 def test_compute_normals(multiblock_poly):
