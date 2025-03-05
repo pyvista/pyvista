@@ -49,7 +49,7 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
             # Make dataset iterable
             clp = [clp]
 
-        for clipped in clp:
+        for clip in clips:
             if isinstance(dataset, pv.PolyData):
                 assert isinstance(clipped, pv.PolyData)
             elif isinstance(dataset, pv.MultiBlock):
