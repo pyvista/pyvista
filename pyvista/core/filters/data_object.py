@@ -10,8 +10,10 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
@@ -126,9 +128,26 @@ class DataObjectFilters:
         >>> transformed.plot(show_edges=True)
 
         """
-        from ._deprecate_transform_inplace_default_true import check_inplace
+        # Deprecated v0.45, convert to error in v0.48, remove v0.51
+        if inplace is None:
+            # if inplace is None user has not explicitly opted into inplace behavior
+            if version_info >= (0, 48):  # pragma: no cover
+                raise RuntimeError(
+                    'Convert this deprecation warning into an error '
+                    'and update the docstring default value/type for inplace.'
+                )
+            if version_info >= (0, 51):  # pragma: no cover
+                raise RuntimeError(
+                    'Remove this deprecation and update the docstring value/type for inplace.'
+                )
 
-        inplace = check_inplace(cls=type(self), inplace=inplace)
+            msg = (
+                f'The default value of `inplace` for the filter `{self.__class__.__name__}.transform` will change in the future. '
+                'Previously it defaulted to `True`, but will change to `False`. '
+                'Explicitly set `inplace` to `True` or `False` to silence this warning.'
+            )
+            warnings.warn(msg, PyVistaDeprecationWarning)
+            inplace = True  # The old default behavior
 
         if isinstance(self, pyvista.MultiBlock):
             return self.generic_filter(
@@ -733,17 +752,22 @@ class DataObjectFilters:
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> _ = pl.show_grid()
         >>> mesh1 = examples.download_teapot()
+        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
+
+        Plot meshes side-by-side
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> # Create plot with unscaled mesh
+        >>> pl.subplot(0, 0)
         >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
         >>> pl.show_axes()
         >>> _ = pl.show_grid()
-        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
+        >>> # Create plot with scaled mesh
+        >>> pl.subplot(0, 1)
         >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
         >>> pl.show(cpos='xy')
 
         """
