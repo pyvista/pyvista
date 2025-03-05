@@ -1448,43 +1448,46 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
 
 
 def test_transform_apply_mode():
-    # Test scaling arrays
     array = np.array((0.0, 0.0, 1.0))
     scale = Transform() * SCALE
 
+    offset = np.array((1.0, 0.0, 0.0))
+    translate = Transform() + offset
+
+    mesh = pv.PolyData(array)
+    mesh['vector'] = [array]
+
+    # Scale points
     transformed = scale.apply(array, 'points')
     assert np.allclose(transformed, array * SCALE)
     transformed = scale.apply_to_points(array)
     assert np.allclose(transformed, array * SCALE)
 
+    # Scale vectors
     transformed = scale.apply(array, 'vectors')
     assert np.allclose(transformed, array * SCALE)
     transformed = scale.apply_to_vectors(array)
     assert np.allclose(transformed, array * SCALE)
 
-    # Test translating arrays
-    offset = np.array((1.0, 0.0, 0.0))
-    translate = Transform() + offset
-
+    # Translate points
     transformed = translate.apply(array, 'points')
     assert np.allclose(transformed, array + offset)
     transformed = translate.apply_to_points(array)
     assert np.allclose(transformed, array + offset)
 
+    # Translate vectors
     transformed = translate.apply(array, 'vectors')
     assert np.allclose(transformed, array)
     transformed = translate.apply_to_vectors(array)
     assert np.allclose(transformed, array)
 
-    # Test datasets
-    mesh = pv.PolyData(array)
-    mesh['vector'] = [array]
-
+    # Scale dataset
     transformed = scale.apply(mesh)
     assert np.allclose(transformed['vector'], mesh['vector'])
     transformed = scale.apply_to_dataset(mesh)
     assert np.allclose(transformed['vector'], mesh['vector'])
 
+    # Scale dataset, all vectors
     transformed = scale.apply(mesh, 'all_vectors')
     assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
     transformed = scale.apply_to_dataset(mesh, transform_all_input_vectors=True)
