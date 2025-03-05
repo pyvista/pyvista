@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
+from pyvista.core.composite import MultiBlock
 from pyvista.core.dataobject import DataObject
 from pyvista.core.dataset import DataSet
 from pyvista.core.grid import Grid
@@ -21,6 +22,11 @@ _PointSetType.__doc__ = """Type variable for PyVista ``PointSet`` classes."""
 
 _DataSetType = TypeVar('_DataSetType', bound=DataSet)
 _DataSetType.__doc__ = """Type variable for :class:`~pyvista.DataSet` classes."""
+
+_DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=DataSet | MultiBlock)
+_DataSetOrMultiBlockType.__doc__ = (
+    """Type variable for :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` classes."""
+)
 
 _DataObjectType = TypeVar('_DataObjectType', bound=DataObject)
 _DataObjectType.__doc__ = """Type variable for :class:`~pyvista.DataObject` classes."""
