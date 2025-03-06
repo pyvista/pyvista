@@ -1949,9 +1949,9 @@ class Transform(_vtk.vtkTransform):
             - ``'quat'``: Represent as quaternions using :meth:`scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
             - ``'matrix'``: Represent as a 3x3 matrix using :meth:`scipy.spatial.transform.Rotation.as_matrix`.
             - ``'rotvec'``: Represent as a rotation vector using :meth:`scipy.spatial.transform.Rotation.as_rotvec`.
-            - ``'mrp'``: Represent as Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`
-            - ``'euler'``: Represent as Euler angles using :meth:`scipy.spatial.transform.Rotation.as_euler`
-            - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`
+            - ``'mrp'``: Represent as Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using :meth:`scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`.
 
         *args
             Arguments passed to the ``Rotation`` method for the specified
