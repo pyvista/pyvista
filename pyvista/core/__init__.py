@@ -4,11 +4,6 @@ from __future__ import annotations
 
 from . import _vtk_core as _vtk_core
 from ._typing_core import *
-from ._typing_core._dataset_types import ConcreteDataObjectType as ConcreteDataObjectType
-from ._typing_core._dataset_types import ConcreteDataSetType as ConcreteDataSetType
-from ._typing_core._dataset_types import ConcreteGridType as ConcreteGridType
-from ._typing_core._dataset_types import ConcretePointGridType as ConcretePointGridType
-from ._typing_core._dataset_types import ConcretePointSetType as ConcretePointSetType
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
