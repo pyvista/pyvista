@@ -913,4 +913,3 @@ class DataObject:
     @property
     def is_empty(self) -> bool:
         """Return ``True`` if the object is empty."""
-        raise NotImplementedError
