@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -43,6 +44,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+@promote_type(_vtk.vtkDataObject)
 @abstract_class
 class DataObject:
     """Methods common to all wrapped data objects.
