@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -2017,7 +2018,10 @@ class Transform(_vtk.vtkTransform):
         except ImportError:
             raise ImportError("The 'scipy' package must be installed to use `as_rotation`")
 
-        representation = representation.lower()
+        representation = cast(
+            Literal['rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'],
+            representation.lower(),
+        )
         _validation.check_contains(
             ['rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'],
             must_contain=representation,
