@@ -684,13 +684,29 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def rotate(  # type: ignore[misc]
+        self: RectilinearGrid,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def rotate(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def rotate(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
 
         .. note::

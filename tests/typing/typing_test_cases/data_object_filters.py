@@ -39,3 +39,13 @@ if TYPE_CHECKING:
     reveal_type(pv.RectilinearGrid().rotate_z(0, inplace=False))    # EXPECTED_TYPE: "StructuredGrid"
     reveal_type(pv.ImageData().rotate_z(0, inplace=False))          # EXPECTED_TYPE: "ImageData"
     reveal_type(pv.MultiBlock().rotate_z(0, inplace=False))         # EXPECTED_TYPE: "MultiBlock"
+
+    # test rotate_vector
+    reveal_type(pv.RectilinearGrid().rotate_vector((0,0,1), 0, inplace=False))  # EXPECTED_TYPE: "StructuredGrid"
+    reveal_type(pv.ImageData().rotate_vector((0,0,1), 0, inplace=False))        # EXPECTED_TYPE: "ImageData"
+    reveal_type(pv.MultiBlock().rotate_vector((0,0,1), 0, inplace=False))       # EXPECTED_TYPE: "MultiBlock"
+
+    # test rotate
+    reveal_type(pv.RectilinearGrid().rotate(np.eye(3), inplace=False))  # EXPECTED_TYPE: "StructuredGrid"
+    reveal_type(pv.ImageData().rotate(np.eye(3), inplace=False))        # EXPECTED_TYPE: "ImageData"
+    reveal_type(pv.MultiBlock().rotate(np.eye(3), inplace=False))       # EXPECTED_TYPE: "MultiBlock"
