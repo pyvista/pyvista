@@ -4740,7 +4740,7 @@ class DataSetFilters(DataObjectFilters):
                     )
             return values_, ranges_
 
-        if self.n_points == 0:
+        if self.is_empty:
             # Empty input, return empty output
             mesh_type = pyvista.UnstructuredGrid if mesh_type is None else mesh_type
             out = mesh_type()

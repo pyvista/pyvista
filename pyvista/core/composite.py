@@ -456,7 +456,7 @@ class MultiBlock(
         # Iterate through ids, names, blocks
         for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
-                skip_empty and hasattr(block, 'n_points') and block.n_points == 0
+                skip_empty and (block is not None and block.is_empty)
             ):
                 continue
             elif isinstance(block, MultiBlock):
