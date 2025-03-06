@@ -463,7 +463,7 @@ class MultiBlock(
         # Iterate through ids, names, blocks
         for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
-                skip_empty and hasattr(block, 'n_points') and block.n_points == 0
+                skip_empty and (block is not None and block.is_empty)
             ):
                 continue
             elif isinstance(block, MultiBlock):
@@ -944,6 +944,26 @@ class MultiBlock(
 
         """
         return any(isinstance(block, pyvista.MultiBlock) for block in self)
+
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if there are no blocks.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.MultiBlock()
+        >>> mesh.is_empty
+        True
+
+        >>> mesh.append(pv.Sphere())
+        >>> mesh.is_empty
+        False
+
+        """
+        return self.n_blocks == 0
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
