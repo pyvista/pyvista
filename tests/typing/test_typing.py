@@ -43,6 +43,19 @@ TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
 TYPING_CASES_ABS_PATH = PROJECT_ROOT / TYPING_CASES_REL_PATH
 TEST_FILE_NAMES = [f for f in os.listdir(TYPING_CASES_ABS_PATH) if f.endswith('.py')]
 
+# Define types to simplify in the "revealed type" output string from Mypy.
+# The key will be replaced by the value.
+REPLACE_TYPES = {
+    'pyvista.core.composite.MultiBlock': 'MultiBlock',
+    'pyvista.core.pointset.ExplicitStructuredGrid': 'ExplicitStructuredGrid',
+    'pyvista.core.pointset.StructuredGrid': 'StructuredGrid',
+    'pyvista.core.pointset.PolyData': 'PolyData',
+    'pyvista.core.pointset.UnstructuredGrid': 'UnstructuredGrid',
+    'pyvista.core.pointset.PointSet': 'PointSet',
+    'pyvista.core.grid.ImageData': 'ImageData',
+    'pyvista.core.grid.RectilinearGrid': 'RectilinearGrid',
+}
+
 
 class _TestCaseTuple(NamedTuple):
     file: str
@@ -69,7 +82,7 @@ def _reveal_types():
         # Clean up output
         stdout = str(result[0])
 
-        # group revealed types by (filepath), (line num), and (type)
+        # Group the revealed types by (filepath), (line num), and (type)
         pattern = r'^(.*?):(\d*?):\snote: Revealed type is "([^"]+)"'
         match = re.findall(pattern, stdout, re.MULTILINE)
         assert match is not None
@@ -77,18 +90,8 @@ def _reveal_types():
         # Make revealed types less verbose
         for i, group in enumerate(match):
             filepath, line_num, revealed = group
-            revealed = revealed.replace('pyvista.core.composite.MultiBlock', 'MultiBlock')
-            revealed = revealed.replace(
-                'pyvista.core.pointset.ExplicitStructuredGrid', 'ExplicitStructuredGrid'
-            )
-            revealed = revealed.replace('pyvista.core.pointset.StructuredGrid', 'StructuredGrid')
-            revealed = revealed.replace('pyvista.core.pointset.PolyData', 'PolyData')
-            revealed = revealed.replace(
-                'pyvista.core.pointset.UnstructuredGrid', 'UnstructuredGrid'
-            )
-            revealed = revealed.replace('pyvista.core.pointset.PointSet', 'PointSet')
-            revealed = revealed.replace('pyvista.core.grid.ImageData', 'ImageData')
-            revealed = revealed.replace('pyvista.core.grid.RectilinearGrid', 'RectilinearGrid')
+            for key, value in REPLACE_TYPES.items():
+                revealed = revealed.replace(key, value)
             match[i] = (filepath, line_num, revealed)
         return match
 
