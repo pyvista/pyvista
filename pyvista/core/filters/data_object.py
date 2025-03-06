@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import overload
 import warnings
 
 import numpy as np
@@ -26,7 +27,9 @@ from pyvista.core.utilities.helpers import wrap
 if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import RectilinearGrid
     from pyvista import RotationLike
+    from pyvista import StructuredGrid
     from pyvista import TransformLike
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
@@ -36,13 +39,29 @@ if TYPE_CHECKING:
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 
+    @overload
+    def transform(  # type: ignore[misc]
+        self: RectilinearGrid,
+        trans: TransformLike,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool | None = ...,
+        progress_bar: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
+    def transform(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        trans: TransformLike,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool | None = ...,
+        progress_bar: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
     def transform(  # type: ignore[misc]
         self: DataSet | MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Transform this mesh with a 4x4 transform.
 
         .. warning::
