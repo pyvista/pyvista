@@ -76,7 +76,7 @@ if TYPE_CHECKING:
     reveal_type(pv.ImageData().flip_z(inplace=False))           # EXPECTED_TYPE: "ImageData"
     reveal_type(pv.MultiBlock().flip_z(inplace=False))          # EXPECTED_TYPE: "MultiBlock"
 
-    # test rotate_vector
+    # test flip_normal
     reveal_type(pv.RectilinearGrid().flip_normal((0,0,1), inplace=False))   # EXPECTED_TYPE: "StructuredGrid"
     reveal_type(pv.ImageData().flip_normal((0,0,1), inplace=False))         # EXPECTED_TYPE: "ImageData"
     reveal_type(pv.MultiBlock().flip_normal((0,0,1), inplace=False))        # EXPECTED_TYPE: "MultiBlock"
