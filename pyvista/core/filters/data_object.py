@@ -114,8 +114,8 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Transformed dataset.  Return type matches input unless
+        DataSet | MultiBlock
+            Transformed dataset. Return type matches input unless
             input dataset is a :class:`pyvista.RectilinearGrid`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
@@ -337,8 +337,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Reflected dataset.  Return type matches input.
+        DataSet | MultiBlock
+            Reflected dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -410,8 +412,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Rotated dataset.
+        DataSet | MultiBlock
+            Rotated dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -488,8 +492,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Rotated dataset.
+        DataSet | MultiBlock
+            Rotated dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -567,8 +573,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Rotated dataset.
+        DataSet | MultiBlock
+            Rotated dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -652,8 +660,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Rotated dataset.
+        DataSet | MultiBlock
+            Rotated dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -731,8 +741,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Rotated dataset.
+        DataSet | MultiBlock
+            Rotated dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -773,12 +785,26 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def translate(  # type: ignore[misc]
+        self: RectilinearGrid,
+        xyz: VectorLike[float],
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def translate(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         xyz: VectorLike[float],
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def translate(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
+        xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Translate the mesh.
 
         .. note::
@@ -800,8 +826,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Translated dataset.
+        DataSet | MultiBlock
+            Translated dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -828,13 +856,29 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def scale(  # type: ignore[misc]
+        self: RectilinearGrid,
+        xyz: float | VectorLike[float],
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+        point: VectorLike[float] | None = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def scale(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        xyz: float | VectorLike[float],
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+        point: VectorLike[float] | None = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def scale(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
         point: VectorLike[float] | None = None,
-    ):
+    ) -> DataSet | MultiBlock:
         """Scale the mesh.
 
         .. note::
@@ -859,8 +903,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Scaled dataset.
+        DataSet | MultiBlock
+            Scaled dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -897,12 +943,26 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def flip_x(  # type: ignore[misc]
+        self: RectilinearGrid,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def flip_x(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def flip_x(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Flip mesh about the x-axis.
 
         .. note::
@@ -925,8 +985,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Flipped dataset.
+        DataSet | MultiBlock
+            Flipped dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -958,12 +1020,26 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def flip_y(  # type: ignore[misc]
+        self: RectilinearGrid,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def flip_y(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def flip_y(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Flip mesh about the y-axis.
 
         .. note::
@@ -986,8 +1062,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Flipped dataset.
+        DataSet | MultiBlock
+            Flipped dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -1019,12 +1097,26 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def flip_z(  # type: ignore[misc]
+        self: RectilinearGrid,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def flip_z(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def flip_z(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Flip mesh about the z-axis.
 
         .. note::
@@ -1047,8 +1139,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Flipped dataset.
+        DataSet | MultiBlock
+            Flipped dataset. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -1080,13 +1174,29 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def flip_normal(  # type: ignore[misc]
+        self: RectilinearGrid,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def flip_normal(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def flip_normal(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Flip mesh about the normal.
 
         .. note::
@@ -1112,8 +1222,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset flipped about its normal.
+        DataSet | MultiBlock
+            Dataset flipped about its normal. Return type matches input unless
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -1976,7 +2088,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
 
@@ -2063,7 +2175,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset with `cell_data` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.  Return type matches input.
@@ -2164,7 +2276,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2231,7 +2343,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset with the cell data transformed into point data.
             Return type matches input.
 
@@ -2276,7 +2388,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2348,7 +2460,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
 
@@ -2483,7 +2595,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.DataSet
+        DataSet | MultiBlock
             Dataset containing resampled data.
 
         See Also
