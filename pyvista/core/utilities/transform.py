@@ -2028,14 +2028,15 @@ class Transform(_vtk.vtkTransform):
 
         _, R, _, _, _ = self.decompose(homogeneous=True)
         R = R[:3, :3]
-        rotation = Rotation.from_matrix(R)
 
+        if representation == 'matrix':
+            return R
+
+        rotation = Rotation.from_matrix(R)
         if representation == 'rotation':
             return rotation
         elif representation == 'quat':
             return rotation.as_quat(*args, **kwargs)
-        elif representation == 'matrix':
-            return R
         elif representation == 'rotvec':
             return rotation.as_rotvec(*args, **kwargs)
         elif representation == 'mrp':
