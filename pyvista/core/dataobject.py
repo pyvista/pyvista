@@ -12,6 +12,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -41,6 +42,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+@promote_type(_vtk.vtkDataObject)
 @abstract_class
 class DataObject:
     """Methods common to all wrapped data objects.
@@ -909,3 +911,8 @@ class DataObject:
         # copy data
         self.copy_structure(mesh)  # type: ignore[arg-type]
         self.copy_attributes(mesh)  # type: ignore[arg-type]
+
+    @property
+    def is_empty(self) -> bool:
+        """Return ``True`` if the object is empty."""
+        raise NotImplementedError
