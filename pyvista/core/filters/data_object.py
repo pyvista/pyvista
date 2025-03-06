@@ -30,15 +30,15 @@ if TYPE_CHECKING:
     from pyvista import RotationLike
     from pyvista import TransformLike
     from pyvista import VectorLike
-    from pyvista.core._typing_core import ConcreteDataSetType
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.core._typing_core import _DataSetType
 
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 
-    def transform(
-        self: ConcreteDataSetType | MultiBlock,
+    def transform(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
@@ -226,7 +226,7 @@ class DataObjectFilters:
         _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
-        def _restore_active_scalars(input_: ConcreteDataSetAlias, output_: ConcreteDataSetAlias):
+        def _restore_active_scalars(input_: _DataSetType, output_: _DataSetType):
             # make the previously active scalars active again
             input_.point_data.active_scalars_name = active_point_scalars_name
             input_.cell_data.active_scalars_name = active_cell_scalars_name
@@ -237,7 +237,7 @@ class DataObjectFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         if isinstance(self, pyvista.RectilinearGrid):
-            output: ConcreteDataSetAlias = pyvista.StructuredGrid()
+            output: DataSet | MultiBlock = pyvista.StructuredGrid()
         elif inplace:
             output = self
         else:
@@ -270,8 +270,8 @@ class DataObjectFilters:
             output.copy_from(res, deep=True)
         return output
 
-    def reflect(
-        self: ConcreteDataSetType | MultiBlock,
+    def reflect(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         inplace: bool = False,
@@ -327,8 +327,8 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    def rotate_x(
-        self: ConcreteDataSetType | MultiBlock,
+    def rotate_x(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -390,8 +390,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate_y(
-        self: ConcreteDataSetType | MultiBlock,
+    def rotate_y(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -452,8 +452,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate_z(
-        self: ConcreteDataSetType | MultiBlock,
+    def rotate_z(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         angle: float,
         point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
@@ -515,8 +515,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate_vector(
-        self: ConcreteDataSetType | MultiBlock,
+    def rotate_vector(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = None,
@@ -582,8 +582,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate(
-        self: ConcreteDataSetType | MultiBlock,
+    def rotate(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -655,8 +655,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def translate(
-        self: ConcreteDataSetType | MultiBlock,
+    def translate(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -710,8 +710,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def scale(
-        self: ConcreteDataSetType | MultiBlock,
+    def scale(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -779,8 +779,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_x(
-        self: ConcreteDataSetType | MultiBlock,
+    def flip_x(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -840,8 +840,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_y(
-        self: ConcreteDataSetType | MultiBlock,
+    def flip_y(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -901,8 +901,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_z(
-        self: ConcreteDataSetType | MultiBlock,
+    def flip_z(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -962,8 +962,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_normal(
-        self: ConcreteDataSetType | MultiBlock,
+    def flip_normal(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -1027,8 +1027,8 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def _clip_with_function(
-        self: ConcreteDataSetType | MultiBlock,
+    def _clip_with_function(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         function: _vtk.vtkImplicitFunction,
         invert: bool = True,
         value: float = 0.0,
@@ -1124,7 +1124,7 @@ class DataObjectFilters:
                 active_scalars_info.append(block.active_scalars_info)  # type: ignore[union-attr]
                 block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)  # type: ignore[union-attr]
 
-        if isinstance(self, _vtk.vtkPolyData):
+        if isinstance(self, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
@@ -1149,8 +1149,8 @@ class DataObjectFilters:
             clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return clipped
 
-    def clip(
-        self: ConcreteDataSetType | MultiBlock,
+    def clip(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
         invert: bool = True,
@@ -1248,8 +1248,8 @@ class DataObjectFilters:
                 return self
         return result
 
-    def clip_box(
-        self: ConcreteDataSetType | MultiBlock,
+    def clip_box(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,
         factor: float = 0.35,
@@ -1370,8 +1370,8 @@ class DataObjectFilters:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
 
-    def slice_implicit(
-        self: ConcreteDataSetType | MultiBlock,
+    def slice_implicit(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         implicit_function: _vtk.vtkImplicitFunction,
         generate_triangles: bool = False,
         contour: bool = False,
@@ -1431,8 +1431,8 @@ class DataObjectFilters:
             return output.contour()
         return output
 
-    def slice(
-        self: ConcreteDataSetType | MultiBlock,
+    def slice(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
         generate_triangles: bool = False,
@@ -1498,8 +1498,8 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    def slice_orthogonal(
-        self: ConcreteDataSetType | MultiBlock,
+    def slice_orthogonal(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         x: float | None = None,
         y: float | None = None,
         z: float | None = None,
@@ -1601,8 +1601,8 @@ class DataObjectFilters:
         )
         return output
 
-    def slice_along_axis(
-        self: ConcreteDataSetType | MultiBlock,
+    def slice_along_axis(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
         tolerance: float | None = None,
@@ -1731,8 +1731,8 @@ class DataObjectFilters:
             output.append(slc, f'slice{i}')
         return output
 
-    def slice_along_line(
-        self: ConcreteDataSetType | MultiBlock,
+    def slice_along_line(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         line: pyvista.PolyData,
         generate_triangles: bool = False,
         contour: bool = False,
@@ -1813,8 +1813,8 @@ class DataObjectFilters:
             return output.contour()
         return output
 
-    def extract_all_edges(
-        self: ConcreteDataSetType | MultiBlock,
+    def extract_all_edges(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         use_all_points: bool = False,
         clear_data: bool = False,
         progress_bar: bool = False,
@@ -1883,8 +1883,8 @@ class DataObjectFilters:
             output.clear_data()
         return output
 
-    def elevation(
-        self: ConcreteDataSetType | MultiBlock,
+    def elevation(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
         scalar_range: str | VectorLike[float] | None = None,
@@ -1995,8 +1995,8 @@ class DataObjectFilters:
             output.point_data.active_scalars_name = self.point_data.active_scalars_name
         return output
 
-    def compute_cell_sizes(
-        self: ConcreteDataSetType | MultiBlock,
+    def compute_cell_sizes(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         length: bool = True,
         area: bool = True,
         volume: bool = True,
@@ -2054,8 +2054,8 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Sizes')
         return _get_output(alg)
 
-    def cell_centers(
-        self: ConcreteDataSetType | MultiBlock, vertex: bool = True, progress_bar: bool = False
+    def cell_centers(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType, vertex: bool = True, progress_bar: bool = False
     ):
         """Generate points at the center of the cells in this dataset.
 
@@ -2101,8 +2101,8 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
 
-    def cell_data_to_point_data(
-        self: ConcreteDataSetType | MultiBlock,
+    def cell_data_to_point_data(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         pass_cell_data: bool = False,
         progress_bar: bool = False,
     ):
@@ -2166,8 +2166,8 @@ class DataObjectFilters:
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ctp(
-        self: ConcreteDataSetType | MultiBlock,
+    def ctp(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         pass_cell_data: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -2204,8 +2204,8 @@ class DataObjectFilters:
             **kwargs,
         )
 
-    def point_data_to_cell_data(
-        self: ConcreteDataSetType | MultiBlock,
+    def point_data_to_cell_data(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         pass_point_data: bool = False,
         categorical: bool = False,
         progress_bar: bool = False,
@@ -2283,8 +2283,8 @@ class DataObjectFilters:
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ptc(
-        self: ConcreteDataSetType | MultiBlock,
+    def ptc(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         pass_point_data: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -2321,8 +2321,8 @@ class DataObjectFilters:
             **kwargs,
         )
 
-    def triangulate(
-        self: ConcreteDataSetType | MultiBlock, inplace: bool = False, progress_bar: bool = False
+    def triangulate(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType, inplace: bool = False, progress_bar: bool = False
     ):
         """Return an all triangle mesh.
 
@@ -2366,8 +2366,8 @@ class DataObjectFilters:
             return self
         return mesh
 
-    def sample(
-        self: ConcreteDataSetType | MultiBlock,
+    def sample(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
         target: DataSet | _vtk.vtkDataSet,
         tolerance: float | None = None,
         pass_cell_data: bool = True,
