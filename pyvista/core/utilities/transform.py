@@ -19,13 +19,15 @@ from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
-if TYPE_CHECKING:
-    from pyvista.core._typing_core import ConcreteDataSetOrMultiBlockType
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
+    from pyvista import MultiBlock
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
 class Transform(_vtk.vtkTransform):
@@ -1441,16 +1443,16 @@ class Transform(_vtk.vtkTransform):
     @overload
     def apply(
         self: Transform,
-        obj: ConcreteDataSetOrMultiBlockType,
+        obj: _DataSetOrMultiBlockType,
         /,
         mode: Literal['all_vectors'] | None = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-    ) -> ConcreteDataSetOrMultiBlockType: ...
+    ) -> _DataSetOrMultiBlockType: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetOrMultiBlockType,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
         mode: Literal['points', 'vectors', 'all_vectors'] | None = None,
         *,
@@ -1691,12 +1693,12 @@ class Transform(_vtk.vtkTransform):
 
     def apply_to_dataset(
         self,
-        dataset: ConcreteDataSetOrMultiBlockType,
+        dataset: _DataSetOrMultiBlockType,
         /,
         all_vectors: bool = False,
         copy: bool = True,
         inverse: bool = False,
-    ) -> ConcreteDataSetOrMultiBlockType:
+    ) -> _DataSetOrMultiBlockType:
         """Apply the current transformation :attr:`matrix` to a dataset.
 
         This is equivalent to ``apply(dataset, mode)`` where ``mode`` is ``'all_vectors'``
