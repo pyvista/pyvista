@@ -1,21 +1,19 @@
-"""Test static type annotations revealed by Mypy.
+"""Test static and runtime type annotations revealed by Mypy.
 
-This test will automatically analyze all files in the test validation_cases directory.
-To add new test cases, simply add a new .py file with each test case following
-the format:
+This test will automatically analyze all files in `tests/typing/typing_test_cases`
+directory. To add new test cases, simply add a new .py file with each test case
+following the format:
 
     reveal_type(arg)  # EXPECTED_TYPE: "<T>"
 
 where `arg` is any argument you want mypy to analyze, and <T> is the expected
 revealed type returned by mypy. Note: the output types from mypy are truncated
-with the module names removed, e.g. `typing.Sequence` -> `Sequence`,
-`builtins.float` -> `float`, etc.
+based on the mappings in the `REPLACE_TYPES` dictionary.
 
 """
 
 from __future__ import annotations
 
-import importlib
 import os
 from pathlib import Path
 import re
@@ -70,8 +68,6 @@ def _reveal_types():
     # Calling from root ensures the config is loaded and imports are found
     # NOTE: running mypy can be slow, avoid making excessive calls
     cur = Path().cwd()
-    if importlib.util.find_spec('npt_promote') is None:
-        raise ModuleNotFoundError("Package 'npt-promote' is required for this test.")
     try:
         os.chdir(PROJECT_ROOT)
 
