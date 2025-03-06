@@ -1851,7 +1851,7 @@ class MultiBlock(
             elif isinstance(block, pyvista.PolyData):
                 return block.copy(deep=False) if copy else block
             else:
-                return block.extract_surface()  # type: ignore[misc]
+                return block.extract_surface()
 
         return self.generic_filter(block_filter, _skip_none=False)
 
