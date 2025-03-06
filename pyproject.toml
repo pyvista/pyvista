@@ -58,7 +58,7 @@ pinned = [ # Pinned versions of core dependencies
   'typing-extensions<4.13.0',
 ]
 
-_typing = [
+typing_core = [
   'pyvista[pinned]',
 
   'mypy<1.14.0',
@@ -66,10 +66,10 @@ _typing = [
   'trimesh<4.6.0',
 ]
 
-typing = ['numpy>=2.0.0', 'pyvista[_typing]']
+typing = ['numpy>=2.0.0', 'pyvista[typing_core]']
 
 test = [
-  'pyvista[_typing]',
+  'pyvista[typing_core]',
 
   'cmocean<4.0.4',
   'colorcet<3.2.0',
