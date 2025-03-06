@@ -14,12 +14,15 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
+    from scipy.spatial.transform import Rotation
+
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista.core._typing_core import MatrixLike
@@ -252,7 +255,12 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                [self.compose(t) for t in trans]
+                if all(isinstance(item, Sequence) for item in trans):
+                    # Init from a nested sequence array
+                    self.compose(trans)
+                else:
+                    # Init from sequence of transformations
+                    [self.compose(t) for t in trans]
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
@@ -1913,3 +1921,128 @@ class Transform(_vtk.vtkTransform):
     @check_finite.setter
     def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
+
+    def as_rotation(
+        self,
+        representation: Literal[
+            'rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'
+        ] = 'rotation',
+        *args,
+        **kwargs,
+    ) -> Rotation | NumpyArray[float]:
+        """Return the rotation component in any representation allowed by SciPy's :class:`scipy.spatial.transform.Rotation` class.
+
+        The current :attr:`matrix` is first decomposed to extract the rotation component
+        and then returned as the specified representation.
+
+        .. note::
+
+            This method depends on the ``scipy`` package which must be installed to use it.
+
+        Parameters
+        ----------
+        representation
+            Representation of the rotation.
+
+            - ``'rotation'``: Return as an instance of :class:`scipy.spatial.transform.Rotation`.
+            - ``'quat'``: Represent as quaternions using :meth:`scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using :meth:`scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`
+            - ``'euler'``: Represent as Euler angles using :meth:`scipy.spatial.transform.Rotation.as_euler`
+            - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`
+
+        *args
+            Arguments passed to the ``Rotation`` method.
+
+        **kwargs
+            Keyword arguments passed to the ``Rotation`` method.
+
+        Returns
+        -------
+        scipy.spatial.transform.Rotation | np.ndarray
+            Rotation object or array depending on the representation.
+
+        Examples
+        --------
+        Create a rotation matrix and initialize a class:`Transform` from it.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> transform = pv.Transform(matrix)
+
+        Represent the rotation as :class:`scipy.spatial.transform.Rotation` instance.
+
+        >>> rot = transform.as_rotation()
+        >>> rot
+        <scipy.spatial.transform._rotation.Rotation ...>
+
+        Represent the rotation as a quaternion.
+
+        >>> rot = transform.as_rotation('quat')
+        >>> rot
+        array([0.        , 0.        , 0.70710678, 0.70710678])
+
+        Represent the rotation as a rotation vector. The vector has a direction
+        ``(0, 0, 1)`` and magnitude of ``pi/2``.
+
+        >>> rot = transform.as_rotation('rotvec')
+        >>> rot
+        array([0.        , 0.        , 1.57079633])
+
+        Represent the rotation as a Modified Rodrigues Parameters vector.
+
+        >>> rot = transform.as_rotation('mrp')
+        >>> rot
+        array([0.        , 0.        , 0.41421356])
+
+        Represent the rotation as x-y-z Euler angles in degrees.
+
+        >>> rot = transform.as_rotation('euler', 'xyz', degrees=True)
+        >>> rot
+        array([ 0.,  0., 90.])
+
+        Represent the rotation as extrinsic x-y-z Davenport angles in degrees.
+
+        >>> rot = transform.as_rotation(
+        ...     'davenport', np.eye(3), 'extrinsic', degrees=True
+        ... )
+        >>> rot
+        array([-1.27222187e-14,  0.00000000e+00,  9.00000000e+01])
+
+        """
+        try:
+            from scipy.spatial.transform import Rotation
+        except ImportError:
+            raise ImportError("The 'scipy' package must be installed to use `as_rotation`")
+
+        representation = representation.lower()
+        _validation.check_contains(
+            ['rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'],
+            must_contain=representation,
+            name='representation',
+        )
+        if representation in ['rotation', 'matrix']:
+            assert_empty_kwargs(**kwargs)
+
+        _, R, _, _, _ = self.decompose(homogeneous=True)
+        R = R[:3, :3]
+        rotation = Rotation.from_matrix(R)
+
+        if representation == 'rotation':
+            return rotation
+        elif representation == 'quat':
+            return rotation.as_quat(*args, **kwargs)
+        elif representation == 'matrix':
+            return R
+        elif representation == 'rotvec':
+            return rotation.as_rotvec(*args, **kwargs)
+        elif representation == 'mrp':
+            return rotation.as_mrp(*args, **kwargs)
+        elif representation == 'euler':
+            return rotation.as_euler(*args, **kwargs)
+        elif representation == 'davenport':
+            return rotation.as_davenport(*args, **kwargs)
+        else:  # pragma: no cover
+            raise RuntimeError(f"Unexpected rotation type '{representation}'")
