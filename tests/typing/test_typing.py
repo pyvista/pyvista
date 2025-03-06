@@ -14,6 +14,7 @@ based on the mappings in the `REPLACE_TYPES` dictionary.
 
 from __future__ import annotations
 
+import importlib
 import os
 from pathlib import Path
 import re
@@ -67,6 +68,9 @@ def _reveal_types():
     # Call mypy from the project root dir on the typing test case files
     # Calling from root ensures the config is loaded and imports are found
     # NOTE: running mypy can be slow, avoid making excessive calls
+    if importlib.util.find_spec('mypy') is None:
+        raise ModuleNotFoundError("Package 'mypy' is required for this test.")
+
     cur = Path().cwd()
     try:
         os.chdir(PROJECT_ROOT)

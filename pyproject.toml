@@ -76,6 +76,7 @@ test = [
   'ipython<9.0.0',
   'ipywidgets<9.0.0',
   'meshio<5.4.0',
+  'mypy<1.14.0',
   'nest_asyncio<1.6.1',
   'numpydoc==1.8.0',
   'pyanalyze<=0.13.1',
