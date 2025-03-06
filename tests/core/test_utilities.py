@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
+from scipy.spatial.transform import Rotation
 import vtk
 
 import pyvista as pv
@@ -1798,6 +1799,23 @@ def test_transform_decompose_dtype(dtype, homogeneous):
     assert np.issubdtype(N.dtype, dtype)
     assert np.issubdtype(S.dtype, dtype)
     assert np.issubdtype(K.dtype, dtype)
+
+
+@pytest.mark.parametrize(
+    ('representation', 'args', 'expected_type'),
+    [
+        ('rotation', (), Rotation),
+        ('quat', (), np.ndarray),
+        ('matrix', (), np.ndarray),
+        ('rotvec', (), np.ndarray),
+        ('mrp', (), np.ndarray),
+        ('euler', ('xyz',), np.ndarray),
+        ('davenport', (np.eye(3), 'extrinsic'), np.ndarray),
+    ],
+)
+def test_transform_as_rotation(representation, args, expected_type):
+    out = pv.Transform().as_rotation(representation, *args)
+    assert isinstance(out, expected_type)
 
 
 @pytest.mark.parametrize(
