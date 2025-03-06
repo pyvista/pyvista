@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import reveal_type
+
+from typing_extensions import reveal_type
 
 if TYPE_CHECKING:
     import numpy as np
