@@ -1802,20 +1802,22 @@ def test_transform_decompose_dtype(dtype, homogeneous):
 
 
 @pytest.mark.parametrize(
-    ('representation', 'args', 'expected_type'),
+    ('representation', 'args', 'expected_type', 'expected_shape'),
     [
-        ('rotation', (), Rotation),
-        ('quat', (), np.ndarray),
-        ('matrix', (), np.ndarray),
-        ('rotvec', (), np.ndarray),
-        ('mrp', (), np.ndarray),
-        ('euler', ('xyz',), np.ndarray),
-        ('davenport', (np.eye(3), 'extrinsic'), np.ndarray),
+        ('rotation', (), Rotation, None),
+        ('quat', (), np.ndarray, (4,)),
+        ('matrix', (), np.ndarray, (3, 3)),
+        ('rotvec', (), np.ndarray, (3,)),
+        ('mrp', (), np.ndarray, (3,)),
+        ('euler', ('xyz',), np.ndarray, (3,)),
+        ('davenport', (np.eye(3), 'extrinsic'), np.ndarray, (3,)),
     ],
 )
-def test_transform_as_rotation(representation, args, expected_type):
+def test_transform_as_rotation(representation, args, expected_type, expected_shape):
     out = pv.Transform().as_rotation(representation, *args)
     assert isinstance(out, expected_type)
+    if expected_shape:
+        assert out.shape == expected_shape
 
 
 @pytest.mark.parametrize(
