@@ -167,8 +167,11 @@ class DataObject:
                 Iterator[tuple[tuple[int, ...], str, pyvista.MultiBlock]], iterator
             )
             for index, name, nested_multiblock in typed_iterator:
-                index_fmt = ''.join([f'[{ind}]' for ind in index])
                 if len(nested_multiblock.field_data.keys()) > 0:
+                    # Avoid circular import
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(index)
                     warnings.warn(
                         f"Nested MultiBlock at index {index_fmt} with name '{name}' has field data which will not be saved.\n"
                         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
