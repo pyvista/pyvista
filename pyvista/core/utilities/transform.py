@@ -1934,7 +1934,7 @@ class Transform(_vtk.vtkTransform):
         """Return the rotation component in any representation allowed by SciPy's :class:`scipy.spatial.transform.Rotation` class.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component
-        and then returned as the specified representation.
+        and then returned with the specified representation.
 
         .. note::
 
@@ -1954,10 +1954,12 @@ class Transform(_vtk.vtkTransform):
             - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`
 
         *args
-            Arguments passed to the ``Rotation`` method.
+            Arguments passed to the ``Rotation`` method for the specified
+            representation.
 
         **kwargs
-            Keyword arguments passed to the ``Rotation`` method.
+            Keyword arguments passed to the ``Rotation`` method for the specified
+            representation.
 
         Returns
         -------
