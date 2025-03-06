@@ -1561,12 +1561,12 @@ class PolyDataFilters(DataSetFilters):
         self,
         target_reduction,
         volume_preservation: bool = False,
-        attribute_error: bool = False,
-        scalars: bool = True,
-        vectors: bool = True,
-        normals: bool = False,
-        tcoords: bool = True,
-        tensors: bool = True,
+        attribute_error: bool | None = None,
+        scalars: bool | None = None,
+        vectors: bool | None = None,
+        normals: bool | None = None,
+        tcoords: bool | None = None,
+        tensors: bool | None = None,
         scalars_weight=0.1,
         vectors_weight=0.1,
         normals_weight=0.1,
@@ -1574,8 +1574,16 @@ class PolyDataFilters(DataSetFilters):
         tensors_weight=0.1,
         inplace: bool = False,
         progress_bar: bool = False,
+        boundary_constraints: bool = False,
+        boundary_weight: float = 1.0,
+        enable_all_attribute_error: bool = False,
     ):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
+
+        .. versionchanged:: 0.45
+          ``scalars``, ``vectors``, ``normals``, ``tcoords`` and ``tensors`` are now disabled by default.
+          They can be enabled all together using ``enable_all_attribute_error``.
+
 
         Parameters
         ----------
@@ -1597,22 +1605,23 @@ class PolyDataFilters(DataSetFilters):
             decimation. If ``True``, the following flags are used to specify
             which attributes are to be included in the error calculation.
 
-        scalars : bool, default: True
-            If attribute errors are to be included in the metric (i.e.,
-            ``attribute_error`` is ``True``), then these flags control
-            which attributes are to be included in the error
-            calculation.
+            .. deprecated:: 0.45.0
 
-        vectors : bool, default: True
+        scalars : bool, default: False
+            This flags control specifically if the **scalar** attributes
+            are to be included in the error calculation.
+
+        vectors : bool, default: False
             See ``scalars`` parameter.
 
         normals : bool, default: False
             See ``scalars`` parameter.
+            .. versionchanged:: 0.45.0
 
-        tcoords : bool, default: True
+        tcoords : bool, default: False
             See ``scalars`` parameter.
 
-        tensors : bool, default: True
+        tensors : bool, default: False
             See ``scalars`` parameter.
 
         scalars_weight : float, default: 0.1
@@ -1637,6 +1646,26 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        boundary_constraints: bool, default: False
+            Use the legacy weighting by boundary_edge_length instead of by
+            boundary_edge_length^2 for backwards compatibility.
+            It requires vtk>=9.3.0.
+
+            .. versionadded:: 0.45.0
+
+        boundary_weight: float, default: 1.0
+            A floating point factor to weigh the boundary quadric constraints
+            by: higher factors further constrain the boundary.
+            It requires vtk>=9.3.0.
+
+            .. versionadded:: 0.45.0
+
+        enable_all_attribute_error: bool, default: False
+            This flag control the default value of all attribute metrics to
+            eventually include them in the error calculation
+
+            .. versionadded:: 0.45.0
 
         Returns
         -------
@@ -1669,28 +1698,64 @@ class PolyDataFilters(DataSetFilters):
         >>> decimated = sphere.decimate(0.75)
         >>> decimated.plot(show_edges=True, line_width=2)
 
+        Decimate taking scalars attributes into account:
+
+        >>> decimated = sphere.decimate(0.5, scalars=True)
+
+        Decimate taking all attributes **except** normals into account:
+
+        >>> decimated = sphere.decimate(
+        ...     0.5, enable_all_attribute_error=True, normals=False
+        ... )
+
         See :ref:`decimate_example` for more examples using this filter.
 
         """
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
+        has_attribute_error = False if attribute_error is None else attribute_error
+        if has_attribute_error:  # pragma: no cover
+            warnings.warn(
+                'Since 0.45, use of `attribute_error=True` is deprecated.'
+                "Use 'enable_all_attribute_error' instead.",
+                PyVistaDeprecationWarning,
+            )
+            enable_all_attribute_error = True
+            if normals is None:
+                normals = False
+
+        # Get each attributes if defined, otherwise fallback to the
+        # enable_all_attribute_error value
+        use_scalars = enable_all_attribute_error if scalars is None else scalars
+        use_vectors = enable_all_attribute_error if vectors is None else vectors
+        use_normals = enable_all_attribute_error if normals is None else normals
+        use_tcoords = enable_all_attribute_error if tcoords is None else tcoords
+        use_tensors = enable_all_attribute_error if tensors is None else tensors
+        use_attribute = use_scalars or use_vectors or use_normals or use_tcoords or use_tensors
+
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
 
         alg.SetVolumePreservation(volume_preservation)
-        alg.SetAttributeErrorMetric(attribute_error)
-        alg.SetScalarsAttribute(scalars)
-        alg.SetVectorsAttribute(vectors)
-        alg.SetNormalsAttribute(normals)
-        alg.SetTCoordsAttribute(tcoords)
-        alg.SetTensorsAttribute(tensors)
+        alg.SetAttributeErrorMetric(use_attribute)
+        alg.SetScalarsAttribute(use_scalars)
+        alg.SetVectorsAttribute(use_vectors)
+        alg.SetNormalsAttribute(use_normals)
+        alg.SetTCoordsAttribute(use_tcoords)
+        alg.SetTensorsAttribute(use_tensors)
         alg.SetScalarsWeight(scalars_weight)
         alg.SetVectorsWeight(vectors_weight)
         alg.SetNormalsWeight(normals_weight)
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
+        if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
+            if boundary_constraints:
+                warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
+        else:
+            alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
+            alg.SetBoundaryWeightFactor(boundary_weight)
 
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Decimating Mesh')
@@ -3495,12 +3560,11 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAngle(angle)
         if pyvista.vtk_version_info >= (9, 1, 0):
             alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
-        else:  # pragma: no cover
-            if rotation_axis != (0, 0, 1):
-                raise VTKVersionError(
-                    'The installed version of VTK does not support '
-                    'setting the direction vector of the axis around which the rotation is done.',
-                )
+        elif rotation_axis != (0, 0, 1):
+            raise VTKVersionError(
+                'The installed version of VTK does not support '
+                'setting the direction vector of the axis around which the rotation is done.',
+            )
 
         _update_alg(alg, progress_bar, 'Extruding')
         output = wrap(alg.GetOutput())

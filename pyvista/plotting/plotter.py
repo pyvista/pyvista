@@ -20,6 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import Union
 from typing import cast
 import uuid
 import warnings
@@ -464,11 +465,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
-
-        # register last actor in actors
-        actor = self.renderer.GetActors().GetLastItem()
-        name = actor.GetAddressAsString('')
-        self.renderer._actors[name] = actor
 
         # set camera position to a three.js viewing perspective
         if set_camera:
@@ -1601,8 +1597,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
-    def actors(self) -> dict[str, _vtk.vtkActor]:  # numpydoc ignore=RT01
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
+
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
 
         Returns
         -------
@@ -1643,12 +1645,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of the active renderer.
+        """Return the bounds of all VISIBLE actors present in the active rendering window.
+
+        Actors with ``visibility`` disabled or with ``use_bounds`` disabled are `not`
+        included in the bounds.
+
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
 
         Returns
         -------
-        tuple[numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64]
-            Bounds of the active renderer.
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
 
         Examples
         --------
@@ -1660,6 +1675,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         return self.renderer.bounds
+
+    @wraps(Renderer.compute_bounds)
+    def compute_bounds(self, *args, **kwargs) -> BoundsTuple:  # numpydoc ignore=PR01,RT01
+        """Return the bounds of actors present in the renderer."""
+        return self.renderer.compute_bounds(*args, **kwargs)
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
@@ -2156,7 +2176,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         for renderer in self.renderers:
-            for actor in renderer._actors.values():
+            for actor in renderer._actors:
                 if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
                     if hasattr(prop, 'SetPointSize'):
@@ -3624,12 +3644,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # each pipeline request
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
-            else:
-                # Otherwise, make sure the mesh object's scalars are set
-                if field == FieldAssociation.POINT:
-                    mesh.point_data.active_scalars_name = original_scalar_name
-                elif field == FieldAssociation.CELL:
-                    mesh.cell_data.active_scalars_name = original_scalar_name
+            # Otherwise, make sure the mesh object's scalars are set
+            elif field == FieldAssociation.POINT:
+                mesh.point_data.active_scalars_name = original_scalar_name
+            elif field == FieldAssociation.CELL:
+                mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -4211,7 +4230,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise ValueError('Invalid resolution dimensions.')
                 volume.spacing = resolution
             else:
-                volume = wrap(volume)
+                # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
+                #   to remove the need to cast the type here
+                volume = cast(Union[pyvista.MultiBlock, pyvista.DataSet], wrap(volume))
                 if not is_pyvista_dataset(volume):
                     raise TypeError(
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.',
@@ -6500,7 +6521,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return [
             tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
-            if name in self.renderers[index]._actors
+            if name in self.renderers[index]._actors.keys()
         ]
 
 

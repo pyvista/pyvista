@@ -56,14 +56,10 @@ ids_to_colors = dataset.user_dict['ids_to_colors']
 #     This mapping is specific to the PyVista datasets and is not part of the
 #     TotalSegmentator data.
 
-print(
-    '{\n'
-    + '\n'.join(
-        f'    {"'" + name + "':":<32} ({R:>3}, {G:>3}, {B:>3}),'
-        for name, (R, G, B) in names_to_colors.items()
-    )
-    + '\n}',
-)
+print('{')
+for name, (R, G, B) in names_to_colors.items():
+    print(f'{name!r:<32}: ({R:>3}, {G:>3}, {B:>3}),')
+print('}')
 
 # %%
 # Utility Functions
@@ -246,3 +242,6 @@ skeleton = [
 
 # Plot the labels associated with these terms.
 plot_anatomy(skeleton)
+
+# %%
+# .. tags:: medical

@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import Union
-from typing import cast
 from typing import overload
 
 import numpy as np
@@ -21,9 +19,9 @@ from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -76,7 +74,7 @@ class Transform(_vtk.vtkTransform):
 
     See Also
     --------
-    :meth:`pyvista.DataSetFilters.transform`
+    pyvista.DataObjectFilters.transform
         Apply a transformation to a mesh.
 
     Examples
@@ -398,6 +396,7 @@ class Transform(_vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
         """
         return self._point
 
@@ -506,7 +505,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.scale`
+        pyvista.DataObjectFilters.scale
             Scale a mesh.
 
         Examples
@@ -602,7 +601,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.reflect`
+        pyvista.DataObjectFilters.reflect
             Reflect a mesh.
 
         Examples
@@ -668,7 +667,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_x
+        pyvista.DataObjectFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -728,7 +727,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_y
+        pyvista.DataObjectFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -788,7 +787,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_z
+        pyvista.DataObjectFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -842,7 +841,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.translate`
+        pyvista.DataObjectFilters.translate
             Translate a mesh.
 
         Examples
@@ -912,7 +911,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate
+        pyvista.DataObjectFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -1009,7 +1008,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_x
+        pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1076,7 +1075,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_y
+        pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1143,7 +1142,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_z
+        pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1214,7 +1213,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_vector
+        pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
@@ -1443,13 +1442,13 @@ class Transform(_vtk.vtkTransform):
     @overload
     def apply(
         self: Transform,
-        obj: ConcreteDataSetType,
+        obj: DataSet,
         /,
         *,
         inverse: bool = ...,
         copy: bool = ...,
         transform_all_input_vectors: bool = ...,
-    ) -> ConcreteDataSetType: ...
+    ) -> DataSet: ...
     @overload
     def apply(
         self: Transform,
@@ -1462,7 +1461,7 @@ class Transform(_vtk.vtkTransform):
     ) -> MultiBlock: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetType | MultiBlock,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
         *,
         inverse: bool = False,
@@ -1475,7 +1474,7 @@ class Transform(_vtk.vtkTransform):
 
             Points with integer values are cast to a float type before the
             transformation is applied. A similar casting is also performed when
-            transforming datasets. See also the notes at :func:`~pyvista.DataSetFilters.transform`
+            transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
         Parameters
@@ -1505,7 +1504,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSetFilters.transform
+        pyvista.DataObjectFilters.transform
             Transform a dataset.
 
         Examples
@@ -1547,7 +1546,6 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
-            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
