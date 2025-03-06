@@ -71,6 +71,9 @@ def _reveal_types():
     if importlib.util.find_spec('mypy') is None:
         raise ModuleNotFoundError("Package 'mypy' is required for this test.")
 
+    if importlib.util.find_spec('npt_promote') is None:
+        raise ModuleNotFoundError("Package 'npt-promote' is required for this test.")
+
     cur = Path().cwd()
     try:
         os.chdir(PROJECT_ROOT)
