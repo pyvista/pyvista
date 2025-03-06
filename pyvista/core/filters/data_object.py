@@ -288,14 +288,32 @@ class DataObjectFilters:
             output.copy_from(res, deep=True)
         return output
 
+    @overload
+    def reflect(  # type: ignore[misc]
+        self: RectilinearGrid,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = ...,
+        inplace: bool = ...,
+        transform_all_input_vectors: bool = ...,
+        progress_bar: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def reflect(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = ...,
+        inplace: bool = ...,
+        transform_all_input_vectors: bool = ...,
+        progress_bar: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def reflect(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         inplace: bool = False,
         transform_all_input_vectors: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Reflect a dataset across a plane.
 
         Parameters
@@ -345,13 +363,29 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
+    @overload
+    def rotate_x(  # type: ignore[misc]
+        self: RectilinearGrid,
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def rotate_x(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def rotate_x(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Rotate mesh about the x-axis.
 
         .. note::
@@ -408,13 +442,29 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def rotate_y(  # type: ignore[misc]
+        self: RectilinearGrid,
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def rotate_y(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def rotate_y(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Rotate mesh about the y-axis.
 
         .. note::
@@ -470,13 +520,29 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def rotate_z(  # type: ignore[misc]
+        self: RectilinearGrid,
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def rotate_z(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def rotate_z(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
+        angle: float,
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Rotate mesh about the z-axis.
 
         .. note::
@@ -533,14 +599,32 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
+    @overload
+    def rotate_vector(  # type: ignore[misc]
+        self: RectilinearGrid,
+        vector: VectorLike[float],
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
     def rotate_vector(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
+        vector: VectorLike[float],
+        angle: float,
+        point: VectorLike[float] | None = ...,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def rotate_vector(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | MultiBlock:
         """Rotate mesh about a vector.
 
         .. note::
