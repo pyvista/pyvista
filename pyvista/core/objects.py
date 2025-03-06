@@ -383,7 +383,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if the table has no rows or columns.
+        """Return ``True`` if the table has no rows and no columns.
 
         .. versionadded:: 0.45
 
