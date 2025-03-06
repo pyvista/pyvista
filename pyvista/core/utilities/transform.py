@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import cast
 from typing import overload
 
 import numpy as np
@@ -1925,9 +1924,8 @@ class Transform(_vtk.vtkTransform):
 
     def as_rotation(
         self,
-        representation: Literal[
-            'rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'
-        ] = 'rotation',
+        representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']
+        | None = None,
         *args,
         **kwargs,
     ) -> Rotation | NumpyArray[float]:
@@ -1942,16 +1940,18 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        representation
+        representation : str, optional
             Representation of the rotation.
 
-            - ``'rotation'``: Return as an instance of :class:`scipy.spatial.transform.Rotation`.
             - ``'quat'``: Represent as quaternions using :meth:`scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
             - ``'matrix'``: Represent as a 3x3 matrix using :meth:`scipy.spatial.transform.Rotation.as_matrix`.
             - ``'rotvec'``: Represent as a rotation vector using :meth:`scipy.spatial.transform.Rotation.as_rotvec`.
             - ``'mrp'``: Represent as Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`.
             - ``'euler'``: Represent as Euler angles using :meth:`scipy.spatial.transform.Rotation.as_euler`.
             - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`.
+
+            If no representation is given, then an instance of :class:`scipy.spatial.transform.Rotation`
+            is returned by default.
 
         *args
             Arguments passed to the ``Rotation`` method for the specified
@@ -2020,12 +2020,11 @@ class Transform(_vtk.vtkTransform):
         except ImportError:
             raise ImportError("The 'scipy' package must be installed to use `as_rotation`")
 
-        representation = cast(
-            Literal['rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'],
-            representation.lower(),
-        )
+        if isinstance(representation, str):
+            representation = representation.lower()  # type: ignore[assignment]
+
         _validation.check_contains(
-            ['rotation', 'quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'],
+            ['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport', None],
             must_contain=representation,
             name='representation',
         )
@@ -2039,7 +2038,7 @@ class Transform(_vtk.vtkTransform):
             return R
 
         rotation = Rotation.from_matrix(R)
-        if representation == 'rotation':
+        if representation is None:
             return rotation
         elif representation == 'quat':
             return rotation.as_quat(*args, **kwargs)

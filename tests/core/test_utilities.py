@@ -1804,7 +1804,7 @@ def test_transform_decompose_dtype(dtype, homogeneous):
 @pytest.mark.parametrize(
     ('representation', 'args', 'expected_type', 'expected_shape'),
     [
-        ('rotation', (), Rotation, None),
+        (None, (), Rotation, None),
         ('quat', (), np.ndarray, (4,)),
         ('matrix', (), np.ndarray, (3, 3)),
         ('rotvec', (), np.ndarray, (3,)),
