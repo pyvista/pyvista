@@ -682,6 +682,26 @@ class MultiBlock(
         return any(isinstance(block, pyvista.MultiBlock) for block in self)
 
     @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if there are no blocks.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.MultiBlock()
+        >>> mesh.is_empty
+        True
+
+        >>> mesh.append(pv.Sphere())
+        >>> mesh.is_empty
+        False
+
+        """
+        return self.n_blocks == 0
+
+    @property
     def bounds(self: MultiBlock) -> BoundsTuple:
         """Find min/max for bounds across blocks.
 
