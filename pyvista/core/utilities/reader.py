@@ -2839,9 +2839,9 @@ class FLUENTCFFReader(BaseReader):
         >>> from pyvista import examples
         >>> filename = examples.download_room_cff(load=False)
         >>> reader = pv.get_reader(filename)
-        >>> reader.disable_read_all_cell_arrays()
+        >>> reader.disable_all_cell_arrays()
         >>> blocks = reader.read()
-        >>> len(blocks.cell_data)
+        >>> len(blocks[0].cell_data)
         0
 
         """
@@ -2882,9 +2882,9 @@ class FLUENTCFFReader(BaseReader):
         >>> filename = examples.download_room_cff(load=False)
         >>> reader = pv.get_reader(filename)
         >>> reader.disable_all_cell_arrays()
-        >>> reader.disable_cell_array('SV_T')
+        >>> reader.enable_cell_array('SV_T')
         >>> blocks = reader.read()
-        >>> len(blocks.cell_data)
+        >>> len(blocks[0].cell_data)
         1
 
         """
@@ -2899,9 +2899,9 @@ class FLUENTCFFReader(BaseReader):
         >>> from pyvista import examples
         >>> filename = examples.download_room_cff(load=False)
         >>> reader = pv.get_reader(filename)
-        >>> reader.disable_read_all_cell_arrays()
+        >>> reader.disable_all_cell_arrays()
         >>> blocks = reader.read()
-        >>> len(blocks.cell_data)
+        >>> len(blocks[0].cell_data)
         0
 
         """
@@ -2920,8 +2920,8 @@ class FLUENTCFFReader(BaseReader):
         >>> reader = pv.get_reader(filename)
         >>> reader.enable_all_cell_arrays()
         >>> blocks = reader.read()
-        >>> len(blocks.cell_data)
-        0
+        >>> len(blocks[0].cell_data)
+        12
 
         """
         self.reader.EnableAllCellArrays()
