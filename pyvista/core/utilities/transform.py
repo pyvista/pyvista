@@ -919,6 +919,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate
             Rotate a mesh.
 
@@ -1016,6 +1018,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
 
@@ -1083,6 +1087,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
 
@@ -1150,6 +1156,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
 
@@ -1221,6 +1229,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
 
@@ -1272,6 +1282,10 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        decompose
 
         Examples
         --------
@@ -1645,6 +1659,13 @@ class Transform(_vtk.vtkTransform):
             shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
             is ``True``).
 
+        See Also
+        --------
+        compose
+        as_rotation
+            Get this transform's rotation component.
+
+
         Examples
         --------
         Create a transform by concatenating scaling, rotation, and translation
@@ -1929,7 +1950,7 @@ class Transform(_vtk.vtkTransform):
         *args,
         **kwargs,
     ) -> Rotation | NumpyArray[float]:
-        """Return the rotation component in any representation allowed by SciPy's :class:`scipy.spatial.transform.Rotation` class.
+        """Return the rotation component as a SciPy ``Rotation`` object or any of its representations.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component
         and then returned with the specified representation.
@@ -1969,6 +1990,9 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         decompose
+            Alternative method for obtaining the rotation component (and others).
+        rotate, rotate_x, rotate_y, rotate_z, rotate_vector
+            Compose a rotation matrix.
 
         Examples
         --------
