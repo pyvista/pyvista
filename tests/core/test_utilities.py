@@ -1536,6 +1536,9 @@ def test_transform_init():
     transform = Transform(matrix)
     assert np.array_equal(transform.matrix, matrix)
 
+    transform = Transform(matrix.tolist())
+    assert np.array_equal(transform.matrix, matrix)
+
 
 def test_transform_chain_methods():
     eye3 = np.eye(3)

@@ -1943,10 +1943,10 @@ class Transform(_vtk.vtkTransform):
         representation : str, optional
             Representation of the rotation.
 
-            - ``'quat'``: Represent as quaternions using :meth:`scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'quat'``: Represent as a quaternion using :meth:`scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
             - ``'matrix'``: Represent as a 3x3 matrix using :meth:`scipy.spatial.transform.Rotation.as_matrix`.
             - ``'rotvec'``: Represent as a rotation vector using :meth:`scipy.spatial.transform.Rotation.as_rotvec`.
-            - ``'mrp'``: Represent as Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`.
             - ``'euler'``: Represent as Euler angles using :meth:`scipy.spatial.transform.Rotation.as_euler`.
             - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`.
 
@@ -2031,8 +2031,7 @@ class Transform(_vtk.vtkTransform):
         if representation in ['rotation', 'matrix']:
             assert_empty_kwargs(**kwargs)
 
-        _, R, _, _, _ = self.decompose(homogeneous=True)
-        R = R[:3, :3]
+        _, R, _, _, _ = self.decompose()
 
         if representation == 'matrix':
             return R
