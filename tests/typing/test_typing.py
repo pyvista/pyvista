@@ -79,7 +79,7 @@ def _reveal_types():
         os.chdir(PROJECT_ROOT)
 
         std_out, std_err, exit_status = mypy_api.run(
-            ['--show-absolute-path', '--show-traceback, --package', TYPING_CASES_PACKAGE]
+            ['--show-absolute-path', '--show-traceback', '--package', TYPING_CASES_PACKAGE]
         )
         assert exit_status == 0, std_err
         assert 'Cannot find implementation' not in std_out
