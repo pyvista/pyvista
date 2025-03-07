@@ -9,6 +9,7 @@ import pickle
 import platform
 import re
 import shutil
+from typing import TYPE_CHECKING
 from unittest import mock
 import warnings
 
@@ -53,10 +54,14 @@ from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
+from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -84,6 +89,19 @@ def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
             match='Invalid output_type 1',
         ):
             sample_function(vtk.vtkPlane(), output_type=1)
+
+
+def test_progress_monitor_raises(mocker: MockerFixture):
+    from pyvista.core.utilities import observers
+
+    m = mocker.patch.object(observers, 'importlib')
+    m.util.find_spec.return_value = False
+
+    with pytest.raises(
+        ImportError,
+        match='Please install `tqdm` to monitor algorithms.',
+    ):
+        ProgressMonitor('algo')
 
 
 def test_create_grid_raises():

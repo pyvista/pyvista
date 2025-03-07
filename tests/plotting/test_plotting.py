@@ -2119,6 +2119,15 @@ def test_opacity_by_array_preference():
     p.show()
 
 
+@pytest.mark.parametrize('mapping', [None, True, object()])
+def test_opacity_transfer_functions_raises(mapping):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Transfer function type ({type(mapping)}) not understood'),
+    ):
+        pv.opacity_transfer_function(mapping, n_colors=10)
+
+
 def test_opacity_transfer_functions():
     n = 256
     mapping = pv.opacity_transfer_function('linear', n)
