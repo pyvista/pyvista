@@ -1744,10 +1744,8 @@ def test_rect_grid_raises_args(args):
 
 def test_rect_grid_dimensions_raises():
     g = pv.RectilinearGrid()
-    with pytest.raises(
-        AttributeError,
-        match=re.escape(
-            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
-        ),
-    ):
+    match = re.escape(
+        'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
+    )
+    with pytest.raises(AttributeError, match=match):
         g.dimensions = 1

@@ -161,14 +161,10 @@ def test_plotting_module_raises(mocker: MockerFixture):
     m = mocker.patch.object(plotting, 'inspect')
     m.getattr_static.side_effect = AttributeError
 
-    with (
-        pytest.raises(
-            AttributeError,
-            match=re.escape(
-                'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `foo`'
-            ),
-        ),
-    ):
+    match = re.escape(
+        'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `foo`'
+    )
+    with pytest.raises(AttributeError, match=match):
         plotting.foo  # noqa: B018
 
 

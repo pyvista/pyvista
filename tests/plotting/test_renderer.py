@@ -587,23 +587,15 @@ def test_show_bounds_padding_raises(padding):
 
 @pytest.mark.parametrize('groups', [1, object(), True])
 def test_init_renderers_groups_raises(groups):
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            f'"groups" should be a list or tuple, not {type(groups).__name__}.',
-        ),
-    ):
+    match = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+    with pytest.raises(TypeError, match=match):
         pv.Plotter(groups=groups)
 
 
 @pytest.mark.parametrize('group', [1, object(), True])
 def test_init_renderers_groups_item_raises(group):
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            f'Each group entry should be a list or tuple, not {type(group).__name__}.',
-        ),
-    ):
+    match = f'Each group entry should be a list or tuple, not {type(group).__name__}.'
+    with pytest.raises(TypeError, match=match):
         pv.Plotter(groups=[group])
 
 

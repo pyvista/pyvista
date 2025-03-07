@@ -415,12 +415,10 @@ def test_pickle_invalid_format(sphere):
 
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
-    with pytest.raises(
-        NotImplementedError,
-        match=re.escape(
-            'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
-        ),
-    ):
+    match = re.escape(
+        'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+    )
+    with pytest.raises(NotImplementedError, match=match):
         pv.Sphere().save('foo.vtp')
 
 

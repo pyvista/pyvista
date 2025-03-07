@@ -67,12 +67,9 @@ def test_plotter_theme_raises():
         pv.Plotter(theme=1)
 
     pl = pv.Plotter()
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            'Expected a pyvista theme like ``pyvista.plotting.themes.Theme``, not int.'
-        ),
-    ):
+    match = re.escape('Expected a pyvista theme like ``pyvista.plotting.themes.Theme``, not int.')
+
+    with pytest.raises(TypeError, match=match):
         pl.theme = 1
 
 
@@ -115,12 +112,10 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
     m.return_value = pv.MultiBlock(), 'foo'
 
     pl = pv.Plotter()
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
-        ),
-    ):
+    match = re.escape(
+        'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
+    )
+    with pytest.raises(TypeError, match=match):
         pl.add_mesh('foo')
 
 
@@ -169,12 +164,10 @@ def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
 
 def test_plotter_add_volume_scalar_raises():
     pl = pv.Plotter()
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
-        ),
-    ):
+    match = re.escape(
+        '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
+    )
+    with pytest.raises(TypeError, match=match):
         pl.add_volume(pv.Sphere(), scalar='foo')
 
 
@@ -195,12 +188,10 @@ def test_plotter_add_volume_mapper_raises():
     pl = pv.Plotter()
     im = pv.ImageData(dimensions=(10, 10, 10))
     im.point_data['foo'] = 1
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            'Mapper (foo) unknown. Available volume mappers include: fixed_point, gpu, open_gl, smart, ugrid'
-        ),
-    ):
+    match = re.escape(
+        'Mapper (foo) unknown. Available volume mappers include: fixed_point, gpu, open_gl, smart, ugrid'
+    )
+    with pytest.raises(TypeError, match=match):
         pl.add_volume(im, mapper='foo')
 
 
@@ -260,12 +251,10 @@ def test_add_point_labels_algo_raises(mocker: MockerFixture):
     m.return_value = pv.PolyData(), vtk.vtkAlgorithm()
 
     pl = pv.Plotter()
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
-        ),
-    ):
+    match = re.escape(
+        'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
+    )
+    with pytest.raises(TypeError, match=match):
         pl.add_point_labels(points=np.array([0.0, 0.0, 0.0]), labels=['foo'])
 
 
@@ -312,12 +301,10 @@ def test_save_graphic_raises():
         pl.save_graphic(filename='foo.svg')
 
     pl = pv.Plotter()
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            'Extension (.not_supported) is an invalid choice.\n\nValid options include: .svg, .eps, .ps, .pdf, .tex'
-        ),
-    ):
+    match = re.escape(
+        'Extension (.not_supported) is an invalid choice.\n\nValid options include: .svg, .eps, .ps, .pdf, .tex'
+    )
+    with pytest.raises(ValueError, match=match):
         pl.save_graphic(filename='foo.not_supported')
 
 
@@ -325,12 +312,10 @@ def test_add_background_image_raises():
     pl = pv.Plotter()
     pl.add_background_image(pv.examples.mapfile)
 
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            'A background image already exists.  Remove it with ``remove_background_image`` before adding one'
-        ),
-    ):
+    match = re.escape(
+        'A background image already exists.  Remove it with ``remove_background_image`` before adding one'
+    )
+    with pytest.raises(RuntimeError, match=match):
         pl.add_background_image(pv.examples.mapfile)
 
 

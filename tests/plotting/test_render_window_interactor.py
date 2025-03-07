@@ -23,12 +23,10 @@ def empty_callback():
 @pytest.mark.parametrize('callback', ['foo', 1, object()])
 def test_track_click_position_raises(callback):
     pl = pv.Plotter()
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            'Invalid callback provided, it should be either ``None`` or a callable.',
-        ),
-    ):
+    match = re.escape(
+        'Invalid callback provided, it should be either ``None`` or a callable.',
+    )
+    with pytest.raises(ValueError, match=match):
         pl.track_click_position(callback=callback)
 
 

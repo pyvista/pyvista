@@ -608,12 +608,10 @@ def test_picker_raises(picker, mocker: MockerFixture):
     m.return_value = None
 
     types = [typ.POINT, typ.CELL, typ.HARDWARE, typ.VOLUME]
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            f'Invalid picker choice for surface picking. Use one of: {types}',
-        ),
-    ):
+    match = re.escape(
+        f'Invalid picker choice for surface picking. Use one of: {types}',
+    )
+    with pytest.raises(ValueError, match=match):
         pl.enable_surface_point_picking(picker=picker)
 
     m.assert_called_once_with(picker)

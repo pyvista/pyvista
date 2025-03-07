@@ -516,12 +516,10 @@ def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
     m = mocker.patch.object(sphere, 'GetPointData')
     m().SetActiveScalars.return_value = -1
 
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the active scalars'
-        ),
-    ):
+    match = re.escape(
+        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the active scalars'
+    )
+    with pytest.raises(ValueError, match=match):
         sphere.set_active_scalars(f)
 
 
