@@ -3,6 +3,8 @@ comment:
   behavior: default
 
 coverage:
+  ignore_lines:
+    - "@overload"
   status:
     project:
       default:
