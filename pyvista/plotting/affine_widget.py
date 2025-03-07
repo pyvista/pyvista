@@ -292,7 +292,7 @@ class AffineWidget3D:
         independent.
 
         """
-        x, y = interactor.GetLastEventPosition()
+        x, y = interactor.GetEventPosition()
         coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToDisplay()
         coordinate.SetValue(x, y, 0)
@@ -312,7 +312,7 @@ class AffineWidget3D:
         translation.
 
         """
-        x, y = interactor.GetLastEventPosition()
+        x, y = interactor.GetEventPosition()
         ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
 
         # Get normalized view coordinates (-1, 1)

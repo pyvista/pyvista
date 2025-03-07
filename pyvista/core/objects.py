@@ -383,3 +383,25 @@ class Table(DataObject, _vtk.vtkTable):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
+
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the table has no rows and no columns.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> table = pv.Table()
+        >>> table.is_empty
+        True
+
+        >>> arrays = np.random.default_rng().random((100, 3))
+        >>> table = pv.Table(arrays)
+        >>> table.is_empty
+        False
+
+        """
+        return self.n_rows == 0 and self.n_columns == 0

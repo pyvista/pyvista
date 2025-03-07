@@ -750,7 +750,7 @@ class DatasetCard:
         - 2x2 grid for large screens
         - 4x1 grid for small screens
 
-    Each card has roughly following structure:
+    Each card has roughly the following structure:
 
         +-Card----------------------+
         | Header: Dataset name      |
@@ -764,7 +764,7 @@ class DatasetCard:
         | +-----------------------+ |
         | | File metadata         | |
         | +-----------------------+ |
-        |                           |
+        | See also                  |
         | Footer: Data source links |
         +---------------------------+
 
@@ -814,6 +814,8 @@ class DatasetCard:
         |            :octicon:`file` File Info
         |            ^^^
         |            {}
+        |
+        |   {}
         |
         |   {}
         |
@@ -871,6 +873,12 @@ class DatasetCard:
         |   :class-body: sd-px-0 sd-py-0 sd-rounded-3
         |
         |   .. image:: /{}
+        """,
+    )[1:-1]
+
+    seealso_template = _aligned_dedent(
+        """
+        |See also {}
         """,
     )[1:-1]
 
@@ -998,6 +1006,11 @@ class DatasetCard:
             n_arrays,
         ) = DatasetCard._generate_dataset_properties(self.loader)
 
+        # Get cross-references from docs
+        cross_references = DatasetCard._generate_cross_references(
+            self.dataset_name, index_name, header_name
+        )
+
         # Generate rst for badges
         carousel_badges = self._generate_carousel_badges(self._badges)
         celltype_badges = self._generate_celltype_badges(self._badges)
@@ -1027,6 +1040,7 @@ class DatasetCard:
             file_ext,
             reader_type,
         )
+        seealso_block = self._create_seealso_block(cross_references)
         footer_block = self._create_footer_block(datasource_links)
 
         # Create two versions of the card
@@ -1037,6 +1051,7 @@ class DatasetCard:
             img_block,
             dataset_props_block,
             file_info_block,
+            seealso_block,
             footer_block,
         )
         # Second version has a ref label in header
@@ -1046,6 +1061,7 @@ class DatasetCard:
             img_block,
             dataset_props_block,
             file_info_block,
+            seealso_block,
             footer_block,
         )
 
@@ -1108,11 +1124,7 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_dataset_name(dataset_name: str):
-        # Format dataset name for indexing and section heading
-        index_name = dataset_name + '_dataset'
-        header = ' '.join([word.capitalize() for word in index_name.split('_')])
-
+    def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
         # Get the corresponding function of the loader
         func = None
 
@@ -1131,11 +1143,93 @@ class DatasetCard:
         if func is None:
             msg = f'Dataset function {func_name} does not exist.'
             raise RuntimeError(msg)
+        return func, func_name
+
+    @staticmethod
+    def _generate_dataset_name(dataset_name: str):
+        # Format dataset name for indexing and section heading
+        index_name = dataset_name + '_dataset'
+        header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the card's header info
+        func, func_name = DatasetCard._get_dataset_function(dataset_name)
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
         return index_name, header, func_ref, func_doc, func_name
+
+    @staticmethod
+    def _generate_cross_references(dataset_name: str, index_name: str, header_name):
+        def find_seealso_refs(func: FunctionType) -> list[str]:
+            """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
+            if not callable(func):
+                msg = 'Input must be a callable function.'
+                raise ValueError(msg)
+
+            # Get the docstring of the function
+            docstring = func.__doc__
+            if not docstring:
+                return []
+
+            # Search for the .. seealso:: section
+            seealso_start = docstring.find('.. seealso::')
+            if seealso_start == -1:
+                return []
+
+            # Extract lines from the start of the seealso section
+            lines = docstring[seealso_start:].splitlines()
+
+            # Determine the expected indentation of the section body
+            refs = []
+            body_indent = None
+
+            for line in lines[1:]:  # Skip the .. seealso:: line itself
+                if not line.strip():  # Allow blank lines within the block
+                    continue
+
+                # Detect indentation level of the body
+                if body_indent is None and line.startswith(' '):
+                    body_indent = len(line) - len(line.lstrip())
+
+                # Stop if the line is less indented than the body
+                current_indent = len(line) - len(line.lstrip())
+                if body_indent is not None and current_indent < body_indent:
+                    break
+
+                # Only capture lines starting with :ref:
+                if line.strip().startswith(':ref:'):
+                    refs.append(line.strip())
+
+            return refs
+
+        func, _ = DatasetCard._get_dataset_function(dataset_name)
+        refs = find_seealso_refs(func)
+
+        # Filter the references
+        self_ref = f':ref:`{header_name} <{index_name}>`'
+        self_ref_count = 0
+        keep_refs = []
+        for ref in refs:
+            # strip any refs to galleries since there is already a badge for that
+            if '_gallery' in ref:
+                continue
+            # skip refs to self
+            if self_ref in ref:
+                self_ref_count += 1
+                continue
+
+            keep_refs.append(ref)
+
+        assert self_ref_count == 1, (
+            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding entry in the Dataset Gallery.\n"
+            f'A reference link should be included in a see also directive, e.g.:\n'
+            f'\n'
+            f'    .. seealso::\n'
+            f'\n'
+            f'        {self_ref}\n'
+            '            See this dataset in the Dataset Gallery for more info.'
+        )
+
+        return ', '.join(keep_refs)
 
     @staticmethod
     def _generate_carousel_badges(badges: list[_BaseDatasetBadge]):
@@ -1314,6 +1408,17 @@ class DatasetCard:
             file_info_fields,
             indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
         )
+
+    @classmethod
+    def _create_seealso_block(cls, cross_references):
+        if cross_references:
+            return cls._format_and_indent_from_template(
+                cross_references,
+                template=cls.seealso_template,
+                indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+            )
+        # Return empty content
+        return ''
 
     @classmethod
     def _create_footer_block(cls, datasource_links):

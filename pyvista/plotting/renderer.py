@@ -488,8 +488,76 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of all actors present in the rendering window."""
+        """Return the bounds of all VISIBLE actors present in the rendering window.
+
+        Actors with :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled are `not` included in the bounds.
+
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
+
+        """
+        bounds = self.ComputeVisiblePropBounds()
+        return _fixup_bounds(bounds)
+
+    def compute_bounds(
+        self,
+        *,
+        force_visibility: bool = False,
+        force_use_bounds: bool = False,
+        ignore_actors: Sequence[str | _vtk.vtkProp | type[_vtk.vtkProp]] | None = None,
+    ) -> BoundsTuple:
+        """Return the bounds of actors present in the renderer.
+
+        By default, only visible actors are included in the bounds computation.
+        Optionally, the bounds of all actors may be computed, regardless if they
+        have their :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled. Specific actors may also be removed from the computation.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        force_visibility : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.visibility` disabled in the
+            computation. By default, invisible actors are excluded.
+
+        force_use_bounds : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.use_bounds` disabled in the
+            computation. By default, actors with use bounds disabled are excluded.
+
+        ignore_actors : sequence[str | vtkProp | type[vtkProp]]
+            List of actors to ignore. The bounds of any actors included will be ignored.
+            Specify actors by name, type, or by instance.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of selected actors in the active renderer.
+
+        See Also
+        --------
+        bounds
+            Bounds of all specified actors.
+
+        """
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        if ignore_actors is None:
+            ignore_actors = []
+
+        ignored_types = [actor_type for actor_type in ignore_actors if isinstance(actor_type, type)]
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
@@ -499,21 +567,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for ax in range(3):
                 update_axis(ax)
 
-        for actor in self._actors:
-            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+        for name, actor in self._actors.items():
+            if not actor.GetUseBounds() and not force_use_bounds:
                 continue
-            if (
-                hasattr(actor, 'GetBounds')
-                and actor.GetBounds() is not None
-                and id(actor) != id(self.bounding_box_actor)
+            if not actor.GetVisibility() and not force_visibility:
+                continue
+            if (  # Check if the actor should be ignored
+                name in ignore_actors
+                or actor in ignore_actors
+                or any(isinstance(actor, actor_type) for actor_type in ignored_types)
             ):
-                _update_bounds(actor.GetBounds())
+                continue
+            if hasattr(actor, 'GetBounds') and (actor_bounds := actor.GetBounds()) is not None:
+                _update_bounds(actor_bounds)
 
-        if np.any(np.abs(the_bounds)):
-            the_bounds[the_bounds == np.inf] = -1.0
-            the_bounds[the_bounds == -np.inf] = 1.0
-
-        return BoundsTuple(*the_bounds.tolist())
+        return _fixup_bounds(the_bounds)
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -821,8 +889,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             cast(Charts, self._charts).remove_chart(chart_or_index)
 
     @property
-    def actors(self):  # numpydoc ignore=RT01
-        """Return a dictionary of actors assigned to this renderer."""
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
+        """Return a dictionary of actors assigned to this renderer.
+
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
+
+        """
         return dict(self._actors.items())
 
     def add_actor(
@@ -4254,3 +4330,10 @@ def _line_for_legend():
     legendface.points = np.array(points)  # type: ignore[assignment]
     legendface.faces = [4, 0, 1, 2, 3]  # type: ignore[assignment]
     return legendface
+
+
+def _fixup_bounds(bounds) -> BoundsTuple:
+    the_bounds = np.asarray(bounds)
+    if np.any(the_bounds[::2] > the_bounds[1::2]):
+        the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    return BoundsTuple(*the_bounds.tolist())

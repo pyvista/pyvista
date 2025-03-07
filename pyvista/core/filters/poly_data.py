@@ -264,9 +264,9 @@ class PolyDataFilters(DataSetFilters):
         bool_inter = self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
 
         # check if a polydata is completely contained within another
-        if bool_inter.n_points == 0:
+        if bool_inter.is_empty:
             inter, s1, s2 = self.intersection(other_mesh)
-            if inter.n_points == 0 and s1.n_points == 0 and s2.n_points == 0:
+            if inter.is_empty and s1.is_empty and s2.is_empty:
                 warnings.warn(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
@@ -2290,7 +2290,7 @@ class PolyDataFilters(DataSetFilters):
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
-        if output.n_points == 0:
+        if output.is_empty:
             msg = (
                 f'There is no path between vertices {start_vertex} and {end_vertex}. '
                 'It is likely the vertices belong to disconnected regions.'

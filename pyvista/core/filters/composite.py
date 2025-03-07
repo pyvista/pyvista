@@ -186,7 +186,7 @@ class CompositeFilters(DataObjectFilters):
                     nested = ' '
                 else:
                     nested = ' nested '
-                    index = ''.join([f'[{id_}]' for id_ in ids_])
+                    index = _format_nested_index(ids)
                 msg = (
                     f"The filter '{func_name}'\n"
                     f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
@@ -388,3 +388,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+
+def _format_nested_index(index: tuple[int, ...]) -> str:
+    return ''.join([f'[{ind}]' for ind in index])

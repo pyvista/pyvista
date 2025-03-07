@@ -5364,6 +5364,11 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
+    .. seealso::
+
+        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     # Deprecated on v0.44.0, estimated removal on v0.47.0
     warnings.warn(
@@ -5415,7 +5420,7 @@ def download_cavity(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
+        :ref:`Cavity Dataset <cavity_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`openfoam_example`
@@ -6159,7 +6164,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`CellsNd Dataset <cells_nd_dataset>`
+        :ref:`Cells Nd Dataset <cells_nd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -8417,7 +8422,7 @@ def download_3gqp(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`3GQP Dataset <3gqp_dataset>`
+        :ref:`3gqp Dataset <3gqp_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -8448,6 +8453,11 @@ def download_full_head(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> dataset = examples.download_full_head()
     >>> dataset.plot(volume=True)
+
+    .. seealso::
+
+        :ref:`Full Head Dataset <full_head_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_full_head, load=load)

@@ -363,10 +363,13 @@ def get_array(
             raise KeyError(msg)
         return arr
     else:
-        if not isinstance(preference, str):
-            msg = '`preference` must be a string'
-            raise TypeError(msg)
-        if preference not in ['cell', 'point', 'field']:
+        preference_ = parse_field_choice(preference)
+
+        if preference_ not in [
+            FieldAssociation.CELL,
+            FieldAssociation.POINT,
+            FieldAssociation.NONE,
+        ]:
             msg = (
                 f'`preference` must be either "cell", "point", "field" for a '
                 f'{type(mesh)}, not "{preference}".'
@@ -376,7 +379,6 @@ def get_array(
         parr = point_array(mesh, name)
         carr = cell_array(mesh, name)
         farr = field_array(mesh, name)
-        preference_ = parse_field_choice(preference)
         if sum([array is not None for array in (parr, carr, farr)]) > 1:
             if preference_ == FieldAssociation.CELL:
                 return carr

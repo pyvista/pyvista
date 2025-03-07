@@ -20,6 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import Union
 from typing import cast
 import uuid
 import warnings
@@ -1611,6 +1612,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
 
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
+
         Returns
         -------
         dict
@@ -1650,12 +1657,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of the active renderer.
+        """Return the bounds of all VISIBLE actors present in the active rendering window.
+
+        Actors with ``visibility`` disabled or with ``use_bounds`` disabled are `not`
+        included in the bounds.
+
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
 
         Returns
         -------
-        tuple[numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64]
-            Bounds of the active renderer.
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
 
         Examples
         --------
@@ -1667,6 +1687,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         return self.renderer.bounds
+
+    @wraps(Renderer.compute_bounds)
+    def compute_bounds(self, *args, **kwargs) -> BoundsTuple:  # numpydoc ignore=PR01,RT01
+        """Return the bounds of actors present in the renderer."""
+        return self.renderer.compute_bounds(*args, **kwargs)
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
@@ -4225,7 +4250,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise ValueError(msg)
                 volume.spacing = resolution
             else:
-                volume = wrap(volume)
+                # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
+                #   to remove the need to cast the type here
+                volume = cast(Union[pyvista.MultiBlock, pyvista.DataSet], wrap(volume))
                 if not is_pyvista_dataset(volume):
                     msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
                     raise TypeError(msg)
