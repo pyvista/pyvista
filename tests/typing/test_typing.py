@@ -78,16 +78,15 @@ def _reveal_types():
     try:
         os.chdir(PROJECT_ROOT)
 
-        result = mypy_api.run(['--show-absolute-path', '--package', TYPING_CASES_PACKAGE])
-        assert 'usage: mypy' not in result[1]
-        assert 'Cannot find implementation' not in result[0]
-
-        # Clean up output
-        stdout = str(result[0])
+        std_out, std_err, exit_status = mypy_api.run(
+            ['--show-absolute-path', '--package', TYPING_CASES_PACKAGE]
+        )
+        assert exit_status == 0, std_err
+        assert 'Cannot find implementation' not in std_out
 
         # Group the revealed types by (filepath), (line num), and (type)
         pattern = r'^(.*?):(\d*?):\snote: Revealed type is "([^"]+)"'
-        match = re.findall(pattern, stdout, re.MULTILINE)
+        match = re.findall(pattern, std_out, re.MULTILINE)
         assert match is not None
 
         # Make revealed types less verbose
