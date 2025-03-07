@@ -1103,14 +1103,14 @@ def test_copy_structure(grid):
 
 
 def test_copy_structure_self(datasets):
-    for dset in datasets:
-        copied = dset.copy()
-        assert copied is not dset
+    for dataset in datasets:  # noqa: F402
+        copied = dataset.copy()
+        assert copied is not dataset
 
         # Copy structure from itself
         copied.copy_structure(copied)
-        assert copied.n_points == dset.n_points
-        assert copied.n_cells == dset.n_cells
+        assert copied.n_points == dataset.n_points
+        assert copied.n_cells == dataset.n_cells
 
 
 def test_copy_attributes(grid):
