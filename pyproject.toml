@@ -328,6 +328,7 @@ extend-select = [
   'FLY',
   'I',
   'ICN',
+  'INP',
   'INT',
   'ISC',
   'LOG',
@@ -414,7 +415,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D']
+'tests/*' = ['D', 'INP']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list
@@ -439,8 +440,8 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting*' = ['ANN']
 
 # All other ANN ignores
-'doc*' = ['ANN']
-'examples*' = ['ANN']
+'doc*' = ['ANN', 'INP']
+'examples*' = ['ANN', 'INP']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
