@@ -15,7 +15,7 @@ pyvista.NumberType
 .. autotypevar:: NumberType
 
 pyvista.ArrayLike
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
@@ -62,7 +62,7 @@ pyvista.CellArrayLike
 .. autodata:: CellArrayLike
 
 pyvista.RotationLike
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
@@ -116,7 +116,7 @@ pyvista._DataSetType
 .. autotypevar:: _DataSetType
 
 pyvista._DataSetOrMultiBlockType
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
