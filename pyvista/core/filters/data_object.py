@@ -40,7 +40,7 @@ class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 
     @overload
-    def transform(  # type: ignore[misc]
+    def transform(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         trans: TransformLike,
         transform_all_input_vectors: bool = ...,
@@ -289,7 +289,7 @@ class DataObjectFilters:
         return output
 
     @overload
-    def reflect(  # type: ignore[misc]
+    def reflect(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
@@ -366,7 +366,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_x(  # type: ignore[misc]
+    def rotate_x(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -447,7 +447,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_y(  # type: ignore[misc]
+    def rotate_y(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -527,7 +527,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_z(  # type: ignore[misc]
+    def rotate_z(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -608,7 +608,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_vector(  # type: ignore[misc]
+    def rotate_vector(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         vector: VectorLike[float],
         angle: float,
@@ -695,7 +695,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate(  # type: ignore[misc]
+    def rotate(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         rotation: RotationLike,
         point: VectorLike[float] | None = ...,
@@ -786,7 +786,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def translate(  # type: ignore[misc]
+    def translate(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = ...,
@@ -857,7 +857,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def scale(  # type: ignore[misc]
+    def scale(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = ...,
@@ -944,7 +944,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_x(  # type: ignore[misc]
+    def flip_x(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,
@@ -1021,7 +1021,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_y(  # type: ignore[misc]
+    def flip_y(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,
@@ -1098,7 +1098,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_z(  # type: ignore[misc]
+    def flip_z(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,
@@ -1175,7 +1175,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_normal(  # type: ignore[misc]
+    def flip_normal(  # type: ignore[misc]  # pragma: no branch
         self: RectilinearGrid,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
