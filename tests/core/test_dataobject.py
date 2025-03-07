@@ -4,6 +4,7 @@ from collections import UserDict
 import json
 import multiprocessing
 import pickle
+import re
 
 import numpy as np
 import pytest
@@ -110,6 +111,32 @@ def test_metadata_save(hexbeam, tmpdir):
 
     # metadata should be removed from the field data
     assert not hexbeam_in.field_data
+
+
+@pytest.mark.needs_vtk_version(9, 3)
+@pytest.mark.parametrize('file_ext', ['.pkl', '.vtm'])
+def test_save_nested_multiblock_field_data(tmp_path, file_ext):
+    filename = 'mesh' + file_ext
+    nested = pv.MultiBlock()
+    nested.field_data['foo'] = 'bar'
+    root = pv.MultiBlock([nested])
+
+    # Save the multiblock and expect a warning
+    match = (
+        "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
+        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+    )
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        root.save(tmp_path / filename)
+
+    # Check that the bug exists, and that the field data is not loaded
+    loaded = pv.read(root)
+    assert loaded[0].field_data.keys() == []
+
+    # Save again without field data, no warning is emitted
+    nested.clear_field_data()
+    root.save(tmp_path / filename)
 
 
 @pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
@@ -384,3 +411,19 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
+
+
+def test_is_empty(ant):
+    assert pv.MultiBlock().is_empty
+    assert not pv.MultiBlock([ant]).is_empty
+
+    assert pv.PolyData().is_empty
+    assert not ant.is_empty
+
+    assert pv.Table().is_empty
+    assert not pv.Table(dict(a=np.array([0]))).is_empty
+
+    class SubClass(pv.DataObject): ...
+
+    with pytest.raises(NotImplementedError):
+        _ = SubClass().is_empty
