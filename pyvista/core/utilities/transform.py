@@ -1966,6 +1966,10 @@ class Transform(_vtk.vtkTransform):
         scipy.spatial.transform.Rotation | np.ndarray
             Rotation object or array depending on the representation.
 
+        See Also
+        --------
+        decompose
+
         Examples
         --------
         Create a rotation matrix and initialize a class:`Transform` from it.
