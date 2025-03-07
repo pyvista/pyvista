@@ -62,8 +62,13 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
                         args = decorator.args
                         for arg in args:
                             if isinstance(arg, RefExpr):
-                                named_type: Instance = ctx.api.named_type(arg.fullname)
-                                decorated_type.type._promote.append(named_type)
+                                try:
+                                    named_type: Instance = ctx.api.named_type(arg.fullname)
+                                except AssertionError:
+                                    # Not a valid type
+                                    continue
+                                else:
+                                    decorated_type.type._promote.append(named_type)
 
     class _PyVistaPlugin(Plugin):
         """Mypy plugin to enable static type promotions."""
