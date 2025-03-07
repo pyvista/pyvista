@@ -193,14 +193,20 @@ quiet-level = 3
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
 
 [tool.coverage.run]
+append = true # Equivalent to pytest --cov-append
+branch = true # Equivalent to pytest --cov-branch
 omit = [
   'pyvista/conftest.py',
   'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
-[tool.coverage.report]
-exclude_also = ['if TYPE_CHECKING:']
+source = "pyvista" # Equivalent to pytest --cov=pyvista
 
+[tool.coverage.report]
+exclude_lines = ["^\\s*if TYPE_CHECKING:"]
+
+[tool.coverage.xml]
+output = "coverage.xml" # Equivalent to --cov-report=xml
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
