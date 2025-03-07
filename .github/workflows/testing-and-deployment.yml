@@ -133,7 +133,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate pyvista-vtk
-          pytest -v tests/plotting --cov-report html --fail_extra_image_cache --generated_image_dir debug_images
+          pytest -v tests/plotting --cov --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -222,7 +222,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v tests/core tests/examples
+        run: python -m pytest --cov -v tests/core tests/examples
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
@@ -233,7 +233,7 @@ jobs:
         run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
 
       - name: Plotting Testing (uses GL)
-        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+        run: xvfb-run -a python -m pytest --cov --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
