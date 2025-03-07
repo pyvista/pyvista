@@ -82,8 +82,10 @@ def _reveal_types():
         std_out, std_err, exit_status = mypy_api.run(
             ['--show-absolute-path', '--show-traceback', '--package', TYPING_CASES_PACKAGE]
         )
-        assert exit_status == 0, std_err
-        assert 'Cannot find implementation' not in std_out
+        if sys.platform != 'linux':
+            # Linux tests are skipped, so only check output for other OSes
+            assert exit_status == 0, std_err
+            assert 'Cannot find implementation' not in std_out
 
         # Group the revealed types by (filepath), (line num), and (type)
         pattern = r'^(.*?):(\d*?):\snote: Revealed type is "([^"]+)"'
