@@ -1662,6 +1662,7 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         compose
+            Compose a transformation.
         as_rotation
             Get this transform's rotation component.
 
