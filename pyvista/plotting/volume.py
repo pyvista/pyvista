@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Self
 
 from . import _vtk
 from .prop3d import Prop3D
@@ -70,3 +71,46 @@ class Volume(Prop3D, _vtk.vtkVolume):
     @prop.setter
     def prop(self, obj: Property):
         self.SetProperty(obj)  # type: ignore[arg-type]
+
+    def copy(self: Self, deep: bool = True) -> Self:
+        """Create a copy of this volume.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Create a shallow or deep copy of the volume. A deep copy will have a
+            new property and mapper, while a shallow copy will use the mapper
+            and property of this actor.
+
+        Returns
+        -------
+        Volume
+            Deep or shallow copy of this volume.
+
+        Examples
+        --------
+        Create an actor of a cube by adding it to a :class:`pyvista.Plotter`
+        and then copy the actor, change the properties, and add it back to the
+        :class:`pyvista.Plotter`.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh, color='b')
+        >>> new_actor = actor.copy()
+        >>> new_actor.prop.style = 'wireframe'
+        >>> new_actor.prop.line_width = 5
+        >>> new_actor.prop.color = 'r'
+        >>> new_actor.prop.lighting = False
+        >>> _ = pl.add_actor(new_actor)
+        >>> pl.show()
+
+        """
+        new_actor = type(self)()
+        if deep:
+            if self.mapper is not None:
+                new_actor.mapper = self.mapper.copy()
+            new_actor.prop = self.prop.copy()
+        else:
+            new_actor.ShallowCopy(self)
+        return new_actor

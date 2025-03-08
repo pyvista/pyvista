@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-import copy as copylib
 from functools import wraps
 from typing import TYPE_CHECKING
 from typing import Literal
@@ -439,17 +438,16 @@ class Prop3D(_vtk.vtkProp3D):
 
         # Update user matrix
         new_matrix = (
-            self.user_matrix @ matrix
-            if multiply_mode == 'pre-multiply'
-            else matrix @ self.user_matrix
+            self.user_matrix @ matrix if multiply_mode == 'pre' else matrix @ self.user_matrix
         )
         output = self if inplace else self.copy()
         output.user_matrix = new_matrix
         return output
 
+    @abstractmethod
     def copy(self: Self, deep: bool = True) -> Self:  # numpydoc ignore=RT01
-        """Return a shallow copy of this prop."""
-        return copylib.deepcopy(self) if deep else copylib.copy(self)
+        """Return a copy of this prop."""
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01

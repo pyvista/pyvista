@@ -16,6 +16,8 @@ from ._property import Property
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .mapper import _BaseMapper
 
 
@@ -320,7 +322,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         pl.add_actor(self)  # type: ignore[arg-type]
         pl.show(**kwargs)
 
-    def copy(self, deep: bool = True) -> Actor:
+    def copy(self: Self, deep: bool = True) -> Self:
         """Create a copy of this actor.
 
         Parameters
@@ -332,7 +334,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Actor
+        Actor
             Deep or shallow copy of this actor.
 
         Examples
@@ -354,7 +356,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl.show()
 
         """
-        new_actor = Actor()
+        new_actor = type(self)()
         if deep:
             if self.mapper is not None:
                 new_actor.mapper = self.mapper.copy()
