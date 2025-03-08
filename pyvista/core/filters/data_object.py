@@ -65,7 +65,7 @@ class DataObjectFilters:
             this conversion always applies to the input mesh.
 
         .. warning::
-            Shear transformations are not supported for ':class:`~pyvista.ImageData`.
+            Shear transformations are not supported for :class:`~pyvista.ImageData`.
             If present, any shear component is removed by the filter.
 
         .. note::

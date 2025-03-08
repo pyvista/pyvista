@@ -47,6 +47,8 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+from tests.plotting.test_actor import actor  # noqa: F401
+from tests.plotting.test_actor import dummy_actor  # noqa: F401
 
 
 @pytest.fixture
@@ -1428,7 +1430,7 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
         )
 
     points_in_array = np.array(_get_points_from_object(obj))
-    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
+    out = transform.scale(SCALE).apply(obj, copy=copy)
 
     if not copy and return_self:
         assert out is obj
@@ -1445,6 +1447,103 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     inverted_points = _get_points_from_object(inverted)
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted
+
+
+def test_transform_apply_mode():
+    array = np.array((0.0, 0.0, 1.0))
+    scale = Transform() * SCALE
+
+    offset = np.array((1.0, 0.0, 0.0))
+    translate = Transform() + offset
+
+    mesh = pv.PolyData(array)
+    mesh['vector'] = [array]
+
+    actor = pv.Actor()  # noqa: F811
+
+    # Scale points
+    transformed = scale.apply(array, 'points')
+    assert np.allclose(transformed, array * SCALE)
+    transformed = scale.apply_to_points(array)
+    assert np.allclose(transformed, array * SCALE)
+
+    # Scale vectors
+    transformed = scale.apply(array, 'vectors')
+    assert np.allclose(transformed, array * SCALE)
+    transformed = scale.apply_to_vectors(array)
+    assert np.allclose(transformed, array * SCALE)
+
+    # Translate points
+    transformed = translate.apply(array, 'points')
+    assert np.allclose(transformed, array + offset)
+    transformed = translate.apply_to_points(array)
+    assert np.allclose(transformed, array + offset)
+
+    # Translate vectors
+    transformed = translate.apply(array, 'vectors')
+    assert np.allclose(transformed, array)
+    transformed = translate.apply_to_vectors(array)
+    assert np.allclose(transformed, array)
+
+    # Scale dataset
+    transformed = scale.apply(mesh)
+    assert np.allclose(transformed['vector'], mesh['vector'])
+    transformed = scale.apply_to_dataset(mesh)
+    assert np.allclose(transformed['vector'], mesh['vector'])
+
+    # Scale dataset, all vectors
+    transformed = scale.apply(mesh, 'all_vectors')
+    assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
+    transformed = scale.apply_to_dataset(mesh, all_vectors=True)
+    assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
+
+    # Scale actor
+    transformed = scale.apply(actor, 'replace')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = scale.apply_to_actor(actor, 'replace')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+
+    # Scale actor
+    transformed = scale.apply(actor, 'pre-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = scale.apply_to_actor(actor, 'pre-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+
+    # Scale actor
+    transformed = scale.apply(actor, 'post-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = scale.apply_to_actor(actor, 'post-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+
+    # Test raises
+    match = "Transformation mode 'points' is not supported for datasets."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(mesh, 'points')
+    match = "Transformation mode 'vectors' is not supported for datasets."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(mesh, 'vectors')
+    match = "Transformation mode 'all_vectors' is not supported for arrays."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(array, 'all_vectors')
+
+
+@pytest.mark.parametrize('obj', [pv.Actor(), pv.AxesAssembly(), 'dummy_actor'])
+def test_transform_apply_actor(obj, dummy_actor):  # noqa: F811
+    if obj == 'dummy_actor':
+        obj = dummy_actor
+    matrix = np.diag((SCALE, SCALE, SCALE, 1))
+    matrix2 = np.diag((SCALE * SCALE, SCALE * SCALE, SCALE * SCALE, 1))
+    transform = Transform(matrix)
+
+    transformed = transform.apply(obj)
+    actual_matrix = transformed.user_matrix
+    assert np.allclose(actual_matrix, matrix)
+    assert transformed is not obj
+
+    transformed2 = transform.apply(transformed, copy=False)
+    actual_matrix = transformed2.user_matrix
+    assert np.allclose(actual_matrix, matrix2)
+    assert transformed2 is transformed
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -1470,8 +1569,7 @@ def test_transform_matrix_list(transform, attr):
 
 
 @pytest.fixture
-def transformed_actor():
-    actor = pv.Actor()
+def transformed_actor(actor):  # noqa: F811
     actor.position = (-0.5, -0.5, 1)
     actor.orientation = (10, 20, 30)
     actor.scale = (1.5, 2, 2.5)
