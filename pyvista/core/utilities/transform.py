@@ -1481,6 +1481,11 @@ class Transform(_vtk.vtkTransform):
             transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
+        .. note::
+
+            When applied to an actor, the transformation is multiplied with its
+            :attr:`~pyvista.Prop3D.user_matrix`.
+
         Parameters
         ----------
         obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
@@ -1507,9 +1512,13 @@ class Transform(_vtk.vtkTransform):
 
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
-            ``False`` to transform the input directly and return it. Only applies to
-            NumPy arrays and datasets. A copy is always returned for tuple and list
-            inputs or point arrays with integers.
+            ``False`` to transform the input directly and return it. Setting this to
+            ``False`` only applies to NumPy float arrays, datasets, and actors; a copy
+            is always returned for tuple and list inputs or arrays with integers.
+
+            .. note::
+                A deep copy is made wherever possible. For some actor inputs, however,
+                only a shallow copy may be made.
 
         Returns
         -------

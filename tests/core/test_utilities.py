@@ -47,6 +47,8 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+from tests.plotting.test_actor import actor  # noqa: F401
+from tests.plotting.test_actor import dummy_actor  # noqa: F401
 
 
 @pytest.fixture
@@ -1505,8 +1507,10 @@ def test_transform_apply_mode():
         scale.apply(array, 'all_vectors')
 
 
-@pytest.mark.parametrize('obj', [pv.Actor(), pv.AxesAssembly()])
-def test_transform_apply_actor(obj):
+@pytest.mark.parametrize('obj', [pv.Actor(), pv.AxesAssembly(), 'dummy_actor'])
+def test_transform_apply_actor(obj, dummy_actor):  # noqa: F811
+    if obj == 'dummy_actor':
+        obj = dummy_actor
     matrix = np.diag((SCALE, SCALE, SCALE, 1))
     matrix2 = np.diag((SCALE * SCALE, SCALE * SCALE, SCALE * SCALE, 1))
     transform = Transform(matrix)
@@ -1545,8 +1549,7 @@ def test_transform_matrix_list(transform, attr):
 
 
 @pytest.fixture
-def transformed_actor():
-    actor = pv.Actor()
+def transformed_actor(actor):  # noqa: F811
     actor.position = (-0.5, -0.5, 1)
     actor.orientation = (10, 20, 30)
     actor.scale = (1.5, 2, 2.5)
