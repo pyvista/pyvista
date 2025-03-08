@@ -1454,7 +1454,10 @@ class Transform(_vtk.vtkTransform):
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
-        mode: Literal['points', 'vectors', 'all_vectors'] | None = None,
+        mode: Literal[
+            'points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply'
+        ]
+        | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
@@ -1470,23 +1473,24 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock
+        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
 
         mode : 'points' | 'vectors' | 'all_vectors', optional
-            Defines how to apply the transformation. If the input is an array, use:
+            Define how to apply the transformation.
+
+            For array inputs, use:
 
             - ``'points'`` for transforming point arrays.
-            - ``'vectors'`` for transforming vector arrays.
+            - ``'vectors'`` for transforming vector arrays. The translation component of
+              the transformation is removed for vectors.
 
-            Transforming vectors is similar to transforming points except the
-            translation component is removed for vectors. By default, ``'points'`` mode
-            is used for array inputs.
+            By default, ``'points'`` mode is used for array inputs.
 
-            If the input is a dataset, use the ``'all_vectors'`` mode to transform `all`
-            input vectors in datasets. Otherwise, only the points, normals and active
-            vectors are transformed. This mode is equivalent to setting
-            ``transform_all_input_vectors=True`` with :meth:`pyvista.DataObjectFilters.transform`.
+            For dataset inputs, use ``'all_vectors'`` to transform `all` input vectors
+            in datasets. Otherwise, only the points, normals and active vectors are
+            transformed. This mode is equivalent to setting ``transform_all_input_vectors=True``
+            with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1494,9 +1498,13 @@ class Transform(_vtk.vtkTransform):
 
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
-            ``False`` to transform the input directly and return it. Only applies to
-            NumPy arrays and datasets. A copy is always returned for tuple and list
-            inputs or point arrays with integers.
+            ``False`` to transform the input directly and return it. Setting this to
+            ``False`` only applies to NumPy float arrays and datasets; a copy
+            is always returned for tuple and list inputs or arrays with integers.
+
+            .. note::
+                A deep copy is made wherever possible. For some actor inputs, however,
+                only a shallow copy may be made.
 
         Returns
         -------
@@ -1561,7 +1569,20 @@ class Transform(_vtk.vtkTransform):
 
         """
         _validation.check_contains(
-            ['points', 'vectors', 'all_vectors', None], must_contain=mode, name='mode'
+            ['points', 'vectors', 'all_vectors', None],
+            must_contain=mode,
+            name='mode',
+        )
+        _validation.check_instance(
+            obj,
+            (
+                np.ndarray,
+                Sequence,
+                pyvista.DataSet,
+                pyvista.MultiBlock,
+                pyvista.Prop3D,
+                pyvista.plotting.prop3d._Prop3DMixin,
+            ),
         )
 
         inplace = not copy
@@ -1575,10 +1596,12 @@ class Transform(_vtk.vtkTransform):
                 inplace=inplace,
                 transform_all_input_vectors=bool(mode),
             )
+
+        matrix = self.inverse_matrix if inverse else self.matrix
+
         if mode not in ['points', 'vectors', None]:
             raise ValueError(f"Transformation mode '{mode}' is not supported for arrays.")
 
-        matrix = self.inverse_matrix if inverse else self.matrix
         if mode == 'vectors':
             # Remove translation
             matrix[:3, 3] = 0
@@ -1643,6 +1666,8 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to vectors.
         apply_to_dataset
             Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
 
         """
         return self.apply(points, 'points', inverse=inverse, copy=copy)
@@ -1687,6 +1712,8 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_dataset
             Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
 
         """
         return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
@@ -1737,6 +1764,8 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_vectors
             Apply this transformation to vectors.
+        apply_to_actor
+            Apply this transformation to an actor.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
