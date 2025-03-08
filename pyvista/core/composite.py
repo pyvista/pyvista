@@ -946,7 +946,7 @@ class MultiBlock(
             separator=separator,
         )
         typed_iterator = cast(
-            Iterator[tuple[tuple[int, ...], tuple[Union[str, None]], Union[DataSet, None]]],
+            Iterator[tuple[tuple[int, ...], Union[str, None], Union[DataSet, None]]],
             iterator,
         )
 
@@ -959,13 +959,13 @@ class MultiBlock(
             separator=separator,
         )
         if copy:
-            multi.move_nested_field_data_to_root(**move_kwargs)
+            multi.move_nested_field_data_to_root(**move_kwargs)  # type: ignore[arg-type]
             field_data_to_copy = multi.field_data
         else:
             # Need to copy nested multiblocks to avoid mutating field data
             input_with_field_data = MultiBlock()
             input_with_field_data.shallow_copy(self, recursive=True)
-            input_with_field_data.move_nested_field_data_to_root(**move_kwargs)
+            input_with_field_data.move_nested_field_data_to_root(**move_kwargs)  # type: ignore[arg-type]
             field_data_to_copy = input_with_field_data.field_data
 
         output.field_data.update(field_data_to_copy, copy=copy)
