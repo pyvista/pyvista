@@ -1505,6 +1505,23 @@ def test_transform_apply_mode():
         scale.apply(array, 'all_vectors')
 
 
+@pytest.mark.parametrize('obj', [pv.Actor(), pv.AxesAssembly()])
+def test_transform_apply_actor(obj):
+    matrix = np.diag((SCALE, SCALE, SCALE, 1))
+    matrix2 = np.diag((SCALE * SCALE, SCALE * SCALE, SCALE * SCALE, 1))
+    transform = Transform(matrix)
+
+    transformed = transform.apply(obj)
+    actual_matrix = transformed.user_matrix
+    assert np.allclose(actual_matrix, matrix)
+    assert transformed is not obj
+
+    transformed2 = transform.apply(transformed, copy=False)
+    actual_matrix = transformed2.user_matrix
+    assert np.allclose(actual_matrix, matrix2)
+    assert transformed2 is transformed
+
+
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
 def test_transform_matrix_list(transform, attr):
     matrix_list = getattr(transform, attr)

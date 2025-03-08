@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
@@ -22,12 +23,14 @@ from pyvista.core.utilities.transformations import reflection
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import Prop3D
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.plotting.prop3d import _Prop3DMixin
 
 
 class Transform(_vtk.vtkTransform):
@@ -1450,6 +1453,16 @@ class Transform(_vtk.vtkTransform):
         inverse: bool = ...,
         copy: bool = ...,
     ) -> _DataSetOrMultiBlockType: ...
+    @overload
+    def apply(
+        self: Transform,
+        obj: Prop3D | _Prop3DMixin,
+        /,
+        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+    ) -> Prop3D | _Prop3DMixin: ...
     def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
@@ -1470,7 +1483,7 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock
+        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
 
         mode : 'points' | 'vectors' | 'all_vectors', optional
@@ -1559,9 +1572,30 @@ class Transform(_vtk.vtkTransform):
         pyvista_ndarray([[0.5, 1. , 1. ],
                          [2. , 2.5, 2.5]])
 
+        Apply a transformation to an actor.
+
+        >>> actor = pv.Actor()
+        >>> transformed_actor = transform.apply(actor)
+        >>> transformed_actor.user_matrix
+        pyvista_ndarray([[ 2.,  4.,  6.],
+                         [ 8., 10., 12.]])
+
         """
         _validation.check_contains(
-            ['points', 'vectors', 'all_vectors', None], must_contain=mode, name='mode'
+            ['points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply', None],
+            must_contain=mode,
+            name='mode',
+        )
+        _validation.check_instance(
+            obj,
+            (
+                np.ndarray,
+                Sequence,
+                pyvista.DataSet,
+                pyvista.MultiBlock,
+                pyvista.Prop3D,
+                pyvista.plotting.prop3d._Prop3DMixin,
+            ),
         )
 
         inplace = not copy
@@ -1575,10 +1609,39 @@ class Transform(_vtk.vtkTransform):
                 inplace=inplace,
                 transform_all_input_vectors=bool(mode),
             )
+
+        matrix = self.inverse_matrix if inverse else self.matrix
+
+        # Transform actor
+        if isinstance(obj, (pyvista.Prop3D, pyvista.plotting.prop3d._Prop3DMixin)):
+            if mode not in ['replace', 'pre-multiply', 'post-multiply', None]:
+                raise ValueError(f"Transformation mode '{mode}' is not supported for actors.")
+            mode = 'post-multiply' if mode is None else mode
+
+            if mode == 'pre-multiply':
+                new_matrix = obj.user_matrix @ matrix
+            elif mode == 'post-multiply':
+                new_matrix = matrix @ obj.user_matrix
+            else:  # replace
+                new_matrix = matrix
+
+            if copy:
+                if hasattr(obj, 'copy'):
+                    actor = obj.copy()
+                elif hasattr(obj, 'ShallowCopy'):
+                    actor = obj.__class__()
+                    actor.ShallowCopy(obj)
+                else:
+                    actor = copylib.copy(obj)
+            else:
+                actor = obj
+
+            actor.user_matrix = new_matrix
+            return actor
+
         if mode not in ['points', 'vectors', None]:
             raise ValueError(f"Transformation mode '{mode}' is not supported for arrays.")
 
-        matrix = self.inverse_matrix if inverse else self.matrix
         if mode == 'vectors':
             # Remove translation
             matrix[:3, 3] = 0
