@@ -58,15 +58,19 @@ pinned = [ # Pinned versions of core dependencies
   'typing-extensions<4.13.0',
 ]
 
-typing = [
+typing_core = [
+  'pyvista[pinned]',
+
   'mypy<1.14.0',
   'npt-promote==0.2',
-  'numpy>=2.0.0',
-  'pyvista[pinned]',
   'trimesh<4.6.0',
 ]
 
+typing = ['numpy>=2.0.0', 'pyvista[typing_core]']
+
 test = [
+  'pyvista[typing_core]',
+
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
@@ -87,7 +91,6 @@ test = [
   'pytest<8.4.0',
   'pytest_cases<3.8.7',
   'pytest_mock<3.15.0',
-  'pyvista[pinned]',
   'scipy<1.14.2',
   'sphinx-book-theme<1.2.0',
   'sphinx-gallery<0.19.0',
@@ -98,11 +101,12 @@ test = [
   'trame-vtk>=2.5.8,<2.8.12',
   'trame-vuetify>=2.3.1,<2.7.2',
   'trame>=2.5.2,<3.7.1',
-  'trimesh<4.6.0',
   'typing-extensions<4.13.0',
 ]
 
 docs = [
+  'pyvista[pinned]',
+
   'cmocean==4.0.3',
   'colorcet==3.1.0',
   'enum-tools==0.12.0',
@@ -120,7 +124,6 @@ docs = [
   'pypandoc==1.15',
   'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
-  'pyvista[pinned]',
   'scipy==1.15.2',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
