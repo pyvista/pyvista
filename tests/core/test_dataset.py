@@ -1252,10 +1252,10 @@ def test_partition(hexbeam):
 
 
 def test_explode(datasets):
-    for dset in datasets:
-        out = dset.explode()
-        assert out.n_cells == dset.n_cells
-        assert out.n_points > dset.n_points
+    for dataset in datasets:  # noqa: F402
+        out = dataset.explode()
+        assert out.n_cells == dataset.n_cells
+        assert out.n_points > dataset.n_points
 
 
 def test_separate_cells(hexbeam):
@@ -1322,9 +1322,9 @@ ids_cells = list(map(type, grids_cells))
 
 
 def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
-    for dset in datasets_vtk9:
+    for dataset in datasets_vtk9:  # noqa: F402
         with pytest.raises(TypeError):
-            _ = dset.cell_neighbors(0)
+            _ = dataset.cell_neighbors(0)
 
 
 def test_raises_point_neighbors_ind_overflow(grid):
