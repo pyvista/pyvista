@@ -339,9 +339,9 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
 
         Examples
         --------
-        Create an actor of a cube by adding it to a :class:`pyvista.Plotter`
+        Create an actor of a cube by adding it to a :class:`~pyvista.Plotter`
         and then copy the actor, change the properties, and add it back to the
-        :class:`pyvista.Plotter`.
+        :class:`~pyvista.Plotter`.
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()

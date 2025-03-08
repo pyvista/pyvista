@@ -80,7 +80,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         deep : bool, default: True
             Create a shallow or deep copy of the volume. A deep copy will have a
             new property and mapper, while a shallow copy will use the mapper
-            and property of this actor.
+            and property of this volume.
 
         Returns
         -------
@@ -89,20 +89,20 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
         Examples
         --------
-        Create an actor of a cube by adding it to a :class:`pyvista.Plotter`
-        and then copy the actor, change the properties, and add it back to the
-        :class:`pyvista.Plotter`.
+        Create a volume of by adding it to a :class:`~pyvista.Plotter`
+        and then copy the volume, change the properties, and add it back to the
+        :class:`~pyvista.Plotter`.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Cube()
+        >>> mesh = pv.Wavelet()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh, color='b')
-        >>> new_actor = actor.copy()
-        >>> new_actor.prop.style = 'wireframe'
-        >>> new_actor.prop.line_width = 5
-        >>> new_actor.prop.color = 'r'
-        >>> new_actor.prop.lighting = False
-        >>> _ = pl.add_actor(new_actor)
+        >>> volume = pl.add_mesh(mesh, color='b')
+        >>> new_volume = volume.copy()
+        >>> new_volume.prop.style = 'wireframe'
+        >>> new_volume.prop.line_width = 5
+        >>> new_volume.prop.color = 'r'
+        >>> new_volume.prop.lighting = False
+        >>> _ = pl.add_actor(new_volume)
         >>> pl.show()
 
         """
