@@ -1507,7 +1507,7 @@ class Transform(_vtk.vtkTransform):
 
             For actor inputs, use:
 
-            - ``'pre-multiply'`` to pre-multiply this transform with the actor's :attr:`~pyvista.Actor.user_matrix`.
+            - ``'pre-multiply'`` to pre-multiply this transform with the actor's :attr:`~pyvista.Prop3D.user_matrix`.
             - ``'post-multiply'`` to post-multiply this transform with the actor's user-matrix
             - ``'replace'`` to replace the actor's user-matrix with this transform's :attr:`matrix`.
 
