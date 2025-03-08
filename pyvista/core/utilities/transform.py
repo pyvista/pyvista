@@ -1577,8 +1577,10 @@ class Transform(_vtk.vtkTransform):
         >>> actor = pv.Actor()
         >>> transformed_actor = transform.apply(actor)
         >>> transformed_actor.user_matrix
-        pyvista_ndarray([[ 2.,  4.,  6.],
-                         [ 8., 10., 12.]])
+        array([[2., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 2., 0.],
+               [0., 0., 0., 1.]])
 
         """
         _validation.check_contains(
