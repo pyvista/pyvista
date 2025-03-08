@@ -1459,6 +1459,8 @@ def test_transform_apply_mode():
     mesh = pv.PolyData(array)
     mesh['vector'] = [array]
 
+    actor = pv.Actor()  # noqa: F811
+
     # Scale points
     transformed = scale.apply(array, 'points')
     assert np.allclose(transformed, array * SCALE)
@@ -1494,6 +1496,24 @@ def test_transform_apply_mode():
     assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
     transformed = scale.apply_to_dataset(mesh, all_vectors=True)
     assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
+
+    # Scale actor
+    transformed = scale.apply(actor, 'replace')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = scale.apply_to_actor(actor, 'replace')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+
+    # Scale actor
+    transformed = scale.apply(actor, 'pre-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = scale.apply_to_actor(actor, 'pre-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+
+    # Scale actor
+    transformed = scale.apply(actor, 'post-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = scale.apply_to_actor(actor, 'post-multiply')
+    assert np.allclose(transformed.user_matrix, scale.matrix)
 
     # Test raises
     match = "Transformation mode 'points' is not supported for datasets."

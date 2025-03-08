@@ -1465,14 +1465,17 @@ class Transform(_vtk.vtkTransform):
     ) -> Prop3D | _Prop3DMixin: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D | _Prop3DMixin,
         /,
-        mode: Literal['points', 'vectors', 'all_vectors'] | None = None,
+        mode: Literal[
+            'points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply'
+        ]
+        | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
     ):
-        """Apply the current transformation :attr:`matrix` to points, vectors, or a dataset.
+        """Apply the current transformation :attr:`matrix` to points, vectors, a dataset, or actor.
 
         .. note::
 
@@ -1481,30 +1484,34 @@ class Transform(_vtk.vtkTransform):
             transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
-        .. note::
-
-            When applied to an actor, the transformation is multiplied with its
-            :attr:`~pyvista.Prop3D.user_matrix`.
-
         Parameters
         ----------
         obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
 
         mode : 'points' | 'vectors' | 'all_vectors', optional
-            Defines how to apply the transformation. If the input is an array, use:
+            Define how to apply the transformation.
+
+            For array inputs, use:
 
             - ``'points'`` for transforming point arrays.
-            - ``'vectors'`` for transforming vector arrays.
+            - ``'vectors'`` for transforming vector arrays. The translation component of
+              the transformation is removed for vectors.
 
-            Transforming vectors is similar to transforming points except the
-            translation component is removed for vectors. By default, ``'points'`` mode
-            is used for array inputs.
+            By default, ``'points'`` mode is used for array inputs.
 
-            If the input is a dataset, use the ``'all_vectors'`` mode to transform `all`
-            input vectors in datasets. Otherwise, only the points, normals and active
-            vectors are transformed. This mode is equivalent to setting
-            ``transform_all_input_vectors=True`` with :meth:`pyvista.DataObjectFilters.transform`.
+            For dataset inputs, use ``'all_vectors'`` to transform `all` input vectors
+            in datasets. Otherwise, only the points, normals and active vectors are
+            transformed. This mode is equivalent to setting ``transform_all_input_vectors=True``
+            with :meth:`pyvista.DataObjectFilters.transform`.
+
+            For actor inputs, use:
+
+            - ``'pre-multiply'`` to pre-multiply this transform with the actor's :attr:`~pyvista.Actor.user_matrix`.
+            - ``'post-multiply'`` to post-multiply this transform with the actor's user-matrix
+            - ``'replace'`` to replace the actor's user-matrix with this transform's :attr:`matrix`.
+
+            By default, ``'post-multiply'`` mode is used for actors.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1522,8 +1529,8 @@ class Transform(_vtk.vtkTransform):
 
         Returns
         -------
-        np.ndarray | DataSet | MultiBlock
-            Transformed array or dataset.
+        np.ndarray | DataSet | MultiBlock | Prop3D
+            Transformed array, dataset, or actor.
 
         See Also
         --------
@@ -1717,6 +1724,8 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to vectors.
         apply_to_dataset
             Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
 
         """
         return self.apply(points, 'points', inverse=inverse, copy=copy)
@@ -1761,6 +1770,8 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_dataset
             Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
 
         """
         return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
@@ -1811,12 +1822,65 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_vectors
             Apply this transformation to vectors.
+        apply_to_actor
+            Apply this transformation to an actor.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
         """
         mode: Literal['all_vectors'] | None = 'all_vectors' if all_vectors else None
         return self.apply(dataset, mode, inverse=inverse, copy=copy)
+
+    def apply_to_actor(
+        self,
+        actor: Prop3D | _Prop3DMixin,
+        /,
+        mode: Literal['pre-multiply', 'post-multiply', 'replace'] = 'post-multiply',
+        copy: bool = True,
+        inverse: bool = False,
+    ) -> Prop3D | _Prop3DMixin:
+        """Apply the current transformation :attr:`matrix` to a dataset.
+
+        This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and
+        examples.
+
+        Parameters
+        ----------
+        actor : Prop3D
+            Actor to apply the transformation to.
+
+        mode : 'pre-multiply', 'post-multiply', 'replace', default: 'post-multiply'
+            When ``True``, all arrays with three components are
+            transformed. Otherwise, only the normals and vectors are
+            transformed. See the warning in :meth:`pyvista.DataObjectFilters.transform`
+            for more details.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it.
+
+        Returns
+        -------
+        Prop3D
+            Transformed actor.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+
+        """
+        return self.apply(actor, mode, inverse=inverse, copy=copy)
 
     def decompose(
         self: Transform,
