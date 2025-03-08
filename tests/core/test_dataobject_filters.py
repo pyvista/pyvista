@@ -65,20 +65,46 @@ def test_clip_filter_normal(datasets):
         dataset.clip(normal=normals[i], invert=True)
 
 
-def test_clip_filter_crinkle():
+@pytest.mark.parametrize('dataset', [pv.PolyData(), pv.MultiBlock()])
+def test_clip_filter_empty_inputs(dataset):
+    dataset.clip('x')
+
+
+def test_clip_filter_crinkle_disjoint(uniform):
+    def assert_array_names(clipped):
+        assert cell_ids in clipped.array_names
+        assert 'vtkOriginalPointIds' not in clipped.array_names
+        assert 'vtkOriginalCellIds' not in clipped.array_names
+
     # crinkle clip
     cell_ids = 'cell_ids'
-    mesh = pv.Wavelet()
-    mesh[cell_ids] = np.arange(mesh.n_cells)
-    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
+    clp = uniform.clip(normal=(1, 1, 1), crinkle=True)
+    assert_array_names(clp)
+
     assert clp is not None
-    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = uniform.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    assert_array_names(clp1)
+    assert_array_names(clp2)
     set_a = set(clp1.cell_data[cell_ids])
     set_b = set(clp2.cell_data[cell_ids])
     assert set_a.isdisjoint(set_b)
-    assert set_a.union(set_b) == set(range(mesh.n_cells))
+    assert set_a.union(set_b) == set(range(uniform.n_cells))
+
+
+@pytest.mark.parametrize('has_active_scalars', [True, False])
+def test_clip_filter_crinkle_active_scalars(uniform, has_active_scalars):
+    if not has_active_scalars:
+        uniform.set_active_scalars(None)
+        assert uniform.active_scalars is None
+    else:
+        assert uniform.active_scalars is not None
+
+    scalars_before = uniform.active_scalars_name
+    uniform.clip('x', crinkle=True)
+    scalars_after = uniform.active_scalars_name
+    assert scalars_before == scalars_after
 
 
 def test_clip_filter_composite(multiblock_all):
