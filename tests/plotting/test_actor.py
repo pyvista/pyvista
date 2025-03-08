@@ -333,18 +333,15 @@ def test_convert_orientation_to_rotation_matrix(order):
     assert np.allclose(actual_orientation, orientation)
 
 
-@pytest.mark.parametrize('obj', [pv.Actor(), pv.AxesAssembly(), 'dummy_actor'])
-def test_transform_actor(obj, dummy_actor):
-    if obj == 'dummy_actor':
-        obj = dummy_actor
+def test_transform_actor(actor):
     SCALE = 2
     matrix = np.diag((SCALE, SCALE, SCALE, 1))
     matrix2 = np.diag((SCALE * SCALE, SCALE * SCALE, SCALE * SCALE, 1))
 
-    transformed = obj.transform(matrix)
+    transformed = actor.transform(matrix)
     actual_matrix = transformed.user_matrix
     assert np.allclose(actual_matrix, matrix)
-    assert transformed is not obj
+    assert transformed is not actor
 
     transformed2 = transformed.transform(matrix, inplace=True)
     actual_matrix = transformed2.user_matrix

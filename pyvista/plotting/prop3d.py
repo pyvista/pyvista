@@ -672,20 +672,3 @@ class _Prop3DMixin(ABC):
         return np.linalg.norm(
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         ).tolist()
-
-    # @wraps(Prop3D.transform)  # type: ignore[attr-defined]
-    # def transform(self:Self, *args, **kwargs) -> Self:  # numpydoc ignore=RT01
-    #     """Wrap :class:`pyvista.Prop3D.transform."""
-    #     # Get output
-    #     inplace = kwargs.pop('inplace', False)
-    #     output = self if inplace else self.copy()
-    #     # Apply transformation to internal prop
-    #     output._prop3d.transform(*args, inplace=True, **kwargs)
-    #     output._post_set_update()
-    #     return output
-    #
-    # @wraps(Prop3D.copy)
-    # def copy(self:Self, *, deep:bool=True) -> Self:
-    #     """Return a shallow copy of this prop."""
-    #     del self._prop3d
-    #     return copylib.deepcopy(self) if deep else copylib.copy(self)
