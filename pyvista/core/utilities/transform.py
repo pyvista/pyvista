@@ -253,7 +253,10 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                [self.compose(t) for t in trans]
+                if all(isinstance(item, Sequence) for item in trans):
+                    self.compose(trans)
+                else:
+                    [self.compose(t) for t in trans]
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
