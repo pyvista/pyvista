@@ -1454,10 +1454,7 @@ class Transform(_vtk.vtkTransform):
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
-        mode: Literal[
-            'points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply'
-        ]
-        | None = None,
+        mode: Literal['points', 'vectors', 'all_vectors'] | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
@@ -1473,7 +1470,7 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
+        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock
             Object to apply the transformation to.
 
         mode : 'points' | 'vectors' | 'all_vectors', optional
@@ -1501,10 +1498,6 @@ class Transform(_vtk.vtkTransform):
             ``False`` to transform the input directly and return it. Setting this to
             ``False`` only applies to NumPy float arrays and datasets; a copy
             is always returned for tuple and list inputs or arrays with integers.
-
-            .. note::
-                A deep copy is made wherever possible. For some actor inputs, however,
-                only a shallow copy may be made.
 
         Returns
         -------
@@ -1580,8 +1573,6 @@ class Transform(_vtk.vtkTransform):
                 Sequence,
                 pyvista.DataSet,
                 pyvista.MultiBlock,
-                pyvista.Prop3D,
-                pyvista.plotting.prop3d._Prop3DMixin,
             ),
         )
 
@@ -1666,8 +1657,6 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to vectors.
         apply_to_dataset
             Apply this transformation to a dataset.
-        apply_to_actor
-            Apply this transformation to an actor.
 
         """
         return self.apply(points, 'points', inverse=inverse, copy=copy)
@@ -1712,8 +1701,6 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_dataset
             Apply this transformation to a dataset.
-        apply_to_actor
-            Apply this transformation to an actor.
 
         """
         return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
@@ -1764,8 +1751,6 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_vectors
             Apply this transformation to vectors.
-        apply_to_actor
-            Apply this transformation to an actor.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
