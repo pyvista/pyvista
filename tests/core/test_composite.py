@@ -1360,13 +1360,13 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     input_ = multiblock_all_with_nested_and_none
     empty_mesh = pv.PolyData()
     multiblock_all_with_nested_and_none.append(empty_mesh)
-    flat_inputs = multiblock_all_with_nested_and_none.flatten(copy=False)
+    flat_inputs = multiblock_all_with_nested_and_none.flatten(copy=False, safe_update=False)
 
     output = multiblock_all_with_nested_and_none.generic_filter(
         'extract_largest',
         inplace=inplace,
     )
-    flat_output = output.flatten(copy=False)
+    flat_output = output.flatten(copy=False, safe_update=False)
 
     assert flat_inputs.n_blocks == flat_output.n_blocks
     for block_in, block_out in zip(flat_inputs, flat_output):
