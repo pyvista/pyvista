@@ -1001,12 +1001,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
-        ),
-    ):
+    match = re.escape(
+        'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+    )
+    with pytest.raises(ValueError, match=match):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'

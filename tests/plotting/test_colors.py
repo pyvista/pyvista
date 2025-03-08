@@ -13,6 +13,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
@@ -28,6 +29,12 @@ if importlib.util.find_spec('colorcet'):
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
+
+
+@pytest.mark.parametrize('scheme', [object(), 1.0, None])
+def test_color_scheme_to_cycler_raises(scheme):
+    with pytest.raises(ValueError, match=f'Color scheme not understood: {scheme}'):
+        color_scheme_to_cycler(scheme=scheme)
 
 
 def test_color():

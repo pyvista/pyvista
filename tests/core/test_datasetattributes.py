@@ -64,6 +64,12 @@ def insert_string_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
+@pytest.mark.parametrize('i', [1, None, object(), True])
+def test_setitem_raises(i):
+    with pytest.raises(TypeError, match='Only strings are valid keys for DataSetAttributes.'):
+        pv.Sphere().point_data[i] = 1
+
+
 def test_init(hexbeam):
     attributes = pv.DataSetAttributes(
         hexbeam.GetPointData(),

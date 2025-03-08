@@ -428,3 +428,14 @@ def test_embeddable_widget(skip_check_gc):
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
+
+
+def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
+    from pyvista.trame import jupyter
+
+    monkeypatch.setattr(jupyter, 'HTML', object)
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.Widget(viewer=None, src=None)
+
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.EmbeddableWidget(plotter=None, width=None, height=None)

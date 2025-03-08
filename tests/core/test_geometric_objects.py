@@ -3,10 +3,36 @@ from __future__ import annotations
 from itertools import permutations
 import re
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 
 import pyvista as pv
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
+def test_pyramid_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 5 np.ndarray or list.')
+    ):
+        pv.Pyramid(points=points)
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 3))
+def test_triangle_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 3 np.ndarray or list')
+    ):
+        pv.Triangle(points=points)
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 4))
+def test_quadrilateral_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 4 np.ndarray or list')
+    ):
+        pv.Quadrilateral(points=points)
 
 
 def test_cylinder():
