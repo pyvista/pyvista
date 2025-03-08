@@ -132,11 +132,13 @@ def test_actor_copy_deep(prop3d, actor, volume, include_mapper):
         assert copied.mapper is None
 
 
-def test_actor_copy_shallow(actor):
-    actor_copy = actor.copy(deep=False)
-    assert actor_copy is not actor
-    assert actor_copy.prop is actor.prop
-    assert actor_copy.mapper is actor.mapper
+@pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
+def test_actor_copy_shallow(prop3d, actor, volume):
+    obj = actor if prop3d is pv.Actor else volume
+    copied = obj.copy(deep=False)
+    assert copied is not obj
+    assert copied.prop is obj.prop
+    assert copied.mapper is obj.mapper
 
 
 def test_actor_mblock_copy_shallow(actor_from_multi_block):
