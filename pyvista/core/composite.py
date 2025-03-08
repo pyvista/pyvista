@@ -603,6 +603,10 @@ class MultiBlock(
             If any field data keys in nested :class:`MultiBlock` blocks are duplicated
             in the root block and ``safe_update`` is ``True``.
 
+        See Also
+        --------
+        flatten
+
         Examples
         --------
         Create a :class:`MultiBlock` with field data.
@@ -707,6 +711,8 @@ class MultiBlock(
             for array_name in field_data_to_copy:
                 # Check for nested user-dict data
                 if array_name.endswith(USER_DICT_KEY):
+                    if user_dict_mode is None:
+                        continue
                     root_user_dict = self.user_dict
 
                     def raise_key_error(
@@ -759,6 +765,8 @@ class MultiBlock(
                     raise ValueError(msg)
 
                 else:
+                    if field_data_mode is None:
+                        continue
                     # Copy the field data
                     array = field_data_to_copy[array_name]
                     if field_data_mode != 'prepend':
@@ -774,7 +782,10 @@ class MultiBlock(
         *,
         order: Literal['nested_first', 'nested_last'] | None = None,
         name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve',
+        field_data_mode: Literal['preserve', 'prepend'] = 'preserve',
+        user_dict_mode: Literal['preserve', 'prepend', 'flat', 'nested'] = 'preserve',
         separator: str = '::',
+        safe_update: bool = True,
         copy: bool = True,
     ) -> MultiBlock:
         """Flatten this :class:`MultiBlock`.
@@ -782,11 +793,8 @@ class MultiBlock(
         Recursively iterate through all blocks and store them in a single
         :class:`MultiBlock` instance. All nested :class:`~pyvista.DataSet` and ``None``
         blocks are preserved, and any nested ``MultiBlock`` container blocks are removed.
-
-        .. warning::
-
-            Any field data directly associated with any nested ``MultiBlock`` is not
-            handled by this method and will be lost.
+        Field data from any nested ``MultiBlock`` containers is preserved and also
+        flattened.
 
         .. versionadded:: 0.45
 
@@ -809,14 +817,47 @@ class MultiBlock(
               .. warning::
 
                   This mode may result in duplicate key names if the same block name is
-                  reused in any nested blocks.
+                  reused in any nested blocks. Use ``safe_update=True`` to raise an
+                  error instead.
 
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
 
+        field_data_mode : 'preserve' | 'prepend', default: 'preserve'
+            Mode for naming the root field data keys when moving nested field data.
+
+            - ``'preserve'``: The array names of nested field data are preserved.
+            - ``'prepend'``: Preserve the array names and prepend the parent names.
+
+        user_dict_mode : 'preserve' | 'prepend' | 'flat' | 'nested', default: 'preserve'
+            Mode for naming the flattened :attr:`~pyvista.DataObject.user_dict` keys when
+            nested :class:`MultiBlock` blocks define a user-dict.
+
+            - ``'preserve'``: Update the root user dict directly with the items of any
+              nested user-dict.
+            - ``'nested'``: Create nested keys in the root user-dict which match the
+              nested hierarchy of any nested ``MultiBlock`` blocks.
+            - ``'flat'``: Create a new key in the root user dict for each nested
+              ``MultiBlock`` that has a user-dict.
+            - ``'prepend'``: Similar to ``'flat'`` except the key names are prepended
+              with the parent block names.
+
+            .. note::
+                If there is only a single level of nesting the ``'flat'``, ``'nested'``
+                and ``'prepend'`` modes are all equivalent. They only differ when there
+                is at least two levels of nesting.
+
         separator : str, default: '::'
-            String separator to use when ``name_mode='prepend'`` is used. The separator
-            is inserted between parent and child block names.
+            String separator to use when ``'prepend'`` mode is used. The separator
+            is inserted between parent and child block name or field data array names.
+
+        safe_update : bool, default: True
+            Flatten the MultiBlock data safely without overwriting any data or
+            duplicating block names. If ``True``, an error is raised if any duplicate,
+            non-unique field data keys or block names are identified. If ``False``,
+            nested field data is flattened without checking for duplicate keys and data
+            may be overwritten; the flattened MultiBlock may also have duplicate block
+            names.
 
         copy : bool, default: True
             Return a deep copy of all nested blocks in the flattened ``MultiBlock``.
@@ -830,6 +871,7 @@ class MultiBlock(
         See Also
         --------
         recursive_iterator
+        move_nested_field_data_to_root
         pyvista.CompositeFilters.generic_filter
         clean
 
@@ -900,21 +942,50 @@ class MultiBlock(
         prepend_names = name_mode == 'prepend'
         multi = self.copy() if copy else self
         iterator = multi.recursive_iterator(
-            contents='items',
+            contents='all',
             order=order,
             skip_none=False,
             skip_empty=False,
             prepend_names=prepend_names,
             separator=separator,
         )
-        typed_iterator = cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator)
+        typed_iterator = cast(
+            Iterator[tuple[tuple[int, ...], tuple[Union[str, None]], Union[DataSet, None]]],
+            iterator,
+        )
 
-        # Generate output
         output = MultiBlock()
-        output.field_data.update(self.field_data, copy=copy)
-        for name, block in typed_iterator:
+        # Move field data
+        move_kwargs = dict(
+            field_data_mode=field_data_mode,
+            user_dict_mode=user_dict_mode,
+            safe_update=safe_update,
+            separator=separator,
+        )
+        if copy:
+            multi.move_nested_field_data_to_root(**move_kwargs)
+            field_data_to_copy = multi.field_data
+        else:
+            # Need to copy nested multiblocks to avoid mutating field data
+            input_with_field_data = MultiBlock()
+            input_with_field_data.shallow_copy(self, recursive=True)
+            input_with_field_data.move_nested_field_data_to_root(**move_kwargs)
+            field_data_to_copy = input_with_field_data.field_data
+
+        output.field_data.update(field_data_to_copy, copy=copy)
+
+        for index, name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None
+            elif safe_update:
+                if name in output.keys():
+                    # Duplicate block name - raise error
+                    index_fmt = _format_nested_index(index)
+                    msg = (
+                        f"Block at index {index_fmt} with name '{name}' cannot be flattened. Another block \n"
+                        'with the same name already exists.'
+                    )
+                    raise ValueError(msg)
             output.append(block, name)
         return output
 

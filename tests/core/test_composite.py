@@ -1307,7 +1307,10 @@ def test_flatten(multiblock_all_with_nested_and_none):
     expected_names = [*root_names, *nested_names]
     expected_n_blocks = len(root_names) + len(nested_names)
 
-    flat = multiblock_all_with_nested_and_none.flatten(name_mode='preserve')
+    match = "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \nwith the same name already exists."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = multiblock_all_with_nested_and_none.flatten()
+    flat = multiblock_all_with_nested_and_none.flatten(name_mode='preserve', safe_update=False)
     assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
     assert len(flat) == expected_n_blocks
     assert flat.keys() == expected_names
@@ -1343,7 +1346,7 @@ def test_generic_filter(multiblock_all_with_nested_and_none, function):
     multiblock_all_with_nested_and_none.append(empty_mesh)
 
     output = multiblock_all_with_nested_and_none.generic_filter(function)
-    flat_output = output.flatten()
+    flat_output = output.flatten(safe_update=False)
     # Make sure no `None` blocks were removed
     assert None in flat_output
     # Check output
