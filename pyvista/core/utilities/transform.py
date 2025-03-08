@@ -1996,7 +1996,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Create a rotation matrix and initialize a class:`Transform` from it.
+        Create a rotation matrix and initialize a :class:`Transform` from it.
 
         >>> import numpy as np
         >>> import pyvista as pv
