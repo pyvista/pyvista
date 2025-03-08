@@ -711,8 +711,6 @@ class MultiBlock(
             for array_name in field_data_to_copy:
                 # Check for nested user-dict data
                 if array_name.endswith(USER_DICT_KEY):
-                    if user_dict_mode is None:
-                        continue
                     root_user_dict = self.user_dict
 
                     def raise_key_error(
@@ -765,8 +763,6 @@ class MultiBlock(
                     raise ValueError(msg)
 
                 else:
-                    if field_data_mode is None:
-                        continue
                     # Copy the field data
                     array = field_data_to_copy[array_name]
                     if field_data_mode != 'prepend':
