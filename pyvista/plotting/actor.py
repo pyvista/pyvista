@@ -356,7 +356,8 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         """
         new_actor = Actor()
         if deep:
-            new_actor.mapper = self.mapper.copy()
+            if self.mapper is not None:
+                new_actor.mapper = self.mapper.copy()
             new_actor.prop = self.prop.copy()
         else:
             new_actor.ShallowCopy(self)
