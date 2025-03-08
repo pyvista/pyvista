@@ -2887,3 +2887,23 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if there are no points.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData()
+        >>> mesh.is_empty
+        True
+
+        >>> mesh = pv.Sphere()
+        >>> mesh.is_empty
+        False
+
+        """
+        return self.n_points == 0
