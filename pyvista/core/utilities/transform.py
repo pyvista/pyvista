@@ -1950,7 +1950,7 @@ class Transform(_vtk.vtkTransform):
         *args,
         **kwargs,
     ) -> Rotation | NumpyArray[float]:
-        """Return the rotation component as a SciPy ``Rotation`` object or any of its representations.
+        """Return the rotation component as a SciPy :class:`~scipy.spatial.transform.Rotation` or any of its representations.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component
         and then returned with the specified representation.
@@ -1964,14 +1964,14 @@ class Transform(_vtk.vtkTransform):
         representation : str, optional
             Representation of the rotation.
 
-            - ``'quat'``: Represent as a quaternion using :meth:`scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
-            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`scipy.spatial.transform.Rotation.as_matrix`.
-            - ``'rotvec'``: Represent as a rotation vector using :meth:`scipy.spatial.transform.Rotation.as_rotvec`.
-            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`scipy.spatial.transform.Rotation.as_mrp`.
-            - ``'euler'``: Represent as Euler angles using :meth:`scipy.spatial.transform.Rotation.as_euler`.
-            - ``'davenport'``: Represent as Davenport angles using :meth:`scipy.spatial.transform.Rotation.as_davenport`.
+            - ``'quat'``: Represent as a quaternion using :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using :meth:`~scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
 
-            If no representation is given, then an instance of :py:class:`scipy.spatial.transform.Rotation`
+            If no representation is given, then an instance of :class:`scipy.spatial.transform.Rotation`
             is returned by default.
 
         *args
