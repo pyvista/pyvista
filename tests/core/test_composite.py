@@ -1215,7 +1215,7 @@ def _make_nested_multiblock(
     return root
 
 
-def test_move_nested_field_data_to_root_safe_update():
+def test_move_nested_field_data_to_root_check_duplicate_keys():
     NAME1 = 'name1'
     VALUE1 = 'value1'
     NAME2 = 'name2'
@@ -1232,7 +1232,7 @@ def test_move_nested_field_data_to_root_safe_update():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.move_nested_field_data_to_root()
-    root.move_nested_field_data_to_root(safe_update=False)
+    root.move_nested_field_data_to_root(check_duplicate_keys=False)
 
     # Test block name key overrides root user dict key
     root = _make_nested_multiblock(
@@ -1244,7 +1244,7 @@ def test_move_nested_field_data_to_root_safe_update():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.move_nested_field_data_to_root(user_dict_mode='prepend')
-    root.move_nested_field_data_to_root(safe_update=False)
+    root.move_nested_field_data_to_root(check_duplicate_keys=False)
 
     # Test nested user dict key overrides root user dict key
     root = _make_nested_multiblock(
@@ -1256,7 +1256,7 @@ def test_move_nested_field_data_to_root_safe_update():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.move_nested_field_data_to_root()
-    root.move_nested_field_data_to_root(safe_update=False)
+    root.move_nested_field_data_to_root(check_duplicate_keys=False)
 
 
 @pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend', 'flat', 'nested'])
@@ -1322,10 +1322,13 @@ def test_flatten(multiblock_all_with_nested_and_none):
     expected_names = [*root_names, *nested_names]
     expected_n_blocks = len(root_names) + len(nested_names)
 
-    match = "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \nwith the same name already exists."
+    match = (
+        "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
+        "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = root_multi.flatten()
-    flat = root_multi.flatten(name_mode='preserve', safe_update=False)
+    flat = root_multi.flatten(name_mode='preserve', check_duplicate_keys=False)
     assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
     assert len(flat) == expected_n_blocks
     assert flat.keys() == expected_names
@@ -1369,7 +1372,7 @@ def test_generic_filter(multiblock_all_with_nested_and_none, function):
     multiblock_all_with_nested_and_none.append(empty_mesh)
 
     output = multiblock_all_with_nested_and_none.generic_filter(function)
-    flat_output = output.flatten(safe_update=False)
+    flat_output = output.flatten(check_duplicate_keys=False)
     # Make sure no `None` blocks were removed
     assert None in flat_output
     # Check output
@@ -1383,13 +1386,15 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     input_ = multiblock_all_with_nested_and_none
     empty_mesh = pv.PolyData()
     multiblock_all_with_nested_and_none.append(empty_mesh)
-    flat_inputs = multiblock_all_with_nested_and_none.flatten(copy=False, safe_update=False)
+    flat_inputs = multiblock_all_with_nested_and_none.flatten(
+        copy=False, check_duplicate_keys=False
+    )
 
     output = multiblock_all_with_nested_and_none.generic_filter(
         'extract_largest',
         inplace=inplace,
     )
-    flat_output = output.flatten(copy=False, safe_update=False)
+    flat_output = output.flatten(copy=False, check_duplicate_keys=False)
 
     assert flat_inputs.n_blocks == flat_output.n_blocks
     for block_in, block_out in zip(flat_inputs, flat_output):

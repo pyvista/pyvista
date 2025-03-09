@@ -523,7 +523,7 @@ class MultiBlock(
         field_data_mode: Literal['preserve', 'prepend'] = 'preserve',
         user_dict_mode: Literal['preserve', 'prepend', 'flat', 'nested'] = 'preserve',
         separator: str = '::',
-        safe_update: bool = True,
+        check_duplicate_keys: bool = True,
     ) -> None:
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
 
@@ -591,7 +591,7 @@ class MultiBlock(
             data or for the user-dict. The separator is inserted between parent and child
             block names.
 
-        safe_update : bool, default: True
+        check_duplicate_keys : bool, default: True
             Update the root data safely without overwriting existing data. If ``True``,
             an error is raised if any nested keys match the root block's keys. If
             ``False``, nested data is moved without checking if a key already exists,
@@ -601,7 +601,7 @@ class MultiBlock(
         ------
         ValueError
             If any field data keys in nested :class:`MultiBlock` blocks are duplicated
-            in the root block and ``safe_update`` is ``True``.
+            in the root block and ``check_duplicate_keys`` is ``True``.
 
         See Also
         --------
@@ -724,7 +724,7 @@ class MultiBlock(
                         raise ValueError(msg)
 
                     if user_dict_mode == 'preserve':
-                        if safe_update:
+                        if check_duplicate_keys:
                             # Check if the keys already exist before updating
                             root_user_dict_keys = root_user_dict.keys()
                             for nested_key in nested_multi.user_dict.keys():
@@ -745,13 +745,13 @@ class MultiBlock(
                         else:
                             dict_to_update = root_user_dict
 
-                        if safe_update:
+                        if check_duplicate_keys:
                             # Check if the keys already exist before updating
                             if new_key in dict_to_update:
                                 raise_key_error(new_key, block_name, index)
                         dict_to_update[new_key] = dict(nested_multi.user_dict)
 
-                elif safe_update and array_name in root_field_data:
+                elif check_duplicate_keys and array_name in root_field_data:
                     # Duplicate keys - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
@@ -781,7 +781,7 @@ class MultiBlock(
         field_data_mode: Literal['preserve', 'prepend'] = 'preserve',
         user_dict_mode: Literal['preserve', 'prepend', 'flat', 'nested'] = 'preserve',
         separator: str = '::',
-        safe_update: bool = True,
+        check_duplicate_keys: bool = True,
         copy: bool = True,
     ) -> MultiBlock:
         """Flatten this :class:`MultiBlock`.
@@ -789,8 +789,11 @@ class MultiBlock(
         Recursively iterate through all blocks and store them in a single
         :class:`MultiBlock` instance. All nested :class:`~pyvista.DataSet` and ``None``
         blocks are preserved, and any nested ``MultiBlock`` container blocks are removed.
-        Field data from any nested ``MultiBlock`` containers is preserved and also
-        flattened.
+        Field data from any nested ``MultiBlock`` containers is preserved, however, and
+        is also flattened.
+
+        The flattening operation is "safe" by default in the sense that duplicate keys
+        for block names and field data are not allowed and no data will be overwritten.
 
         .. versionadded:: 0.45
 
@@ -809,13 +812,6 @@ class MultiBlock(
             Mode for naming blocks in the flattened output.
 
             - ``'preserve'``: The names of all blocks are preserved.
-
-              .. warning::
-
-                  This mode may result in duplicate key names if the same block name is
-                  reused in any nested blocks. Use ``safe_update=True`` to raise an
-                  error instead.
-
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
 
@@ -829,11 +825,11 @@ class MultiBlock(
             Mode for naming the flattened :attr:`~pyvista.DataObject.user_dict` keys when
             nested :class:`MultiBlock` blocks define a user-dict.
 
-            - ``'preserve'``: Update the root user dict directly with the items of any
-              nested user-dict.
-            - ``'nested'``: Create nested keys in the root user-dict which match the
-              nested hierarchy of any nested ``MultiBlock`` blocks.
-            - ``'flat'``: Create a new key in the root user dict for each nested
+            - ``'preserve'``: Update the flattened user dict directly with the items of
+              any nested user-dict.
+            - ``'nested'``: Create nested keys in the flattened user-dict which match
+              the nested hierarchy of any nested ``MultiBlock`` blocks.
+            - ``'flat'``: Create a new key in the flattened user dict for each nested
               ``MultiBlock`` that has a user-dict.
             - ``'prepend'``: Similar to ``'flat'`` except the key names are prepended
               with the parent block names.
@@ -847,7 +843,7 @@ class MultiBlock(
             String separator to use when ``'prepend'`` mode is used. The separator
             is inserted between parent and child block name or field data array names.
 
-        safe_update : bool, default: True
+        check_duplicate_keys : bool, default: True
             Flatten the MultiBlock data safely without overwriting any data or
             duplicating block names. If ``True``, an error is raised if any duplicate,
             non-unique field data keys or block names are identified. If ``False``,
@@ -936,8 +932,26 @@ class MultiBlock(
             ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
         )
         prepend_names = name_mode == 'prepend'
-        multi = self.copy() if copy else self
-        iterator = multi.recursive_iterator(
+
+        if copy:
+            input_multi = self.copy()
+        else:
+            # Shallow copy nested multiblocks to avoid mutating input field data
+            input_multi = MultiBlock()
+            input_multi.shallow_copy(self, recursive=True)
+
+        # Move field data to output
+        output_multi = MultiBlock()
+        input_multi.move_nested_field_data_to_root(
+            field_data_mode=field_data_mode,
+            user_dict_mode=user_dict_mode,
+            check_duplicate_keys=check_duplicate_keys,
+            separator=separator,
+        )
+        output_multi.field_data.update(input_multi.field_data, copy=copy)
+
+        # Create iterator
+        iterator = input_multi.recursive_iterator(
             contents='all',
             order=order,
             skip_none=False,
@@ -950,37 +964,21 @@ class MultiBlock(
             iterator,
         )
 
-        output = MultiBlock()
-        # Move field data
-        if copy:
-            multi_with_field_data = multi
-        else:
-            # Need to copy nested multiblocks to avoid mutating field data
-            multi_with_field_data = MultiBlock()
-            multi_with_field_data.shallow_copy(self, recursive=True)
-        multi_with_field_data.move_nested_field_data_to_root(
-            field_data_mode=field_data_mode,
-            user_dict_mode=user_dict_mode,
-            safe_update=safe_update,
-            separator=separator,
-        )
-        output.field_data.update(multi_with_field_data.field_data, copy=copy)
-
-        # Append blocks
+        # Append blocks to output
         for index, name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None
-            elif safe_update:
-                if name in output.keys():
+            elif check_duplicate_keys:
+                if name in output_multi.keys():
                     # Duplicate block name - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
                         f"Block at index {index_fmt} with name '{name}' cannot be flattened. Another block \n"
-                        'with the same name already exists.'
+                        "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
                     )
                     raise ValueError(msg)
-            output.append(block, name)
-        return output
+            output_multi.append(block, name)
+        return output_multi
 
     @property
     def is_nested(self) -> bool:  # numpydoc ignore=RT01
