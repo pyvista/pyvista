@@ -91,20 +91,24 @@ class Volume(Prop3D, _vtk.vtkVolume):
         Examples
         --------
         Create a volume of by adding it to a :class:`~pyvista.Plotter`
-        and then copy the volume, change the properties, and add it back to the
-        :class:`~pyvista.Plotter`.
+        and then copy the volume.
+
 
         >>> import pyvista as pv
         >>> mesh = pv.Wavelet()
         >>> pl = pv.Plotter()
-        >>> volume = pl.add_mesh(mesh, color='b')
+        >>> volume = pl.add_volume(mesh, diffuse=0.5)
         >>> new_volume = volume.copy()
-        >>> new_volume.prop.style = 'wireframe'
-        >>> new_volume.prop.line_width = 5
-        >>> new_volume.prop.color = 'r'
-        >>> new_volume.prop.lighting = False
-        >>> _ = pl.add_actor(new_volume)
-        >>> pl.show()
+
+        Change the copy's properties. A deep copy is made by default, so the original
+        volume is not affected.
+
+        >>> new_volume.prop.diffuse = 1.0
+        >>> new_volume.prop.diffuse
+        1.0
+
+        >>> volume.prop.diffuse
+        0.5
 
         """
         new_actor = type(self)()

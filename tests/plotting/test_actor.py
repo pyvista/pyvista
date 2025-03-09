@@ -27,7 +27,7 @@ def actor():
 
 @pytest.fixture
 def volume():
-    return pv.Plotter().add_mesh(pv.Wavelet())
+    return pv.Plotter().add_volume(pv.Wavelet())
 
 
 @pytest.fixture
@@ -106,29 +106,39 @@ def test_actor_from_plotter():
     assert 'Mapper' in repr(actor)
 
 
-@pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
-def test_actor_copy_deep(prop3d, actor, volume):
+@pytest.mark.parametrize('include_mapper', [True, False])
+@pytest.mark.parametrize(('prop3d', 'prop_attr'), [(pv.Volume, 'shade'), (pv.Actor, 'lighting')])
+def test_actor_copy_deep(prop3d, prop_attr, actor, volume, include_mapper):
     obj = actor if prop3d is pv.Actor else volume
-    assert obj.mapper is not None
+    if include_mapper:
+        assert obj.mapper is not None
+    else:
+        obj.mapper = None
+        assert obj.mapper is None
 
     copied = obj.copy()
     assert copied is not obj
-
     assert copied.prop is not obj.prop
-    copied.prop.lighting = not copied.prop.lighting
-    assert copied.prop.lighting is not obj.prop.lighting
 
-    assert copied.mapper is not obj.mapper
-    assert copied.mapper.dataset is obj.mapper.dataset
-    copied.mapper.dataset = None
-    assert obj.mapper.dataset is not None
+    setattr(copied.prop, prop_attr, not getattr(copied.prop, prop_attr))
+    assert getattr(copied.prop, prop_attr) is not getattr(obj.prop, prop_attr)
+
+    if include_mapper:
+        assert copied.mapper is not obj.mapper
+        assert copied.mapper.dataset is obj.mapper.dataset
+        copied.mapper.dataset = None
+        assert obj.mapper.dataset is not None
+    else:
+        assert copied.mapper is None
 
 
-def test_actor_copy_shallow(actor):
-    actor_copy = actor.copy(deep=False)
-    assert actor_copy is not actor
-    assert actor_copy.prop is actor.prop
-    assert actor_copy.mapper is actor.mapper
+@pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
+def test_actor_copy_shallow(prop3d, actor, volume):
+    obj = actor if prop3d is pv.Actor else volume
+    copied = obj.copy(deep=False)
+    assert copied is not obj
+    assert copied.prop is obj.prop
+    assert copied.mapper is obj.mapper
 
 
 def test_actor_mblock_copy_shallow(actor_from_multi_block):
