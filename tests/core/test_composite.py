@@ -1311,11 +1311,11 @@ def test_flatten(multiblock_all_with_nested_and_none):
     nested_multi.field_data[NESTED_KEY] = ['nested data']
     assert isinstance(nested_multi, pv.MultiBlock)
 
-    def assert_field_data_keys():
+    def assert_field_data_keys(flat_, root_, nested_):
         # Test that input block field data isn't accidentally cleared
-        assert flat.field_data.keys() == [ROOT_KEY, NESTED_KEY]
-        assert root_multi.field_data.keys() == [ROOT_KEY]
-        assert nested_multi.field_data.keys() == [NESTED_KEY]
+        assert flat_.field_data.keys() == [ROOT_KEY, NESTED_KEY]
+        assert root_.field_data.keys() == [ROOT_KEY]
+        assert nested_.field_data.keys() == [NESTED_KEY]
 
     root_names = root_multi.keys()[:-1]
     nested_names = nested_multi.keys()
@@ -1332,7 +1332,7 @@ def test_flatten(multiblock_all_with_nested_and_none):
 
     # Test field data keys with copy
     assert nested_multi[0] is not flat[0]
-    assert_field_data_keys()
+    assert_field_data_keys(flat, root_multi, nested_multi)
 
     flat = root_multi.flatten(name_mode='reset', copy=False)
     expected_names = [f'Block-{i:02}' for i in range(expected_n_blocks)]
@@ -1340,7 +1340,7 @@ def test_flatten(multiblock_all_with_nested_and_none):
 
     # Test field data keys without copy
     assert nested_multi[0] is flat[0]
-    assert_field_data_keys()
+    assert_field_data_keys(flat, root_multi, nested_multi)
 
 
 @pytest.mark.parametrize('copy', [True, False])

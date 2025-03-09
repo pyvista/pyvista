@@ -820,7 +820,7 @@ class MultiBlock(
             - ``'reset'``: Reset the block names to default values.
 
         field_data_mode : 'preserve' | 'prepend', default: 'preserve'
-            Mode for naming the root field data keys when moving nested field data.
+            Mode for naming the root field data keys when flattening nested field data.
 
             - ``'preserve'``: The array names of nested field data are preserved.
             - ``'prepend'``: Preserve the array names and prepend the parent names.
@@ -952,24 +952,21 @@ class MultiBlock(
 
         output = MultiBlock()
         # Move field data
-        move_kwargs = dict(
+        if copy:
+            multi_with_field_data = multi
+        else:
+            # Need to copy nested multiblocks to avoid mutating field data
+            multi_with_field_data = MultiBlock()
+            multi_with_field_data.shallow_copy(self, recursive=True)
+        multi_with_field_data.move_nested_field_data_to_root(
             field_data_mode=field_data_mode,
             user_dict_mode=user_dict_mode,
             safe_update=safe_update,
             separator=separator,
         )
-        if copy:
-            multi.move_nested_field_data_to_root(**move_kwargs)  # type: ignore[arg-type]
-            field_data_to_copy = multi.field_data
-        else:
-            # Need to copy nested multiblocks to avoid mutating field data
-            input_with_field_data = MultiBlock()
-            input_with_field_data.shallow_copy(self, recursive=True)
-            input_with_field_data.move_nested_field_data_to_root(**move_kwargs)  # type: ignore[arg-type]
-            field_data_to_copy = input_with_field_data.field_data
+        output.field_data.update(multi_with_field_data.field_data, copy=copy)
 
-        output.field_data.update(field_data_to_copy, copy=copy)
-
+        # Append blocks
         for index, name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None
