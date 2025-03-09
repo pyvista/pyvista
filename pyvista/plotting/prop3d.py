@@ -17,8 +17,6 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
-
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -372,11 +370,6 @@ class Prop3D(_vtk.vtkProp3D):
     def user_matrix(self, value: TransformLike) -> None:
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
-
-    @abstractmethod
-    def copy(self: Self, deep: bool = True) -> Self:  # numpydoc ignore=RT01
-        """Return a copy of this prop."""
-        raise NotImplementedError  # pragma: no cover
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
