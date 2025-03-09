@@ -357,7 +357,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
         text='this is a sphere',
         show_bounds=True,
         color='r',
-        style='wireframe',
+        style='surface',
         line_width=2,
         scalars=scalars,
         flip_scalars=True,
@@ -860,10 +860,10 @@ def test_add_scalar_bar_with_unconstrained_font_size(sphere):
 
 
 def test_plot_list():
-    sphere_a = pv.Sphere(0.5)
-    sphere_b = pv.Sphere(1.0)
-    sphere_c = pv.Sphere(2.0)
-    pv.plot([sphere_a, sphere_b, sphere_c], style='wireframe')
+    sphere_a = pv.Sphere(center=(0, 0, 0), radius=0.75)
+    sphere_b = pv.Sphere(center=(1, 0, 0), radius=0.5)
+    sphere_c = pv.Sphere(center=(2, 0, 0), radius=0.25)
+    pv.plot([sphere_a, sphere_b, sphere_c], color='tan')
 
 
 def test_add_lines_invalid():
@@ -3982,8 +3982,9 @@ def test_plot_texture_flip_y(texture):
 @pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 @pytest.mark.skipif(pv.vtk_version_info >= (9, 3), reason='This is broken on VTK 9.3')
-def test_plot_cubemap_alone(cubemap):
+def test_plot_cubemap_alone(cubemap, verify_image_cache):
     """Test plotting directly from the Texture class."""
+    verify_image_cache.high_variance_test = True
     cubemap.plot()
 
 
@@ -4110,7 +4111,8 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
+def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs, verify_image_cache):
+    verify_image_cache.high_variance_test = True
     plot = pv.Plotter()
     assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
     plot.add_actor(assembly)
@@ -4598,9 +4600,9 @@ def test_direction_objects(direction_obj_test_case):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-@pytest.mark.parametrize('compute_normals', [True, False])
-def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+@pytest.mark.parametrize('orient_faces', [True, False])
+def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4664,7 +4666,7 @@ def test_contour_labels_boundary_style(
     fixed_kwargs = dict(
         smoothing_distance=0.3,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
         simplify_output=False,
     )
 
@@ -4717,7 +4719,7 @@ def test_contour_labels_smoothing_constraint(
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
         pad_background=False,
-        compute_normals=False,
+        orient_faces=False,
     )
 
     # Translate so origin is in bottom left corner
@@ -4750,7 +4752,7 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         smoothing=smoothing,
         smoothing_distance=0.8,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
     )
     mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
     mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
@@ -4916,8 +4918,14 @@ def test_bounding_box(oblique_cone, box_style):
 @pytest.mark.parametrize('operator', ['or', 'and', 'ior', 'iand'])
 def test_bitwise_and_or_of_polydata(operator):
     radius = 0.5
-    sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
-    sphere_shifted = pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    shift = [0.25, 0.25, 0.25]
+    kwargs = dict(theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=radius, **kwargs)
+    sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
+    # Expand the wireframe ever so slightly to avoid rendering artifacts
+    wireframe = pv.Sphere(radius + 0.001, **kwargs).extract_all_edges()
+    wireframe_shifted = pv.Sphere(radius=radius + 0.001, center=shift, **kwargs).extract_all_edges()
+
     if operator == 'or':
         result = sphere | sphere_shifted
     elif operator == 'and':
@@ -4929,8 +4937,8 @@ def test_bitwise_and_or_of_polydata(operator):
         result = sphere.copy()
         result &= sphere_shifted
     pl = pv.Plotter()
-    pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
-    pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
+    pl.add_mesh(wireframe, color='r', line_width=2)
+    pl.add_mesh(wireframe_shifted, color='b', line_width=2)
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
     pl.show()
@@ -4939,3 +4947,9 @@ def test_bitwise_and_or_of_polydata(operator):
 def test_plot_logo():
     logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
     logo_plotter.show()
+
+
+@skip_mesa
+def test_plot_wireframe_style():
+    sphere = pv.Sphere()
+    sphere.plot(style='wireframe')

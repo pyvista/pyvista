@@ -31,11 +31,9 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
@@ -45,7 +43,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 def translate(
-    surf: ConcreteDataSetType,
+    surf: DataSet,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
 ) -> None:
@@ -86,7 +84,7 @@ def translate(
 
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)
+        surf.points += np.array(center, dtype=surf.points.dtype)  # type: ignore[misc]
 
 
 if _vtk.vtk_version_info < (9, 3):
@@ -3512,9 +3510,7 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(
-        self: AxesGeometrySource, shaft_type: GeometryTypes | ConcreteDataSetAlias
-    ) -> None:
+    def shaft_type(self: AxesGeometrySource, shaft_type: GeometryTypes | DataSet) -> None:
         self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3555,11 +3551,11 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self: AxesGeometrySource, tip_type: str | ConcreteDataSetAlias) -> None:
+    def tip_type(self: AxesGeometrySource, tip_type: str | DataSet) -> None:
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(
-        self: AxesGeometrySource, part: _PartEnum, geometry: str | ConcreteDataSetAlias
+        self: AxesGeometrySource, part: _PartEnum, geometry: str | DataSet
     ) -> str:
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = (
@@ -3687,8 +3683,8 @@ class AxesGeometrySource:
             )  # pragma: no cover
 
     @staticmethod
-    def _make_any_part(geometry: str | ConcreteDataSetType) -> tuple[str, PolyData]:
-        part: ConcreteDataSetAlias
+    def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
+        part: DataSet
         part_poly: PolyData
         if isinstance(geometry, str):
             name = geometry
@@ -3725,7 +3721,7 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_axes_parts(
-        geometry: str | ConcreteDataSetAlias,
+        geometry: str | DataSet,
     ) -> tuple[str, tuple[PolyData, PolyData, PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
@@ -4423,7 +4419,7 @@ class CubeFacesSource(CubeSource):
                 points += vector
 
             # Set poly as a single quad cell
-            face_poly.points = points  # type: ignore[union-attr]
+            face_poly.points = points  # type: ignore[union-attr, has-type]
             face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
 
             if frame_width is not None:
@@ -4433,7 +4429,7 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points  # type: ignore[union-attr]
+                face_poly.points = frame_points  # type: ignore[union-attr, has-type]
                 face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property

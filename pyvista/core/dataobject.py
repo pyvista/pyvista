@@ -5,13 +5,16 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -38,8 +41,10 @@ if TYPE_CHECKING:
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+@promote_type(_vtk.vtkDataObject)
 @abstract_class
 class DataObject:
     """Methods common to all wrapped data objects.
@@ -156,6 +161,23 @@ class DataObject:
 
         """
 
+        def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
+            iterator = mesh.recursive_iterator('all', node_type='parent')
+            typed_iterator = cast(
+                Iterator[tuple[tuple[int, ...], str, pyvista.MultiBlock]], iterator
+            )
+            for index, name, nested_multiblock in typed_iterator:
+                if len(nested_multiblock.field_data.keys()) > 0:
+                    # Avoid circular import
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(index)
+                    warnings.warn(
+                        f"Nested MultiBlock at index {index_fmt} with name '{name}' has field data which will not be saved.\n"
+                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+                    )
+
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
@@ -189,6 +211,10 @@ class DataObject:
 
         # store complex and bitarray types as field data
         self._store_metadata()
+
+        # warn if data will be lost
+        if isinstance(self, pyvista.MultiBlock):
+            _warn_multiblock_nested_field_data(self)
 
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
@@ -230,7 +256,9 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self: Self) -> tuple[float, float]:  # pragma: no cover
+    def get_data_range(
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
             f'{type(self)} mesh type does not have a `get_data_range` method.',
@@ -605,10 +633,10 @@ class DataObject:
     ) -> None:
         # Setting None removes the field data array
         if dict_ is None:
-            if '_PYVISTA_USER_DICT' in self.field_data.keys():
-                del self.field_data['_PYVISTA_USER_DICT']
             if hasattr(self, '_user_dict'):
                 del self._user_dict
+            if USER_DICT_KEY in self.field_data.keys():
+                del self.field_data[USER_DICT_KEY]
             return
 
         self._config_user_dict()
@@ -623,15 +651,14 @@ class DataObject:
 
     def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
-        field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
             # Init
             self._user_dict = _SerializedDictArray()
 
-        if field_name in field_data.keys():
-            if isinstance(array := field_data[field_name], pyvista_ndarray):
+        if USER_DICT_KEY in field_data.keys():
+            if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
@@ -647,7 +674,7 @@ class DataObject:
         # Set field data array directly instead of calling 'set_array'
         # This skips the call to '_prepare_array' which will otherwise
         # do all kinds of casting/conversions and mangle this array
-        self._user_dict.SetName(field_name)
+        self._user_dict.SetName(USER_DICT_KEY)
         field_data.VTKObject.AddArray(self._user_dict)
         field_data.VTKObject.Modified()
 
@@ -907,3 +934,8 @@ class DataObject:
         # copy data
         self.copy_structure(mesh)  # type: ignore[arg-type]
         self.copy_attributes(mesh)  # type: ignore[arg-type]
+
+    @property
+    def is_empty(self) -> bool:
+        """Return ``True`` if the object is empty."""
+        raise NotImplementedError

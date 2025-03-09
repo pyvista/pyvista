@@ -22,6 +22,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -69,7 +70,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,7 +308,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -409,7 +410,10 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        select_values
+            Threshold-like method for keeping some values and replacing others.
         :meth:`~pyvista.DataSetFilters.threshold`
+            General threshold method that returns a :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -879,10 +883,11 @@ class ImageDataFilters(DataSetFilters):
             .. code-block:: python
 
                 image.contour_labels(
+                    boundary_style='strict_external',  # old filter strictly computes external polygons
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
-                    compute_normals=False,  # old filter does not compute normals
+                    orient_faces=False,  # old filter does not orient faces
                     simplify_output=False,  # old filter returns multi-component scalars
                 )
 
@@ -1012,7 +1017,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
-        boundary_style: Literal['external', 'internal', 'all'] = 'external',
+        boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
         *,
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
@@ -1020,7 +1025,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        compute_normals: bool = True,
+        orient_faces: bool = True,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1058,9 +1063,8 @@ class ImageDataFilters(DataSetFilters):
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal`'' contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
 
         .. note::
@@ -1071,11 +1075,24 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        boundary_style : 'external' | 'internal' | 'all', default: 'external'
+        boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
             Style of boundary polygons to generate. ``'internal'`` polygons are generated
             between two connected foreground regions. ``'external'`` polygons are
-            generated between foreground background. ``'all'``  includes both internal
-            and external boundary polygons.
+            generated between foreground and background regions. ``'all'``  includes
+            both internal and external boundary polygons.
+
+            These styles are generated such that ``internal + external = all``.
+            Internally, the filter computes all boundary polygons by default and
+            then removes any undesired polygons in post-processing.
+            This improves the quality of the output, but can negatively affect the
+            filter's performance since all boundaries are always initially computed.
+
+            The ``'strict_external'`` style can be used as a fast alternative to
+            ``'external'``. This style `strictly` generates external polygons and does
+            not compute or consider internal boundaries. This computation is fast, but
+            also results in jagged, non-smooth boundaries between regions. The
+            ``select_inputs`` and ``select_outputs`` options cannot be used with this
+            style.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -1140,12 +1157,16 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        compute_normals : bool, default: True
-            Compute point and cell normals for the contoured output using
-            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
-            enabled by default. If ``False``, the generated polygons may have
-            inconsistent ordering and orientation (and may negatively impact
-            the shading used for rendering).
+        orient_faces : bool, default: True
+            Orient the faces of the generated contours so that they have consistent
+            ordering and face outward. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation, which can negatively impact
+            downstream calculations and the shading used for rendering.
+
+            .. note::
+
+                Orienting the faces can be computationally expensive for large meshes.
+                Consider disabling this option to improve this filter's performance.
 
             .. warning::
 
@@ -1179,7 +1200,7 @@ class ImageDataFilters(DataSetFilters):
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
-            ``'external'``, and is not simplified otherwise.
+            ``'external'`` or ``'strict_external'``, and is not simplified otherwise.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1236,6 +1257,9 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.pack_labels`
             Function used internally by SurfaceNets to generate contiguous label data.
 
+        :meth:`~pyvista.DataSetFilters.color_labels`
+            Color labeled data, e.g. labeled volumes or contours.
+
         :ref:`contouring_example`, :ref:`anatomical_groups_example`
             Additional examples using this filter.
 
@@ -1270,8 +1294,9 @@ class ImageDataFilters(DataSetFilters):
         >>> image.dimensions
         (35, 35, 16)
 
-        Plot the cropped image for context. Configure the color map to generate
-        consistent coloring of the regions for all plots.
+        Plot the cropped image for context. Use :meth:`~pyvista.DataSetFilters.color_labels`
+        to generate consistent coloring of the regions for all plots. Negative indexing
+        is used for plotting internal boundaries.
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
@@ -1336,7 +1361,8 @@ class ImageDataFilters(DataSetFilters):
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
-        visualize the result.
+        visualize the result with :meth:`~pyvista.DataSetFilters.color_labels` using
+        the ``negative_indexing`` option.
 
         >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
@@ -1384,6 +1410,15 @@ class ImageDataFilters(DataSetFilters):
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> labels_plotter(surf, zoom=1.5).show()
+
+        Use the ``'strict_external'`` style to compute external contours quickly. Note
+        that this produces jagged and non-smooth boundaries between regions, which may
+        not be desirable. Also note how the top of the surface is perfectly flat compared
+        to the default ``'external'`` style (see first example above) since the strict
+        style ignores the smoothing effects of all internal boundaries.
+
+        >>> surf = image.contour_labels('strict_external')
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
@@ -1529,7 +1564,9 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         _validation.check_contains(
-            ['all', 'internal', 'external'], must_contain=boundary_style, name='boundary_style'
+            ['all', 'internal', 'external', 'strict_external'],
+            must_contain=boundary_style,
+            name='boundary_style',
         )
         _validation.check_contains(
             [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
@@ -1545,12 +1582,19 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        _configure_boundaries(
-            alg,
-            cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
-            select_inputs,
-            select_outputs,
-        )
+        if boundary_style == 'strict_external':
+            # Use default alg parameters
+            if select_inputs is not None or select_outputs is not None:
+                raise TypeError(
+                    'Selecting inputs and/or outputs is not supported by `strict_external`.'
+                )
+        else:
+            _configure_boundaries(
+                alg,
+                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                select_inputs,
+                select_outputs,
+            )
         _configure_smoothing(
             alg,
             alg_input.spacing,
@@ -1590,11 +1634,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
+        is_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = boundary_style == 'external'
+            simplify_output = is_external
         if simplify_output:
             # Simplify scalars to a single component
-            if boundary_style != 'external':
+            if not is_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -1622,8 +1667,16 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        if compute_normals and output.n_cells > 0:
-            output.compute_normals(auto_orient_normals=True, inplace=True)
+        if orient_faces and output.n_cells > 0:
+            # Orient the faces but discard the normals array
+            output.compute_normals(
+                cell_normals=True,
+                point_normals=False,
+                consistent_normals=True,
+                auto_orient_normals=True,
+                inplace=True,
+            )
+            del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -1672,9 +1725,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         cells_to_points
             Inverse of this filter to represent cells as points.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
 
         Parameters
@@ -1870,9 +1923,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         points_to_cells
             Inverse of this filter to represent points as cells.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
 
         Parameters
@@ -3045,7 +3098,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.sample`
+        :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
         :meth:`~pyvista.DataSetFilters.interpolate`
@@ -3492,3 +3545,294 @@ class ImageDataFilters(DataSetFilters):
             self.copy_from(output_image)
             return self
         return output_image
+
+    def select_values(  # type: ignore[misc]
+        self: ImageData,
+        values: (
+            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
+        )
+        | None = None,
+        *,
+        ranges: (
+            VectorLike[float]
+            | MatrixLike[float]
+            | dict[str, VectorLike[float]]
+            | dict[tuple[float, float], str]
+        )
+        | None = None,
+        fill_value: float | VectorLike[float] = 0,
+        replacement_value: float | VectorLike[float] | None = None,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        component_mode: Literal['any', 'all', 'multi'] | int = 'all',
+        invert: bool = False,
+        split: bool = False,
+    ):
+        """Select values of interest and fill the rest with a constant.
+
+        Point or cell data may be selected with a single value, multiple values, a range
+        of values, or any mix of values and ranges. This enables threshold-like
+        filtering of data in a discontinuous manner to select a single label or groups
+        of labels from categorical data, or to select multiple regions from continuous
+        data. Selected values may optionally be split into separate meshes.
+
+        The selected values are stored in an array with the same name as the input.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        values : float | ArrayLike[float] | dict, optional
+            Value(s) to select. Can be a number, an iterable of numbers, or a dictionary
+            with numeric entries. For ``dict`` inputs, either its keys or values may be
+            numeric, and the other field must be strings. The numeric field is used as
+            the input for this parameter, and if ``split`` is ``True``, the string field
+            is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
+
+            .. note::
+                When selecting multi-component values with ``component_mode=multi``,
+                each value is specified as a multi-component scalar. In this case,
+                ``values`` can be a single vector or an array of row vectors.
+
+        ranges : ArrayLike[float] | dict, optional
+            Range(s) of values to select. Can be a single range (i.e. a sequence of
+            two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
+            dictionary with range entries. Any combination of ``values`` and ``ranges``
+            may be specified together. The endpoints of the ranges are included in the
+            selection. Ranges cannot be set when ``component_mode=multi``.
+
+            For ``dict`` inputs, either its keys or values may be numeric, and the other
+            field must be strings. The numeric field is used as the input for this
+            parameter, and if ``split`` is ``True``, the string field is used to set the
+            block names of the returned :class:`~pyvista.MultiBlock`.
+
+            .. note::
+                Use ``+/-`` infinity to specify an unlimited bound, e.g.:
+
+                - ``[0, float('inf')]`` to select values greater than or equal to zero.
+                - ``[float('-inf'), 0]`` to select values less than or equal to zero.
+
+        fill_value : float | VectorLike[float], default: 0
+            Value used to fill the image. Can be a single value or a multi-component
+            vector. Non-selected parts of the image will have this value.
+
+        replacement_value : float | VectorLike[float], optional
+            Replacement value for the output array. Can be a single value or a
+            multi-component vector. If provided, selected values will be replaced with
+            the given value. If no value is given, the selected values are retained and
+            returned as-is. Setting this value is useful for generating a binarized
+            output array.
+
+        scalars : str, optional
+            Name of scalars to select from. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        component_mode : int | 'any' | 'all' | 'multi', default: 'all'
+            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Has no effect when the scalars have a single component. Must be one of:
+
+            - number: specify the component number as a 0-indexed integer. The selected
+              component must have the specified value(s).
+            - ``'any'``: any single component can have the specified value(s).
+            - ``'all'``: all individual components must have the specified values(s).
+            - ``'multi'``: the entire multi-component item must have the specified value.
+
+        invert : bool, default: False
+            Invert the selection. If ``True`` values are selected which do *not* have
+            the specified values.
+
+        split : bool, default: False
+            If ``True``, each value in ``values`` and each range in ``range`` is
+            selected independently and returned as a :class:`~pyvista.MultiBlock`.
+            The number of blocks returned equals the number of input values and ranges.
+            The blocks may be named if a dictionary is used as input. See ``values``
+            and ``ranges`` for details.
+
+            .. note::
+                Output blocks may contain meshes with only the ``fill_value`` if no
+                values meet the selection criteria.
+
+        See Also
+        --------
+        image_threshold
+            Similar filter for thresholding :class:`~pyvista.ImageData`.
+        :meth:`~pyvista.DataSetFilters.extract_values`
+            Similar threshold-like filter for extracting values from any dataset.
+        :meth:`~pyvista.DataSetFilters.split_values`
+            Split a mesh by value into separate meshes.
+        :meth:`~pyvista.DataSetFilters.threshold`
+            Generalized thresholding filter which returns a :class:`~pyvista.UnstructuredGrid`.
+
+        Returns
+        -------
+        pyvista.ImageData or pyvista.MultiBlock
+            Image with selected values or a composite of meshes with selected
+            values, depending on ``split``.
+
+        Examples
+        --------
+        Load a CT image. Here we load :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_whole_body_ct_male()
+        >>> ct_image = dataset['ct']
+
+        Show the initial data range.
+
+        >>> ct_image.get_data_range()
+        (np.int16(-1348), np.int16(3409))
+
+        Select intensity values above ``150`` to select the bones.
+
+        >>> bone_range = [150, float('inf')]
+        >>> fill_value = -1000  # fill with intensity values corresponding to air
+        >>> bone_image = ct_image.select_values(
+        ...     ranges=bone_range, fill_value=fill_value
+        ... )
+
+        Show the new data range.
+
+        >>> bone_image.get_data_range()
+        (np.int16(-1000), np.int16(3409))
+
+        Plot the selected values. Use ``'foreground'`` opacity to make the fill value
+        transparent and the selected values opaque.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     bone_image,
+        ...     opacity='foreground',
+        ...     cmap='bone',
+        ... )
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.show()
+
+        Use ``'replacement_value'`` to binarize the selected values instead. The fill
+        value, or background, is ``0`` by default.
+
+        >>> bone_mask = ct_image.select_values(ranges=bone_range, replacement_value=1)
+        >>> bone_mask.get_data_range()
+        (np.int16(0), np.int16(1))
+
+        Generate a surface contour of the mask and plot it.
+
+        >>> surf = bone_mask.contour_labels()
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(surf, color=True)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.show()
+
+        Load a color image. Here we load :func:`~pyvista.examples.downloads.download_beach`.
+
+        >>> image = examples.download_beach()
+        >>> plot_kwargs = dict(
+        ...     cpos='xy', rgb=True, lighting=False, zoom='tight', show_axes=False
+        ... )
+        >>> image.plot(**plot_kwargs)
+
+        Select components from the image which have a strong red component.
+        Use ``replacement_value`` to replace these pixels with a pure red color
+        and ``fill_value`` to fill the rest of the image with white pixels.
+
+        >>> white = [255, 255, 255]
+        >>> red = [255, 0, 0]
+        >>> red_range = [200, 255]
+        >>> red_component = 0
+        >>> selected = image.select_values(
+        ...     ranges=red_range,
+        ...     component_mode=red_component,
+        ...     replacement_value=red,
+        ...     fill_value=white,
+        ... )
+
+        >>> selected.plot(**plot_kwargs)
+
+        """
+        validated = self._validate_extract_values(
+            values=values,
+            ranges=ranges,
+            scalars=scalars,
+            preference=preference,
+            component_mode=component_mode,
+            split=split,
+            mesh_type=pyvista.ImageData,
+        )
+        if isinstance(validated, tuple):
+            (
+                valid_values,
+                valid_ranges,
+                value_names,
+                range_names,
+                array,
+                array_name,
+                association,
+                component_logic,
+            ) = validated
+        else:
+            # Return empty dataset
+            return validated
+
+        kwargs = dict(
+            values=valid_values,
+            ranges=valid_ranges,
+            array=array,
+            association=association,
+            component_logic=component_logic,
+            invert=invert,
+            array_name=array_name,
+            fill_value=fill_value,
+            replacement_value=replacement_value,
+        )
+
+        if split:
+            return self._split_values(
+                method=self._select_values,
+                value_names=value_names,
+                range_names=range_names,
+                **kwargs,
+            )
+
+        return self._select_values(**kwargs)
+
+    def _select_values(  # type: ignore[misc]
+        self: ImageData,
+        *,
+        values,
+        ranges,
+        array,
+        component_logic,
+        invert,
+        association,
+        array_name,
+        fill_value,
+        replacement_value,
+    ):
+        id_mask = self._apply_component_logic_to_array(
+            values=values,
+            ranges=ranges,
+            array=array,
+            component_logic=component_logic,
+            invert=invert,
+        )
+
+        # Generate output array
+        input_array = cast(
+            pyvista.pyvista_ndarray, get_array(self, name=array_name, preference=association)
+        )
+        array_out = np.full_like(input_array, fill_value=fill_value)
+        replacement_values = (
+            input_array[id_mask] if replacement_value is None else replacement_value
+        )
+        array_out[id_mask] = replacement_values
+
+        output = pyvista.ImageData()
+        output.copy_structure(self)
+        output[array_name] = array_out
+        return output
