@@ -93,7 +93,6 @@ class Volume(Prop3D, _vtk.vtkVolume):
         Create a volume of by adding it to a :class:`~pyvista.Plotter`
         and then copy the volume.
 
-
         >>> import pyvista as pv
         >>> mesh = pv.Wavelet()
         >>> pl = pv.Plotter()
