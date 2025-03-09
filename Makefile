@@ -6,6 +6,8 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 CODE_FILES ?= *.py *.rst *.md
 
 # doctest-modules-local-namespace must be off screen to avoid plotting everything
+# must be off screen to avoid plotting everything
+doctest-modules: export PYVISTA_OFF_SCREEN = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
 doctest-modules:
