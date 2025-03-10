@@ -113,6 +113,13 @@ def test_clip_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_transform_raises(sphere):
+    matrix = np.diag((1, 1, 1, 0))
+    match = re.escape('Transform element (3,3), the inverse scale term, is zero')
+    with pytest.raises(ValueError, match=match):
+        sphere.transform(matrix, inplace=False)
+
+
 def test_clip_box(datasets):
     for dataset in datasets:
         clp = dataset.clip_box(invert=True, progress_bar=True)
