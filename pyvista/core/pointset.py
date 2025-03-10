@@ -45,11 +45,11 @@ from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
-    from ._typing_core import ConcretePointGridType
-    from ._typing_core import ConcretePointSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -193,8 +193,8 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(  # type: ignore[misc]
-        self: ConcretePointSetType,
+    def translate(
+        self: Self,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -385,7 +385,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)
+    @wraps(DataSet.plot)  # type: ignore[has-type]
     def plot(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
@@ -1721,9 +1721,7 @@ class PointGrid(_PointSet):
         """Initialize the point grid."""
         super().__init__()
 
-    def plot_curvature(  # type: ignore[misc]
-        self: ConcretePointGridType, curv_type='mean', **kwargs
-    ):
+    def plot_curvature(self: Self, curv_type='mean', **kwargs):
         """Plot the curvature of the external surface of the grid.
 
         Parameters

@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import Union
-from typing import cast
 from typing import overload
 
 import numpy as np
@@ -21,9 +19,9 @@ from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -55,12 +53,12 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
     Parameters
     ----------
-    trans : TransformLike, optional
-        Initialize the transform with a transformation. By default, the transform
-        is initialized as the identity matrix.
+    trans : TransformLike | Sequence[TransformLike], optional
+        Initialize the transform with a transformation or sequence of transformations.
+        By default, the transform is initialized as the identity matrix.
 
     point : VectorLike[float], optional
-        Point to use when concatenating some transformations such as scale, rotation, etc.
+        Point to use when composing some transformations such as scale, rotation, etc.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
@@ -71,7 +69,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         transformations are performed about the origin ``(0, 0, 0)``.
 
     multiply_mode : 'pre' | 'post', optional
-        Multiplication mode to use when concatenating. Set this to ``'pre'`` for
+        Multiplication mode to use when composing. Set this to ``'pre'`` for
         pre-multiplication or ``'post'`` for post-multiplication.
 
     See Also
@@ -388,7 +386,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
     @property
     def point(self: Transform) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
-        """Point to use when concatenating some transformations such as scale, rotation, etc.
+        """Point to use when composing some transformations such as scale, rotation, etc.
 
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
@@ -501,7 +499,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the scaling
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -597,7 +595,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -663,7 +661,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -723,7 +721,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -783,7 +781,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -837,7 +835,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
             unpacked vector (three args).
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -907,7 +905,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -1004,7 +1002,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -1071,7 +1069,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -1138,7 +1136,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -1209,7 +1207,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -1263,7 +1261,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
@@ -1324,7 +1322,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         Notes
         -----
-        This matrix is a single 4x4 matrix computed from concatenating all
+        This matrix is a single 4x4 matrix computed from composing all
         transformations. Use :attr:`matrix_list` instead to get a list of the
         individual transformations.
 
@@ -1355,7 +1353,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         Notes
         -----
-        This matrix is a single 4x4 matrix computed from concatenating the inverse of
+        This matrix is a single 4x4 matrix computed from composing the inverse of
         all transformations. Use :attr:`inverse_matrix_list` instead to get a list of
         the individual inverse transformations.
 
@@ -1444,13 +1442,13 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
     @overload
     def apply(
         self: Transform,
-        obj: ConcreteDataSetType,
+        obj: DataSet,
         /,
         *,
         inverse: bool = ...,
         copy: bool = ...,
         transform_all_input_vectors: bool = ...,
-    ) -> ConcreteDataSetType: ...
+    ) -> DataSet: ...
     @overload
     def apply(
         self: Transform,
@@ -1463,7 +1461,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
     ) -> MultiBlock: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetType | MultiBlock,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
         *,
         inverse: bool = False,
@@ -1548,7 +1546,6 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
-            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
@@ -1642,7 +1639,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         Examples
         --------
-        Create a transform by concatenating scaling, rotation, and translation
+        Create a transform by composing scaling, rotation, and translation
         matrices.
 
         >>> import numpy as np

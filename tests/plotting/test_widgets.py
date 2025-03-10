@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import platform
 from typing import TYPE_CHECKING
+from typing import Literal
 from unittest.mock import ANY
 
 import numpy as np
@@ -593,14 +594,34 @@ def test_affine_widget(sphere):
     pl.iren._mouse_move(0, 0)
     assert not widget._selected_actor
 
+    def test_translation(
+        press_pos: tuple[float, float],
+        move_pos: tuple[float, float],
+        idx: int,
+        direction: Literal['neg', 'pos'],
+    ):
+        pl.iren._mouse_left_button_press(*press_pos)
+        assert widget._selected_actor is widget._arrows[idx]
+        assert widget._pressing_down
+
+        pl.iren._mouse_move(*move_pos)
+        trans_val = actor.user_matrix[idx, 3]
+        assert (trans_val < 0) if direction == 'neg' else (trans_val > 0)
+
+        pl.iren._mouse_left_button_release(*move_pos)
+        trans_val = actor.user_matrix[idx, 3]
+        assert (trans_val < 0) if direction == 'neg' else (trans_val > 0)
+        assert not widget._pressing_down
+        widget._reset()
+        assert np.allclose(widget._cached_matrix, np.eye(4))
+
     # test X axis translation
-    pl.iren._mouse_left_button_press(width // 2 - 1, height // 2 - 1)
-    assert widget._selected_actor is widget._arrows[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width, height // 2)
-    assert actor.user_matrix[0, 3] < 0
-    pl.iren._mouse_left_button_release(width, height // 2)
-    assert actor.user_matrix[0, 3] < 0
+    test_translation(
+        press_pos=(width // 2 - 4, height // 2 - 4),
+        move_pos=(width, height // 2),
+        idx=0,
+        direction='neg',
+    )
 
     # test callback called
     assert len(interact_calls) == 2
@@ -609,59 +630,62 @@ def test_affine_widget(sphere):
     assert release_calls[0].shape == (4, 4)
 
     # test Y axis translation
-    pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
-    assert widget._selected_actor is widget._arrows[1]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width, height // 2)
-    assert actor.user_matrix[1, 3] < 0
-    pl.iren._mouse_left_button_release()
-    assert actor.user_matrix[1, 3] < 0
+    test_translation(
+        press_pos=(width // 2 + 2, height // 2 - 3),
+        move_pos=(width, height // 2),
+        idx=1,
+        direction='pos',
+    )
 
     # test Z axis translation
-    pl.iren._mouse_left_button_press(width // 2, height // 2 + 5)
-    assert widget._selected_actor is widget._arrows[2]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2, 0)
-    assert actor.user_matrix[3, 3] > 0
-    pl.iren._mouse_left_button_release()
-    assert actor.user_matrix[3, 3] > 0
+    test_translation(
+        press_pos=(width // 2, height // 2 + 5),
+        move_pos=(width // 2, 0),
+        idx=2,
+        direction='neg',
+    )
 
-    # test X axis rotation
-    pl.iren._mouse_left_button_press(width // 2 + 30, height // 2)
-    assert widget._selected_actor is widget._circles[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 + 30, height // 2 + 1)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert x_r > 0
-    assert np.allclose([y_r, z_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
-    assert np.allclose(widget._cached_matrix, np.eye(4))
+    def test_rotation(
+        press_pos: tuple[float, float],
+        move_pos: tuple[float, float],
+        idx: int,
+        rotation: Literal['ccw', 'cw'],
+    ):
+        pl.iren._mouse_left_button_press(*press_pos)
+        assert widget._selected_actor is widget._circles[idx]
+        assert widget._pressing_down
+        pl.iren._mouse_move(*move_pos)
+        euler_angles = r_mat_to_euler_angles(actor.user_matrix)
+        assert euler_angles[idx] > 0 if rotation == 'ccw' else euler_angles[idx] < 0
+        assert np.count_nonzero(np.isclose(euler_angles, 0)) == len(euler_angles) - 1
+        pl.iren._mouse_left_button_release()
+        assert not widget._pressing_down
+        widget._reset()
+        assert np.allclose(widget._cached_matrix, np.eye(4))
 
-    # test Y axis rotation
-    pl.iren._mouse_left_button_press(width // 2 - 30, height // 2)
-    assert widget._selected_actor is widget._circles[1]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 30, height // 2 - 1)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert y_r > 0
-    assert np.allclose([x_r, z_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
+    # test X axis rotation, counterclockwise
+    test_rotation(
+        press_pos=(width // 2 + 30, height // 2),
+        move_pos=(width // 2 + 21, height // 2 + 17),
+        idx=0,
+        rotation='ccw',
+    )
 
-    # test Z axis rotation
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 28)
-    assert widget._selected_actor is widget._circles[2]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert z_r > 0
-    assert np.allclose([x_r, y_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
+    # test Y axis rotation, counterclockwise
+    test_rotation(
+        press_pos=(width // 2 - 20, height // 2 + 20),
+        move_pos=(width // 2 - 30, height // 2 + 4),
+        idx=1,
+        rotation='ccw',
+    )
+
+    # test Z axis rotation, clockwise
+    test_rotation(
+        press_pos=(width // 2, height // 2 - 29),
+        move_pos=(width // 2 - 12, height // 2 - 23),
+        idx=2,
+        rotation='cw',
+    )
 
     # test change axes
     axes = np.array(
@@ -671,13 +695,12 @@ def test_affine_widget(sphere):
     assert np.allclose(widget.axes, axes)
 
     # test X axis translation with new axes
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 30)
-    assert widget._selected_actor is widget._arrows[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2, height // 2 - 32)
-    assert actor.user_matrix[0, 3] > 0
-    pl.iren._mouse_left_button_release(width, height // 2 - 32)
-    assert actor.user_matrix[0, 3] > 0
+    test_translation(
+        press_pos=(width // 2, height // 2 - 38),
+        move_pos=(width // 2, height // 2 - 50),
+        idx=0,
+        direction='pos',
+    )
 
     # test origin
     origin = np.random.default_rng().random(3)
