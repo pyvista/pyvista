@@ -222,7 +222,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch --ignore=tests/plotting
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
