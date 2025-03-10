@@ -247,6 +247,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_PointGridType'),
     (r'py:.*', '.*_PointSetType'),
     (r'py:.*', '.*_DataSetType'),
+    (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
@@ -278,6 +279,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*TipType'),
     (r'py:.*', '.*_AxesGeometryKwargs'),
     (r'py:.*', '.*_OrthogonalPlanesKwargs'),
+    (r'py:.*', '.*_Prop3DMixin'),
     #
     # PyVista Widget enums
     (r'py:.*', '.*PickerType'),
