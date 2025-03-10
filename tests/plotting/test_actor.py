@@ -350,3 +350,18 @@ def test_convert_orientation_to_rotation_matrix(order):
     assert isinstance(actual_orientation, tuple)
     assert len(actual_orientation) == 3
     assert np.allclose(actual_orientation, orientation)
+
+
+@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+def test_transform_actor(actor, multiply_mode):
+    translation = pv.Transform().translate((1, 2, 3))
+    scaling = pv.Transform().scale(2)
+
+    expected = pv.Transform([translation, scaling], multiply_mode=multiply_mode)
+
+    actor1 = actor.transform(translation, multiply_mode=multiply_mode, inplace=True)
+    assert actor1 is actor
+    actor2 = actor1.transform(scaling, multiply_mode=multiply_mode, inplace=False)
+    assert actor2 is not actor1
+
+    assert np.allclose(actor2.user_matrix, expected.matrix)
