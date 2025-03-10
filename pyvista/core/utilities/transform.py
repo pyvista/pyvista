@@ -80,6 +80,8 @@ class Transform(_vtk.vtkTransform):
     --------
     pyvista.DataObjectFilters.transform
         Apply a transformation to a mesh.
+    pyvista.Prop3D.transform
+        Transform an actor.
 
     Examples
     --------

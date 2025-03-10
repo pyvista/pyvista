@@ -122,8 +122,10 @@ class DataObjectFilters:
 
         See Also
         --------
-        :class:`pyvista.Transform`
+        pyvista.Transform
             Describe linear transformations via a 4x4 matrix.
+        pyvista.Prop3D.transform
+            Transform an actor.
 
         Examples
         --------
