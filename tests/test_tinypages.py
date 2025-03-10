@@ -44,7 +44,6 @@ def test_tinypages(tmp_path, ename, evalue):
     tmp_dir = tmp_path / f'{ename}_{evalue}'
     if tmp_dir.exists():
         shutil.rmtree(tmp_dir)
-        tmp_dir.rmdir()
     tmp_dir.mkdir()
     html_dir = tmp_dir / 'html'
     doctree_dir = tmp_dir / 'doctrees'
