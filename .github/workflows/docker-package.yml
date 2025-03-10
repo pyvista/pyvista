@@ -16,6 +16,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  id-token: none
+
 jobs:
   build-and-publish:
     name: Build and Publish Docker Image

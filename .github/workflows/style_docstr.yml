@@ -10,6 +10,9 @@ concurrency:
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
+permissions:
+  id-token: none
+
 jobs:
   docstringcheck:
     runs-on: ubuntu-22.04
