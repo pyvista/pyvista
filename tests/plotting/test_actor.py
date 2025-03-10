@@ -352,17 +352,16 @@ def test_convert_orientation_to_rotation_matrix(order):
     assert np.allclose(actual_orientation, orientation)
 
 
-def test_transform_actor(actor):
-    SCALE = 2
-    matrix = np.diag((SCALE, SCALE, SCALE, 1))
-    matrix2 = np.diag((SCALE * SCALE, SCALE * SCALE, SCALE * SCALE, 1))
+@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+def test_transform_actor(actor, multiply_mode):
+    translation = pv.Transform().translate((1, 2, 3))
+    scaling = pv.Transform().scale(2)
 
-    transformed = actor.transform(matrix)
-    actual_matrix = transformed.user_matrix
-    assert np.allclose(actual_matrix, matrix)
-    assert transformed is not actor
+    expected = pv.Transform([translation, scaling], multiply_mode=multiply_mode)
 
-    transformed2 = transformed.transform(matrix, inplace=True)
-    actual_matrix = transformed2.user_matrix
-    assert np.allclose(actual_matrix, matrix2)
-    assert transformed2 is transformed
+    actor1 = actor.transform(translation, multiply_mode=multiply_mode, inplace=True)
+    assert actor1 is actor
+    actor2 = actor1.transform(scaling, multiply_mode=multiply_mode, inplace=False)
+    assert actor2 is not actor1
+
+    assert np.allclose(actor2.user_matrix, expected.matrix)
