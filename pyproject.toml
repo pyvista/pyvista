@@ -199,8 +199,7 @@ omit = [
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
-exclude_also = ['if TYPE_CHECKING:']
-
+exclude_also = ['^\s*@overload\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
@@ -242,11 +241,7 @@ extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
-plugins = [
-  'npt_promote',
-  'numpy.typing.mypy_plugin',
-  'pyvista.typing.mypy_plugin',
-]
+plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true
