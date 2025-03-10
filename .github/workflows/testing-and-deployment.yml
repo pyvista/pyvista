@@ -64,7 +64,11 @@ jobs:
           path: debug_images
 
   LinuxConda:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-22.04, ubuntu-22.04-arm ]
     if: false
     env:
       CONDA_ALWAYS_YES: 1
@@ -144,12 +148,12 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-
-      # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
+        os: [ ubuntu-22.04, ubuntu-22.04-arm]
+      # see discussion at https://github.com/pyvista/pyvista/issues/2867
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
           - python-version: "3.9"
