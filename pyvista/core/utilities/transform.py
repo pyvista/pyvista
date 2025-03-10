@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
@@ -1636,28 +1635,9 @@ class Transform(_vtk.vtkTransform):
         if isinstance(obj, (pyvista.Prop3D, pyvista.plotting.prop3d._Prop3DMixin)):
             if mode not in ['replace', 'pre-multiply', 'post-multiply', None]:
                 raise ValueError(f"Transformation mode '{mode}' is not supported for actors.")
-            mode = 'post-multiply' if mode is None else mode
-
-            if mode == 'pre-multiply':
-                new_matrix = obj.user_matrix @ matrix
-            elif mode == 'post-multiply':
-                new_matrix = matrix @ obj.user_matrix
-            else:  # replace
-                new_matrix = matrix
-
-            if copy:
-                if hasattr(obj, 'copy'):
-                    actor = obj.copy()
-                elif hasattr(obj, 'ShallowCopy'):
-                    actor = obj.__class__()
-                    actor.ShallowCopy(obj)
-                else:
-                    actor = copylib.copy(obj)
-            else:
-                actor = obj
-
-            actor.user_matrix = new_matrix
-            return actor
+            if mode in ['post-multiply', None]:
+                return obj.transform(matrix, 'post', inplace=inplace)
+            return obj.transform(matrix, 'pre', inplace=inplace)
 
         if mode not in ['points', 'vectors', None]:
             raise ValueError(f"Transformation mode '{mode}' is not supported for arrays.")

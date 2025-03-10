@@ -1525,25 +1525,9 @@ def test_transform_apply_mode():
     match = "Transformation mode 'all_vectors' is not supported for arrays."
     with pytest.raises(ValueError, match=match):
         scale.apply(array, 'all_vectors')
-
-
-@pytest.mark.parametrize('obj', [pv.Actor(), pv.AxesAssembly(), 'dummy_actor'])
-def test_transform_apply_actor(obj, dummy_actor):  # noqa: F811
-    if obj == 'dummy_actor':
-        obj = dummy_actor
-    matrix = np.diag((SCALE, SCALE, SCALE, 1))
-    matrix2 = np.diag((SCALE * SCALE, SCALE * SCALE, SCALE * SCALE, 1))
-    transform = Transform(matrix)
-
-    transformed = transform.apply(obj)
-    actual_matrix = transformed.user_matrix
-    assert np.allclose(actual_matrix, matrix)
-    assert transformed is not obj
-
-    transformed2 = transform.apply(transformed, copy=False)
-    actual_matrix = transformed2.user_matrix
-    assert np.allclose(actual_matrix, matrix2)
-    assert transformed2 is transformed
+    match = "Transformation mode 'all_vectors' is not supported for actors."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(actor, 'all_vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
