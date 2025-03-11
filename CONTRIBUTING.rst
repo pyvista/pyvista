@@ -737,15 +737,6 @@ type at runtime to match the statically-revealed type. The
 `pyanalyze.runtime.get_assignability_error <https://pyanalyze.readthedocs.io/en/latest/reference/runtime.html#pyanalyze.runtime.get_assignability_error>`_
 method is used for this.
 
-.. note::
-
-    Any ``import`` statements required for a test must be added to `both` the
-    test case file(s) in ``tests/typing/typing_test_cases`` as well as the test
-    file in ``tests/typing/test_typing.py``. The former import is required
-    for the static test, and the latter import is required for its respective
-    runtime test.
-
-
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Build the documentation on Linux or Mac OS with:

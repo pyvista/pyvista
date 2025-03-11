@@ -14,26 +14,17 @@ based on the mappings in the `REPLACE_TYPES` dictionary.
 
 from __future__ import annotations
 
+import ast
 import importlib
 import os
 from pathlib import Path
 import re
+import sys
 from typing import NamedTuple
 
 from mypy import api as mypy_api
-import numpy as np  # noqa: F401
 import pyanalyze
 import pytest
-
-import pyvista as pv  # noqa: F401
-from pyvista import ExplicitStructuredGrid  # noqa: F401
-from pyvista import ImageData  # noqa: F401
-from pyvista import MultiBlock  # noqa: F401
-from pyvista import PointSet  # noqa: F401
-from pyvista import PolyData  # noqa: F401
-from pyvista import RectilinearGrid  # noqa: F401
-from pyvista import StructuredGrid  # noqa: F401
-from pyvista import UnstructuredGrid  # noqa: F401
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 assert 'tests' in os.listdir(PROJECT_ROOT)
@@ -82,7 +73,11 @@ def _reveal_types():
             ['--show-absolute-path', '--show-traceback', '--package', TYPING_CASES_PACKAGE]
         )
 
-        assert exit_status == 0, std_err
+        if exit_status != 0:
+            if std_out:
+                raise RuntimeError(f'Error running mypy.\n{std_out}')
+            else:
+                raise RuntimeError(f'Error running mypy.\n{std_err}')
         assert 'Cannot find implementation' not in std_out
 
         # Group the revealed types by (filepath), (line num), and (type)
@@ -105,7 +100,7 @@ def _reveal_types():
 def _get_expected_types():
     """Parse all case files and extract expected types."""
     cases = []
-    pattern = r'^\s.*?reveal_type\((.*?)\)\s*?#\sEXPECTED_TYPE: "([^"]+)"'
+    pattern = r'^\s*?reveal_type\((.*?)\)\s*?#\sEXPECTED_TYPE: "([^"]+)"'
     for file in TEST_FILE_NAMES:
         with (Path(TYPING_CASES_ABS_PATH) / file).open() as f:
             split_lines = f.read().splitlines()
@@ -174,9 +169,53 @@ def _generate_test_cases():
     return test_cases_list
 
 
+def _extract_all_imports(file_names):
+    """Extract all import statements from a list of python files."""
+    all_imports = set()
+
+    for file_name in file_names:
+        file_path = Path(TYPING_CASES_ABS_PATH) / file_name
+        try:
+            with file_path.open() as f:
+                tree = ast.parse(f.read(), filename=file_path)
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.asname:
+                            all_imports.add(f'import {alias.name} as {alias.asname}')
+                        else:
+                            all_imports.add(f'import {alias.name}')
+                elif isinstance(node, ast.ImportFrom):
+                    module = node.module if node.module else ''
+                    for alias in node.names:
+                        if alias.asname:
+                            all_imports.add(f'from {module} import {alias.name} as {alias.asname}')
+                        else:
+                            all_imports.add(f'from {module} import {alias.name}')
+        except Exception as e:
+            print(f'Failed to parse {file_path}: {e}', file=sys.stderr)
+
+    return sorted(all_imports)
+
+
+def _import_imports_from_test_cases():
+    """Extract imports from test case files and load them into global namespace."""
+    imports = _extract_all_imports(TEST_FILE_NAMES)
+    for imp in imports:
+        try:
+            exec(imp, globals())
+        except Exception as e:
+            print(f'Failed to import: {imp} — {e}', file=sys.stderr)
+
+
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
+        # Load imports from test cases for dynamic tests
+        _import_imports_from_test_cases()
+
+        # Generate separate tests for static and runtime checks
         test_cases = _generate_test_cases()
         test_cases_runtime = [(*case, 'runtime') for case in test_cases]
         test_cases_static = [(*case, 'static') for case in test_cases]
@@ -186,8 +225,9 @@ def pytest_generate_tests(metafunc):
         all_cases = all_cases[::-1]
 
         # Name test cases with file line number
+        parent = Path(TYPING_CASES_REL_PATH).name
         ids = [
-            f'{file.split(".py")[0]} : line {line} : {static_or_runtime}'
+            f'{parent}/{file}, line {line}, {static_or_runtime}'
             for file, line, _, _, _, static_or_runtime in all_cases
         ]
         metafunc.parametrize('test_case', all_cases, ids=ids)
