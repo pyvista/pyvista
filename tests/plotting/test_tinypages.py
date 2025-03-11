@@ -11,7 +11,6 @@ import sys
 import pytest
 
 from pyvista.plotting import system_supports_plotting
-
 from tests.conftest import flaky_test
 
 pytest.importorskip('sphinx')
