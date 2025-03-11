@@ -413,6 +413,15 @@ def test_pickle_invalid_format(sphere):
         pickle.dumps(sphere)
 
 
+def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
+    match = re.escape(
+        'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+    )
+    with pytest.raises(NotImplementedError, match=match):
+        pv.Sphere().save('foo.vtp')
+
+
 def test_is_empty(ant):
     assert pv.MultiBlock().is_empty
     assert not pv.MultiBlock([ant]).is_empty
