@@ -1496,7 +1496,8 @@ class Transform(_vtk.vtkTransform):
             Object to apply the transformation to.
 
         mode : str, optional
-            Define how to apply the transformation.
+            Define how to apply the transformation. Different modes may be used depending
+            on the input type.
 
             #.  For array inputs:
 
@@ -1508,13 +1509,16 @@ class Transform(_vtk.vtkTransform):
 
             #.  For dataset inputs:
 
-                Points are always transformed. Vectors are also transformed based on the mode:
+                The dataset's points are always transformed, and its vectors are
+                transformed based on the mode:
 
                 - ``'active_vectors'`` transforms active normals and active vectors
                   arrays only.
                 - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
                   with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
                   with :meth:`pyvista.DataObjectFilters.transform`.
+
+                By default, only ``'active_vectors'`` are transformed.
 
             #.  For actor inputs:
 
@@ -1536,10 +1540,6 @@ class Transform(_vtk.vtkTransform):
             ``False`` to transform the input directly and return it. Setting this to
             ``False`` only applies to NumPy float arrays, datasets, and actors; a copy
             is always returned for tuple and list inputs or arrays with integers.
-
-            .. note::
-                A deep copy is made wherever possible. For some actor inputs, however,
-                only a shallow copy may be made.
 
         Returns
         -------
@@ -1618,6 +1618,14 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
 
         """
+
+        def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
+            if mode_ not in allowed_modes:
+                raise ValueError(
+                    f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
+                    f'\n{allowed}'
+                )
+
         _validation.check_contains(
             [
                 'points',
@@ -1646,8 +1654,8 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
-            if mode not in ['active_vectors', 'all_vectors', None]:
-                raise ValueError(f"Transformation mode '{mode}' is not supported for datasets.")
+            allowed = ['active_vectors', 'all_vectors', None]
+            _check_mode('datasets', mode, allowed)
             if mode in ['active_vectors', None]:
                 mode = None
 
@@ -1661,14 +1669,15 @@ class Transform(_vtk.vtkTransform):
 
         # Transform actor
         if isinstance(obj, pyvista.Prop3D):
-            if mode not in ['replace', 'pre-multiply', 'post-multiply', None]:
-                raise ValueError(f"Transformation mode '{mode}' is not supported for actors.")
+            allowed = ['replace', 'pre-multiply', 'post-multiply', None]
+            _check_mode('actors', mode, allowed)
             if mode in ['post-multiply', None]:
                 return obj.transform(matrix, 'post', inplace=inplace)
             return obj.transform(matrix, 'pre', inplace=inplace)
 
-        if mode not in ['points', 'vectors', None]:
-            raise ValueError(f"Transformation mode '{mode}' is not supported for arrays.")
+        # Transform array
+        allowed = ['points', 'vectors', None]
+        _check_mode('arrays', mode, allowed)
 
         if mode == 'vectors':
             # Remove translation

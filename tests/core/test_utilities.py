@@ -1642,19 +1642,33 @@ def test_transform_apply_mode():
     transformed = scale.apply_to_actor(actor, 'post-multiply')
     assert np.allclose(transformed.user_matrix, scale.matrix)
 
-    # Test raises
-    match = "Transformation mode 'points' is not supported for datasets."
-    with pytest.raises(ValueError, match=match):
-        scale.apply(mesh, 'points')
-    match = "Transformation mode 'vectors' is not supported for datasets."
-    with pytest.raises(ValueError, match=match):
-        scale.apply(mesh, 'vectors')
-    match = "Transformation mode 'all_vectors' is not supported for arrays."
-    with pytest.raises(ValueError, match=match):
-        scale.apply(array, 'all_vectors')
-    match = "Transformation mode 'all_vectors' is not supported for actors."
-    with pytest.raises(ValueError, match=match):
-        scale.apply(actor, 'all_vectors')
+
+def test_transform_apply_invalid_mode():
+    mesh = pv.PolyData()
+    array = np.ndarray(())
+    actor = pv.Actor()
+    trans = pv.Transform()
+
+    match = (
+        "Transformation mode 'points' is not supported for datasets. Mode must be one of\n"
+        "['active_vectors', 'all_vectors', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(mesh, 'points')
+
+    match = (
+        "Transformation mode 'all_vectors' is not supported for arrays. Mode must be one of\n"
+        "['points', 'vectors', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(array, 'all_vectors')
+
+    match = (
+        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
+        "['replace', 'pre-multiply', 'post-multiply', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
