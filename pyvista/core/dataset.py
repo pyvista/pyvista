@@ -481,7 +481,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property  # type: ignore[override]
+    @property
     def points(self: Self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 

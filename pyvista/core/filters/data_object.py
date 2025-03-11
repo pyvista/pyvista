@@ -35,10 +35,13 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
+
+    points: pyvista_ndarray
 
     @overload
     def transform(  # type: ignore[misc]
