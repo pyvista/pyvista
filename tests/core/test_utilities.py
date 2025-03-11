@@ -1621,7 +1621,7 @@ def test_transform_apply_mode():
     # Scale dataset, all vectors
     transformed = scale.apply(mesh, 'all_vectors')
     assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
-    transformed = scale.apply_to_dataset(mesh, all_vectors=True)
+    transformed = scale.apply_to_dataset(mesh, 'all_vectors')
     assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
 
     # Scale actor

@@ -1448,7 +1448,7 @@ class Transform(_vtk.vtkTransform):
         self: Transform,
         obj: _DataSetOrMultiBlockType,
         /,
-        mode: Literal['all_vectors'] | None = ...,
+        mode: Literal['active_vectors', 'all_vectors'] = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
@@ -1468,7 +1468,13 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
         /,
         mode: Literal[
-            'points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply'
+            'points',
+            'vectors',
+            'active_vectors',
+            'all_vectors',
+            'replace',
+            'pre-multiply',
+            'post-multiply',
         ]
         | None = None,
         *,
@@ -1489,29 +1495,37 @@ class Transform(_vtk.vtkTransform):
         obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
 
-        mode : 'points' | 'vectors' | 'all_vectors', optional
+        mode : str, optional
             Define how to apply the transformation.
 
-            For array inputs, use:
+            #.  For array inputs:
 
-            - ``'points'`` for transforming point arrays.
-            - ``'vectors'`` for transforming vector arrays. The translation component of
-              the transformation is removed for vectors.
+                - ``'points'`` transforms point arrays.
+                - ``'vectors'`` transforms vector arrays. The translation component of
+                  the transformation is removed for vectors.
 
-            By default, ``'points'`` mode is used for array inputs.
+                By default, ``'points'`` mode is used for array inputs.
 
-            For dataset inputs, use ``'all_vectors'`` to transform `all` input vectors
-            in datasets. Otherwise, only the points, normals and active vectors are
-            transformed. This mode is equivalent to setting ``transform_all_input_vectors=True``
-            with :meth:`pyvista.DataObjectFilters.transform`.
+            #.  For dataset inputs:
 
-            For actor inputs, use:
+                Points are always transformed. Vectors are also transformed based on the mode:
 
-            - ``'pre-multiply'`` to pre-multiply this transform with the actor's :attr:`~pyvista.Prop3D.user_matrix`.
-            - ``'post-multiply'`` to post-multiply this transform with the actor's user-matrix
-            - ``'replace'`` to replace the actor's user-matrix with this transform's :attr:`matrix`.
+                - ``'active_vectors'`` transforms active normals and active vectors
+                  arrays only.
+                - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
+                  with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+                  with :meth:`pyvista.DataObjectFilters.transform`.
 
-            By default, ``'post-multiply'`` mode is used for actors.
+            #.  For actor inputs:
+
+                - ``'pre-multiply'`` pre-multiplies this transform with the actor's
+                  :attr:`~pyvista.Prop3D.user_matrix`.
+                - ``'post-multiply'`` to post-multiplies this transform with the actor's
+                  user-matrix.
+                - ``'replace'`` replaces the actor's user-matrix with this transform's
+                  :attr:`matrix`.
+
+                By default, ``'post-multiply'`` mode is used for actors.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1540,9 +1554,14 @@ class Transform(_vtk.vtkTransform):
             Equivalent to ``apply(obj, 'vectors')`` for vector-array inputs.
         apply_to_dataset
             Equivalent to ``apply(obj, mode)`` for dataset inputs where ``mode`` may be
-            ``'all_vectors'`` or ``None``.
+            ``'active_vectors'`` or ``'all_vectors'``.
+        apply_to_actor
+            Equivalent to ``apply(obj, mode)`` for actor inputs where ``mode`` may be
+            ``'pre-multiply'``, ``'post-multiply'``, or ``'replace'``.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
+        pyvista.Prop3D.transform
+            Transform an actor.
 
         Examples
         --------
@@ -1600,7 +1619,16 @@ class Transform(_vtk.vtkTransform):
 
         """
         _validation.check_contains(
-            ['points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply', None],
+            [
+                'points',
+                'vectors',
+                'active_vectors',
+                'all_vectors',
+                'replace',
+                'pre-multiply',
+                'post-multiply',
+                None,
+            ],
             must_contain=mode,
             name='mode',
         )
@@ -1618,8 +1646,10 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
-            if mode not in ['all_vectors', None]:
+            if mode not in ['active_vectors', 'all_vectors', None]:
                 raise ValueError(f"Transformation mode '{mode}' is not supported for datasets.")
+            if mode in ['active_vectors', None]:
+                mode = None
 
             return obj.transform(
                 self.copy().invert() if inverse else self,
@@ -1760,26 +1790,28 @@ class Transform(_vtk.vtkTransform):
         self,
         dataset: _DataSetOrMultiBlockType,
         /,
-        all_vectors: bool = False,
+        mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
         copy: bool = True,
         inverse: bool = False,
     ) -> _DataSetOrMultiBlockType:
         """Apply the current transformation :attr:`matrix` to a dataset.
 
-        This is equivalent to ``apply(dataset, mode)`` where ``mode`` is ``'all_vectors'``
-        when ``all_vectors=True``. See :meth:`apply` for details and examples.
-        This method is also similar to :meth:`pyvista.DataObjectFilters.transform`.
+        This is equivalent to ``apply(dataset, mode)``. See :meth:`apply` for details
+        and examples.
 
         Parameters
         ----------
         dataset : DataSet | MultiBlock
             Object to apply the transformation to.
 
-        all_vectors : bool, default: False
-            When ``True``, all arrays with three components are
-            transformed. Otherwise, only the normals and vectors are
-            transformed. See the warning in :meth:`pyvista.DataObjectFilters.transform`
-            for more details.
+        mode : 'active_vectors' | 'all_vectors', default: 'active_vectors'
+            Mode for transforming the dataset's vectors:
+
+            - ``'active_vectors'`` transforms active normals and active vectors arrays
+              only.
+            - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
+              three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+              with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1808,7 +1840,6 @@ class Transform(_vtk.vtkTransform):
             Transform a dataset.
 
         """
-        mode: Literal['all_vectors'] | None = 'all_vectors' if all_vectors else None
         return self.apply(dataset, mode, inverse=inverse, copy=copy)
 
     def apply_to_actor(
@@ -1858,6 +1889,8 @@ class Transform(_vtk.vtkTransform):
             Apply this transformation to vectors.
         apply_to_dataset
             Apply this transformation to a dataset.
+        pyvista.Prop3D.transform
+            Transform an actor.
 
         """
         return self.apply(actor, mode, inverse=inverse, copy=copy)
