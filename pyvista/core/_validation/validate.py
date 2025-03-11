@@ -570,17 +570,12 @@ def validate_transform4x4(
 ) -> NumpyArray[float]:
     """Validate transform-like input as a 4x4 ndarray.
 
-    This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
-    the array is padded using a 4x4 identity matrix.
-
     Parameters
     ----------
     transform : TransformLike
-        Transformation matrix as a 3x3 or 4x4 array or vtk matrix, or a
-        SciPy ``Rotation`` instance.
-
-        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
-        or as a vtkTransform.
+        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
+        or a SciPy ``Rotation`` instance. If the input is 3x3, the array is padded using
+        a 4x4 identity matrix.
 
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
