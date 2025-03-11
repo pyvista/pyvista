@@ -12,7 +12,7 @@ import pytest
 
 from pyvista.plotting import system_supports_plotting
 
-from ..conftest import flaky_test
+from tests.conftest import flaky_test
 
 pytest.importorskip('sphinx')
 
@@ -40,8 +40,10 @@ def test_tinypages(tmp_path, ename, evalue):
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
+    tmp_dir = tmp_path / f'{ename}_{evalue}'
+    tmp_dir.mkdir()
+    html_dir = tmp_dir / 'html'
+    doctree_dir = tmp_dir / 'doctrees'
     # Build the pages with warnings turned into errors
     cmd = [
         sys.executable,
