@@ -211,6 +211,11 @@ def _import_imports_from_test_cases():
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
+
+    # Skip tests on Linux and Python < 3.12
+    if sys.platform == 'linux' and sys.version_info < (3, 12):
+        pytest.skip('Issue with mypy plugin.')
+
     if 'test_case' in metafunc.fixturenames:
         # Load imports from test cases for dynamic tests
         _import_imports_from_test_cases()
