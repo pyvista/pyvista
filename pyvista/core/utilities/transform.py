@@ -22,7 +22,6 @@ from pyvista.core.utilities.transformations import reflection
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista import Prop3D
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -1456,28 +1455,15 @@ class Transform(_vtk.vtkTransform):
         inverse: bool = ...,
         copy: bool = ...,
     ) -> _DataSetOrMultiBlockType: ...
-    @overload
     def apply(
         self: Transform,
-        obj: Prop3D,
-        /,
-        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> Prop3D: ...
-    def apply(
-        self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
         mode: Literal[
             'points',
             'vectors',
             'active_vectors',
             'all_vectors',
-            'replace',
-            'pre-multiply',
-            'post-multiply',
         ]
         | None = None,
         *,
