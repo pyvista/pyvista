@@ -22,6 +22,7 @@ from pyvista.core.utilities.transformations import reflection
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import Prop3D
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -1450,16 +1451,35 @@ class Transform(_vtk.vtkTransform):
         self: Transform,
         obj: _DataSetOrMultiBlockType,
         /,
-        mode: Literal['all_vectors'] | None = ...,
+        mode: Literal['active_vectors', 'all_vectors'] = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
     ) -> _DataSetOrMultiBlockType: ...
+    @overload
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        obj: Prop3D,
         /,
-        mode: Literal['points', 'vectors', 'all_vectors'] | None = None,
+        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+    ) -> Prop3D: ...
+    def apply(
+        self: Transform,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
+        /,
+        mode: Literal[
+            'points',
+            'vectors',
+            'active_vectors',
+            'all_vectors',
+            'replace',
+            'pre-multiply',
+            'post-multiply',
+        ]
+        | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
@@ -1478,21 +1498,30 @@ class Transform(_vtk.vtkTransform):
         obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock
             Object to apply the transformation to.
 
-        mode : 'points' | 'vectors' | 'all_vectors', optional
-            Define how to apply the transformation.
+        mode : str, optional
+            Define how to apply the transformation. Different modes may be used depending
+            on the input type.
 
-            For array inputs, use:
+            #.  For array inputs:
 
-            - ``'points'`` for transforming point arrays.
-            - ``'vectors'`` for transforming vector arrays. The translation component of
-              the transformation is removed for vectors.
+                - ``'points'`` transforms point arrays.
+                - ``'vectors'`` transforms vector arrays. The translation component of
+                  the transformation is removed for vectors.
 
-            By default, ``'points'`` mode is used for array inputs.
+                By default, ``'points'`` mode is used for array inputs.
 
-            For dataset inputs, use ``'all_vectors'`` to transform `all` input vectors
-            in datasets. Otherwise, only the points, normals and active vectors are
-            transformed. This mode is equivalent to setting ``transform_all_input_vectors=True``
-            with :meth:`pyvista.DataObjectFilters.transform`.
+            #.  For dataset inputs:
+
+                The dataset's points are always transformed, and its vectors are
+                transformed based on the mode:
+
+                - ``'active_vectors'`` transforms active normals and active vectors
+                  arrays only.
+                - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
+                  with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+                  with :meth:`pyvista.DataObjectFilters.transform`.
+
+                By default, only ``'active_vectors'`` are transformed.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1517,7 +1546,7 @@ class Transform(_vtk.vtkTransform):
             Equivalent to ``apply(obj, 'vectors')`` for vector-array inputs.
         apply_to_dataset
             Equivalent to ``apply(obj, mode)`` for dataset inputs where ``mode`` may be
-            ``'all_vectors'`` or ``None``.
+            ``'active_vectors'`` or ``'all_vectors'``.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
@@ -1566,8 +1595,22 @@ class Transform(_vtk.vtkTransform):
                          [2. , 2.5, 2.5]])
 
         """
+
+        def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
+            if mode_ not in allowed_modes:
+                raise ValueError(
+                    f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
+                    f'\n{allowed}'
+                )
+
         _validation.check_contains(
-            ['points', 'vectors', 'all_vectors', None],
+            [
+                'points',
+                'vectors',
+                'active_vectors',
+                'all_vectors',
+                None,
+            ],
             must_contain=mode,
             name='mode',
         )
@@ -1584,8 +1627,10 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
-            if mode not in ['all_vectors', None]:
-                raise ValueError(f"Transformation mode '{mode}' is not supported for datasets.")
+            allowed = ['active_vectors', 'all_vectors', None]
+            _check_mode('datasets', mode, allowed)
+            if mode in ['active_vectors', None]:
+                mode = None
 
             return obj.transform(
                 self.copy().invert() if inverse else self,
@@ -1595,8 +1640,9 @@ class Transform(_vtk.vtkTransform):
 
         matrix = self.inverse_matrix if inverse else self.matrix
 
-        if mode not in ['points', 'vectors', None]:
-            raise ValueError(f"Transformation mode '{mode}' is not supported for arrays.")
+        # Transform array
+        allowed = ['points', 'vectors', None]
+        _check_mode('arrays', mode, allowed)
 
         if mode == 'vectors':
             # Remove translation
@@ -1606,7 +1652,7 @@ class Transform(_vtk.vtkTransform):
         array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
-        # Transform a single point
+        # Transform a 1D array
         out: NumpyArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
@@ -1615,7 +1661,7 @@ class Transform(_vtk.vtkTransform):
                 out = array
             return out
 
-        # Transform many points
+        # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         if out is not None:
             return out
@@ -1714,26 +1760,28 @@ class Transform(_vtk.vtkTransform):
         self,
         dataset: _DataSetOrMultiBlockType,
         /,
-        all_vectors: bool = False,
+        mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
         copy: bool = True,
         inverse: bool = False,
     ) -> _DataSetOrMultiBlockType:
         """Apply the current transformation :attr:`matrix` to a dataset.
 
-        This is equivalent to ``apply(dataset, mode)`` where ``mode`` is ``'all_vectors'``
-        when ``all_vectors=True``. See :meth:`apply` for details and examples.
-        This method is also similar to :meth:`pyvista.DataObjectFilters.transform`.
+        This is equivalent to ``apply(dataset, mode)``. See :meth:`apply` for details
+        and examples.
 
         Parameters
         ----------
         dataset : DataSet | MultiBlock
             Object to apply the transformation to.
 
-        all_vectors : bool, default: False
-            When ``True``, all arrays with three components are
-            transformed. Otherwise, only the normals and vectors are
-            transformed. See the warning in :meth:`pyvista.DataObjectFilters.transform`
-            for more details.
+        mode : 'active_vectors' | 'all_vectors', default: 'active_vectors'
+            Mode for transforming the dataset's vectors:
+
+            - ``'active_vectors'`` transforms active normals and active vectors arrays
+              only.
+            - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
+              three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+              with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1760,7 +1808,6 @@ class Transform(_vtk.vtkTransform):
             Transform a dataset.
 
         """
-        mode: Literal['all_vectors'] | None = 'all_vectors' if all_vectors else None
         return self.apply(dataset, mode, inverse=inverse, copy=copy)
 
     def decompose(
