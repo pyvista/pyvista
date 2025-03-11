@@ -29,7 +29,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
-    from pyvista.plotting.prop3d import _Prop3DMixin
 
 
 class Transform(_vtk.vtkTransform):
@@ -1457,16 +1456,16 @@ class Transform(_vtk.vtkTransform):
     @overload
     def apply(
         self: Transform,
-        obj: Prop3D | _Prop3DMixin,
+        obj: Prop3D,
         /,
         mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-    ) -> Prop3D | _Prop3DMixin: ...
+    ) -> Prop3D: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D | _Prop3DMixin,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
         /,
         mode: Literal[
             'points', 'vectors', 'all_vectors', 'replace', 'pre-multiply', 'post-multiply'
@@ -1613,7 +1612,6 @@ class Transform(_vtk.vtkTransform):
                 pyvista.DataSet,
                 pyvista.MultiBlock,
                 pyvista.Prop3D,
-                pyvista.plotting.prop3d._Prop3DMixin,
             ),
         )
 
@@ -1632,7 +1630,7 @@ class Transform(_vtk.vtkTransform):
         matrix = self.inverse_matrix if inverse else self.matrix
 
         # Transform actor
-        if isinstance(obj, (pyvista.Prop3D, pyvista.plotting.prop3d._Prop3DMixin)):
+        if isinstance(obj, pyvista.Prop3D):
             if mode not in ['replace', 'pre-multiply', 'post-multiply', None]:
                 raise ValueError(f"Transformation mode '{mode}' is not supported for actors.")
             if mode in ['post-multiply', None]:
@@ -1815,12 +1813,12 @@ class Transform(_vtk.vtkTransform):
 
     def apply_to_actor(
         self,
-        actor: Prop3D | _Prop3DMixin,
+        actor: Prop3D,
         /,
         mode: Literal['pre-multiply', 'post-multiply', 'replace'] = 'post-multiply',
         copy: bool = True,
         inverse: bool = False,
-    ) -> Prop3D | _Prop3DMixin:
+    ) -> Prop3D:
         """Apply the current transformation :attr:`matrix` to a dataset.
 
         This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and

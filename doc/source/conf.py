@@ -279,7 +279,6 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*TipType'),
     (r'py:.*', '.*_AxesGeometryKwargs'),
     (r'py:.*', '.*_OrthogonalPlanesKwargs'),
-    (r'py:.*', '.*_Prop3DMixin'),
     #
     # PyVista Widget enums
     (r'py:.*', '.*PickerType'),
