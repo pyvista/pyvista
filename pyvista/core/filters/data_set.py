@@ -2385,7 +2385,7 @@ class DataSetFilters(DataObjectFilters):
         output = _get_output(alg)
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
-                msg = 'This filter cannot be applied inplace for this mesh type.'
+                msg = 'This filter cannot be applied inplace for this mesh type.'  # type: ignore[unreachable]
                 raise TypeError(msg)
             self.copy_from(output, deep=False)
             return self
@@ -5700,7 +5700,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            msg = 'Tessellate filter is not supported for PolyData objects.'
+            msg = 'Tessellate filter is not supported for PolyData objects.'  # type: ignore[unreachable]
             raise TypeError(msg)
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
