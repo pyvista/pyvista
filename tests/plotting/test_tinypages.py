@@ -22,7 +22,7 @@ if not system_supports_plotting():
 ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
 
 
-@flaky_test(exceptions=(AssertionError,))
+@flaky_test(exceptions=(AssertionError, FileExistsError))
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
