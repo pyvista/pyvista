@@ -680,7 +680,7 @@ Type checking is used to test ``pyvista`` code both statically and dynamically
 at runtime.
 
 Static Analysis
-+++++++++++++++
+^^^^^^^^^^^^^^^
 Mypy is used to analyze and type-check all source code statically. Install
 the typing requirements with
 
@@ -691,7 +691,7 @@ the typing requirements with
 and run ``mypy`` to analyze the all ``pyvista`` repository code.
 
 Runtime Tests
-+++++++++++++
+^^^^^^^^^^^^^
 Since ``mypy`` is limited to static analysis, it's possible that a type hint
 may not match the actual runtime type. In addition, there may be complex
 typing ``@overload`` definitions which could benefit from some testing to
