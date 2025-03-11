@@ -1139,7 +1139,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def _simulate_keypress(self, key):  # pragma:
+    def _simulate_keypress(self, key):
         """Simulate a keypress."""
         if len(key) > 1:
             msg = 'Only accepts a single key'
