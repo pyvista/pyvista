@@ -586,6 +586,34 @@ def VTKVersionInfo():
 vtk_version_info = VTKVersionInfo()
 
 
+class DisableSnakeCaseAPI:
+    """Base class to raise error if using VTK's `snake_case` API."""
+
+    def __getattribute__(self, item):
+        if vtk_version_info >= (9, 4):
+
+            def find_defining_class(cls, attr):
+                """Find the class that defines a given attribute."""
+                for base in cls.__mro__:
+                    if attr in base.__dict__:
+                        return base
+                return None
+
+            # Raise error if accessing attributes from VTK's pythonic snake_case API
+            try:
+                from pyvista.core.errors import PyVistaAPIAttributeError
+            except ImportError:
+                # Need to ignore import errors since attribute checks when deleting
+                # objects may fail when python is shutting down
+                ...
+            else:
+                if item not in ['__class__', '__init__'] and item[0].islower():
+                    cls = find_defining_class(self.__class__, item)
+                    if cls is not None and cls.__module__.startswith('vtkmodules'):
+                        raise PyVistaAPIAttributeError(attr=item)
+        return super().__getattribute__(item)
+
+
 class vtkPyVistaOverride:
     """Base class to automatically override VTK classes with PyVista classes."""
 

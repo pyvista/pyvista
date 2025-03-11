@@ -46,7 +46,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_vtk.vtkPyVistaOverride):
+class DataObject(_vtk.DisableSnakeCaseAPI, _vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
