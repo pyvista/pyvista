@@ -1576,71 +1576,77 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     assert not transform.is_inverted
 
 
-def test_transform_apply_mode():
+@pytest.fixture
+def scale_transform():
+    return Transform() * SCALE
+
+
+@pytest.fixture
+def translate_transform():
+    return Transform() + VECTOR
+
+
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_points])
+@pytest.mark.parametrize('transformation', ['scale', 'translate'])
+def test_transform_apply_to_points(scale_transform, translate_transform, method, transformation):
     array = np.array((0.0, 0.0, 1.0))
-    scale = Transform() * SCALE
 
-    offset = np.array((1.0, 0.0, 0.0))
-    translate = Transform() + offset
+    if transformation == 'scale':
+        trans = scale_transform
+        expected = array * SCALE
+    else:
+        trans = translate_transform
+        expected = array + VECTOR
 
-    mesh = pv.PolyData(array)
-    mesh['vector'] = [array]
+    if method == pv.Transform.apply:
+        transformed = method(trans, array, 'points')
+    else:
+        transformed = method(trans, array)
+    assert np.allclose(transformed, expected)
 
+
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_vectors])
+@pytest.mark.parametrize('transformation', ['scale', 'translate'])
+def test_transform_apply_to_vectors(scale_transform, translate_transform, method, transformation):
+    array = np.array((0.0, 0.0, 1.0))
+
+    if transformation == 'scale':
+        trans = scale_transform
+        expected = array * SCALE
+    else:
+        trans = translate_transform
+        expected = array
+
+    if method == pv.Transform.apply:
+        transformed = method(trans, array, 'vectors')
+    else:
+        transformed = method(trans, array)
+    assert np.allclose(transformed, expected)
+
+
+@pytest.mark.parametrize('mode', ['active_vectors', 'all_vectors'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_dataset])
+def test_transform_apply_to_dataset(scale_transform, mode, method):
+    vector = np.array(VECTOR, dtype=float)
+    mesh = pv.PolyData(vector)
+    mesh['vector'] = [vector]
+
+    expected = mesh['vector']
+    if mode == 'all_vectors':
+        expected = expected * SCALE
+
+    transformed = method(scale_transform, mesh, mode)
+    assert np.allclose(transformed['vector'], expected)
+
+
+@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
+def test_transform_apply_to_actor(scale_transform, mode, method):
+    expected_matrix = scale_transform.matrix
     actor = pv.Actor()
 
-    # Scale points
-    transformed = scale.apply(array, 'points')
-    assert np.allclose(transformed, array * SCALE)
-    transformed = scale.apply_to_points(array)
-    assert np.allclose(transformed, array * SCALE)
-
-    # Scale vectors
-    transformed = scale.apply(array, 'vectors')
-    assert np.allclose(transformed, array * SCALE)
-    transformed = scale.apply_to_vectors(array)
-    assert np.allclose(transformed, array * SCALE)
-
-    # Translate points
-    transformed = translate.apply(array, 'points')
-    assert np.allclose(transformed, array + offset)
-    transformed = translate.apply_to_points(array)
-    assert np.allclose(transformed, array + offset)
-
-    # Translate vectors
-    transformed = translate.apply(array, 'vectors')
-    assert np.allclose(transformed, array)
-    transformed = translate.apply_to_vectors(array)
-    assert np.allclose(transformed, array)
-
-    # Scale dataset
-    transformed = scale.apply(mesh)
-    assert np.allclose(transformed['vector'], mesh['vector'])
-    transformed = scale.apply_to_dataset(mesh)
-    assert np.allclose(transformed['vector'], mesh['vector'])
-
-    # Scale dataset, all vectors
-    transformed = scale.apply(mesh, 'all_vectors')
-    assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
-    transformed = scale.apply_to_dataset(mesh, 'all_vectors')
-    assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
-
-    # Scale actor
-    transformed = scale.apply(actor, 'replace')
-    assert np.allclose(transformed.user_matrix, scale.matrix)
-    transformed = scale.apply_to_actor(actor, 'replace')
-    assert np.allclose(transformed.user_matrix, scale.matrix)
-
-    # Scale actor
-    transformed = scale.apply(actor, 'pre-multiply')
-    assert np.allclose(transformed.user_matrix, scale.matrix)
-    transformed = scale.apply_to_actor(actor, 'pre-multiply')
-    assert np.allclose(transformed.user_matrix, scale.matrix)
-
-    # Scale actor
-    transformed = scale.apply(actor, 'post-multiply')
-    assert np.allclose(transformed.user_matrix, scale.matrix)
-    transformed = scale.apply_to_actor(actor, 'post-multiply')
-    assert np.allclose(transformed.user_matrix, scale.matrix)
+    transformed = method(scale_transform, actor, mode)
+    assert np.allclose(transformed.user_matrix, expected_matrix)
 
 
 def test_transform_apply_invalid_mode():
