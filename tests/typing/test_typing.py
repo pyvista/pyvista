@@ -18,7 +18,6 @@ import importlib
 import os
 from pathlib import Path
 import re
-import sys
 from typing import NamedTuple
 
 from mypy import api as mypy_api
@@ -82,10 +81,9 @@ def _reveal_types():
         std_out, std_err, exit_status = mypy_api.run(
             ['--show-absolute-path', '--show-traceback', '--package', TYPING_CASES_PACKAGE]
         )
-        if sys.platform != 'linux':
-            # Linux tests are skipped, so only check output for other OSes
-            assert exit_status == 0, std_err
-            assert 'Cannot find implementation' not in std_out
+
+        assert exit_status == 0, std_err
+        assert 'Cannot find implementation' not in std_out
 
         # Group the revealed types by (filepath), (line num), and (type)
         pattern = r'^(.*?):(\d*?):\snote: Revealed type is "([^"]+)"'
@@ -195,7 +193,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('test_case', all_cases, ids=ids)
 
 
-@pytest.mark.skipif(sys.platform == 'windows', reason='Segfaults occasionally.')
 def test_typing(test_case):
     file, line_num, arg, expected, revealed, static_or_runtime = test_case
     # Test set-up
