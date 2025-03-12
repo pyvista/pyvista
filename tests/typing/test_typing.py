@@ -1,6 +1,6 @@
 """Test static and runtime type annotations revealed by Mypy.
 
-This test will automatically analyze all files in `tests/typing/typing_test_cases`
+This test will automatically analyze all files in `tests/typing/test_typing_cases`
 directory. To add new test cases, simply add a new .py file with each test case
 following the format:
 
@@ -29,7 +29,7 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 assert 'tests' in os.listdir(PROJECT_ROOT)
-TYPING_CASES_REL_PATH = 'tests/typing/typing_test_cases'
+TYPING_CASES_REL_PATH = 'tests/typing/test_typing_cases'
 TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
 TYPING_CASES_ABS_PATH = PROJECT_ROOT / TYPING_CASES_REL_PATH
 TEST_FILE_NAMES = [f for f in os.listdir(TYPING_CASES_ABS_PATH) if f.endswith('.py')]

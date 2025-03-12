@@ -712,7 +712,7 @@ The tests can be executed with:
     pytest tests/typing/test_typing.py
 
 This test collects and executes test cases from ``.py`` files in
-``tests/typing/typing_test_cases``.
+``tests/typing/test_typing_cases``.
 
 Individual test cases are written as a single line of Python code with the format:
 
