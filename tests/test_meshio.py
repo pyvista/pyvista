@@ -11,6 +11,8 @@ from pyvista import examples
 
 empty = pv.UnstructuredGrid()
 cow = examples.download_cow().cast_to_unstructured_grid()
+points_only = cow.copy()
+points_only.cells = np.array((), dtype=int)
 beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
@@ -101,7 +103,7 @@ polyhedron = meshio.Mesh(
 
 
 @pytest.mark.parametrize(
-    'mesh_in', [beam, airplane, uniform, uniform2d, mesh2d, polyhedron, cow, empty]
+    'mesh_in', [beam, airplane, uniform, uniform2d, mesh2d, polyhedron, cow, empty, points_only]
 )
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
@@ -111,14 +113,14 @@ def test_meshio(mesh_in, tmpdir):
     filename = tmpdir.mkdir('tmpdir').join('test_mesh.vtu')
     pv.save_meshio(filename, mesh_in)
 
-    try:
+    if mesh_in.n_cells == 0:
+        # Meshio cannot read empty meshes and will either:
+        # - crash if there are points but no cells
+        # - raise a ValueError if totally empty
+        # As a workaround, we create the mesh directly for testing
+        mesh = meshio.Mesh(points=mesh_in.points, cells=mesh_in.cells)
+    else:
         mesh = pv.read_meshio(filename)
-    except ValueError:
-        if mesh_in.is_empty:
-            # Meshio has a bug where it cannot read empty meshes, so we create it directly
-            mesh = meshio.Mesh(points=mesh_in.points, cells=mesh_in.cells)
-        else:  # re-raise
-            raise
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)

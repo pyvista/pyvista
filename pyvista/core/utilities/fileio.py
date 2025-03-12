@@ -939,6 +939,13 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         from meshio._vtk_common import meshio_to_vtk_type
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
 
+    if not mesh.cells:
+        # Empty mesh
+        grid = pyvista.UnstructuredGrid()
+        if mesh.points.size > 0:
+            grid.points = mesh.points
+        return grid
+
     # Extract cells from meshio.Mesh object
     cells = []
     cell_type = []
@@ -981,13 +988,8 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
-    cat_cells = (
-        np.array((), dtype=np.int64)
-        if len(cells) == 0
-        else np.concatenate(cells).astype(np.int64, copy=False)
-    )
     grid = pyvista.UnstructuredGrid(
-        cat_cells,
+        np.concatenate(cells).astype(np.int64, copy=False),
         np.array(cell_type),
         np.array(points, np.float64),
     )
