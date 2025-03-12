@@ -291,6 +291,43 @@ def test_save_image_raises(mocker: MockerFixture):
         pl._save_image(im, filename='foo', return_img=True)
 
 
+def test_add_volume_scalar_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotter
+
+    m = mocker.patch.object(plotter, 'get_array')
+    m().ndim = 1
+    m2 = mocker.patch.object(plotter, 'np')
+    m2.issubdtype.return_value = False
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError,
+        match='Non-numeric scalars are currently not supported for volume rendering.',
+    ):
+        pl.add_volume(pv.ImageData(), scalars='foo')
+
+    mocker.resetall()
+
+    m = mocker.patch.object(plotter, 'get_array')
+    m().ndim = 0
+    with pytest.raises(
+        ValueError,
+        match='`add_volume` only supports scalars with 1 or 2 dimensions',
+    ):
+        pl.add_volume(pv.ImageData(), scalars='foo')
+
+
+def test_update_scalar_bar_range_raises():
+    pl = pv.Plotter()
+    match = re.escape('clim argument must be a length 2 iterable of values: (min, max).')
+
+    with pytest.raises(TypeError, match=match):
+        pl.update_scalar_bar_range(clim=[1, 2, 3])
+
+    with pytest.raises(AttributeError, match='This plotter does not have an active mapper.'):
+        pl.update_scalar_bar_range(clim=[1, 2], name=None)
+
+
 def test_save_graphic_raises():
     pl = pv.Plotter()
     pl.close()
