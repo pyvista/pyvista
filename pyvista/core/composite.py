@@ -192,7 +192,7 @@ class MultiBlock(
         prepend_names: bool
         separator: str
 
-    @overload
+    @overload  # 'ids', nested_ids=True
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['ids'],
@@ -203,7 +203,8 @@ class MultiBlock(
         skip_none: bool = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[int, ...]]: ...
-    @overload
+
+    @overload  # 'ids', nested_ids=False
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['ids'],
@@ -214,7 +215,7 @@ class MultiBlock(
         skip_none: bool = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[int]: ...
-    @overload
+    @overload  # 'names'
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['names'],
@@ -225,18 +226,29 @@ class MultiBlock(
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[str]: ...
-    @overload
+    @overload  # 'items', skip_none=False
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['items'],
         order: _OrderLiteral | None = ...,
         *,
         node_type: Literal['parent' | 'child'] = ...,
-        skip_none: bool = ...,
+        skip_none: Literal[False] = ...,
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[str, _TypeMultiBlockLeaf]]: ...
-    @overload
+    @overload  # 'items', skip_none=True
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['items'],
+        order: _OrderLiteral | None = ...,
+        *,
+        node_type: Literal['parent' | 'child'] = ...,
+        skip_none: Literal[True],
+        nested_ids: bool | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
+    ) -> Iterator[tuple[str, DataSet | MultiBlock]]: ...
+    @overload  # 'blocks', skip_None=True
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['blocks'] = ...,
@@ -247,7 +259,7 @@ class MultiBlock(
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[DataSet | MultiBlock]: ...
-    @overload
+    @overload  # 'blocks', skip_None=False
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['blocks'] = ...,
@@ -258,8 +270,7 @@ class MultiBlock(
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[_TypeMultiBlockLeaf]: ...
-
-    @overload
+    @overload  # 'all', skip_none=True, nested_ids=True
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['all'],
@@ -270,7 +281,7 @@ class MultiBlock(
         node_type: Literal['parent' | 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[tuple[int, ...], str, DataSet | MultiBlock]]: ...
-    @overload
+    @overload  # 'all', skip_none=False, nested_ids=True
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['all'],
@@ -281,7 +292,7 @@ class MultiBlock(
         node_type: Literal['parent' | 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[tuple[int, ...], str, _TypeMultiBlockLeaf]]: ...
-    @overload
+    @overload  # 'all', skip_none=True, nested_ids=False
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['all'],
@@ -292,7 +303,7 @@ class MultiBlock(
         node_type: Literal['parent' | 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[int, str, DataSet | MultiBlock]]: ...
-    @overload
+    @overload  # 'all', skip_none=False, nested_ids=False
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['all'],
