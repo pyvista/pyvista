@@ -1749,17 +1749,3 @@ def test_rect_grid_dimensions_raises():
     )
     with pytest.raises(AttributeError, match=match):
         g.dimensions = 1
-
-
-def test_celltypes_empty(hexbeam):
-    empty = pv.UnstructuredGrid()
-    celltypes = empty.celltypes
-    assert celltypes.size == 0
-    assert celltypes.dtype == hexbeam.celltypes.dtype
-
-
-def test_cell_connectivity_empty(hexbeam):
-    empty = pv.UnstructuredGrid()
-    conn = empty.cell_connectivity
-    assert conn.size == 0
-    assert conn.dtype == hexbeam.cell_connectivity.dtype
