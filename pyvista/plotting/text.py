@@ -758,7 +758,8 @@ class TextProperty(_vtk.vtkTextProperty):
         path = pathlib.Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
-            raise FileNotFoundError(f'Unable to locate {path}')
+            msg = f'Unable to locate {path}'
+            raise FileNotFoundError(msg)
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
 
@@ -787,10 +788,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'right':
             self.SetJustificationToRight()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".',
+                'Should be either "left", "center" or "right".'
             )
+            raise ValueError(msg)
 
     @property
     def justification_vertical(self) -> str:
@@ -817,10 +819,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".',
+                'Should be either "bottom", "center" or "top".'
             )
+            raise ValueError(msg)
 
     @property
     def italic(self) -> bool:
