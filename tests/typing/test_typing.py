@@ -21,6 +21,7 @@ from pathlib import Path
 import re
 import sys
 from typing import NamedTuple
+from typing import Union  # noqa: F401
 
 from mypy import api as mypy_api
 import pyanalyze
@@ -36,6 +37,7 @@ TEST_FILE_NAMES = [f for f in os.listdir(TYPING_CASES_ABS_PATH) if f.endswith('.
 # Define types to simplify in the "revealed type" output string from Mypy.
 # The key will be replaced by the value.
 REPLACE_TYPES = {
+    'pyvista.core.partitioned.PartitionedDataSet': 'PartitionedDataSet',
     'pyvista.core.composite.MultiBlock': 'MultiBlock',
     'pyvista.core.pointset.ExplicitStructuredGrid': 'ExplicitStructuredGrid',
     'pyvista.core.pointset.StructuredGrid': 'StructuredGrid',
@@ -44,7 +46,19 @@ REPLACE_TYPES = {
     'pyvista.core.pointset.PointSet': 'PointSet',
     'pyvista.core.grid.ImageData': 'ImageData',
     'pyvista.core.grid.RectilinearGrid': 'RectilinearGrid',
+    'pyvista.core.objects.Table': 'Table',
+    'pyvista.core.pyvista_ndarray.pyvista_ndarray': 'pyvista_ndarray',
 }
+
+# Import the REPLACE_TYPES values into the global namespace to make
+# available for runtime tests
+globals().update(
+    {
+        class_name: getattr(importlib.import_module(module_name), class_name)
+        for full_path in REPLACE_TYPES
+        for module_name, class_name in [full_path.rsplit('.', 1)]
+    }
+)
 
 
 class _TestCaseTuple(NamedTuple):
