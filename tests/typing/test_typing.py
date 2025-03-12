@@ -34,6 +34,7 @@ TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
 TYPING_CASES_ABS_PATH = PROJECT_ROOT / TYPING_CASES_REL_PATH
 TEST_FILE_NAMES = [f for f in os.listdir(TYPING_CASES_ABS_PATH) if f.endswith('.py')]
 
+
 # Define types to simplify in the "revealed type" output string from Mypy.
 # The key will be replaced by the value.
 REPLACE_TYPES = {
@@ -61,6 +62,8 @@ globals().update(
         for module_name, class_name in [full_path.rsplit('.', 1)]
     }
 )
+REPLACE_TYPES.update({'builtins.str': 'str'})
+REPLACE_TYPES.update({'builtins.int': 'int'})
 
 
 class _TestCaseTuple(NamedTuple):

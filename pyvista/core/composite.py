@@ -203,6 +203,40 @@ class MultiBlock(
         prepend_names: bool
         separator: str
 
+    class _RecursiveIteratorKwargsNoNestedIds(TypedDict, total=False):
+        node_type: Literal['parent' | 'child']
+        skip_none: bool
+        skip_empty: bool
+        prepend_names: bool
+        separator: str
+
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['ids'],
+        order: _OrderLiteral | None = ...,
+        *,
+        nested_ids: Literal[True] | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorKwargsNoNestedIds],
+    ) -> Iterator[tuple[int,]]: ...
+
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['ids'],
+        order: _OrderLiteral | None = ...,
+        *,
+        nested_ids: Literal[False],
+        # Explicitly handle False/None fallback
+        **kwargs: Unpack[_RecursiveIteratorKwargsNoNestedIds],
+    ) -> Iterator[int]: ...
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['names'],
+        order: _OrderLiteral | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorKwargs],
+    ) -> Iterator[str]: ...
     @overload
     def recursive_iterator(
         self: MultiBlock,
