@@ -13,9 +13,10 @@ reveal_type(MultiBlock().recursive_iterator(order='nested_first'))      # EXPECT
 reveal_type(MultiBlock().recursive_iterator(skip_none=True))            # EXPECTED_TYPE: "Iterator[Union[DataSet, MultiBlock]]"
 reveal_type(MultiBlock().recursive_iterator('blocks', skip_none=True))  # EXPECTED_TYPE: "Iterator[Union[DataSet, MultiBlock]]"
 
-
+# Test names
 reveal_type(MultiBlock().recursive_iterator('names'))                   # EXPECTED_TYPE: "Iterator[str]"
 
+# Test items
 reveal_type(MultiBlock().recursive_iterator('items'))                   # EXPECTED_TYPE: "Iterator[tuple[str, Union[MultiBlock, DataSet, None]]]"
 reveal_type(MultiBlock().recursive_iterator('items', skip_none=True))   # EXPECTED_TYPE: "Iterator[tuple[str, Union[DataSet, MultiBlock]]]"
 

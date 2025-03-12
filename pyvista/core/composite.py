@@ -188,6 +188,8 @@ class MultiBlock(
     _OrderLiteral = Literal['nested_first', 'nested_last']
 
     class _RecursiveIteratorBasicKwargs(TypedDict, total=False):
+        """Define kwargs which have no impact on return type."""
+
         skip_empty: bool
         prepend_names: bool
         separator: str
@@ -199,11 +201,10 @@ class MultiBlock(
         order: _OrderLiteral | None = ...,
         *,
         nested_ids: Literal[True] | None = ...,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         skip_none: bool = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[int, ...]]: ...
-
     @overload  # 'ids', nested_ids=False
     def recursive_iterator(
         self: MultiBlock,
@@ -211,7 +212,7 @@ class MultiBlock(
         order: _OrderLiteral | None = ...,
         *,
         nested_ids: Literal[False],
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         skip_none: bool = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[int]: ...
@@ -221,7 +222,7 @@ class MultiBlock(
         contents: Literal['names'],
         order: _OrderLiteral | None = ...,
         *,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         skip_none: bool = ...,
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
@@ -232,7 +233,7 @@ class MultiBlock(
         contents: Literal['items'],
         order: _OrderLiteral | None = ...,
         *,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         skip_none: Literal[False] = ...,
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
@@ -243,7 +244,7 @@ class MultiBlock(
         contents: Literal['items'],
         order: _OrderLiteral | None = ...,
         *,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         skip_none: Literal[True],
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
@@ -255,7 +256,7 @@ class MultiBlock(
         order: _OrderLiteral | None = ...,
         *,
         skip_none: Literal[True],
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[DataSet | MultiBlock]: ...
@@ -266,7 +267,7 @@ class MultiBlock(
         order: _OrderLiteral | None = ...,
         *,
         skip_none: Literal[False] = ...,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         nested_ids: bool | None = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[_TypeMultiBlockLeaf]: ...
@@ -278,7 +279,7 @@ class MultiBlock(
         *,
         skip_none: Literal[True],
         nested_ids: Literal[True] | None = ...,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[tuple[int, ...], str, DataSet | MultiBlock]]: ...
     @overload  # 'all', skip_none=False, nested_ids=True
@@ -289,7 +290,7 @@ class MultiBlock(
         *,
         skip_none: Literal[False] = ...,
         nested_ids: Literal[True] | None = ...,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[tuple[int, ...], str, _TypeMultiBlockLeaf]]: ...
     @overload  # 'all', skip_none=True, nested_ids=False
@@ -300,7 +301,7 @@ class MultiBlock(
         *,
         skip_none: Literal[True],
         nested_ids: Literal[False],
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[int, str, DataSet | MultiBlock]]: ...
     @overload  # 'all', skip_none=False, nested_ids=False
@@ -311,7 +312,7 @@ class MultiBlock(
         *,
         skip_none: Literal[False] = ...,
         nested_ids: Literal[False],
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
     ) -> Iterator[tuple[int, str, _TypeMultiBlockLeaf]]: ...
     @overload
@@ -320,7 +321,7 @@ class MultiBlock(
         contents: _ContentsLiteral = ...,
         order: Literal['nested_first', 'nested_last'] | None = ...,
         *,
-        node_type: Literal['parent' | 'child'] = ...,
+        node_type: Literal['parent', 'child'] = ...,
         skip_none: bool = ...,
         skip_empty: bool = ...,
         nested_ids: bool | None = ...,
@@ -336,7 +337,7 @@ class MultiBlock(
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
         order: Literal['nested_first', 'nested_last'] | None = None,
         *,
-        node_type: Literal['parent' | 'child'] = 'child',
+        node_type: Literal['parent', 'child'] = 'child',
         skip_none: bool = False,
         skip_empty: bool = False,
         nested_ids: bool | None = None,
