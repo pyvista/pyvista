@@ -1350,7 +1350,7 @@ class DataObjectFilters:
             # Add Cell IDs to all blocks and keep track of scalars to restore later
             active_scalars_info = []
             if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
             else:
                 blocks = [self]
             for block in blocks:
