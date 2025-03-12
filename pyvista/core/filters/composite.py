@@ -186,7 +186,7 @@ class CompositeFilters(DataObjectFilters):
                     nested = ' '
                 else:
                     nested = ' nested '
-                    index = ''.join([f'[{id_}]' for id_ in ids_])
+                    index = _format_nested_index(ids)
                 msg = (
                     f"The filter '{func_name}'\n"
                     f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
@@ -286,34 +286,6 @@ class CompositeFilters(DataObjectFilters):
         alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
-
-    clip = DataSetFilters.clip
-
-    clip_box = DataSetFilters.clip_box
-
-    slice = DataSetFilters.slice
-
-    slice_orthogonal = DataSetFilters.slice_orthogonal
-
-    slice_along_axis = DataSetFilters.slice_along_axis
-
-    slice_along_line = DataSetFilters.slice_along_line
-
-    extract_all_edges = DataSetFilters.extract_all_edges
-
-    elevation = DataSetFilters.elevation
-
-    compute_cell_sizes = DataSetFilters.compute_cell_sizes
-
-    cell_centers = DataSetFilters.cell_centers
-
-    cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
-
-    point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
-
-    sample = DataSetFilters.sample
-
-    triangulate = DataSetFilters.triangulate
 
     def outline(  # type: ignore[misc]
         self: MultiBlock,
@@ -415,3 +387,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+
+def _format_nested_index(index: tuple[int, ...]) -> str:
+    return ''.join([f'[{ind}]' for ind in index])

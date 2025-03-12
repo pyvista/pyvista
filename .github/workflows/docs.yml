@@ -1,5 +1,7 @@
 name: Build Documentation
-on:
+
+# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
+on: # zizmor: ignore[cache-poisoning]
   pull_request: # Uses cache
   workflow_dispatch: # Able to not use cache by user demand
     inputs:
@@ -35,10 +37,13 @@ env:
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
 
+permissions:
+  id-token: none
+
 jobs:
   doc:
     name: Build Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
@@ -162,7 +167,7 @@ jobs:
 
   preview:
     name: Preview Development Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: doc
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
@@ -188,7 +193,7 @@ jobs:
 
   deploy:
     name: Publish Release Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -214,7 +219,7 @@ jobs:
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:

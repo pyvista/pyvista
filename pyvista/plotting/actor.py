@@ -16,6 +16,8 @@ from ._property import Property
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .mapper import _BaseMapper
 
 
@@ -223,17 +225,27 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor visibility.
 
+        See Also
+        --------
+        use_bounds
+        pyvista.Plotter.compute_bounds
+
         Examples
         --------
         Create an actor using the :class:`pyvista.Plotter` and then change the
         visibility of the actor.
 
         >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor = pl.add_mesh(mesh)
+        >>> pl.bounds
+        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+
         >>> actor.visibility = False
-        >>> actor.visibility
-        False
+        >>> pl.bounds
+        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
         """
         return bool(self.GetVisibility())
@@ -241,6 +253,46 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     @visibility.setter
     def visibility(self, value: bool) -> None:
         self.SetVisibility(value)
+
+    @property
+    def use_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set the use of actor's bounds.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        visibility
+        pyvista.Plotter.compute_bounds
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then change the
+        use of bounds for the actor.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> pl.bounds
+        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+
+        >>> actor.use_bounds = False
+        >>> pl.bounds
+        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+
+        Although the actor's bounds are no longer used, the actor remains visible.
+
+        >>> actor.visibility
+        True
+
+        """
+        return bool(self.GetUseBounds())
+
+    @use_bounds.setter
+    def use_bounds(self, value: bool) -> None:
+        self.SetUseBounds(value)
 
     def plot(self, **kwargs) -> None:
         """Plot just the actor.
@@ -270,7 +322,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         pl.add_actor(self)  # type: ignore[arg-type]
         pl.show(**kwargs)
 
-    def copy(self, deep: bool = True) -> Actor:
+    def copy(self: Self, deep: bool = True) -> Self:
         """Create a copy of this actor.
 
         Parameters
@@ -282,14 +334,14 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Actor
+        Actor
             Deep or shallow copy of this actor.
 
         Examples
         --------
-        Create an actor of a cube by adding it to a :class:`pyvista.Plotter`
+        Create an actor of a cube by adding it to a :class:`~pyvista.Plotter`
         and then copy the actor, change the properties, and add it back to the
-        :class:`pyvista.Plotter`.
+        :class:`~pyvista.Plotter`.
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
@@ -304,9 +356,10 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl.show()
 
         """
-        new_actor = Actor()
+        new_actor = type(self)()
         if deep:
-            new_actor.mapper = self.mapper.copy()
+            if self.mapper is not None:
+                new_actor.mapper = self.mapper.copy()
             new_actor.prop = self.prop.copy()
         else:
             new_actor.ShallowCopy(self)

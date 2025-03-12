@@ -375,11 +375,11 @@ def test_contour_labels_cell_data(channels):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     start = time.perf_counter()
-    channels.contour_labels('external', compute_normals=False)
+    channels.contour_labels('external', orient_faces=False)
     time_slow = time.perf_counter() - start
 
     start = time.perf_counter()
-    contours = channels.contour_labels('strict_external', compute_normals=False)
+    contours = channels.contour_labels('strict_external', orient_faces=False)
     time_fast = time.perf_counter() - start
     assert time_fast < time_slow / 1.5
 
@@ -1001,12 +1001,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
-        ),
-    ):
+    match = re.escape(
+        'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+    )
+    with pytest.raises(ValueError, match=match):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'
@@ -1285,3 +1283,30 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+
+def test_select_values(uniform):
+    selected = uniform.select_values(ranges=uniform.get_data_range())
+    assert isinstance(selected, pv.ImageData)
+    assert selected is not uniform
+    assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+def test_select_values_split(uniform):
+    unique_values = np.unique(uniform.active_scalars)
+    selected = uniform.select_values(values=unique_values, split=True)
+    assert isinstance(selected, pv.MultiBlock)
+    assert isinstance(selected[0], pv.ImageData)
+    assert len(selected) == len(unique_values)
+
+
+def test_select_values_empty_input():
+    selected = pv.ImageData().select_values()
+    assert isinstance(selected, pv.ImageData)
+
+
+@pytest.mark.parametrize('dtype', [np.uint16, int, float])
+def test_select_values_dtype(uniform, dtype):
+    uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
+    selected = uniform.select_values([0])
+    assert selected.active_scalars.dtype == dtype

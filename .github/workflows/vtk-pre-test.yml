@@ -23,7 +23,9 @@ jobs:
     # only for pull requests, run only when 'vtk_master' label exists
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master') }}
     name: Linux VTK Master Testing
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -52,7 +54,7 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
-          packages: libgl1-mesa-glx xvfb
+          packages: xvfb
           version: 3.0
 
       - name: Install nightly VTK

@@ -4,12 +4,14 @@ from collections import UserDict
 import json
 import multiprocessing
 import pickle
+import re
 
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.fileio import save_pickle
 
 
@@ -111,27 +113,48 @@ def test_metadata_save(hexbeam, tmpdir):
     assert not hexbeam_in.field_data
 
 
+@pytest.mark.needs_vtk_version(9, 3)
+@pytest.mark.parametrize('file_ext', ['.pkl', '.vtm'])
+def test_save_nested_multiblock_field_data(tmp_path, file_ext):
+    filename = 'mesh' + file_ext
+    nested = pv.MultiBlock()
+    nested.field_data['foo'] = 'bar'
+    root = pv.MultiBlock([nested])
+
+    # Save the multiblock and expect a warning
+    match = (
+        "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
+        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+    )
+    with pytest.warns(UserWarning, match=re.escape(match)):
+        root.save(tmp_path / filename)
+
+    # Check that the bug exists, and that the field data is not loaded
+    loaded = pv.read(root)
+    assert loaded[0].field_data.keys() == []
+
+    # Save again without field data, no warning is emitted
+    nested.clear_field_data()
+    root.save(tmp_path / filename)
+
+
 @pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
 def test_user_dict(data_object):
-    field_name = '_PYVISTA_USER_DICT'
-    assert field_name not in data_object.field_data.keys()
+    assert USER_DICT_KEY not in data_object.field_data.keys()
 
     data_object.user_dict['abc'] = 123
-    assert field_name in data_object.field_data.keys()
+    assert USER_DICT_KEY in data_object.field_data.keys()
 
     new_dict = dict(ham='eggs')
     data_object.user_dict = new_dict
     assert data_object.user_dict == new_dict
-    assert data_object.field_data[field_name] == json.dumps(new_dict)
+    assert data_object.field_data[USER_DICT_KEY] == json.dumps(new_dict)
 
     new_dict = UserDict(test='string')
     data_object.user_dict = new_dict
     assert data_object.user_dict == new_dict
-    assert data_object.field_data[field_name] == json.dumps(new_dict.data)
-
-    data_object.user_dict = None
-    assert field_name not in data_object.field_data.keys()
-    assert data_object.user_dict == {}
+    assert data_object.field_data[USER_DICT_KEY] == json.dumps(new_dict.data)
 
     match = (
         "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
@@ -139,6 +162,39 @@ def test_user_dict(data_object):
     )
     with pytest.raises(TypeError, match=match):
         data_object.user_dict = 42
+
+
+@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
+@pytest.mark.parametrize('method', ['set_none', 'clear', 'clear_field_data'])
+def test_user_dict_removal(data_object, method):
+    def clear_user_dict():
+        if method == 'clear':
+            data_object.field_data.clear()
+        elif method == 'clear_field_data':
+            data_object.clear_field_data()
+        elif method == 'set_none':
+            data_object.user_dict = None
+        else:
+            raise RuntimeError(f'Invalid test method {method}.')
+
+    # Clear before and after to ensure full test coverage of branches
+    clear_user_dict()
+
+    # Create dict for test and copy it since we want to test that the source dict itself
+    # isn't cleared when clearing the user_dict
+    expected_dict = dict(a=0)
+    actual_dict = expected_dict.copy()
+
+    # Set user dict
+    data_object.user_dict = actual_dict
+    assert data_object.user_dict == expected_dict
+
+    # Clear it
+    clear_user_dict()
+
+    assert USER_DICT_KEY not in data_object.field_data.keys()
+    assert data_object.user_dict == {}
+    assert actual_dict == expected_dict
 
 
 @pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
@@ -355,3 +411,28 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
+
+
+def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
+    match = re.escape(
+        'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+    )
+    with pytest.raises(NotImplementedError, match=match):
+        pv.Sphere().save('foo.vtp')
+
+
+def test_is_empty(ant):
+    assert pv.MultiBlock().is_empty
+    assert not pv.MultiBlock([ant]).is_empty
+
+    assert pv.PolyData().is_empty
+    assert not ant.is_empty
+
+    assert pv.Table().is_empty
+    assert not pv.Table(dict(a=np.array([0]))).is_empty
+
+    class SubClass(pv.DataObject): ...
+
+    with pytest.raises(NotImplementedError):
+        _ = SubClass().is_empty
