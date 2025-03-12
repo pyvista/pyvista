@@ -13,12 +13,15 @@ import itertools
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 from typing import NoReturn
 from typing import Union
 from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import TypedDict
+from typing_extensions import Unpack
 
 import pyvista
 from pyvista.core import _validation
@@ -42,7 +45,6 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Literal
 
     from pyvista import PolyData
 
@@ -182,6 +184,50 @@ class MultiBlock(
     def _items(self) -> Iterable[tuple[str | None, _TypeMultiBlockLeaf]]:
         yield from zip(self.keys(), self)
 
+    _ContentsLiteral = Literal['ids', 'names', 'blocks', 'items', 'all']
+    _OrderLiteral = Literal['nested_first', 'nested_last']
+
+    class _RecursiveIteratorKwargs(TypedDict, total=False):
+        node_type: Literal['parent' | 'child']
+        skip_none: bool
+        skip_empty: bool
+        nested_ids: bool
+        prepend_names: bool
+        separator: str
+
+    #
+    class _RecursiveIteratorKwargsNoSkipNone(TypedDict, total=False):
+        node_type: Literal['parent' | 'child']
+        skip_empty: bool
+        nested_ids: bool
+        prepend_names: bool
+        separator: str
+
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: _ContentsLiteral = ...,
+        order: _OrderLiteral | None = ...,
+        *,
+        skip_none: Literal[True],
+        **kwargs: Unpack[_RecursiveIteratorKwargsNoSkipNone],
+    ) -> Iterator[DataSet | MultiBlock]: ...
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: _ContentsLiteral = ...,
+        order: _OrderLiteral | None = ...,
+        *,
+        skip_none: Literal[False],
+        **kwargs: Unpack[_RecursiveIteratorKwargsNoSkipNone],
+    ) -> Iterator[_TypeMultiBlockLeaf]: ...
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: _ContentsLiteral = ...,
+        order: _OrderLiteral | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorKwargs],
+    ) -> Iterator[_TypeMultiBlockLeaf]: ...
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
