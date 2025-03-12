@@ -238,6 +238,13 @@ class MultiBlock(
     @overload
     def recursive_iterator(
         self: MultiBlock,
+        contents: Literal['items'],
+        order: _OrderLiteral | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorKwargs],
+    ) -> Iterator[tuple[str, _TypeMultiBlockLeaf]]: ...
+    @overload
+    def recursive_iterator(
+        self: MultiBlock,
         contents: Literal['blocks'] = ...,
         order: _OrderLiteral | None = ...,
         *,
@@ -267,8 +274,8 @@ class MultiBlock(
         separator: str = ...,
     ) -> (
         Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
-        | Iterator[tuple[str | None, _TypeMultiBlockLeaf]]
-        | Iterator[tuple[int | tuple[int, ...], str | None, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[str, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[int | tuple[int, ...], str, _TypeMultiBlockLeaf]]
     ): ...
     def recursive_iterator(
         self: MultiBlock,
@@ -283,8 +290,8 @@ class MultiBlock(
         separator: str = '::',
     ) -> (
         Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
-        | Iterator[tuple[str | None, _TypeMultiBlockLeaf]]
-        | Iterator[tuple[int | tuple[int, ...], str | None, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[str, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[int | tuple[int, ...], str, _TypeMultiBlockLeaf]]
     ):
         """Iterate over all nested blocks recursively.
 
@@ -505,7 +512,7 @@ class MultiBlock(
         self,
         *,
         ids: Iterable[list[int]],
-        names: Iterable[str | None],
+        names: Iterable[str],
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'],
         order: Literal['nested_first', 'nested_last'] | None = None,
         node_type: Literal['parent', 'child'] = 'child',
@@ -516,8 +523,8 @@ class MultiBlock(
         separator: str,
     ) -> (
         Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
-        | Iterator[tuple[str | None, _TypeMultiBlockLeaf]]
-        | Iterator[tuple[int | tuple[int, ...], str | None, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[str, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[int | tuple[int, ...], str, _TypeMultiBlockLeaf]]
     ):
         # Determine ordering of blocks and names to iterate through
         if order is None:
@@ -1578,7 +1585,7 @@ class MultiBlock(
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self: MultiBlock, index: int) -> str | None:
+    def get_block_name(self: MultiBlock, index: int) -> str:
         """Return the string name of the block at the given index.
 
         Parameters
@@ -1605,11 +1612,10 @@ class MultiBlock(
         """
         index = range(self.n_blocks)[index]
         meta = self.GetMetaData(index)
-        if meta is not None:
-            return meta.Get(_vtk.vtkCompositeDataSet.NAME())
-        return None
+        assert meta is not None
+        return meta.Get(_vtk.vtkCompositeDataSet.NAME())
 
-    def keys(self: MultiBlock) -> list[str | None]:
+    def keys(self: MultiBlock) -> list[str]:
         """Get all the block names in the dataset.
 
         Returns
@@ -1631,7 +1637,7 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self: MultiBlock) -> list[str | None]:
+    def _ipython_key_completions_(self: MultiBlock) -> list[str]:
         return self.keys()
 
     def replace(
