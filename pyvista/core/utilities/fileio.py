@@ -981,8 +981,13 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
 
+    cat_cells = (
+        np.array((), dtype=np.int64)
+        if len(cells) == 0
+        else np.concatenate(cells).astype(np.int64, copy=False)
+    )
     grid = pyvista.UnstructuredGrid(
-        np.concatenate(cells).astype(np.int64, copy=False),
+        cat_cells,
         np.array(cell_type),
         np.array(points, np.float64),
     )
@@ -1051,6 +1056,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         if 'vtkGhostType' in mesh.cell_data
         else mesh
     )
+    if mesh.is_empty:
+        return meshio.Mesh(mesh.points, [])
 
     vtk_celltypes = mesh.celltypes
     connectivity = mesh.cell_connectivity

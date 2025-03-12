@@ -9,6 +9,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 
+empty = pv.UnstructuredGrid()
 cow = examples.download_cow().cast_to_unstructured_grid()
 beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
@@ -99,7 +100,9 @@ polyhedron = meshio.Mesh(
 )
 
 
-@pytest.mark.parametrize('mesh_in', [beam, airplane, uniform, uniform2d, mesh2d, polyhedron, cow])
+@pytest.mark.parametrize(
+    'mesh_in', [beam, airplane, uniform, uniform2d, mesh2d, polyhedron, cow, empty]
+)
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
@@ -107,7 +110,15 @@ def test_meshio(mesh_in, tmpdir):
     # Save and read reference mesh using meshio
     filename = tmpdir.mkdir('tmpdir').join('test_mesh.vtu')
     pv.save_meshio(filename, mesh_in)
-    mesh = pv.read_meshio(filename)
+
+    try:
+        mesh = pv.read_meshio(filename)
+    except ValueError:
+        if mesh_in.is_empty:
+            # Meshio has a bug where it cannot read empty meshes, so we create it directly
+            mesh = meshio.Mesh(points=mesh_in.points, cells=mesh_in.cells)
+        else:  # re-raise
+            raise
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)

@@ -2117,6 +2117,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         carr = self.GetCells()
+        if carr is None:
+            return np.array((), dtype=int)
         return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
 
     def linear_copy(self, deep: bool = False):
@@ -2209,6 +2211,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
+        array = self.GetCellTypesArray()
+        if array is None:
+            return np.array((), dtype=np.uint8)
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
 
     @property
