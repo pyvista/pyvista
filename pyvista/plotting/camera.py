@@ -868,10 +868,8 @@ class Camera(_vtk.vtkCamera):
 
         """
         # Inspired by vedo resetCamera. Thanks @marcomusy.
-        if bounds is None:
-            x0, x1, y0, y1, z0, z1 = self._renderer.bounds
-        else:
-            x0, y0, x1, y1, z0, z1 = bounds
+        bounds = bounds if bounds is not None else self._renderer.bounds
+        x0, x1, y0, y1, z0, z1 = bounds
 
         self.enable_parallel_projection()
 
