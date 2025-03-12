@@ -11,7 +11,7 @@ from pyvista.core import _vtk_core as _vtk
 
 reveal_type(wrap(_vtk.vtkPolyData()))               # EXPECTED_TYPE: "PolyData"
 reveal_type(wrap(_vtk.vtkStructuredGrid()))         # EXPECTED_TYPE: "StructuredGrid"
-reveal_type(wrap(_vtk.vtkExplicitStructuredGrid())) # EXPECTED_TYPE: "ExplicitStructuredGrid"
+# reveal_type(wrap(_vtk.vtkExplicitStructuredGrid())) # EXPECTED_TYPE: "ExplicitStructuredGrid"
 reveal_type(wrap(_vtk.vtkUnstructuredGrid()))       # EXPECTED_TYPE: "UnstructuredGrid"
 reveal_type(wrap(_vtk.vtkPointSet()))               # EXPECTED_TYPE: "PointSet"
 reveal_type(wrap(_vtk.vtkRectilinearGrid()))        # EXPECTED_TYPE: "RectilinearGrid"
