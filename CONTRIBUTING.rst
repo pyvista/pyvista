@@ -686,9 +686,9 @@ the typing requirements with
 
 .. code-block:: shell
 
-    python -m pip install -e '.[typing]'``
+    python -m pip install -e '.[typing]'
 
-and run ``mypy`` to analyze the all ``pyvista`` repository code.
+and run ``mypy`` to analyze all ``pyvista`` repository code.
 
 Runtime Tests
 ^^^^^^^^^^^^^
@@ -698,6 +698,12 @@ typing ``@overload`` definitions which could benefit from some testing to
 ensure the type overloads work as expected. For these cases, PyVista uses
 custom unit tests to validate that type hints are correct both statically
 and dynamically.
+
+To execute the runtime tests, install the regular test requirements with:
+
+.. code-block:: shell
+
+    python -m pip install -e '.[tests]'
 
 The tests can be executed with:
 
@@ -719,11 +725,11 @@ expected revealed type returned by ``Mypy``.
 
 For example, to test that the :meth:`~pyvista.wrap` method returns
 :class:`~pyvista.PolyData` for ``vtkPolyData`` input, we can write a test case for
-the function call ``pv.wrap(vtk.vtkPolyData())`` as follows:
+the function call ``wrap(vtk.vtkPolyData())`` as follows:
 
 .. code-block:: python
 
-    reveal_type(pv.wrap(vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
+    reveal_type(wrap(vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
 
 Any number of related test cases (one test case per line) may be written and
 included in a single ``.py`` file.
