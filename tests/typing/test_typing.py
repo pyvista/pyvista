@@ -239,10 +239,17 @@ def test_typing(test_case):
     else:
         # Test that the actual runtime type is compatible with the expected type
 
-        # Load the test case file's namespace into the local namespace
-        # so we can evaluate code defined in the test case
-        namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
-        locals().update(namespace)
+        try:
+            # Load the test case file's namespace into the local namespace
+            # so we can evaluate code defined in the test case
+            namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
+            locals().update(namespace)
+        except Exception as e:
+            raise RuntimeError(
+                f'Test setup failed for runtime test case in {file}:{line_num}.\n'
+                f'Unable to load module {file}.\n'
+                f'An exception was raised:\n{e!r}'
+            )
 
         try:
             expected_type = eval(expected)

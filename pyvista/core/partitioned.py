@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
+from typing import Self
 from typing import overload
 
 from . import _vtk_core as _vtk
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from .dataset import DataSet
+    from .utilities.arrays import FieldAssociation
 
 
 class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
@@ -75,7 +77,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     def __getitem__(self, index):
         """Get a partition by its index."""
         if isinstance(index, slice):
-            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])  # type: ignore[abstract]
+            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
                 raise IndexError(f'index ({index}) out of range for this dataset.')
@@ -248,3 +250,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         index = self.n_partitions
         self.n_partitions += 1
         self[index] = dataset
+
+    def get_data_range(  # numpydoc ignore=RT01
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
+        """Get the non-NaN min and max of a named array."""
+        return DataObject.get_data_range(self, name=name, preference=preference)
