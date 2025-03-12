@@ -64,6 +64,7 @@ globals().update(
 REPLACE_TYPES.update({'builtins.str': 'str'})
 REPLACE_TYPES.update({'builtins.int': 'int'})
 REPLACE_TYPES.update({'builtins.tuple': 'tuple'})
+REPLACE_TYPES.update({'builtins.list': 'list'})
 
 
 class _TestCaseTuple(NamedTuple):
@@ -210,7 +211,6 @@ def pytest_generate_tests(metafunc):
 
         # Interleave cases
         all_cases = [x for y in zip(test_cases_runtime, test_cases_static) for x in y]
-        all_cases = all_cases[::-1]
 
         # Name test cases with file line number
         parent = Path(TYPING_CASES_REL_PATH).name
@@ -237,7 +237,7 @@ def test_typing(test_case):
         # Test statically revealed type from mypy is correct
         assert f'{arg} -> {revealed}' == f'{arg} -> {expected}'
     else:
-        # Test that the actual runtime type is compatible with the revealed type
+        # Test that the actual runtime type is compatible with the expected type
 
         # Load the test case file's namespace into the local namespace
         # so we can evaluate code defined in the test case
@@ -245,12 +245,12 @@ def test_typing(test_case):
         locals().update(namespace)
 
         try:
-            revealed_type = eval(revealed)
+            expected_type = eval(expected)
         except Exception as e:
             pytest.fail(
                 f'Test setup failed for runtime test case in {file}:{line_num}.\n'
-                f'Could not evaluate revealed type:\n '
-                f'\t{revealed}\n'
+                f'Could not evaluate expected type:\n '
+                f'\t{expected}\n'
                 f'An exception was raised:\n{e!r}'
             )
         try:
@@ -262,13 +262,13 @@ def test_typing(test_case):
                 f'\t{arg}\n'
                 f'An exception was raised:\n{e!r}'
             )
-        compat_error_msg = pyanalyze.runtime.get_assignability_error(runtime_val, revealed_type)
+        compat_error_msg = pyanalyze.runtime.get_assignability_error(runtime_val, expected_type)
         if compat_error_msg:
             error_prefix = (
                 f'\nRuntime value:\n'
                 f'\t{arg} = {runtime_val}\n'
-                f'is not compatible with statically revealed type:\n'
-                f'\t{revealed_type}\n\n'
+                f'is not compatible with the expected type:\n'
+                f'\t{expected_type}\n\n'
                 f'Reason:\n'
             )
 
