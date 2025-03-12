@@ -1154,17 +1154,17 @@ class MultiBlock(
 
         # Append blocks to output
         for index, name, block in iterator:
-            name_: str | None = None if name_mode == 'reset' else name
-            if check_duplicate_keys:
-                if name_ in output_multi.keys():
+            reset_name = name_mode == 'reset'
+            if not reset_name and check_duplicate_keys:
+                if name in output_multi.keys():
                     # Duplicate block name - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
-                        f"Block at index {index_fmt} with name '{name_}' cannot be flattened. Another block \n"
+                        f"Block at index {index_fmt} with name '{name}' cannot be flattened. Another block \n"
                         "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
                     )
                     raise ValueError(msg)
-            output_multi.append(block, name_)
+            output_multi.append(block, None if reset_name else name)
         return output_multi
 
     @property
