@@ -205,7 +205,6 @@ def pytest_generate_tests(metafunc):
 
         # Interleave cases
         all_cases = [x for y in zip(test_cases_runtime, test_cases_static) for x in y]
-        all_cases = all_cases[::-1]
 
         # Name test cases with file line number
         parent = Path(TYPING_CASES_REL_PATH).name
@@ -234,10 +233,17 @@ def test_typing(test_case):
     else:
         # Test that the actual runtime type is compatible with the expected type
 
-        # Load the test case file's namespace into the local namespace
-        # so we can evaluate code defined in the test case
-        namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
-        locals().update(namespace)
+        try:
+            # Load the test case file's namespace into the local namespace
+            # so we can evaluate code defined in the test case
+            namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
+            locals().update(namespace)
+        except Exception as e:
+            raise RuntimeError(
+                f'Test setup failed for runtime test case in {file}:{line_num}.\n'
+                f'Unable to load module {file}.\n'
+                f'An exception was raised:\n{e!r}'
+            )
 
         try:
             expected_type = eval(expected)
