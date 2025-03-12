@@ -14,12 +14,12 @@ based on the mappings in the `REPLACE_TYPES` dictionary.
 
 from __future__ import annotations
 
-import ast
 import importlib
 import os
 from pathlib import Path
 import re
 import sys
+from typing import Any
 from typing import NamedTuple
 from typing import Union  # noqa: F401
 
@@ -188,44 +188,11 @@ def _generate_test_cases():
     return test_cases_list
 
 
-def _extract_all_imports(file_names):
-    """Extract all import statements from a list of python files."""
-    all_imports = set()
-
-    for file_name in file_names:
-        file_path = Path(TYPING_CASES_ABS_PATH) / file_name
-        try:
-            with file_path.open() as f:
-                tree = ast.parse(f.read(), filename=file_path)
-
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Import):
-                    for alias in node.names:
-                        if alias.asname:
-                            all_imports.add(f'import {alias.name} as {alias.asname}')
-                        else:
-                            all_imports.add(f'import {alias.name}')
-                elif isinstance(node, ast.ImportFrom):
-                    module = node.module if node.module else ''
-                    for alias in node.names:
-                        if alias.asname:
-                            all_imports.add(f'from {module} import {alias.name} as {alias.asname}')
-                        else:
-                            all_imports.add(f'from {module} import {alias.name}')
-        except Exception as e:
-            print(f'Failed to parse {file_path}: {e}', file=sys.stderr)
-
-    return sorted(all_imports)
-
-
-def _import_imports_from_test_cases():
-    """Extract imports from test case files and load them into global namespace."""
-    imports = _extract_all_imports(TEST_FILE_NAMES)
-    for imp in imports:
-        try:
-            exec(imp, globals())
-        except Exception as e:
-            print(f'Failed to import: {imp} — {e}', file=sys.stderr)
+def _load_module_namespace(module_path: Path) -> dict[str, Any]:
+    namespace = {}
+    with module_path.open() as f:
+        exec(f.read(), namespace)
+    return namespace
 
 
 def pytest_generate_tests(metafunc):
@@ -236,9 +203,6 @@ def pytest_generate_tests(metafunc):
         pytest.skip('Issue with mypy plugin.')
 
     if 'test_case' in metafunc.fixturenames:
-        # Load imports from test cases for dynamic tests
-        _import_imports_from_test_cases()
-
         # Generate separate tests for static and runtime checks
         test_cases = _generate_test_cases()
         test_cases_runtime = [(*case, 'runtime') for case in test_cases]
@@ -274,6 +238,11 @@ def test_typing(test_case):
         assert f'{arg} -> {revealed}' == f'{arg} -> {expected}'
     else:
         # Test that the actual runtime type is compatible with the revealed type
+
+        # Load the test case file's namespace into the local namespace
+        # so we can evaluate code defined in the test case
+        namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
+        locals().update(namespace)
 
         try:
             revealed_type = eval(revealed)
