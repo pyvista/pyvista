@@ -13,6 +13,7 @@ empty = pv.UnstructuredGrid()
 cow = examples.download_cow().cast_to_unstructured_grid()
 points_only = cow.copy()
 points_only.cells = np.array((), dtype=int)
+assert points_only.n_cells == 0
 beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
