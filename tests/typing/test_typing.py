@@ -64,6 +64,7 @@ globals().update(
 )
 REPLACE_TYPES.update({'builtins.str': 'str'})
 REPLACE_TYPES.update({'builtins.int': 'int'})
+REPLACE_TYPES.update({'builtins.tuple': 'tuple'})
 
 
 class _TestCaseTuple(NamedTuple):

@@ -13,6 +13,7 @@ reveal_type(MultiBlock().recursive_iterator(skip_none=True))            # EXPECT
 reveal_type(MultiBlock().recursive_iterator('blocks', skip_none=True))  # EXPECTED_TYPE: "Iterator[Union[DataSet, MultiBlock]]"
 
 reveal_type(MultiBlock().recursive_iterator('names'))                   # EXPECTED_TYPE: "Iterator[str]"
-reveal_type(MultiBlock().recursive_iterator('ids'))                     # EXPECTED_TYPE: "Iterator[tuple[int]]"
-reveal_type(MultiBlock().recursive_iterator('ids', nested_ids=True))    # EXPECTED_TYPE: "Iterator[tuple[int]]"
+reveal_type(MultiBlock().recursive_iterator('ids'))                     # EXPECTED_TYPE: "Iterator[tuple[int, ...]]"
+reveal_type(MultiBlock().recursive_iterator('ids', nested_ids=True))    # EXPECTED_TYPE: "Iterator[tuple[int, ...]]"
+reveal_type(MultiBlock().recursive_iterator('ids', nested_ids=None))    # EXPECTED_TYPE: "Iterator[tuple[int, ...]]"
 reveal_type(MultiBlock().recursive_iterator('ids', nested_ids=False))   # EXPECTED_TYPE: "Iterator[int]"

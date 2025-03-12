@@ -218,8 +218,7 @@ class MultiBlock(
         *,
         nested_ids: Literal[True] | None = ...,
         **kwargs: Unpack[_RecursiveIteratorKwargsNoNestedIds],
-    ) -> Iterator[tuple[int,]]: ...
-
+    ) -> Iterator[tuple[int, ...]]: ...
     @overload
     def recursive_iterator(
         self: MultiBlock,
@@ -227,7 +226,6 @@ class MultiBlock(
         order: _OrderLiteral | None = ...,
         *,
         nested_ids: Literal[False],
-        # Explicitly handle False/None fallback
         **kwargs: Unpack[_RecursiveIteratorKwargsNoNestedIds],
     ) -> Iterator[int]: ...
     @overload
@@ -240,7 +238,7 @@ class MultiBlock(
     @overload
     def recursive_iterator(
         self: MultiBlock,
-        contents: _ContentsLiteral = ...,
+        contents: Literal['blocks'] = ...,
         order: _OrderLiteral | None = ...,
         *,
         skip_none: Literal[True],
@@ -249,19 +247,29 @@ class MultiBlock(
     @overload
     def recursive_iterator(
         self: MultiBlock,
-        contents: _ContentsLiteral = ...,
+        contents: Literal['blocks'] = ...,
         order: _OrderLiteral | None = ...,
         *,
-        skip_none: Literal[False],
+        skip_none: Literal[False] = ...,
         **kwargs: Unpack[_RecursiveIteratorKwargsNoSkipNone],
     ) -> Iterator[_TypeMultiBlockLeaf]: ...
     @overload
     def recursive_iterator(
         self: MultiBlock,
         contents: _ContentsLiteral = ...,
-        order: _OrderLiteral | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorKwargs],
-    ) -> Iterator[_TypeMultiBlockLeaf]: ...
+        order: Literal['nested_first', 'nested_last'] | None = ...,
+        *,
+        node_type: Literal['parent' | 'child'] = ...,
+        skip_none: bool = ...,
+        skip_empty: bool = ...,
+        nested_ids: bool | None = ...,
+        prepend_names: bool = ...,
+        separator: str = ...,
+    ) -> (
+        Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
+        | Iterator[tuple[str | None, _TypeMultiBlockLeaf]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, _TypeMultiBlockLeaf]]
+    ): ...
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
