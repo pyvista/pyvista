@@ -17,9 +17,11 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 from collections.abc import Sized
 from numbers import Number
+from numbers import Real
 import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 from typing import Union
 from typing import cast
 from typing import get_args
@@ -28,6 +30,8 @@ from typing import get_origin
 import numpy as np
 import numpy.typing as npt
 
+from pyvista.core._typing_core import NumberType
+from pyvista.core._typing_core import VectorLike
 from pyvista.core._validation._cast_array import _cast_to_numpy
 
 if TYPE_CHECKING:
@@ -37,8 +41,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
     from pyvista.core._typing_core._array_like import _NumberType
 
-
-_Shape = Union[tuple[()], tuple[int, ...]]
+_ScalarShape = tuple[()]
+_ArrayShape = tuple[int, ...]
+_Shape = Union[_ScalarShape, _ArrayShape]
 _ShapeLike = Union[int, _Shape]
 
 
@@ -703,20 +708,60 @@ def check_ndim(
         raise ValueError(msg)
 
 
-def check_number(num: float, /, *, name: str = 'Object') -> None:
-    """Check if an object is an instance of ``Number``.
+def check_number(
+    num: Union[complex, np.number, Number],  # type: ignore[type-arg]
+    /,
+    *,
+    definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
+    must_be_real: bool = True,
+    name: str = 'Object',
+) -> None:
+    """Check if an object is a number.
 
-    A number is any instance of ``numbers.Number``, e.g.  ``int``,
-    ``float``, and ``complex``.
+    By default, the number must be an instance of the abstract base class :class:`numbers.Real`.
+    Optionally, the number can also be complex. The definition can also be restricted
+    to strictly check if the number is a built-in numeric type (e.g. ``int``, ``float``)
+    or numpy numeric data types (e.g. ``np.floating``, ``np.integer``).
 
     Notes
     -----
-    A NumPy ndarray is not an instance of ``Number``.
+    - This check fails for 0-dimensional instances of :class:`numpy.ndarray`.
+    - Values such as ``float('inf')`` and ``float('NaN')`` are valid numbers and
+      will not raise an error. Use :func:`check_finite` to check for finite values.
+
+    .. warning::
+
+        - Some NumPy numeric data types are subclasses of the built-in types whereas other are
+          not. For example, ``numpy.float_`` is a subclass of ``float`` and ``numpy.complex_``
+          is a subclass ``complex``. However, ``numpy.int_`` is not a subclass of ``int`` and
+          ``numpy.bool_`` is not a subclass of ``bool``.
+        - The built-in ``bool`` type is a subclass of ``int`` whereas NumPy's``.bool_`` type
+          is not a subclass of ``np.int_`` (``np.bool_`` is not a numeric type).
+
+        This can lead to unexpected results:
+
+        - This check will always fail for ``np.bool_`` types.
+        - This check will pass for ``np.float_`` or ``np.complex_``, even if
+          ``definition='builtin'``.
 
     Parameters
     ----------
-    num : numbers.Number
+    num : float | int | complex | numpy.number | Number
         Number to check.
+
+    definition : str, default: 'abstract'
+        Control the base class(es) to use when checking the number's type. Must be
+        one of:
+
+        - ``'abstract'`` : number must be an instance of one of the abstract types
+          in :py:mod:`numbers`.
+        - ``'builtin'`` : number must be an instance of one of the built-in numeric
+          types.
+        - ``'numpy'`` : number must be an instance of NumPy's data types.
+
+    must_be_real : bool, default: True
+        If ``True``, the number must be real, i.e. an integer or
+        floating type. Set to ``False`` to allow complex numbers.
 
     name : str, default: "Object"
         Variable name to use in the error messages if any are raised.
@@ -724,17 +769,58 @@ def check_number(num: float, /, *, name: str = 'Object') -> None:
     Raises
     ------
     TypeError
-        If input is not an instance of ``Number``.
+        If input is not an instance of a numeric type.
+
+    See Also
+    --------
+    validate_number
+        Similar function which returns a validated number.
+    check_real
+        Similar function for any dimensional array of real numbers.
+    check_finite
+        Check for finite values.
 
     Examples
     --------
-    Check if a complex number is an instance of ``Number``.
-
+    Check if a float is a number.
     >>> from pyvista import _validation
-    >>> _validation.check_number(1 + 2j)
+    >>> num = 42.0
+    >>> type(num)
+    <class 'float'>
+    >>> _validation.check_number(num)
+
+    Check if an element of a NumPy array is a number.
+
+    >>> import numpy as np
+    >>> num_array = np.array([1, 2, 3])
+    >>> num = num_array[0]
+    >>> type(num)
+    <class 'numpy.int64'>
+    >>> _validation.check_number(num)
+
+    Check if a complex number is a number.
+    >>> num = 1 + 2j
+    >>> type(num)
+    <class 'complex'>
+    >>> _validation.check_number(num, must_be_real=False)
 
     """
-    check_instance(num, Number, allow_subclass=True, name=name)
+    check_contains(
+        ['abstract', 'builtin', 'numpy'],
+        must_contain=definition,
+    )
+
+    valid_type: Any
+    if definition == 'abstract':
+        valid_type = Real if must_be_real else Number
+    elif definition == 'builtin':
+        valid_type = (float, int) if must_be_real else (float, int, complex)
+    elif definition == 'numpy':
+        valid_type = (np.floating, np.integer) if must_be_real else np.number
+    else:
+        raise NotImplementedError  # pragma: no cover
+
+    check_instance(num, valid_type, allow_subclass=True, name=name)
 
 
 def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object') -> None:
@@ -860,12 +946,12 @@ def check_instance(
         Object to check.
 
     classinfo : type | tuple[type, ...]
-        ``type`` or tuple of types. Object must be an instance of one of
-        the types.
+        A type, tuple of types, or a Union of types. Object must be an instance
+        of one of the types.
 
     allow_subclass : bool, default: True
         If ``True``, the object's type must be specified by ``classinfo``
-         or any of its subclasses. Otherwise, subclasses are not allowed.
+        or any of its subclasses. Otherwise, subclasses are not allowed.
 
     name : str, default: "Object"
         Variable name to use in the error messages if any are raised.
@@ -903,7 +989,10 @@ def check_instance(
         classinfo = get_args(classinfo)
 
     # Count num classes
-    num_classes = len(classinfo) if isinstance(classinfo, tuple) else 1
+    if isinstance(classinfo, tuple) and all(isinstance(cls, type) for cls in classinfo):
+        num_classes = len(classinfo)
+    else:
+        num_classes = 1
 
     # Check if is instance
     is_instance = isinstance(obj, classinfo)
@@ -947,7 +1036,8 @@ def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str 
         Object to check.
 
     classinfo : type | tuple[type, ...]
-        ``type`` or tuple of types. Object must be one of the types.
+        A type, tuple of types, or a Union of types. Object must be one
+        of the types.
 
     name : str, default: "Object"
         Variable name to use in the error messages if any are raised.
@@ -992,7 +1082,7 @@ def check_iterable_items(
         have the type or one of the types specified.
 
     allow_subclass : bool, default: True
-        If ``True``, the type of the iterable items must be any of the
+        If ``True``, the type of the iterable's items must be any of the
         given types or a subclass thereof. Otherwise, subclasses are not
         allowed.
 
