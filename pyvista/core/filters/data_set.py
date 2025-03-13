@@ -5433,13 +5433,14 @@ class DataSetFilters(DataObjectFilters):
         # Validate measures as a list
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         measures_available = _get_cell_qualilty_measures()
-        measures_available_names = list(measures_available.keys())
+        measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
 
         if quality_measure == 'all':
             requested_measures = measures_available_names
         else:
-            requested_measures = (
-                [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            requested_measures = cast(
+                list[_CellQualityLiteral],
+                ([quality_measure] if isinstance(quality_measure, str) else quality_measure),
             )
             for measure in requested_measures:
                 _validation.check_contains(
