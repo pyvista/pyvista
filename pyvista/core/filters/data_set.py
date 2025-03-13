@@ -5435,7 +5435,9 @@ class DataSetFilters(DataObjectFilters):
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
 
-        if quality_measure == 'all':
+        if (
+            isinstance(quality_measure, str) and quality_measure == 'all'
+        ) or 'all' in quality_measure:
             requested_measures = measures_available_names
         else:
             requested_measures = cast(

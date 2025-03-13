@@ -9,55 +9,69 @@ Leverage powerful VTK algorithms for computing mesh quality.
 Here we will use the :func:`~pyvista.DataSetFilters.compute_cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
+
+Note that many of the measures may only apply to 2D cells or 3D cells. Examples for
+meshes with :attr:`~pyvista.CellType.TRIANGLE` and :attr:`~pyvista.CellType.TETRA` cells
+are given here.
+
 """
 
 from __future__ import annotations
 
-import pyvista as pv
 from pyvista import examples
+
+# %%
+# Triangle Cell Quality
+# ---------------------
+# Load a :class:`~pyvista.PolyData` mesh and :meth:`~pyvista.PolyDataFilters.decimate`
+# it to show coarse :attr:`~pyvista.CellType.TRIANGLE` cells for the example.
+# Here we use :meth:`~pyvista.examples.downloads.download_cow`.
 
 mesh = examples.download_cow().triangulate().decimate(0.7)
 
 # %%
 # Compute the cell quality. By default, the ``'scaled_jacobian'`` measure is computed.
 
-mesh = mesh.compute_cell_quality()
-mesh
+qual = mesh.compute_cell_quality()
+qual
 
 # %%
-# Plot the mesh. We define a custom method to add a mesh and set default plot values.
+# Plot the mesh.
 
-
-def add_mesh(plotter, mesh_, scalars=None, cmap='bwr', show_edges=True, zoom=1.3):
-    plotter.add_mesh(mesh_, scalars=scalars, cmap=cmap, show_edges=show_edges)
-    plotter.view_xy()
-    plotter.camera.zoom(zoom)
-
-
-pl = pv.Plotter()
-add_mesh(pl, mesh, scalars='scaled_jacobian')
-pl.show()
+plot_kwargs = dict(cmap='bwr', show_edges=True, cpos='xy', zoom=1.3)
+qual.plot(scalars='scaled_jacobian', **plot_kwargs)
 
 # %%
-# Note that there are many different quality measures, many of which may only apply to
-# 2D cells or 3D cells (see :class:`~pyvista.CellType` for more information about cell
-# types). For :attr:`~pyvista.CellType.TRIANGLE` and :attr:`~pyvista.CellType.QUAD`
-# cells, the following measures produce meaningful values.
+# Compute additional measures and plot them all for comparison.
 
 measures = ['area', 'max_angle', 'min_angle', 'shape']
-mesh = mesh.compute_cell_quality(measures)
-mesh
+qual = mesh.compute_cell_quality(measures)
+for measure in measures:
+    qual.plot(scalars=measure, **plot_kwargs)
 
 
 # %%
-pl = pv.Plotter(shape=(2, 2))
-pl.link_views()
-pl.subplot(0, 0)
-add_mesh(pl, mesh, scalars=measures[0])
-pl.subplot(0, 1)
-add_mesh(pl, mesh, scalars=measures[1])
-pl.subplot(1, 0)
-add_mesh(pl, mesh, scalars=measures[2])
-pl.subplot(1, 1)
-add_mesh(pl, mesh, scalars=measures[3])
-pl.show()
+# Quality measures like ``'volume'`` do not apply to 2D cells, and a null value
+# of ``-1`` is returned.
+
+qual = mesh.compute_cell_quality('volume')
+qual.get_data_range('volume')
+
+# %%
+# Tetrahedral Cell Quality
+# ---------------------
+# Load a mesh with :attr:`~pyvista.CellType.TETRA` cells. Here we use
+# :meth:`~pyvista.examples.downloads.download_letter_a`.
+
+mesh = examples.download_letter_a()
+
+# %%
+# Plot some valid quality measures for tetrahedral cells.
+
+measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
+qual = mesh.compute_cell_quality(measures)
+for measure in measures:
+    qual.plot(scalars=measure, **plot_kwargs)
+
+# %%
+# .. tags:: filter
