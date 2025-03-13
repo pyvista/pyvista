@@ -1778,6 +1778,6 @@ def test_celltypes_empty(empty_poly_cast_to_ugrid, hexbeam):
 
 
 def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
-    conn = empty_poly_cast_to_ugrid.cell_connectivity
-    assert conn.size == 0
-    assert conn.dtype == hexbeam.cell_connectivity.dtype
+    connectivity = empty_poly_cast_to_ugrid.cell_connectivity
+    assert connectivity.size == 0
+    assert connectivity.dtype == hexbeam.cell_connectivity.dtype
