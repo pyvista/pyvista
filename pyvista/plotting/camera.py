@@ -135,9 +135,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera = pv.Camera.from_paraview_pvcc(
-        ...     "camera.pvcc"
-        ... )  # doctest:+SKIP
+        >>> pl.camera = pv.Camera.from_paraview_pvcc('camera.pvcc')  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
 
@@ -190,7 +188,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
+        >>> pl.camera.to_paraview_pvcc('camera.pvcc')  # doctest:+SKIP
 
         """
         root = ET.Element('PVCameraConfiguration')
@@ -853,7 +851,7 @@ class Camera(_vtk.vtkCamera):
 
         """
         # Inspired by vedo resetCamera. Thanks @marcomusy.
-        x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+        x0, x1, y0, y1, z0, z1 = self._renderer.bounds
 
         self.enable_parallel_projection()
 

@@ -5,13 +5,16 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -27,7 +30,7 @@ from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any
     from typing import ClassVar
@@ -38,8 +41,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+@promote_type(_vtk.vtkDataObject)
 @abstract_class
 class DataObject:
     """Methods common to all wrapped data objects.
@@ -156,13 +161,30 @@ class DataObject:
 
         """
 
+        def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
+            iterator = mesh.recursive_iterator('all', node_type='parent')
+            typed_iterator = cast(
+                Iterator[tuple[tuple[int, ...], str, pyvista.MultiBlock]], iterator
+            )
+            for index, name, nested_multiblock in typed_iterator:
+                if len(nested_multiblock.field_data.keys()) > 0:
+                    # Avoid circular import
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(index)
+                    warnings.warn(
+                        f"Nested MultiBlock at index {index_fmt} with name '{name}' has field data which will not be saved.\n"
+                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+                    )
+
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
-            if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:
-                mesh_ = cast(pyvista.DataSet, mesh_)
+            if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
+                mesh_ = cast(pyvista.DataSet, mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
                     writer.SetArrayName(texture)
                     array_name = texture
@@ -189,6 +211,10 @@ class DataObject:
 
         # store complex and bitarray types as field data
         self._store_metadata()
+
+        # warn if data will be lost
+        if isinstance(self, pyvista.MultiBlock):
+            _warn_multiblock_nested_field_data(self)
 
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
@@ -230,7 +256,9 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self: Self) -> tuple[float, float]:  # pragma: no cover
+    def get_data_range(
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
             f'{type(self)} mesh type does not have a `get_data_range` method.',
@@ -293,7 +321,7 @@ class DataObject:
 
         # now make a call on the object to get its attributes as a list of len
         # 2 tuples
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
@@ -373,14 +401,17 @@ class DataObject:
             return True
 
         # these attrs use numpy.array_equal
-        equal_attrs = [
-            'verts',  # DataObject
-            'points',  # DataObject
-            'lines',  # DataObject
-            'faces',  # DataObject
-            'cells',  # UnstructuredGrid
-            'celltypes',
-        ]  # UnstructuredGrid
+        if isinstance(self, pyvista.ImageData):
+            equal_attrs = ['extent', 'index_to_physical_matrix']
+        else:
+            equal_attrs = [
+                'verts',  # DataObject
+                'points',  # DataObject
+                'lines',  # DataObject
+                'faces',  # DataObject
+                'cells',  # UnstructuredGrid
+                'celltypes',
+            ]  # UnstructuredGrid
         for attr in equal_attrs:
             if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
@@ -428,9 +459,7 @@ class DataObject:
         Add field data to a ImageData dataset.
 
         >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
-        >>> mesh.add_field_data(
-        ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
-        ... )
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
@@ -438,7 +467,7 @@ class DataObject:
 
         >>> blocks = pv.MultiBlock()
         >>> blocks.append(pv.Sphere())
-        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
+        >>> blocks['cube'] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
@@ -541,6 +570,8 @@ class DataObject:
             not guaranteed, as it's possible that some filters may modify or clear
             field data. Use with caution.
 
+        .. versionadded:: 0.44
+
         Returns
         -------
         UserDict
@@ -597,11 +628,15 @@ class DataObject:
 
     @user_dict.setter
     def user_dict(
-        self: Self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
+        self: Self,
+        dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None,
     ) -> None:
         # Setting None removes the field data array
-        if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
-            del self.field_data['_PYVISTA_USER_DICT']
+        if dict_ is None:
+            if hasattr(self, '_user_dict'):
+                del self._user_dict
+            if USER_DICT_KEY in self.field_data.keys():
+                del self.field_data[USER_DICT_KEY]
             return
 
         self._config_user_dict()
@@ -616,19 +651,18 @@ class DataObject:
 
     def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
-        field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
             # Init
             self._user_dict = _SerializedDictArray()
 
-        if field_name in field_data.keys():
-            if isinstance(array := field_data[field_name], pyvista_ndarray):
+        if USER_DICT_KEY in field_data.keys():
+            if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
-            elif isinstance(array, str) and repr(self._user_dict) != array:
+            elif isinstance(array, str) and repr(self._user_dict) != array:  # type: ignore[unreachable]
                 # Filters may update the field data block separately, e.g.
                 # when copying field data, so we need to capture the new
                 # string and re-init
@@ -640,7 +674,7 @@ class DataObject:
         # Set field data array directly instead of calling 'set_array'
         # This skips the call to '_prepare_array' which will otherwise
         # do all kinds of casting/conversions and mangle this array
-        self._user_dict.SetName(field_name)
+        self._user_dict.SetName(USER_DICT_KEY)
         field_data.VTKObject.AddArray(self._user_dict)
         field_data.VTKObject.Modified()
 
@@ -783,12 +817,12 @@ class DataObject:
 
             for parent_type, writer_type in writers.items():
                 if isinstance(self, parent_type):
-                    writer = writer_type()
+                    writer = writer_type()  # type: ignore[unreachable]
                     break
             else:
                 raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
 
-            writer.SetInputDataObject(self)
+            writer.SetInputDataObject(self)  # type: ignore[unreachable]
             writer.SetWriteToOutputString(True)
             writer.SetDataModeToBinary()
             writer.SetCompressorTypeToNone()
@@ -877,12 +911,12 @@ class DataObject:
 
             for parent_type, reader_type in readers.items():
                 if isinstance(self, parent_type):
-                    reader = reader_type()
+                    reader = reader_type()  # type: ignore[unreachable]
                     break
             else:
                 raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
 
-            reader.ReadFromInputStringOn()
+            reader.ReadFromInputStringOn()  # type: ignore[unreachable]
             reader.SetInputString(vtk_serialized)
             reader.Update()
 
@@ -900,3 +934,8 @@ class DataObject:
         # copy data
         self.copy_structure(mesh)  # type: ignore[arg-type]
         self.copy_attributes(mesh)  # type: ignore[arg-type]
+
+    @property
+    def is_empty(self) -> bool:
+        """Return ``True`` if the object is empty."""
+        raise NotImplementedError

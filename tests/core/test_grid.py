@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
+import re
+from typing import TYPE_CHECKING
 import weakref
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 import vtk
@@ -14,6 +18,9 @@ from pyvista import examples
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 test_path = str(Path(__file__).resolve().parent)
 
@@ -110,6 +117,19 @@ def test_init_bad_input():
 
     with pytest.raises(TypeError, match='requires the following arrays'):
         pv.UnstructuredGrid(*range(5))
+
+    with pytest.raises(TypeError, match='All input types must be sequences.'):
+        pv.UnstructuredGrid(*range(3))
+
+
+def test_check_consistency_raises(mocker: MockerFixture):
+    mocker.patch.object(pv.UnstructuredGrid, 'n_cells')
+    mocker.patch.object(pv.UnstructuredGrid, 'celltypes')
+
+    grid = pv.UnstructuredGrid()
+
+    with pytest.raises(ValueError):  # noqa: PT011
+        grid._check_for_consistency()
 
 
 def create_hex_example():
@@ -880,6 +900,9 @@ def test_image_data_init_kwargs():
     image = pv.ImageData(direction_matrix=matrix)
     assert np.allclose(image.direction_matrix, matrix)
 
+    image = pv.ImageData(offset=vector)
+    assert np.allclose(image.offset, vector)
+
 
 @pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
 def test_image_data_empty_init(dims):
@@ -1139,7 +1162,7 @@ def test_imagedata_direction_matrix():
 
     # Test bounds using a transformed reference box
     box = pv.Box(bounds=initial_bounds)
-    box.transform(image.index_to_physical_matrix)
+    box.transform(image.index_to_physical_matrix, inplace=True)
     expected_bounds = box.bounds
     assert np.allclose(image.bounds, expected_bounds)
 
@@ -1151,6 +1174,13 @@ def test_imagedata_direction_matrix():
     # Check that points make use of the direction matrix internally
     poly_points = pv.PolyData(image.points)
     assert np.allclose(poly_points.bounds, expected_bounds)
+
+
+def test_imagedata_direction_matrix_orthonormal(uniform):
+    # Test matrix does not enforce orthogonality
+    matrix_not_orthonormal = np.reshape(range(1, 10), (3, 3))
+    uniform.direction_matrix = matrix_not_orthonormal
+    assert np.array_equal(uniform.direction_matrix, matrix_not_orthonormal)
 
 
 def test_imagedata_index_to_physical_matrix():
@@ -1165,6 +1195,19 @@ def test_imagedata_index_to_physical_matrix():
     ijk_to_xyz = image.index_to_physical_matrix
     assert np.allclose(ijk_to_xyz, expected_transform.matrix)
 
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
+    # Test setters
+    I3 = np.eye(3)
+    I4 = np.eye(4)
+    image.index_to_physical_matrix = I4
+    assert np.allclose(image.index_to_physical_matrix, I4)
+    assert np.allclose(image.spacing, (1, 1, 1))
+    assert np.allclose(image.origin, (0, 0, 0))
+    assert np.allclose(image.direction_matrix, I3)
+
+    image.physical_to_index_matrix = expected_transform.inverse_matrix
     xyz_to_ijk = image.physical_to_index_matrix
     assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
 
@@ -1257,6 +1300,19 @@ def test_set_extent_width_spacing():
     assert np.allclose(grid.x[:5], [0.0, 0.1, 0.2, 0.3, 0.4])
 
 
+def test_imagedata_offset():
+    grid = pv.ImageData()
+    offset = (1, 2, 3)
+    grid.extent = (offset[0], 9, offset[1], 9, offset[2], 9)
+    actual_dimensions = grid.dimensions
+    actual_offset = grid.offset
+    assert isinstance(actual_offset, tuple)
+    assert actual_offset == offset
+    # Test to make sure dimensions are unchanged since setting offset
+    # modifies the extent which could modify dimensions.
+    assert grid.dimensions == actual_dimensions
+
+
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
@@ -1270,6 +1326,14 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     assert 'BLOCK_K' in grid.cell_data
     assert 'vtkGhostType' in grid.cell_data
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
+
+
+def test_UnstructuredGrid_cast_to_explicit_structured_grid_raises():
+    with pytest.raises(
+        TypeError,
+        match="'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required",
+    ):
+        pv.UnstructuredGrid().cast_to_explicit_structured_grid()
 
 
 def test_ExplicitStructuredGrid_init():
@@ -1363,6 +1427,11 @@ def test_ExplicitStructuredGrid_save():
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
     Path('grid.vtu').unlink()
+
+
+def test_ExplicitStructuredGrid_save_raises():
+    with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
+        examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
 
 
 def test_ExplicitStructuredGrid_hide_cells():
@@ -1594,6 +1663,16 @@ def test_StructuredGrid_cast_to_explicit_structured_grid():
     assert (grid.cell_data['vtkGhostType'] > 0).sum() == 40
 
 
+def test_StructuredGrid_cast_to_explicit_structured_grid_raises():
+    xrng = np.arange(-10, 10, 20, dtype=np.float32)
+    x, y, z = np.meshgrid(*[xrng] * 3, indexing='ij')
+    grid = pv.StructuredGrid(x, y, z)
+    with pytest.raises(
+        TypeError, match='Only 3D structured grid can be casted to an explicit structured grid.'
+    ):
+        grid.cast_to_explicit_structured_grid()
+
+
 def test_copy_no_copy_wrap_object(datasets):
     for dataset in datasets:
         # different dataset types have different copy behavior for points
@@ -1643,3 +1722,30 @@ def test_grid_dimensionality(grid_class, dimensionality, dimensions):
 
     assert grid.dimensionality == dimensionality
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+@pytest.mark.parametrize('arg', [1, True, object()])
+def test_rect_grid_raises(arg):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Type ({type(arg)}) not understood by `RectilinearGrid`'),
+    ):
+        pv.RectilinearGrid(arg)
+
+
+@given(args=st.lists(st.none()).filter(lambda x: len(x) in [2, 3]))
+def test_rect_grid_raises_args(args):
+    with pytest.raises(
+        TypeError,
+        match=re.escape('Arguments not understood by `RectilinearGrid`.'),
+    ):
+        pv.RectilinearGrid(*args)
+
+
+def test_rect_grid_dimensions_raises():
+    g = pv.RectilinearGrid()
+    match = re.escape(
+        'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
+    )
+    with pytest.raises(AttributeError, match=match):
+        g.dimensions = 1

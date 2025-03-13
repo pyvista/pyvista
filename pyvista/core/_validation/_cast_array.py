@@ -9,7 +9,7 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar

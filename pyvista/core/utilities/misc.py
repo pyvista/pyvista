@@ -15,7 +15,10 @@ import warnings
 
 import numpy as np
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from typing import Any
+    from typing import ClassVar
+
     from .._typing_core import ArrayLike
     from .._typing_core import NumpyArray
     from .._typing_core import VectorLike
@@ -185,7 +188,7 @@ def has_module(module_name: str) -> bool:
         ``True`` if the module can be imported, otherwise ``False``.
 
     """
-    module_spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
+    module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None
 
 
@@ -248,12 +251,12 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition) -> None:  # noqa: ANN001, ANN101
+    def __init__(self, dec, condition) -> None:  # noqa: ANN001
         """Initialize."""
         self.decorator = dec
         self.condition = condition
 
-    def __call__(self, func):  # noqa: ANN001, ANN101, ANN204
+    def __call__(self, func):  # noqa: ANN001, ANN204
         """Call the decorated function if condition is matched."""
         if not self.condition:
             # Return the function unchanged, not decorated.
@@ -312,7 +315,60 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
 
     """
     x = np.array(x)
+    x = x if np.issubdtype(x.dtype, np.floating) else x.astype(float)
     zero = np.abs(x) < tol
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
     return x
+
+
+class _classproperty(property):
+    """Read-only class property decorator.
+
+    Use this decaorator as an alternative to chaining `@classmethod`
+    and `@property` which is deprecated.
+
+    See:
+    - https://docs.python.org/library/functions.html#classmethod
+    - https://stackoverflow.com/a/13624858
+
+    Examples
+    --------
+    >>> from pyvista.core.utilities.misc import _classproperty
+    >>> class Foo:
+    ...     @_classproperty
+    ...     def bar(cls): ...
+
+    """
+
+    def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
+        return self.fget(owner_cls)  # type: ignore[misc]
+
+
+class _NameMixin:
+    """Add a 'name' property to a class.
+
+    .. versionadded:: 0.45
+
+    """
+
+    # In case subclasses use @no_new_attr mixin
+    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
+
+    @property
+    def name(self) -> str:  # numpydoc ignore=RT01
+        """Get or set the unique name identifier used by PyVista."""
+        if not hasattr(self, '_name') or self._name is None:
+            address = (
+                self.GetAddressAsString('')
+                if hasattr(self, 'GetAddressAsString')
+                else hex(id(self))
+            )
+            return f'{type(self).__name__}({address})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if not value:
+            raise ValueError('Name must be truthy.')
+        self._name = str(value)

@@ -219,7 +219,9 @@ class Renderers:
                     ]
 
         # each render will also have an associated background renderer
-        self._background_renderers = [None for _ in range(len(self))]
+        self._background_renderers: list[None | BackgroundRenderer] = [
+            None for _ in range(len(self))
+        ]
 
         # create a shadow renderer that lives on top of all others
         self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
@@ -625,6 +627,11 @@ class Renderers:
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
+
+        .. note::
+            If a mesh has scalar data, set ``color=True`` in the call to :meth:`add_mesh`
+            to color the mesh with the next color in the cycler. Otherwise the mesh's
+            scalars are used to color the mesh by default.
 
         Parameters
         ----------

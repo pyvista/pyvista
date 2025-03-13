@@ -23,7 +23,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
@@ -248,12 +248,19 @@ def convert_array(
 def convert_array(
     arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None
 ) -> _vtk.vtkAbstractArray: ...
+@overload
 def convert_array(
-    arr: npt.ArrayLike | _vtk.vtkAbstractArray,
+    arr: None,
+    name: str | None = ...,
+    deep: bool = ...,
+    array_type: int | None = ...,
+) -> None: ...
+def convert_array(
+    arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
     deep: bool = False,
     array_type: int | None = None,
-) -> npt.NDArray[Any] | _vtk.vtkAbstractArray:
+) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
@@ -346,9 +353,13 @@ def get_array(
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return arr
     else:
-        if not isinstance(preference, str):
-            raise TypeError('`preference` must be a string')
-        if preference not in ['cell', 'point', 'field']:
+        preference_ = parse_field_choice(preference)
+
+        if preference_ not in [
+            FieldAssociation.CELL,
+            FieldAssociation.POINT,
+            FieldAssociation.NONE,
+        ]:
             raise ValueError(
                 f'`preference` must be either "cell", "point", "field" for a '
                 f'{type(mesh)}, not "{preference}".',
@@ -357,7 +368,6 @@ def get_array(
         parr = point_array(mesh, name)
         carr = cell_array(mesh, name)
         farr = field_array(mesh, name)
-        preference_ = parse_field_choice(preference)
         if sum([array is not None for array in (parr, carr, farr)]) > 1:
             if preference_ == FieldAssociation.CELL:
                 return carr
@@ -1013,7 +1023,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
         return item
 
-    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]
+    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
         item = super().pop(__key)
         self._update_string()
         return item

@@ -1,33 +1,29 @@
 from __future__ import annotations
 
 import colorsys
+import importlib.util
 import itertools
+import re
 
 import matplotlib as mpl
 from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
 
-try:
-    import cmocean  # noqa: F401
-
+if importlib.util.find_spec('cmocean'):
     COLORMAPS.append('algae')
-except ImportError:
-    pass
 
 
-try:
-    import colorcet  # noqa: F401
-
+if importlib.util.find_spec('colorcet'):
     COLORMAPS.append('fire')
-except:
-    pass
 
 
 @pytest.mark.parametrize('cmap', COLORMAPS)
@@ -35,22 +31,17 @@ def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
+@pytest.mark.parametrize('scheme', [object(), 1.0, None])
+def test_color_scheme_to_cycler_raises(scheme):
+    with pytest.raises(ValueError, match=f'Color scheme not understood: {scheme}'):
+        color_scheme_to_cycler(scheme=scheme)
+
+
 def test_color():
     name, name2 = 'blue', 'b'
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
     h = '0000ffff'
     i_opacity, f_opacity, h_opacity = 153, 0.6, '99'
-    invalid_colors = (
-        (300, 0, 0),
-        (0, -10, 0),
-        (0, 0, 1.5),
-        (-0.5, 0, 0),
-        (0, 0),
-        '#hh0000',
-        'invalid_name',
-        {'invalid_name': 100},
-    )
-    invalid_opacities = (275, -50, 2.4, -1.2, '#zz')
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
     h_prefixes = ('', '0x', '#')
@@ -91,13 +82,6 @@ def test_color():
         assert pv.Color(i_rgba, default_opacity=opacity) == i_rgba
     # Check default_color
     assert pv.Color(None, default_color=name) == i_rgba
-    # Check invalid colors and opacities
-    for invalid_color in invalid_colors:
-        with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color(invalid_color)
-    for invalid_opacity in invalid_opacities:
-        with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color('b', invalid_opacity)
     # Check hex and name getters
     assert pv.Color(name).hex_rgba == f'#{h}'
     assert pv.Color(name).hex_rgb == f'#{h[:-2]}'
@@ -119,6 +103,52 @@ def test_color():
         c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
+
+
+@pytest.mark.parametrize('opacity', [275, -50, 2.4, -1.2, '#zz'])
+def test_color_invalid_opacity(opacity):
+    match = (
+        'Must be an integer, float or string.  For example:'
+        "\n\t\topacity='1.0'"
+        "\n\t\topacity='255'"
+        "\n\t\topacity='#FF'"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Color('b', opacity)
+
+
+@pytest.mark.parametrize(
+    'color',
+    [
+        (300, 0, 0),
+        (0, -10, 0),
+        (0, 0, 1.5),
+        np.array((0, 0, 1.5), dtype=np.float16),
+        (-0.5, 0, 0),
+        (0, 0),
+        '#hh0000',
+        'invalid_name',
+        {'invalid_name': 100},
+    ],
+)
+def test_color_invalid_color(color):
+    match = (
+        'Must be a string, rgb(a) sequence, or hex color string.  For example:'
+        "\n\t\tcolor='white'"
+        "\n\t\tcolor='w'"
+        '\n\t\tcolor=[1.0, 1.0, 1.0]'
+        '\n\t\tcolor=[255, 255, 255]'
+        "\n\t\tcolor='#FFFFFF'"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Color(color)
+
+
+@pytest.mark.parametrize('delimiter', ['-', '_', ' '])
+def test_color_name_delimiter(delimiter):
+    name = f'medium{delimiter}spring{delimiter}green'
+    c = pv.Color(name)
+    assert c.name == name.replace(delimiter, '')
 
 
 def test_color_hls():
@@ -149,6 +179,13 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values)
         metafunc.parametrize('tab_color', test_cases, ids=color_names)
 
+    if 'vtk_color' in metafunc.fixturenames:
+        color_names = list(pv.plotting.colors._VTK_COLORS.keys())
+        color_values = list(pv.plotting.colors._VTK_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('vtk_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
@@ -172,6 +209,32 @@ def test_tab_colors(tab_color):
 
     # Test name
     assert name in pv.plotting.colors._TABLEAU_COLORS
+
+
+def test_vtk_colors(vtk_color):
+    name, value = vtk_color
+
+    # Some pyvista colors are technically not valid VTK colors. We need to map their
+    # synonym manually for the tests
+    vtk_synonyms = {  # pyvista_color : vtk_color
+        'light_slate_blue': 'slate_blue_light',
+        'deep_cadmium_red': 'cadmium_red_deep',
+        'light_cadmium_red': 'cadmium_red_light',
+        'light_cadmium_yellow': 'cadmium_yellow_light',
+        'deep_cobalt_violet': 'cobalt_violet_deep',
+        'deep_naples_yellow': 'naples_yellow_deep',
+        'light_viridian': 'viridian_light',
+    }
+    name = vtk_synonyms.get(name, name)
+
+    # Get expected hex value from vtkNamedColors
+    color3ub = vtk.vtkNamedColors().GetColor3ub(name)
+    int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+        pytest.fail(f"Color '{name}' is not a valid VTK color.")
+    expected_hex = pv.Color(int_rgb).hex_rgb
+
+    assert value.lower() == expected_hex
 
 
 def test_color_synonyms(color_synonym):

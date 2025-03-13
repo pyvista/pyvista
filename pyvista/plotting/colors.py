@@ -34,7 +34,7 @@ from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._typing import ColorLike
 
 IPYGANY_MAP = {
@@ -42,9 +42,22 @@ IPYGANY_MAP = {
     'spectral': 'Spectral',
 }
 
-# Following colors are copied from matplotlib.colors, synonyms (colors with a
-# different name but same hex value) are removed and put in the `color_synonyms`
-# dictionary. An extra `paraview_background` color is added.
+_ALLOWED_COLOR_NAME_DELIMITERS = '_' + '-' + ' '
+_REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
+
+
+def _format_color_name(name: str):
+    """Format name as lower-case and remove delimiters."""
+    return name.lower().translate(_REMOVE_DELIMITER_LOOKUP)
+
+
+def _format_color_dict(colors: dict[str, str]):
+    """Format name and hex value."""
+    return {_format_color_name(n): h.lower() for n, h in colors.items()}
+
+
+# Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
+# but with synonyms removed
 _CSS_COLORS = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
@@ -157,7 +170,6 @@ _CSS_COLORS = {
     'plum': '#DDA0DD',
     'powderblue': '#B0E0E6',
     'purple': '#800080',
-    'raw_sienna': '#965434',
     'rebeccapurple': '#663399',
     'red': '#FF0000',
     'rosybrown': '#BC8F8F',
@@ -187,6 +199,8 @@ _CSS_COLORS = {
     'yellow': '#FFFF00',
     'yellowgreen': '#9ACD32',
 }
+
+# Tableau colors. Matches matplotlib.colors.TABLEAU_COLORS
 _TABLEAU_COLORS = {
     'tab:blue': '#1f77b4',
     'tab:orange': '#ff7f0e',
@@ -201,14 +215,84 @@ _TABLEAU_COLORS = {
 }
 _PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 
-hexcolors = {
-    **_CSS_COLORS,
-    **_PARAVIEW_COLORS,
-    **_TABLEAU_COLORS,
+# Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
+# The vtk colors are only partially supported:
+# - VTK colors with the same name as CSS colors but different values are excluded
+#   (i.e. the CSS colors take precedent)
+# - Not all VTK synonyms are supported.
+# - Colors with adjective suffixes are renamed to use a prefix instead
+#   (e.g. 'green_pale' is renamed to 'pale_green'). This is done to keep VTK color
+#   names consistent with CSS names. In most cases this altered color name is
+#   supported directly by vtkNamedColors, but in some cases this technically is no
+#   longer a valid named vtk color. See tests.
+_VTK_COLORS = {
+    'alizarin_crimson': '#e32636',
+    'aureoline_yellow': '#ffa824',
+    'banana': '#e3cf57',
+    'brick': '#9c661f',
+    'brown_madder': '#db2929',
+    'brown_ochre': '#87421f',
+    'burnt_sienna': '#8a360f',
+    'burnt_umber': '#8a3324',
+    'cadmium_lemon': '#ffe303',
+    'cadmium_orange': '#ff6103',
+    'cadmium_yellow': '#ff9912',
+    'carrot': '#ed9121',
+    'cerulean': '#05b8cc',
+    'chrome_oxide_green': '#668014',
+    'cinnabar_green': '#61b329',
+    'cobalt': '#3d59ab',
+    'cobalt_green': '#3d9140',
+    'cold_grey': '#808a87',
+    'deep_cadmium_red': '#e3170d',
+    'deep_cobalt_violet': '#91219e',
+    'deep_naples_yellow': '#ffa812',
+    'deep_ochre': '#733d1a',
+    'eggshell': '#fce6c9',
+    'emerald_green': '#00c957',
+    'english_red': '#d43d1a',
+    'flesh': '#ff7d40',
+    'flesh_ochre': '#ff5721',
+    'geranium_lake': '#e31230',
+    'gold_ochre': '#c77826',
+    'greenish_umber': '#ff3d0d',
+    'ivory_black': '#292421',
+    'lamp_black': '#2e473b',
+    'light_cadmium_red': '#ff030d',
+    'light_cadmium_yellow': '#ffb00f',
+    'light_slate_blue': '#8470ff',
+    'light_viridian': '#6eff70',
+    'madder_lake_deep': '#e32e30',
+    'manganese_blue': '#03a89e',
+    'mars_orange': '#964514',
+    'mars_yellow': '#e3701a',
+    'melon': '#e3a869',
+    'mint': '#bdfcc9',
+    'peacock': '#33a1c9',
+    'permanent_green': '#0ac92b',
+    'permanent_red_violet': '#db2645',
+    'raspberry': '#872657',
+    'raw_sienna': '#C76114',
+    'raw_umber': '#734a12',
+    'rose_madder': '#e33638',
+    'sap_green': '#308014',
+    'sepia': '#5e2612',
+    'terre_verte': '#385e0f',
+    'titanium_white': '#fcfff0',
+    'turquoise_blue': '#00c78c',
+    'ultramarine': '#120a8f',
+    'ultramarine_violet': '#5c246e',
+    'van_dyke_brown': '#5e2605',
+    'venetian_red': '#d41a1f',
+    'violet_red': '#d02090',
+    'warm_grey': '#808069',
+    'yellow_ochre': '#e38217',
+    'zinc_white': '#fcf7ff',
 }
-hexcolors = {name: hex_.lower() for name, hex_ in hexcolors.items()}
 
-color_names = {h.lower(): n for n, h in hexcolors.items()}
+hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS)
+
+color_names = {h: n for n, h in hexcolors.items()}
 
 color_char_to_word = {
     'b': 'blue',
@@ -221,7 +305,7 @@ color_char_to_word = {
     'w': 'white',
 }
 
-color_synonyms = {
+_color_synonyms = {
     **color_char_to_word,
     'aqua': 'cyan',
     'darkgrey': 'darkgray',
@@ -234,6 +318,11 @@ color_synonyms = {
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
     'slategrey': 'slategray',
+    'lightgoldenrod': 'lightgoldenrodyellow',
+}
+
+color_synonyms = {
+    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
 
 matplotlib_default_colors = [
@@ -502,7 +591,7 @@ class Color:
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
 
-    See :ref:`color_table` for a list of supported colors.
+    See :ref:`named_colors` for a list of supported colors.
 
     .. note:
 
@@ -553,13 +642,13 @@ class Color:
     integer RGBA sequence and RGBA hexadecimal string.
 
     >>> import pyvista as pv
-    >>> pv.Color("green", opacity=0.5)
+    >>> pv.Color('green', opacity=0.5)
     Color(name='green', hex='#00800080', opacity=128)
     >>> pv.Color([0.0, 0.5, 0.0, 0.5])
     Color(name='green', hex='#00800080', opacity=128)
     >>> pv.Color([0, 128, 0, 128])
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pv.Color("#00800080")
+    >>> pv.Color('#00800080')
     Color(name='green', hex='#00800080', opacity=128)
 
     """
@@ -655,7 +744,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: float | np.floating[Any] | str,
+        val: float | np.floating[Any] | np.integer[Any] | str,
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
@@ -674,18 +763,29 @@ class Color:
             ``0`` and ``255``).
 
         """
+        # Check for numpy inputs to avoid unnecessary calls to np.issubdtype
+        arr = None
+        if isinstance(val, (np.ndarray, np.generic)):
+            arr = np.asanyarray(val)
+
+        # Convert non-integers to int
         if isinstance(val, str):
             # From hexadecimal value
             val = int(Color.strip_hex_prefix(val), 16)
-        elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
-            # From float
+        elif isinstance(val, float) or (
+            arr is not None and np.issubdtype(arr.dtype, np.floating) and arr.ndim == 0
+        ):
             val = int(round(255 * val))
-        if (
-            np.issubdtype(np.asarray(val).dtype, np.integer)
-            and np.size(val) == 1
+
+        # Check integers
+        if isinstance(val, int) and 0 <= val <= 255:
+            return val  # type: ignore[return-value]
+        elif isinstance(val, np.uint8) or (
+            arr is not None
+            and np.issubdtype(arr.dtype, np.integer)
+            and arr.ndim == 0
             and 0 <= val <= 255
         ):
-            # From integer
             return int(val)
         else:
             raise ValueError(f'Unsupported color channel value provided: {val}')
@@ -725,7 +825,7 @@ class Color:
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
         arg = n
-        n = n.lower()
+        n = _format_color_name(n)
         if n in color_synonyms:
             # Synonym of registered color name
             # Convert from synonym to full hex
@@ -750,7 +850,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", opacity=128)
+        >>> c = pv.Color('blue', opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
@@ -776,7 +876,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", opacity=128)
+        >>> c = pv.Color('blue', opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
@@ -802,7 +902,7 @@ class Color:
         Create a blue color with custom opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", opacity=0.6)
+        >>> c = pv.Color('blue', opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
@@ -828,7 +928,7 @@ class Color:
         Create a blue color with custom opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.6)
+        >>> c = pv.Color('blue', default_opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
@@ -859,7 +959,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity="#80")
+        >>> c = pv.Color('blue', default_opacity='#80')
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
@@ -867,7 +967,7 @@ class Color:
 
         Create a transparent red color using an RGBA hexadecimal value.
 
-        >>> c = pv.Color("0xff000040")
+        >>> c = pv.Color('0xff000040')
         >>> c
         Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
@@ -887,7 +987,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity="#80")
+        >>> c = pv.Color('blue', default_opacity='#80')
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
@@ -895,7 +995,7 @@ class Color:
 
         Create a red color using an RGB hexadecimal value.
 
-        >>> c = pv.Color("0xff0000")
+        >>> c = pv.Color('0xff0000')
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
@@ -908,7 +1008,10 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
-        See :ref:`color_table` for a list of supported colors.
+        The name is always formatted as a lower case string without
+        any delimiters.
+
+        See :ref:`named_colors` for a list of supported colors.
 
         Returns
         -------
@@ -917,12 +1020,26 @@ class Color:
 
         Examples
         --------
-        Create a blue color with half opacity.
+        Create a dark blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.5)
+        >>> c = pv.Color('darkblue', default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80', opacity=128)
+        Color(name='darkblue', hex='#00008b80', opacity=128)
+
+        When creating a new ``Color``, the name may be delimited with a space,
+        hyphen, underscore, or written as a single word.
+
+        >>> c = pv.Color('dark blue', default_opacity=0.5)
+
+        Upper-case letters are also supported.
+
+        >>> c = pv.Color('DarkBlue', default_opacity=0.5)
+
+        However, the name is always standardized as a single lower-case word.
+
+        >>> c
+        Color(name='darkblue', hex='#00008b80', opacity=128)
 
         """
         return self._name
@@ -936,7 +1053,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.5)
+        >>> c = pv.Color('blue', default_opacity=0.5)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub
@@ -1067,7 +1184,7 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if has_module('colorcet'):
+        if has_colorcet := has_module('colorcet'):
             import colorcet
 
             try:
@@ -1076,7 +1193,7 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        if has_module('cmocean'):
+        if has_cmocean := has_module('cmocean'):
             import cmocean
 
             try:
@@ -1094,7 +1211,18 @@ def get_cmap_safe(cmap):
                 try:
                     cmap = colormaps[cmap]
                 except KeyError:
-                    raise ValueError(f'Invalid colormap "{cmap}"') from None
+                    if not has_colorcet or not has_cmocean:  # pragma: no cover
+                        if not has_colorcet and not has_cmocean:
+                            missing = '`colorcet` or `cmocean`'
+                        else:
+                            missing = '`colorcet`' if not has_colorcet else '`cmocean`'
+                        msg = (
+                            f"Colormap '{cmap}' is not recognized but may be a valid {missing} colormap.\n"
+                            f'Install {missing} and try again.'
+                        )
+                    else:
+                        msg = f"Invalid colormap '{cmap}'"
+                    raise ValueError(msg) from None
 
     elif isinstance(cmap, list):
         for item in cmap:

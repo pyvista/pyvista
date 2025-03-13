@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import itertools
 from pathlib import Path
 import pickle
@@ -23,9 +24,8 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
 
     import imageio
     import meshio
@@ -38,6 +38,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core.pointset import UnstructuredGrid
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
+
+PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
 _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
 _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
@@ -157,7 +159,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
 
 def read(
-    filename: str | Path,
+    filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,
@@ -193,7 +195,7 @@ def read(
 
     Parameters
     ----------
-    filename : str, Path
+    filename : str, Path, Sequence[str | Path]
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
@@ -229,22 +231,23 @@ def read(
 
     Load a meshio file.
 
-    >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
+    >>> mesh = pv.read('mesh.obj')  # doctest:+SKIP
 
     Load a pickled mesh file.
 
-    >>> mesh = pv.read("mesh.pkl")  # doctest:+SKIP
+    >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
-    if isinstance(filename, (list, tuple)):
+    if isinstance(filename, Sequence) and not isinstance(filename, str):
         multi = pyvista.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format), name)
+            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
+
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
@@ -963,6 +966,10 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
         cell_type += [vtk_type] * len(c.data)
 
+    # Convert cell sets to cell data
+    if mesh.cell_sets:
+        mesh.cell_sets_to_data()
+
     # Extract cell data from meshio.Mesh object
     cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
 
@@ -990,6 +997,151 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
     grid._post_file_load_processing()
 
     return grid
+
+
+def to_meshio(mesh: DataSet) -> meshio.Mesh:
+    """Convert a PyVista mesh to a ``meshio`` mesh instance.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Any PyVista mesh/spatial data type.
+
+    Returns
+    -------
+    meshio.Mesh
+        A mesh instance from the ``meshio`` library.
+
+    Raises
+    ------
+    ImportError
+        If the meshio package is not installed.
+
+    See Also
+    --------
+    from_meshio, read_meshio, save_meshio, :func:`~pyvista.wrap`
+
+    Examples
+    --------
+    Convert a pyvista sphere to a ``meshio`` mesh instance.
+
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
+    >>> mesh = pv.to_meshio(sphere)
+
+    """
+    try:
+        import meshio
+
+    except ImportError:  # pragma: no cover
+        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
+
+    try:  # for meshio<5.0 compatibility
+        from meshio.vtk._vtk import vtk_to_meshio_type
+
+    except:  # pragma: no cover
+        from meshio._vtk_common import vtk_to_meshio_type
+
+    # Cast to unstructured grid
+    mesh = mesh.cast_to_unstructured_grid()
+    mesh = (
+        mesh.extract_cells(mesh.cell_data['vtkGhostType'] == 0)
+        if 'vtkGhostType' in mesh.cell_data
+        else mesh
+    )
+
+    vtk_celltypes = mesh.celltypes
+    connectivity = mesh.cell_connectivity
+
+    # Generate polyhedral cell faces if any
+    polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+
+    if polyhedral_cells is not None:
+        locations = pyvista.convert_array(mesh.GetFaceLocations())
+        polyhedral_cell_faces = []
+
+        for location in locations:
+            if location == -1:
+                continue
+
+            n_faces = polyhedral_cells[location]
+            i = location + 1
+            faces: list[MatrixLike[int]] = []
+
+            while len(faces) < n_faces:
+                n_vertices = polyhedral_cells[i]
+                faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
+                i += n_vertices + 1
+
+            polyhedral_cell_faces.append(faces)
+
+    # Single cell type (except POLYGON and POLYHEDRON)
+    if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
+        pyvista.CellType.POLYGON,
+        pyvista.CellType.POLYHEDRON,
+    }:
+        vtk_celltype = vtk_celltypes[0]
+        cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
+
+        if vtk_celltype == pyvista.CellType.PIXEL:
+            cells = cells[:, [0, 1, 3, 2]]
+            celltype = 'quad'
+
+        elif vtk_celltype == pyvista.CellType.VOXEL:
+            cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
+            celltype = 'hexahedron'
+
+        else:
+            celltype = vtk_to_meshio_type[vtk_celltype]
+
+        cells = [(celltype, cells)]
+
+    # Mixed cell types
+    else:
+        cells = []
+        offset = mesh.offset
+        polyhedron_count = 0
+
+        for i1, i2, vtk_celltype in zip(offset[:-1], offset[1:], vtk_celltypes):
+            cell = connectivity[i1:i2]
+
+            if vtk_celltype == pyvista.CellType.POLYHEDRON:
+                celltype = f'polyhedron{len(cell)}'
+                cell = polyhedral_cell_faces[polyhedron_count]
+                polyhedron_count += 1
+
+            else:
+                celltype = (
+                    f'polygon{len(cell)}'
+                    if vtk_celltype == pyvista.CellType.POLYGON
+                    else vtk_to_meshio_type[vtk_celltype]
+                )
+
+            if len(cells) > 0 and cells[-1][0] == celltype:
+                cells[-1][1].append(cell)
+
+            else:
+                cells.append((celltype, [cell]))
+
+        cells = [
+            (celltype if not celltype.startswith('polygon') else 'polygon', celldata)
+            for celltype, celldata in cells
+        ]
+
+    # Point data
+    point_data = {k.replace(' ', '_'): v for k, v in mesh.point_data.items()}
+
+    # Cell data
+    vtk_cell_data = mesh.cell_data
+    indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
+    cell_data = {
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+        for k, v in vtk_cell_data.items()
+    }
+
+    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
 
 
 def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.Mesh:
@@ -1046,7 +1198,7 @@ def save_meshio(
 
     **kwargs : dict, optional
         Additional keyword arguments.  See
-        ``meshio.write_points_cells`` for more details.
+        ``meshio.Mesh.write`` for more details.
 
     Examples
     --------
@@ -1057,87 +1209,11 @@ def save_meshio(
     >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
-    try:
-        import meshio
-    except ImportError:  # pragma: no cover
-        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
-
-    try:  # for meshio<5.0 compatibility
-        from meshio.vtk._vtk import vtk_to_meshio_type
-    except:  # pragma: no cover
-        from meshio._vtk_common import vtk_to_meshio_type
-
     # Make sure relative paths will work
     filename = Path(filename).expanduser().resolve()
 
-    # Cast to pyvista.UnstructuredGrid
-    if not isinstance(mesh, pyvista.UnstructuredGrid):
-        mesh = mesh.cast_to_unstructured_grid()
-
-    # Copy useful arrays to avoid repeated calls to properties
-    vtk_offset = mesh.offset
-    vtk_cells = mesh.cells
-    vtk_cell_type = mesh.celltypes
-
-    # Check that meshio supports all cell types in input mesh
-    pixel_voxel = {8, 11}  # Handle pixels and voxels
-    for cell_type in np.unique(vtk_cell_type):
-        if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
-            raise TypeError(f'meshio does not support VTK type {cell_type}.')
-
-    # Get cells
-    cells = []  # type: ignore[var-annotated]
-    c = 0
-    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
-        if cell_type == 42:
-            cell_ = mesh.get_cell(i)
-            cell: MatrixLike[int] = [face.point_ids for face in cell_.faces]
-            cell_type = f'polyhedron{cell_.n_points}'
-
-        else:
-            numnodes = vtk_cells[offset + c]
-            cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
-            c += 1
-            cell = (
-                cell
-                if cell_type not in pixel_voxel
-                else cell[[0, 1, 3, 2]]
-                if cell_type == 8
-                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
-            )
-            cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
-            cell_type = vtk_to_meshio_type[cell_type]
-
-        if len(cells) > 0 and cells[-1][0] == cell_type:
-            cells[-1][1].append(cell)
-        else:
-            cells.append((cell_type, [cell]))
-
-    # Get point data
-    point_data = {k.replace(' ', '_'): v for k, v in mesh.point_data.items()}
-
-    # Get cell data
-    vtk_cell_data = mesh.cell_data
-    indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
-    cell_data = (
-        {
-            k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
-            for k, v in vtk_cell_data.items()
-        }
-        if vtk_cell_data
-        else {}
-    )
-
     # Save using meshio
-    meshio.write_points_cells(
-        filename=filename,
-        points=np.array(mesh.points),
-        cells=cells,
-        point_data=point_data,
-        cell_data=cell_data,
-        file_format=file_format,
-        **kwargs,
-    )
+    to_meshio(mesh).write(filename, file_format=file_format, **kwargs)
 
 
 def _process_filename(filename: str | Path) -> Path:
@@ -1165,7 +1241,7 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
 
     """
     try:
-        from imageio import imread
+        from imageio.v2 import imread
     except ModuleNotFoundError:  # pragma: no cover
         raise ModuleNotFoundError(
             'Problem reading the image with VTK. Install imageio to try to read the '

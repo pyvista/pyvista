@@ -16,10 +16,12 @@ import numpy as np
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista.core import _validation
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -28,7 +30,7 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
     import sys
 
@@ -74,7 +76,7 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -98,6 +100,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         origin: VectorLike[float],
         scale: float | VectorLike[float],
         user_matrix: MatrixLike[float] | None,
+        name: str | None = None,
     ):
         super().__init__()
 
@@ -152,6 +155,8 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.scale = scale  # type: ignore[assignment]
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
+
+        self._name = name  # type: ignore[assignment]
 
     @property
     def parts(self):
@@ -351,6 +356,11 @@ class AxesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -394,9 +404,7 @@ class AxesAssembly(_XYZAssembly):
 
     Position and orient the axes in space.
 
-    >>> axes = pv.AxesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
-    ... )
+    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -449,6 +457,7 @@ class AxesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -476,6 +485,7 @@ class AxesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -490,10 +500,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -778,9 +785,7 @@ class AxesAssembly(_XYZAssembly):
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_assembly.set_actor_prop(
-        ...     'style', 'wireframe', axis='x', part='shaft'
-        ... )
+        >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
 
@@ -904,45 +909,6 @@ def _validate_label_sequence(labels: Sequence[str], n_labels: int | Sequence[int
     return labels
 
 
-def _validate_color_sequence(
-    color: ColorLike | Sequence[ColorLike],
-    n_colors: int | None = None,
-) -> tuple[Color, ...]:
-    """Validate a color sequence.
-
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
-    For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
-
-    If `n_colors` is None, no broadcasting or length-checking is performed.
-    """
-    try:
-        # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
-        n_colors = 1 if n_colors is None else n_colors
-        return tuple(color_list * n_colors)
-    except ValueError:
-        if isinstance(color, (tuple, list)):
-            try:
-                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
-                if len(color_list) == 1:
-                    n_colors = 1 if n_colors is None else n_colors
-                    color_list = color_list * n_colors
-
-                # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
-                    return tuple(color_list)
-            except ValueError:
-                pass
-    raise ValueError(
-        f'Invalid color(s):\n'
-        f'\t{color}\n'
-        f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
-    )
-
-
 class AxesAssemblySymmetric(AxesAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
@@ -1016,6 +982,11 @@ class AxesAssemblySymmetric(AxesAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -1050,7 +1021,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     only show text for the positive axes.
 
     >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -1081,6 +1052,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -1109,6 +1081,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -1388,6 +1361,11 @@ class PlanesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the assembly. Defaults to the identity
         matrix. The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.OrthogonalPlanesSource`.
 
@@ -1490,6 +1468,7 @@ class PlanesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
         # Init plane actors
@@ -1530,6 +1509,7 @@ class PlanesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
 
         self.opacity = opacity  # type: ignore[assignment]
@@ -1552,10 +1532,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
@@ -2009,7 +1986,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only

@@ -13,7 +13,7 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -308,7 +308,7 @@ def fit_plane_to_points(
     ... ]
     >>> pl.show()
 
-    Use the metadata with :meth:`pyvista.DataSetFilters.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(
@@ -617,9 +617,7 @@ def vector_poly_data(
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
     >>> u = x / np.sqrt(x**2 + y**2)
     >>> v = y / np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack(
-    ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
-    ... ).T
+    >>> vectors = np.vstack((u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))).T
     >>> pdata = pv.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']

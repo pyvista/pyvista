@@ -69,7 +69,7 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(HTML):  # numpydoc ignore=PR01
+class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width=None, height=None, iframe_attrs=None, **kwargs):
@@ -110,7 +110,7 @@ class Widget(HTML):  # numpydoc ignore=PR01
         return self._src
 
 
-class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
+class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     """Custom HTML iframe widget for embedding the trame viewer."""
 
     def __init__(self, plotter, width, height, **kwargs):
@@ -221,7 +221,7 @@ def build_url(
             server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
         src = (
-            f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
+            f'{server_proxy_prefix if server_proxy_prefix else ""}{_server.port}/index.html{params}'
         )
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'
@@ -323,7 +323,7 @@ def show_trame(
         Pass a callable that accptes the viewer instance, the string URL,
         and ``**kwargs`` to create custom HTML representations of the output.
 
-        .. code:: python
+        .. code-block:: python
 
             import pyvista as pv
             from IPython.display import IFrame

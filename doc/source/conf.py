@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import importlib.util
 import locale
 import os
 from pathlib import Path
@@ -13,6 +14,12 @@ import sys
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
+
+# This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
+# import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
+# during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
+# Note that `import make_tables` below imports pyvista.
+os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
@@ -66,7 +73,8 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_logo = './_static/pyvista_logo_sm.png'
+html_logo = './_static/pyvista_logo.svg'
+html_favicon = './_static/pyvista_logo.svg'
 
 sys.path.append(str(Path('./_ext').resolve()))
 
@@ -86,6 +94,7 @@ extensions = [
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -197,6 +206,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
+
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']
 
@@ -231,7 +243,11 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NumpyArray'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
-    (r'py:.*', '.*Concrete.*Type'),
+    (r'py:.*', '.*_GridType'),
+    (r'py:.*', '.*_PointGridType'),
+    (r'py:.*', '.*_PointSetType'),
+    (r'py:.*', '.*_DataSetType'),
+    (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
@@ -243,6 +259,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PolyData'),
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*Grid'),
+    (r'py:.*', '.*PointGrid'),
+    (r'py:.*', '.*_PointSet'),
     #
     # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
@@ -277,6 +296,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'colors.ListedColormap'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     #
@@ -287,6 +307,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
+    (r'py:.*', '.*PathStrSeq'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),
@@ -437,14 +458,7 @@ reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
-has_osmnx = False
-try:
-    import fiona  # noqa: F401
-    import osmnx  # noqa: F401
-
-    has_osmnx = True
-except:
-    pass
+has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
 
 
 sphinx_gallery_conf = {

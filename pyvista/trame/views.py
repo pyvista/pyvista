@@ -86,7 +86,7 @@ class _BasePyVistaView:
         return io.BytesIO(content.read().encode('utf8')).read()
 
 
-class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
+class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame ``VtkRemoteView`` for server rendering.
 
     This will connect to a PyVista plotter and stream the server-side
@@ -161,7 +161,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         return self.update(*args, **kwargs)
 
 
-class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
+class PyVistaLocalView(VtkLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame VtkLocalView for in-browser rendering.
 
     This will connect to and synchronize with a PyVista plotter to
@@ -206,7 +206,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
         """No-op implementation to match remote viewers."""
 
 
-class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
+class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame ``VtkRemoteLocalView``.
 
     Dynamically switch between client and server rendering.

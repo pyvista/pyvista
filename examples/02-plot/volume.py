@@ -15,6 +15,8 @@ This also explores how to extract a volume of interest (VOI) from a
 # sphinx_gallery_thumbnail_number = 3
 from __future__ import annotations
 
+import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 
@@ -178,5 +180,79 @@ pl.camera_position = [
     (0.3738545892415734, 0.244312810377319, 0.8947312427698892),
 ]
 pl.show()
+
+
 # %%
-# .. tags:: plot
+# .. _volume_with_mask_example:
+#
+# Volume With Segmentation Mask
+# +++++++++++++++++++++++++++++
+# Visualize a medical image with a corresponding binary segmentation mask.
+#
+# For this example, we use :func:`~pyvista.examples.downloads.download_whole_body_ct_male`
+# though :func:`~pyvista.examples.downloads.download_whole_body_ct_female`, or any
+# other dataset with a corresponding label or mask may be used.
+
+# %%
+# Load the dataset and get the ct image and a mask image. Here, a mask of the heart is
+# used.
+dataset = examples.download_whole_body_ct_male()
+ct_image = dataset['ct']
+heart_mask = dataset['segmentations']['heart']
+
+# %%
+# Use the segmentation mask to isolate the heart in the CT image.
+#
+# Initialize a new array and image with CT background values. Here, we set the scalar
+# values to ``-1000`` which typically corresponds to air (low density).
+
+heart_array = np.full_like(ct_image.active_scalars, -1000)
+
+# %%
+# Extract the intensities for the heart segment. We use heart mask's array
+# to mask the CT image to only extract the intensities of interest.
+ct_image_array = ct_image.active_scalars
+heart_mask_array = heart_mask.active_scalars
+heart_array[heart_mask_array == True] = ct_image_array[heart_mask_array == True]  # noqa: E712
+
+# %%
+# Add the masked array to the CT image as a new set of scalar values.
+ct_image['heart'] = heart_array
+
+# %%
+# Create the plot.
+#
+# For the CT image, the opacity is set to a sigmoid function to show the
+# subject's skeleton. Since different images have different intensity
+# distributions, you may need to experiment with different sigmoid functions.
+# See :func:`~pyvista.Plotter.add_volume` for details.
+
+pl = pv.Plotter()
+
+# Add the CT image.
+pl.add_volume(
+    ct_image,
+    scalars='NIFTI',
+    cmap='bone',
+    opacity='sigmoid_15',
+    show_scalar_bar=False,
+)
+
+# Add masked CT image of the heart and use a contrasting color map.
+_ = pl.add_volume(
+    ct_image,
+    scalars='heart',
+    cmap='gist_heat',
+    opacity='linear',
+    opacity_unit_distance=np.mean(ct_image.spacing),
+)
+
+# Orient the camera to provide a latero-anterior view.
+pl.view_yz()
+pl.camera.azimuth = 70
+pl.camera.up = (0, 0, 1)
+pl.camera.zoom(1.5)
+pl.show()
+
+# %%
+# .. tags:: medical, plot

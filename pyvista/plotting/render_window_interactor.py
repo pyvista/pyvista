@@ -11,6 +11,8 @@ import time
 import warnings
 import weakref
 
+import numpy as np
+
 from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
@@ -176,10 +178,7 @@ class RenderWindowInteractor:
         >>> actor = pl.add_mesh(sphere)
         >>> def callback(step):
         ...     actor.position = [step / 100.0, step / 100.0, 0]
-        ...
-        >>> pl.add_timer_event(
-        ...     max_steps=200, duration=500, callback=callback
-        ... )
+        >>> pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
         """
         self._timer = Timer(max_steps, callback)
@@ -221,9 +220,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
         call = partial(try_callback, call)
@@ -255,9 +252,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -280,12 +275,8 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
-        >>> obs_leave = pl.iren.add_observer(
-        ...     "LeaveEvent", lambda *_: print('Leave!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer('LeaveEvent', lambda *_: print('Leave!'))
         >>> pl.iren.remove_observers()
 
         """
@@ -467,7 +458,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -635,7 +626,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_custom_trackball_style(left="dolly")
+        >>> plotter.enable_custom_trackball_style(left='dolly')
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -949,7 +940,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
+    def enable_terrain_style(self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
@@ -984,17 +975,23 @@ class RenderWindowInteractor:
         latitude/longitude markers that can be used to estimate/control
         position.
 
+        .. versionchanged:: 0.45
+            mouse_wheel_zooms and shift_pans parameters are not True by
+            default to be more intuitive. We also improved the scroll
+            zooming factor to be less jumpy.
+
         Parameters
         ----------
-        mouse_wheel_zooms : bool, default: False
-            Whether to use the mouse wheel for zooming. By default
-            zooming can be performed with right click and drag.
+        mouse_wheel_zooms : bool | float, default: True
+            Whether to use the mouse wheel for zooming. If ``False``,
+            you can still zoom with right click and drag. Pass a float
+            value for to control the zoom factor, default is ``1.05``.
 
-        shift_pans : bool, default: False
-            Whether shift + left mouse button pans the scene. By default
-            shift + left mouse button rotates the view restricted to
-            only horizontal or vertical movements, and panning is done
-            holding down the middle mouse button.
+        shift_pans : bool, default: True
+            Whether shift + left mouse button pans the scene. If
+            ``False``, shift + left mouse button rotates the view
+            restricted to only horizontal or vertical movements, and
+            panning is done holding down the middle mouse button.
 
         Examples
         --------
@@ -1015,9 +1012,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(
-        ...     mouse_wheel_zooms=True, shift_pans=True
-        ... )
+        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -1026,16 +1021,29 @@ class RenderWindowInteractor:
         self.update_style()
 
         if mouse_wheel_zooms:
+            factor = 1.05 if isinstance(mouse_wheel_zooms, bool) else mouse_wheel_zooms
 
             def wheel_zoom_callback(_obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
-                    zoom_factor = 1.1
+                    zoom_factor = 1.0 / factor
                 elif event == 'MouseWheelBackwardEvent':
                     # zoom out
-                    zoom_factor = 1 / 1.1
-                self._plotter.camera.zoom(zoom_factor)
+                    zoom_factor = factor
+
+                with self.poked_subplot():
+                    if self._plotter.camera.parallel_projection:
+                        self._plotter.camera.parallel_scale *= zoom_factor
+                    else:
+                        camera_position = np.array(self._plotter.camera.position)
+                        camera_focal_point = np.array(self._plotter.camera.focal_point)
+                        camera_vector = camera_position - camera_focal_point
+                        self._plotter.camera.position = (
+                            camera_focal_point + zoom_factor * camera_vector
+                        )
+
+                    self._plotter.reset_camera_clipping_range()
                 self._plotter.render()
 
             callback = partial(try_callback, wheel_zoom_callback)
@@ -1127,7 +1135,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def _simulate_keypress(self, key):  # pragma:
+    def _simulate_keypress(self, key):
         """Simulate a keypress."""
         if len(key) > 1:
             raise ValueError('Only accepts a single key')

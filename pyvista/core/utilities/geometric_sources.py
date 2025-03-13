@@ -28,14 +28,12 @@ from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
@@ -45,7 +43,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 def translate(
-    surf: ConcreteDataSetType,
+    surf: DataSet,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
 ) -> None:
@@ -84,9 +82,9 @@ def translate(
     trans[:3, 2] = normz
     trans[3, 3] = 1
 
-    surf.transform(trans)
+    surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)
+        surf.points += np.array(center, dtype=surf.points.dtype)  # type: ignore[misc]
 
 
 if _vtk.vtk_version_info < (9, 3):
@@ -619,9 +617,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     Visualize the output of :class:`CylinderSource` in a 3D plot.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     pv.CylinderSource().output, show_edges=True, line_width=5
-    ... )
+    >>> _ = pl.add_mesh(pv.CylinderSource().output, show_edges=True, line_width=5)
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -986,18 +982,17 @@ class Text3DSource(vtkVectorText):
             if not np.array_equal(old_value, value):
                 object.__setattr__(self, name, value)
                 object.__setattr__(self, '_modified', True)
+        # Do not allow setting attributes.
+        # This is similar to using @no_new_attr decorator but without
+        # the __setattr__ override since this class defines its own override
+        # for setting the modified flag
+        elif name in Text3DSource._new_attr_exceptions:
+            object.__setattr__(self, name, value)
         else:
-            # Do not allow setting attributes.
-            # This is similar to using @no_new_attr decorator but without
-            # the __setattr__ override since this class defines its own override
-            # for setting the modified flag
-            if name in Text3DSource._new_attr_exceptions:
-                object.__setattr__(self, name, value)
-            else:
-                raise AttributeError(
-                    f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}',
-                )
+            raise AttributeError(
+                f'Attribute "{name}" does not exist and cannot be added to type '
+                f'{self.__class__.__name__}',
+            )
 
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
@@ -1005,7 +1000,7 @@ class Text3DSource(vtkVectorText):
         return self.GetText()
 
     @string.setter
-    def string(self: Text3DSource, string: str) -> None:
+    def string(self: Text3DSource, string: str | None) -> None:
         self.SetText('' if string is None else string)
 
     @property
@@ -1059,7 +1054,7 @@ class Text3DSource(vtkVectorText):
         return self._width
 
     @width.setter
-    def width(self: Text3DSource, width: float) -> None:
+    def width(self: Text3DSource, width: float | None) -> None:
         _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
         self._width = width
 
@@ -1069,7 +1064,7 @@ class Text3DSource(vtkVectorText):
         return self._height
 
     @height.setter
-    def height(self: Text3DSource, height: float) -> None:
+    def height(self: Text3DSource, height: float | None) -> None:
         (
             _check_range(height, rng=(0, float('inf')), parm_name='height')
             if height is not None
@@ -1083,7 +1078,7 @@ class Text3DSource(vtkVectorText):
         return self._depth
 
     @depth.setter
-    def depth(self: Text3DSource, depth: float) -> None:
+    def depth(self: Text3DSource, depth: float | None) -> None:
         _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
@@ -2293,15 +2288,19 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
                 * ``'dodecahedron'`` or ``4``
 
         """
+        if isinstance(kind, int):
+            if kind not in range(5):
+                raise ValueError(f'Invalid Platonic solid index "{kind}".')
+            self.SetSolidType(kind)
+            return
+
         if isinstance(kind, str):
             if kind not in self._kinds:
                 raise ValueError(f'Invalid Platonic solid kind "{kind}".')
-            kind = self._kinds[kind]
-        elif isinstance(kind, int) and kind not in range(5):
-            raise ValueError(f'Invalid Platonic solid index "{kind}".')
-        elif not isinstance(kind, int):
-            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
-        self.SetSolidType(kind)
+            self.SetSolidType(self._kinds[kind])
+            return
+
+        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
 
     @property
     def output(self: PlatonicSolidSource) -> PolyData:
@@ -3321,9 +3320,7 @@ class AxesGeometrySource:
         Get the symmetric bounds of the axes.
 
         >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     symmetric_bounds=True
-        ... )
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
         >>> axes_geometry_source.output.bounds
         BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
@@ -3344,21 +3341,17 @@ class AxesGeometrySource:
 
         Create actors.
 
-        >>> axes_sym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... )
-        >>> axes_asym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... )
+        >>> axes_sym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=True)
+        >>> axes_asym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=False)
 
         Show multi-window plot.
 
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> _ = pl.add_text("Symmetric bounds")
+        >>> _ = pl.add_text('Symmetric bounds')
         >>> _ = pl.add_actor(axes_sym)
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_text("Asymmetric bounds")
+        >>> _ = pl.add_text('Asymmetric bounds')
         >>> _ = pl.add_actor(axes_asym)
         >>> pl.show()
 
@@ -3517,9 +3510,7 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(
-        self: AxesGeometrySource, shaft_type: GeometryTypes | ConcreteDataSetAlias
-    ) -> None:
+    def shaft_type(self: AxesGeometrySource, shaft_type: GeometryTypes | DataSet) -> None:
         self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3560,11 +3551,11 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self: AxesGeometrySource, tip_type: str | ConcreteDataSetAlias) -> None:
+    def tip_type(self: AxesGeometrySource, tip_type: str | DataSet) -> None:
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(
-        self: AxesGeometrySource, part: _PartEnum, geometry: str | ConcreteDataSetAlias
+        self: AxesGeometrySource, part: _PartEnum, geometry: str | DataSet
     ) -> str:
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = (
@@ -3692,8 +3683,8 @@ class AxesGeometrySource:
             )  # pragma: no cover
 
     @staticmethod
-    def _make_any_part(geometry: str | ConcreteDataSetType) -> tuple[str, PolyData]:
-        part: ConcreteDataSetAlias
+    def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
+        part: DataSet
         part_poly: PolyData
         if isinstance(geometry, str):
             name = geometry
@@ -3730,7 +3721,7 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_axes_parts(
-        geometry: str | ConcreteDataSetAlias,
+        geometry: str | DataSet,
     ) -> tuple[str, tuple[PolyData, PolyData, PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
@@ -3797,9 +3788,7 @@ class OrthogonalPlanesSource:
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
-    >>> _ = pl.add_mesh(
-    ...     output, opacity=0.3, show_edges=True, line_width=10
-    ... )
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True, line_width=10)
     >>> pl.view_yz()
     >>> pl.show()
 
@@ -4107,9 +4096,7 @@ class CubeFacesSource(CubeSource):
     Generate a frame instead of full faces.
 
     >>> mesh = pv.ParametricEllipsoid(5, 4, 3)
-    >>> cube_faces_source = pv.CubeFacesSource(
-    ...     bounds=mesh.bounds, frame_width=0.1
-    ... )
+    >>> cube_faces_source = pv.CubeFacesSource(bounds=mesh.bounds, frame_width=0.1)
     >>> output = cube_faces_source.output
 
     >>> pl = pv.Plotter()
@@ -4432,7 +4419,7 @@ class CubeFacesSource(CubeSource):
                 points += vector
 
             # Set poly as a single quad cell
-            face_poly.points = points  # type: ignore[union-attr]
+            face_poly.points = points  # type: ignore[union-attr, has-type]
             face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
 
             if frame_width is not None:
@@ -4442,7 +4429,7 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points  # type: ignore[union-attr]
+                face_poly.points = frame_points  # type: ignore[union-attr, has-type]
                 face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property

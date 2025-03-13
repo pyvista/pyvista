@@ -20,7 +20,7 @@ from . import transformations
 from .fileio import from_meshio
 from .fileio import is_meshio_mesh
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from meshio import Mesh
     from trimesh import Trimesh
 
@@ -39,8 +39,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._dataset_types import ConcreteDataObjectAlias
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
 
     from ..wrappers import _WrappableVTKDataObjectType
 
@@ -74,13 +72,9 @@ def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
 
 # General catch-all cases
 @overload
-def wrap(dataset: _vtk.vtkDataSet) -> ConcreteDataSetAlias: ...
+def wrap(dataset: _vtk.vtkDataSet) -> DataSet: ...
 @overload
-def wrap(dataset: DataSet) -> ConcreteDataSetAlias: ...
-@overload
-def wrap(dataset: _vtk.vtkDataObject) -> ConcreteDataObjectAlias: ...
-@overload
-def wrap(dataset: DataObject) -> ConcreteDataObjectAlias: ...
+def wrap(dataset: _vtk.vtkDataObject) -> DataObject: ...
 
 
 # Misc overloads

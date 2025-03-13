@@ -29,6 +29,7 @@ downloading, reading, and processing files with a generic mapping:
 """
 
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+# mypy: disable-error-code="redundant-expr"
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -285,7 +286,7 @@ class _DatasetLoader:
                     [cell_types.update({cell_type: None}) for cell_type in cells]
                 else:
                     for cell_type in pv.CellType:
-                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr, misc]
+                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
                         if extracted.n_cells > 0:
                             cell_types[cell_type] = None
             except AttributeError:
@@ -709,7 +710,7 @@ def _load_as_multiblock(
 
     for file, name in zip(files, names):
         if not isinstance(file, _DatasetLoader):
-            continue
+            continue  # type: ignore[unreachable]
         loaded = file.load()
         assert isinstance(
             loaded,

@@ -90,7 +90,7 @@ def voxelize(
     pyvista.voxelize_volume
         Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
-    pyvista.PolyDataFilters.voxelize_binary_mask
+    pyvista.DataSetFilters.voxelize_binary_mask
         Similar function that returns a :class:`pyvista.ImageData` with point data.
 
     Examples
@@ -126,10 +126,8 @@ def voxelize(
     >>> mesh = pv.Cube(x_length=0.25)
     >>> vox = pv.voxelize(mesh=mesh, density=0.2)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
@@ -138,10 +136,8 @@ def voxelize(
 
     >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     """
@@ -261,7 +257,7 @@ def voxelize_volume(
         Similar function that returns a :class:`pyvista.UnstructuredGrid` of
         :attr:`~pyvista.CellType.VOXEL` cells.
 
-    pyvista.PolyDataFilters.voxelize_binary_mask
+    pyvista.DataSetFilters.voxelize_binary_mask
         Similar function that returns a :class:`pyvista.ImageData` with point data.
 
     pyvista.DataSetFilters.select_enclosed_points
@@ -781,9 +777,7 @@ def sample_function(
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
-    >>> grid.plot(
-    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
-    ... )
+    >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
     Sample Perlin noise in 2D and plot it.
 

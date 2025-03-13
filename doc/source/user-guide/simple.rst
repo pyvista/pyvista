@@ -16,7 +16,7 @@ The wrapping function :func:`pyvista.wrap` is usable from the top level of
 PyVista. This allows users to quickly wrap any VTK dataset they have as a
 PyVista object:
 
-.. code:: python
+.. code-block:: python
 
     import vtk
     import pyvista as pv
@@ -35,6 +35,7 @@ passing the filename:
 .. code-block:: python
 
     import pyvista as pv
+
     mesh = pv.read('my_strange_vtk_file.vtk')
 
 
@@ -48,13 +49,13 @@ assigned to the nodes or cells of the mesh respectively).
 
 First, check out some common meta-properties:
 
-.. code:: python
+.. code-block:: python
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> import numpy as np
 
-.. code:: python
+.. code-block:: python
 
     >>> mesh = examples.load_airplane()
 
@@ -86,7 +87,7 @@ Access the points by fetching the :attr:`points
 <pyvista.DataSet.points>` attribute on any PyVista mesh
 as a :class:`numpy.ndarray`:
 
-.. code:: python
+.. code-block:: python
 
     >>> the_pts = mesh.points
     >>> isinstance(the_pts, np.ndarray)
@@ -194,7 +195,7 @@ after it's closed).
 You can then use this cached camera position for additional plotting
 without having to manually interact with the plotting window:
 
-.. code:: python
+.. code-block:: python
 
     # reuse the camera position from the previous plotter
     cpos = plotter.camera_position
@@ -224,7 +225,7 @@ Any PyVista mesh object can be saved to a VTK file format using
 :func:`save() <pyvista.DataObject.save>`. For example, the mesh in the
 code block above could be saved like:
 
-.. code:: python
+.. code-block:: python
 
     mesh.save("mesh.vtk")
 

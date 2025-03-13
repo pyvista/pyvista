@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import cast
+import warnings
 
 import numpy as np
 
@@ -13,7 +15,7 @@ from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
@@ -289,12 +291,34 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetLabelOffset(offset)
 
     @property
-    def title_offset(self) -> float:  # numpydoc ignore=RT01
+    def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
+        if pyvista.vtk_version_info >= (9, 3):
+            offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
+            self.GetTitleOffset(offx, offy)  # type: ignore[call-overload]
+            return offx, offy  # type: ignore[return-value]
+
         return self.GetTitleOffset()
 
     @title_offset.setter
-    def title_offset(self, offset: float):
+    def title_offset(self, offset: float | MutableSequence[float]):
+        vtk_geq_9_3 = pyvista.vtk_version_info >= (9, 3)
+
+        if vtk_geq_9_3:
+            if isinstance(offset, float):
+                msg = f'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of (x,y) offsets. Setting the x offset to {(x := 0.0)}'
+                warnings.warn(msg, UserWarning)
+                self.SetTitleOffset([x, offset])
+            else:
+                self.SetTitleOffset(offset)
+            return
+
+        if isinstance(offset, MutableSequence):
+            msg = f'Setting title_offset with a sequence is only supported from vtk >= 9.3. Considering only the second value (ie. y-offset) of {(y := offset[1])}'
+            warnings.warn(msg, UserWarning)
+            self.SetTitleOffset(y)
+            return
+
         self.SetTitleOffset(offset)
 
     @property

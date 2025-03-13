@@ -1,4 +1,9 @@
-"""Contains a variety of cells to serve as examples."""
+"""Contains a variety of cells to serve as examples.
+
+Functions that create single cell :class:`pyvista.UnstructuredGrid` objects which can
+be used to learn about VTK :class:`cell types <pyvista.CellType>`.
+
+"""
 
 from __future__ import annotations
 

@@ -21,7 +21,7 @@ from .utilities.arrays import copy_vtk_array
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from typing_extensions import Self
@@ -176,8 +176,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
                 # special treatment for string field data
-                if self.association == FieldAssociation.NONE and isinstance(array, str):
-                    dtype = 'str'
+                if self.association == FieldAssociation.NONE and isinstance(array, str):  # type: ignore[unreachable]
+                    dtype = 'str'  # type: ignore[unreachable]
                     # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
                     val = f'{array[:15]}...' if len(array) > 18 else array
                     line = f'{name[:23]:<24}{dtype!s:<11}"{val}"'
@@ -786,9 +786,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 data = tmparray
             if data.shape[0] != array_len:
                 raise ValueError(
-                    f'data length of ({data.shape[0]}) != required length ({array_len})',
+                    f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) but a length of ({array_len}) was expected.",
                 )
-
+            if any(data.shape) and data.size == 0:
+                raise ValueError(
+                    f"Invalid array shape. Empty arrays are not allowed. Array '{name}' cannot have shape {data.shape}."
+                )
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object
@@ -800,7 +803,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if data.flags.c_contiguous:
                     # no reason to return a shallow copy if the array and name
                     # are identical, just return the underlying array name
-                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
+                    if not deep_copy and data.VTKObject.GetName() == name:
                         return data.VTKObject
 
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
@@ -906,6 +909,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         with contextlib.suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
+        if hasattr(self.dataset, '_user_dict'):
+            del self.dataset._user_dict
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
@@ -1097,10 +1102,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         for name, array in array_dict.items():
-            if copy:
-                self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
-            else:
-                self[name] = array
+            self._update_array(name, array, copy)
+
+    def _update_array(
+        self: Self,
+        name: str,
+        array: NumpyArray[float],
+        copy: bool,
+    ) -> None:
+        if copy:
+            self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
+        else:
+            self[name] = array
 
     def _raise_index_out_of_bounds(self: Self, index: Any) -> None:
         """Raise a KeyError if array index is out of bounds."""
@@ -1152,7 +1165,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_scalars_name.setter
-    def active_scalars_name(self: Self, name: str) -> None:
+    def active_scalars_name(self: Self, name: str | None) -> None:
         """Set name of the active scalars.
 
         Parameters
@@ -1202,7 +1215,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @_active_normals_name.setter
-    def _active_normals_name(self: Self, name: str) -> None:
+    def _active_normals_name(self: Self, name: str | None) -> None:
         """Set name of the active normals.
 
         Parameters
@@ -1251,7 +1264,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_vectors_name.setter
-    def active_vectors_name(self: Self, name: str) -> None:
+    def active_vectors_name(self: Self, name: str | None) -> None:
         """Set name of the active vectors.
 
         Parameters
@@ -1406,7 +1419,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals_name.setter
-    def active_normals_name(self: Self, name: str) -> None:
+    def active_normals_name(self: Self, name: str | None) -> None:
         """Set the name of the normals array.
 
         Parameters
@@ -1520,7 +1533,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_texture_coordinates_name.setter
-    def active_texture_coordinates_name(self: Self, name: str) -> None:
+    def active_texture_coordinates_name(self: Self, name: str | None) -> None:
         """Set the name of the active texture coordinates array.
 
         Parameters

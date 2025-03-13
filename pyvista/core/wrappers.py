@@ -14,7 +14,6 @@ A user-defined Foo class is defined that extends the functionality of
 >>> default_wrappers = pv._wrappers.copy()
 >>> class Foo(pv.PolyData):
 ...     pass  # Extend PolyData here
-...
 >>> pv._wrappers['vtkPolyData'] = Foo
 >>> image = pv.ImageData()
 >>> surface = image.extract_surface()

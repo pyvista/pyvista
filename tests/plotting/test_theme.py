@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import os
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import pytest
 import vtk
 
@@ -18,6 +22,25 @@ from pyvista.plotting.utilities.gl_checks import uses_egl
 @pytest.fixture
 def default_theme():
     return pv.plotting.themes.Theme()
+
+
+@pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
+def test_theme_trame_raises(default_theme: pv.themes.Theme, trame):
+    with pytest.raises(TypeError, match='Configuration type must be `_TrameConfig`.'):
+        default_theme.trame = trame
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(image_scale=st.integers().filter(lambda x: x < 1))
+def test_theme_image_scale_raises(default_theme: pv.themes.Theme, image_scale):
+    with pytest.raises(ValueError, match='Scale factor must be a positive integer.'):
+        default_theme.image_scale = image_scale
+
+
+@pytest.mark.parametrize('lighting_params', [1, None, object(), True, pv.Sphere()])
+def test_theme_lightning_params_raises(default_theme: pv.themes.Theme, lighting_params):
+    with pytest.raises(TypeError, match='Configuration type must be `_LightingConfig`.'):
+        default_theme.lighting_params = lighting_params
 
 
 @pytest.mark.parametrize(
@@ -475,6 +498,9 @@ def test_plotter_set_theme():
     assert pl.theme == my_theme
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+)
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     pv.plotting.themes.DarkTheme().save(filename)
@@ -485,6 +511,9 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pv.plotting.themes.DarkTheme()
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+)
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
@@ -652,11 +681,13 @@ def test_trame_config():
     assert trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
 
-    trame_config.server_proxy_enabled = True
+    with pytest.warns(UserWarning, match='Enabling server_proxy will disable jupyter_extension'):
+        trame_config.server_proxy_enabled = True
     assert not trame_config.jupyter_extension_enabled
     assert trame_config.server_proxy_enabled
 
-    trame_config.jupyter_extension_enabled = True
+    with pytest.warns(UserWarning, match='Enabling jupyter_extension will disable server_proxy'):
+        trame_config.jupyter_extension_enabled = True
     assert trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
 

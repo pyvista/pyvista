@@ -1143,7 +1143,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
-                if actor.GetMapper() and actor.GetPickable():
+                if (
+                    (mapper := actor.GetMapper())
+                    and hasattr(mapper, 'GetInputAsDataSet')
+                    and actor.GetPickable()
+                ):
                     input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
@@ -1568,18 +1572,14 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         color.
 
         >>> import pyvista as pv
-        >>> multiblock = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> multiblock = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(multiblock)
         >>> def turn_blue(index, dataset):
         ...     mapper.block_attr[index].color = 'blue'
-        ...
         >>> pl.enable_block_picking(callback=turn_blue, side='left')
         >>> def clear_color(index, dataset):
         ...     mapper.block_attr[index].color = None
-        ...
         >>> pl.enable_block_picking(callback=clear_color, side='right')
         >>> pl.show()
 
@@ -1848,7 +1848,7 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx = None
+        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:

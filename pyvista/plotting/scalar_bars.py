@@ -386,10 +386,8 @@ class ScalarBars:
             newrng = mapper.scalar_range
             oldmappers = self._scalar_bar_mappers[title]
             # get max for range and reset everything
-            if newrng[0] < clim[0]:
-                clim[0] = newrng[0]
-            if newrng[1] > clim[1]:
-                clim[1] = newrng[1]
+            clim[0] = min(newrng[0], clim[0])
+            clim[1] = max(newrng[1], clim[1])
             for mh in oldmappers:
                 mh.scalar_range = clim[0], clim[1]
             mapper.scalar_range = clim[0], clim[1]

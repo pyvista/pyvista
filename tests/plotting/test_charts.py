@@ -22,7 +22,7 @@ skip_mac = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: PT004
+def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
 
 
@@ -393,7 +393,20 @@ def test_axis_label_font_size(chart_2d):
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.parametrize('chart_f', [('chart_2d'), ('chart_box'), ('chart_pie'), ('chart_mpl')])
+@pytest.mark.parametrize(
+    'chart_f',
+    [
+        ('chart_2d'),
+        ('chart_box'),
+        ('chart_pie'),
+        pytest.param(
+            'chart_mpl',
+            marks=pytest.mark.filterwarnings(
+                r'ignore:No artists with labels found to put in legend\.  Note that artists whose label start with an underscore are ignored when legend\(\) is called with no argument\.:UserWarning'
+            ),
+        ),
+    ],
+)
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
@@ -612,9 +625,9 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     sz = 5
     st, st_inv = 'o', '^'
     l = 'Scatter'
-    assert (
-        st_inv not in charts.ScatterPlot2D.MARKER_STYLES
-    ), 'New marker styles added? Change this test.'
+    assert st_inv not in charts.ScatterPlot2D.MARKER_STYLES, (
+        'New marker styles added? Change this test.'
+    )
 
     # Test constructor
     plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)

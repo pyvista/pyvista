@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING
 from .helpers import wrap
 from .misc import check_valid_vector
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
@@ -190,13 +190,11 @@ def Cylinder(
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pv.Cylinder(
-    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
-    ...     ),
+    ...     pv.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2),
     ...     show_edges=True,
     ...     line_width=5,
     ... )
-    >>> pl.camera_position = "xy"
+    >>> pl.camera_position = 'xy'
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -326,7 +324,7 @@ def Arrow(
     tip_resolution: int = 20,
     shaft_radius: float = 0.05,
     shaft_resolution: int = 20,
-    scale: float | Literal['auto'] = 1.0,
+    scale: float | Literal['auto'] | None = 1.0,
 ) -> PolyData:
     """Create an arrow.
 
@@ -611,9 +609,7 @@ def SolidSphere(
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
     True
-    >>> partial_solid_sphere = pv.SolidSphere(
-    ...     start_theta=180, end_theta=360
-    ... )
+    >>> partial_solid_sphere = pv.SolidSphere(start_theta=180, end_theta=360)
     >>> partial_solid_sphere.plot(show_edges=True)
 
     To see the cell structure inside the solid sphere,
@@ -629,7 +625,7 @@ def SolidSphere(
     ...     theta_resolution=8,
     ...     phi_resolution=8,
     ... )
-    >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
+    >>> partial_solid_sphere['cell_radial_pos'] = np.linalg.norm(
     ...     partial_solid_sphere.cell_centers().points, axis=-1
     ... )
     >>> partial_solid_sphere.explode(1).plot()
@@ -743,9 +739,7 @@ def SolidSphereGeneric(
     ...     phi=np.linspace(0, 180, 30),
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(
-    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
-    ... )
+    >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
     Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
     `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
@@ -757,9 +751,7 @@ def SolidSphereGeneric(
     ...     phi=phi,
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(
-    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
-    ... )
+    >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
     """
     if radius is None:
@@ -1796,9 +1788,7 @@ def CircularArcFromNormal(
     >>> import pyvista as pv
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pv.CircularArcFromNormal(
-    ...     [0, 0, 0], normal=normal, polar=polar
-    ... )
+    >>> arc = pv.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)

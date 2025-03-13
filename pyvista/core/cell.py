@@ -13,12 +13,12 @@ import pyvista
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .celltype import CellType
-from .dataset import DataObject
+from .dataobject import DataObject
 from .errors import CellSizeError
 from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 

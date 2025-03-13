@@ -40,7 +40,13 @@ if pv.vtk_version_info < (9, 1):
     pytestmark = pytest.mark.skip
 else:
     skip_no_trame = pytest.mark.skipif(not has_trame, reason='Requires trame')
-    pytestmark = [skip_no_trame, pytest.mark.skip_plotting]
+    pytestmark = [
+        skip_no_trame,
+        pytest.mark.skip_plotting,
+        pytest.mark.filterwarnings(
+            r'ignore:It is recommended to use web\.AppKey instances for keys:aiohttp.web_exceptions.NotAppKeyWarning'
+        ),
+    ]
 
 
 def test_set_jupyter_backend_trame():
@@ -71,6 +77,7 @@ def test_base_viewer_ui():
 
 
 @pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+@pytest.mark.filterwarnings('ignore:Suppress rendering on the plotter is changed to .*:UserWarning')
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
@@ -421,3 +428,14 @@ def test_embeddable_widget(skip_check_gc):
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
+
+
+def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
+    from pyvista.trame import jupyter
+
+    monkeypatch.setattr(jupyter, 'HTML', object)
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.Widget(viewer=None, src=None)
+
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.EmbeddableWidget(plotter=None, width=None, height=None)
