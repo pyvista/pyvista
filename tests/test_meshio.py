@@ -120,6 +120,7 @@ def test_meshio(mesh_in, tmpdir):
         # - raise a ValueError if totally empty
         # As a workaround, we create the mesh directly for testing
         mesh = meshio.Mesh(points=mesh_in.points, cells=mesh_in.cells)
+        mesh = pv.from_meshio(mesh)
     else:
         mesh = pv.read_meshio(filename)
 

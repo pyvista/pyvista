@@ -939,7 +939,7 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         from meshio._vtk_common import meshio_to_vtk_type
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
 
-    if not mesh.cells:
+    if len(mesh.cells) == 0:
         # Empty mesh
         grid = pyvista.UnstructuredGrid()
         if mesh.points.size > 0:
