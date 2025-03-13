@@ -60,6 +60,17 @@ globals().update(
     }
 )
 
+REPLACE_TYPES.update(
+    {
+        'builtins.float': 'float',
+        'builtins.int': 'int',
+        'builtins.bool': 'bool',
+        'builtins.list': 'list',
+        'numpy.ndarray': 'ndarray',
+        'numpy.dtype': 'dtype',
+    }
+)
+
 
 class _TestCaseTuple(NamedTuple):
     file: str
