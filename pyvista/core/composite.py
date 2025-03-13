@@ -184,7 +184,6 @@ class MultiBlock(
     def _items(self) -> Iterable[tuple[str | None, _TypeMultiBlockLeaf]]:
         yield from zip(self.keys(), self)
 
-    _ContentsLiteral = Literal['ids', 'names', 'blocks', 'items', 'all']
     _OrderLiteral = Literal['nested_first', 'nested_last']
 
     class _RecursiveIteratorBasicKwargs(TypedDict, total=False):
@@ -362,7 +361,7 @@ class MultiBlock(
     @overload  # general case
     def recursive_iterator(
         self: MultiBlock,
-        contents: _ContentsLiteral = ...,
+        contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = ...,
         order: _OrderLiteral | None = ...,
         *,
         node_type: Literal['parent', 'child'] = ...,
@@ -378,8 +377,8 @@ class MultiBlock(
     ): ...
     def recursive_iterator(
         self: MultiBlock,
-        contents: _ContentsLiteral = 'blocks',
-        order: _OrderLiteral | None = None,
+        contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
+        order: Literal['nested_first', 'nested_last'] | None = None,
         *,
         node_type: Literal['parent', 'child'] = 'child',
         skip_none: bool = False,
