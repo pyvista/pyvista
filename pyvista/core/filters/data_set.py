@@ -5375,11 +5375,6 @@ class DataSetFilters(DataObjectFilters):
 
                 Add option to compute multiple measures or all measures.
 
-            .. deprecated:: 0.45
-
-                The default quality measure will change from ``'scaled_jacobian'`` to
-                ``'all'`` in a future version.
-
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
             that could be addressed by this filter but is not well defined for
@@ -5413,18 +5408,15 @@ class DataSetFilters(DataObjectFilters):
         if quality_measure is None:
             # Measure was not explicitly specified
             if version_info >= (0, 48):  # pragma: no cover
-                raise RuntimeError(
-                    'Convert this deprecation warning into an error and update the '
-                    "docstring default value/type for quality measure to 'all'."
-                )
+                raise RuntimeError('Convert this deprecation warning into an error.')
             if version_info >= (0, 49):  # pragma: no cover
                 raise RuntimeError(
-                    "Remove this deprecation and update the docstring value/type for quality measure to 'all'."
+                    "Remove this deprecation and update the type hint to be 'scaled_jacobian' instead of None."
                 )
 
             msg = (
-                "The default measure 'scaled_jacobian' will change in a future version, and 'all' measures will be computed instead.\n"
-                "The 'CellQuality' array will also be removed; the array name now matches the quality measure.\n"
+                "The 'CellQuality' array will be removed in a future version.\n"
+                "The array name now matches the quality measure, e.g. 'scaled_jacobian'.\n"
                 'Set the quality measure explicitly to remove this warning.'
             )
             warnings.warn(msg, PyVistaDeprecationWarning)

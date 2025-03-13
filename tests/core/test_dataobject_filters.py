@@ -523,8 +523,8 @@ def test_compute_cell_quality():
 
 
 def test_compute_cell_quality_deprecation(ant):
-    match = "The default measure 'scaled_jacobian' will change in a future version, and 'all' measures will be computed instead."
-    "The 'CellQuality' array will also be removed; the array name now matches the quality measure."
+    match = "The 'CellQuality' array will be removed in a future version."
+    "The array name now matches the quality measure, e.g. 'scaled_jacobian'."
     'Set the quality measure explicitly to remove this warning.'
     with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
         ant.compute_cell_quality()
@@ -535,7 +535,7 @@ def test_compute_cell_quality_deprecation(ant):
             raise RuntimeError(f'Remove the {CELL_QUALITY} array from the output.')
 
 
-def test_compute_cell_quality_measures_api(ant):
+def test_compute_cell_quality_measures(ant):
     # Get quality measures from type hints
     hinted_measures = list(get_args(_CellQualityLiteral))
     assert 'all' in hinted_measures
