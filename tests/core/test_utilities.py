@@ -1763,7 +1763,10 @@ def test_transform_identity(transform):
 def test_transform_init():
     matrix = np.diag((SCALE, SCALE, SCALE, 1))
     transform = Transform(matrix)
-    assert np.array_equal(transform.matrix, matrix)
+    assert np.allclose(transform.matrix, matrix)
+
+    transform = Transform(matrix.tolist())
+    assert np.allclose(transform.matrix, matrix)
 
 
 def test_transform_chain_methods():

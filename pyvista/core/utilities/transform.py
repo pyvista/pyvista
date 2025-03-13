@@ -256,7 +256,10 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                [self.compose(t) for t in trans]
+                if all(isinstance(item, Sequence) for item in trans):
+                    self.compose(trans)
+                else:
+                    [self.compose(t) for t in trans]
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
@@ -1687,7 +1690,7 @@ class Transform(_vtk.vtkTransform):
         array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
-        # Transform a single point
+        # Transform a 1D array
         out: NumpyArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
@@ -1696,7 +1699,7 @@ class Transform(_vtk.vtkTransform):
                 out = array
             return out
 
-        # Transform many points
+        # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         if out is not None:
             return out
