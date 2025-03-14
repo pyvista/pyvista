@@ -110,19 +110,7 @@ def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
 
-    # Save and read reference mesh using meshio
-    filename = tmpdir.mkdir('tmpdir').join('test_mesh.vtu')
-    pv.save_meshio(filename, mesh_in)
-
-    if mesh_in.n_cells == 0:
-        # Meshio cannot read empty meshes and will either:
-        # - crash if there are points but no cells
-        # - raise a ValueError if totally empty
-        # As a workaround, we create the mesh directly for testing
-        mesh = meshio.Mesh(points=mesh_in.points, cells=mesh_in.cells)
-        mesh = pv.from_meshio(mesh)
-    else:
-        mesh = pv.read_meshio(filename)
+    mesh = pv.from_meshio(pv.to_meshio(mesh_in))
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
