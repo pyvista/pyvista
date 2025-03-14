@@ -504,6 +504,7 @@ def test_slice_along_line_composite(multiblock_all):
 SCALED_JACOBIAN = 'scaled_jacobian'
 CELL_QUALITY = 'CellQuality'
 AREA = 'area'
+VOLUME = 'volume'
 
 
 def test_compute_cell_quality():
@@ -545,7 +546,9 @@ def test_compute_cell_quality_measures(ant):
         hinted_measures.insert(1, 'aspect_beta')
 
     assert 'all' in hinted_measures
+    assert 'all_valid' in hinted_measures
     hinted_measures.remove('all')
+    hinted_measures.remove('all_valid')
 
     # Get quality measures from the VTK class
     actual_measures = list(_get_cell_qualilty_measures().keys())
@@ -553,8 +556,16 @@ def test_compute_cell_quality_measures(ant):
     assert actual_measures == hinted_measures, msg
 
     # Test 'all' measure keys
-    qual = ant.compute_cell_quality(['all'])
+    qual = ant.compute_cell_quality('all')
     assert qual.array_names == actual_measures
+
+
+def test_compute_cell_quality_all_valid(ant):
+    # Test 'all' measure keys
+    qual = ant.compute_cell_quality('all_valid')
+    assert AREA in qual.array_names
+    assert SCALED_JACOBIAN in qual.array_names
+    assert VOLUME not in qual.array_names
 
 
 @pytest.mark.parametrize(

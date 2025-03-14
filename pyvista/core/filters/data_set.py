@@ -83,6 +83,7 @@ _CellQualityLiteral = Literal[
     'volume',
     'warpage',
     'all',
+    'all_valid',
 ]
 
 
@@ -5318,7 +5319,7 @@ class DataSetFilters(DataObjectFilters):
         The per-cell quality is added to the mesh's cell data, in an array with
         the same name as the quality measure. Cell types not supported by this
         filter or undefined quality of supported cell types will have an
-        entry of -1.
+        entry of ``-1``.
 
         Defaults to computing the scaled Jacobian.
 
@@ -5368,8 +5369,9 @@ class DataSetFilters(DataObjectFilters):
         ----------
         quality_measure : str | sequence[str], default: 'scaled_jacobian'
             The cell quality measure to use. Specify a single measure or a sequence of
-            measures to compute. Specify ``'all'`` to compute all measures. A separate
-            array is created for each measure.
+            measures to compute. Specify ``'all'`` to compute all measures, or
+            ``'all_valid'`` to only keep quality measures that are valid for the mesh's
+            cell types. A separate array is created for each measure.
 
             .. note::
 
@@ -5406,12 +5408,30 @@ class DataSetFilters(DataObjectFilters):
         >>> cqual = sphere.compute_cell_quality(['min_angle'])
         >>> cqual.plot(show_edges=True)
 
+        Compute all valid quality measures for the sphere. These measures all return
+        non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        >>> cqual = sphere.compute_cell_quality('all_valid')
+        >>> cqual.cell_data.keys()
+        ['area',
+         'aspect_frobenius',
+         'aspect_ratio',
+         'condition',
+         'distortion',
+         'max_angle',
+         'min_angle',
+         'radius_ratio',
+         'relative_size_squared',
+         'scaled_jacobian',
+         'shape',
+         'shape_and_size']
+
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
         CELL_QUALITY = 'CellQuality'
-
-        if isinstance(quality_measure, str):
+        compute_all = quality_measure in ['all', 'all_valid']
+        if isinstance(quality_measure, str) and not compute_all:
             if version_info >= (0, 48):  # pragma: no cover
                 raise RuntimeError('Convert this deprecation warning into an error.')
             if version_info >= (0, 49):  # pragma: no cover
@@ -5431,9 +5451,7 @@ class DataSetFilters(DataObjectFilters):
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
-        if (
-            isinstance(quality_measure, str) and quality_measure == 'all'
-        ) or 'all' in quality_measure:
+        if compute_all:
             requested_measures = measures_available_names
             # Disable VTK errors which are likely to be emitted for some measures
             _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
@@ -5450,16 +5468,23 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
         output = self.copy()
+        keep_valid_only = quality_measure == 'all_valid'
         for measure in requested_measures:
             # Set measure and update
             getattr(alg, measures_available[measure])()
             _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
-            tmp_output = _get_output(alg)
-            output.cell_data[measure] = tmp_output.cell_data[CELL_QUALITY]
 
-        if len(requested_measures) == 1 and quality_measure != 'all':
+            # Store the cell quality array with the output
+            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+            if keep_valid_only and (
+                np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+            ):
+                continue
+            output.cell_data[measure] = cell_quality_array
+
+        if len(requested_measures) == 1 and not compute_all:
             # Need to include CellQuality array for legacy behavior
-            output.cell_data[CELL_QUALITY] = tmp_output[CELL_QUALITY]
+            output.cell_data[CELL_QUALITY] = cell_quality_array
 
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
