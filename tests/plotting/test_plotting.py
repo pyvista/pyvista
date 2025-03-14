@@ -30,6 +30,9 @@ from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import BackgroundPlotter
+from pyvista.plotting import QtDeprecationError
+from pyvista.plotting import QtInteractor
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -44,6 +47,8 @@ from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
+
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -138,6 +143,29 @@ def multicomp_poly():
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
     return data
+
+
+def test_pyvista_qt_raises():
+    match = re.escape(QtDeprecationError.message.format(*[BackgroundPlotter.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        BackgroundPlotter()
+
+    match = re.escape(QtDeprecationError.message.format(*[QtInteractor.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        QtInteractor()
+
+
+def test_plotting_module_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotting
+
+    m = mocker.patch.object(plotting, 'inspect')
+    m.getattr_static.side_effect = AttributeError
+
+    match = re.escape(
+        'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `foo`'
+    )
+    with pytest.raises(AttributeError, match=match):
+        plotting.foo  # noqa: B018
 
 
 def test_import_gltf(verify_image_cache):
@@ -2085,6 +2113,15 @@ def test_opacity_by_array_preference():
     p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
     p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
     p.show()
+
+
+@pytest.mark.parametrize('mapping', [None, True, object()])
+def test_opacity_transfer_functions_raises(mapping):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Transfer function type ({type(mapping)}) not understood'),
+    ):
+        pv.opacity_transfer_function(mapping, n_colors=10)
 
 
 def test_opacity_transfer_functions():
@@ -4953,3 +4990,26 @@ def test_plot_logo():
 def test_plot_wireframe_style():
     sphere = pv.Sphere()
     sphere.plot(style='wireframe')
+
+
+# Skip tests less 9.1 due to slightly above threshold error
+@pytest.mark.needs_vtk_version(9, 1)
+@pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
+@pytest.mark.parametrize('return_clipped', ['return_clipped', None])
+def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
+    return_clipped = bool(return_clipped)
+    as_multiblock = bool(as_multiblock)
+
+    mesh = examples.download_bunny_coarse()
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+
+    clipped = mesh.clip('x', crinkle=True, return_clipped=return_clipped)
+    if isinstance(clipped, tuple):
+        clipped = pv.MultiBlock(clipped)
+        clipped[0].translate((-0.1, 0, 0), inplace=True)
+
+    pl = pv.Plotter()
+    pl.add_mesh(clipped, show_edges=True)
+    pl.view_xy()
+    pl.show()
