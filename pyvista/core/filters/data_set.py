@@ -5423,15 +5423,14 @@ class DataSetFilters(DataObjectFilters):
                 "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
             )
             warnings.warn(msg, PyVistaDeprecationWarning)
-            quality_measure = 'scaled_jacobian'  # The old default
 
-        # Validate measures as a list
+        # Store state to be restored later, used for silencing errors
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+
+        # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
-
-        # Store state to be restored later
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         if (
             isinstance(quality_measure, str) and quality_measure == 'all'
         ) or 'all' in quality_measure:
@@ -5439,14 +5438,12 @@ class DataSetFilters(DataObjectFilters):
             # Disable VTK errors which are likely to be emitted for some measures
             _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         else:
-            requested_measures = cast(
-                list[_CellQualityLiteral],
-                ([quality_measure] if isinstance(quality_measure, str) else quality_measure),
-            )
-            for measure in requested_measures:
+            measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            for measure in measures:
                 _validation.check_contains(
                     measures_available_names, must_contain=measure, name='quality_measure'
                 )
+            requested_measures = cast(list[_CellQualityLiteral], measures)
 
         # Compute cell quality
         alg = _vtk.vtkCellQuality()
