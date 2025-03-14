@@ -32,7 +32,7 @@ dolfin
 
 # %%
 # Now we can work on and plot that Dolfin mesh.
-qual = dolfin.compute_cell_quality()
+qual = dolfin.compute_cell_quality(['scaled_jacobian'])
 qual.plot(show_edges=True, cpos='xy')
 # %%
 # .. tags:: load

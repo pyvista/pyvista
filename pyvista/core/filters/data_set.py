@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
+import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -17,6 +18,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
@@ -49,6 +51,40 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
+
+
+_CellQualityLiteral = Literal[
+    'area',
+    'aspect_frobenius',
+    'aspect_gamma',
+    'aspect_ratio',
+    'collapse_ratio',
+    'condition',
+    'diagonal',
+    'dimension',
+    'distortion',
+    'jacobian',
+    'max_angle',
+    'max_aspect_frobenius',
+    'max_edge_ratio',
+    'med_aspect_frobenius',
+    'min_angle',
+    'oddy',
+    'radius_ratio',
+    'relative_size_squared',
+    'scaled_jacobian',
+    'shape',
+    'shape_and_size',
+    'shear',
+    'shear_and_size',
+    'skew',
+    'stretch',
+    'taper',
+    'volume',
+    'warpage',
+    'all',
+    'all_valid',
+]
 
 
 @abstract_class
@@ -5274,23 +5310,22 @@ class DataSetFilters(DataObjectFilters):
 
     def compute_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
-        quality_measure: str = 'scaled_jacobian',
+        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
         null_value: float = -1.0,
         progress_bar: bool = False,
     ):
-        """Compute a function of (geometric) quality for each cell of a mesh.
+        r"""Compute a function of (geometric) quality for each cell of a mesh.
 
-        The per-cell quality is added to the mesh's cell data, in an
-        array named ``"CellQuality"``. Cell types not supported by this
+        The per-cell quality is added to the mesh's cell data, in an array with
+        the same name as the quality measure. Cell types not supported by this
         filter or undefined quality of supported cell types will have an
-        entry of -1.
+        entry of ``-1``.
 
         Defaults to computing the scaled Jacobian.
 
         Options for cell quality measure:
 
         - ``'area'``
-        - ``'aspect_beta'``
         - ``'aspect_frobenius'``
         - ``'aspect_gamma'``
         - ``'aspect_ratio'``
@@ -5319,14 +5354,34 @@ class DataSetFilters(DataObjectFilters):
         - ``'volume'``
         - ``'warpage'``
 
+        .. deprecated:: 0.45
+
+            The ``'CellQuality'`` array will be removed in a future version. The array
+            name now matches the name of the quality measure. During the deprecation
+            period, both array names will be returned when the input is a single string
+            (but both arrays refer to same underlying data array).
+
         Notes
         -----
         There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
 
         Parameters
         ----------
-        quality_measure : str, default: 'scaled_jacobian'
-            The cell quality measure to use.
+        quality_measure : str | sequence[str], default: 'scaled_jacobian'
+            The cell quality measure to use. Specify a single measure or a sequence of
+            measures to compute. Specify ``'all'`` to compute all measures, or
+            ``'all_valid'`` to only keep quality measures that are valid for the mesh's
+            cell types. A separate array is created for each measure.
+
+            .. note::
+
+                Some quality measures may generate VTK warnings for meshes with
+                non-applicable cells. These warnings are silenced when ``'all'``
+                is selected.
+
+            .. versionadded:: 0.45
+
+                Add option to compute multiple measures or all measures.
 
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
@@ -5340,9 +5395,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset with the computed mesh quality in the
-            ``cell_data`` as the ``"CellQuality"`` array.
+        DataSet
+            Dataset with the computed mesh quality. Cell data array(s) with the computed
+            quality measure(s) are included.
 
         Examples
         --------
@@ -5350,64 +5405,91 @@ class DataSetFilters(DataObjectFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
-        >>> cqual = sphere.compute_cell_quality('min_angle')
+        >>> cqual = sphere.compute_cell_quality(['min_angle'])
         >>> cqual.plot(show_edges=True)
+
+        Compute all valid quality measures for the sphere. These measures all return
+        non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        >>> cqual = sphere.compute_cell_quality('all_valid')
+        >>> valid_measures = cqual.cell_data.keys()
+        >>> print(f'[{",\n ".join(repr(measure) for measure in valid_measures)}]')
+        ['area',
+         'aspect_frobenius',
+         'aspect_ratio',
+         'condition',
+         'distortion',
+         'max_angle',
+         'min_angle',
+         'radius_ratio',
+         'relative_size_squared',
+         'scaled_jacobian',
+         'shape',
+         'shape_and_size']
 
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
-        alg = _vtk.vtkCellQuality()
-        possible_measure_setters = {
-            'area': 'SetQualityMeasureToArea',
-            'aspect_beta': 'SetQualityMeasureToAspectBeta',
-            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
-            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
-            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
-            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
-            'condition': 'SetQualityMeasureToCondition',
-            'diagonal': 'SetQualityMeasureToDiagonal',
-            'dimension': 'SetQualityMeasureToDimension',
-            'distortion': 'SetQualityMeasureToDistortion',
-            'jacobian': 'SetQualityMeasureToJacobian',
-            'max_angle': 'SetQualityMeasureToMaxAngle',
-            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
-            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
-            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
-            'min_angle': 'SetQualityMeasureToMinAngle',
-            'oddy': 'SetQualityMeasureToOddy',
-            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
-            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
-            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
-            'shape': 'SetQualityMeasureToShape',
-            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
-            'shear': 'SetQualityMeasureToShear',
-            'shear_and_size': 'SetQualityMeasureToShearAndSize',
-            'skew': 'SetQualityMeasureToSkew',
-            'stretch': 'SetQualityMeasureToStretch',
-            'taper': 'SetQualityMeasureToTaper',
-            'volume': 'SetQualityMeasureToVolume',
-            'warpage': 'SetQualityMeasureToWarpage',
-        }
+        CELL_QUALITY = 'CellQuality'
+        compute_all = quality_measure in ['all', 'all_valid']
+        if isinstance(quality_measure, str) and not compute_all:
+            if version_info >= (0, 48):  # pragma: no cover
+                raise RuntimeError('Convert this deprecation warning into an error.')
+            if version_info >= (0, 49):  # pragma: no cover
+                raise RuntimeError('Remove this deprecation.')
 
-        # we need to check if these quality measures exist as VTK API changes
-        measure_setters = {}
-        for name, attr in possible_measure_setters.items():
-            setter_candidate = getattr(alg, attr, None)
-            if setter_candidate:
-                measure_setters[name] = setter_candidate
-
-        try:
-            # Set user specified quality measure
-            measure_setters[quality_measure]()
-        except (KeyError, IndexError):
-            options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
-            raise KeyError(
-                f'Cell quality type ({quality_measure}) not available. Options are: {options}',
+            msg = (
+                "The 'CellQuality' array will be removed in a future version.\n"
+                "The array name now matches the quality measure, e.g. `'scaled_jacobian'`.\n"
+                "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
             )
+            warnings.warn(msg, PyVistaDeprecationWarning)
+
+        # Store state to be restored later, used for silencing errors
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+
+        # Validate measures
+        _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
+        measures_available = _get_cell_qualilty_measures()
+        measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
+        if compute_all:
+            requested_measures = measures_available_names
+            # Disable VTK errors which are likely to be emitted for some measures
+            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        else:
+            measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            for measure in measures:
+                _validation.check_contains(
+                    measures_available_names, must_contain=measure, name='quality_measure'
+                )
+            requested_measures = cast(list[_CellQualityLiteral], measures)
+
+        # Compute cell quality
+        alg = _vtk.vtkCellQuality()
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
-        _update_alg(alg, progress_bar, 'Computing Cell Quality')
-        return _get_output(alg)
+        output = self.copy()
+        keep_valid_only = quality_measure == 'all_valid'
+        for measure in requested_measures:
+            # Set measure and update
+            getattr(alg, measures_available[measure])()
+            _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
+
+            # Store the cell quality array with the output
+            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+            if keep_valid_only and (
+                np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+            ):
+                continue
+            output.cell_data[measure] = cell_quality_array
+
+        if len(requested_measures) == 1 and not compute_all:
+            # Need to include CellQuality array for legacy behavior
+            output.cell_data[CELL_QUALITY] = cell_quality_array
+
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        return output
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
@@ -7580,3 +7662,19 @@ def _swap_axes(vectors, values):
     elif np.isclose(values[1], values[2]):
         _swap(1, 2)
     return vectors
+
+
+def _get_cell_qualilty_measures() -> dict[str, str]:
+    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    # Get possible quality measures dynamically
+    str_start = 'SetQualityMeasureTo'
+    measures = {}
+    for attr in dir(_vtk.vtkCellQuality):
+        if attr.startswith(str_start):
+            # Get the part after 'SetQualityMeasureTo'
+            measure_name = attr[len(str_start) :]
+            # Convert to snake case
+            # Add underscore before uppercase letters, except the first one
+            measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
+            measures[measure_name] = attr
+    return measures
