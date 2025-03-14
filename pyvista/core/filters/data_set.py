@@ -5371,6 +5371,12 @@ class DataSetFilters(DataObjectFilters):
             measures to compute. Specify ``'all'`` to compute all measures. A separate
             array is created for each measure.
 
+            .. note::
+
+                Some quality measures may generate VTK warnings for meshes with
+                non-applicable cells. These warnings are silenced when ``'all'``
+                is selected.
+
             .. versionadded:: 0.45
 
                 Add option to compute multiple measures or all measures.
@@ -5424,10 +5430,14 @@ class DataSetFilters(DataObjectFilters):
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
 
+        # Store state to be restored later
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         if (
             isinstance(quality_measure, str) and quality_measure == 'all'
         ) or 'all' in quality_measure:
             requested_measures = measures_available_names
+            # Disable VTK errors which are likely to be emitted for some measures
+            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         else:
             requested_measures = cast(
                 list[_CellQualityLiteral],
@@ -5454,6 +5464,8 @@ class DataSetFilters(DataObjectFilters):
             # Need to include CellQuality array for legacy behavior
             output.cell_data[CELL_QUALITY] = tmp_output[CELL_QUALITY]
 
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return output
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
