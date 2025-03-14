@@ -542,7 +542,7 @@ def test_compute_cell_quality_measures(ant):
     hinted_measures = list(get_args(_CellQualityLiteral))
     if pv.vtk_version_info < (9, 2):
         # This measure was removed from VTK's API
-        hinted_measures.append('aspect_beta')
+        hinted_measures.insert(1, 'aspect_beta')
 
     assert 'all' in hinted_measures
     hinted_measures.remove('all')
