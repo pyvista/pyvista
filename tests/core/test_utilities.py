@@ -9,9 +9,12 @@ import pickle
 import platform
 import re
 import shutil
+from typing import TYPE_CHECKING
 from unittest import mock
 import warnings
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 from pytest_cases import parametrize
@@ -25,34 +28,118 @@ from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
+from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
+from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import has_duplicates
+from pyvista.core.utilities.arrays import parse_field_choice
 from pyvista.core.utilities.arrays import raise_has_duplicates
+from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.features import create_grid
+from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
-from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture
 def transform():
     return Transform()
+
+
+def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
+    with monkeypatch.context() as m:
+        m.setattr(os, 'name', 'nt')
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.int64)
+
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.uint64)
+
+        with pytest.raises(
+            ValueError,
+            match='Invalid output_type 1',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=1)
+
+
+def test_progress_monitor_raises(mocker: MockerFixture):
+    from pyvista.core.utilities import observers
+
+    m = mocker.patch.object(observers, 'importlib')
+    m.util.find_spec.return_value = False
+
+    with pytest.raises(
+        ImportError,
+        match='Please install `tqdm` to monitor algorithms.',
+    ):
+        ProgressMonitor('algo')
+
+
+def test_create_grid_raises():
+    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+        create_grid(pv.Sphere(), dimensions=None)
+
+
+def test_parse_field_choice_raises():
+    with pytest.raises(ValueError, match=re.escape('Data field (foo) not supported.')):
+        parse_field_choice('foo')
+
+    with pytest.raises(TypeError, match=re.escape('Data field (1) not supported.')):
+        parse_field_choice(1)
+
+
+def test_convert_array_raises():
+    with pytest.raises(TypeError, match=re.escape("Invalid input array type (<class 'int'>).")):
+        convert_array(1)
+
+
+def test_get_array_raises():
+    with pytest.raises(
+        KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
+    ):
+        get_array(vtk.vtkTable(), 'foo', err=True)
+
+    with pytest.raises(
+        KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
+    ):
+        get_array_association(vtk.vtkTable(), 'foo', err=True)
+
+
+def test_raise_not_matching_raises():
+    with pytest.raises(
+        ValueError, match=re.escape('Number of scalars (1) must match number of rows (0).')
+    ):
+        raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
 def test_version():
@@ -72,9 +159,12 @@ def test_version():
 
 def test_createvectorpolydata_error():
     orig = np.random.default_rng().random((3, 1))
+    with pytest.raises(ValueError, match='orig array must be 3D'):
+        vector_poly_data(orig, [0, 1, 2])
+
     vec = np.random.default_rng().random((3, 1))
-    with pytest.raises(ValueError):  # noqa: PT011
-        vector_poly_data(orig, vec)
+    with pytest.raises(ValueError, match='vec array must be 3D'):
+        vector_poly_data([0, 1, 2], vec)
 
 
 def test_createvectorpolydata_1D():
@@ -282,6 +372,17 @@ def test_is_inside_bounds():
     assert not is_inside_bounds((5, 12, 5), bnds)
     assert not is_inside_bounds((5, 5, 12), bnds)
     assert not is_inside_bounds((12, 12, 12), bnds)
+
+
+def test_is_inside_bounds_raises():
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0,))
+
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0, 1, 3, 4, 5))
+
+    with pytest.raises(TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")):
+        is_inside_bounds(point=None, bounds=(0,))
 
 
 def test_voxelize(uniform):
@@ -508,10 +609,38 @@ def test_observer():
         obs.observe(alg)
 
 
+@pytest.mark.parametrize('point', [1, object(), None])
+def test_valid_vector_raises(point):
+    with pytest.raises(TypeError, match='foo must be a length three iterable of floats.'):
+        check_valid_vector(point=point, name='foo')
+
+
 def test_check_valid_vector():
     with pytest.raises(ValueError, match='length three'):
         check_valid_vector([0, 1])
+
     check_valid_vector([0, 1, 2])
+
+
+@pytest.mark.parametrize('value', [object(), None, [], ()])
+def test_annotated_int_enum_from_any_raises(value):
+    class Foo(AnnotatedIntEnum):
+        BAR = (0, 'foo')
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'{Foo.__name__} has no value matching {value}'),
+    ):
+        Foo.from_any(value)
+
+
+@given(points=st.lists(st.integers()).filter(lambda x: bool(len(x) % 2)))
+def test_lines_segments_from_points(points):
+    with pytest.raises(
+        ValueError,
+        match='An even number of points must be given to define each segment.',
+    ):
+        line_segments_from_points(points=points)
 
 
 def test_cells_dict_utils():

@@ -4,7 +4,12 @@ import os
 from pathlib import Path
 import pickle
 import re
+from typing import TYPE_CHECKING
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 
@@ -12,6 +17,9 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.examples.downloads import download_file
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 HAS_IMAGEIO = True
 try:
@@ -21,6 +29,37 @@ except ModuleNotFoundError:
 
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+
+
+def test_read_raises():
+    with pytest.raises(
+        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+    ):
+        pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(npoints=st.integers().filter(lambda x: x < 2))
+def test_read_texture_raises(mocker: MockerFixture, npoints):
+    from pyvista.core.utilities import fileio
+
+    m = mocker.patch.object(fileio, 'read')
+    m().n_points = npoints
+
+    m = mocker.patch.object(fileio, '_try_imageio_imread')
+    m.return_value = None
+
+    pv.read_texture(file := Path('foo.vtp'))
+    m.assert_called_once_with(file.expanduser().resolve())
+
+
+@pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+def test_read_exodus_raises(sideset):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
+    ):
+        pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
 
 
 def test_get_reader_fail(tmp_path):
