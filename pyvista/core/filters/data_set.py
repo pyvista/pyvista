@@ -5357,8 +5357,8 @@ class DataSetFilters(DataObjectFilters):
 
             The ``'CellQuality'`` array will be removed in a future version. The array
             name now matches the name of the quality measure. During the deprecation
-            period, both array names will be returned (but both refer to same
-            underlying data array).
+            period, both array names will be returned when the input is a single string
+            (but both arrays refer to same underlying data array).
 
         Notes
         -----
