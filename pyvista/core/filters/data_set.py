@@ -5314,7 +5314,7 @@ class DataSetFilters(DataObjectFilters):
         null_value: float = -1.0,
         progress_bar: bool = False,
     ):
-        """Compute a function of (geometric) quality for each cell of a mesh.
+        r"""Compute a function of (geometric) quality for each cell of a mesh.
 
         The per-cell quality is added to the mesh's cell data, in an array with
         the same name as the quality measure. Cell types not supported by this
@@ -5412,7 +5412,8 @@ class DataSetFilters(DataObjectFilters):
         non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
 
         >>> cqual = sphere.compute_cell_quality('all_valid')
-        >>> cqual.cell_data.keys()
+        >>> valid_measures = cqual.cell_data.keys()
+        >>> print(f'[{",\n ".join(repr(measure) for measure in valid_measures)}]')
         ['area',
          'aspect_frobenius',
          'aspect_ratio',
