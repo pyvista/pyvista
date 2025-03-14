@@ -508,7 +508,7 @@ AREA = 'area'
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.compute_cell_quality(SCALED_JACOBIAN, progress_bar=True)
+    qual = mesh.compute_cell_quality([SCALED_JACOBIAN], progress_bar=True)
 
     assert CELL_QUALITY in qual.array_names
     assert SCALED_JACOBIAN in qual.array_names
@@ -519,17 +519,19 @@ def test_compute_cell_quality():
     assert qual.array_names == expected_names
 
     with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
-        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+        qual = mesh.compute_cell_quality(quality_measure=['foo'], progress_bar=True)
 
 
 def test_compute_cell_quality_deprecation(ant):
     match = "The 'CellQuality' array will be removed in a future version."
-    "The array name now matches the quality measure, e.g. 'scaled_jacobian'."
-    'Set the quality measure explicitly to remove this warning.'
+    "The array name now matches the quality measure, e.g. `'scaled_jacobian'`."
+    "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
     with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
         ant.compute_cell_quality()
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        ant.compute_cell_quality('area')
 
-    qual = ant.compute_cell_quality(SCALED_JACOBIAN)
+    qual = ant.compute_cell_quality([SCALED_JACOBIAN])
     if pv.version_info >= (0, 49):  # pragma: no cover
         if CELL_QUALITY in qual.array_names:
             raise RuntimeError(f'Remove the {CELL_QUALITY} array from the output.')
@@ -547,7 +549,7 @@ def test_compute_cell_quality_measures(ant):
     assert actual_measures == hinted_measures, msg
 
     # Test 'all' measure keys
-    qual = ant.compute_cell_quality('all')
+    qual = ant.compute_cell_quality(['all'])
     assert qual.array_names == actual_measures
 
 

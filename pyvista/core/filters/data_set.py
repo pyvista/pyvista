@@ -5309,7 +5309,7 @@ class DataSetFilters(DataObjectFilters):
 
     def compute_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
-        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] | None = None,
+        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
         null_value: float = -1.0,
         progress_bar: bool = False,
     ):
@@ -5405,19 +5405,16 @@ class DataSetFilters(DataObjectFilters):
         """
         CELL_QUALITY = 'CellQuality'
 
-        if quality_measure is None:
-            # Measure was not explicitly specified
+        if isinstance(quality_measure, str):
             if version_info >= (0, 48):  # pragma: no cover
                 raise RuntimeError('Convert this deprecation warning into an error.')
             if version_info >= (0, 49):  # pragma: no cover
-                raise RuntimeError(
-                    "Remove this deprecation and update the type hint to be 'scaled_jacobian' instead of None."
-                )
+                raise RuntimeError('Remove this deprecation.')
 
             msg = (
                 "The 'CellQuality' array will be removed in a future version.\n"
-                "The array name now matches the quality measure, e.g. 'scaled_jacobian'.\n"
-                'Set the quality measure explicitly to remove this warning.'
+                "The array name now matches the quality measure, e.g. `'scaled_jacobian'`.\n"
+                "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
             )
             warnings.warn(msg, PyVistaDeprecationWarning)
             quality_measure = 'scaled_jacobian'  # The old default
