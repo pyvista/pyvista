@@ -38,6 +38,7 @@ TEST_FILE_NAMES = [f for f in os.listdir(TYPING_CASES_ABS_PATH) if f.endswith('.
 # The key will be replaced by the value.
 REPLACE_TYPES = {
     'pyvista.core.partitioned.PartitionedDataSet': 'PartitionedDataSet',
+    'pyvista.core.dataset.DataSet': 'DataSet',
     'pyvista.core.composite.MultiBlock': 'MultiBlock',
     'pyvista.core.pointset.ExplicitStructuredGrid': 'ExplicitStructuredGrid',
     'pyvista.core.pointset.StructuredGrid': 'StructuredGrid',
@@ -48,6 +49,7 @@ REPLACE_TYPES = {
     'pyvista.core.grid.RectilinearGrid': 'RectilinearGrid',
     'pyvista.core.objects.Table': 'Table',
     'pyvista.core.pyvista_ndarray.pyvista_ndarray': 'pyvista_ndarray',
+    'typing.Iterator': 'Iterator',
 }
 
 # Import the REPLACE_TYPES values into the global namespace to make
@@ -59,6 +61,10 @@ globals().update(
         for module_name, class_name in [full_path.rsplit('.', 1)]
     }
 )
+REPLACE_TYPES.update({'builtins.str': 'str'})
+REPLACE_TYPES.update({'builtins.int': 'int'})
+REPLACE_TYPES.update({'builtins.tuple': 'tuple'})
+REPLACE_TYPES.update({'builtins.list': 'list'})
 
 
 class _TestCaseTuple(NamedTuple):

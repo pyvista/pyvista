@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
-from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
@@ -163,10 +162,7 @@ class DataObject:
 
         def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
             iterator = mesh.recursive_iterator('all', node_type='parent')
-            typed_iterator = cast(
-                Iterator[tuple[tuple[int, ...], str, pyvista.MultiBlock]], iterator
-            )
-            for index, name, nested_multiblock in typed_iterator:
+            for index, name, nested_multiblock in iterator:
                 if len(nested_multiblock.field_data.keys()) > 0:
                     # Avoid circular import
                     from pyvista.core.filters.composite import _format_nested_index
