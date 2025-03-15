@@ -616,25 +616,23 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
 
     Examples
     --------
-    Load a surface mesh with :attr:`~pyvista.CellType.TRIANGLE` cells.
+    Get the current vtk verbosity.
 
     >>> import pyvista as pv
+    >>> pv.vtk_verbosity()
+    'info'
+
+    Set verbosity to max.
+
+    >>> _ = pv.vtk_verbosity('max')
+    >>> pv.vtk_verbosity()
+    'max'
+
+    Use it as a context manager to temporarily turn it off.
+
     >>> mesh = pv.Sphere()
-
-    Compute the ``'volume'`` cell quality of the mesh. Since the cells are 2D,
-    they have no volume, and VTK will print errors to ``stderr``.
-
-    >>> mesh.compute_cell_quality('volume')
-
-    To temporarily silence the errors, use ``vtk_verbosity`` context manager. The
-
     >>> with pv.vtk_verbosity('off'):
     ...     mesh.compute_cell_quality('volume')
-
-    Alternatively, silence all errors permanently.
-
-    >>> pv.vtk_verbosity('off')
-    >>> mesh.compute_cell_quality('volume')
 
     """
 
@@ -661,6 +659,26 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     def _verbosity(self, verbosity: _VerbosityOptions):
         vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
 
+    @property
+    def _verbosity_string(self):
+        to_string = {
+            -10: 'invalid',
+            -9: 'off',
+            -2: 'error',
+            -1: 'warning',
+            0: 'info',
+            1: '1',
+            2: '2',
+            3: '3',
+            4: '4',
+            5: '5',
+            6: '6',
+            7: '7',
+            8: '8',
+            9: 'max',
+        }
+        return to_string[self._verbosity]
+
     def __init__(self):
         """Initialize context manager."""
         self._original_verbosity = None
@@ -675,9 +693,13 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
         if self._original_verbosity is not None:
             self._verbosity = self._original_verbosity
 
-    def __call__(self, verbosity: _VerbosityOptions):
+    def __call__(self, verbosity: _VerbosityOptions | None = None):
         """Call the context manager."""
-        # Set the verbosity permanently
+        if verbosity is None:
+            # Get the verbosity
+            return self._verbosity_string
+
+        # Set the verbosity but allow restore to original value if exiting context
         self._original_verbosity = self._verbosity
         self._verbosity = verbosity
         return self
