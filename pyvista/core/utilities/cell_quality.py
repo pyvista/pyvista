@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal
+from typing import NoReturn
 from typing import get_args
 
 import numpy as np
@@ -193,6 +194,27 @@ def cell_quality_info(cell_type: CellType, measure: str) -> CellQualityInfo:
         Dataclass with information about the quality measure for a specific cell type.
 
     """
+
+    def raise_error(item_: str, valid_options_: list[str]) -> NoReturn:
+        raise ValueError(
+            f'Cell quality info is not available for {item_}. Valid options are:\n{valid_options_}'
+        )
+
     if _INFO_LOOKUP == {}:
         _init_lookup(_INFO_LOOKUP)
-    return _INFO_LOOKUP[cell_type][measure]
+
+    # Lookup measures available for the cell type
+    try:
+        measures = _INFO_LOOKUP[cell_type]
+    except KeyError:
+        item = f'cell type {cell_type.name!r}'
+        valid_options = [typ.name for typ in _INFO_LOOKUP.keys()]
+        raise_error(item, valid_options)
+
+    # Lookup the measure info
+    try:
+        return measures[measure]
+    except KeyError:
+        item = f'{cell_type.name!r} measure {measure!r}'
+        valid_options = list(measures.keys())
+        raise_error(item, valid_options)
