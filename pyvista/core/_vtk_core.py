@@ -663,8 +663,7 @@ class VTKVerbosity(contextlib.ContextDecorator):
 
     def __init__(self):
         """Initialize context manager."""
-        # Store current verbosity state
-        self._original_verbosity = self._verbosity
+        self._original_verbosity = None
 
     def __enter__(self):
         """Enter context manager."""
@@ -673,12 +672,13 @@ class VTKVerbosity(contextlib.ContextDecorator):
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager."""
         # Restore the original verbosity level
-        self._verbosity = self._original_verbosity
+        if self._original_verbosity is not None:
+            self._verbosity = self._original_verbosity
 
     def __call__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):  # type:ignore[override]
         """Call the context manager."""
-        # Set the verbosity permanently.
-        self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
+        # Set the verbosity permanently
+        self._original_verbosity = self._verbosity
         self._verbosity = verbosity
         return self
 

@@ -2006,14 +2006,14 @@ def test_classproperty():
 
 
 @pytest.fixture
-def reset_verbosity():
+def modifies_verbosity():
     initial_verbosity = vtk.vtkLogger.GetCurrentVerbosityCutoff()
     yield
     vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
 
 
 @pytest.mark.parametrize('verbosity', [*_vtk._VerbosityOptions, _vtk.vtkLogger.VERBOSITY_OFF])
-def test_vtk_verbosity_context(verbosity, reset_verbosity):
+def test_vtk_verbosity_context(verbosity, modifies_verbosity):
     initial_verbosity = vtk.vtkLogger.VERBOSITY_4
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
     with pv.vtk_verbosity(verbosity):
@@ -2022,7 +2022,7 @@ def test_vtk_verbosity_context(verbosity, reset_verbosity):
 
 
 @pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
-def test_vtk_verbosity_setter(verbosity, reset_verbosity):
+def test_vtk_verbosity_setter(verbosity, modifies_verbosity):
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
     pv.vtk_verbosity(verbosity)
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
