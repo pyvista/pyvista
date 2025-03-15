@@ -24,6 +24,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -2002,3 +2003,20 @@ def test_classproperty():
         Foo.prop()
     with pytest.raises(TypeError, match='object is not callable'):
         Foo().prop()
+
+
+# Usage examples:
+@pytest.mark.parametrize('option', [*_vtk._VerbosityOptions, _vtk.vtkLogger.VERBOSITY_OFF])
+def test_vtk_verbosity(option):
+    with pv.vtk_verbosity(option):
+        ...
+
+
+def test_vtk_verbosity_raises():
+    match = re.escape(
+        "Invalid verbosity name 'str', must be one of:\n"
+        "('invalid', 'off', 'error', 'warning', 'info', 'trace', 'max', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9')."
+    )
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity('str'):
+            ...

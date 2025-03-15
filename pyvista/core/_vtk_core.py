@@ -10,7 +10,9 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+from typing import Literal
 from typing import NamedTuple
+from typing import get_args
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
@@ -584,3 +586,68 @@ def VTKVersionInfo():
 
 
 vtk_version_info = VTKVersionInfo()
+
+_VerbosityLiteral = Literal[
+    'invalid',
+    'off',
+    'error',
+    'warning',
+    'info',
+    'trace',
+    'max',
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+]
+
+_VerbosityOptions = get_args(_VerbosityLiteral)
+
+
+class vtk_verbosity(contextlib.ContextDecorator):
+    """Context manager to temporarily set VTK verbosity level.
+
+    Examples
+    --------
+    Load a surface mesh with :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Sphere()
+
+    Compute the ``'volume'`` cell quality of the mesh. Since the cells are 2D,
+    they have no volume, and VTK will print errors to ``stderr``.
+
+    >>> mesh.compute_cell_quality('volume')
+
+    To silence the errors, use the :class:`vtk_verbosity` context manager:
+
+    >>> with pv.vtk_verbosity('off'):
+    ...     mesh.compute_cell_quality('volume')
+
+    """
+
+    def __init__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
+        if isinstance(verbosity, (int, str)) and not isinstance(verbosity, vtkLogger.Verbosity):
+            try:
+                verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+            except AttributeError:
+                raise ValueError(
+                    f"Invalid verbosity name '{verbosity}', must be one of:\n{_VerbosityOptions}."
+                )
+        self._new_verbosity = verbosity
+
+    def __enter__(self):
+        # Store the current verbosity level
+        self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
+        # Set the new verbosity level
+        vtkLogger.SetStderrVerbosity(self._new_verbosity)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Restore the original verbosity level
+        vtkLogger.SetStderrVerbosity(self._original_verbosity)
