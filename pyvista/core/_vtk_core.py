@@ -635,14 +635,16 @@ class vtk_verbosity(contextlib.ContextDecorator):
     """
 
     def __init__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
-        if isinstance(verbosity, (int, str)) and not isinstance(verbosity, vtkLogger.Verbosity):
+        if isinstance(verbosity, vtkLogger.Verbosity):
+            verbosity_ = verbosity
+        else:
             try:
-                verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+                verbosity_ = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
             except AttributeError:
                 raise ValueError(
                     f"Invalid verbosity name '{verbosity}', must be one of:\n{_VerbosityOptions}."
                 )
-        self._new_verbosity = verbosity
+        self._new_verbosity = verbosity_
 
     def __enter__(self):
         # Store the current verbosity level
