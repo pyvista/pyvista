@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -21,6 +22,8 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
+from pyvista.core.filters.data_set import _CellQualityLiteral
+from pyvista.core.filters.data_set import _get_cell_qualilty_measures
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -498,12 +501,71 @@ def test_slice_along_line_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+SCALED_JACOBIAN = 'scaled_jacobian'
+CELL_QUALITY = 'CellQuality'
+AREA = 'area'
+VOLUME = 'volume'
+
+
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.compute_cell_quality(progress_bar=True)
-    assert 'CellQuality' in qual.array_names
-    with pytest.raises(KeyError):
-        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+    qual = mesh.compute_cell_quality([SCALED_JACOBIAN], progress_bar=True)
+
+    assert CELL_QUALITY in qual.array_names
+    assert SCALED_JACOBIAN in qual.array_names
+    assert np.shares_memory(qual[CELL_QUALITY], qual[SCALED_JACOBIAN])
+
+    expected_names = [SCALED_JACOBIAN, AREA]
+    qual = mesh.compute_cell_quality(expected_names, progress_bar=True)
+    assert qual.array_names == expected_names
+
+    with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
+        qual = mesh.compute_cell_quality(quality_measure=['foo'], progress_bar=True)
+
+
+def test_compute_cell_quality_deprecation(ant):
+    match = "The 'CellQuality' array will be removed in a future version."
+    "The array name now matches the quality measure, e.g. `'scaled_jacobian'`."
+    "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        ant.compute_cell_quality()
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        ant.compute_cell_quality('area')
+
+    qual = ant.compute_cell_quality([SCALED_JACOBIAN])
+    if pv.version_info >= (0, 49):  # pragma: no cover
+        if CELL_QUALITY in qual.array_names:
+            raise RuntimeError(f'Remove the {CELL_QUALITY} array from the output.')
+
+
+def test_compute_cell_quality_measures(ant):
+    # Get quality measures from type hints
+    hinted_measures = list(get_args(_CellQualityLiteral))
+    if pv.vtk_version_info < (9, 2):
+        # This measure was removed from VTK's API
+        hinted_measures.insert(1, 'aspect_beta')
+
+    assert 'all' in hinted_measures
+    assert 'all_valid' in hinted_measures
+    hinted_measures.remove('all')
+    hinted_measures.remove('all_valid')
+
+    # Get quality measures from the VTK class
+    actual_measures = list(_get_cell_qualilty_measures().keys())
+    msg = 'VTK API has changed. Update type hints and docstring for `compute_cell_quality`.'
+    assert actual_measures == hinted_measures, msg
+
+    # Test 'all' measure keys
+    qual = ant.compute_cell_quality('all')
+    assert qual.array_names == actual_measures
+
+
+def test_compute_cell_quality_all_valid(ant):
+    # Test 'all' measure keys
+    qual = ant.compute_cell_quality('all_valid')
+    assert AREA in qual.array_names
+    assert SCALED_JACOBIAN in qual.array_names
+    assert VOLUME not in qual.array_names
 
 
 @pytest.mark.parametrize(
