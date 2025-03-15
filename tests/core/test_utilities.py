@@ -2008,8 +2008,11 @@ def test_classproperty():
 # Usage examples:
 @pytest.mark.parametrize('option', [*_vtk._VerbosityOptions, _vtk.vtkLogger.VERBOSITY_OFF])
 def test_vtk_verbosity(option):
+    initial_verbosity = vtk.vtkLogger.VERBOSITY_4
+    _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
     with pv.vtk_verbosity(option):
         ...
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == initial_verbosity
 
 
 def test_vtk_verbosity_raises():
