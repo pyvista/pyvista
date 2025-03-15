@@ -613,6 +613,8 @@ _VerbosityOptions = get_args(_VerbosityLiteral)
 class vtk_verbosity(contextlib.ContextDecorator):
     """Context manager to temporarily set VTK verbosity level.
 
+    .. versionadded:: 0.45
+
     Examples
     --------
     Load a surface mesh with :attr:`~pyvista.CellType.TRIANGLE` cells.
