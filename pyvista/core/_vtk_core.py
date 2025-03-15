@@ -647,12 +647,11 @@ class VTKVerbosity(contextlib.ContextDecorator):
             return verbosity
         else:
             try:
-                verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+                return getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
             except AttributeError:
                 raise ValueError(
                     f"Invalid verbosity name '{verbosity}', must be one of:\n{_VerbosityOptions}."
                 )
-        return verbosity
 
     @property
     def _verbosity(self):
@@ -676,7 +675,7 @@ class VTKVerbosity(contextlib.ContextDecorator):
         # Restore the original verbosity level
         self._verbosity = self._original_verbosity
 
-    def __call__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
+    def __call__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):  # type:ignore[override]
         """Call the context manager."""
         # Set the verbosity permanently.
         self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
