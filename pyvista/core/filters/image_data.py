@@ -1008,11 +1008,8 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        with pyvista.vtk_verbosity('off'):
+            _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         return wrap(alg.GetOutput())
 
     def contour_labels(  # type: ignore[misc]
@@ -1606,11 +1603,9 @@ class ImageDataFilters(DataSetFilters):
 
         # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Generating label contours')
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        with pyvista.vtk_verbosity('off'):
+            _update_alg(alg, progress_bar, 'Generating label contours')
+
         output: pyvista.PolyData = _get_output(alg)
 
         (  # Clear temp scalars from input

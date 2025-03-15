@@ -24,6 +24,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -2002,3 +2003,50 @@ def test_classproperty():
         Foo.prop()
     with pytest.raises(TypeError, match='object is not callable'):
         Foo().prop()
+
+
+@pytest.fixture
+def modifies_verbosity():
+    initial_verbosity = vtk.vtkLogger.GetCurrentVerbosityCutoff()
+    yield
+    vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
+
+
+@pytest.mark.parametrize(
+    'verbosity',
+    [
+        'OFF',
+        'off',
+        'error',
+        'warning',
+        'info',
+        'trace',
+        'max',
+        *range(10),
+        '0',
+        _vtk.vtkLogger.VERBOSITY_OFF,
+    ],
+)
+def test_vtk_verbosity_context(verbosity, modifies_verbosity):
+    initial_verbosity = vtk.vtkLogger.VERBOSITY_4
+    _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
+    with pv.vtk_verbosity(verbosity):
+        ...
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == initial_verbosity
+
+
+@pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
+def test_vtk_verbosity_setter(verbosity, modifies_verbosity):
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
+    pv.vtk_verbosity(verbosity)
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
+
+
+def test_vtk_verbosity_raises():
+    match = re.escape(
+        "Invalid verbosity name 'str', must be one of:\n"
+        "'off', 'error', 'warning', 'info', 'trace', 'max', or an integer between [-9, 9]."
+    )
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity('str'):
+            ...
