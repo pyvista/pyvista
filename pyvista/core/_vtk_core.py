@@ -600,7 +600,7 @@ _VerbosityOptions = (
 )
 
 
-class VTKVerbosity(contextlib.ContextDecorator):
+class _VTKVerbosity(contextlib.AbstractContextManager):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
@@ -662,10 +662,6 @@ class VTKVerbosity(contextlib.ContextDecorator):
         """Initialize context manager."""
         self._original_verbosity = None
 
-    def __enter__(self):
-        """Enter context manager."""
-        # Do nothing, state was stored previously on init or call
-
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager."""
         # Restore the original verbosity level
@@ -680,4 +676,4 @@ class VTKVerbosity(contextlib.ContextDecorator):
         return self
 
 
-vtk_verbosity = VTKVerbosity()
+vtk_verbosity = _VTKVerbosity()
