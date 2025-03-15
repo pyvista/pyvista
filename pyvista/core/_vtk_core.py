@@ -611,7 +611,7 @@ _VerbosityOptions = get_args(_VerbosityLiteral)
 
 
 class VTKVerbosity(contextlib.ContextDecorator):
-    """Context manager to temporarily set VTK verbosity level.
+    """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
 
@@ -627,10 +627,15 @@ class VTKVerbosity(contextlib.ContextDecorator):
 
     >>> mesh.compute_cell_quality('volume')
 
-    To silence the errors, use the :class:`vtk_verbosity` context manager:
+    To temporarily silence the errors, use ``vtk_verbosity`` context manager. The
 
     >>> with pv.vtk_verbosity('off'):
     ...     mesh.compute_cell_quality('volume')
+
+    Alternatively, silence all errors permanently.
+
+    >>> pv.vtk_verbosity('off')
+    >>> mesh.compute_cell_quality('volume')
 
     """
 
@@ -649,27 +654,33 @@ class VTKVerbosity(contextlib.ContextDecorator):
                 )
         return verbosity
 
-    def _set_verbosity(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
-        self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
+    @property
+    def _verbosity(self):
+        return vtkLogger.GetCurrentVerbosityCutoff()
+
+    @_verbosity.setter
+    def _verbosity(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
         vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
 
     def __init__(self):
-        self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
+        """Initialize context manager."""
+        # Store current verbosity state
+        self._original_verbosity = self._verbosity
 
     def __enter__(self):
-        ...
-        # # Store the current verbosity level
-        # self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
-        # # # Set the new verbosity level
-        # # vtkLogger.SetStderrVerbosity(self._new_verbosity)
+        """Enter context manager."""
+        # Do nothing, state was stored previously on init or call
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Exit context manager."""
         # Restore the original verbosity level
-        vtkLogger.SetStderrVerbosity(self._original_verbosity)
+        self._verbosity = self._original_verbosity
 
     def __call__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
-        """Allow setting verbosity permanently."""
-        self._set_verbosity(verbosity)
+        """Call the context manager."""
+        # Set the verbosity permanently.
+        self._original_verbosity = vtkLogger.GetCurrentVerbosityCutoff()
+        self._verbosity = verbosity
         return self
 
 

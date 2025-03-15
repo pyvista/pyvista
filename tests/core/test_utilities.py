@@ -2012,7 +2012,6 @@ def reset_verbosity():
     vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
 
 
-# Usage examples:
 @pytest.mark.parametrize('verbosity', [*_vtk._VerbosityOptions, _vtk.vtkLogger.VERBOSITY_OFF])
 def test_vtk_verbosity_context(verbosity, reset_verbosity):
     initial_verbosity = vtk.vtkLogger.VERBOSITY_4
