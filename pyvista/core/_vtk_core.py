@@ -603,7 +603,7 @@ if TYPE_CHECKING:
     )
 
 
-class _VTKVerbosity(contextlib.AbstractContextManager):
+class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
@@ -664,6 +664,10 @@ class _VTKVerbosity(contextlib.AbstractContextManager):
     def __init__(self):
         """Initialize context manager."""
         self._original_verbosity = None
+
+    def __enter__(self):
+        """Enter context manager."""
+        return
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager."""
