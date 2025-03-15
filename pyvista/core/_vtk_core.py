@@ -671,7 +671,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager):
         if self._original_verbosity is not None:
             self._verbosity = self._original_verbosity
 
-    def __call__(self, verbosity: _VerbosityOptions):  # type:ignore[override]
+    def __call__(self, verbosity: _VerbosityOptions):
         """Call the context manager."""
         # Set the verbosity permanently
         self._original_verbosity = self._verbosity
