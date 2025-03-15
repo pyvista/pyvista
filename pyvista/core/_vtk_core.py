@@ -632,7 +632,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
 
     >>> mesh = pv.Sphere()
     >>> with pv.vtk_verbosity('off'):
-    ...     mesh.compute_cell_quality('volume')
+    ...     mesh = mesh.compute_cell_quality('volume')
 
     """
 
