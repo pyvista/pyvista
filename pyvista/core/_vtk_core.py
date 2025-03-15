@@ -10,7 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
-from typing import Literal
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
@@ -586,18 +586,21 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-_VerbosityOptions = (
-    Literal[
-        'off',
-        'error',
-        'warning',
-        'info',
-        'trace',
-        'max',
-    ]
-    | int
-    | vtkLogger.Verbosity
-)
+if TYPE_CHECKING:
+    from typing import Literal
+
+    _VerbosityOptions = (
+        Literal[
+            'off',
+            'error',
+            'warning',
+            'info',
+            'trace',
+            'max',
+        ]
+        | int
+        | vtkLogger.Verbosity
+    )
 
 
 class _VTKVerbosity(contextlib.AbstractContextManager):
