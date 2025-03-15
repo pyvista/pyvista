@@ -2012,7 +2012,21 @@ def modifies_verbosity():
     vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
 
 
-@pytest.mark.parametrize('verbosity', [*_vtk._VerbosityOptions, _vtk.vtkLogger.VERBOSITY_OFF])
+@pytest.mark.parametrize(
+    'verbosity',
+    [
+        'OFF',
+        'off',
+        'error',
+        'warning',
+        'info',
+        'trace',
+        'max',
+        *range(10),
+        '0',
+        _vtk.vtkLogger.VERBOSITY_OFF,
+    ],
+)
 def test_vtk_verbosity_context(verbosity, modifies_verbosity):
     initial_verbosity = vtk.vtkLogger.VERBOSITY_4
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
@@ -2031,7 +2045,7 @@ def test_vtk_verbosity_setter(verbosity, modifies_verbosity):
 def test_vtk_verbosity_raises():
     match = re.escape(
         "Invalid verbosity name 'str', must be one of:\n"
-        "('invalid', 'off', 'error', 'warning', 'info', 'trace', 'max', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9')."
+        "'off', 'error', 'warning', 'info', 'trace', 'max', or an integer between [-9, 9]."
     )
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity('str'):

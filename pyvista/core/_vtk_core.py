@@ -12,7 +12,6 @@ from __future__ import annotations
 import contextlib
 from typing import Literal
 from typing import NamedTuple
-from typing import get_args
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
@@ -587,33 +586,30 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-_VerbosityLiteral = Literal[
-    'invalid',
-    'off',
-    'error',
-    'warning',
-    'info',
-    'trace',
-    'max',
-    '0',
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-]
-
-_VerbosityOptions = get_args(_VerbosityLiteral)
+_VerbosityOptions = (
+    Literal[
+        'off',
+        'error',
+        'warning',
+        'info',
+        'trace',
+        'max',
+    ]
+    | int
+    | vtkLogger.Verbosity
+)
 
 
 class VTKVerbosity(contextlib.ContextDecorator):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    verbosity : int | str | vtkLogger.Verbosity
+        Verbosity of the ``vtkLogger`` to set. Accepted values are, ``'off'``, ``'error'``,
+        ``'warning'``, ``'info'``, ``'trace'``, ``'max'`` or an integer between ``[-9, 9]``.
 
     Examples
     --------
@@ -641,7 +637,7 @@ class VTKVerbosity(contextlib.ContextDecorator):
 
     @staticmethod
     def _validate_verbosity(
-        verbosity: _VerbosityLiteral | vtkLogger.Verbosity,
+        verbosity: _VerbosityOptions,
     ) -> vtkLogger.Verbosity:
         if isinstance(verbosity, vtkLogger.Verbosity):
             return verbosity
@@ -650,7 +646,8 @@ class VTKVerbosity(contextlib.ContextDecorator):
                 return getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
             except AttributeError:
                 raise ValueError(
-                    f"Invalid verbosity name '{verbosity}', must be one of:\n{_VerbosityOptions}."
+                    f"Invalid verbosity name '{verbosity}', must be one of:\n"
+                    f"'off', 'error', 'warning', 'info', 'trace', 'max', or an integer between [-9, 9]."
                 )
 
     @property
@@ -658,7 +655,7 @@ class VTKVerbosity(contextlib.ContextDecorator):
         return vtkLogger.GetCurrentVerbosityCutoff()
 
     @_verbosity.setter
-    def _verbosity(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):
+    def _verbosity(self, verbosity: _VerbosityOptions):
         vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
 
     def __init__(self):
@@ -675,7 +672,7 @@ class VTKVerbosity(contextlib.ContextDecorator):
         if self._original_verbosity is not None:
             self._verbosity = self._original_verbosity
 
-    def __call__(self, verbosity: _VerbosityLiteral | vtkLogger.Verbosity):  # type:ignore[override]
+    def __call__(self, verbosity: _VerbosityOptions):  # type:ignore[override]
         """Call the context manager."""
         # Set the verbosity permanently
         self._original_verbosity = self._verbosity
