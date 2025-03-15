@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import functools
 import itertools
+import re
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -26,6 +28,8 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import RectilinearGrid
@@ -35,6 +39,40 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
+
+
+_CellQualityLiteral = Literal[
+    'area',
+    'aspect_frobenius',
+    'aspect_gamma',
+    'aspect_ratio',
+    'collapse_ratio',
+    'condition',
+    'diagonal',
+    'dimension',
+    'distortion',
+    'jacobian',
+    'max_angle',
+    'max_aspect_frobenius',
+    'max_edge_ratio',
+    'med_aspect_frobenius',
+    'min_angle',
+    'oddy',
+    'radius_ratio',
+    'relative_size_squared',
+    'scaled_jacobian',
+    'shape',
+    'shape_and_size',
+    'shear',
+    'shear_and_size',
+    'skew',
+    'stretch',
+    'taper',
+    'volume',
+    'warpage',
+    'all',
+    'all_valid',
+]
 
 
 class DataObjectFilters:
@@ -2751,3 +2789,227 @@ class DataObjectFilters:
                 raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
+
+    def compute_cell_quality(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
+        null_value: float = -1.0,
+        progress_bar: bool = False,
+    ) -> _DataSetOrMultiBlockType:
+        r"""Compute a function of (geometric) quality for each cell of a mesh.
+
+        The per-cell quality is added to the mesh's cell data, in an array with
+        the same name as the quality measure. Cell types not supported by this
+        filter or undefined quality of supported cell types will have an
+        entry of ``-1``.
+
+        Defaults to computing the scaled Jacobian.
+
+        Options for cell quality measure:
+
+        - ``'area'``
+        - ``'aspect_frobenius'``
+        - ``'aspect_gamma'``
+        - ``'aspect_ratio'``
+        - ``'collapse_ratio'``
+        - ``'condition'``
+        - ``'diagonal'``
+        - ``'dimension'``
+        - ``'distortion'``
+        - ``'jacobian'``
+        - ``'max_angle'``
+        - ``'max_aspect_frobenius'``
+        - ``'max_edge_ratio'``
+        - ``'med_aspect_frobenius'``
+        - ``'min_angle'``
+        - ``'oddy'``
+        - ``'radius_ratio'``
+        - ``'relative_size_squared'``
+        - ``'scaled_jacobian'``
+        - ``'shape'``
+        - ``'shape_and_size'``
+        - ``'shear'``
+        - ``'shear_and_size'``
+        - ``'skew'``
+        - ``'stretch'``
+        - ``'taper'``
+        - ``'volume'``
+        - ``'warpage'``
+
+        .. deprecated:: 0.45
+
+            The ``'CellQuality'`` array will be removed in a future version. The array
+            name now matches the name of the quality measure. During the deprecation
+            period, both array names will be returned when the input is a single string
+            (but both arrays refer to same underlying data array).
+
+        Notes
+        -----
+        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
+
+        Parameters
+        ----------
+        quality_measure : str | sequence[str], default: 'scaled_jacobian'
+            The cell quality measure to use. Specify a single measure or a sequence of
+            measures to compute. Specify ``'all'`` to compute all measures, or
+            ``'all_valid'`` to only keep quality measures that are valid for the mesh's
+            cell types. A separate array is created for each measure.
+
+            .. note::
+
+                Some quality measures may generate VTK warnings for meshes with
+                non-applicable cells. These warnings are silenced when ``'all'``
+                is selected.
+
+            .. versionadded:: 0.45
+
+                Add option to compute multiple measures or all measures.
+
+        null_value : float, default: -1.0
+            Float value for undefined quality. Undefined quality are qualities
+            that could be addressed by this filter but is not well defined for
+            the particular geometry of cell in question, e.g. a volume query
+            for a triangle. Undefined quality will always be undefined.
+            The default value is -1.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Dataset with the computed mesh quality. Return type matches input.
+            Cell data array(s) with the computed quality measure(s) are included.
+
+        Examples
+        --------
+        Compute and plot the minimum angle of a sample sphere mesh.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> cqual = sphere.compute_cell_quality(['min_angle'])
+        >>> cqual.plot(show_edges=True)
+
+        Compute all valid quality measures for the sphere. These measures all return
+        non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        >>> cqual = sphere.compute_cell_quality('all_valid')
+        >>> valid_measures = cqual.cell_data.keys()
+        >>> print(f'[{",\n ".join(repr(measure) for measure in valid_measures)}]')
+        ['area',
+         'aspect_frobenius',
+         'aspect_ratio',
+         'condition',
+         'distortion',
+         'max_angle',
+         'min_angle',
+         'radius_ratio',
+         'relative_size_squared',
+         'scaled_jacobian',
+         'shape',
+         'shape_and_size']
+
+        See the :ref:`mesh_quality_example` for more examples using this filter.
+
+        """
+        compute_all = quality_measure in ['all', 'all_valid']
+        keep_valid_only = quality_measure == 'all_valid'
+        if isinstance(quality_measure, str) and not compute_all:
+            if version_info >= (0, 48):  # pragma: no cover
+                raise RuntimeError('Convert this deprecation warning into an error.')
+            if version_info >= (0, 49):  # pragma: no cover
+                raise RuntimeError('Remove this deprecation.')
+
+            msg = (
+                "The 'CellQuality' array will be removed in a future version.\n"
+                "The array name now matches the quality measure, e.g. `'scaled_jacobian'`.\n"
+                "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
+            )
+            warnings.warn(msg, PyVistaDeprecationWarning)
+
+        # Store state to be restored later, used for silencing errors
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+
+        # Validate measures
+        _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
+        measures_available = _get_cell_qualilty_measures()
+        measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
+        if compute_all:
+            measures_requested = measures_available_names
+            # Disable VTK errors which are likely to be emitted for some measures
+            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        else:
+            measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            for measure in measures:
+                _validation.check_contains(
+                    measures_available_names, must_contain=measure, name='quality_measure'
+                )
+            measures_requested = cast(list[_CellQualityLiteral], measures)
+
+        block_filter = functools.partial(
+            DataObjectFilters._compute_cell_quality,
+            measures_requested=measures_requested,
+            measures_available=measures_available,
+            keep_valid_only=keep_valid_only,
+            compute_all=compute_all,
+            null_value=null_value,
+            progress_bar=progress_bar,
+        )
+        if isinstance(self, pyvista.MultiBlock):
+            output: _DataSetOrMultiBlockType = self.generic_filter(block_filter)  # type: ignore[assignment]
+        else:
+            output = block_filter(self)
+
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        return output
+
+    def _compute_cell_quality(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        measures_requested,
+        measures_available,
+        keep_valid_only,
+        compute_all,
+        null_value,
+        progress_bar,
+    ) -> _DataSetType:
+        """Compute cell quality of a DataSet (internal method)."""
+        CELL_QUALITY = 'CellQuality'
+        alg = _vtk.vtkCellQuality()
+        alg.SetInputData(self)
+        alg.SetUndefinedQuality(null_value)
+        output = self.copy()
+        for measure in measures_requested:
+            # Set measure and update
+            getattr(alg, measures_available[measure])()
+            _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
+
+            # Store the cell quality array with the output
+            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+            if keep_valid_only and (
+                np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+            ):
+                continue
+            output.cell_data[measure] = cell_quality_array
+
+        if len(measures_requested) == 1 and not compute_all:
+            # Need to include CellQuality array for legacy behavior
+            output.cell_data[CELL_QUALITY] = cell_quality_array
+        return output
+
+
+def _get_cell_qualilty_measures() -> dict[str, str]:
+    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    # Get possible quality measures dynamically
+    str_start = 'SetQualityMeasureTo'
+    measures = {}
+    for attr in dir(_vtk.vtkCellQuality):
+        if attr.startswith(str_start):
+            # Get the part after 'SetQualityMeasureTo'
+            measure_name = attr[len(str_start) :]
+            # Convert to snake case
+            # Add underscore before uppercase letters, except the first one
+            measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
+            measures[measure_name] = attr
+    return measures
