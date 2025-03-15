@@ -5354,16 +5354,19 @@ class DataSetFilters(DataObjectFilters):
         - ``'volume'``
         - ``'warpage'``
 
+        .. note::
+
+            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            for low-level technical information about how each metric is computed,
+            which :class:`~pyvista.CellType` it applies to as well as the metric's
+            full, normal, and acceptable range of values.
+
         .. deprecated:: 0.45
 
             The ``'CellQuality'`` array will be removed in a future version. The array
             name now matches the name of the quality measure. During the deprecation
             period, both array names will be returned when the input is a single string
             (but both arrays refer to same underlying data array).
-
-        Notes
-        -----
-        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
 
         Parameters
         ----------
