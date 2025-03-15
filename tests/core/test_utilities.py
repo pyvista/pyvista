@@ -24,6 +24,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -43,6 +44,7 @@ from pyvista.core.utilities.arrays import parse_field_choice
 from pyvista.core.utilities.arrays import raise_has_duplicates
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
+from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
@@ -2002,3 +2004,45 @@ def test_classproperty():
         Foo.prop()
     with pytest.raises(TypeError, match='object is not callable'):
         Foo().prop()
+
+
+# Usage examples:
+@pytest.mark.parametrize('option', [*_vtk._VerbosityOptions, _vtk.vtkLogger.VERBOSITY_OFF])
+def test_vtk_verbosity(option):
+    with pv.vtk_verbosity(option):
+        ...
+
+
+def test_vtk_verbosity_raises():
+    match = re.escape(
+        "Invalid verbosity name 'str', must be one of:\n"
+        "('invalid', 'off', 'error', 'warning', 'info', 'trace', 'max', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9')."
+    )
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity('str'):
+            ...
+
+
+def test_cell_quality_info():
+    cell_type = pv.CellType.TRIANGLE
+    measure = 'area'
+    info = pv.cell_quality_info(cell_type, measure)
+    assert isinstance(info, CellQualityInfo)
+    assert info.cell_type == cell_type
+    assert info.measure == measure
+
+
+def test_cell_quality_info_raises():
+    match = re.escape(
+        "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
+        "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
+
+    match = re.escape(
+        "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"
+        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', 'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
