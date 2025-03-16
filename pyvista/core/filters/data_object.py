@@ -2903,11 +2903,10 @@ class DataObjectFilters:
         """
         # Validate measures
         _validation.check_instance(measure, (str, list, tuple), name='quality_measure')
-        compute_all = measure in ['all', 'all_valid']
         keep_valid_only = measure == 'all_valid'
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
-        if compute_all:
+        if measure in ['all', 'all_valid']:
             measures_requested = measures_available_names
         else:
             measures = [measure] if isinstance(measure, str) else measure
@@ -2922,7 +2921,6 @@ class DataObjectFilters:
             measures_requested=measures_requested,
             measures_available=measures_available,
             keep_valid_only=keep_valid_only,
-            compute_all=compute_all,
             null_value=null_value,
             progress_bar=progress_bar,
         )
@@ -2938,7 +2936,6 @@ class DataObjectFilters:
         measures_requested,
         measures_available,
         keep_valid_only,
-        compute_all,
         null_value,
         progress_bar,
     ) -> _DataSetType:
