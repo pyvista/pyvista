@@ -17,7 +17,6 @@ from pyvista.core import _validation as _validation
 from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
 from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetType
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
-from pyvista.core._typing_core._dataset_types import _MultiBlockType as _MultiBlockType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info

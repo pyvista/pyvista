@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import _MultiBlockType
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
@@ -29,12 +28,12 @@ class CompositeFilters(DataObjectFilters):
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def generic_filter(  # type:ignore[misc]
-        self: _MultiBlockType,
+        self: MultiBlock,
         function: str | Callable[..., _TypeMultiBlockLeaf],
         /,
         *args,
         **kwargs,
-    ) -> _MultiBlockType:
+    ) -> MultiBlock:
         """Apply any filter to all nested blocks recursively.
 
         This filter applies a user-specified function or method to all blocks in
@@ -208,7 +207,7 @@ class CompositeFilters(DataObjectFilters):
             return self
 
         # Create a copy and replace all the blocks
-        output = self.__class__()
+        output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
         for ids, name, block in get_iterator(output, skip_none, skip_empty):
             filtered = apply_filter(function, ids, name, block)
