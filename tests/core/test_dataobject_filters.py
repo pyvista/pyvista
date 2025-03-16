@@ -531,21 +531,6 @@ def test_cell_quality():
         qual = mesh.cell_quality(quality_measure=['foo'], progress_bar=True)
 
 
-def test_cell_quality_deprecation(ant):
-    match = "The 'CellQuality' array will be removed in a future version."
-    "The array name now matches the quality measure, e.g. `'scaled_jacobian'`."
-    "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
-    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
-        ant.cell_quality()
-    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
-        ant.cell_quality('area')
-
-    qual = ant.cell_quality([SCALED_JACOBIAN])
-    if pv.version_info >= (0, 49):  # pragma: no cover
-        if CELL_QUALITY in qual.array_names:
-            raise RuntimeError(f'Remove the {CELL_QUALITY} array from the output.')
-
-
 def test_cell_quality_measures(ant):
     # Get quality measures from type hints
     hinted_measures = list(get_args(_CellQualityLiteral))

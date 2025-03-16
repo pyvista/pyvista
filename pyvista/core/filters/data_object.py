@@ -2792,7 +2792,7 @@ class DataObjectFilters:
 
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
+        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'shape',
         null_value: float = -1.0,
         progress_bar: bool = False,
     ) -> _DataSetOrMultiBlockType:
@@ -2803,7 +2803,7 @@ class DataObjectFilters:
         filter or undefined quality of supported cell types will have an
         entry of ``-1``.
 
-        Defaults to computing the scaled Jacobian.
+        Defaults to computing the shape quality measure.
 
         Options for cell quality measure:
 
@@ -2836,12 +2836,6 @@ class DataObjectFilters:
         - ``'volume'``
         - ``'warpage'``
 
-        .. deprecated:: 0.45
-
-            The ``'CellQuality'`` array will be removed in a future version. The array
-            name now matches the name of the quality measure. During the deprecation
-            period, both array names will be returned when the input is a single string
-            (but both arrays refer to same underlying data array).
 
         Notes
         -----
@@ -2887,7 +2881,7 @@ class DataObjectFilters:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
-        >>> cqual = sphere.cell_quality(['min_angle'])
+        >>> cqual = sphere.cell_quality('min_angle')
         >>> cqual.plot(show_edges=True)
 
         Compute all valid quality measures for the sphere. These measures all return
@@ -2912,26 +2906,13 @@ class DataObjectFilters:
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
-        compute_all = quality_measure in ['all', 'all_valid']
-        keep_valid_only = quality_measure == 'all_valid'
-        if isinstance(quality_measure, str) and not compute_all:
-            if version_info >= (0, 48):  # pragma: no cover
-                raise RuntimeError('Convert this deprecation warning into an error.')
-            if version_info >= (0, 49):  # pragma: no cover
-                raise RuntimeError('Remove this deprecation.')
-
-            msg = (
-                "The 'CellQuality' array will be removed in a future version.\n"
-                "The array name now matches the quality measure, e.g. `'scaled_jacobian'`.\n"
-                "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
-            )
-            warnings.warn(msg, PyVistaDeprecationWarning)
-
         # Store state to be restored later, used for silencing errors
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
 
         # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
+        compute_all = quality_measure in ['all', 'all_valid']
+        keep_valid_only = quality_measure == 'all_valid'
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if compute_all:
