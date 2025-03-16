@@ -226,22 +226,22 @@ class CellQualityTable(DocTable):
 
     @classmethod
     def get_row(cls, i, row_data):
-        def _get_table_entry(cell_type):
-            return success if cell_type in measures[measure] else error
-
         measures, measure = row_data
 
         success = ':material-regular:`check;2em;sd-text-success`'
         error = ':material-regular:`close;2em;sd-text-error`'
+
+        def _get_table_entry(cell_type):
+            return success if cell_type in measures[measure] else error
 
         tri = _get_table_entry(pv.CellType.TRIANGLE)
         quad = _get_table_entry(pv.CellType.QUAD)
         tetra = _get_table_entry(pv.CellType.TETRA)
         hexa = _get_table_entry(pv.CellType.HEXAHEDRON)
         wedge = _get_table_entry(pv.CellType.WEDGE)
-        pyramid = _get_table_entry(pv.CellType.PYRAMID)
+        pyra = _get_table_entry(pv.CellType.PYRAMID)
 
-        return cls.row_template.format(measure, tri, quad, tetra, hexa, wedge, pyramid)
+        return cls.row_template.format(f'``{measure}``', tri, quad, tetra, hexa, wedge, pyra)
 
 
 class LineStyleTable(DocTable):
