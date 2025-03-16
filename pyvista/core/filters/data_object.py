@@ -2925,7 +2925,7 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
         return (
-            self.generic_filter(block_filter)
+            self.generic_filter(block_filter)  # type: ignore[return-value]
             if isinstance(self, pyvista.MultiBlock)
             else block_filter(self)
         )

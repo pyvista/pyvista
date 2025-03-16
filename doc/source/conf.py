@@ -247,6 +247,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_PointGridType'),
     (r'py:.*', '.*_PointSetType'),
     (r'py:.*', '.*_DataSetType'),
+    (r'py:.*', '.*_MultiBlockType'),
     (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
