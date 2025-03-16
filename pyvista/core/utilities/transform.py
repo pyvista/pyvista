@@ -2090,5 +2090,5 @@ class Transform(_vtk.vtkTransform):
         elif representation == 'davenport':
             return rotation.as_davenport(*args, **kwargs)
         else:  # pragma: no cover
-            msg = f"Unexpected rotation type '{representation}'"
+            msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
             raise RuntimeError(msg)
