@@ -5360,7 +5360,7 @@ class DataSetFilters(DataObjectFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
         >>> cqual = sphere.compute_cell_quality('min_angle')  # doctest:+SKIP
-        >>> cqual.plot(show_edges=True). # doctest:+SKIP
+        >>> cqual.plot(show_edges=True)  # doctest:+SKIP
 
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
