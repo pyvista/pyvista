@@ -2836,28 +2836,22 @@ class DataObjectFilters:
         - ``'volume'``
         - ``'warpage'``
 
+        .. note::
 
-        Notes
-        -----
-        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
+            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            for low-level technical information about how each metric is computed,
+            which :class:`~pyvista.CellType` it applies to, as well as the metric's
+            full, normal, and acceptable range of values.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------
-        quality_measure : str | sequence[str], default: 'scaled_jacobian'
+        quality_measure : str | sequence[str], default: 'shape'
             The cell quality measure to use. Specify a single measure or a sequence of
             measures to compute. Specify ``'all'`` to compute all measures, or
             ``'all_valid'`` to only keep quality measures that are valid for the mesh's
             cell types. A separate array is created for each measure.
-
-            .. note::
-
-                Some quality measures may generate VTK warnings for meshes with
-                non-applicable cells. These warnings are silenced when ``'all'``
-                is selected.
-
-            .. versionadded:: 0.45
-
-                Add option to compute multiple measures or all measures.
 
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
@@ -2906,9 +2900,6 @@ class DataObjectFilters:
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
-        # Store state to be restored later, used for silencing errors
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-
         # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         compute_all = quality_measure in ['all', 'all_valid']
@@ -2917,8 +2908,6 @@ class DataObjectFilters:
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if compute_all:
             measures_requested = measures_available_names
-            # Disable VTK errors which are likely to be emitted for some measures
-            _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
         else:
             measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
             for measure in measures:
@@ -2936,14 +2925,11 @@ class DataObjectFilters:
             null_value=null_value,
             progress_bar=progress_bar,
         )
-        if isinstance(self, pyvista.MultiBlock):
-            output: _DataSetOrMultiBlockType = self.generic_filter(block_filter)  # type: ignore[assignment]
-        else:
-            output = block_filter(self)
-
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return output
+        return (
+            self.generic_filter(block_filter)
+            if isinstance(self, pyvista.MultiBlock)
+            else block_filter(self)
+        )
 
     def _dataset_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
@@ -2957,6 +2943,10 @@ class DataObjectFilters:
     ) -> _DataSetType:
         """Compute cell quality of a DataSet (internal method)."""
         CELL_QUALITY = 'CellQuality'
+
+        # Store state to be restored later, used for silencing errors
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+
         alg = _vtk.vtkCellQuality()
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
@@ -2974,9 +2964,8 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
 
-        if len(measures_requested) == 1 and not compute_all:
-            # Need to include CellQuality array for legacy behavior
-            output.cell_data[CELL_QUALITY] = cell_quality_array
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return output
 
 

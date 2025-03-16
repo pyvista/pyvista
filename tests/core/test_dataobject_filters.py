@@ -509,7 +509,7 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
-SCALED_JACOBIAN = 'scaled_jacobian'
+SHAPE = 'shape'
 CELL_QUALITY = 'CellQuality'
 AREA = 'area'
 VOLUME = 'volume'
@@ -517,18 +517,15 @@ VOLUME = 'volume'
 
 def test_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.cell_quality([SCALED_JACOBIAN], progress_bar=True)
+    qual = mesh.cell_quality(SHAPE, progress_bar=True)
+    assert SHAPE in qual.array_names
 
-    assert CELL_QUALITY in qual.array_names
-    assert SCALED_JACOBIAN in qual.array_names
-    assert np.shares_memory(qual[CELL_QUALITY], qual[SCALED_JACOBIAN])
-
-    expected_names = [SCALED_JACOBIAN, AREA]
+    expected_names = [SHAPE, AREA]
     qual = mesh.cell_quality(expected_names, progress_bar=True)
     assert qual.array_names == expected_names
 
     with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
-        qual = mesh.cell_quality(quality_measure=['foo'], progress_bar=True)
+        mesh.cell_quality(quality_measure='foo', progress_bar=True)
 
 
 def test_cell_quality_measures(ant):
@@ -556,19 +553,19 @@ def test_cell_quality_measures(ant):
 def test_cell_quality_all_valid(ant):
     qual = ant.cell_quality('all_valid')
     assert AREA in qual.array_names
-    assert SCALED_JACOBIAN in qual.array_names
+    assert SHAPE in qual.array_names
     assert VOLUME not in qual.array_names
 
 
 def test_cell_quality_composite(multiblock_all_with_nested_and_none):
-    qual = multiblock_all_with_nested_and_none.cell_quality([SCALED_JACOBIAN])
+    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
     for block in qual.recursive_iterator(skip_none=True):
-        assert SCALED_JACOBIAN in block.array_names
+        assert SHAPE in block.array_names
 
 
 def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
     iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
-    qual = multiblock_all_with_nested_and_none.cell_quality([SCALED_JACOBIAN])
+    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
     iter_out = qual.recursive_iterator()
     for block_in, block_out in zip(iter_in, iter_out):
         assert type(block_in) is type(block_out)
