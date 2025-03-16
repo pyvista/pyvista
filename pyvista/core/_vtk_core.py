@@ -648,11 +648,15 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
             return verbosity
         else:
             try:
-                return getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+                logger_verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+                if logger_verbosity == vtkLogger.VERBOSITY_INVALID:
+                    raise AttributeError
+                else:
+                    return logger_verbosity
             except AttributeError:
                 raise ValueError(
                     f"Invalid verbosity name '{verbosity}', must be one of:\n"
-                    f"'off', 'error', 'warning', 'info', 'trace', 'max', or an integer between [-9, 9]."
+                    f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
                 )
 
     @property

@@ -2046,7 +2046,7 @@ def test_vtk_verbosity_set_get(verbosity, modifies_verbosity):
 def test_vtk_verbosity_raises():
     match = re.escape(
         "Invalid verbosity name 'str', must be one of:\n"
-        "'off', 'error', 'warning', 'info', 'trace', 'max', or an integer between [-9, 9]."
+        "'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
     )
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity('str'):
