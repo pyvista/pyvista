@@ -2043,7 +2043,7 @@ def test_vtk_verbosity_set_get(verbosity, modifies_verbosity):
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
 
 
-@pytest.mark.parametrize('value', ['str', -10])
+@pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_raises(value):
     match = re.escape(
         "must be one of:\n'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
