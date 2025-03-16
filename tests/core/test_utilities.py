@@ -2015,9 +2015,13 @@ def test_cell_quality_info():
 
 
 def test_cell_quality_info_raises():
+    if pv.vtk_version_info < (9, 2):
+        options = "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON']"
+    else:
+        options = "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
     match = re.escape(
         "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
-        "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
+        + options
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
