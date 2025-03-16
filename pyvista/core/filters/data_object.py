@@ -2916,7 +2916,7 @@ class DataObjectFilters:
                 )
             measures_requested = cast(list[_CellQualityLiteral], measures)
 
-        block_filter = functools.partial(
+        cell_quality = functools.partial(
             DataObjectFilters._dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
@@ -2925,9 +2925,9 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
         return (
-            self.generic_filter(block_filter)  # type: ignore[return-value]
+            self.generic_filter(cell_quality)  # type: ignore[return-value]
             if isinstance(self, pyvista.MultiBlock)
-            else block_filter(self)
+            else cell_quality(self)
         )
 
     def _dataset_cell_quality(  # type: ignore[misc]
