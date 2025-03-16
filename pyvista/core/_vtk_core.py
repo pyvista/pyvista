@@ -595,7 +595,6 @@ if TYPE_CHECKING:
             'error',
             'warning',
             'info',
-            'trace',
             'max',
         ]
         | int
@@ -612,7 +611,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     ----------
     verbosity : int | str | vtkLogger.Verbosity
         Verbosity of the ``vtkLogger`` to set. Accepted values are, ``'off'``, ``'error'``,
-        ``'warning'``, ``'info'``, ``'trace'``, ``'max'`` or an integer between ``[-9, 9]``.
+        ``'warning'``, ``'info'``, ``'max'`` or an integer between ``[-9, 9]``.
 
     Examples
     --------
