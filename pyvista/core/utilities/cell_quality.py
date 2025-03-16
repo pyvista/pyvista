@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 from typing import NoReturn
+from typing import cast
 from typing import get_args
 
 import numpy as np
@@ -152,16 +153,16 @@ _INFO = [
     CellQualityInfo(CellType.WEDGE, 'volume', (0, INF), (-INF, INF), (-INF, INF), sqrt(3) / 4),
 ]
 
-_INFO_LOOKUP = {}
+_INFO_LOOKUP: dict[CellType, dict[str, CellQualityInfo]] = {}
 
 
-def _init_lookup(lookup: dict | None) -> None:
+def _init_lookup(lookup: dict[CellType, dict[str, CellQualityInfo]]) -> None:
     """Populate info lookup dict."""
     from pyvista import examples  # Avoid circular import
 
     for info in _INFO:
         # Validate info by loading the cell as a mesh and computing its cell quality
-        example_name = _CELL_TYPE_INFO[info.cell_type.name].example
+        example_name = cast(str, _CELL_TYPE_INFO[info.cell_type.name].example)
         cell_mesh = getattr(examples.cells, example_name)()
         null_value = -1
 
