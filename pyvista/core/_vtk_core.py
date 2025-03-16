@@ -610,8 +610,16 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     Parameters
     ----------
     verbosity : int | str | vtkLogger.Verbosity
-        Verbosity of the ``vtkLogger`` to set. Accepted values are, ``'off'``, ``'error'``,
-        ``'warning'``, ``'info'``, ``'max'`` or an integer between ``[-9, 9]``.
+        Verbosity of the ``vtkLogger`` to set.
+
+        - ``'off'``: No output.
+        - ``'error'``: Only error messages.
+        - ``'warning'``: Errors and warnings.
+        - ``'info'``: Errors, warnings, and info messages.
+        - ``'max'``: All messages, including debug info.
+
+        Integers between ``[-9, 9]`` or their string representation
+        are also accepted.
 
     Examples
     --------
