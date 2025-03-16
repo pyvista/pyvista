@@ -2031,15 +2031,11 @@ def test_cell_quality_info_valid_measures():
             f'Measure {info.measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
 
-
+@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_raises():
-    if pv.vtk_version_info < (9, 2):
-        options = "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON']"
-    else:
-        options = "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
     match = re.escape(
         "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
-        + options
+        "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
