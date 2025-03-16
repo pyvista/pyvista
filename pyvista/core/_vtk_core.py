@@ -698,8 +698,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager."""
         # Restore the original verbosity level
-        if self._original_verbosity is not None:
-            self._verbosity = self._original_verbosity
+        self._verbosity = self._original_verbosity
 
     def __call__(self, verbosity: _VerbosityOptions | None = None):
         """Call the context manager."""

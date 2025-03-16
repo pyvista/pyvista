@@ -2043,11 +2043,11 @@ def test_vtk_verbosity_set_get(verbosity, modifies_verbosity):
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
 
 
-def test_vtk_verbosity_raises():
+@pytest.mark.parametrize('value', ['str', -10])
+def test_vtk_verbosity_raises(value):
     match = re.escape(
-        "Invalid verbosity name 'str', must be one of:\n"
-        "'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
+        "must be one of:\n'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
     )
     with pytest.raises(ValueError, match=match):
-        with pv.vtk_verbosity('str'):
+        with pv.vtk_verbosity(value):
             ...
