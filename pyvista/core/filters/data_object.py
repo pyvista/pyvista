@@ -2802,40 +2802,14 @@ class DataObjectFilters:
         The per-cell quality is added to the mesh's cell data, in an array with
         the same name as the quality measure. Cell types not supported by this
         filter or undefined quality of supported cell types will have an
-        entry of ``-1``.
+        entry of ``-1``. See table below for all measures and the
+        :class:`~pyvista.CellType` supported by each one.
 
         Defaults to computing the shape quality measure.
 
-        Options for cell quality measure:
+        .. dropdown:: Cell Quality Measures
 
-        - ``'area'``
-        - ``'aspect_frobenius'``
-        - ``'aspect_gamma'``
-        - ``'aspect_ratio'``
-        - ``'collapse_ratio'``
-        - ``'condition'``
-        - ``'diagonal'``
-        - ``'dimension'``
-        - ``'distortion'``
-        - ``'jacobian'``
-        - ``'max_angle'``
-        - ``'max_aspect_frobenius'``
-        - ``'max_edge_ratio'``
-        - ``'med_aspect_frobenius'``
-        - ``'min_angle'``
-        - ``'oddy'``
-        - ``'radius_ratio'``
-        - ``'relative_size_squared'``
-        - ``'scaled_jacobian'``
-        - ``'shape'``
-        - ``'shape_and_size'``
-        - ``'shear'``
-        - ``'shear_and_size'``
-        - ``'skew'``
-        - ``'stretch'``
-        - ``'taper'``
-        - ``'volume'``
-        - ``'warpage'``
+            .. include:: /api/core/cell_quality_table.rst
 
         .. note::
 
@@ -2944,6 +2918,7 @@ class DataObjectFilters:
 
         # Store state to be restored later, used for silencing errors
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
 
         alg = _vtk.vtkCellQuality()
         alg.SetInputData(self)
