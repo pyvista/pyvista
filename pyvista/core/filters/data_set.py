@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
-import re
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -50,40 +49,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
-
-
-_CellQualityLiteral = Literal[
-    'area',
-    'aspect_frobenius',
-    'aspect_gamma',
-    'aspect_ratio',
-    'collapse_ratio',
-    'condition',
-    'diagonal',
-    'dimension',
-    'distortion',
-    'jacobian',
-    'max_angle',
-    'max_aspect_frobenius',
-    'max_edge_ratio',
-    'med_aspect_frobenius',
-    'min_angle',
-    'oddy',
-    'radius_ratio',
-    'relative_size_squared',
-    'scaled_jacobian',
-    'shape',
-    'shape_and_size',
-    'shear',
-    'shear_and_size',
-    'skew',
-    'stretch',
-    'taper',
-    'volume',
-    'warpage',
-    'all',
-    'all_valid',
-]
 
 
 @abstract_class
@@ -5307,6 +5272,146 @@ class DataSetFilters(DataObjectFilters):
             ) from None
         return merged
 
+    def compute_cell_quality(  # type: ignore[misc]
+        self: _DataSetType,
+        quality_measure: str = 'scaled_jacobian',
+        null_value: float = -1.0,
+        progress_bar: bool = False,
+    ):
+        """Compute a function of (geometric) quality for each cell of a mesh.
+
+        The per-cell quality is added to the mesh's cell data, in an
+        array named ``"CellQuality"``. Cell types not supported by this
+        filter or undefined quality of supported cell types will have an
+        entry of -1.
+
+        Defaults to computing the scaled Jacobian.
+
+        Options for cell quality measure:
+
+        - ``'area'``
+        - ``'aspect_beta'``
+        - ``'aspect_frobenius'``
+        - ``'aspect_gamma'``
+        - ``'aspect_ratio'``
+        - ``'collapse_ratio'``
+        - ``'condition'``
+        - ``'diagonal'``
+        - ``'dimension'``
+        - ``'distortion'``
+        - ``'jacobian'``
+        - ``'max_angle'``
+        - ``'max_aspect_frobenius'``
+        - ``'max_edge_ratio'``
+        - ``'med_aspect_frobenius'``
+        - ``'min_angle'``
+        - ``'oddy'``
+        - ``'radius_ratio'``
+        - ``'relative_size_squared'``
+        - ``'scaled_jacobian'``
+        - ``'shape'``
+        - ``'shape_and_size'``
+        - ``'shear'``
+        - ``'shear_and_size'``
+        - ``'skew'``
+        - ``'stretch'``
+        - ``'taper'``
+        - ``'volume'``
+        - ``'warpage'``
+
+        .. note::
+
+            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            for low-level technical information about how each metric is computed,
+            which :class:`~pyvista.CellType` it applies to as well as the metric's
+            full, normal, and acceptable range of values.
+
+        Parameters
+        ----------
+        quality_measure : str, default: 'scaled_jacobian'
+            The cell quality measure to use.
+
+        null_value : float, default: -1.0
+            Float value for undefined quality. Undefined quality are qualities
+            that could be addressed by this filter but is not well defined for
+            the particular geometry of cell in question, e.g. a volume query
+            for a triangle. Undefined quality will always be undefined.
+            The default value is -1.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the computed mesh quality in the
+            ``cell_data`` as the ``"CellQuality"`` array.
+
+        Examples
+        --------
+        Compute and plot the minimum angle of a sample sphere mesh.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> cqual = sphere.compute_cell_quality('min_angle')
+        >>> cqual.plot(show_edges=True)
+
+        See the :ref:`mesh_quality_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkCellQuality()
+        possible_measure_setters = {
+            'area': 'SetQualityMeasureToArea',
+            'aspect_beta': 'SetQualityMeasureToAspectBeta',
+            'aspect_frobenius': 'SetQualityMeasureToAspectFrobenius',
+            'aspect_gamma': 'SetQualityMeasureToAspectGamma',
+            'aspect_ratio': 'SetQualityMeasureToAspectRatio',
+            'collapse_ratio': 'SetQualityMeasureToCollapseRatio',
+            'condition': 'SetQualityMeasureToCondition',
+            'diagonal': 'SetQualityMeasureToDiagonal',
+            'dimension': 'SetQualityMeasureToDimension',
+            'distortion': 'SetQualityMeasureToDistortion',
+            'jacobian': 'SetQualityMeasureToJacobian',
+            'max_angle': 'SetQualityMeasureToMaxAngle',
+            'max_aspect_frobenius': 'SetQualityMeasureToMaxAspectFrobenius',
+            'max_edge_ratio': 'SetQualityMeasureToMaxEdgeRatio',
+            'med_aspect_frobenius': 'SetQualityMeasureToMedAspectFrobenius',
+            'min_angle': 'SetQualityMeasureToMinAngle',
+            'oddy': 'SetQualityMeasureToOddy',
+            'radius_ratio': 'SetQualityMeasureToRadiusRatio',
+            'relative_size_squared': 'SetQualityMeasureToRelativeSizeSquared',
+            'scaled_jacobian': 'SetQualityMeasureToScaledJacobian',
+            'shape': 'SetQualityMeasureToShape',
+            'shape_and_size': 'SetQualityMeasureToShapeAndSize',
+            'shear': 'SetQualityMeasureToShear',
+            'shear_and_size': 'SetQualityMeasureToShearAndSize',
+            'skew': 'SetQualityMeasureToSkew',
+            'stretch': 'SetQualityMeasureToStretch',
+            'taper': 'SetQualityMeasureToTaper',
+            'volume': 'SetQualityMeasureToVolume',
+            'warpage': 'SetQualityMeasureToWarpage',
+        }
+
+        # we need to check if these quality measures exist as VTK API changes
+        measure_setters = {}
+        for name, attr in possible_measure_setters.items():
+            setter_candidate = getattr(alg, attr, None)
+            if setter_candidate:
+                measure_setters[name] = setter_candidate
+
+        try:
+            # Set user specified quality measure
+            measure_setters[quality_measure]()
+        except (KeyError, IndexError):
+            options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
+            raise KeyError(
+                f'Cell quality type ({quality_measure}) not available. Options are: {options}',
+            )
+        alg.SetInputData(self)
+        alg.SetUndefinedQuality(null_value)
+        _update_alg(alg, progress_bar, 'Computing Cell Quality')
+        return _get_output(alg)
+
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
     ):
@@ -7478,19 +7583,3 @@ def _swap_axes(vectors, values):
     elif np.isclose(values[1], values[2]):
         _swap(1, 2)
     return vectors
-
-
-def _get_cell_qualilty_measures() -> dict[str, str]:
-    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
-    # Get possible quality measures dynamically
-    str_start = 'SetQualityMeasureTo'
-    measures = {}
-    for attr in dir(_vtk.vtkCellQuality):
-        if attr.startswith(str_start):
-            # Get the part after 'SetQualityMeasureTo'
-            measure_name = attr[len(str_start) :]
-            # Convert to snake case
-            # Add underscore before uppercase letters, except the first one
-            measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
-            measures[measure_name] = attr
-    return measures

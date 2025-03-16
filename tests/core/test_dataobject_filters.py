@@ -501,6 +501,14 @@ def test_slice_along_line_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+def test_compute_cell_quality():
+    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
+    qual = mesh.compute_cell_quality(progress_bar=True)
+    assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+
+
 SCALED_JACOBIAN = 'scaled_jacobian'
 CELL_QUALITY = 'CellQuality'
 AREA = 'area'
