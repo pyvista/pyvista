@@ -2790,7 +2790,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
-    def compute_cell_quality(  # type: ignore[misc]
+    def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
         null_value: float = -1.0,
@@ -2887,13 +2887,13 @@ class DataObjectFilters:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
-        >>> cqual = sphere.compute_cell_quality(['min_angle'])
+        >>> cqual = sphere.cell_quality(['min_angle'])
         >>> cqual.plot(show_edges=True)
 
         Compute all valid quality measures for the sphere. These measures all return
         non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
 
-        >>> cqual = sphere.compute_cell_quality('all_valid')
+        >>> cqual = sphere.cell_quality('all_valid')
         >>> valid_measures = cqual.cell_data.keys()
         >>> print(f'[{",\n ".join(repr(measure) for measure in valid_measures)}]')
         ['area',
@@ -2947,7 +2947,7 @@ class DataObjectFilters:
             measures_requested = cast(list[_CellQualityLiteral], measures)
 
         block_filter = functools.partial(
-            DataObjectFilters._compute_cell_quality,
+            DataObjectFilters._dataset_cell_quality,
             measures_requested=measures_requested,
             measures_available=measures_available,
             keep_valid_only=keep_valid_only,
@@ -2964,7 +2964,7 @@ class DataObjectFilters:
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return output
 
-    def _compute_cell_quality(  # type: ignore[misc]
+    def _dataset_cell_quality(  # type: ignore[misc]
         self: _DataSetType,
         *,
         measures_requested,

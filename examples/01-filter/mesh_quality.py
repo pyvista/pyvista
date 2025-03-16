@@ -6,7 +6,7 @@ Computing Mesh Quality
 
 Leverage powerful VTK algorithms for computing mesh quality.
 
-Here we will use the :func:`~pyvista.DataObjectFilters.compute_cell_quality` filter
+Here we will use the :func:`~pyvista.DataObjectFilters.cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
 
@@ -34,7 +34,7 @@ mesh = examples.download_cow().triangulate().decimate(0.7)
 # Compute some valid measures for triangle cells.
 
 measures = ['area', 'shape', 'min_angle', 'max_angle']
-qual = mesh.compute_cell_quality(measures)
+qual = mesh.cell_quality(measures)
 
 # %%
 # Plot the meshes in subplots for comparison. We define a custom method
@@ -65,7 +65,7 @@ pl.show()
 # Quality measures like ``'volume'`` do not apply to 2D cells, and a null value
 # of ``-1`` is returned.
 
-qual = mesh.compute_cell_quality(['volume'])
+qual = mesh.cell_quality(['volume'])
 qual.get_data_range('volume')
 
 # %%
@@ -80,7 +80,7 @@ mesh = examples.download_letter_a()
 # Plot some valid quality measures for tetrahedral cells.
 
 measures = ['volume', 'collapse_ratio', 'jacobian', 'scaled_jacobian']
-qual = mesh.compute_cell_quality(measures)
+qual = mesh.cell_quality(measures)
 
 pl = pv.Plotter(shape=(2, 2))
 pl.link_views()

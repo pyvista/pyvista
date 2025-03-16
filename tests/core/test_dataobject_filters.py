@@ -507,38 +507,38 @@ AREA = 'area'
 VOLUME = 'volume'
 
 
-def test_compute_cell_quality():
+def test_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.compute_cell_quality([SCALED_JACOBIAN], progress_bar=True)
+    qual = mesh.cell_quality([SCALED_JACOBIAN], progress_bar=True)
 
     assert CELL_QUALITY in qual.array_names
     assert SCALED_JACOBIAN in qual.array_names
     assert np.shares_memory(qual[CELL_QUALITY], qual[SCALED_JACOBIAN])
 
     expected_names = [SCALED_JACOBIAN, AREA]
-    qual = mesh.compute_cell_quality(expected_names, progress_bar=True)
+    qual = mesh.cell_quality(expected_names, progress_bar=True)
     assert qual.array_names == expected_names
 
     with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
-        qual = mesh.compute_cell_quality(quality_measure=['foo'], progress_bar=True)
+        qual = mesh.cell_quality(quality_measure=['foo'], progress_bar=True)
 
 
-def test_compute_cell_quality_deprecation(ant):
+def test_cell_quality_deprecation(ant):
     match = "The 'CellQuality' array will be removed in a future version."
     "The array name now matches the quality measure, e.g. `'scaled_jacobian'`."
     "Pass the quality measure as a list to remove this warning, e.g. `['scaled_jacobian']`."
     with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
-        ant.compute_cell_quality()
+        ant.cell_quality()
     with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
-        ant.compute_cell_quality('area')
+        ant.cell_quality('area')
 
-    qual = ant.compute_cell_quality([SCALED_JACOBIAN])
+    qual = ant.cell_quality([SCALED_JACOBIAN])
     if pv.version_info >= (0, 49):  # pragma: no cover
         if CELL_QUALITY in qual.array_names:
             raise RuntimeError(f'Remove the {CELL_QUALITY} array from the output.')
 
 
-def test_compute_cell_quality_measures(ant):
+def test_cell_quality_measures(ant):
     # Get quality measures from type hints
     hinted_measures = list(get_args(_CellQualityLiteral))
     if pv.vtk_version_info < (9, 2):
@@ -552,30 +552,30 @@ def test_compute_cell_quality_measures(ant):
 
     # Get quality measures from the VTK class
     actual_measures = list(_get_cell_qualilty_measures().keys())
-    msg = 'VTK API has changed. Update type hints and docstring for `compute_cell_quality`.'
+    msg = 'VTK API has changed. Update type hints and docstring for `cell_quality`.'
     assert actual_measures == hinted_measures, msg
 
     # Test 'all' measure keys
-    qual = ant.compute_cell_quality('all')
+    qual = ant.cell_quality('all')
     assert qual.array_names == actual_measures
 
 
-def test_compute_cell_quality_all_valid(ant):
-    qual = ant.compute_cell_quality('all_valid')
+def test_cell_quality_all_valid(ant):
+    qual = ant.cell_quality('all_valid')
     assert AREA in qual.array_names
     assert SCALED_JACOBIAN in qual.array_names
     assert VOLUME not in qual.array_names
 
 
-def test_compute_cell_quality_composite(multiblock_all_with_nested_and_none):
-    qual = multiblock_all_with_nested_and_none.compute_cell_quality([SCALED_JACOBIAN])
+def test_cell_quality_composite(multiblock_all_with_nested_and_none):
+    qual = multiblock_all_with_nested_and_none.cell_quality([SCALED_JACOBIAN])
     for block in qual.recursive_iterator(skip_none=True):
         assert SCALED_JACOBIAN in block.array_names
 
 
-def test_compute_cell_quality_return_type(multiblock_all_with_nested_and_none):
+def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
     iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
-    qual = multiblock_all_with_nested_and_none.compute_cell_quality([SCALED_JACOBIAN])
+    qual = multiblock_all_with_nested_and_none.cell_quality([SCALED_JACOBIAN])
     iter_out = qual.recursive_iterator()
     for block_in, block_out in zip(iter_in, iter_out):
         assert type(block_in) is type(block_out)
