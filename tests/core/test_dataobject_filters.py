@@ -22,8 +22,8 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
-from pyvista.core.filters.data_set import _CellQualityLiteral
-from pyvista.core.filters.data_set import _get_cell_qualilty_measures
+from pyvista.core.filters.data_object import _CellQualityLiteral
+from pyvista.core.filters.data_object import _get_cell_qualilty_measures
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -561,11 +561,24 @@ def test_compute_cell_quality_measures(ant):
 
 
 def test_compute_cell_quality_all_valid(ant):
-    # Test 'all' measure keys
     qual = ant.compute_cell_quality('all_valid')
     assert AREA in qual.array_names
     assert SCALED_JACOBIAN in qual.array_names
     assert VOLUME not in qual.array_names
+
+
+def test_compute_cell_quality_composite(multiblock_all_with_nested_and_none):
+    qual = multiblock_all_with_nested_and_none.compute_cell_quality([SCALED_JACOBIAN])
+    for block in qual.recursive_iterator(skip_none=True):
+        assert SCALED_JACOBIAN in block.array_names
+
+
+def test_compute_cell_quality_return_type(multiblock_all_with_nested_and_none):
+    iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
+    qual = multiblock_all_with_nested_and_none.compute_cell_quality([SCALED_JACOBIAN])
+    iter_out = qual.recursive_iterator()
+    for block_in, block_out in zip(iter_in, iter_out):
+        assert type(block_in) is type(block_out)
 
 
 @pytest.mark.parametrize(
