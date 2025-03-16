@@ -2031,6 +2031,7 @@ def test_cell_quality_info_valid_measures():
             f'Measure {info.measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
 
+
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_raises():
     match = re.escape(
