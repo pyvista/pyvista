@@ -92,14 +92,17 @@ class _CellTypeTuple(NamedTuple):
     edges_override: Literal['variable', 'n/a'] | None = None
     faces_override: Literal['variable', 'n/a'] | None = None
 
+    ####################################################################################
+    # Linear cells
 
-_CELL_TYPE_INFO = {
-    'EMPTY_CELL': _CellTypeTuple(
+
+_CELL_TYPE_INFO = dict(
+    EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
         cell_class=_vtk.vtkEmptyCell,
         short_doc="""Used as a place-holder during processing.""",
     ),
-    'VERTEX': _CellTypeTuple(
+    VERTEX=_CellTypeTuple(
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
         example='Vertex',
@@ -109,7 +112,7 @@ _CELL_TYPE_INFO = {
         The vertex is a primary zero-dimensional cell. It is defined by a single point.
         """,
     ),
-    'POLY_VERTEX': _CellTypeTuple(
+    POLY_VERTEX=_CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
         example='PolyVertex',
@@ -121,7 +124,7 @@ _CELL_TYPE_INFO = {
         arbitrarily ordered list of points.
         """,
     ),
-    'LINE': _CellTypeTuple(
+    LINE=_CellTypeTuple(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
         example='Line',
@@ -132,7 +135,7 @@ _CELL_TYPE_INFO = {
         The direction along the line is from the first point to the second point.
         """,
     ),
-    'POLY_LINE': _CellTypeTuple(
+    POLY_LINE=_CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
         example='PolyLine',
@@ -148,7 +151,7 @@ _CELL_TYPE_INFO = {
         of lines in the polyline. Each pair of points ``(i, i+1)`` defines a line.
         """,
     ),
-    'TRIANGLE': _CellTypeTuple(
+    TRIANGLE=_CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
         example='Triangle',
@@ -163,7 +166,7 @@ _CELL_TYPE_INFO = {
         right-hand rule.
         """,
     ),
-    'TRIANGLE_STRIP': _CellTypeTuple(
+    TRIANGLE_STRIP=_CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
         cell_class=_vtk.vtkTriangleStrip,
         example='TriangleStrip',
@@ -187,7 +190,7 @@ _CELL_TYPE_INFO = {
         The points defining the triangle strip need not lie in a plane.
         """,
     ),
-    'POLYGON': _CellTypeTuple(
+    POLYGON=_CellTypeTuple(
         value=_vtk.VTK_POLYGON,
         cell_class=_vtk.vtkPolygon,
         example='Polygon',
@@ -211,7 +214,7 @@ _CELL_TYPE_INFO = {
         self-intersect.
         """,
     ),
-    'PIXEL': _CellTypeTuple(
+    PIXEL=_CellTypeTuple(
         value=_vtk.VTK_PIXEL,
         cell_class=_vtk.vtkPixel,
         example='Pixel',
@@ -236,7 +239,7 @@ _CELL_TYPE_INFO = {
         performance.
         """,
     ),
-    'QUAD': _CellTypeTuple(
+    QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUAD,
         cell_class=_vtk.vtkQuad,
         example='Quadrilateral',
@@ -253,7 +256,7 @@ _CELL_TYPE_INFO = {
         The quadrilateral is convex and its edges must not intersect.
         """,
     ),
-    'TETRA': _CellTypeTuple(
+    TETRA=_CellTypeTuple(
         value=_vtk.VTK_TETRA,
         cell_class=_vtk.vtkTetra,
         example='Tetrahedron',
@@ -269,7 +272,7 @@ _CELL_TYPE_INFO = {
         triangle whose normal points in the direction of the fourth point.
         """,
     ),
-    'VOXEL': _CellTypeTuple(
+    VOXEL=_CellTypeTuple(
         value=_vtk.VTK_VOXEL,
         cell_class=_vtk.vtkVoxel,
         example='Voxel',
@@ -293,7 +296,7 @@ _CELL_TYPE_INFO = {
         performance.
         """,
     ),
-    'HEXAHEDRON': _CellTypeTuple(
+    HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
         example='Hexahedron',
@@ -313,7 +316,7 @@ _CELL_TYPE_INFO = {
         hexahedron must be convex.
         """,
     ),
-    'WEDGE': _CellTypeTuple(
+    WEDGE=_CellTypeTuple(
         value=_vtk.VTK_WEDGE,
         cell_class=_vtk.vtkWedge,
         example='Wedge',
@@ -332,7 +335,7 @@ _CELL_TYPE_INFO = {
         must be convex.
         """,
     ),
-    'PYRAMID': _CellTypeTuple(
+    PYRAMID=_CellTypeTuple(
         value=_vtk.VTK_PYRAMID,
         cell_class=_vtk.vtkPyramid,
         example='Pyramid',
@@ -353,7 +356,7 @@ _CELL_TYPE_INFO = {
         The fifth apex point must not be co-planar with the base points.
         """,
     ),
-    'PENTAGONAL_PRISM': _CellTypeTuple(
+    PENTAGONAL_PRISM=_CellTypeTuple(
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
         example='PentagonalPrism',
@@ -372,7 +375,7 @@ _CELL_TYPE_INFO = {
         pentagon must be convex.
         """,
     ),
-    'HEXAGONAL_PRISM': _CellTypeTuple(
+    HEXAGONAL_PRISM=_CellTypeTuple(
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
         example='HexagonalPrism',
@@ -393,7 +396,7 @@ _CELL_TYPE_INFO = {
     ),
     ####################################################################################
     # Quadratic, isoparametric cells
-    'QUADRATIC_EDGE': _CellTypeTuple(
+    QUADRATIC_EDGE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_EDGE,
         cell_class=_vtk.vtkQuadraticEdge,
         example='QuadraticEdge',
@@ -407,7 +410,7 @@ _CELL_TYPE_INFO = {
         ``(0,1,2)`` where id ``(2)`` is the mid-edge node.
         """,
     ),
-    'QUADRATIC_TRIANGLE': _CellTypeTuple(
+    QUADRATIC_TRIANGLE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkQuadraticTriangle,
         example='QuadraticTriangle',
@@ -426,7 +429,7 @@ _CELL_TYPE_INFO = {
 
         """,
     ),
-    'QUADRATIC_QUAD': _CellTypeTuple(
+    QUADRATIC_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_QUAD,
         cell_class=_vtk.vtkQuadraticQuad,
         example='QuadraticQuadrilateral',
@@ -444,7 +447,7 @@ _CELL_TYPE_INFO = {
 
         """,
     ),
-    'QUADRATIC_POLYGON': _CellTypeTuple(
+    QUADRATIC_POLYGON=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_POLYGON,
         cell_class=_vtk.vtkQuadraticPolygon,
         example='QuadraticPolygon',
@@ -467,7 +470,7 @@ _CELL_TYPE_INFO = {
         Do not repeat the last point.
         """,
     ),
-    'QUADRATIC_TETRA': _CellTypeTuple(
+    QUADRATIC_TETRA=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TETRA,
         cell_class=_vtk.vtkQuadraticTetra,
         example='QuadraticTetrahedron',
@@ -486,7 +489,7 @@ _CELL_TYPE_INFO = {
 
         """,
     ),
-    'QUADRATIC_HEXAHEDRON': _CellTypeTuple(
+    QUADRATIC_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkQuadraticHexahedron,
         example='QuadraticHexahedron',
@@ -507,7 +510,7 @@ _CELL_TYPE_INFO = {
         ``(2,6)``, ``(3,7)``.
         """,
     ),
-    'QUADRATIC_WEDGE': _CellTypeTuple(
+    QUADRATIC_WEDGE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkQuadraticWedge,
         example='QuadraticWedge',
@@ -530,7 +533,7 @@ _CELL_TYPE_INFO = {
         ``(3,4)``, ``(4,5)``, ``(5,3)``, ``(0,3)``, ``(1,4)``, ``(2,5)``.
         """,
     ),
-    'QUADRATIC_PYRAMID': _CellTypeTuple(
+    QUADRATIC_PYRAMID=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_PYRAMID,
         cell_class=_vtk.vtkQuadraticPyramid,
         example='QuadraticPyramid',
@@ -551,7 +554,7 @@ _CELL_TYPE_INFO = {
         The parametric location of vertex ``(4)`` is ``[0, 0, 1]``.
         """,
     ),
-    'BIQUADRATIC_QUAD': _CellTypeTuple(
+    BIQUADRATIC_QUAD=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUAD,
         cell_class=_vtk.vtkBiQuadraticQuad,
         example='BiQuadraticQuadrilateral',
@@ -571,7 +574,7 @@ _CELL_TYPE_INFO = {
 
         """,
     ),
-    'TRIQUADRATIC_HEXAHEDRON': _CellTypeTuple(
+    TRIQUADRATIC_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkTriQuadraticHexahedron,
         example='TriQuadraticHexahedron',
@@ -607,7 +610,7 @@ _CELL_TYPE_INFO = {
         The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     ),
-    'QUADRATIC_LINEAR_QUAD': _CellTypeTuple(
+    QUADRATIC_LINEAR_QUAD=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
         example='QuadraticLinearQuadrilateral',
@@ -625,7 +628,7 @@ _CELL_TYPE_INFO = {
 
         """,
     ),
-    'QUADRATIC_LINEAR_WEDGE': _CellTypeTuple(
+    QUADRATIC_LINEAR_WEDGE=_CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
         cell_class=_vtk.vtkQuadraticLinearWedge,
         example='QuadraticLinearWedge',
@@ -646,7 +649,7 @@ _CELL_TYPE_INFO = {
         The edges ``(0,3)``, ``(1,4)``, ``(2,5)`` don't have mid-edge nodes.
         """,
     ),
-    'BIQUADRATIC_QUADRATIC_WEDGE': _CellTypeTuple(
+    BIQUADRATIC_QUADRATIC_WEDGE=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
         example='BiQuadraticQuadraticWedge',
@@ -670,7 +673,7 @@ _CELL_TYPE_INFO = {
         ``18-(2,0,3,5)``.
         """,
     ),
-    'BIQUADRATIC_QUADRATIC_HEXAHEDRON': _CellTypeTuple(
+    BIQUADRATIC_QUADRATIC_HEXAHEDRON=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
         example='BiQuadraticQuadraticHexahedron',
@@ -695,7 +698,7 @@ _CELL_TYPE_INFO = {
         ``23-(2,3,7,6)`` and ``22-(3,0,4,7)``.
         """,
     ),
-    'BIQUADRATIC_TRIANGLE': _CellTypeTuple(
+    BIQUADRATIC_TRIANGLE=_CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkBiQuadraticTriangle,
         example='BiQuadraticTriangle',
@@ -718,7 +721,7 @@ _CELL_TYPE_INFO = {
     ),
     ####################################################################################
     # Cubic, iso-parametric cell
-    'CUBIC_LINE': _CellTypeTuple(
+    CUBIC_LINE=_CellTypeTuple(
         value=_vtk.VTK_CUBIC_LINE,
         cell_class=_vtk.vtkCubicLine,
         example='CubicLine',
@@ -736,14 +739,14 @@ _CELL_TYPE_INFO = {
     ),
     ####################################################################################
     # Special class of cells formed by convex group of points
-    'CONVEX_POINT_SET': _CellTypeTuple(
+    CONVEX_POINT_SET=_CellTypeTuple(
         value=_vtk.VTK_CONVEX_POINT_SET,
         cell_class=_vtk.vtkConvexPointSet,
         points_override='variable',
     ),
     ####################################################################################
     # Polyhedron cell (consisting of polygonal faces)
-    'POLYHEDRON': _CellTypeTuple(
+    POLYHEDRON=_CellTypeTuple(
         value=_vtk.VTK_POLYHEDRON,
         cell_class=_vtk.vtkPolyhedron,
         example='Polyhedron',
@@ -776,41 +779,41 @@ _CELL_TYPE_INFO = {
     ),
     ####################################################################################
     # Higher order cells in parametric form
-    'PARAMETRIC_CURVE': _CellTypeTuple(value=_vtk.VTK_PARAMETRIC_CURVE),
-    'PARAMETRIC_SURFACE': _CellTypeTuple(value=_vtk.VTK_PARAMETRIC_SURFACE),
-    'PARAMETRIC_TRI_SURFACE': _CellTypeTuple(value=_vtk.VTK_PARAMETRIC_TRI_SURFACE),
-    'PARAMETRIC_QUAD_SURFACE': _CellTypeTuple(value=_vtk.VTK_PARAMETRIC_QUAD_SURFACE),
-    'PARAMETRIC_TETRA_REGION': _CellTypeTuple(value=_vtk.VTK_PARAMETRIC_TETRA_REGION),
-    'PARAMETRIC_HEX_REGION': _CellTypeTuple(value=_vtk.VTK_PARAMETRIC_HEX_REGION),
+    PARAMETRIC_CURVE=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_CURVE),
+    PARAMETRIC_SURFACE=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_SURFACE),
+    PARAMETRIC_TRI_SURFACE=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_TRI_SURFACE),
+    PARAMETRIC_QUAD_SURFACE=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_QUAD_SURFACE),
+    PARAMETRIC_TETRA_REGION=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_TETRA_REGION),
+    PARAMETRIC_HEX_REGION=_CellTypeTuple(value=_vtk.VTK_PARAMETRIC_HEX_REGION),
     ####################################################################################
     # Higher order cells
-    'HIGHER_ORDER_EDGE': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
-    'HIGHER_ORDER_TRIANGLE': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TRIANGLE),
-    'HIGHER_ORDER_QUAD': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
-    'HIGHER_ORDER_POLYGON': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_POLYGON),
-    'HIGHER_ORDER_TETRAHEDRON': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TETRAHEDRON),
-    'HIGHER_ORDER_WEDGE': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_WEDGE),
-    'HIGHER_ORDER_PYRAMID': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_PYRAMID),
-    'HIGHER_ORDER_HEXAHEDRON': _CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
+    HIGHER_ORDER_EDGE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_EDGE),
+    HIGHER_ORDER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TRIANGLE),
+    HIGHER_ORDER_QUAD=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_QUAD),
+    HIGHER_ORDER_POLYGON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_POLYGON),
+    HIGHER_ORDER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_TETRAHEDRON),
+    HIGHER_ORDER_WEDGE=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_WEDGE),
+    HIGHER_ORDER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_PYRAMID),
+    HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    'LAGRANGE_CURVE': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE),
-    'LAGRANGE_TRIANGLE': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_TRIANGLE),
-    'LAGRANGE_QUADRILATERAL': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_QUADRILATERAL),
-    'LAGRANGE_TETRAHEDRON': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
-    'LAGRANGE_HEXAHEDRON': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_HEXAHEDRON),
-    'LAGRANGE_WEDGE': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE),
-    'LAGRANGE_PYRAMID': _CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
+    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE),
+    LAGRANGE_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TRIANGLE),
+    LAGRANGE_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_QUADRILATERAL),
+    LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
+    LAGRANGE_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_HEXAHEDRON),
+    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE),
+    LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    'BEZIER_CURVE': _CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE),
-    'BEZIER_TRIANGLE': _CellTypeTuple(value=_vtk.VTK_BEZIER_TRIANGLE),
-    'BEZIER_QUADRILATERAL': _CellTypeTuple(value=_vtk.VTK_BEZIER_QUADRILATERAL),
-    'BEZIER_TETRAHEDRON': _CellTypeTuple(value=_vtk.VTK_BEZIER_TETRAHEDRON),
-    'BEZIER_HEXAHEDRON': _CellTypeTuple(value=_vtk.VTK_BEZIER_HEXAHEDRON),
-    'BEZIER_WEDGE': _CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE),
-    'BEZIER_PYRAMID': _CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
-}
+    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE),
+    BEZIER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_BEZIER_TRIANGLE),
+    BEZIER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_BEZIER_QUADRILATERAL),
+    BEZIER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_TETRAHEDRON),
+    BEZIER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_HEXAHEDRON),
+    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE),
+    BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
+)
 if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
     _CELL_TYPE_INFO['TRIQUADRATIC_PYRAMID'] = _CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
@@ -1038,8 +1041,6 @@ class CellType(IntEnum):
 
         return self
 
-    ####################################################################################
-    # Linear cells
     EMPTY_CELL = _CELL_TYPE_INFO['EMPTY_CELL']
     VERTEX = _CELL_TYPE_INFO['VERTEX']
     POLY_VERTEX = _CELL_TYPE_INFO['POLY_VERTEX']
@@ -1057,9 +1058,6 @@ class CellType(IntEnum):
     PYRAMID = _CELL_TYPE_INFO['PYRAMID']
     PENTAGONAL_PRISM = _CELL_TYPE_INFO['PENTAGONAL_PRISM']
     HEXAGONAL_PRISM = _CELL_TYPE_INFO['HEXAGONAL_PRISM']
-
-    ####################################################################################
-    # Quadratic, isoparametric cells
     QUADRATIC_EDGE = _CELL_TYPE_INFO['QUADRATIC_EDGE']
     QUADRATIC_TRIANGLE = _CELL_TYPE_INFO['QUADRATIC_TRIANGLE']
     QUADRATIC_QUAD = _CELL_TYPE_INFO['QUADRATIC_QUAD']
@@ -1077,30 +1075,15 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_WEDGE = _CELL_TYPE_INFO['BIQUADRATIC_QUADRATIC_WEDGE']
     BIQUADRATIC_QUADRATIC_HEXAHEDRON = _CELL_TYPE_INFO['BIQUADRATIC_QUADRATIC_HEXAHEDRON']
     BIQUADRATIC_TRIANGLE = _CELL_TYPE_INFO['BIQUADRATIC_TRIANGLE']
-
-    ####################################################################################
-    # Cubic, iso-parametric cell
     CUBIC_LINE = _CELL_TYPE_INFO['CUBIC_LINE']
-
-    ####################################################################################
-    # Special class of cells formed by convex group of points
     CONVEX_POINT_SET = _CELL_TYPE_INFO['CONVEX_POINT_SET']
-
-    ####################################################################################
-    # Polyhedron cell (consisting of polygonal faces)
     POLYHEDRON = _CELL_TYPE_INFO['POLYHEDRON']
-
-    ####################################################################################
-    # Higher order cells in parametric form
     PARAMETRIC_CURVE = _CELL_TYPE_INFO['PARAMETRIC_CURVE']
     PARAMETRIC_SURFACE = _CELL_TYPE_INFO['PARAMETRIC_SURFACE']
     PARAMETRIC_TRI_SURFACE = _CELL_TYPE_INFO['PARAMETRIC_TRI_SURFACE']
     PARAMETRIC_QUAD_SURFACE = _CELL_TYPE_INFO['PARAMETRIC_QUAD_SURFACE']
     PARAMETRIC_TETRA_REGION = _CELL_TYPE_INFO['PARAMETRIC_TETRA_REGION']
     PARAMETRIC_HEX_REGION = _CELL_TYPE_INFO['PARAMETRIC_HEX_REGION']
-
-    ####################################################################################
-    # Higher order cells
     HIGHER_ORDER_EDGE = _CELL_TYPE_INFO['HIGHER_ORDER_EDGE']
     HIGHER_ORDER_TRIANGLE = _CELL_TYPE_INFO['HIGHER_ORDER_TRIANGLE']
     HIGHER_ORDER_QUAD = _CELL_TYPE_INFO['HIGHER_ORDER_QUAD']
@@ -1109,9 +1092,6 @@ class CellType(IntEnum):
     HIGHER_ORDER_WEDGE = _CELL_TYPE_INFO['HIGHER_ORDER_WEDGE']
     HIGHER_ORDER_PYRAMID = _CELL_TYPE_INFO['HIGHER_ORDER_PYRAMID']
     HIGHER_ORDER_HEXAHEDRON = _CELL_TYPE_INFO['HIGHER_ORDER_HEXAHEDRON']
-
-    ####################################################################################
-    # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
     LAGRANGE_CURVE = _CELL_TYPE_INFO['LAGRANGE_CURVE']
     LAGRANGE_TRIANGLE = _CELL_TYPE_INFO['LAGRANGE_TRIANGLE']
     LAGRANGE_QUADRILATERAL = _CELL_TYPE_INFO['LAGRANGE_QUADRILATERAL']
@@ -1119,9 +1099,6 @@ class CellType(IntEnum):
     LAGRANGE_HEXAHEDRON = _CELL_TYPE_INFO['LAGRANGE_HEXAHEDRON']
     LAGRANGE_WEDGE = _CELL_TYPE_INFO['LAGRANGE_WEDGE']
     LAGRANGE_PYRAMID = _CELL_TYPE_INFO['LAGRANGE_PYRAMID']
-
-    ####################################################################################
-    # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
     BEZIER_CURVE = _CELL_TYPE_INFO['BEZIER_CURVE']
     BEZIER_TRIANGLE = _CELL_TYPE_INFO['BEZIER_TRIANGLE']
     BEZIER_QUADRILATERAL = _CELL_TYPE_INFO['BEZIER_QUADRILATERAL']
