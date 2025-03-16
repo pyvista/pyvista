@@ -92,11 +92,10 @@ class _CellTypeTuple(NamedTuple):
     edges_override: Literal['variable', 'n/a'] | None = None
     faces_override: Literal['variable', 'n/a'] | None = None
 
-    ####################################################################################
-    # Linear cells
-
 
 _CELL_TYPE_INFO = dict(
+    ####################################################################################
+    # Linear cells
     EMPTY_CELL=_CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
         cell_class=_vtk.vtkEmptyCell,
