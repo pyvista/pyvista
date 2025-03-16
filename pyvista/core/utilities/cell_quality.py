@@ -164,8 +164,15 @@ def _init_lookup(lookup: dict | None) -> None:
         example_name = _CELL_TYPE_INFO[info.cell_type.name].example
         cell_mesh = getattr(examples.cells, example_name)()
         null_value = -1
-        with _vtk.vtk_verbosity('off'):
-            qual = cell_mesh.compute_cell_quality(info.measure, null_value=null_value)
+
+        # Suppress errors for invalid metrics
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+
+        qual = cell_mesh.compute_cell_quality(info.measure, null_value=null_value)
+
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
 
         # Ensure the measure is valid for this cell type
         assert qual.active_scalars[0] != null_value, (
