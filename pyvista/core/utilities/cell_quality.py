@@ -64,11 +64,12 @@ def sqrt(num: float) -> float:  # noqa: D103
 
 
 INF = float('inf')
-TET_ANGLE = (180 / np.pi) * np.arccos(1 / 3)
+ANGLE = (180 / np.pi) * np.arccos(1 / 3)
 R22 = sqrt(2) / 2
 R33 = sqrt(3) / 3
 
 _INFO = [
+    # TRIANGLE
     CellQualityInfo(CellType.TRIANGLE, 'area', (0, INF), (0, INF), (0, INF), sqrt(3) / 4),
     CellQualityInfo(CellType.TRIANGLE, 'aspect_ratio', (1, 1.3), (1, INF), (1, INF), 1),
     CellQualityInfo(CellType.TRIANGLE, 'aspect_frobenius', (1, 1.3), (1, INF), (1, INF), 1),
@@ -116,14 +117,7 @@ _INFO = [
     # CellQualityInfo(CellType.TETRA, 'condition', (1, 3), (1, INF), (1, INF), 1),
     CellQualityInfo(CellType.TETRA, 'distortion', (0.5, 1), (0, 1), (-INF, INF), 0),
     CellQualityInfo(CellType.TETRA, 'jacobian', (0, INF), (0, INF), (-INF, INF), sqrt(2) / 2),
-    CellQualityInfo(
-        CellType.TETRA,
-        'min_angle',
-        (40, TET_ANGLE),
-        (0, TET_ANGLE),
-        (0, 360),
-        TET_ANGLE,
-    ),
+    CellQualityInfo(CellType.TETRA, 'min_angle', (40, ANGLE), (0, ANGLE), (0, 360), ANGLE),
     CellQualityInfo(CellType.TETRA, 'radius_ratio', (1, 3), (1, INF), (1, INF), 1),
     CellQualityInfo(CellType.TETRA, 'relative_size_squared', (0.3, 1), (0, 1), (0, 1), None),
     # CellQualityInfo(CellType.TETRA, 'scaled_jacobian', (0.5, R22), (-R22, R22), (-INF, INF), 1),
