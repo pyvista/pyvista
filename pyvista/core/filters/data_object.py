@@ -2792,7 +2792,8 @@ class DataObjectFilters:
 
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        quality_measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'shape',
+        measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'shape',
+        *,
         null_value: float = -1.0,
         progress_bar: bool = False,
     ) -> _DataSetOrMultiBlockType:
@@ -2847,7 +2848,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        quality_measure : str | sequence[str], default: 'shape'
+        measure : str | sequence[str], default: 'shape'
             The cell quality measure to use. Specify a single measure or a sequence of
             measures to compute. Specify ``'all'`` to compute all measures, or
             ``'all_valid'`` to only keep quality measures that are valid for the mesh's
@@ -2901,15 +2902,15 @@ class DataObjectFilters:
 
         """
         # Validate measures
-        _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
-        compute_all = quality_measure in ['all', 'all_valid']
-        keep_valid_only = quality_measure == 'all_valid'
+        _validation.check_instance(measure, (str, list, tuple), name='quality_measure')
+        compute_all = measure in ['all', 'all_valid']
+        keep_valid_only = measure == 'all_valid'
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if compute_all:
             measures_requested = measures_available_names
         else:
-            measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            measures = [measure] if isinstance(measure, str) else measure
             for measure in measures:
                 _validation.check_contains(
                     measures_available_names, must_contain=measure, name='quality_measure'

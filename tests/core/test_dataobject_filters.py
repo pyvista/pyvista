@@ -525,7 +525,7 @@ def test_cell_quality():
     assert qual.array_names == expected_names
 
     with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
-        mesh.cell_quality(quality_measure='foo', progress_bar=True)
+        mesh.cell_quality(measure='foo', progress_bar=True)
 
 
 def test_cell_quality_measures(ant):
