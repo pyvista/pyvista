@@ -1749,3 +1749,35 @@ def test_rect_grid_dimensions_raises():
     )
     with pytest.raises(AttributeError, match=match):
         g.dimensions = 1
+
+
+@pytest.fixture
+def empty_poly_cast_to_ugrid():
+    cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
+
+    # Likely VTK bug, these should not be None but they are
+    assert cast_ugrid.GetCells() is None
+    assert cast_ugrid.GetCellTypesArray() is None
+
+    # Make sure a proper ugrid does not have these as None
+    ugrid = pv.UnstructuredGrid()
+    assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
+    assert isinstance(ugrid.GetCellTypesArray(), vtk.vtkUnsignedCharArray)
+
+    return cast_ugrid
+
+
+def test_cells_empty(empty_poly_cast_to_ugrid):
+    assert empty_poly_cast_to_ugrid.cells.size == 0
+
+
+def test_celltypes_empty(empty_poly_cast_to_ugrid, hexbeam):
+    celltypes = empty_poly_cast_to_ugrid.celltypes
+    assert celltypes.size == 0
+    assert celltypes.dtype == hexbeam.celltypes.dtype
+
+
+def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
+    connectivity = empty_poly_cast_to_ugrid.cell_connectivity
+    assert connectivity.size == 0
+    assert connectivity.dtype == hexbeam.cell_connectivity.dtype

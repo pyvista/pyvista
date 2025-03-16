@@ -2043,14 +2043,18 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         # Flag this array as read only to ensure users do not attempt to write to it.
-        array = _vtk.vtk_to_numpy(self.GetCells().GetData())
+        array = _vtk.vtk_to_numpy(self._get_cells().GetData())
         array.flags['WRITEABLE'] = False
         return array
 
     @cells.setter
     def cells(self, cells) -> None:
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
-        self.GetCells().ImportLegacyFormat(vtk_idarr)
+        self._get_cells().ImportLegacyFormat(vtk_idarr)
+
+    def _get_cells(self):
+        cells = self.GetCells()
+        return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
 
     @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
@@ -2123,7 +2127,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         array([ 0,  2,  8,  7, 27, 36, 90, 81,  2,  1,  4,  8, 36, 18, 54, 90])
 
         """
-        carr = self.GetCells()
+        carr = self._get_cells()
         return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
 
     def linear_copy(self, deep: bool = False):
@@ -2152,7 +2156,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         lgrid = self.copy(deep)
 
         # grab the vtk object
-        vtk_cell_type = _vtk.numpy_to_vtk(self.GetCellTypesArray(), deep=True)
+        vtk_cell_type = _vtk.numpy_to_vtk(self._get_cell_types_array(), deep=True)
         celltype = _vtk.vtk_to_numpy(vtk_cell_type)
         celltype[celltype == CellType.QUADRATIC_TETRA] = CellType.TETRA
         celltype[celltype == CellType.QUADRATIC_PYRAMID] = CellType.PYRAMID
@@ -2168,7 +2172,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         vtk_offset = self.GetCellLocationsArray()
         cells = _vtk.vtkCellArray()
-        cells.DeepCopy(self.GetCells())
+        cells.DeepCopy(self._get_cells())
         lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
         # fixing bug with display of quad cells
@@ -2216,7 +2220,13 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
-        return _vtk.vtk_to_numpy(self.GetCellTypesArray())
+        return _vtk.vtk_to_numpy(self._get_cell_types_array())
+
+    def _get_cell_types_array(self):
+        array = self.GetCellTypesArray()
+        if array is None:
+            array = _vtk.vtkUnsignedCharArray()
+        return array
 
     @property
     def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
@@ -2252,7 +2262,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                312, 320])
 
         """
-        carr = self.GetCells()
+        carr = self._get_cells()
         # This will be the number of cells + 1.
         array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
         array.flags['WRITEABLE'] = False

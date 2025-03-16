@@ -945,6 +945,13 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         from meshio._vtk_common import meshio_to_vtk_type
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
 
+    if len(mesh.cells) == 0:
+        # Empty mesh
+        grid = pyvista.UnstructuredGrid()
+        if mesh.points.size > 0:
+            grid.points = mesh.points
+        return grid
+
     # Extract cells from meshio.Mesh object
     cells = []
     cell_type = []
@@ -1058,6 +1065,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         if 'vtkGhostType' in mesh.cell_data
         else mesh
     )
+    if mesh.is_empty:
+        return meshio.Mesh(mesh.points, [])
 
     vtk_celltypes = mesh.celltypes
     connectivity = mesh.cell_connectivity
