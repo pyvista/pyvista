@@ -2790,7 +2790,7 @@ class DataObjectFilters:
 
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        measure: Literal['all', 'all_valid']
+        quality_measure: Literal['all', 'all_valid']
         | _CellQualityLiteral
         | Sequence[_CellQualityLiteral] = 'shape',
         *,
@@ -2822,7 +2822,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        measure : str | sequence[str], default: 'shape'
+        quality_measure : str | sequence[str], default: 'shape'
             The cell quality measure to use. Specify a single measure or a sequence of
             measures to compute. Specify ``'all'`` to compute all measures, or
             ``'all_valid'`` to only keep quality measures that are valid for the mesh's
@@ -2858,7 +2858,9 @@ class DataObjectFilters:
 
         >>> cqual = sphere.cell_quality('all_valid')
         >>> valid_measures = cqual.cell_data.keys()
-        >>> print(f'[{",\n ".join(repr(measure) for measure in valid_measures)}]')
+        >>> print(
+        ...     f'[{",\n ".join(repr(quality_measure) for measure in valid_measures)}]'
+        ... )
         ['area',
          'aspect_frobenius',
          'aspect_ratio',
@@ -2876,17 +2878,17 @@ class DataObjectFilters:
 
         """
         # Validate measures
-        _validation.check_instance(measure, (str, list, tuple), name='quality_measure')
-        keep_valid_only = measure == 'all_valid'
+        _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
+        keep_valid_only = quality_measure == 'all_valid'
         measures_available = _get_cell_qualilty_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
-        if measure in ['all', 'all_valid']:
+        if quality_measure in ['all', 'all_valid']:
             measures_requested = measures_available_names
         else:
-            measures = [measure] if isinstance(measure, str) else measure
-            for measure in measures:
+            measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            for quality_measure in measures:
                 _validation.check_contains(
-                    measures_available_names, must_contain=measure, name='quality_measure'
+                    measures_available_names, must_contain=quality_measure, name='quality_measure'
                 )
             measures_requested = cast(list[_CellQualityLiteral], measures)
 
