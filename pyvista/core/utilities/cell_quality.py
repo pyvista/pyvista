@@ -49,7 +49,7 @@ class CellQualityInfo:
     """Information about a cell's quality measure."""
 
     cell_type: CellType
-    measure: str
+    measure: _CellQualityLiteral
     acceptable_range: tuple[float, float] | None
     normal_range: tuple[float, float]
     full_range: tuple[float, float]
@@ -66,7 +66,6 @@ R22 = sqrt(2) / 2
 R33 = sqrt(3) / 3
 
 _CELL_QUALITY_INFO = [
-    # TRIANGLE
     CellQualityInfo(CellType.TRIANGLE, 'area', (0, INF), (0, INF), (0, INF), sqrt(3) / 4),
     CellQualityInfo(CellType.TRIANGLE, 'aspect_ratio', (1, 1.3), (1, INF), (1, INF), 1),
     CellQualityInfo(CellType.TRIANGLE, 'aspect_frobenius', (1, 1.3), (1, INF), (1, INF), 1),
@@ -144,7 +143,7 @@ _CELL_QUALITY_INFO = [
     CellQualityInfo(CellType.WEDGE, 'volume', (0, INF), (-INF, INF), (-INF, INF), sqrt(3) / 4),
 ]
 
-_CELL_QUALITY_LOOKUP: dict[CellType, dict[str, CellQualityInfo]] = {}
+_CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityLiteral, CellQualityInfo]] = {}
 
 for info in _CELL_QUALITY_INFO:
     # Measure is valid, populate dict
@@ -152,7 +151,7 @@ for info in _CELL_QUALITY_INFO:
     _CELL_QUALITY_LOOKUP[info.cell_type][info.measure] = info
 
 
-def cell_quality_info(cell_type: CellType, measure: str) -> CellQualityInfo:
+def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
     Parameters
