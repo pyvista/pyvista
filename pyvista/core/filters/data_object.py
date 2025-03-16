@@ -70,8 +70,6 @@ _CellQualityLiteral = Literal[
     'taper',
     'volume',
     'warpage',
-    'all',
-    'all_valid',
 ]
 
 
@@ -2792,7 +2790,9 @@ class DataObjectFilters:
 
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        measure: _CellQualityLiteral | Sequence[_CellQualityLiteral] = 'shape',
+        measure: Literal['all', 'all_valid']
+        | _CellQualityLiteral
+        | Sequence[_CellQualityLiteral] = 'shape',
         *,
         null_value: float = -1.0,
         progress_bar: bool = False,

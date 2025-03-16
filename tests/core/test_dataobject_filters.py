@@ -535,11 +535,6 @@ def test_cell_quality_measures(ant):
         # This measure was removed from VTK's API
         hinted_measures.insert(1, 'aspect_beta')
 
-    assert 'all' in hinted_measures
-    assert 'all_valid' in hinted_measures
-    hinted_measures.remove('all')
-    hinted_measures.remove('all_valid')
-
     # Get quality measures from the VTK class
     actual_measures = list(_get_cell_qualilty_measures().keys())
     msg = 'VTK API has changed. Update type hints and docstring for `cell_quality`.'
