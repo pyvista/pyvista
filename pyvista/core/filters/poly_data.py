@@ -761,8 +761,12 @@ class PolyDataFilters(DataSetFilters):
         pass_verts : bool, default: False
             Whether vertices cells are passed to the output PolyData.
 
+            .. versionadded:: 0.45.0
+
         pass_lines : bool, default: False
             Whether lines cells are passed to the output PolyData.
+
+            .. versionadded:: 0.45.0
 
         inplace : bool, default: False
             Whether to update the mesh in-place.
