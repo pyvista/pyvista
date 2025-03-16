@@ -2036,9 +2036,10 @@ def test_vtk_verbosity_context(verbosity, modifies_verbosity):
 
 
 @pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
-def test_vtk_verbosity_setter(verbosity, modifies_verbosity):
+def test_vtk_verbosity_set_get(verbosity, modifies_verbosity):
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
     pv.vtk_verbosity(verbosity)
+    assert pv.vtk_verbosity() == 'off'
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
 
 
