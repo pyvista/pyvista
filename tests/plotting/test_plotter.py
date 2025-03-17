@@ -310,6 +310,8 @@ def test_add_volume_scalar_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(plotter, 'get_array')
     m().ndim = 0
+    m2.issubdtype.return_value = True
+
     with pytest.raises(
         ValueError,
         match='`add_volume` only supports scalars with 1 or 2 dimensions',
