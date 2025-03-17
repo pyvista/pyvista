@@ -143,10 +143,9 @@ _CELL_QUALITY_INFO = [
     CellQualityInfo(CellType.WEDGE, 'volume', (0, INF), (-INF, INF), (-INF, INF), sqrt(3) / 4),
 ]
 
+# Create lookup dict
 _CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityLiteral, CellQualityInfo]] = {}
-
 for info in _CELL_QUALITY_INFO:
-    # Measure is valid, populate dict
     _CELL_QUALITY_LOOKUP.setdefault(info.cell_type, {})
     _CELL_QUALITY_LOOKUP[info.cell_type][info.measure] = info
 
@@ -166,6 +165,11 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
     -------
     CellQualityInfo
         Dataclass with information about the quality measure for a specific cell type.
+
+    Raises
+    ------
+    ValueError
+        If info is not available for the specified cell type or measure.
 
     """
 
