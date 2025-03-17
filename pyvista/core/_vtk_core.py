@@ -701,12 +701,17 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
 
     def __enter__(self):
         """Enter context manager."""
-        return
+        if self._original_verbosity is None:
+            raise ValueError(
+                'Verbosity must be set to a value to use it as a context manager.\n'
+                'Call `vtk_verbosity()` with an argument to set its value.'
+            )
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager."""
         # Restore the original verbosity level
         self._verbosity = self._original_verbosity
+        self._original_verbosity = None  # Reset
 
     def __call__(self, verbosity: _VerbosityOptions | None = None):
         """Call the context manager."""

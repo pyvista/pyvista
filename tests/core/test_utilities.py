@@ -2035,6 +2035,25 @@ def test_vtk_verbosity_context(verbosity, modifies_verbosity):
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == initial_verbosity
 
 
+def test_vtk_verbosity_no_context(modifies_verbosity):
+    match = re.escape(
+        'Verbosity must be set to a value to use it as a context manager.\n'
+        'Call `vtk_verbosity()` with an argument to set its value.'
+    )
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity:
+            ...
+
+    # Use context normally
+    with pv.vtk_verbosity('off'):
+        ...
+
+    # Test again to check reset after use
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity:
+            ...
+
+
 @pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
 def test_vtk_verbosity_set_get(verbosity, modifies_verbosity):
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
@@ -2044,7 +2063,7 @@ def test_vtk_verbosity_set_get(verbosity, modifies_verbosity):
 
 
 @pytest.mark.parametrize('value', ['str', 'invalid'])
-def test_vtk_verbosity_raises(value):
+def test_vtk_verbosity_invalid_input(value):
     match = re.escape(
         "must be one of:\n'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
     )
