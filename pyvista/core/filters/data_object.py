@@ -2913,29 +2913,26 @@ class DataObjectFilters:
         """Compute cell quality of a DataSet (internal method)."""
         CELL_QUALITY = 'CellQuality'
 
-        # Store state to be restored later, used for silencing errors
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-
         alg = _vtk.vtkCellQuality()
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
         output = self.copy()
-        for measure in measures_requested:
-            # Set measure and update
-            getattr(alg, measures_available[measure])()
-            _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
 
-            # Store the cell quality array with the output
-            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
-            if keep_valid_only and (
-                np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
-            ):
-                continue
-            output.cell_data[measure] = cell_quality_array
+        # Disable VTK warnings/errors generated from computing invalid measures
+        with pyvista.vtk_verbosity('off'):
+            # Compute all measures
+            for measure in measures_requested:
+                # Set measure and update
+                getattr(alg, measures_available[measure])()
+                _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
 
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+                # Store the cell quality array with the output
+                cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+                if keep_valid_only and (
+                    np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+                ):
+                    continue
+                output.cell_data[measure] = cell_quality_array
         return output
 
 
