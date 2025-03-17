@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 
 import pytest
@@ -36,3 +37,15 @@ def test_large_dependencies_not_imported(module: str):
     https://github.com/pyvista/pyvista/pull/7023
     """
     assert not _module_is_loaded(module), error_msg
+
+
+def test_pyvista_oo_flag():
+    """Test that PyVista works correctly with the -OO optimization flag."""
+    code = """
+import pyvista as pv
+mesh = pv.Sphere()
+""".strip()
+
+    command = [sys.executable, '-OO', '-c', code]
+    result = subprocess.run(command, capture_output=True, text=True)
+    assert result.returncode == 0, f'PyVista failed with -OO flag. stderr: {result.stderr}'
