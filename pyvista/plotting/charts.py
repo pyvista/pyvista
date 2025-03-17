@@ -98,7 +98,7 @@ class DocSubs:
                     mem_sub = cls._wrap_member(m)
                     mem_sub.__doc__ = d
                     setattr(cls, member_name, mem_sub)
-                # Get the member function/property and safely substitute its docstring
+                # Get the member function/property and safely substitute its docstring.
                 member = getattr(cls, member_name)
                 if member.__doc__:
                     member.__doc__ = member.__doc__.format(**subs)
