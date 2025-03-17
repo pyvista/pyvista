@@ -98,9 +98,10 @@ class DocSubs:
                     mem_sub = cls._wrap_member(m)
                     mem_sub.__doc__ = d
                     setattr(cls, member_name, mem_sub)
-                # Get the member function/property and substitute its docstring.
+                # Get the member function/property and safely substitute its docstring
                 member = getattr(cls, member_name)
-                member.__doc__ = member.__doc__.format(**subs)
+                if member.__doc__:
+                    member.__doc__ = member.__doc__.format(**subs)
 
         # Secondly, register all members of this class that require substitutions in subclasses
         # Create copy of registered members so far
@@ -145,7 +146,11 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
         raise ValueError('`member` must be a callable.')
-    member.__doc__ = DocSubs._DOC_TAG + member.__doc__
+
+    # Safeguard against None docstring when using -OO
+    existing_doc = member.__doc__ if member.__doc__ is not None else ''
+
+    member.__doc__ = DocSubs._DOC_TAG + existing_doc
     return member
 
 
