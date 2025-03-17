@@ -10,6 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
@@ -585,3 +586,144 @@ def VTKVersionInfo():
 
 
 vtk_version_info = VTKVersionInfo()
+
+if TYPE_CHECKING:
+    from typing import Literal
+
+    _VerbosityOptions = (
+        Literal[
+            'off',
+            'error',
+            'warning',
+            'info',
+            'max',
+        ]
+        | int
+        | vtkLogger.Verbosity
+    )
+
+
+class _VTKVerbosity(contextlib.AbstractContextManager[None]):
+    """Context manager to set VTK verbosity level.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    verbosity : int | str | vtkLogger.Verbosity
+        Verbosity of the ``vtkLogger`` to set.
+
+        - ``'off'``: No output.
+        - ``'error'``: Only error messages.
+        - ``'warning'``: Errors and warnings.
+        - ``'info'``: Errors, warnings, and info messages.
+        - ``'max'``: All messages, including debug info.
+
+        Integers between ``[-9, 9]`` or their string representation
+        are also accepted.
+
+    Examples
+    --------
+    Get the current vtk verbosity.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_verbosity()
+    'info'
+
+    Set verbosity to max.
+
+    >>> _ = pv.vtk_verbosity('max')
+    >>> pv.vtk_verbosity()
+    'max'
+
+    Use it as a context manager to temporarily turn it off.
+
+    >>> mesh = pv.Sphere()
+    >>> with pv.vtk_verbosity('off'):
+    ...     mesh = mesh.compute_cell_quality('volume')
+
+    The state is restored to its previous value outside the context.
+
+    >>> pv.vtk_verbosity()
+    'max'
+
+    """
+
+    @staticmethod
+    def _validate_verbosity(
+        verbosity: _VerbosityOptions,
+    ) -> vtkLogger.Verbosity:
+        if isinstance(verbosity, vtkLogger.Verbosity):
+            return verbosity
+        else:
+            try:
+                logger_verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+                if logger_verbosity == vtkLogger.VERBOSITY_INVALID:
+                    raise AttributeError
+                else:
+                    return logger_verbosity
+            except AttributeError:
+                raise ValueError(
+                    f"Invalid verbosity name '{verbosity}', must be one of:\n"
+                    f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
+                )
+
+    @property
+    def _verbosity(self):
+        return vtkLogger.GetCurrentVerbosityCutoff()
+
+    @_verbosity.setter
+    def _verbosity(self, verbosity: _VerbosityOptions):
+        vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
+
+    @property
+    def _verbosity_string(self):
+        to_string = {
+            -10: 'invalid',
+            -9: 'off',
+            -2: 'error',
+            -1: 'warning',
+            0: 'info',
+            1: '1',
+            2: '2',
+            3: '3',
+            4: '4',
+            5: '5',
+            6: '6',
+            7: '7',
+            8: '8',
+            9: 'max',
+        }
+        return to_string[self._verbosity]
+
+    def __init__(self):
+        """Initialize context manager."""
+        self._original_verbosity = None
+
+    def __enter__(self):
+        """Enter context manager."""
+        if self._original_verbosity is None:
+            raise ValueError(
+                'Verbosity must be set to a value to use it as a context manager.\n'
+                'Call `vtk_verbosity()` with an argument to set its value.'
+            )
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit context manager."""
+        # Restore the original verbosity level
+        self._verbosity = self._original_verbosity
+        self._original_verbosity = None  # Reset
+
+    def __call__(self, verbosity: _VerbosityOptions | None = None):
+        """Call the context manager."""
+        if verbosity is None:
+            # Get the verbosity
+            return self._verbosity_string
+
+        # Set the verbosity but allow restore to original value if exiting context
+        self._original_verbosity = self._verbosity
+        self._verbosity = verbosity
+        return self
+
+
+vtk_verbosity = _VTKVerbosity()
