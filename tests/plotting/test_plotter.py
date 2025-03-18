@@ -291,6 +291,45 @@ def test_save_image_raises(mocker: MockerFixture):
         pl._save_image(im, filename='foo', return_img=True)
 
 
+def test_add_volume_scalar_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotter
+
+    m = mocker.patch.object(plotter, 'get_array')
+    m().ndim = 1
+    m2 = mocker.patch.object(plotter, 'np')
+    m2.issubdtype.return_value = False
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError,
+        match='Non-numeric scalars are currently not supported for volume rendering.',
+    ):
+        pl.add_volume(pv.ImageData(), scalars='foo')
+
+    mocker.resetall()
+
+    m = mocker.patch.object(plotter, 'get_array')
+    m().ndim = 0
+    m2.issubdtype.return_value = True
+
+    with pytest.raises(
+        ValueError,
+        match='`add_volume` only supports scalars with 1 or 2 dimensions',
+    ):
+        pl.add_volume(pv.ImageData(), scalars='foo')
+
+
+def test_update_scalar_bar_range_raises():
+    pl = pv.Plotter()
+    match = re.escape('clim argument must be a length 2 iterable of values: (min, max).')
+
+    with pytest.raises(TypeError, match=match):
+        pl.update_scalar_bar_range(clim=[1, 2, 3])
+
+    with pytest.raises(AttributeError, match='This plotter does not have an active mapper.'):
+        pl.update_scalar_bar_range(clim=[1, 2], name=None)
+
+
 def test_save_graphic_raises():
     pl = pv.Plotter()
     pl.close()
@@ -765,9 +804,11 @@ def test_plotter_update_coordinates(sphere):
         pl.add_mesh(sphere)
         pl.update_coordinates(sphere.points * 2.0)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Convert error this method')
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Remove this method')
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
 
 
 def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
