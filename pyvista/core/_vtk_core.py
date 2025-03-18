@@ -722,10 +722,12 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
             # Get the verbosity
             return self._verbosity_string
 
-        # Set the verbosity but allow restore to original value if exiting context
-        self._original_verbosity = self._verbosity
-        self._verbosity = verbosity
-        return self
+        # Create new instance and store the local state
+        # to be restored when exiting context
+        output = _VTKVerbosity()
+        output._original_verbosity = output._verbosity
+        output._verbosity = verbosity
+        return output
 
 
 vtk_verbosity = _VTKVerbosity()
