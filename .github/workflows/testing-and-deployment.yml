@@ -79,6 +79,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{matrix.config.os}}, py-${{matrix.config.python-version}}
+          files: mac-core-${{ join(matrix.config.* , '-') }}.xml, mac-plotting-${{ join(matrix.config.* , '-') }}.xml
+          name: ${{matrix.config.os}}-py-${{matrix.config.python-version}}
+          fail_ci_if_error: true
 
       - name: Upload Generated Images
         if: always()
@@ -207,6 +210,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: linux, py-${{matrix.python-version}}, vtk-${{matrix.vtk-version}}, numpy-${{matrix.numpy-version}}
+          files: linux-core-${{ join(matrix.* , '-') }}.xml, linux-plot-${{ join(matrix.* , '-') }}.xml
+          fail_ci_if_error: true
+          name: linux-py-${{matrix.python-version}}-vtk-${{matrix.vtk-version}}-numpy-${{matrix.numpy-version}}
 
       - name: Check package
         run: |
