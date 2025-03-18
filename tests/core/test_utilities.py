@@ -2084,7 +2084,7 @@ def test_cell_quality_info():
     info = pv.cell_quality_info(cell_type, measure)
     assert isinstance(info, CellQualityInfo)
     assert info.cell_type == cell_type
-    assert info.measure == measure
+    assert info.quality_measure == measure
 
 
 @pytest.mark.needs_vtk_version(9, 2)
@@ -2095,7 +2095,7 @@ def test_cell_quality_info_valid_measures():
         cell_mesh = getattr(ex.cells, example_name)()
         null_value = -1
 
-        qual = cell_mesh.compute_cell_quality(info.measure, null_value=null_value)
+        qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
 
         # Ensure the measure is valid for this cell type
         assert qual.active_scalars[0] != null_value, (

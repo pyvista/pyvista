@@ -49,7 +49,7 @@ class CellQualityInfo:
     """Information about a cell's quality measure."""
 
     cell_type: CellType
-    measure: _CellQualityLiteral
+    quality_measure: _CellQualityLiteral
     acceptable_range: tuple[float, float] | None
     normal_range: tuple[float, float]
     full_range: tuple[float, float]
@@ -147,7 +147,7 @@ _CELL_QUALITY_INFO = [
 _CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityLiteral, CellQualityInfo]] = {}
 for info in _CELL_QUALITY_INFO:
     _CELL_QUALITY_LOOKUP.setdefault(info.cell_type, {})
-    _CELL_QUALITY_LOOKUP[info.cell_type][info.measure] = info
+    _CELL_QUALITY_LOOKUP[info.cell_type][info.quality_measure] = info
 
 
 def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> CellQualityInfo:
