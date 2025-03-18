@@ -5383,9 +5383,11 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if pyvista.version_info >= (0, 48):  # pragma: no cover
-            raise RuntimeError('Convert this deprecation warning into an error.')
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
         if pyvista.version_info >= (0, 49):  # pragma: no cover
-            raise RuntimeError('Remove this filter.')
+            msg = 'Remove this filter.'
+            raise RuntimeError(msg)
 
         msg = (
             'This filter is deprecated. Use :meth:`~pyvista.DataObjectFilters.cell_quality` instead.\n'
