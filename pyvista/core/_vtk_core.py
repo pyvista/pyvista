@@ -625,6 +625,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     --------
     Get the current vtk verbosity.
 
+    >>> import vtk
     >>> import pyvista as pv
     >>> pv.vtk_verbosity()
     'info'
@@ -635,11 +636,11 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     >>> pv.vtk_verbosity()
     'max'
 
-    Use it as a context manager to temporarily turn it off.
+    Use it as a context manager to temporarily turn it off for some computations.
 
     >>> mesh = pv.Sphere()
     >>> with pv.vtk_verbosity('off'):
-    ...     mesh = mesh.compute_cell_quality('volume')
+    ...     mesh = mesh.cell_quality('volume')
 
     The state is restored to its previous value outside the context.
 
@@ -719,10 +720,12 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
             # Get the verbosity
             return self._verbosity_string
 
-        # Set the verbosity but allow restore to original value if exiting context
-        self._original_verbosity = self._verbosity
-        self._verbosity = verbosity
-        return self
+        # Create new instance and store the local state
+        # to be restored when exiting context
+        output = _VTKVerbosity()
+        output._original_verbosity = output._verbosity
+        output._verbosity = verbosity
+        return output
 
 
 vtk_verbosity = _VTKVerbosity()
