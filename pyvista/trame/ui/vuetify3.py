@@ -282,9 +282,8 @@ class Viewer(BaseViewer):
         if mode is None:
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
-            raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
-            )
+            msg = f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+            raise ValueError(msg)
         if mode != 'trame':
             default_server_rendering = mode == 'server'
 

@@ -175,7 +175,8 @@ def test_user_dict_removal(data_object, method):
         elif method == 'set_none':
             data_object.user_dict = None
         else:
-            raise RuntimeError(f'Invalid test method {method}.')
+            msg = f'Invalid test method {method}.'
+            raise RuntimeError(msg)
 
     # Clear before and after to ensure full test coverage of branches
     clear_user_dict()
