@@ -197,7 +197,7 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: linux, ${{ join(matrix.* , '-') }}
+          flags: linux, py-${{matrix.python-version}}, vtk-${{matrix.vtk-version}}, numpy-${{matrix.numpy-version}}
 
       - name: Check package
         run: |
