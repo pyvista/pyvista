@@ -148,7 +148,9 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
         raise ValueError('`member` must be a callable.')
 
     # Safeguard against None docstring when using -OO
-    existing_doc = member.__doc__ if member.__doc__ is not None else ''
+    existing_doc = ''
+    if member.__doc__ is not None:
+        existing_doc = member.__doc__
 
     member.__doc__ = DocSubs._DOC_TAG + existing_doc
     return member
