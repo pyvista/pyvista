@@ -66,10 +66,19 @@ jobs:
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: pytest -v --ignore=tests/plotting
+        run: |
+          pytest -v --ignore=tests/plotting --junitxml=mac-core-${{ join(matrix.config.* , '-') }}.xml -o junit_family=legacy
 
       - name: Test Plotting
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: |
+          pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --junitxml=mac-plotting-${{ join(matrix.config.* , '-') }}.xml -o junit_family=legacy
+
+      - name: Upload test results to Codecov
+        if: always()
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{matrix.config.os}}, py-${{matrix.config.python-version}}
 
       - name: Upload Generated Images
         if: always()
