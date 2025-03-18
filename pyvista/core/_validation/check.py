@@ -163,7 +163,8 @@ def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array')
     try:
         check_subdtype(array, (np.floating, np.integer), name=name)
     except TypeError as e:
-        raise TypeError(f'{name} must have real numbers.') from e
+        msg = f'{name} must have real numbers.'
+        raise TypeError(msg) from e
 
 
 def check_sorted(
@@ -232,7 +233,8 @@ def check_sorted(
         try:
             check_range(axis, rng=[-ndim, ndim - 1], name='Axis')
         except ValueError:
-            raise ValueError(f'Axis {axis} is out of bounds for ndim {ndim}.')
+            msg = f'Axis {axis} is out of bounds for ndim {ndim}.'
+            raise ValueError(msg)
 
     if axis is None and ndim >= 1:  # type: ignore[unreachable]
         # Emulate np.sort(), which flattens array when axis is None
@@ -264,10 +266,11 @@ def check_sorted(
         msg_body = f'with {array.size} elements'
         order = 'ascending' if ascending else 'descending'
         strict_ = 'strict ' if strict else ''
-        raise ValueError(
+        msg = (
             f'{name} {msg_body} must be sorted in {strict_}{order} order. '
-            f'Got:\n    {reprlib.repr(array)}',
+            f'Got:\n    {reprlib.repr(array)}'
         )
+        raise ValueError(msg)
 
 
 def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
@@ -300,7 +303,8 @@ def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     if not np.all(np.isfinite(array)):
-        raise ValueError(f'{name} must have finite values.')
+        msg = f'{name} must have finite values.'
+        raise ValueError(msg)
 
 
 def check_integer(
@@ -350,7 +354,8 @@ def check_integer(
     if strict:
         check_subdtype(array, np.integer)
     elif not np.array_equal(array, np.floor(array)):
-        raise ValueError(f'{name} must have integer-like values.')
+        msg = f'{name} must have integer-like values.'
+        raise ValueError(msg)
 
 
 def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
@@ -440,9 +445,11 @@ def check_greater_than(
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     valid_value = _validate_real_value(value)
     if strict and not np.all(array > valid_value):
-        raise ValueError(f'{name} values must all be greater than {value}.')
+        msg = f'{name} values must all be greater than {value}.'
+        raise ValueError(msg)
     elif not np.all(array >= valid_value):
-        raise ValueError(f'{name} values must all be greater than or equal to {value}.')
+        msg = f'{name} values must all be greater than or equal to {value}.'
+        raise ValueError(msg)
 
 
 def check_less_than(
@@ -494,9 +501,11 @@ def check_less_than(
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     valid_value = _validate_real_value(value)
     if strict and not np.all(array < valid_value):
-        raise ValueError(f'{name} values must all be less than {value}.')
+        msg = f'{name} values must all be less than {value}.'
+        raise ValueError(msg)
     elif not np.all(array <= valid_value):
-        raise ValueError(f'{name} values must all be less than or equal to {value}.')
+        msg = f'{name} values must all be less than or equal to {value}.'
+        raise ValueError(msg)
 
 
 def check_range(
@@ -896,7 +905,8 @@ def check_instance(
 
     """
     if not isinstance(name, str):
-        raise TypeError(f'Name must be a string, got {type(name)} instead.')
+        msg = f'Name must be a string, got {type(name)} instead.'  # type: ignore[unreachable]
+        raise TypeError(msg)
 
     # Get class info from generics
     if get_origin(classinfo) is Union:
@@ -1161,10 +1171,11 @@ def check_length(
     if exact_length is not None:
         check_integer(exact_length, name="'exact_length'")
         if array_len not in np.atleast_1d(exact_length):
-            raise ValueError(
+            msg = (
                 f'{name} must have a length equal to any of: {exact_length}. '
-                f'Got length {array_len} instead.',
+                f'Got length {array_len} instead.'
             )
+            raise ValueError(msg)
 
     # Validate min/max length
     if min_length is not None:
@@ -1175,13 +1186,11 @@ def check_length(
         check_sorted((min_length, max_length), name='Range')
 
     if min_length is not None and array_len < min_length:
-        raise ValueError(
-            f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.',
-        )
+        msg = f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.'
+        raise ValueError(msg)
     if max_length is not None and array_len > max_length:
-        raise ValueError(
-            f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.',
-        )
+        msg = f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.'
+        raise ValueError(msg)
 
 
 def _validate_shape_value(shape: _ShapeLike) -> _Shape:
@@ -1190,7 +1199,8 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
         # `None` is used to mean `any shape is allowed` by the array
         #  validation methods, so raise an error here.
         #  Also, setting `None` as a shape is deprecated by NumPy.
-        raise TypeError('`None` is not a valid shape. Use `()` instead.')
+        msg = '`None` is not a valid shape. Use `()` instead.'  # type: ignore[unreachable]
+        raise TypeError(msg)
 
     # Return early for common inputs
     if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
@@ -1212,4 +1222,5 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     else:
         check_iterable_items(shape, int, name='Shape')
     check_greater_than(shape, -1, name='Shape', strict=False)
-    raise RuntimeError('This line should not be reachable.')  # pragma: no cover
+    msg = 'This line should not be reachable.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover

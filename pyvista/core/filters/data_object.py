@@ -154,14 +154,14 @@ class DataObjectFilters:
         if inplace is None:
             # if inplace is None user has not explicitly opted into inplace behavior
             if version_info >= (0, 48):  # pragma: no cover
-                raise RuntimeError(
+                msg = (
                     'Convert this deprecation warning into an error '
                     'and update the docstring default value/type for inplace.'
                 )
+                raise RuntimeError(msg)
             if version_info >= (0, 51):  # pragma: no cover
-                raise RuntimeError(
-                    'Remove this deprecation and update the docstring value/type for inplace.'
-                )
+                msg = 'Remove this deprecation and update the docstring value/type for inplace.'
+                raise RuntimeError(msg)
 
             msg = (
                 f'The default value of `inplace` for the filter `{self.__class__.__name__}.transform` will change in the future. '
@@ -181,12 +181,14 @@ class DataObjectFilters:
             )
 
         if inplace and isinstance(self, pyvista.RectilinearGrid):
-            raise TypeError(f'Cannot transform a {self.__class__} inplace')
+            msg = f'Cannot transform a {self.__class__} inplace'
+            raise TypeError(msg)
 
         t = trans if isinstance(trans, Transform) else Transform(trans)
 
         if t.matrix[3, 3] == 0:
-            raise ValueError('Transform element (3,3), the inverse scale term, is zero')
+            msg = 'Transform element (3,3), the inverse scale term, is zero'
+            raise ValueError(msg)
 
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
@@ -1561,7 +1563,8 @@ class DataObjectFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise ValueError('The bounds mesh must have only 6 faces.')
+                msg = 'The bounds mesh must have only 6 faces.'
+                raise ValueError(msg)
             bounds = []
             poly.compute_normals(inplace=True)
             for cid in range(6):
@@ -1921,9 +1924,8 @@ class DataObjectFilters:
                 ax_label = cast(XYZLiteral, ax_str)
                 ax_index = label_to_index[ax_label]
             else:
-                raise ValueError(
-                    f'Axis ({axis!r}) not understood. Choose one of {labels}.',
-                ) from None
+                msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
+                raise ValueError(msg) from None
         # get the locations along that axis
         if bounds is None:
             bounds = self.bounds
@@ -2027,10 +2029,12 @@ class DataObjectFilters:
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
-            raise ValueError('Input line must have only one cell.')
+            msg = 'Input line must have only one cell.'
+            raise ValueError(msg)
         polyline = line.GetCell(0)
         if not isinstance(polyline, _vtk.vtkPolyLine):
-            raise TypeError(f'Input line must have a PolyLine cell, not ({type(polyline)})')
+            msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
+            raise TypeError(msg)
         # Generate PolyPlane
         polyplane = _vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
@@ -2101,16 +2105,14 @@ class DataObjectFilters:
             try:
                 alg.SetUseAllPoints(use_all_points)
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError(
+                msg = (
                     'This version of VTK does not support `use_all_points=True`. '
-                    'VTK v9.1 or newer is required.',
+                    'VTK v9.1 or newer is required.'
                 )
+                raise VTKVersionError(msg)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Extracting All Edges')
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        with pyvista.vtk_verbosity('off'):
+            _update_alg(alg, progress_bar, 'Extracting All Edges')
         output = _get_output(alg)
         if clear_data:
             output.clear_data()
@@ -2739,15 +2741,15 @@ class DataObjectFilters:
                 try:
                     locator = locator_map[locator]
                 except KeyError as err:
-                    raise ValueError(
-                        f'locator must be a string from {locator_map.keys()}, got {locator}',
-                    ) from err
+                    msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
+                    raise ValueError(msg) from err
             alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:
                 alg.SnapToCellWithClosestPointOn()
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
+                msg = '`snap_to_closest_point=True` requires vtk 9.3.0 or newer'
+                raise VTKVersionError(msg)
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)

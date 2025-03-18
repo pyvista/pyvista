@@ -19,6 +19,7 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._vtk_core import vtk_verbosity as vtk_verbosity
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
@@ -35,7 +36,8 @@ ID_TYPE = cast(int, _get_vtk_id_type())
 if vtk_version_info.major < 9:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    raise VTKVersionError('VTK version must be 9.0.0 or greater.')
+    msg = 'VTK version must be 9.0.0 or greater.'
+    raise VTKVersionError(msg)
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -116,6 +118,7 @@ def __getattr__(name):
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError:
-        raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
+        msg = f"module 'pyvista' has no attribute '{name}'"
+        raise AttributeError(msg) from None
 
     return feature
