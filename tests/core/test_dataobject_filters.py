@@ -26,42 +26,98 @@ from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 
 
-def test_clip_filter(datasets):
+@pytest.mark.parametrize('return_clipped', [True, False])
+def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset in enumerate(datasets):
-        clp = dataset.clip(normal=normals[i], invert=True)
-        assert clp is not None
-        if isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
-        else:
-            assert isinstance(clp, pv.UnstructuredGrid)
+    # Remove None blocks in the root block but keep the none block in the nested MultiBlock
+    multi = multiblock_all_with_nested_and_none
+    for i, block in enumerate(multi):
+        if block is None:
+            del multi[i]
+    assert None not in multi
+    assert None in multi.recursive_iterator()
 
-    # clip with get_clipped=True
-    for i, dataset in enumerate(datasets):
-        clp1, clp2 = dataset.clip(normal=normals[i], invert=True, return_clipped=True)
-        for clp in (clp1, clp2):
+    for dataset in multi:
+        clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
+        assert clips is not None
+
+        if return_clipped:
+            assert isinstance(clips, tuple)
+            assert len(clips) == 2
+        else:
+            assert isinstance(clips, pv.DataObject)
+            # Make dataset iterable
+            clips = [clips]
+
+        for clip in clips:
             if isinstance(dataset, pv.PolyData):
-                assert isinstance(clp, pv.PolyData)
+                assert isinstance(clip, pv.PolyData)
+            elif isinstance(dataset, pv.MultiBlock):
+                assert isinstance(clip, pv.MultiBlock)
+                assert clip.n_blocks == dataset.n_blocks
             else:
-                assert isinstance(clp, pv.UnstructuredGrid)
+                assert isinstance(clip, pv.UnstructuredGrid)
+
+
+def test_clip_filter_normal(datasets):
+    # Test no errors are raised
+    for i, dataset in enumerate(datasets):
+        dataset.clip(normal=normals[i], invert=True)
+
+
+@pytest.mark.parametrize('dataset', [pv.PolyData(), pv.MultiBlock()])
+def test_clip_filter_empty_inputs(dataset):
+    dataset.clip('x')
+
+
+def test_clip_filter_crinkle_disjoint(uniform):
+    def assert_array_names(clipped):
+        assert cell_ids in clipped.array_names
+        assert 'vtkOriginalPointIds' not in clipped.array_names
+        assert 'vtkOriginalCellIds' not in clipped.array_names
 
     # crinkle clip
-    mesh = pv.Wavelet()
-    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
+    cell_ids = 'cell_ids'
+    clp = uniform.clip(normal=(1, 1, 1), crinkle=True)
+    assert_array_names(clp)
+
     assert clp is not None
-    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = uniform.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
-    set_a = set(clp1.cell_data['cell_ids'])
-    set_b = set(clp2.cell_data['cell_ids'])
+    assert_array_names(clp1)
+    assert_array_names(clp2)
+    set_a = set(clp1.cell_data[cell_ids])
+    set_b = set(clp2.cell_data[cell_ids])
     assert set_a.isdisjoint(set_b)
-    assert set_a.union(set_b) == set(range(mesh.n_cells))
+    assert set_a.union(set_b) == set(range(uniform.n_cells))
+
+
+@pytest.mark.parametrize('has_active_scalars', [True, False])
+def test_clip_filter_crinkle_active_scalars(uniform, has_active_scalars):
+    if not has_active_scalars:
+        uniform.set_active_scalars(None)
+        assert uniform.active_scalars is None
+    else:
+        assert uniform.active_scalars is not None
+
+    scalars_before = uniform.active_scalars_name
+    uniform.clip('x', crinkle=True)
+    scalars_after = uniform.active_scalars_name
+    assert scalars_before == scalars_after
 
 
 def test_clip_filter_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.clip(normal=normals[0], invert=False)
     assert output.n_blocks == multiblock_all.n_blocks
+
+
+def test_transform_raises(sphere):
+    matrix = np.diag((1, 1, 1, 0))
+    match = re.escape('Transform element (3,3), the inverse scale term, is zero')
+    with pytest.raises(ValueError, match=match):
+        sphere.transform(matrix, inplace=False)
 
 
 def test_clip_box(datasets):

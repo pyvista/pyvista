@@ -135,7 +135,8 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
 
     """
     if len(points) % 2 != 0:
-        raise ValueError('An even number of points must be given to define each segment.')
+        msg = 'An even number of points must be given to define each segment.'
+        raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -577,9 +578,11 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
 
     """
     if points.shape[1] != 3:
-        raise ValueError('Points array should have shape (N, 3).')
+        msg = 'Points array should have shape (N, 3).'
+        raise ValueError(msg)
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError('Face array should have shape (M, 3).')
+        msg = 'Face array should have shape (M, 3).'
+        raise ValueError(msg)
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
@@ -637,12 +640,14 @@ def vector_poly_data(
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise ValueError('orig array must be 3D')
+        msg = 'orig array must be 3D'
+        raise ValueError(msg)
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise ValueError('vec array must be 3D')
+        msg = 'vec array must be 3D'
+        raise ValueError(msg)
 
     # Create vtk points and cells objects
     vpts = _vtk.vtkPoints()

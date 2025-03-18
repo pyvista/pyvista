@@ -224,7 +224,8 @@ class LookupTable(_vtk.vtkLookupTable):
     ):
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
-            raise ValueError('Cannot set both `cmap` and `values`.')
+            msg = 'Cannot set both `cmap` and `values`.'
+            raise ValueError(msg)
 
         if cmap is not None:
             self.apply_cmap(cmap, n_values=n_values, flip=flip)
@@ -607,7 +608,8 @@ class LookupTable(_vtk.vtkLookupTable):
         try:
             self.SetRamp(RAMP_MAP_INV[value])
         except KeyError:
-            raise ValueError(f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}')
+            msg = f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}'
+            raise ValueError(msg)
         self.rebuild()
 
     @property
@@ -833,7 +835,8 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         if isinstance(opacity, (float, int)):
             if not 0 <= opacity <= 1:
-                raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
+                msg = f'Opacity must be between 0 and 1, got {opacity}'
+                raise ValueError(msg)
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
@@ -912,9 +915,8 @@ class LookupTable(_vtk.vtkLookupTable):
             self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            raise RuntimeError(
-                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.',
-            )
+            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
             self.ForceBuild()
@@ -1129,4 +1131,5 @@ class LookupTable(_vtk.vtkLookupTable):
             try:
                 return np.array([self.map_value(item) for item in value])
             except:
-                raise TypeError('LookupTable __call__ expects a single value or an iterable.')
+                msg = 'LookupTable __call__ expects a single value or an iterable.'
+                raise TypeError(msg)

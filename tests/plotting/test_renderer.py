@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import re
+
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 import vtk
@@ -541,3 +545,64 @@ def test_compute_bounds(airplane):
     assert pl.compute_bounds(ignore_actors=[actor]) == DEFAULT_BOUNDS
     assert pl.compute_bounds(ignore_actors=[type(actor)]) == DEFAULT_BOUNDS
     assert pl.compute_bounds(ignore_actors=[actor.name]) == DEFAULT_BOUNDS
+
+
+@pytest.mark.parametrize('aa_type', [None, 1.0, 1, object()])
+def test_enable_antialising_raises(aa_type):
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match=f'`aa_type` must be a string, not {type(aa_type)}'):
+        pl.renderer.enable_anti_aliasing(aa_type=aa_type)
+
+
+def test_add_actor_raises():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match=re.escape('Culling option (foo) not understood.')):
+        pl.renderer.add_actor(vtk.vtkActor(), culling='foo')
+
+
+@pytest.mark.parametrize('grid', [1.0, 1, object()])
+def test_show_bounds_grid_raises(grid):
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match=re.escape(f'`grid` must be a str, not {type(grid)}')):
+        pl.renderer.show_bounds(grid=grid)
+
+
+def test_show_bounds_grid_value_raises(grid):
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError, match=re.escape('`grid` must be either "front", "back, or, "all", not foo')
+    ):
+        pl.renderer.show_bounds(grid='foo')
+
+
+@given(padding=st.floats().filter(lambda x: (x > 1.0) | (x < 0)))
+def test_show_bounds_padding_raises(padding):
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
+    ):
+        pl.renderer.show_bounds(padding=padding)
+
+
+@pytest.mark.parametrize('groups', [1, object(), True])
+def test_init_renderers_groups_raises(groups):
+    match = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+    with pytest.raises(TypeError, match=match):
+        pv.Plotter(groups=groups)
+
+
+@pytest.mark.parametrize('group', [1, object(), True])
+def test_init_renderers_groups_item_raises(group):
+    match = f'Each group entry should be a list or tuple, not {type(group).__name__}.'
+    with pytest.raises(TypeError, match=match):
+        pv.Plotter(groups=[group])
+
+
+@given(groups=st.lists(st.integers()).filter(lambda x: len(x) != 2))
+def test_init_renderers_groups_item_len_raises(groups):
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Each group entry must have length 2.'),
+    ):
+        pv.Plotter(groups=[groups])

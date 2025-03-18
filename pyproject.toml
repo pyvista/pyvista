@@ -81,6 +81,7 @@ test = [
   'pyanalyze<=0.13.1',
   'pytest-cov<6.1.0',
   'pytest-memprof<0.3.0',
+  'pytest-mypy-plugins<3.2.0',
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
@@ -198,8 +199,7 @@ omit = [
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
-exclude_also = ['if TYPE_CHECKING:']
-
+exclude_also = ['^\s*@overload\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
@@ -241,7 +241,7 @@ extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
-plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
+plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true
@@ -302,6 +302,7 @@ docstring-code-line-length = 75
 quote-style = 'single'
 
 [tool.ruff.lint]
+extend-safe-fixes = ['EM']
 extend-select = [
   'A',
   'AIR',
@@ -315,11 +316,13 @@ extend-select = [
   'DJ',
   'DTZ',
   'E',
+  'EM',
   'F',
   'FA',
   'FLY',
   'I',
   'ICN',
+  'INP',
   'INT',
   'ISC',
   'LOG',
@@ -406,7 +409,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D']
+'tests/*' = ['D', 'INP']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list
@@ -431,8 +434,8 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting*' = ['ANN']
 
 # All other ANN ignores
-'doc*' = ['ANN']
-'examples*' = ['ANN']
+'doc*' = ['ANN', 'INP']
+'examples*' = ['ANN', 'INP']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
