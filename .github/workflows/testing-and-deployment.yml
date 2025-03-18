@@ -70,6 +70,7 @@ jobs:
           pytest -v --ignore=tests/plotting --junitxml=mac-core-${{ join(matrix.config.* , '-') }}.xml -o junit_family=legacy
 
       - name: Test Plotting
+        if: always()
         run: |
           pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --junitxml=mac-plotting-${{ join(matrix.config.* , '-') }}.xml -o junit_family=legacy
 
@@ -182,6 +183,7 @@ jobs:
         run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
 
       - name: Plotting Testing (uses GL)
+        if: always()
         run: |
           xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images --junitxml=linux-plot-${{ join(matrix.* , '-') }}.xml -o junit_family=legacy
 
@@ -276,6 +278,7 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
+        if: always()
         run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
