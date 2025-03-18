@@ -2037,6 +2037,19 @@ def test_vtk_verbosity_context(verbosity):
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
+def test_vtk_verbosity_nested_context():
+    LEVEL1 = 'off'
+    LEVEL2 = 'error'
+    LEVEL3 = 'warning'
+    with pv.vtk_verbosity(LEVEL1):
+        with pv.vtk_verbosity(LEVEL2):
+            with pv.vtk_verbosity(LEVEL3):
+                assert pv.vtk_verbosity() == LEVEL3
+            assert pv.vtk_verbosity() == LEVEL2
+        assert pv.vtk_verbosity() == LEVEL1
+
+
+@pytest.mark.usefixtures('modifies_verbosity')
 def test_vtk_verbosity_no_context():
     match = re.escape(
         'Verbosity must be set to a value to use it as a context manager.\n'
