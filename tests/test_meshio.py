@@ -131,9 +131,7 @@ def test_meshio(mesh_in, tmpdir):
         cells = mesh_in.cells.reshape((mesh_in.n_cells, 5))[:, [0, 1, 2, 4, 3]].ravel()
         assert np.allclose(cells, mesh.cells)
     elif (mesh_in.celltypes == pv.CellType.VOXEL).all():
-        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[
-            :, [0, 1, 2, 4, 3, 5, 6, 8, 7]
-        ].ravel()
+        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:, [0, 1, 2, 4, 3, 5, 6, 8, 7]].ravel()
         assert np.allclose(cells, mesh.cells)
     # Mixed cell types with voxels
     elif (mesh_in.celltypes == pv.CellType.VOXEL).any():
