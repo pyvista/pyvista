@@ -104,7 +104,7 @@ polyhedron = meshio.Mesh(
 
 
 @pytest.mark.parametrize(
-    'mesh_in', [beam, airplane, uniform, uniform2d, mesh2d, polyhedron, cow, empty, points_only]
+    'mesh_in', [beam, airplane, uniform+beam, uniform, uniform2d, mesh2d, polyhedron, cow, empty, points_only]
 )
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
