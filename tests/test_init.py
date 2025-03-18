@@ -18,6 +18,20 @@ def _module_is_loaded(module: str) -> bool:
     return os.system(f'{sys.executable} -c "{exe_str}"') != 0
 
 
+def test_failed():
+    pytest.fail('test')
+
+
+@pytest.mark.skipif(os.name == 'nt', reason='Test skipped on Windows')
+def test_failed_windows():
+    pytest.fail('test')
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 11), reason='Test skipped for python version >= 3.11')
+def test_failed_python_version():
+    pytest.fail('test')
+
+
 def test_vtk_not_loaded():
     error_msg = """
     vtk has been directly imported in vtk>=9
