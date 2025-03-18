@@ -18,6 +18,7 @@ beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
 uniform2d = pv.ImageData(dimensions=(10, 10, 1)).cast_to_unstructured_grid()
+quad = examples.cells.Quadrilateral()
 mesh2d = meshio.Mesh(
     points=[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
     cells=[('triangle', [[0, 1, 2], [1, 3, 2]])],
@@ -104,7 +105,19 @@ polyhedron = meshio.Mesh(
 
 
 @pytest.mark.parametrize(
-    'mesh_in', [beam, airplane, uniform+beam, uniform, uniform2d, mesh2d, polyhedron, cow, empty, points_only]
+    'mesh_in',
+    [
+        beam,
+        airplane,
+        uniform + quad,
+        uniform,
+        uniform2d,
+        mesh2d,
+        polyhedron,
+        cow,
+        empty,
+        points_only,
+    ],
 )
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
@@ -118,8 +131,30 @@ def test_meshio(mesh_in, tmpdir):
         cells = mesh_in.cells.reshape((mesh_in.n_cells, 5))[:, [0, 1, 2, 4, 3]].ravel()
         assert np.allclose(cells, mesh.cells)
     elif (mesh_in.celltypes == pv.CellType.VOXEL).all():
-        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:, [0, 1, 2, 4, 3, 5, 6, 8, 7]].ravel()
+        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[
+            :, [0, 1, 2, 4, 3, 5, 6, 8, 7]
+        ].ravel()
         assert np.allclose(cells, mesh.cells)
+    # Mixed cell types with voxels
+    elif (mesh_in.celltypes == pv.CellType.VOXEL).any():
+        cells_in = [
+            i
+            for cell in mesh_in.cells_dict.values()
+            for indices in cell
+            for i in [len(indices), *indices.tolist()]
+        ]
+
+        cells_out = [
+            i
+            for cell_type, cell in mesh.cells_dict.items()
+            for indices in cell
+            for i in (
+                [len(indices), *indices[[0, 1, 3, 2, 4, 5, 7, 6]].tolist()]
+                if cell_type == 12
+                else [len(indices), *indices.tolist()]
+            )
+        ]
+        assert cells_in == cells_out
     else:
         assert np.allclose(mesh_in.cells, mesh.cells)
     for k, v in mesh_in.point_data.items():

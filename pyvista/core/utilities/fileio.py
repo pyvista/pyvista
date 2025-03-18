@@ -1131,6 +1131,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
             # Handle the missing voxel type in vtk_to_meshio_type
             elif vtk_celltype == pyvista.CellType.VOXEL:
                 celltype = 'hexahedron'
+                cell = cell[[0, 1, 3, 2, 4, 5, 7, 6]]
 
             else:
                 celltype = (
