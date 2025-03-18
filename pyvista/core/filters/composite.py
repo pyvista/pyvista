@@ -364,10 +364,11 @@ class CompositeFilters(DataObjectFilters):
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
-            raise RuntimeError(
+            msg = (
                 'This multiblock contains non-PolyData datasets. Convert all the '
-                'datasets to PolyData with `as_polydata`',
+                'datasets to PolyData with `as_polydata`'
             )
+            raise RuntimeError(msg)
 
         # track original point indices
         if split_vertices and track_vertices:
