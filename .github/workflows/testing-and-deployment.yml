@@ -201,6 +201,7 @@ jobs:
 
       - uses: codecov/codecov-action@v4
         name: "Upload coverage to CodeCov"
+        if: always()
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
