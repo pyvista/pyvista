@@ -158,12 +158,12 @@ class MultiBlock(
                 for key, block in args[0].items():
                     self.append(block, key)
             else:
-                raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
+                msg = f'Type {type(args[0])} is not supported by pyvista.MultiBlock'
+                raise TypeError(msg)
 
         elif len(args) > 1:
-            raise ValueError(
-                'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.',
-            )
+            msg = 'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.'
+            raise ValueError(msg)
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
@@ -387,14 +387,18 @@ class MultiBlock(
         )
         nested_ids = contents in ['ids', 'all'] if nested_ids is None else nested_ids
         if nested_ids and contents not in ['ids', 'all']:
-            raise ValueError('Nested ids option only applies when ids are returned.')
+            msg = 'Nested ids option only applies when ids are returned.'
+            raise ValueError(msg)
         if prepend_names and contents not in ['names', 'items', 'all']:
-            raise ValueError('Prepend names option only applies when names are returned.')
+            msg = 'Prepend names option only applies when names are returned.'
+            raise ValueError(msg)
         if node_type == 'parent':
             if skip_none:
-                raise ValueError("Cannot skip None blocks when the node type is 'parent'.")
+                msg = "Cannot skip None blocks when the node type is 'parent'."
+                raise ValueError(msg)
             if order is not None:
-                raise TypeError("Cannot set order when the node type is 'parent'.")
+                msg = "Cannot set order when the node type is 'parent'."
+                raise TypeError(msg)
         _validation.check_instance(separator, str, name='separator')
         if not separator:
             msg = 'String separator cannot be empty.'
@@ -514,7 +518,8 @@ class MultiBlock(
                 id_out = tuple(id_) if nested_ids else id_[0]
                 yield id_out, name, block
             else:  # pragma: no cover
-                raise RuntimeError(f"Unexpected contents '{contents}'.")
+                msg = f"Unexpected contents '{contents}'."  # type: ignore[unreachable]
+                raise RuntimeError(msg)
 
     def move_nested_field_data_to_root(
         self,
@@ -1251,7 +1256,8 @@ class MultiBlock(
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
-        raise KeyError(f'Block name ({name}) not found')
+        msg = f'Block name ({name}) not found'
+        raise KeyError(msg)
 
     @overload
     def __getitem__(
@@ -1277,7 +1283,8 @@ class MultiBlock(
             index = self.get_index_by_name(index)
         ############################
         if index < -self.n_blocks or index >= self.n_blocks:
-            raise IndexError(f'index ({index}) out of range for this dataset.')
+            msg = f'index ({index}) out of range for this dataset.'
+            raise IndexError(msg)
         if index < 0:
             index = self.n_blocks + index
 
@@ -1314,13 +1321,15 @@ class MultiBlock(
         """
         # do not allow to add self
         if dataset is self:
-            raise ValueError('Cannot nest a composite dataset in itself.')
+            msg = 'Cannot nest a composite dataset in itself.'
+            raise ValueError(msg)
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
         wrapped = wrap(dataset)
         if isinstance(wrapped, pyvista_ndarray):
-            raise TypeError('dataset should not be or contain an array')
+            msg = 'dataset should not be or contain an array'  # type: ignore[unreachable]
+            raise TypeError(msg)
         dataset = wrapped
         self.n_blocks += 1
         self[index] = dataset
@@ -1615,10 +1624,12 @@ class MultiBlock(
         target: _TypeMultiBlockLeaf = self
         for ind in indices[:-1]:
             if target is None or isinstance(target, pyvista.DataSet):
-                raise IndexError(f'Invalid indices {indices}.')
+                msg = f'Invalid indices {indices}.'
+                raise IndexError(msg)
             target = target[ind]
         if not isinstance(target, MultiBlock):
-            raise IndexError(f'Invalid indices {indices}.')
+            msg = f'Invalid indices {indices}.'
+            raise IndexError(msg)
         return target, indices[-1]
 
     @overload
@@ -2123,7 +2134,8 @@ class MultiBlock(
             return FieldAssociation.NONE, pyvista_ndarray([])
 
         if not data_assoc:
-            raise KeyError(f'"{name}" is missing from all the blocks of this composite dataset.')
+            msg = f'"{name}" is missing from all the blocks of this composite dataset.'
+            raise KeyError(msg)
 
         field_asc = data_assoc[0][0]
         # set the field association to the preference if at least one occurrence
@@ -2147,12 +2159,14 @@ class MultiBlock(
                 dtypes.add(scalars.dtype)
 
         if len(dims) > 1:
-            raise ValueError(f'Inconsistent dimensions {dims} in active scalars.')
+            msg = f'Inconsistent dimensions {dims} in active scalars.'
+            raise ValueError(msg)
 
         # check complex mismatch
         is_complex = [np.issubdtype(dtype, np.complexfloating) for dtype in dtypes]
         if any(is_complex) and not all(is_complex):
-            raise ValueError('Inconsistent complex and real data types in active scalars.')
+            msg = 'Inconsistent complex and real data types in active scalars.'
+            raise ValueError(msg)
 
         return field_asc, scalars
 
@@ -2415,7 +2429,8 @@ class MultiBlock(
         dtype = scalars.dtype
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
-                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+                msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
+                raise ValueError(msg)
             if dtype != np.uint8:
                 # uint8 is required by the mapper to display correctly
                 _validation.check_subdtype(scalars, (np.floating, np.integer), name='rgb scalars')
@@ -2431,13 +2446,15 @@ class MultiBlock(
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
-                raise TypeError('`component` must be either None or an integer')
+                msg = '`component` must be either None or an integer'  # type: ignore[unreachable]
+                raise TypeError(msg)
             if component is not None:
                 if component >= scalars.shape[1] or component < 0:
-                    raise ValueError(
+                    msg = (
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}',
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
                     )
+                    raise ValueError(msg)
             scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
 
         return field, scalars_name, dtype
