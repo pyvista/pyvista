@@ -72,13 +72,15 @@ class _BasePyVistaView:
         if isinstance(self, PyVistaLocalView):
             data = self.export(format='zip')
             if data is None:
-                raise ValueError('No data to write.')
+                msg = 'No data to write.'
+                raise ValueError(msg)
             write_html(data, content)
             content.seek(0)
         elif isinstance(self, PyVistaRemoteLocalView):
             data = self.export_geometry(format='zip')
             if data is None:
-                raise ValueError('No data to write.')
+                msg = 'No data to write.'
+                raise ValueError(msg)
             write_html(data, content)
             content.seek(0)
         else:

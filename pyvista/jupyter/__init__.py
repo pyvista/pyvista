@@ -29,20 +29,23 @@ def _validate_jupyter_backend(backend):
     backend = backend.lower()
 
     if not importlib.util.find_spec('IPython'):
-        raise ImportError('Install IPython to display with pyvista in a notebook.')
+        msg = 'Install IPython to display with pyvista in a notebook.'
+        raise ImportError(msg)
 
     if backend not in ALLOWED_BACKENDS:
         backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
-        raise ValueError(
+        msg = (
             f'Invalid Jupyter notebook plotting backend "{backend}".\n'
-            f'Use one of the following:\n{backend_list_str}',
+            f'Use one of the following:\n{backend_list_str}'
         )
+        raise ValueError(msg)
 
     if backend in ['server', 'client', 'trame', 'html']:
         try:
             from pyvista.trame.jupyter import show_trame as show_trame
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
+            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+            raise ImportError(msg)
 
     if backend == 'none':
         backend = None

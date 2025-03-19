@@ -98,11 +98,13 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field.value == 1:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -338,11 +340,13 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field.value == 1:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -460,9 +464,8 @@ class ImageDataFilters(DataSetFilters):
         # set the threshold(s) and mode
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
-            raise ValueError(
-                f'Threshold must have one or two values, got {size}.',
-            )
+            msg = f'Threshold must have one or two values, got {size}.'
+            raise ValueError(msg)
         if size == 2:
             alg.ThresholdBetween(threshold_val[0], threshold_val[1])
         else:
@@ -550,11 +553,13 @@ class ImageDataFilters(DataSetFilters):
             try:
                 set_default_active_scalars(self)  # type: ignore[arg-type]
             except MissingDataError:
-                raise MissingDataError('FFT filter requires point scalars.') from None
+                msg = 'FFT filter requires point scalars.'
+                raise MissingDataError(msg) from None
 
             # possible only cell scalars were made active
             if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
-                raise MissingDataError('FFT filter requires point scalars.')
+                msg = 'FFT filter requires point scalars.'
+                raise MissingDataError(msg)
 
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
@@ -821,19 +826,22 @@ class ImageDataFilters(DataSetFilters):
             if len(possible_scalars) == 1:
                 self.set_active_scalars(possible_scalars[0], preference='point')  # type: ignore[attr-defined]
             elif len(possible_scalars) > 1:
-                raise AmbiguousDataError(
+                msg = (
                     'There are multiple point scalars available. Set one to be '
-                    'active with `point_data.active_scalars_name = `',
+                    'active with `point_data.active_scalars_name = `'
                 )
+                raise AmbiguousDataError(msg)
             else:
-                raise MissingDataError('FFT filters require point scalars.')
+                msg = 'FFT filters require point scalars.'
+                raise MissingDataError(msg)
 
         if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):  # type: ignore[attr-defined]
-            raise ValueError(
+            msg = (
                 'Active scalars must be complex data for this filter, represented '
                 'as an array with a datatype of `numpy.complex64` or '
-                '`numpy.complex128`.',
+                '`numpy.complex128`.'
             )
+            raise ValueError(msg)
 
     def _flip_uniform(self, axis) -> pyvista.ImageData:
         """Flip the uniform grid along a specified axis and return a uniform grid.
@@ -960,20 +968,21 @@ class ImageDataFilters(DataSetFilters):
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
+            raise VTKVersionError(msg)
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
-                )
+                msg = f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -989,17 +998,18 @@ class ImageDataFilters(DataSetFilters):
         elif output_mesh_type == 'triangles':
             alg.SetOutputMeshTypeToTriangles()
         else:
-            raise ValueError(
-                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
-            )
+            msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'  # type: ignore[unreachable]
+            raise ValueError(msg)
         if output_style == 'default':
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
             alg.SetOutputStyleToBoundary()
         elif output_style == 'selected':  # type: ignore[unreachable]
-            raise NotImplementedError(f'Output style "{output_style}" is not implemented')
+            msg = f'Output style "{output_style}" is not implemented'
+            raise NotImplementedError(msg)
         else:
-            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
+            msg = f'Invalid output style "{output_style}", use "default" or "boundary"'
+            raise ValueError(msg)
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
@@ -1008,11 +1018,8 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        with pyvista.vtk_verbosity('off'):
+            _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         return wrap(alg.GetOutput())
 
     def contour_labels(  # type: ignore[misc]
@@ -1561,7 +1568,8 @@ class ImageDataFilters(DataSetFilters):
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
+            raise VTKVersionError(msg)
 
         _validation.check_contains(
             ['all', 'internal', 'external', 'strict_external'],
@@ -1585,9 +1593,8 @@ class ImageDataFilters(DataSetFilters):
         if boundary_style == 'strict_external':
             # Use default alg parameters
             if select_inputs is not None or select_outputs is not None:
-                raise TypeError(
-                    'Selecting inputs and/or outputs is not supported by `strict_external`.'
-                )
+                msg = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
+                raise TypeError(msg)
         else:
             _configure_boundaries(
                 alg,
@@ -1606,11 +1613,9 @@ class ImageDataFilters(DataSetFilters):
 
         # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Generating label contours')
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        with pyvista.vtk_verbosity('off'):
+            _update_alg(alg, progress_bar, 'Generating label contours')
+
         output: pyvista.PolyData = _get_output(alg)
 
         (  # Clear temp scalars from input
@@ -1869,9 +1874,8 @@ class ImageDataFilters(DataSetFilters):
         if scalars is not None:
             field = self.get_array_association(scalars, preference='point')
             if field != FieldAssociation.POINT:
-                raise ValueError(
-                    f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
-                )
+                msg = f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead."
+                raise ValueError(msg)
         return self._remesh_points_cells(
             points_to_cells=True,
             scalars=scalars,
@@ -2025,9 +2029,8 @@ class ImageDataFilters(DataSetFilters):
         if scalars is not None:
             field = self.get_array_association(scalars, preference='cell')
             if field != FieldAssociation.CELL:
-                raise ValueError(
-                    f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
-                )
+                msg = f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead."
+                raise ValueError(msg)
         return self._remesh_points_cells(
             points_to_cells=False,
             scalars=scalars,
@@ -2140,19 +2143,21 @@ class ImageDataFilters(DataSetFilters):
         # Check the validity of the operation
         if points_to_cells:
             if new_image.n_cells != self.n_points:
-                raise ValueError(
+                msg = (
                     'Cannot re-mesh points to cells. The dimensions of the input'
                     f' {self.dimensions} is not compatible with the dimensions of the'
                     f' output {new_image.dimensions} and would require to map'
                     f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
+                raise ValueError(msg)
         elif new_image.n_points != self.n_cells:
-            raise ValueError(
+            msg = (
                 'Cannot re-mesh cells to points. The dimensions of the input'
                 f' {self.dimensions} is not compatible with the dimensions of the'
                 f' output {new_image.dimensions} and would require to map'
                 f' {self.n_cells} cells on {new_image.n_points} points.'
             )
+            raise ValueError(msg)
 
         # Copy field data
         new_image.field_data.update(self.field_data)
@@ -2363,18 +2368,20 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
         if field != FieldAssociation.POINT:
-            raise ValueError(
-                f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
-            )
+            msg = f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead."
+            raise ValueError(msg)
 
         # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
         pad_sz = np.atleast_1d(pad_size)
-        if not pad_sz.ndim == 1:
-            raise ValueError(f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.')
+        if pad_sz.ndim != 1:
+            msg = f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.'
+            raise ValueError(msg)
         if not np.issubdtype(pad_sz.dtype, np.integer):
-            raise TypeError(f'Pad size must be integers. Got dtype {pad_sz.dtype.name}.')
+            msg = f'Pad size must be integers. Got dtype {pad_sz.dtype.name}.'
+            raise TypeError(msg)
         if np.any(pad_sz < 0):
-            raise ValueError(f'Pad size cannot be negative. Got {pad_size}.')
+            msg = f'Pad size cannot be negative. Got {pad_size}.'
+            raise ValueError(msg)
 
         length = len(pad_sz)
         if length == 1:
@@ -2394,7 +2401,8 @@ class ImageDataFilters(DataSetFilters):
         elif length == 6:
             all_pad_sizes = pad_sz
         else:
-            raise ValueError(f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.')
+            msg = f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.'
+            raise ValueError(msg)
 
         # Combine size 2 by 2 to get a (3, ) shaped array
         dims_mask, _ = self._validate_dimensional_operation(
@@ -2439,10 +2447,11 @@ class ImageDataFilters(DataSetFilters):
             ):
                 raise ValueError(error_msg)
             if (num_value_components := len(val)) not in [1, num_input_components]:
-                raise ValueError(
+                msg = (
                     f'Number of components ({num_value_components}) in pad value {pad_value} must '
-                    f"match the number components ({num_input_components}) in array '{scalars}'.",
+                    f"match the number components ({num_input_components}) in array '{scalars}'."
                 )
+                raise ValueError(msg)
             if num_input_components > 1:
                 pad_multi_component = True
                 data = self.point_data  # type: ignore[attr-defined]
@@ -2450,19 +2459,16 @@ class ImageDataFilters(DataSetFilters):
                 for array_name in array_names:
                     array = data[array_name]
                     if not np.array_equal(val, val.astype(array.dtype)):
-                        raise TypeError(
-                            f"Pad value {pad_value} with dtype '{val.dtype.name}' is not compatible with dtype '{array.dtype}' of array {array_name}.",
-                        )
-                    if (
-                        not (n_comp := _get_num_components(data[array_name]))
-                        == num_input_components
-                    ):
-                        raise ValueError(
+                        msg = f"Pad value {pad_value} with dtype '{val.dtype.name}' is not compatible with dtype '{array.dtype}' of array {array_name}."
+                        raise TypeError(msg)
+                    if (n_comp := _get_num_components(data[array_name])) != num_input_components:
+                        msg = (
                             f"Cannot pad array '{array_name}' with value {pad_value}. "
                             f"Number of components ({n_comp}) in '{array_name}' must match "
                             f'the number of components ({num_value_components}) in value.'
-                            f'\nTry setting `pad_all_scalars=False` or update the array.',
+                            f'\nTry setting `pad_all_scalars=False` or update the array.'
                         )
+                        raise ValueError(msg)
             else:
                 pad_multi_component = False
             alg = _vtk.vtkImageConstantPad()  # type: ignore[assignment]
@@ -2761,9 +2767,8 @@ class ImageDataFilters(DataSetFilters):
             alg.SetExtractionModeToLargestRegion()
         elif extraction_mode == 'seeded':
             if point_seeds is None:
-                raise ValueError(
-                    '`point_seeds` must be specified when `extraction_mode="seeded"`.',
-                )
+                msg = '`point_seeds` must be specified when `extraction_mode="seeded"`.'
+                raise ValueError(msg)
 
             # PointSet requires vtk >= 9.1.0
             # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
@@ -2779,29 +2784,27 @@ class ImageDataFilters(DataSetFilters):
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
         else:
-            raise ValueError(
+            msg = (  # type: ignore[unreachable]
                 f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
+            raise ValueError(msg)
 
         if label_mode == 'size':
             alg.SetLabelModeToSizeRank()
         elif label_mode == 'constant':
             alg.SetLabelModeToConstantValue()
             if constant_value is None:
-                raise ValueError(
-                    f'`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
-                )
+                msg = f'`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
+                raise ValueError(msg)
             alg.SetLabelConstantValue(int(constant_value))
         elif label_mode == 'seeds':
             if point_seeds is None:
-                raise ValueError(
-                    '`point_seeds` must be specified when `label_mode="seeds"`.',
-                )
+                msg = '`point_seeds` must be specified when `label_mode="seeds"`.'
+                raise ValueError(msg)
             alg.SetLabelModeToSeedScalar()
         else:
-            raise ValueError(
-                f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'
-            )
+            msg = f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'  # type: ignore[unreachable]
+            raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Identifying and Labelling Connected Regions')
 
@@ -2922,10 +2925,11 @@ class ImageDataFilters(DataSetFilters):
             try:
                 target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
             except ValueError:
-                raise ValueError(
+                msg = (
                     f'`{operation_mask}` is not a valid `operation_mask`.'
                     ' Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].'
                 )
+                raise ValueError(msg)
 
             # Brute force all possible combinations: only 8 combinations to test
             # dimensions_masks is ordered such as the behavior is predictable
@@ -2963,19 +2967,21 @@ class ImageDataFilters(DataSetFilters):
                     2: '(>1, >1, 1)',
                     3: '(>1, >1, >1)',
                 }[target_dimensionality]
-                raise ValueError(
+                msg = (
                     f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
                     f' A {operation_mask} ImageData with dims {desired_dimensions} cannot be obtained.'
                 )
+                raise ValueError(msg)
 
         # Check that the resulting dimensions are admissible
         dimensions_result = operator(dimensions, operation_size * dimensions_mask)
 
         if not (dimensions_result >= 1).all():
-            raise ValueError(
+            msg = (
                 f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
                 f' would result in {dimensions_result} which contains <= 0 dimensions.'
             )
+            raise ValueError(msg)
 
         return dimensions_mask, dimensions_result
 
@@ -3378,7 +3384,8 @@ class ImageDataFilters(DataSetFilters):
         processing_cell_scalars = field == FieldAssociation.CELL
         if processing_cell_scalars:
             if extend_border:
-                raise ValueError('`extend_border` cannot be set when resampling cell data.')
+                msg = '`extend_border` cannot be set when resampling cell data.'
+                raise ValueError(msg)
             dimensionality = input_image.dimensionality
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
 
@@ -3387,7 +3394,8 @@ class ImageDataFilters(DataSetFilters):
             # Only extend border with point data
             extend_border = not processing_cell_scalars
         elif extend_border and reference_image is not None:
-            raise ValueError('`extend_border` cannot be set when a `image_reference` is provided.')
+            msg = '`extend_border` cannot be set when a `image_reference` is provided.'
+            raise ValueError(msg)
 
         # Setup reference image
         if reference_image is None:
@@ -3397,10 +3405,11 @@ class ImageDataFilters(DataSetFilters):
             reference_image_provided = False
         else:
             if dimensions is not None or sample_rate is not None:
-                raise ValueError(
+                msg = (
                     'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
                     '`reference_image` must define the geometry exclusively.'
                 )
+                raise ValueError(msg)
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
@@ -3410,10 +3419,11 @@ class ImageDataFilters(DataSetFilters):
         old_dimensions = np.array(input_image.dimensions)
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
-                raise ValueError(
+                msg = (
                     'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
                     '`sample_rate` must define the sampling geometry exclusively.'
                 )
+                raise ValueError(msg)
             # Set reference dimensions from the sample rate
             sample_rate_ = _validation.validate_array3(
                 sample_rate,
@@ -3465,7 +3475,8 @@ class ImageDataFilters(DataSetFilters):
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
         else:  # pragma: no cover
-            raise RuntimeError(f"Unexpected interpolation mode '{interpolation}'.")
+            msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
+            raise RuntimeError(msg)
 
         if anti_aliasing and np.any(magnification_factors < 1.0):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
