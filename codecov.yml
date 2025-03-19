@@ -2,9 +2,6 @@ comment:
   layout: "diff"
   behavior: default
 
-codecov:
-  require_ci_to_pass: false
-
 coverage:
   status:
     project:
