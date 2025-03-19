@@ -2794,7 +2794,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         quality_measure: Literal['all', 'all_valid']
         | _CellQualityLiteral
-        | Sequence[_CellQualityLiteral] = 'shape',
+        | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
         *,
         null_value: float = -1.0,
         progress_bar: bool = False,
@@ -2807,7 +2807,7 @@ class DataObjectFilters:
         entry of ``-1``. See table below for all measures and the
         :class:`~pyvista.CellType` supported by each one.
 
-        Defaults to computing the shape quality measure.
+        Defaults to computing the scaled jacobian quality measure.
 
         .. dropdown:: Cell Quality Measures
 
@@ -2824,7 +2824,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        quality_measure : str | sequence[str], default: 'shape'
+        quality_measure : str | sequence[str], default: 'scaled_jacobian'
             The cell quality measure to use. Specify a single measure or a sequence of
             measures to compute. Specify ``'all'`` to compute all measures, or
             ``'all_valid'`` to only keep quality measures that are valid for the mesh's
@@ -2874,7 +2874,7 @@ class DataObjectFilters:
          'shape',
          'shape_and_size']
 
-        See the :ref:`mesh_quality_example` for more examples using this filter.
+        See :ref:`mesh_quality_example` for more examples using this filter.
 
         """
         # Validate measures
