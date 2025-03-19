@@ -100,8 +100,7 @@ class DocSubs:
                     setattr(cls, member_name, mem_sub)
                 # Get the member function/property and safely substitute its docstring.
                 member = getattr(cls, member_name)
-                if member.__doc__:
-                    member.__doc__ = member.__doc__.format(**subs)
+                member.__doc__ = (member.__doc__ or '').format(**subs)
 
         # Secondly, register all members of this class that require substitutions in subclasses
         # Create copy of registered members so far
@@ -148,11 +147,9 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
         raise ValueError(msg)
 
     # Safeguard against None docstring when using -OO
-    existing_doc = ''
-    if member.__doc__ is not None:
-        existing_doc = member.__doc__
-
+    existing_doc = member.__doc__ or ''
     member.__doc__ = DocSubs._DOC_TAG + existing_doc
+
     return member
 
 
