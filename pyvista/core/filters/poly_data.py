@@ -750,6 +750,7 @@ class PolyDataFilters(DataSetFilters):
 
     def triangulate(  # type: ignore[override]
         self,
+        *,
         pass_verts: bool = False,
         pass_lines: bool = False,
         inplace: bool = False,
