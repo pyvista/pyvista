@@ -544,8 +544,8 @@ def Tetrahedron() -> UnstructuredGrid:
     List the grid's points.
 
     >>> grid.points
-    pyvista_ndarray([[ 1.,  1.,  1.],
-                     [ 1., -1., -1.],
+    pyvista_ndarray([[ 1., -1., -1.],
+                     [ 1.,  1.,  1.],
                      [-1.,  1., -1.],
                      [-1., -1.,  1.]])
 
@@ -554,8 +554,8 @@ def Tetrahedron() -> UnstructuredGrid:
 
     """
     points = [
-        [1.0, 1.0, 1.0],
         [1.0, -1.0, -1.0],
+        [1.0, 1.0, 1.0],
         [-1.0, 1.0, -1.0],
         [-1.0, -1.0, 1.0],
     ]
