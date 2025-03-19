@@ -643,17 +643,17 @@ def HexagonalPrism() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[ 0. ,  0. ,  1. ],
-                     [ 1. ,  0. ,  1. ],
-                     [ 1.5,  0.5,  1. ],
-                     [ 1. ,  1. ,  1. ],
-                     [ 0. ,  1. ,  1. ],
                      [-0.5,  0.5,  1. ],
+                     [ 0. ,  1. ,  1. ],
+                     [ 1. ,  1. ,  1. ],
+                     [ 1.5,  0.5,  1. ],
+                     [ 1. ,  0. ,  1. ],
                      [ 0. ,  0. ,  0. ],
-                     [ 1. ,  0. ,  0. ],
-                     [ 1.5,  0.5,  0. ],
-                     [ 1. ,  1. ,  0. ],
+                     [-0.5,  0.5,  0. ],
                      [ 0. ,  1. ,  0. ],
-                     [-0.5,  0.5,  0. ]])
+                     [ 1. ,  1. ,  0. ],
+                     [ 1.5,  0.5,  0. ],
+                     [ 1. ,  0. ,  0. ]])
 
     >>> grid.celltypes  # same as pyvista.CellType.HEXAGONAL_PRISM
     array([16], dtype=uint8)
@@ -675,7 +675,6 @@ def HexagonalPrism() -> UnstructuredGrid:
         [1.5, 0.5, 0.0],
         [1.0, 0.0, 0.0],
     ]
-
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.HEXAGONAL_PRISM], points)
 
@@ -1177,20 +1176,20 @@ def QuadraticWedge() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
                      [0. , 1. , 0. ],
+                     [1. , 0. , 0. ],
                      [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
                      [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
+                     [1. , 0. , 1. ],
                      [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [0.5, 0.5, 1. ],
+                     [0.5, 0.5, 0. ],
+                     [0.5, 0. , 0. ],
                      [0. , 0.5, 1. ],
+                     [0.5, 0.5, 1. ],
+                     [0.5, 0. , 1. ],
                      [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [0. , 1. , 0.5]])
+                     [0. , 1. , 0.5],
+                     [1. , 0. , 0.5]])
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
     array([26], dtype=uint8)
