@@ -171,17 +171,17 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
 
     .. dropdown:: Cell Quality Info
 
-        .. include:: api/core/cell_quality/cell_quality_info_table_TRIANGLE.rst
+        .. include:: /api/core/cell_quality/cell_quality_info_table_TRIANGLE.rst
 
-        .. include:: api/core/cell_quality/cell_quality_info_table_QUAD.rst
+        .. include:: /api/core/cell_quality/cell_quality_info_table_QUAD.rst
 
-        .. include:: api/core/cell_quality/cell_quality_info_table_HEXAHEDRON.rst
+        .. include:: /api/core/cell_quality/cell_quality_info_table_HEXAHEDRON.rst
 
-        .. include:: api/core/cell_quality/cell_quality_info_table_TETRA.rst
+        .. include:: /api/core/cell_quality/cell_quality_info_table_TETRA.rst
 
-        .. include:: api/core/cell_quality/cell_quality_info_table_WEDGE.rst
+        .. include:: /api/core/cell_quality/cell_quality_info_table_WEDGE.rst
 
-        .. include:: api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
+        .. include:: /api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
 
 
     Parameters
