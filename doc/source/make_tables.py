@@ -232,10 +232,13 @@ class CellQualityInfoTable(DocTable):
 
     @classmethod
     def get_row(cls, i, row_data):
+        def as_list(obj):
+            return list(obj) if obj is not None else obj
+
         measure = row_data.quality_measure
-        acceptable = row_data.acceptable_range
-        normal = row_data.normal_range
-        full = row_data.full_range
+        acceptable = as_list(row_data.acceptable_range)
+        normal = as_list(row_data.normal_range)
+        full = as_list(row_data.full_range)
         value = row_data.unit_cell_value
         return cls.row_template.format(measure, acceptable, normal, full, value)
 
