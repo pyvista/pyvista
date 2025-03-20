@@ -1208,10 +1208,12 @@ def default_n_faces():
 
 def test_n_faces(default_n_faces):
     if pv._version.version_info[:2] > (0, 46):
-        raise RuntimeError('Convert non-strict n_faces use to error')
+        msg = 'Convert non-strict n_faces use to error'
+        raise RuntimeError(msg)
 
     if pv._version.version_info[:2] > (0, 49):
-        raise RuntimeError('Convert default n_faces behavior to strict')
+        msg = 'Convert default n_faces behavior to strict'
+        raise RuntimeError(msg)
 
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1335,9 +1337,11 @@ def test_n_faces_etc_deprecated(cells: str):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
+            msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
+            msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

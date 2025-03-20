@@ -528,7 +528,8 @@ except ImportError:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
+            msg = 'Chart backgrounds require the vtkPythonContext2D module'
+            raise VTKVersionError(msg)
 
 
 from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
@@ -662,10 +663,11 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
                 else:
                     return logger_verbosity
             except AttributeError:
-                raise ValueError(
+                msg = (
                     f"Invalid verbosity name '{verbosity}', must be one of:\n"
                     f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
                 )
+                raise ValueError(msg)
 
     @property
     def _verbosity(self):
@@ -702,10 +704,11 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     def __enter__(self):
         """Enter context manager."""
         if self._original_verbosity is None:
-            raise ValueError(
+            msg = (
                 'Verbosity must be set to a value to use it as a context manager.\n'
                 'Call `vtk_verbosity()` with an argument to set its value.'
             )
+            raise ValueError(msg)
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager."""
@@ -719,10 +722,12 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
             # Get the verbosity
             return self._verbosity_string
 
-        # Set the verbosity but allow restore to original value if exiting context
-        self._original_verbosity = self._verbosity
-        self._verbosity = verbosity
-        return self
+        # Create new instance and store the local state
+        # to be restored when exiting context
+        output = _VTKVerbosity()
+        output._original_verbosity = output._verbosity
+        output._verbosity = verbosity
+        return output
 
 
 vtk_verbosity = _VTKVerbosity()
