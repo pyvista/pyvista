@@ -15,7 +15,7 @@ cell_example_functions = [
     func for name, func in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
 ]
 
-
+@pytest.mark.needs_vtk_version(9, 3, 0)
 @parametrize('cell_example', cell_example_functions)
 def test_area_and_volume(cell_example):
     mesh = cell_example()
