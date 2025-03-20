@@ -19,6 +19,28 @@ def test_eq_wrong_type(sphere):
     assert sphere != [1, 2, 3]
 
 
+def test_polydata_strip_neq():
+    points = np.array(
+        [
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [1.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [1.0, 2.0, 0.0],
+            [0.0, 2.0, 0.0],
+            [1.0, 3.0, 0.0],
+            [0.0, 3.0, 0.0],
+        ],
+    )
+    mesh1 = pv.PolyData(points, strips=(s := np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])))
+
+    s = s.copy()
+    s[1:] = s[:0:-1]
+    mesh2 = pv.PolyData(points, strips=s)
+
+    assert mesh1 != mesh2
+
+
 def test_uniform_eq():
     orig = examples.load_uniform()
     copy = orig.copy(deep=True)
