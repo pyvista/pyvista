@@ -748,13 +748,30 @@ class PolyDataFilters(DataSetFilters):
         kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
         return self.plot(scalars=self.curvature(curv_type), **kwargs)  # type: ignore[attr-defined]
 
-    def triangulate(self, inplace: bool = False, progress_bar: bool = False):
+    def triangulate(  # type: ignore[override]
+        self,
+        *,
+        pass_verts: bool = False,
+        pass_lines: bool = False,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
 
         Parameters
         ----------
+        pass_verts : bool, default: False
+            Whether vertices cells are passed to the output PolyData.
+
+            .. versionadded:: 0.45.0
+
+        pass_lines : bool, default: False
+            Whether lines cells are passed to the output PolyData.
+
+            .. versionadded:: 0.45.0
+
         inplace : bool, default: False
             Whether to update the mesh in-place.
 
@@ -783,8 +800,8 @@ class PolyDataFilters(DataSetFilters):
         """
         trifilter = _vtk.vtkTriangleFilter()
         trifilter.SetInputData(self)
-        trifilter.PassVertsOff()
-        trifilter.PassLinesOff()
+        trifilter.SetPassVerts(pass_verts)
+        trifilter.SetPassLines(pass_lines)
         _update_alg(trifilter, progress_bar, 'Computing Triangle Mesh')
 
         mesh = _get_output(trifilter)
