@@ -27,23 +27,24 @@ def test_area_and_volume(cell_example):
         pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         pyvista.CellType.TRIQUADRATIC_HEXAHEDRON,
     ]:
-        # Special cases, these cells have bugs, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
-        # Volume should be positive but returns zero
+        pytest.xfail(
+            'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
+        )
         assert np.isclose(mesh.volume, 0.0)
+
+    # Test area and volume
+    dim = mesh.GetCell(0).GetCellDimension()
+    area = mesh.area
+    volume = mesh.volume
+    if dim == 2:
+        assert area > 0
+        assert np.isclose(volume, 0.0)
+    elif dim == 3:
+        assert np.isclose(area, 0.0)
+        assert volume > 0
     else:
-        # Test area and volume
-        dim = mesh.GetCell(0).GetCellDimension()
-        area = mesh.area
-        volume = mesh.volume
-        if dim == 2:
-            assert area > 0
-            assert np.isclose(volume, 0.0)
-        elif dim == 3:
-            assert np.isclose(area, 0.0)
-            assert volume > 0
-        else:
-            assert np.isclose(area, 0.0)
-            assert np.isclose(volume, 0.0)
+        assert np.isclose(area, 0.0)
+        assert np.isclose(volume, 0.0)
 
 
 def test_empty():
