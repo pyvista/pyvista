@@ -41,7 +41,7 @@ def test_large_dependencies_not_imported(module: str):
 
 def test_pyvista_oo_flag():
     """Test that PyVista works correctly with the -OO optimization flag."""
-    code = 'from pyvista import Charts2D'
+    code = 'from pyvista import Chart2D'
 
     command = [sys.executable, '-OO', '-c', code]
     result = subprocess.run(command, capture_output=True, text=True)
