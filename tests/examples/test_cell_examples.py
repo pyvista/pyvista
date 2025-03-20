@@ -30,7 +30,6 @@ def test_area_and_volume(cell_example):
         pytest.xfail(
             'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
         )
-        assert np.isclose(mesh.volume, 0.0)
 
     # Test area and volume
     dim = mesh.GetCell(0).GetCellDimension()
