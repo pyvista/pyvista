@@ -2114,7 +2114,7 @@ def test_cell_quality_info_valid_measures():
 
         # Ensure the measure is valid for this cell type
         assert qual.active_scalars[0] != null_value, (
-            f'Measure {info.measure!r} is not valid for cell type {info.cell_type.name!r}'
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
 
 
