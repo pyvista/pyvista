@@ -2091,12 +2091,14 @@ def test_vtk_verbosity_invalid_input(value):
             ...
 
 
-def test_cell_quality_info():
-    cell_type = pv.CellType.TRIANGLE
+@pytest.mark.parametrize(
+    'cell_type', [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE']
+)
+def test_cell_quality_info(cell_type):
     measure = 'area'
     info = pv.cell_quality_info(cell_type, measure)
     assert isinstance(info, CellQualityInfo)
-    assert info.cell_type == cell_type
+    assert info.cell_type == pv.CellType.TRIANGLE
     assert info.quality_measure == measure
 
 
@@ -2124,6 +2126,8 @@ def test_cell_quality_info_raises():
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE.name, 'area')
 
     match = re.escape(
         "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"

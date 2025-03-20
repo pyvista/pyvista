@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import re
 from typing import Literal
 from typing import NoReturn
 from typing import get_args
 
 import numpy as np
 
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import CellType
 
 _CellQualityLiteral = Literal[
@@ -151,7 +151,7 @@ for info in _CELL_QUALITY_INFO:
     _CELL_QUALITY_LOOKUP[info.cell_type][info.quality_measure] = info
 
 
-def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> CellQualityInfo:
+def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
     This function returns information about a quality measure for a specified
@@ -186,7 +186,7 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
 
     Parameters
     ----------
-    cell_type : CellType
+    cell_type : CellType | str
         Cell type to get information about.
 
     measure : str
@@ -210,11 +210,21 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
         )
         raise ValueError(msg)
 
+    if isinstance(cell_type, str):
+        valid_options = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
+        upper = cell_type.upper()
+        if upper not in valid_options:
+            item = f'cell type {upper!r}'
+            raise_error(item, valid_options)
+        value = _CELL_TYPE_INFO[upper].value
+    else:
+        value = CellType(cell_type)
+
     # Lookup measures available for the cell type
     try:
-        measures = _CELL_QUALITY_LOOKUP[cell_type]
+        measures = _CELL_QUALITY_LOOKUP[value]
     except KeyError:
-        item = f'cell type {cell_type.name!r}'
+        item = f'cell type {value.name!r}'
         valid_options = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
         raise_error(item, valid_options)
 
@@ -222,6 +232,6 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
     try:
         return measures[measure]
     except KeyError:
-        item = f'{cell_type.name!r} measure {measure!r}'
+        item = f'{value.name!r} measure {measure!r}'
         valid_options = list(measures.keys())
         raise_error(item, valid_options)
