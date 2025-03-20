@@ -155,18 +155,17 @@ for info in _CELL_QUALITY_INFO:
 def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
-    Cell quality info is extracted from the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
-    which provides detailed low-level technical information about how quality measures from
-    :meth:`~pyvista.DataSetFilters.compute_cell_quality` are computed. The info can help
-    inform decisions when determining if a particular cell is of high or low quality.
+    This function returns information about a quality measure for a specified
+    :class:`~pyvista.CellType`. The following is provided for each measure:
 
-    This function returns information about a specific measure and
-    :class:`~pyvista.CellType`. In particular, information is provided for each measure:
+    - ``acceptable_range``: Well-behaved cells have values in this range.
+    - ``normal_range``: All cells except those with degeneracies have values in this range.
+    - ``full_range``: All cells including degenerate ones have values in this range.
+    - ``unit_cell_value``: The quality measure value for a reference unit cell (e.g.
+      equilateral triangle for triangles).
 
-    - ``acceptable_range``: Well-behaved cells will have values in this range.
-    - ``normal_range``: All cells except those with degeneracies will have values in this range.
-    - ``full_range``: All cells including degenerate ones will have values in this range.
-    -  ``unit_cell_value``: The quality measure's valueReference value
+    This information is extracted from the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_.
+    The info can help inform if a particular cell is of high or low quality.
 
     See the tables below for a summary of all cell quality info available from this
     function.
