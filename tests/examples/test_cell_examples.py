@@ -16,7 +16,7 @@ cell_example_functions = [
 ]
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.needs_vtk_version(9, 1, 0)
 @parametrize('cell_example', cell_example_functions)
 def test_area_and_volume(cell_example):
     mesh = cell_example()
