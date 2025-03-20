@@ -155,32 +155,35 @@ for info in _CELL_QUALITY_INFO:
 def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
-    Information is available for the following cell types and quality measures.
+    Cell quality info is extracted from the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+    which provides detailed low-level technical information about how quality measures from
+    :meth:`~pyvista.DataSetFilters.compute_cell_quality` are computed. The info can help
+    inform decisions when determining if a particular cell is of high or low quality.
 
-    .. dropdown:: :attr:`~pyvista.CellType.TRIANGLE` Cell Quality Info
+    This function returns information about a specific measure and
+    :class:`~pyvista.CellType`. In particular, information is provided for each measure:
+
+    - ``acceptable_range``: Well-behaved cells will have values in this range.
+    - ``normal_range``: All cells except those with degeneracies will have values in this range.
+    - ``full_range``: All cells including degenerate ones will have values in this range.
+    -  ``unit_cell_value``: The quality measure's valueReference value
+
+    See the tables below for a summary of all cell quality info available from this
+    function.
+
+    .. dropdown:: Cell Quality Info
 
         .. include:: api/core/cell_quality/cell_quality_info_table_TRIANGLE.rst
 
-    .. dropdown:: :attr:`~pyvista.CellType.QUAD` Cell Quality Info
-
         .. include:: api/core/cell_quality/cell_quality_info_table_QUAD.rst
-
-    .. dropdown:: :attr:`~pyvista.CellType.HEXAHEDRON` Cell Quality Info
 
         .. include:: api/core/cell_quality/cell_quality_info_table_HEXAHEDRON.rst
 
-    .. dropdown:: :attr:`~pyvista.CellType.TETRA` Cell Quality Info
-
         .. include:: api/core/cell_quality/cell_quality_info_table_TETRA.rst
-
-    .. dropdown:: :attr:`~pyvista.CellType.WEDGE` Cell Quality Info
 
         .. include:: api/core/cell_quality/cell_quality_info_table_WEDGE.rst
 
-    .. dropdown:: :attr:`~pyvista.CellType.PYRAMID` Cell Quality Info
-
         .. include:: api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
-
 
 
     Parameters

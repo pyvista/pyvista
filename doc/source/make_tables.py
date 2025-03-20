@@ -184,20 +184,14 @@ class CellQualityInfoTable(DocTable):
 
     cell_type: pyvista.CellType
 
-    @_classproperty
-    @final
-    def name(cls):
-        return f'cell_quality_info_table_{cls.cell_type.name}'
-
     @property
     @final
     def path(cls):
-        return f'{CELL_QUALITY_TABLE_DIR}/{cls.name}.rst'
+        return f'{CELL_QUALITY_TABLE_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
 
     header = _aligned_dedent(
         """
-        |.. list-table::
-        |   :name: {}
+        |.. list-table:: {}
         |   :widths: 20 20 20 20 20
         |   :header-rows: 1
         |
@@ -228,7 +222,7 @@ class CellQualityInfoTable(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header.format(cls.name)
+        return cls.header.format(f':attr:`~pyvista.CellType.{cls.cell_type.name}`')
 
     @classmethod
     def get_row(cls, i, row_data):
