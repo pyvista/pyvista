@@ -158,7 +158,8 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest tests/test_init.py --cov=pyvista --cov-branch --cov-report=xml -v --ignore=tests/plotting --junitxml=junit.xml
+        run: |
+          python -m pytest tests/test_init.py --cov=pyvista --cov-branch --cov-report=xml -v --ignore=tests/plotting --junitxml=junit-${{ join(matrix.* , '-') }}.xml
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
