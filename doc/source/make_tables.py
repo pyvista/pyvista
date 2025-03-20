@@ -236,7 +236,7 @@ class CellQualityTable(DocTable):
     @classmethod
     def get_header(cls, data):
         return cls.header.format(
-            *[f':class:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
+            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
         )
 
     @classmethod
