@@ -10,7 +10,6 @@ from typing import get_args
 
 import numpy as np
 
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import CellType
 
 _CellQualityLiteral = Literal[
@@ -226,19 +225,3 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
         item = f'{cell_type.name!r} measure {measure!r}'
         valid_options = list(measures.keys())
         raise_error(item, valid_options)
-
-
-def _get_cell_quality_measures() -> dict[str, str]:
-    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
-    # Get possible quality measures dynamically
-    str_start = 'SetQualityMeasureTo'
-    measures = {}
-    for attr in dir(_vtk.vtkCellQuality):
-        if attr.startswith(str_start):
-            # Get the part after 'SetQualityMeasureTo'
-            measure_name = attr[len(str_start) :]
-            # Convert to snake case
-            # Add underscore before uppercase letters, except the first one
-            measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
-            measures[measure_name] = attr
-    return measures
