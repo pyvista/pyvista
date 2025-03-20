@@ -29,7 +29,7 @@ dependencies = [
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
-license = { text = 'MIT' }
+license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
 requires-python = '>=3.9'
