@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Literal
 from typing import NoReturn
 from typing import get_args
 
 import numpy as np
 
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import CellType
 
 _CellQualityLiteral = Literal[
@@ -153,6 +155,34 @@ for info in _CELL_QUALITY_INFO:
 def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
+    Information is available for the following cell types and quality measures.
+
+    .. dropdown:: :attr:`~pyvista.CellType.TRIANGLE` Cell Quality Info
+
+        .. include:: api/core/cell_quality/cell_quality_info_table_TRIANGLE.rst
+
+    .. dropdown:: :attr:`~pyvista.CellType.QUAD` Cell Quality Info
+
+        .. include:: api/core/cell_quality/cell_quality_info_table_QUAD.rst
+
+    .. dropdown:: :attr:`~pyvista.CellType.HEXAHEDRON` Cell Quality Info
+
+        .. include:: api/core/cell_quality/cell_quality_info_table_HEXAHEDRON.rst
+
+    .. dropdown:: :attr:`~pyvista.CellType.TETRA` Cell Quality Info
+
+        .. include:: api/core/cell_quality/cell_quality_info_table_TETRA.rst
+
+    .. dropdown:: :attr:`~pyvista.CellType.WEDGE` Cell Quality Info
+
+        .. include:: api/core/cell_quality/cell_quality_info_table_WEDGE.rst
+
+    .. dropdown:: :attr:`~pyvista.CellType.PYRAMID` Cell Quality Info
+
+        .. include:: api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
+
+
+
     Parameters
     ----------
     cell_type : CellType
@@ -193,3 +223,19 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
         item = f'{cell_type.name!r} measure {measure!r}'
         valid_options = list(measures.keys())
         raise_error(item, valid_options)
+
+
+def _get_cell_quality_measures() -> dict[str, str]:
+    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    # Get possible quality measures dynamically
+    str_start = 'SetQualityMeasureTo'
+    measures = {}
+    for attr in dir(_vtk.vtkCellQuality):
+        if attr.startswith(str_start):
+            # Get the part after 'SetQualityMeasureTo'
+            measure_name = attr[len(str_start) :]
+            # Convert to snake case
+            # Add underscore before uppercase letters, except the first one
+            measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
+            measures[measure_name] = attr
+    return measures
