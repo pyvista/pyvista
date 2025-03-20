@@ -38,7 +38,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     """
 
     if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}  # type: ignore[dict-item]
+        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
 
     if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
         # If VTK 9.4 or newer, then VTK must also be >9.1, and therefore _WRITERS is already initialized
