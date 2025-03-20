@@ -4831,7 +4831,9 @@ def download_drill(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_drill, load=load)
+    # Silence warning: unexpected data at end of line in OBJ file
+    with pyvista.vtk_verbosity('off'):
+        return _download_dataset(_dataset_drill, load=load)
 
 
 _dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
@@ -8501,7 +8503,9 @@ def download_nek5000(load=True):
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_nek5000, load=load)
+    # Silence info messages about 2D mesh found
+    with pyvista.vtk_verbosity('off'):
+        return _download_dataset(_dataset_nek5000, load=load)
 
 
 def _nek_5000_download():  # pragma: no cover
