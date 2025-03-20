@@ -40,6 +40,12 @@ def test_polydata_strip_neq():
 
     assert mesh1 != mesh2
 
+    s = s.copy()
+    s[0] = 4
+    mesh3 = pv.PolyData(points, strips=s[0:5])
+
+    assert mesh1 != mesh3
+
 
 def test_uniform_eq():
     orig = examples.load_uniform()
