@@ -204,9 +204,10 @@ def cell_quality_info(cell_type: CellType, measure: _CellQualityLiteral) -> Cell
     """
 
     def raise_error(item_: str, valid_options_: list[str]) -> NoReturn:
-        raise ValueError(
+        msg = (
             f'Cell quality info is not available for {item_}. Valid options are:\n{valid_options_}'
         )
+        raise ValueError(msg)
 
     # Lookup measures available for the cell type
     try:
