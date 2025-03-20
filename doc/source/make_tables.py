@@ -182,12 +182,12 @@ class CellQualityTable(DocTable):
         |   :header-rows: 1
         |
         |   * - Measure
-        |     - :attr:`~pyvista.CellType.TRIANGLE`
-        |     - :attr:`~pyvista.CellType.QUAD`
-        |     - :attr:`~pyvista.CellType.TETRA`
-        |     - :attr:`~pyvista.CellType.HEXAHEDRON`
-        |     - :attr:`~pyvista.CellType.WEDGE`
-        |     - :attr:`~pyvista.CellType.PYRAMID`
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
         """,
     )
     row_template = _aligned_dedent(
@@ -201,6 +201,16 @@ class CellQualityTable(DocTable):
         |     - {}
         """,
     )
+
+    # Types to show in the table (from left-to-right)
+    cell_types: ClassVar[pyvista.CellType] = [
+        pyvista.CellType.TRIANGLE,
+        pyvista.CellType.QUAD,
+        pyvista.CellType.TETRA,
+        pyvista.CellType.HEXAHEDRON,
+        pyvista.CellType.WEDGE,
+        pyvista.CellType.PYRAMID,
+    ]
 
     @classmethod
     def fetch_data(cls):
@@ -225,7 +235,9 @@ class CellQualityTable(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header
+        return cls.header.format(
+            *[f':class:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
+        )
 
     @classmethod
     def get_row(cls, i, row_data):
@@ -237,14 +249,8 @@ class CellQualityTable(DocTable):
         def _get_table_entry(cell_type):
             return success if cell_type in measures[measure] else error
 
-        tri = _get_table_entry(pv.CellType.TRIANGLE)
-        quad = _get_table_entry(pv.CellType.QUAD)
-        tetra = _get_table_entry(pv.CellType.TETRA)
-        hexa = _get_table_entry(pv.CellType.HEXAHEDRON)
-        wedge = _get_table_entry(pv.CellType.WEDGE)
-        pyra = _get_table_entry(pv.CellType.PYRAMID)
-
-        return cls.row_template.format(f'``{measure}``', tri, quad, tetra, hexa, wedge, pyra)
+        table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
+        return cls.row_template.format(f'``{measure}``', *table_entries)
 
 
 class LineStyleTable(DocTable):
