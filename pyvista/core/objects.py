@@ -51,7 +51,8 @@ class Table(DataObject, _vtk.vtkTable):
             elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
                 self._from_pandas(args[0])
             else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
+                msg = f'Table unable to be made from ({type(args[0])})'
+                raise TypeError(msg)
 
     @staticmethod
     def _prepare_arrays(arrays):
@@ -61,7 +62,8 @@ class Table(DataObject, _vtk.vtkTable):
         elif arrays.ndim == 2:
             return arrays.T
         else:
-            raise ValueError('Only 1D or 2D arrays are supported by Tables.')
+            msg = 'Only 1D or 2D arrays are supported by Tables.'
+            raise ValueError(msg)
 
     def _from_arrays(self, arrays) -> None:
         np_table = self._prepare_arrays(arrays)
@@ -71,7 +73,8 @@ class Table(DataObject, _vtk.vtkTable):
     def _from_dict(self, array_dict):
         for array in array_dict.values():
             if not isinstance(array, np.ndarray) and array.ndim < 3:
-                raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
+                msg = 'Dictionary must contain only NumPy arrays with maximum of 2D.'
+                raise ValueError(msg)
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
@@ -334,7 +337,8 @@ class Table(DataObject, _vtk.vtkTable):
         try:
             import pandas as pd
         except ImportError:  # pragma: no cover
-            raise ImportError('Install ``pandas`` to use this feature.')
+            msg = 'Install ``pandas`` to use this feature.'
+            raise ImportError(msg)
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
@@ -342,9 +346,8 @@ class Table(DataObject, _vtk.vtkTable):
 
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
-        raise NotImplementedError(
-            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
-        )
+        msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+        raise NotImplementedError(msg)
 
     def get_data_range(  # type: ignore[override]
         self,

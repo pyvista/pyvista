@@ -49,11 +49,12 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
 
     """
     if not isinstance(interaction_event, (_vtk.vtkCommand.EventIds, str)):
-        raise TypeError(
+        msg = (  # type: ignore[unreachable]
             'Expected type for `interaction_event` is either a str '
             'or an instance of `vtk.vtkCommand.EventIds`.'
-            f' ({type(interaction_event)}) was given.',
+            f' ({type(interaction_event)}) was given.'
         )
+        raise TypeError(msg)
 
     if isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         return interaction_event
@@ -65,9 +66,10 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     }
     if interaction_event not in event_map:
         expected = ', '.join(f'`{e}`' for e in event_map)
-        raise ValueError(
-            f'Expected value for `interaction_event` is {expected}. {interaction_event} was given.',
+        msg = (
+            f'Expected value for `interaction_event` is {expected}. {interaction_event} was given.'
         )
+        raise ValueError(msg)
 
     return event_map[interaction_event]
 
@@ -611,7 +613,8 @@ class WidgetHelper:
                 plane_widget.NormalToZAxisOn()
                 plane_widget.SetNormal(NORMALS['z'])  # type: ignore[arg-type]
             else:
-                raise RuntimeError('assign_to_axis not understood')
+                msg = 'assign_to_axis not understood'
+                raise RuntimeError(msg)
         else:
             plane_widget.SetNormal(normal)
 
@@ -912,11 +915,12 @@ class WidgetHelper:
         if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)  # type: ignore[attr-defined]
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
-            raise TypeError(
+            msg = (
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
-                'from `Plotter.add_volume`.',
+                'from `Plotter.add_volume`.'
             )
+            raise TypeError(msg)
         else:
             assert_empty_kwargs(**kwargs)
 
@@ -1369,12 +1373,14 @@ class WidgetHelper:
 
         """
         if not isinstance(data, list):
-            raise TypeError(
-                f'The `data` parameter must be a list but {type(data).__name__} was passed instead',
+            msg = (
+                f'The `data` parameter must be a list but {type(data).__name__} was passed instead'
             )
+            raise TypeError(msg)
         n_states = len(data)
         if n_states == 0:
-            raise ValueError('The input list of values is empty')
+            msg = 'The input list of values is empty'
+            raise ValueError(msg)
         delta = (n_states - 1) / float(n_states)
         # avoid division by zero in case there is only one element
         delta = 1 if delta == 0 else delta
@@ -1534,7 +1540,8 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # type: ignore[attr-defined]
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
@@ -1572,9 +1579,8 @@ class WidgetHelper:
 
         if style is not None:
             if not isinstance(style, str):
-                raise TypeError(
-                    f'Expected type for ``style`` is str but {type(style).__name__} was given.',
-                )
+                msg = f'Expected type for ``style`` is str but {type(style).__name__} was given.'
+                raise TypeError(msg)
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
@@ -1726,13 +1732,15 @@ class WidgetHelper:
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for threshold widget.')
+            msg = 'MultiBlock datasets are not supported for threshold widget.'
+            raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         arr = get_array(mesh, scalars, preference=preference)
         if arr is None:
-            raise ValueError('No arrays present to threshold.')
+            msg = 'No arrays present to threshold.'
+            raise ValueError(msg)
         field = get_array_association(mesh, scalars, preference=preference)
 
         rng = mesh.get_data_range(scalars)
@@ -1881,22 +1889,24 @@ class WidgetHelper:
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.PointSet):
-            raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
+            msg = 'PointSets are 0-dimensional and thus cannot produce contours.'
+            raise TypeError(msg)
         if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for this widget.')
+            msg = 'MultiBlock datasets are not supported for this widget.'
+            raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise ValueError('Input dataset for the contour filter must have data arrays.')
+            msg = 'Input dataset for the contour filter must have data arrays.'
+            raise ValueError(msg)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
-            )
+            msg = f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+            raise TypeError(msg)
 
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -2020,7 +2030,8 @@ class WidgetHelper:
 
         """
         if initial_points is not None and len(initial_points) != n_handles:
-            raise ValueError('`initial_points` must be length `n_handles`.')
+            msg = '`initial_points` must be length `n_handles`.'
+            raise ValueError(msg)
 
         color = Color(color, default_color=pyvista.global_theme.color)
 
@@ -2234,7 +2245,8 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # type: ignore[attr-defined]
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         if color is None:
             color = pyvista.global_theme.font.color.float_rgb
@@ -2594,7 +2606,8 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -2735,7 +2748,8 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         if radio_button_group not in self.radio_button_widget_dict:
             self.radio_button_widget_dict[radio_button_group] = []
@@ -2869,7 +2883,8 @@ class WidgetHelper:
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+            msg = 'vtkCameraOrientationWidget requires vtk>=9.1.0'
+            raise VTKVersionError(msg)
 
         widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)  # type: ignore[attr-defined]
@@ -2949,7 +2964,8 @@ class WidgetHelper:
         logo_maybe: pyvista.DataObject | str | pathlib.Path | None
         logo_maybe = pyvista.read(logo) if isinstance(logo, (str, pathlib.Path)) else logo
         if not isinstance(logo_maybe, pyvista.ImageData):
-            raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+            msg = 'Logo must be a pyvista.ImageData or a file path to an image.'
+            raise TypeError(msg)
         else:
             logo = logo_maybe
 
@@ -3002,7 +3018,8 @@ class WidgetHelper:
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
+            msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
+            raise VTKVersionError(msg)
         representation = vtkCamera3DRepresentation()
         representation.SetCamera(self.renderer.GetActiveCamera())  # type: ignore[attr-defined]
         widget = vtkCamera3DWidget()

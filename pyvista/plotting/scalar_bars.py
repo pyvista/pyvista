@@ -115,10 +115,11 @@ class ScalarBars:
         if title is None:
             if len(self) > 1:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError(
+                msg = (
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}',
+                    f'scalar bar from one of the following:\n{titles}'
                 )
+                raise ValueError(msg)
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))
 
@@ -353,7 +354,8 @@ class ScalarBars:
 
         """
         if mapper is None:
-            raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
+            msg = 'Mapper cannot be ``None`` when creating a scalar bar'
+            raise ValueError(msg)
 
         if theme is None:
             theme = pyvista.global_theme
@@ -400,7 +402,8 @@ class ScalarBars:
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
             if not self._plotter._scalar_bar_slots:
-                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+                msg = f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.'
+                raise RuntimeError(msg)
 
             slot = min(self._plotter._scalar_bar_slots)
             self._plotter._scalar_bar_slots.remove(slot)

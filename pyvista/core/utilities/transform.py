@@ -271,30 +271,34 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`compose` this transform using post-multiply semantics.
@@ -309,15 +313,17 @@ class Transform(_vtk.vtkTransform):
             try:
                 transform = copied.compose(other, multiply_mode='post')
             except TypeError:
-                raise TypeError(
+                msg = (
                     f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
+                raise TypeError(msg)
             except ValueError:
-                raise ValueError(
+                msg = (
                     f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                     f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
                 )
+                raise ValueError(msg)
         return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
@@ -325,15 +331,17 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
@@ -2049,7 +2057,8 @@ class Transform(_vtk.vtkTransform):
         try:
             from scipy.spatial.transform import Rotation
         except ImportError:
-            raise ImportError("The 'scipy' package must be installed to use `as_rotation`")
+            msg = "The 'scipy' package must be installed to use `as_rotation`"
+            raise ImportError(msg)
 
         if isinstance(representation, str):
             representation = representation.lower()  # type: ignore[assignment]
@@ -2081,4 +2090,5 @@ class Transform(_vtk.vtkTransform):
         elif representation == 'davenport':
             return rotation.as_davenport(*args, **kwargs)
         else:  # pragma: no cover
-            raise RuntimeError(f"Unexpected rotation type '{representation}'")
+            msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
+            raise RuntimeError(msg)

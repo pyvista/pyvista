@@ -827,9 +827,11 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+            msg = 'Passing `pad_singleton_dims` should raise an error.'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `pad_singleton_dims`.')
+            msg = 'Remove `pad_singleton_dims`.'
+            raise RuntimeError(msg)
 
     match = (
         'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
@@ -837,9 +839,11 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+            msg = 'Passing `pad_singleton_dims` should raise an error.'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `pad_singleton_dims`.')
+            msg = 'Remove `pad_singleton_dims`.'
+            raise RuntimeError(msg)
 
 
 @pytest.fixture
