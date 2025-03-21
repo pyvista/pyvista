@@ -544,8 +544,8 @@ def Tetrahedron() -> UnstructuredGrid:
     List the grid's points.
 
     >>> grid.points
-    pyvista_ndarray([[ 1.,  1.,  1.],
-                     [ 1., -1., -1.],
+    pyvista_ndarray([[ 1., -1., -1.],
+                     [ 1.,  1.,  1.],
                      [-1.,  1., -1.],
                      [-1., -1.,  1.]])
 
@@ -554,8 +554,8 @@ def Tetrahedron() -> UnstructuredGrid:
 
     """
     points = [
-        [1.0, 1.0, 1.0],
         [1.0, -1.0, -1.0],
+        [1.0, 1.0, 1.0],
         [-1.0, 1.0, -1.0],
         [-1.0, -1.0, 1.0],
     ]
@@ -643,35 +643,37 @@ def HexagonalPrism() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[ 0. ,  0. ,  1. ],
-                     [ 1. ,  0. ,  1. ],
-                     [ 1.5,  0.5,  1. ],
-                     [ 1. ,  1. ,  1. ],
-                     [ 0. ,  1. ,  1. ],
                      [-0.5,  0.5,  1. ],
+                     [ 0. ,  1. ,  1. ],
+                     [ 1. ,  1. ,  1. ],
+                     [ 1.5,  0.5,  1. ],
+                     [ 1. ,  0. ,  1. ],
                      [ 0. ,  0. ,  0. ],
-                     [ 1. ,  0. ,  0. ],
-                     [ 1.5,  0.5,  0. ],
-                     [ 1. ,  1. ,  0. ],
+                     [-0.5,  0.5,  0. ],
                      [ 0. ,  1. ,  0. ],
-                     [-0.5,  0.5,  0. ]])
+                     [ 1. ,  1. ,  0. ],
+                     [ 1.5,  0.5,  0. ],
+                     [ 1. ,  0. ,  0. ]])
 
     >>> grid.celltypes  # same as pyvista.CellType.HEXAGONAL_PRISM
     array([16], dtype=uint8)
 
     """
     points = [
+        # Top face (z=1.0)
         [0.0, 0.0, 1.0],
-        [1.0, 0.0, 1.0],
-        [1.5, 0.5, 1.0],
-        [1.0, 1.0, 1.0],
-        [0.0, 1.0, 1.0],
         [-0.5, 0.5, 1.0],
+        [0.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [1.5, 0.5, 1.0],
+        [1.0, 0.0, 1.0],
+        # Bottom face (z=0.0)
         [0.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0],
-        [1.5, 0.5, 0.0],
-        [1.0, 1.0, 0.0],
-        [0.0, 1.0, 0.0],
         [-0.5, 0.5, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [1.5, 0.5, 0.0],
+        [1.0, 0.0, 0.0],
     ]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.HEXAGONAL_PRISM], points)
@@ -1174,26 +1176,32 @@ def QuadraticWedge() -> UnstructuredGrid:
 
     >>> grid.points
     pyvista_ndarray([[0. , 0. , 0. ],
-                     [1. , 0. , 0. ],
                      [0. , 1. , 0. ],
+                     [1. , 0. , 0. ],
                      [0. , 0. , 1. ],
-                     [1. , 0. , 1. ],
                      [0. , 1. , 1. ],
-                     [0.5, 0. , 0. ],
-                     [0.5, 0.5, 0. ],
+                     [1. , 0. , 1. ],
                      [0. , 0.5, 0. ],
-                     [0.5, 0. , 1. ],
-                     [0.5, 0.5, 1. ],
+                     [0.5, 0.5, 0. ],
+                     [0.5, 0. , 0. ],
                      [0. , 0.5, 1. ],
+                     [0.5, 0.5, 1. ],
+                     [0.5, 0. , 1. ],
                      [0. , 0. , 0.5],
-                     [1. , 0. , 0.5],
-                     [0. , 1. , 0.5]])
+                     [0. , 1. , 0.5],
+                     [1. , 0. , 0.5]])
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
     array([26], dtype=uint8)
 
     """
-    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
+    grid = _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
+    # This generates a cell with negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639
+    # Fix this by swapping the first three points to reverse the base triangle's
+    # orientation and swap the other points to keep the structure intact
+    new_ordering = [0, 2, 1, 3, 5, 4, 8, 7, 6, 11, 10, 9, 12, 14, 13]
+    grid.points = grid.points[new_ordering]
+    return grid
 
 
 def QuadraticPyramid() -> UnstructuredGrid:
