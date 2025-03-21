@@ -2102,20 +2102,23 @@ def test_cell_quality_info(cell_type):
     assert info.quality_measure == measure
 
 
+ids = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=ids)
 @pytest.mark.needs_vtk_version(9, 2)
-def test_cell_quality_info_valid_measures():
-    for info in _CELL_QUALITY_INFO:
-        # Validate info by loading the cell as a mesh and computing its cell quality
-        example_name = _CELL_TYPE_INFO[info.cell_type.name].example
-        cell_mesh = getattr(ex.cells, example_name)()
-        null_value = -1
+def test_cell_quality_info_valid_measures(info):
+    # Validate info by loading the cell as a mesh and computing its cell quality
+    example_name = _CELL_TYPE_INFO[info.cell_type.name].example
+    cell_mesh = getattr(ex.cells, example_name)()
+    null_value = -1
 
-        qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
+    qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
 
-        # Ensure the measure is valid for this cell type
-        assert qual.active_scalars[0] != null_value, (
-            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
-        )
+    # Ensure the measure is valid for this cell type
+    assert qual.active_scalars[0] != null_value, (
+        f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+    )
 
 
 @pytest.mark.needs_vtk_version(9, 2)
