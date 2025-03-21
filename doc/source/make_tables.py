@@ -228,14 +228,29 @@ class CellQualityInfoTable(DocTable):
 
     @classmethod
     def get_row(cls, i, row_data):
-        def as_list(obj):
-            return list(obj) if obj is not None else obj
+        def format_list(obj):
+            if obj is None:
+                return 'None'
+            return '[' + ', '.join(format_number(num) for num in obj) + ']'
+
+        def format_number(num):
+            if num is None:
+                return 'None'
+            if num == float('inf'):
+                return 'inf'
+            if num == -float('inf'):
+                return '-inf'
+
+            # Show minimum 1 decimal and maximum 3 decimals
+            formatted = f'{num:.3f}'.rstrip('0').rstrip('.')
+            return formatted if '.' in formatted else f'{formatted}.0'
 
         measure = row_data.quality_measure
-        acceptable = as_list(row_data.acceptable_range)
-        normal = as_list(row_data.normal_range)
-        full = as_list(row_data.full_range)
-        value = row_data.unit_cell_value
+        acceptable = format_list(row_data.acceptable_range)
+        normal = format_list(row_data.normal_range)
+        full = format_list(row_data.full_range)
+        value = format_number(row_data.unit_cell_value)
+
         return cls.row_template.format(measure, acceptable, normal, full, value)
 
 
