@@ -191,7 +191,7 @@ class CellQualityInfoTable(DocTable):
 
     header = _aligned_dedent(
         """
-        |**{} Cells**
+        |{} **Cells**
         |
         |.. list-table::
         |   :widths: 20 20 20 20 20
