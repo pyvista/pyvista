@@ -2105,20 +2105,53 @@ def test_cell_quality_info(cell_type):
 ids = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
 
 
+def _compute_cell_quality(info: CellQualityInfo, null_value=-1):
+    example_name = _CELL_TYPE_INFO[info.cell_type.name].example
+    cell_mesh = getattr(ex.cells, example_name)()
+    qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
+    return qual.active_scalars[0]
+
+
 @parametrize('info', _CELL_QUALITY_INFO, ids=ids)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_valid_measures(info):
-    # Validate info by loading the cell as a mesh and computing its cell quality
-    example_name = _CELL_TYPE_INFO[info.cell_type.name].example
-    cell_mesh = getattr(ex.cells, example_name)()
-    null_value = -1
-
-    qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
-
     # Ensure the measure is valid for this cell type
-    assert qual.active_scalars[0] != null_value, (
-        f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
-    )
+    null_value = -1
+    qual_value = _compute_cell_quality(info, null_value)
+    if qual_value == null_value:
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=ids)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_unit_cell_value(info):
+    # Ensure the unit cell value matches the mesh's value
+    qual_value = _compute_cell_quality(info)
+    unit_cell_value = info.unit_cell_value
+    if unit_cell_value is not None:
+        assert np.isclose(qual_value, unit_cell_value)
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=ids)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_acceptable_range(info):
+    # Ensure the compute quality of the example cell is within the acceptable range
+    if info.cell_type == pv.CellType.TETRA and info.quality_measure == 'scaled_jacobian':
+        pytest.xfail(
+            "Cell quality of the unit tetrahedron is 'too good' and is therefore considered unacceptable."
+        )
+
+    qual_value = _compute_cell_quality(info)
+    unit_cell_value = info.unit_cell_value
+    acceptable_range = info.acceptable_range
+    if unit_cell_value is not None and acceptable_range is not None:
+        tol = 1e-6
+        upper_range = acceptable_range[1] + tol
+        lower_range = acceptable_range[0] - tol
+        assert qual_value >= lower_range
+        assert qual_value <= upper_range
 
 
 @pytest.mark.needs_vtk_version(9, 2)

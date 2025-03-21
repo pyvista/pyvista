@@ -108,10 +108,10 @@ _CELL_QUALITY_INFO = [
     CellQualityInfo(CellType.QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
     CellQualityInfo(CellType.QUAD, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     CellQualityInfo(CellType.QUAD, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    CellQualityInfo(CellType.QUAD, 'skew', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    # CellQualityInfo(CellType.QUAD, 'skew', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     CellQualityInfo(CellType.QUAD, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
     CellQualityInfo(CellType.QUAD, 'taper', (0.0, 0.7), (0.0, INF), (0.0, INF), 0.0),
-    CellQualityInfo(CellType.QUAD, 'warpage', (0.0, 0.7), (0.0, 2.0), (0.0, INF), 0.0),
+    # CellQualityInfo(CellType.QUAD, 'warpage', (0.0, 0.7), (0.0, 2.0), (0.0, INF), 0.0),
     # CellQualityInfo(CellType.TETRA, 'aspect_beta', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
     # CellQualityInfo(CellType.TETRA, 'aspect_delta', (0.1, INF), (0.0, INF), (0.0, INF), 1.0),
     CellQualityInfo(CellType.TETRA, 'aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
@@ -121,7 +121,7 @@ _CELL_QUALITY_INFO = [
         CellType.TETRA, 'collapse_ratio', (0.1, INF), (0.0, INF), (0.0, INF), sqrt(6.0) / 3.0
     ),
     CellQualityInfo(CellType.TETRA, 'condition', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 0.0),
+    CellQualityInfo(CellType.TETRA, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
     # CellQualityInfo(CellType.TETRA, 'edge_ratio', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
     CellQualityInfo(CellType.TETRA, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), R22),
     CellQualityInfo(CellType.TETRA, 'min_angle', (40, ANGLE), (0.0, ANGLE), (0.0, 360), ANGLE),
@@ -136,7 +136,7 @@ _CELL_QUALITY_INFO = [
         CellType.TETRA, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 12.0
     ),
     CellQualityInfo(CellType.HEXAHEDRON, 'diagonal', (0.65, 1.0), (0.0, 1.0), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'dimension', None, (0.0, INF), (0.0, INF), 1.0),
+    CellQualityInfo(CellType.HEXAHEDRON, 'dimension', None, (0.0, INF), (0.0, INF), R33),
     CellQualityInfo(CellType.HEXAHEDRON, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
     # CellQualityInfo(CellType.HEXAHEDRON, 'edge_ratio', None, (1.0, INF), (1.0, INF), 1.0),
     CellQualityInfo(CellType.HEXAHEDRON, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
@@ -163,7 +163,7 @@ _CELL_QUALITY_INFO = [
     CellQualityInfo(CellType.HEXAHEDRON, 'skew', (0.0, 0.5), (0.0, 1.0), (0.0, INF), 0.0),
     CellQualityInfo(CellType.HEXAHEDRON, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
     CellQualityInfo(CellType.HEXAHEDRON, 'taper', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'volume', (0.0, INF), (0.0, INF), (-INF, INF), 2.0),
+    CellQualityInfo(CellType.HEXAHEDRON, 'volume', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
     CellQualityInfo(
         CellType.PYRAMID, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 6.0
     ),
