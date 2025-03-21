@@ -682,6 +682,24 @@ def test_triangulate_filter(plane):
     assert not plane.extract_all_edges().is_all_triangles
 
 
+@pytest.mark.parametrize('pass_lines', [True, False])
+def test_triangulate_filter_pass_lines(sphere: pv.PolyData, plane: pv.PolyData, pass_lines: bool):
+    merge: pv.PolyData = plane + (lines := sphere.extract_all_edges())
+    tri: pv.PolyData = merge.triangulate(pass_lines=pass_lines, inplace=False)
+
+    assert tri.n_lines == (lines.n_cells if pass_lines else 0)
+    assert tri.is_all_triangles if not pass_lines else (not tri.is_all_triangles)
+
+
+@pytest.mark.parametrize('pass_verts', [True, False])
+def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
+    merge: pv.PolyData = plane + (verts := pv.PolyData([0.0, 1.0, 2.0]))
+    tri: pv.PolyData = merge.triangulate(pass_verts=pass_verts, inplace=False)
+
+    assert tri.n_verts == (verts.n_cells if pass_verts else 0)
+    assert tri.is_all_triangles if not pass_verts else (not tri.is_all_triangles)
+
+
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
