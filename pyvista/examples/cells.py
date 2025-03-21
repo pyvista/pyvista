@@ -302,7 +302,7 @@ def Triangle() -> UnstructuredGrid:
     array([5], dtype=uint8)
 
     """
-    R33 = (3**0.5) / 3
+    R33 = np.sqrt(3) / 3
     points = [[0.5, -0.5 * R33, 0.0], [-0.5, -0.5 * R33, 0.0], [0.0, R33, 0.0]]
 
     cells = [len(points), *list(range(len(points)))]
@@ -715,25 +715,19 @@ def Wedge() -> UnstructuredGrid:
     List the grid's points.
 
     >>> grid.points
-    pyvista_ndarray([[0. , 1. , 0. ],
-                     [0. , 0. , 0. ],
-                     [0. , 0.5, 0.5],
-                     [1. , 1. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 0.5, 0.5]])
+    pyvista_ndarray([[0.       , 1.       , 0.       ],
+                     [0.       , 0.       , 0.       ],
+                     [0.       , 0.5      , 0.8660254],
+                     [1.       , 1.       , 0.       ],
+                     [1.       , 0.       , 0.       ],
+                     [1.       , 0.5      , 0.8660254]])
 
     >>> grid.celltypes  # same as pyvista.CellType.WEDGE
     array([13], dtype=uint8)
 
     """
-    points = [
-        [0, 0, 0],
-        [1, 0, 0],
-        [0.5, np.sqrt(3) / 2, 0],
-        [0, 0, 1],
-        [1, 0, 1],
-        [0.5, np.sqrt(3) / 2, 1],
-    ]
+    R32 = np.sqrt(3) / 2
+    points = [[0, 1, 0], [0, 0, 0], [0, 0.5, R32], [1, 1, 0], [1, 0.0, 0.0], [1, 0.5, R32]]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.WEDGE], points)
 
@@ -821,11 +815,11 @@ def Pyramid() -> UnstructuredGrid:
     List the grid's points.
 
     >>> grid.points
-    pyvista_ndarray([[ 1.        ,  1.        ,  0.        ],
-                     [-1.        ,  1.        ,  0.        ],
-                     [-1.        , -1.        ,  0.        ],
-                     [ 1.        , -1.        ,  0.        ],
-                     [ 0.        ,  0.        ,  1.60803807]])
+    pyvista_ndarray([[ 0.5       ,  0.5       ,  0.        ],
+                     [-0.5       ,  0.5       ,  0.        ],
+                     [-0.5       , -0.5       ,  0.        ],
+                     [ 0.5       , -0.5       ,  0.        ],
+                     [ 0.        ,  0.        ,  0.70710678]])
 
     >>> grid.celltypes  # same as pyvista.CellType.PYRAMID
     array([14], dtype=uint8)
@@ -836,7 +830,7 @@ def Pyramid() -> UnstructuredGrid:
         [-0.5, 0.5, 0.0],
         [-0.5, -0.5, 0.0],
         [0.5, -0.5, 0.0],
-        [0.0, 0.0, (2**0.5) / 2],
+        [0.0, 0.0, np.sqrt(2) / 2],
     ]
 
     cells = [len(points), *list(range(len(points)))]
