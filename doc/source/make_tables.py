@@ -245,7 +245,7 @@ class CellQualityInfoTable(DocTable):
             formatted = f'{num:.3f}'.rstrip('0').rstrip('.')
             return formatted if '.' in formatted else f'{formatted}.0'
 
-        measure = row_data.quality_measure
+        measure = f'``{row_data.quality_measure}``'
         acceptable = format_list(row_data.acceptable_range)
         normal = format_list(row_data.normal_range)
         full = format_list(row_data.full_range)
