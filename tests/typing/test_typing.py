@@ -80,10 +80,12 @@ def _reveal_types():
     # Calling from root ensures the config is loaded and imports are found
     # NOTE: running mypy can be slow, avoid making excessive calls
     if importlib.util.find_spec('mypy') is None:
-        raise ModuleNotFoundError("Package 'mypy' is required for this test.")
+        msg = "Package 'mypy' is required for this test."
+        raise ModuleNotFoundError(msg)
 
     if importlib.util.find_spec('npt_promote') is None:
-        raise ModuleNotFoundError("Package 'npt-promote' is required for this test.")
+        msg = "Package 'npt-promote' is required for this test."
+        raise ModuleNotFoundError(msg)
 
     cur = Path().cwd()
     try:
@@ -95,9 +97,11 @@ def _reveal_types():
 
         if exit_status != 0:
             if std_out:
-                raise RuntimeError(f'Error running mypy.\n{std_out}')
+                msg = f'Error running mypy.\n{std_out}'
+                raise RuntimeError(msg)
             else:
-                raise RuntimeError(f'Error running mypy.\n{std_err}')
+                msg = f'Error running mypy.\n{std_err}'
+                raise RuntimeError(msg)
         assert 'Cannot find implementation' not in std_out
 
         # Group the revealed types by (filepath), (line num), and (type)
@@ -245,11 +249,12 @@ def test_typing(test_case):
             namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
             locals().update(namespace)
         except Exception as e:
-            raise RuntimeError(
+            msg = (
                 f'Test setup failed for runtime test case in {file}:{line_num}.\n'
                 f'Unable to load module {file}.\n'
                 f'An exception was raised:\n{e!r}'
             )
+            raise RuntimeError(msg)
 
         try:
             expected_type = eval(expected)
