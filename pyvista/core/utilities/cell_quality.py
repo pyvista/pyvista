@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NoReturn
 from typing import get_args
@@ -11,6 +12,9 @@ import numpy as np
 
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import CellType
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 _CellQualityLiteral = Literal[
     'area',
@@ -267,7 +271,7 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
 
     """
 
-    def raise_error(item_: str, valid_options_: list[str]) -> NoReturn:
+    def raise_error(item_: str, valid_options_: Sequence[str]) -> NoReturn:
         msg = (
             f'Cell quality info is not available for {item_}. Valid options are:\n{valid_options_}'
         )
