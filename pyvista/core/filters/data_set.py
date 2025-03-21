@@ -5346,8 +5346,7 @@ class DataSetFilters(DataObjectFilters):
         .. deprecated:: 0.45
 
             Use :meth:`~pyvista.DataObjectFilters.cell_quality` instead. Note that
-            this new filter uses ``'shape'`` as a default measure instead of ``'scaled_jacobian'``
-            and does not include an array with the name ``'CellQuality'``.
+            this new filter does not include an array named ``'CellQuality'``.
 
         Parameters
         ----------
@@ -5390,9 +5389,8 @@ class DataSetFilters(DataObjectFilters):
             raise RuntimeError(msg)
 
         msg = (
-            'This filter is deprecated. Use :meth:`~pyvista.DataObjectFilters.cell_quality` instead.\n'
-            "Note that this new filter uses ``'shape'`` as a default measure instead of \n"
-            "'scaled_jacobian' and does not include an array with the name 'CellQuality'."
+            'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
+            "new filter does not include an array named ``'CellQuality'`"
         )
         warnings.warn(msg, PyVistaDeprecationWarning)
 

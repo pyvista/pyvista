@@ -626,7 +626,6 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     --------
     Get the current vtk verbosity.
 
-    >>> import vtk
     >>> import pyvista as pv
     >>> pv.vtk_verbosity()
     'info'
@@ -637,7 +636,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     >>> pv.vtk_verbosity()
     'max'
 
-    Use it as a context manager to temporarily turn it off for some computations.
+    Use it as a context manager to temporarily turn it off.
 
     >>> mesh = pv.Sphere()
     >>> with pv.vtk_verbosity('off'):
