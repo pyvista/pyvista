@@ -7,7 +7,6 @@ authors = [{ name = 'PyVista Developers', email = 'info@pyvista.org' }]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Science/Research',
-  'License :: OSI Approved :: MIT License',
   'Operating System :: MacOS',
   'Operating System :: Microsoft :: Windows',
   'Operating System :: POSIX',
@@ -29,7 +28,7 @@ dependencies = [
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
-license = { text = 'MIT' }
+license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
 requires-python = '>=3.9'
