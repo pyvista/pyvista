@@ -1641,9 +1641,20 @@ def test_transform_apply_to_dataset(scale_transform, mode, method):
     assert np.allclose(transformed['vector'], expected)
 
 
+@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
+def test_transform_apply_to_actor(scale_transform, mode, method):
+    expected_matrix = scale_transform.matrix
+    actor = pv.Actor()
+
+    transformed = method(scale_transform, actor, mode)
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+
 def test_transform_apply_invalid_mode():
     mesh = pv.PolyData()
     array = np.ndarray(())
+    actor = pv.Actor()
     trans = pv.Transform()
 
     match = (
@@ -1659,6 +1670,13 @@ def test_transform_apply_invalid_mode():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         trans.apply(array, 'all_vectors')
+
+    match = (
+        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
+        "['replace', 'pre-multiply', 'post-multiply', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
