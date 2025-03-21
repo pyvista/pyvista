@@ -715,12 +715,12 @@ def Wedge() -> UnstructuredGrid:
     List the grid's points.
 
     >>> grid.points
-    pyvista_ndarray([[0. , 1. , 0. ],
-                     [0. , 0. , 0. ],
-                     [0. , 0.5, 0.5],
-                     [1. , 1. , 0. ],
-                     [1. , 0. , 0. ],
-                     [1. , 0.5, 0.5]])
+    pyvista_ndarray([[0.       , 1.       , 0.       ],
+                     [0.       , 0.       , 0.       ],
+                     [0.       , 0.5      , 0.8660254],
+                     [1.       , 1.       , 0.       ],
+                     [1.       , 0.       , 0.       ],
+                     [1.       , 0.5      , 0.8660254]])
 
     >>> grid.celltypes  # same as pyvista.CellType.WEDGE
     array([13], dtype=uint8)
@@ -815,11 +815,11 @@ def Pyramid() -> UnstructuredGrid:
     List the grid's points.
 
     >>> grid.points
-    pyvista_ndarray([[ 1.        ,  1.        ,  0.        ],
-                     [-1.        ,  1.        ,  0.        ],
-                     [-1.        , -1.        ,  0.        ],
-                     [ 1.        , -1.        ,  0.        ],
-                     [ 0.        ,  0.        ,  1.60803807]])
+    pyvista_ndarray([[ 0.5       ,  0.5       ,  0.        ],
+                     [-0.5       ,  0.5       ,  0.        ],
+                     [-0.5       , -0.5       ,  0.        ],
+                     [ 0.5       , -0.5       ,  0.        ],
+                     [ 0.        ,  0.        ,  0.70710678]])
 
     >>> grid.celltypes  # same as pyvista.CellType.PYRAMID
     array([14], dtype=uint8)
