@@ -151,6 +151,9 @@ for info in _CELL_QUALITY_INFO:
     _CELL_QUALITY_LOOKUP[info.cell_type][info.quality_measure] = info
 
 
+_CELL_TYPE_NAMES = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
+
+
 def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
@@ -211,12 +214,11 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
         raise ValueError(msg)
 
     if isinstance(cell_type, str):
-        valid_options = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
         upper = cell_type.upper()
-        if upper not in valid_options:
+        if upper not in _CELL_TYPE_NAMES:
             item = f'cell type {upper!r}'
-            raise_error(item, valid_options)
-        value = _CELL_TYPE_INFO[upper].value
+            raise_error(item, _CELL_TYPE_NAMES)
+        value = CellType(_CELL_TYPE_INFO[upper].value)
     else:
         value = CellType(cell_type)
 
