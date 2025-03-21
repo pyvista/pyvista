@@ -2,4 +2,7 @@ from __future__ import annotations
 
 
 def test_foo():
-    from pyvista.examples import downloads  # noqa: F401
+    from pyvista import examples
+
+    print(examples.USER_DATA_PATH)
+    assert 0  # noqa: PT015
