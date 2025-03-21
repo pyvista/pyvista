@@ -191,30 +191,32 @@ class CellQualityInfoTable(DocTable):
 
     header = _aligned_dedent(
         """
-        |{} **Cells**
+        |.. dropdown:: {} Cells
         |
-        |.. list-table::
-        |   :widths: 20 20 20 20 20
-        |   :header-rows: 1
+        |   Info about {} quality measures.
         |
-        |   * - Measure
-        |     - Acceptable
-        |       Range
-        |     - Normal
-        |       Range
-        |     - Full
-        |       Range
-        |     - Unit Cell
-        |       Value
+        |   .. list-table::
+        |       :widths: 20 20 20 20 20
+        |       :header-rows: 1
+        |
+        |       * - Measure
+        |         - Acceptable
+        |           Range
+        |         - Normal
+        |           Range
+        |         - Full
+        |           Range
+        |         - Unit Cell
+        |           Value
         """,
     )
     row_template = _aligned_dedent(
         """
-        |   * - {}
-        |     - {}
-        |     - {}
-        |     - {}
-        |     - {}
+        |       * - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        |         - {}
         """,
     )
 
@@ -224,7 +226,9 @@ class CellQualityInfoTable(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header.format(f':attr:`~pyvista.CellType.{cls.cell_type.name}`')
+        return cls.header.format(
+            cls.cell_type.name.capitalize(), f':attr:`~pyvista.CellType.{cls.cell_type.name}`'
+        )
 
     @classmethod
     def get_row(cls, i, row_data):
