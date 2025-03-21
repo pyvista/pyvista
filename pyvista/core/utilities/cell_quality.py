@@ -192,7 +192,7 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
     - ``normal_range``: All cells except those with degeneracies have values in this range.
     - ``full_range``: All cells including degenerate ones have values in this range.
     - ``unit_cell_value``: The quality measure value for a reference unit cell (e.g.
-      equilateral triangle for triangles).
+      equilateral triangle with edge length of one for triangles).
 
     This information is extracted from the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_.
     The info can help inform if a particular cell is of high or low quality.
@@ -212,6 +212,19 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
 
     .. include:: /api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
 
+
+    .. note::
+
+        Some fields for some measures have a value of ``None``. This is done in cases
+        where an acceptable range may be application-specific, or where the unit cell
+        value is dependent on the data (e.g. any size-dependent measures).
+
+    .. note::
+
+        Information is not available for all valid quality measures. Only a subset
+        is provided here. If information about a measure is missing and you have
+        knowledge about its acceptable range, normal range, etc., please consider
+        submitting a pull request on GitHub at https://github.com/pyvista/pyvista.
 
     Parameters
     ----------
