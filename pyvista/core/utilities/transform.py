@@ -1611,10 +1611,11 @@ class Transform(_vtk.vtkTransform):
 
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
-                raise ValueError(
+                msg = (
                     f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
                     f'\n{allowed}'
                 )
+                raise ValueError(msg)
 
         _validation.check_contains(
             [
