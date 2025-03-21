@@ -227,8 +227,7 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
         measures = _CELL_QUALITY_LOOKUP[value]
     except KeyError:
         item = f'cell type {value.name!r}'
-        valid_options = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
-        raise_error(item, valid_options)
+        raise_error(item, _CELL_TYPE_NAMES)
 
     # Lookup the measure info
     try:
