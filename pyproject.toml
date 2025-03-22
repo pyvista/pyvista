@@ -403,6 +403,7 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/*' = ['D100', 'D103']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
+'pyvista/core/filters/*' = ['PYI019']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
