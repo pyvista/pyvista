@@ -25,6 +25,7 @@ import vtk
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -44,6 +45,8 @@ from pyvista.core.utilities.arrays import parse_field_choice
 from pyvista.core.utilities.arrays import raise_has_duplicates
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
+from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
+from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
@@ -2086,3 +2089,80 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.parametrize(
+    'cell_type', [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE']
+)
+def test_cell_quality_info(cell_type):
+    measure = 'area'
+    info = pv.cell_quality_info(cell_type, measure)
+    assert isinstance(info, CellQualityInfo)
+    assert info.cell_type == pv.CellType.TRIANGLE
+    assert info.quality_measure == measure
+
+
+ids = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
+
+
+def _compute_cell_quality(info: CellQualityInfo, null_value=-1):
+    example_name = _CELL_TYPE_INFO[info.cell_type.name].example
+    cell_mesh = getattr(ex.cells, example_name)()
+    qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
+    return qual.active_scalars[0]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=ids)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_valid_measures(info):
+    # Ensure the measure is valid for this cell type
+    null_value = -1
+    qual_value = _compute_cell_quality(info, null_value)
+    if qual_value == null_value:
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=ids)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_unit_cell_value(info):
+    # Ensure the unit cell value matches the mesh's value
+    qual_value = _compute_cell_quality(info)
+    unit_cell_value = info.unit_cell_value
+    if unit_cell_value is not None:
+        assert np.isclose(qual_value, unit_cell_value)
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=ids)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_acceptable_range(info):
+    # Ensure the compute quality of the example cell is within the acceptable range
+    qual_value = _compute_cell_quality(info)
+    unit_cell_value = info.unit_cell_value
+    acceptable_range = info.acceptable_range
+    if unit_cell_value is not None and acceptable_range is not None:
+        tol = 1e-6
+        upper_range = acceptable_range[1] + tol
+        lower_range = acceptable_range[0] - tol
+        assert qual_value >= lower_range
+        assert qual_value <= upper_range
+
+
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_raises():
+    match = re.escape(
+        "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
+        "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE.name, 'area')
+
+    match = re.escape(
+        "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"
+        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', 'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
