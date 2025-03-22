@@ -2138,11 +2138,6 @@ def test_cell_quality_info_unit_cell_value(info):
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
     # Ensure the compute quality of the example cell is within the acceptable range
-    if info.cell_type == pv.CellType.TETRA and info.quality_measure == 'scaled_jacobian':
-        pytest.xfail(
-            "Cell quality of the unit tetrahedron is 'too good' and is therefore considered unacceptable."
-        )
-
     qual_value = _compute_cell_quality(info)
     unit_cell_value = info.unit_cell_value
     acceptable_range = info.acceptable_range

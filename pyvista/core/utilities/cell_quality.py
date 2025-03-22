@@ -129,7 +129,7 @@ _CELL_QUALITY_INFO = [
     CellQualityInfo(
         CellType.TETRA, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None
     ),
-    CellQualityInfo(CellType.TETRA, 'scaled_jacobian', (0.5, R22), (-R22, R22), (-INF, INF), 1.0),
+    CellQualityInfo(CellType.TETRA, 'scaled_jacobian', (0.5, 1.0), (-R22, R22), (-INF, INF), 1.0),
     CellQualityInfo(CellType.TETRA, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     CellQualityInfo(CellType.TETRA, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
     CellQualityInfo(
