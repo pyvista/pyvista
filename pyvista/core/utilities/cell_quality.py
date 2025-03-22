@@ -65,111 +65,95 @@ def sqrt(num: float) -> float:  # noqa: D103
     return num**0.5
 
 
+# Define aliases to help definitions fit on one line
 INF = float('inf')
 ANGLE = (180 / np.pi) * np.arccos(1 / 3)
 R22 = sqrt(2) / 2
 R33 = sqrt(3) / 3
 
+TRIANGLE = CellType.TRIANGLE
+QUAD = CellType.QUAD
+TETRA = CellType.TETRA
+HEXAHEDRON = CellType.HEXAHEDRON
+PYRAMID = CellType.PYRAMID
+WEDGE = CellType.WEDGE
+
+Info = CellQualityInfo
+
 _CELL_QUALITY_INFO = [
-    CellQualityInfo(CellType.TRIANGLE, 'area', (0.0, INF), (0.0, INF), (0.0, INF), sqrt(3.0) / 4.0),
-    CellQualityInfo(CellType.TRIANGLE, 'aspect_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TRIANGLE, 'aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TRIANGLE, 'condition', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TRIANGLE, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
-    # CellQualityInfo(CellType.TRIANGLE, 'edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(
-        CellType.TRIANGLE, 'max_angle', (60.0, 90.0), (60.0, 180.0), (0.0, 180.0), 60.0
-    ),
-    CellQualityInfo(CellType.TRIANGLE, 'min_angle', (30.0, 60.0), (0.0, 60.0), (0.0, 360.0), 60.0),
-    CellQualityInfo(
-        CellType.TRIANGLE, 'scaled_jacobian', (0.5, 2 * R33), (-2 * R33, 2 * R33), (-INF, INF), 1.0
-    ),
-    CellQualityInfo(CellType.TRIANGLE, 'radius_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TRIANGLE, 'shape', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    CellQualityInfo(CellType.TRIANGLE, 'shape_and_size', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    CellQualityInfo(CellType.QUAD, 'area', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'aspect_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'condition', (1.0, 4), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
-    # CellQualityInfo(CellType.QUAD, 'edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'max_aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'max_angle', (90.0, 135.0), (90.0, 360.0), (0.0, 360.0), 90.0),
-    CellQualityInfo(CellType.QUAD, 'max_edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'med_aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'min_angle', (45.0, 90.0), (0.0, 90.0), (0.0, 360.0), 90.0),
-    CellQualityInfo(CellType.QUAD, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
-    CellQualityInfo(CellType.QUAD, 'radius_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(
-        CellType.QUAD, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None
-    ),
-    CellQualityInfo(CellType.QUAD, 'scaled_jacobian', (0.3, 1.0), (-1, 1.0), (-1, 1.0), 1.0),
-    CellQualityInfo(CellType.QUAD, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    CellQualityInfo(CellType.QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    CellQualityInfo(CellType.QUAD, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    CellQualityInfo(CellType.QUAD, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    # CellQualityInfo(CellType.QUAD, 'skew', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    CellQualityInfo(CellType.QUAD, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
-    CellQualityInfo(CellType.QUAD, 'taper', (0.0, 0.7), (0.0, INF), (0.0, INF), 0.0),
-    # CellQualityInfo(CellType.QUAD, 'warpage', (0.0, 0.7), (0.0, 2.0), (0.0, INF), 0.0),
-    # CellQualityInfo(CellType.TETRA, 'aspect_beta', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
-    # CellQualityInfo(CellType.TETRA, 'aspect_delta', (0.1, INF), (0.0, INF), (0.0, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'aspect_gamma', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'aspect_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(
-        CellType.TETRA, 'collapse_ratio', (0.1, INF), (0.0, INF), (0.0, INF), sqrt(6.0) / 3.0
-    ),
-    CellQualityInfo(CellType.TETRA, 'condition', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
-    # CellQualityInfo(CellType.TETRA, 'edge_ratio', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), R22),
-    CellQualityInfo(CellType.TETRA, 'min_angle', (40, ANGLE), (0.0, ANGLE), (0.0, 360), ANGLE),
-    CellQualityInfo(CellType.TETRA, 'radius_ratio', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(
-        CellType.TETRA, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None
-    ),
-    CellQualityInfo(CellType.TETRA, 'scaled_jacobian', (0.5, 1.0), (-R22, R22), (-INF, INF), 1.0),
-    CellQualityInfo(CellType.TETRA, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    CellQualityInfo(CellType.TETRA, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    CellQualityInfo(
-        CellType.TETRA, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 12.0
-    ),
-    CellQualityInfo(CellType.HEXAHEDRON, 'diagonal', (0.65, 1.0), (0.0, 1.0), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'dimension', None, (0.0, INF), (0.0, INF), R33),
-    CellQualityInfo(CellType.HEXAHEDRON, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
-    # CellQualityInfo(CellType.HEXAHEDRON, 'edge_ratio', None, (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'max_edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    CellQualityInfo(
-        CellType.HEXAHEDRON, 'max_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0
-    ),
-    CellQualityInfo(
-        CellType.HEXAHEDRON, 'med_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0
-    ),
-    CellQualityInfo(CellType.HEXAHEDRON, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
-    CellQualityInfo(
-        CellType.HEXAHEDRON, 'relative_size_squared', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), None
-    ),
-    CellQualityInfo(CellType.HEXAHEDRON, 'scaled_jacobian', (0.5, 1.0), (-1, 1.0), (-1, INF), 1.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    CellQualityInfo(
-        CellType.HEXAHEDRON, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None
-    ),
-    CellQualityInfo(CellType.HEXAHEDRON, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    CellQualityInfo(
-        CellType.HEXAHEDRON, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None
-    ),
-    CellQualityInfo(CellType.HEXAHEDRON, 'skew', (0.0, 0.5), (0.0, 1.0), (0.0, INF), 0.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'taper', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
-    CellQualityInfo(CellType.HEXAHEDRON, 'volume', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
-    CellQualityInfo(
-        CellType.PYRAMID, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 6.0
-    ),
-    CellQualityInfo(
-        CellType.WEDGE, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(3.0) / 4.0
-    ),
+    Info(TRIANGLE, 'area', (0.0, INF), (0.0, INF), (0.0, INF), sqrt(3.0) / 4.0),
+    Info(TRIANGLE, 'aspect_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TRIANGLE, 'aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TRIANGLE, 'condition', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TRIANGLE, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
+    # Info(TRIANGLE, 'edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TRIANGLE, 'max_angle', (60.0, 90.0), (60.0, 180.0), (0.0, 180.0), 60.0),
+    Info(TRIANGLE, 'min_angle', (30.0, 60.0), (0.0, 60.0), (0.0, 360.0), 60.0),
+    Info(TRIANGLE, 'scaled_jacobian', (0.5, 2 * R33), (-2 * R33, 2 * R33), (-INF, INF), 1.0),
+    Info(TRIANGLE, 'radius_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
+    Info(TRIANGLE, 'shape', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TRIANGLE, 'shape_and_size', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(QUAD, 'area', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
+    Info(QUAD, 'aspect_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'condition', (1.0, 4), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
+    # Info(QUAD, 'edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
+    Info(QUAD, 'max_aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'max_angle', (90.0, 135.0), (90.0, 360.0), (0.0, 360.0), 90.0),
+    Info(QUAD, 'max_edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'med_aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'min_angle', (45.0, 90.0), (0.0, 90.0), (0.0, 360.0), 90.0),
+    Info(QUAD, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
+    Info(QUAD, 'radius_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(QUAD, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(QUAD, 'scaled_jacobian', (0.3, 1.0), (-1, 1.0), (-1, 1.0), 1.0),
+    Info(QUAD, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    Info(QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(QUAD, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    Info(QUAD, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    # Info(QUAD, 'skew', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    Info(QUAD, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
+    Info(QUAD, 'taper', (0.0, 0.7), (0.0, INF), (0.0, INF), 0.0),
+    # Info(QUAD, 'warpage', (0.0, 0.7), (0.0, 2.0), (0.0, INF), 0.0),
+    # Info(TETRA, 'aspect_beta', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
+    # Info(TETRA, 'aspect_delta', (0.1, INF), (0.0, INF), (0.0, INF), 1.0),
+    Info(TETRA, 'aspect_frobenius', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TETRA, 'aspect_gamma', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
+    Info(TETRA, 'aspect_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
+    Info(TETRA, 'collapse_ratio', (0.1, INF), (0.0, INF), (0.0, INF), sqrt(6.0) / 3.0),
+    Info(TETRA, 'condition', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TETRA, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
+    # Info(TETRA, 'edge_ratio', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TETRA, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), R22),
+    Info(TETRA, 'min_angle', (40, ANGLE), (0.0, ANGLE), (0.0, 360), ANGLE),
+    Info(TETRA, 'radius_ratio', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
+    Info(TETRA, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TETRA, 'scaled_jacobian', (0.5, 1.0), (-R22, R22), (-INF, INF), 1.0),
+    Info(TETRA, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    Info(TETRA, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TETRA, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 12.0),
+    Info(HEXAHEDRON, 'diagonal', (0.65, 1.0), (0.0, 1.0), (1.0, INF), 1.0),
+    Info(HEXAHEDRON, 'dimension', None, (0.0, INF), (0.0, INF), R33),
+    Info(HEXAHEDRON, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
+    # Info(HEXAHEDRON, 'edge_ratio', None, (1.0, INF), (1.0, INF), 1.0),
+    Info(HEXAHEDRON, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
+    Info(HEXAHEDRON, 'max_edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
+    Info(HEXAHEDRON, 'max_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
+    Info(HEXAHEDRON, 'med_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
+    Info(HEXAHEDRON, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
+    Info(HEXAHEDRON, 'relative_size_squared', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(HEXAHEDRON, 'scaled_jacobian', (0.5, 1.0), (-1, 1.0), (-1, INF), 1.0),
+    Info(HEXAHEDRON, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    Info(HEXAHEDRON, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(HEXAHEDRON, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
+    Info(HEXAHEDRON, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(HEXAHEDRON, 'skew', (0.0, 0.5), (0.0, 1.0), (0.0, INF), 0.0),
+    Info(HEXAHEDRON, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
+    Info(HEXAHEDRON, 'taper', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
+    Info(HEXAHEDRON, 'volume', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
+    Info(PYRAMID, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 6.0),
+    Info(WEDGE, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(3.0) / 4.0),
 ]
 
 # Create lookup dict
