@@ -94,7 +94,7 @@ else:
     # provide helpful message if pooch path is inaccessible
     if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
         try:
-            Path(USER_DATA_PATH).mkdir(exist_ok=True)
+            Path(USER_DATA_PATH).mkdir(exist_ok=True, parents=True)
             if not os.access(USER_DATA_PATH, os.W_OK):
                 raise OSError
         except (PermissionError, OSError):
