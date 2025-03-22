@@ -30,9 +30,6 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
 
-permissions:
-  id-token: none
-
 jobs:
   # For now this is just MNE-Python, but others could be added
   mne:

@@ -31,9 +31,6 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
 
-permissions:
-  id-token: none
-
 jobs:
   macOS:
     name: Mac OS Unit Testing
