@@ -5426,7 +5426,11 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
-        return _get_output(alg)
+        output = _get_output(alg)
+        if quality_measure == 'volume' and isinstance(output, pyvista.UnstructuredGrid):
+            wedge_ind = output.celltypes == pyvista.CellType.WEDGE
+            output.cell_data['CellQuality'][wedge_ind] *=-1
+        return output
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
