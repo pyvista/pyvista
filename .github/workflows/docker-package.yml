@@ -17,7 +17,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 permissions:
-  id-token: write
+  packages: write
 
 jobs:
   build-and-publish:
