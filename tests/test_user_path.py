@@ -5,4 +5,3 @@ def test_foo():
     from pyvista import examples
 
     print(examples.USER_DATA_PATH)
-    assert 0  # noqa: PT015
