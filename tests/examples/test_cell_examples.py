@@ -86,6 +86,7 @@ def test_triangle():
     assert grid.celltypes[0] == CellType.TRIANGLE
     assert grid.n_cells == 1
     assert grid.n_points == 3
+    assert np.isclose(grid.area, np.sqrt(3) / 4)
 
 
 def test_triangle_strip():
@@ -107,6 +108,7 @@ def test_Quadrilateral():
     assert grid.celltypes[0] == CellType.QUAD
     assert grid.n_cells == 1
     assert grid.n_points == 4
+    assert np.isclose(grid.area, 1.0)
 
 
 def test_tetrahedron():
@@ -114,6 +116,7 @@ def test_tetrahedron():
     assert grid.celltypes[0] == CellType.TETRA
     assert grid.n_cells == 1
     assert grid.n_points == 4
+    assert np.isclose(grid.volume, np.sqrt(2) / 12)
 
 
 def test_hexagonal_prism():
@@ -128,6 +131,7 @@ def test_hexahedron():
     assert grid.celltypes[0] == CellType.HEXAHEDRON
     assert grid.n_cells == 1
     assert grid.n_points == 8
+    assert np.isclose(grid.volume, 1.0)
 
 
 def test_pyramid():
@@ -135,6 +139,7 @@ def test_pyramid():
     assert grid.celltypes[0] == CellType.PYRAMID
     assert grid.n_cells == 1
     assert grid.n_points == 5
+    assert np.isclose(grid.volume, np.sqrt(2.0) / 6.0)
 
 
 def test_wedge():
@@ -142,6 +147,7 @@ def test_wedge():
     assert grid.celltypes[0] == CellType.WEDGE
     assert grid.n_cells == 1
     assert grid.n_points == 6
+    assert np.isclose(grid.volume, np.sqrt(3.0) / 4.0)
 
 
 def test_pentagonal_prism():
