@@ -1128,6 +1128,16 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
                 cell = polyhedral_cell_faces[polyhedron_count]
                 polyhedron_count += 1
 
+            # Handle the missing voxel key (11) in vtk_to_meshio_type
+            elif vtk_celltype == pyvista.CellType.VOXEL:
+                celltype = 'hexahedron'
+                cell = cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+
+            # Handle the missing "pixel" key in meshio._mesh.topological_dimension
+            elif vtk_celltype == pyvista.CellType.PIXEL:
+                celltype = 'quad'
+                cell = cell[[0, 1, 3, 2]]
+
             else:
                 celltype = (
                     f'polygon{len(cell)}'
