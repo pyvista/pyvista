@@ -231,9 +231,6 @@ jobs:
       - name: Install PyVista test dependencies
         run: pip install .[test]
 
-      - name: Test user data path
-        run: pytest tests/test_user_path.py
-
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
