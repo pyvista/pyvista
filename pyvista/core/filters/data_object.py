@@ -39,38 +39,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
-
-
-_CellQualityLiteral = Literal[
-    'area',
-    'aspect_frobenius',
-    'aspect_gamma',
-    'aspect_ratio',
-    'collapse_ratio',
-    'condition',
-    'diagonal',
-    'dimension',
-    'distortion',
-    'jacobian',
-    'max_angle',
-    'max_aspect_frobenius',
-    'max_edge_ratio',
-    'med_aspect_frobenius',
-    'min_angle',
-    'oddy',
-    'radius_ratio',
-    'relative_size_squared',
-    'scaled_jacobian',
-    'shape',
-    'shape_and_size',
-    'shear',
-    'shear_and_size',
-    'skew',
-    'stretch',
-    'taper',
-    'volume',
-    'warpage',
-]
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
 
 class DataObjectFilters:
@@ -2937,7 +2906,7 @@ class DataObjectFilters:
                     np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
                 ):
                     continue
-                if measure == 'volume':
+                if measure == 'volume' and isinstance(output, pyvista.UnstructuredGrid):
                     # Need to fix negative volume for wedges, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643
                     wedge_ind = output.celltypes == pyvista.CellType.WEDGE
                     cell_quality_array[wedge_ind] *= -1

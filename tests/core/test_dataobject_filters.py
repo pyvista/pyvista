@@ -22,8 +22,8 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
-from pyvista.core.filters.data_object import _CellQualityLiteral
 from pyvista.core.filters.data_object import _get_cell_qualilty_measures
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals

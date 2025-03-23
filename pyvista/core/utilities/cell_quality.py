@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NoReturn
-from typing import get_args
 
 import numpy as np
 
@@ -46,7 +45,6 @@ _CellQualityLiteral = Literal[
     'volume',
     'warpage',
 ]
-_CellQualityOptions = get_args(_CellQualityLiteral)
 
 
 @dataclass
