@@ -832,7 +832,6 @@ def Pyramid() -> UnstructuredGrid:
         [0.5, -0.5, 0.0],
         [0.0, 0.0, np.sqrt(2) / 2],
     ]
-
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.PYRAMID], points)
 
