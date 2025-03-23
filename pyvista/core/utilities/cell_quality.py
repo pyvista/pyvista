@@ -65,7 +65,7 @@ def sqrt(num: float) -> float:  # noqa: D103
 
 # Define aliases to help definitions fit on one line
 INF = float('inf')
-ANGLE = (180 / np.pi) * np.arccos(1 / 3)
+ANGLE = float((180 / np.pi) * np.arccos(1 / 3))
 R22 = sqrt(2) / 2
 R33 = sqrt(3) / 3
 
