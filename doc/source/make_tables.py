@@ -38,6 +38,7 @@ import numpy as np
 
 import pyvista
 import pyvista as pv
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_object import _get_cell_qualilty_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
@@ -269,6 +270,7 @@ class CellQualityInfoTable(DocTable):
         |.. dropdown:: {} Cells
         |
         |   Info about {} quality measures.
+        |   See {} for an example unit cell.
         |
         |   .. list-table::
         |       :widths: 20 20 20 20 20
@@ -301,8 +303,12 @@ class CellQualityInfoTable(DocTable):
 
     @classmethod
     def get_header(cls, data):
+        name = cls.cell_type.name
+        example = _CELL_TYPE_INFO[name].example
         return cls.header.format(
-            cls.cell_type.name.capitalize(), f':attr:`~pyvista.CellType.{cls.cell_type.name}`'
+            name.capitalize(),
+            f':attr:`~pyvista.CellType.{name}`',
+            f':func:`~pyvista.examples.cells.{example}`',
         )
 
     @classmethod
