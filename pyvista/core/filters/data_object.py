@@ -2780,7 +2780,7 @@ class DataObjectFilters:
 
         .. dropdown:: Cell Quality Measures
 
-            .. include:: /api/core/cell_quality_table.rst
+            .. include:: /api/core/cell_quality/cell_quality_table.rst
 
         .. note::
 
