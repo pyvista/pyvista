@@ -320,9 +320,13 @@ class CellQualityInfoTable(DocTable):
             if num == -float('inf'):
                 return '-inf'
 
-            # Show minimum 1 decimal and maximum 3 decimals
-            formatted = f'{num:.3f}'.rstrip('0').rstrip('.')
-            return formatted if '.' in formatted else f'{formatted}.0'
+            # Show max 3 significant digits
+            formatted = f'{num:.3g}'
+
+            # Ensure at least one decimal place
+            if 'e' in formatted or '.' in formatted:
+                return formatted
+            return f'{formatted}.0'
 
         measure = f'``{row_data.quality_measure}``'
         acceptable = format_list(row_data.acceptable_range)
