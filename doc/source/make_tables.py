@@ -39,8 +39,10 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_object import _get_cell_qualilty_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -169,7 +171,7 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
-CELL_TYPES: [
+CELL_QUALITY_TYPES = [
     pyvista.CellType.TRIANGLE,
     pyvista.CellType.QUAD,
     pyvista.CellType.TETRA,
@@ -177,6 +179,79 @@ CELL_TYPES: [
     pyvista.CellType.WEDGE,
     pyvista.CellType.PYRAMID,
 ]
+
+
+class CellQualityTable(DocTable):
+    """Class to generate table for cell quality measures."""
+
+    path = f'{CELL_QUALITY_TABLE_DIR}/cell_quality_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table::
+        |   :name: cell_quality_table
+        |   :widths: 22 13 13 13 13 13 13
+        |   :header-rows: 1
+        |
+        |   * - Measure
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        # Get all cell example functions,
+        # i.e. items from examples.cells that start with a capital letter
+        cell_funcs = [
+            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+        ]
+
+        # Init dict with all measures as keys
+        measures = {measure: set() for measure in _get_cell_qualilty_measures().keys()}
+
+        # Compute the cell quality of each cell type and add to dict if valid
+        for func in cell_funcs:
+            mesh = getattr(cells, func)()
+            cell_type = pv.CellType(mesh.celltypes[0])
+            mesh = mesh.cell_quality('all_valid')
+            for valid_measure in mesh.array_names:
+                measures[valid_measure].add(cell_type)
+
+        return [(measures, measure) for measure in measures.keys()]
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(
+            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in CELL_QUALITY_TYPES]
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        measures, measure = row_data
+
+        success = ':material-regular:`check;2em;sd-text-success`'
+        error = ':material-regular:`close;2em;sd-text-error`'
+
+        def _get_table_entry(cell_type):
+            return success if cell_type in measures[measure] else error
+
+        table_entries = [_get_table_entry(cell_type) for cell_type in CELL_QUALITY_TYPES]
+        return cls.row_template.format(f'``{measure}``', *table_entries)
 
 
 class CellQualityInfoTable(DocTable):
@@ -2499,8 +2574,9 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables():  # noqa: D103
-    # Make cell quality table
+    # Make cell quality tables
     os.makedirs(CELL_QUALITY_TABLE_DIR, exist_ok=True)
+    CellQualityTable.generate()
     CellQualityInfoTableTRIANGLE.generate()
     CellQualityInfoTableQUAD.generate()
     CellQualityInfoTableHEXAHEDRON.generate()

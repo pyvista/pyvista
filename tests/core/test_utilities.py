@@ -2108,7 +2108,7 @@ ids = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY
 def _compute_cell_quality(info: CellQualityInfo, null_value=-1):
     example_name = _CELL_TYPE_INFO[info.cell_type.name].example
     cell_mesh = getattr(ex.cells, example_name)()
-    qual = cell_mesh.compute_cell_quality(info.quality_measure, null_value=null_value)
+    qual = cell_mesh.cell_quality(info.quality_measure, null_value=null_value)
     return qual.active_scalars[0]
 
 
