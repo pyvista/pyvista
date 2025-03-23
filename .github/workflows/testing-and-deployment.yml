@@ -69,6 +69,7 @@ jobs:
         run: pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
+        if: always()
         run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
@@ -161,14 +162,17 @@ jobs:
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+        if: always()
         with:
           packages: xvfb
           version: 3.0
 
       - name: Software Report (Plotting Dependencies)
+        if: always()
         run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
 
       - name: Plotting Testing (uses GL)
+        if: always()
         run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
 
       - name: Upload Generated Images
@@ -251,6 +255,7 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
+        if: always()
         run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
