@@ -2806,14 +2806,16 @@ class DataObjectFilters:
         filter or undefined quality of supported cell types will have an
         entry of ``-1``.
 
-        See table below for all measures and the
+        See the :ref:`cell_quality_measures_table` below for all measures and the
         :class:`~pyvista.CellType` supported by each one.
         Defaults to computing the scaled jacobian quality measure.
+
+        .. _cell_quality_measures_table:
 
         .. dropdown:: Cell Quality Measures
             :open:
 
-            .. include:: /api/core/cell_quality_table.rst
+            .. include:: /api/core/cell_quality_measures_table.rst
 
         .. note::
 

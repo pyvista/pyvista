@@ -10,9 +10,9 @@ Here we will use the :func:`~pyvista.DataObjectFilters.cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
 
-Note that many of the measures may only apply to 2D cells or 3D cells. Examples for
-meshes with :attr:`~pyvista.CellType.TRIANGLE` and :attr:`~pyvista.CellType.TETRA` cells
-are given here.
+Note that many of the measures may only apply to some cell types but not others.
+See :ref:`cell_quality_measures_table` for details about which measures are valid
+for different cell types.
 
 """
 
