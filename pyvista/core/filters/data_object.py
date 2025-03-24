@@ -2828,10 +2828,15 @@ class DataObjectFilters:
         Parameters
         ----------
         quality_measure : str | sequence[str], default: 'scaled_jacobian'
-            The cell quality measure to use. Specify a single measure or a sequence of
-            measures to compute. Specify ``'all'`` to compute all measures, or
-            ``'all_valid'`` to only keep quality measures that are valid for the mesh's
-            cell types. A separate array is created for each measure.
+            The cell quality measure(s) to use. May be either:
+
+            - A single measure or a sequence of measures listed in
+              :ref:`cell_quality_measures_table`.
+            - ``'all'`` to compute all measures, or
+            - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
+              cell type(s).
+
+            A separate array is created for each measure.
 
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities
