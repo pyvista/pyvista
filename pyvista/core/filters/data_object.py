@@ -2810,8 +2810,6 @@ class DataObjectFilters:
         :class:`~pyvista.CellType` supported by each one.
         Defaults to computing the ``scaled_jacobian`` quality measure.
 
-        .. _cell_quality_measures_table:
-
         .. dropdown:: Cell Quality Measures
             :open:
 
@@ -2832,7 +2830,7 @@ class DataObjectFilters:
 
             - A single measure or a sequence of measures listed in
               :ref:`cell_quality_measures_table`.
-            - ``'all'`` to compute all measures, or
+            - ``'all'`` to compute all measures.
             - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
               cell type(s).
 
