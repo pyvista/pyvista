@@ -2811,6 +2811,7 @@ class DataObjectFilters:
         Defaults to computing the scaled jacobian quality measure.
 
         .. dropdown:: Cell Quality Measures
+            :open:
 
             .. include:: /api/core/cell_quality_table.rst
 
