@@ -2808,7 +2808,7 @@ class DataObjectFilters:
 
         See the :ref:`cell_quality_measures_table` below for all measures and the
         :class:`~pyvista.CellType` supported by each one.
-        Defaults to computing the scaled jacobian quality measure.
+        Defaults to computing the ``scaled_jacobian`` quality measure.
 
         .. _cell_quality_measures_table:
 
@@ -2821,8 +2821,7 @@ class DataObjectFilters:
 
             Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
             for low-level technical information about how each metric is computed,
-            which :class:`~pyvista.CellType` it applies to, as well as the metric's
-            full, normal, and acceptable range of values.
+            as well as the metric's full, normal, and acceptable range of values.
 
         .. versionadded:: 0.45
 
