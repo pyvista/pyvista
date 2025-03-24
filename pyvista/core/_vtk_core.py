@@ -308,15 +308,12 @@ from vtkmodules.vtkFiltersCore import vtkDecimatePro as vtkDecimatePro
 from vtkmodules.vtkFiltersCore import vtkDelaunay2D as vtkDelaunay2D
 from vtkmodules.vtkFiltersCore import vtkDelaunay3D as vtkDelaunay3D
 from vtkmodules.vtkFiltersCore import vtkElevationFilter as vtkElevationFilter
-from vtkmodules.vtkFiltersCore import (
-    vtkUnstructuredGridToExplicitStructuredGrid as vtkUnstructuredGridToExplicitStructuredGrid,
-    vtkMaskPointsFilter as vtkMaskPointsFilter,
-)
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges as vtkFeatureEdges
 from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D as vtkFlyingEdges3D
 from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
+from vtkmodules.vtkFiltersCore import vtkMaskPointsFilter as vtkMaskPointsFilter
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
@@ -330,7 +327,6 @@ from vtkmodules.vtkFiltersCore import vtkTriangleFilter as vtkTriangleFilter
 from vtkmodules.vtkFiltersCore import vtkTubeFilter as vtkTubeFilter
 from vtkmodules.vtkFiltersCore import (
     vtkUnstructuredGridToExplicitStructuredGrid as vtkUnstructuredGridToExplicitStructuredGrid,
-    vtkMaskPointsFilter as vtkMaskPointsFilter,
 )
 from vtkmodules.vtkFiltersCore import vtkWindowedSincPolyDataFilter as vtkWindowedSincPolyDataFilter
 from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType as vtkExtractCellsByType
