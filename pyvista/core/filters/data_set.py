@@ -2199,7 +2199,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
     ):
-        """ Mask points using a boolean array.
+        """Mask points using a boolean array.
 
         Parameters
         ----------
@@ -2222,25 +2222,30 @@ class DataSetFilters(DataObjectFilters):
         pyvista.PolyData
             Masked points.
 
+        Examples
+        --------
+        Mask points on a sphere.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> mask = sphere.points[:, 0] > 0
+        >>> masked = sphere.mask_points(mask)
+        >>> masked.plot()
+
         """
         alg = _vtk.vtkMaskPointsFilter()
         alg.SetInputDataObject(self)
         if isinstance(mask, str):
-            alg.SetInputArrayToProcess(
-                0, 0, 0, _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS, mask
-            )
+            alg.SetInputArrayToProcess(0, 0, 0, _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS, mask)
         else:
             mask = pyvista.convert_array(mask, dtype=bool)
             if mask.size != self.n_points:
-                raise ValueError(
-                    f"Mask must be of length {self.n_points} but has length {mask.size}"
-                )
-            alg.SetInputArrayToProcess(
-                0, 0, 0, _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS, "mask"
-            )
-            self.point_data["mask"] = mask
+                msg = f'Mask must be of length {self.n_points} but has length {mask.size}'
+                raise ValueError(msg)
+            alg.SetInputArrayToProcess(0, 0, 0, _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS, 'mask')
+            self.point_data['mask'] = mask
         alg.SetInvert(invert)
-        _update_alg(alg, progress_bar, "Masking Points")
+        _update_alg(alg, progress_bar, 'Masking Points')
         result = _get_output(alg)
         if inplace:
             self.copy_from(result, deep=False)
