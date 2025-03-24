@@ -2804,9 +2804,10 @@ class DataObjectFilters:
         The per-cell quality is added to the mesh's cell data, in an array with
         the same name as the quality measure. Cell types not supported by this
         filter or undefined quality of supported cell types will have an
-        entry of ``-1``. See table below for all measures and the
-        :class:`~pyvista.CellType` supported by each one.
+        entry of ``-1``.
 
+        See table below for all measures and the
+        :class:`~pyvista.CellType` supported by each one.
         Defaults to computing the scaled jacobian quality measure.
 
         .. dropdown:: Cell Quality Measures
