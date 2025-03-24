@@ -2192,6 +2192,61 @@ class DataSetFilters(DataObjectFilters):
                 return self
         return output
 
+    def mask_points(  # type: ignore[misc]
+        self: _DataSetType,
+        mask: str | NumpyArray[bool],
+        invert: bool = False,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """ Mask points using a boolean array.
+
+        Parameters
+        ----------
+        mask : str or numpy.ndarray
+            Mask array. If a string, the mask name in the point or cell
+            data.
+
+        invert : bool, default: False
+            Invert the mask.  If ``True``, the points that are not masked
+            will be selected.
+
+        inplace : bool, default: False
+            If ``True``, the mesh will be updated in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Masked points.
+
+        """
+        alg = _vtk.vtkMaskPointsFilter()
+        alg.SetInputDataObject(self)
+        if isinstance(mask, str):
+            alg.SetInputArrayToProcess(
+                0, 0, 0, _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS, mask
+            )
+        else:
+            mask = pyvista.convert_array(mask, dtype=bool)
+            if mask.size != self.n_points:
+                raise ValueError(
+                    f"Mask must be of length {self.n_points} but has length {mask.size}"
+                )
+            alg.SetInputArrayToProcess(
+                0, 0, 0, _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS, "mask"
+            )
+            self.point_data["mask"] = mask
+        alg.SetInvert(invert)
+        _update_alg(alg, progress_bar, "Masking Points")
+        result = _get_output(alg)
+        if inplace:
+            self.copy_from(result, deep=False)
+            return self
+        return result
+
     def extract_largest(  # type: ignore[misc]
         self: _DataSetType, inplace: bool = False, progress_bar: bool = False
     ):
