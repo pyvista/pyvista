@@ -2773,31 +2773,39 @@ class DataObjectFilters:
         The per-cell quality is added to the mesh's cell data, in an array with
         the same name as the quality measure. Cell types not supported by this
         filter or undefined quality of supported cell types will have an
-        entry of ``-1``. See table below for all measures and the
-        :class:`~pyvista.CellType` supported by each one.
+        entry of ``-1``.
 
-        Defaults to computing the scaled jacobian quality measure.
+        See the :ref:`cell_quality_measures_table` below for all measures and the
+        :class:`~pyvista.CellType` supported by each one.
+        Defaults to computing the ``scaled_jacobian`` quality measure.
+
+        .. _cell_quality_measures_table:
 
         .. dropdown:: Cell Quality Measures
+            :open:
 
-            .. include:: /api/core/cell_quality/cell_quality_table.rst
+            .. include:: /api/core/cell_quality/cell_quality_measures_table.rst
 
         .. note::
 
             Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
             for low-level technical information about how each metric is computed,
-            which :class:`~pyvista.CellType` it applies to, as well as the metric's
-            full, normal, and acceptable range of values.
+            as well as the metric's full, normal, and acceptable range of values.
 
         .. versionadded:: 0.45
 
         Parameters
         ----------
         quality_measure : str | sequence[str], default: 'scaled_jacobian'
-            The cell quality measure to use. Specify a single measure or a sequence of
-            measures to compute. Specify ``'all'`` to compute all measures, or
-            ``'all_valid'`` to only keep quality measures that are valid for the mesh's
-            cell types. A separate array is created for each measure.
+            The cell quality measure(s) to use. May be either:
+
+            - A single measure or a sequence of measures listed in
+              :ref:`cell_quality_measures_table`.
+            - ``'all'`` to compute all measures, or
+            - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
+              cell type(s).
+
+            A separate array is created for each measure.
 
         null_value : float, default: -1.0
             Float value for undefined quality. Undefined quality are qualities

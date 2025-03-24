@@ -185,11 +185,11 @@ CELL_QUALITY_TYPES = [
 class CellQualityTable(DocTable):
     """Class to generate table for cell quality measures."""
 
-    path = f'{CELL_QUALITY_TABLE_DIR}/cell_quality_table.rst'
+    path = f'{CELL_QUALITY_TABLE_DIR}/cell_quality_measures_table.rst'
     header = _aligned_dedent(
         """
         |.. list-table::
-        |   :name: cell_quality_table
+        |   :name: cell_quality_measures_table
         |   :widths: 22 13 13 13 13 13 13
         |   :header-rows: 1
         |
