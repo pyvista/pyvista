@@ -85,7 +85,7 @@ qual.plot(
 )
 
 # %%
-# Use :meth:`~pyvista.DataObjectFilters.extract_values` to extract the "poor" quality
+# Use :meth:`~pyvista.DataSetFilters.extract_values` to extract the "poor" quality
 # cells outside the acceptable range.
 
 unacceptable = qual.extract_values(scalars='shape', ranges=acceptable_range, invert=True)
