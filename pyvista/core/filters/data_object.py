@@ -2919,8 +2919,10 @@ class DataObjectFilters:
 
                 # Store the cell quality array with the output
                 cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
-                if keep_valid_only and (
-                    np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+                if (
+                    keep_valid_only
+                    and np.isclose(np.max(cell_quality_array), null_value)
+                    and np.isclose(np.min(cell_quality_array), null_value)
                 ):
                     continue
                 if measure == 'volume' and isinstance(output, pyvista.UnstructuredGrid):

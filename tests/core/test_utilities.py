@@ -2118,7 +2118,7 @@ def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
     qual_value = _compute_cell_quality(info, null_value)
-    if qual_value == null_value:
+    if np.isclose(qual_value, null_value):
         pytest.fail(
             f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
