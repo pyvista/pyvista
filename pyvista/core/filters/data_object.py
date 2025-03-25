@@ -2834,6 +2834,13 @@ class DataObjectFilters:
         >>> cqual = sphere.cell_quality('min_angle')
         >>> cqual.plot(show_edges=True)
 
+        Quality measures like ``'volume'`` do not apply to 2D cells, and a null value
+        of ``-1`` is returned.
+
+        >>> qual = sphere.cell_quality('volume')
+        >>> qual.get_data_range('volume')
+        (np.float64(-1.0), np.float64(-1.0))
+
         Compute all valid quality measures for the sphere. These measures all return
         non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
 

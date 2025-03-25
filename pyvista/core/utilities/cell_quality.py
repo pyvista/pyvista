@@ -262,6 +262,8 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
     >>> info_quad.unit_cell_value
     1.0
 
+    See :ref:`mesh_quality_example` for more examples using this function.
+
     """
 
     def raise_error(item_: str, valid_options_: Sequence[str]) -> NoReturn:

@@ -60,11 +60,45 @@ pl.show()
 
 
 # %%
-# Quality measures like ``'volume'`` do not apply to 2D cells, and a null value
-# of ``-1`` is returned.
+# The previous plots show the full range of cell quality values present in the mesh.
+# However, it may be more useful to show the `acceptable` range of values instead.
+# Get the acceptable range for the ``shape`` quality measure using
+# :func:`~pyvista.cell_quality_info`.
 
-qual = mesh.cell_quality(['volume'])
-qual.get_data_range('volume')
+info = pv.cell_quality_info('TRIANGLE', 'shape')
+acceptable_range = info.acceptable_range
+print(acceptable_range)
+
+# %%
+# Plot the shape quality measure again but this time we color the cells based on
+# the acceptable range for the measure. Cells outside of this range are saturated
+# as blue or red and may be considered to be "poor" quality cells.
+
+qual.plot(
+    scalars='shape',
+    clim=acceptable_range,
+    cmap='bwr',
+    below_color='blue',
+    above_color='red',
+    cpos='xy',
+    zoom=1.5,
+)
+
+# %%
+# Use :meth:`~pyvista.DataObjectFilters.extract_values` to extract the "poor" quality
+# cells outside the acceptable range.
+
+unacceptable = qual.extract_values(scalars='shape', ranges=acceptable_range, invert=True)
+
+# %%
+# Plot the unacceptable cells along with the original mesh as wireframe for context.
+
+pl = pv.Plotter()
+pl.add_mesh(mesh, style='wireframe', color='light gray')
+pl.add_mesh(unacceptable, color='lime')
+pl.view_xy()
+pl.camera.zoom(1.5)
+pl.show()
 
 # %%
 # Tetrahedron Cell Quality
