@@ -198,7 +198,7 @@ omit = [
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
-exclude_also = ['^\s*@overload\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
+exclude_also = ['^\s*@overload.*\n\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
