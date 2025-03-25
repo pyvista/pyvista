@@ -2810,10 +2810,7 @@ class DataObjectFilters:
         :class:`~pyvista.CellType` supported by each one.
         Defaults to computing the ``scaled_jacobian`` quality measure.
 
-        .. dropdown:: Cell Quality Measures
-            :open:
-
-            .. include:: /api/core/cell_quality_measures_table.rst
+        .. include:: /api/core/cell_quality_measures_table.rst
 
         .. note::
 
