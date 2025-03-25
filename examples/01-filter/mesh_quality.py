@@ -10,10 +10,7 @@ Here we will use the :func:`~pyvista.DataObjectFilters.cell_quality` filter
 to compute the cell qualities. The following quality measures are available
 for various cell types:
 
-.. dropdown:: Cell Quality Measures
-    :open:
-
-    .. include:: /api/core/cell_quality_measures_table.rst
+.. include:: /api/core/cell_quality_measures_table.rst
 
 """
 
