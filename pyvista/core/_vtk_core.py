@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
+from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource as vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource as vtkImageGaussianSource

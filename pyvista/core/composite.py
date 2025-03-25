@@ -1711,9 +1711,9 @@ class MultiBlock(
 
         """
         index = range(self.n_blocks)[index]
-        meta = self.GetMetaData(index)
-        assert meta is not None
-        return meta.Get(_vtk.vtkCompositeDataSet.NAME())
+        # Safely cast as vtkInformation since `None` case is caught by IndexError above
+        meta = cast(_vtk.vtkInformation, self.GetMetaData(index))
+        return meta.Get(_vtk.vtkCompositeDataSet.NAME())  # type:ignore[return-value]
 
     def keys(self: MultiBlock) -> list[str]:
         """Get all the block names in the dataset.
