@@ -2854,7 +2854,7 @@ class DataObjectFilters:
         # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         keep_valid_only = quality_measure == 'all_valid'
-        measures_available = _get_cell_qualilty_measures()
+        measures_available = _get_cell_quality_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if quality_measure in ['all', 'all_valid']:
             measures_requested = measures_available_names
@@ -2919,7 +2919,7 @@ class DataObjectFilters:
         return output
 
 
-def _get_cell_qualilty_measures() -> dict[str, str]:
+def _get_cell_quality_measures() -> dict[str, str]:
     """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
     # Get possible quality measures dynamically
     str_start = 'SetQualityMeasureTo'

@@ -40,7 +40,7 @@ import pyvista
 import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.filters.data_object import _get_cell_qualilty_measures
+from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples import cells
@@ -222,7 +222,7 @@ class CellQualityMeasuresTable(DocTable):
         ]
 
         # Init dict with all measures as keys
-        measures = {measure: set() for measure in _get_cell_qualilty_measures().keys()}
+        measures = {measure: set() for measure in _get_cell_quality_measures().keys()}
 
         # Compute the cell quality of each cell type and add to dict if valid
         for func in cell_funcs:
@@ -255,7 +255,7 @@ class CellQualityMeasuresTable(DocTable):
 
 
 class CellQualityInfoTable(DocTable):
-    """Class to generate table for cell quality measures."""
+    """Class to generate table for cell quality info."""
 
     cell_type: pyvista.CellType
 
