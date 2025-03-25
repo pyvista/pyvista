@@ -5343,6 +5343,11 @@ class DataSetFilters(DataObjectFilters):
             which :class:`~pyvista.CellType` it applies to as well as the metric's
             full, normal, and acceptable range of values.
 
+        .. deprecated:: 0.45
+
+            Use :meth:`~pyvista.DataObjectFilters.cell_quality` instead. Note that
+            this new filter does not include an array named ``'CellQuality'``.
+
         Parameters
         ----------
         quality_measure : str, default: 'scaled_jacobian'
@@ -5370,12 +5375,25 @@ class DataSetFilters(DataObjectFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
-        >>> cqual = sphere.compute_cell_quality('min_angle')
-        >>> cqual.plot(show_edges=True)
+        >>> cqual = sphere.compute_cell_quality('min_angle')  # doctest:+SKIP
+        >>> cqual.plot(show_edges=True)  # doctest:+SKIP
 
         See the :ref:`mesh_quality_example` for more examples using this filter.
 
         """
+        if pyvista.version_info >= (0, 48):  # pragma: no cover
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
+        if pyvista.version_info >= (0, 49):  # pragma: no cover
+            msg = 'Remove this filter.'
+            raise RuntimeError(msg)
+
+        msg = (
+            'This filter is deprecated. Use `cell_quality` instead. Note that this\n'
+            "new filter does not include an array named ``'CellQuality'`"
+        )
+        warnings.warn(msg, PyVistaDeprecationWarning)
+
         alg = _vtk.vtkCellQuality()
         possible_measure_setters = {
             'area': 'SetQualityMeasureToArea',

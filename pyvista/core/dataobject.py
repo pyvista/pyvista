@@ -414,8 +414,9 @@ class DataObject:
                 'lines',  # DataObject
                 'faces',  # DataObject
                 'cells',  # UnstructuredGrid
-                'celltypes',
-            ]  # UnstructuredGrid
+                'celltypes',  # UnstructuredGrid
+                'strips',  # PolyData
+            ]
         for attr in equal_attrs:
             if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
