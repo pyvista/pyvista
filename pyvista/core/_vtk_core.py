@@ -313,6 +313,7 @@ from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D as vtkFlyingEdges3D
 from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
+
 try:
     from vtkmodules.vtkFiltersCore import vtkMaskPointsFilter as vtkMaskPointsFilter
 except ImportError:
