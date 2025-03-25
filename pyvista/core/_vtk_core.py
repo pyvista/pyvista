@@ -644,7 +644,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     Use it as a context manager to temporarily turn it off.
 
     >>> with pv.vtk_verbosity('off'):
-    ...     mesh = mesh.compute_cell_quality('volume')
+    ...     mesh = mesh.cell_quality('volume')
 
     The state is restored to its previous value outside the context.
 
