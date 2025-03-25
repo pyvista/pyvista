@@ -13,6 +13,7 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class CornerAnnotation(_vtk.vtkCornerAnnotation):
+class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
@@ -50,6 +51,11 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     linear_font_scale_factor : float, optional
         Linear font scale factor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     Examples
     --------
     Create text annotation in four corners.
@@ -60,7 +66,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
+    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -68,6 +74,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
             self.prop = TextProperty()
         if linear_font_scale_factor is not None:
             self.linear_font_scale_factor = linear_font_scale_factor
+        self._name = name
 
     def get_text(self, position):
         """Get the text to be displayed for each corner.
@@ -157,7 +164,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(_vtk.vtkTextActor):
+class Text(_NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -173,6 +180,11 @@ class Text(_vtk.vtkTextActor):
     prop : pyvista.TextProperty, optional
         The property of this actor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     Examples
     --------
     Create a text with text's property.
@@ -183,7 +195,7 @@ class Text(_vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None):
+    def __init__(self, text=None, position=None, prop=None, name=None):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -192,6 +204,7 @@ class Text(_vtk.vtkTextActor):
             self.position = position
         if prop is None:
             self.prop = TextProperty()
+        self._name = name
 
     @property
     def input(self):
@@ -283,6 +296,11 @@ class Label(_Prop3DMixin, Text):
 
             Use `font_size` instead. Maintained for backwards compatibility. Will be
             removed in a future version.
+
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
 
     See Also
     --------
@@ -383,10 +401,12 @@ class Label(_Prop3DMixin, Text):
         font_size: int = 50,
         prop: pyvista.Property | None = None,
         size: int | None = None,
+        name: str | None = None,
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
+        self._name = name  # type: ignore[assignment]
 
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]
@@ -425,9 +445,11 @@ class Label(_Prop3DMixin, Text):
 
         """
         if version_info >= (0, 48):  # pragma: no cover
-            raise RuntimeError('Convert this deprecation warning into an error.')
+            msg = 'Convert this deprecation warning into an error.'
+            raise RuntimeError(msg)
         if version_info >= (0, 49):  # pragma: no cover
-            raise RuntimeError('Remove this property.')
+            msg = 'Remove this property.'
+            raise RuntimeError(msg)
 
         msg = (
             'The behavior of `size` will change in a future version. It currently returns a float with\n'
@@ -779,7 +801,8 @@ class TextProperty(_vtk.vtkTextProperty):
         path = pathlib.Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
-            raise FileNotFoundError(f'Unable to locate {path}')
+            msg = f'Unable to locate {path}'
+            raise FileNotFoundError(msg)
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
 
@@ -808,10 +831,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'right':
             self.SetJustificationToRight()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".',
+                'Should be either "left", "center" or "right".'
             )
+            raise ValueError(msg)
 
     @property
     def justification_vertical(self) -> str:
@@ -838,10 +862,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".',
+                'Should be either "bottom", "center" or "top".'
             )
+            raise ValueError(msg)
 
     @property
     def italic(self) -> bool:

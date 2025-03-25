@@ -25,6 +25,11 @@ def test_corner_annotation_prop(corner_annotation):
     assert isinstance(prop, pv.TextProperty)
 
 
+def test_corner_annotation_name():
+    corner = pv.CornerAnnotation('top', 'abc', name='corner')
+    assert corner.name == 'corner'
+
+
 @pytest.fixture
 def text():
     return pv.Text()
@@ -46,6 +51,11 @@ def test_text_position(text):
     assert np.all(text.position == position)
 
 
+def test_text_name():
+    text = pv.Text('abc', name='text')
+    assert text.name == 'text'
+
+
 def test_label():
     label = pv.Label('text', (1, 2, 3), font_size=42, prop=pv.Property())
 
@@ -60,6 +70,11 @@ def test_label():
     assert label.font_size == 42
     label.font_size = 99
     assert label.font_size == 99
+
+
+def test_label_name():
+    label = pv.Label('abc', name='label')
+    assert label.name == 'label'
 
 
 def test_label_prop3d():

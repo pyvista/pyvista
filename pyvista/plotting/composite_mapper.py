@@ -477,11 +477,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             else:
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
-            raise KeyError(f'Invalid block key: {index}') from None
+            msg = f'Invalid block key: {index}'
+            raise KeyError(msg) from None
         if block is None and index > len(self) - 1:
-            raise KeyError(
-                f'index {index} is out of bounds. There are only {len(self)} blocks.',
-            ) from None
+            msg = f'index {index} is out of bounds. There are only {len(self)} blocks.'
+            raise KeyError(msg) from None
         return block
 
     def __getitem__(self, index):
@@ -856,10 +856,9 @@ class CompositePolyDataMapper(
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)
-            else:  # pragma: no cover
-                if flip_scalars:
-                    self.lookup_table.SetHueRange(0.0, 0.66667)
-                else:
-                    self.lookup_table.SetHueRange(0.66667, 0.0)
+            elif flip_scalars:
+                self.lookup_table.SetHueRange(0.0, 0.66667)
+            else:
+                self.lookup_table.SetHueRange(0.66667, 0.0)
 
         return scalar_bar_args

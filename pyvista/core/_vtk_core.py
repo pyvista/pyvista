@@ -10,6 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
@@ -446,13 +447,16 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
 
+from vtkmodules.vtkImagingCore import vtkAbstractImageInterpolator as vtkAbstractImageInterpolator
 from vtkmodules.vtkImagingCore import vtkExtractVOI as vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageConstantPad as vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageFlip as vtkImageFlip
+from vtkmodules.vtkImagingCore import vtkImageInterpolator as vtkImageInterpolator
 from vtkmodules.vtkImagingCore import vtkImageMirrorPad as vtkImageMirrorPad
-from vtkmodules.vtkImagingCore import vtkImageResample as vtkImageResample
+from vtkmodules.vtkImagingCore import vtkImageResize as vtkImageResize
+from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincInterpolator
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
@@ -524,7 +528,8 @@ except ImportError:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
+            msg = 'Chart backgrounds require the vtkPythonContext2D module'
+            raise VTKVersionError(msg)
 
 
 from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
@@ -581,3 +586,148 @@ def VTKVersionInfo():
 
 
 vtk_version_info = VTKVersionInfo()
+
+if TYPE_CHECKING:
+    from typing import Literal
+
+    _VerbosityOptions = (
+        Literal[
+            'off',
+            'error',
+            'warning',
+            'info',
+            'max',
+        ]
+        | int
+        | vtkLogger.Verbosity
+    )
+
+
+class _VTKVerbosity(contextlib.AbstractContextManager[None]):
+    """Context manager to set VTK verbosity level.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    verbosity : int | str | vtkLogger.Verbosity
+        Verbosity of the ``vtkLogger`` to set.
+
+        - ``'off'``: No output.
+        - ``'error'``: Only error messages.
+        - ``'warning'``: Errors and warnings.
+        - ``'info'``: Errors, warnings, and info messages.
+        - ``'max'``: All messages, including debug info.
+
+        Integers between ``[-9, 9]`` or their string representation
+        are also accepted.
+
+    Examples
+    --------
+    Get the current vtk verbosity.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_verbosity()
+    'info'
+
+    Set verbosity to max.
+
+    >>> _ = pv.vtk_verbosity('max')
+    >>> pv.vtk_verbosity()
+    'max'
+
+    Use it as a context manager to temporarily turn it off.
+
+    >>> mesh = pv.Sphere()
+    >>> with pv.vtk_verbosity('off'):
+    ...     mesh = mesh.cell_quality('volume')
+
+    The state is restored to its previous value outside the context.
+
+    >>> pv.vtk_verbosity()
+    'max'
+
+    """
+
+    @staticmethod
+    def _validate_verbosity(
+        verbosity: _VerbosityOptions,
+    ) -> vtkLogger.Verbosity:
+        if isinstance(verbosity, vtkLogger.Verbosity):
+            return verbosity
+        else:
+            try:
+                logger_verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
+                if logger_verbosity == vtkLogger.VERBOSITY_INVALID:
+                    raise AttributeError
+                else:
+                    return logger_verbosity
+            except AttributeError:
+                msg = (
+                    f"Invalid verbosity name '{verbosity}', must be one of:\n"
+                    f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
+                )
+                raise ValueError(msg)
+
+    @property
+    def _verbosity(self):
+        return vtkLogger.GetCurrentVerbosityCutoff()
+
+    @_verbosity.setter
+    def _verbosity(self, verbosity: _VerbosityOptions):
+        vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
+
+    @property
+    def _verbosity_string(self):
+        to_string = {
+            -10: 'invalid',
+            -9: 'off',
+            -2: 'error',
+            -1: 'warning',
+            0: 'info',
+            1: '1',
+            2: '2',
+            3: '3',
+            4: '4',
+            5: '5',
+            6: '6',
+            7: '7',
+            8: '8',
+            9: 'max',
+        }
+        return to_string[self._verbosity]
+
+    def __init__(self):
+        """Initialize context manager."""
+        self._original_verbosity = None
+
+    def __enter__(self):
+        """Enter context manager."""
+        if self._original_verbosity is None:
+            msg = (
+                'Verbosity must be set to a value to use it as a context manager.\n'
+                'Call `vtk_verbosity()` with an argument to set its value.'
+            )
+            raise ValueError(msg)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit context manager."""
+        # Restore the original verbosity level
+        self._verbosity = self._original_verbosity
+        self._original_verbosity = None  # Reset
+
+    def __call__(self, verbosity: _VerbosityOptions | None = None):
+        """Call the context manager."""
+        if verbosity is None:
+            # Get the verbosity
+            return self._verbosity_string
+
+        # Create new instance and store the local state
+        # to be restored when exiting context
+        output = _VTKVerbosity()
+        output._original_verbosity = output._verbosity
+        output._verbosity = verbosity
+        return output
+
+
+vtk_verbosity = _VTKVerbosity()

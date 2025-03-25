@@ -10,11 +10,16 @@ concurrency:
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
+permissions:
+  id-token: none
+
 jobs:
   docstringcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -53,6 +58,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5

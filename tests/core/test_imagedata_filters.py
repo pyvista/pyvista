@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import operator
 import re
+import time
 
 import numpy as np
 import pytest
@@ -369,6 +370,28 @@ def test_contour_labels_cell_data(channels):
     voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_strict_external(channels):
+    start = time.perf_counter()
+    channels.contour_labels('external', orient_faces=False)
+    time_slow = time.perf_counter() - start
+
+    start = time.perf_counter()
+    contours = channels.contour_labels('strict_external', orient_faces=False)
+    time_fast = time.perf_counter() - start
+    assert time_fast < time_slow / 1.5
+
+    # Test output is simplified correctly
+    assert contours.active_scalars.ndim == 1
+    assert np.all(contours.active_scalars > 0)
+
+    match = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
+    with pytest.raises(TypeError, match=match):
+        channels.contour_labels('strict_external', select_inputs=[0])
+    with pytest.raises(TypeError, match=match):
+        channels.contour_labels('strict_external', select_outputs=[0])
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -804,9 +827,11 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+            msg = 'Passing `pad_singleton_dims` should raise an error.'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `pad_singleton_dims`.')
+            msg = 'Remove `pad_singleton_dims`.'
+            raise RuntimeError(msg)
 
     match = (
         'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
@@ -814,9 +839,11 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+            msg = 'Passing `pad_singleton_dims` should raise an error.'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `pad_singleton_dims`.')
+            msg = 'Remove `pad_singleton_dims`.'
+            raise RuntimeError(msg)
 
 
 @pytest.fixture
@@ -978,12 +1005,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
-        ),
-    ):
+    match = re.escape(
+        'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+    )
+    with pytest.raises(ValueError, match=match):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'
@@ -1157,16 +1182,31 @@ def test_resample_extend_border(uniform, extend_border, name, value):
         assert np.allclose(resampled.bounds, uniform.bounds)
 
 
-@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
-@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
-def test_resample_interpolation(uniform, interpolation, dtype):
+@pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
+@pytest.mark.parametrize(
+    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
+)
+@pytest.mark.parametrize('sample_rate', [0.5, 2.0])
+def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
     array = uniform.active_scalars
     uniform[uniform.active_scalars_name] = array.astype(dtype)
-    resampled = uniform.resample(interpolation=interpolation)
+    resampled = uniform.resample(sample_rate, interpolation=interpolation)
 
-    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
     actual_dtype = resampled.active_scalars.dtype
-    assert actual_dtype == expected_dtype
+    assert actual_dtype == dtype
+
+    # Test anti-aliasing
+    anti_aliased = uniform.resample(sample_rate, interpolation=interpolation, anti_aliasing=True)
+    expected_dimensions = np.array(uniform.dimensions) * sample_rate
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+
+    # expect different result if down-sampling only
+    resampled_array = resampled.active_scalars
+    anti_aliased_array = anti_aliased.active_scalars
+    if sample_rate < 1.0:
+        assert not np.allclose(resampled_array, anti_aliased_array)
+    else:
+        assert np.allclose(resampled_array, anti_aliased_array)
 
 
 @pytest.mark.parametrize(
@@ -1247,3 +1287,30 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+
+def test_select_values(uniform):
+    selected = uniform.select_values(ranges=uniform.get_data_range())
+    assert isinstance(selected, pv.ImageData)
+    assert selected is not uniform
+    assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+def test_select_values_split(uniform):
+    unique_values = np.unique(uniform.active_scalars)
+    selected = uniform.select_values(values=unique_values, split=True)
+    assert isinstance(selected, pv.MultiBlock)
+    assert isinstance(selected[0], pv.ImageData)
+    assert len(selected) == len(unique_values)
+
+
+def test_select_values_empty_input():
+    selected = pv.ImageData().select_values()
+    assert isinstance(selected, pv.ImageData)
+
+
+@pytest.mark.parametrize('dtype', [np.uint16, int, float])
+def test_select_values_dtype(uniform, dtype):
+    uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
+    selected = uniform.select_values([0])
+    assert selected.active_scalars.dtype == dtype

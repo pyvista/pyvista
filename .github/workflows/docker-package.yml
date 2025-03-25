@@ -16,10 +16,13 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  packages: write
+
 jobs:
   build-and-publish:
     name: Build and Publish Docker Image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # For Pull Requests, only runs from `docker`
     if: github.event_name == 'push' ||
       ( github.event_name == 'pull_request' &&
@@ -28,6 +31,8 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
