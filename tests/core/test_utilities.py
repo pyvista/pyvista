@@ -2124,9 +2124,17 @@ def test_cell_quality_info_valid_measures(info):
         )
 
 
+def xfail_wedge(info):
+    if info.cell_type == pv.CellType.WEDGE:
+        pytest.xfail(
+            'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
+        )
+
+
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
+    xfail_wedge(info)
     # Ensure the reported unit cell value matches the actual unit cell mesh's value
     qual_value = _compute_cell_quality(info)
     unit_cell_value = info.unit_cell_value
@@ -2137,6 +2145,7 @@ def test_cell_quality_info_unit_cell_value(info):
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
+    xfail_wedge(info)
     # Ensure the compute quality of the example cell is within the acceptable range
     qual_value = _compute_cell_quality(info)
     unit_cell_value = info.unit_cell_value

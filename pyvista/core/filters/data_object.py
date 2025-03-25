@@ -2925,10 +2925,6 @@ class DataObjectFilters:
                     and np.isclose(np.min(cell_quality_array), null_value)
                 ):
                     continue
-                if measure == 'volume' and isinstance(output, pyvista.UnstructuredGrid):
-                    # Need to fix negative volume for wedges, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643
-                    wedge_ind = output.celltypes == pyvista.CellType.WEDGE
-                    cell_quality_array[wedge_ind] *= -1
                 output.cell_data[measure] = cell_quality_array
         return output
 
