@@ -2820,6 +2820,11 @@ class DataObjectFilters:
             Dataset with the computed mesh quality. Return type matches input.
             Cell data array(s) with the computed quality measure(s) are included.
 
+        See Also
+        --------
+        :func:`~pyvista.cell_quality_info`
+            Return information about a cell's quality measure, e.g. acceptable range.
+
         Examples
         --------
         Compute and plot the minimum angle of a sample sphere mesh.

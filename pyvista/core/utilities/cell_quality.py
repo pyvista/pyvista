@@ -161,7 +161,8 @@ _CELL_TYPE_NAMES = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
 def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
-    This function returns information about a quality measure for a specified
+    This function returns information about a quality measure computed by
+    :meth:`~pyvista.DataObjectFilters.cell_quality` for a specified
     :class:`~pyvista.CellType`. The following is provided for each measure:
 
     - ``acceptable_range``: Well-behaved cells have values in this range.
@@ -197,7 +198,8 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
 
     .. note::
 
-        Information is not available for all valid quality measures. Only a subset
+        Information is not available for all valid quality measures computed by
+        :meth:`~pyvista.DataObjectFilters.cell_quality`. Only a subset
         is provided here. If information about a measure is missing and you have
         knowledge about its acceptable range, normal range, etc., please consider
         submitting a pull request on GitHub at https://github.com/pyvista/pyvista.
@@ -219,6 +221,10 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
     ------
     ValueError
         If info is not available for the specified cell type or measure.
+
+    See Also
+    --------
+    :meth:`~pyvista.DataObjectFilters.cell_quality`
 
     Examples
     --------
