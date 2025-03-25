@@ -655,7 +655,7 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     calls. If the context manager isn't used, the state needs to be reset explicitly.
     Here, we set it back to its default value.
 
-    >>> pv.vtk_verbosity('info')
+    >>> _ = pv.vtk_verbosity('info')
 
     """
 
