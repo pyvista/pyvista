@@ -2125,7 +2125,7 @@ def test_cell_quality_info_valid_measures(info):
 
 
 def xfail_wedge(info):
-    if info.cell_type == pv.CellType.WEDGE:
+    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
         )
