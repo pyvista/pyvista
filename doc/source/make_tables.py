@@ -39,7 +39,9 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_object import _get_cell_qualilty_measures
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -58,6 +60,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
+CELL_QUALITY_MEASURES_TABLE_DIR = 'api/core'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -165,6 +168,88 @@ class DocTable:
         """
         msg = 'Subclasses should specify a get_row method.'
         raise NotImplementedError(msg)
+
+
+class CellQualityMeasuresTable(DocTable):
+    """Class to generate table for cell quality measures."""
+
+    path = f'{CELL_QUALITY_MEASURES_TABLE_DIR}/cell_quality_measures_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table:: Cell Quality Measures
+        |   :widths: 22 13 13 13 13 13 13
+        |   :header-rows: 1
+        |
+        |   * - Measure
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    # Types to show in the table (from left-to-right)
+    cell_types: ClassVar[pyvista.CellType] = [
+        pyvista.CellType.TRIANGLE,
+        pyvista.CellType.QUAD,
+        pyvista.CellType.TETRA,
+        pyvista.CellType.HEXAHEDRON,
+        pyvista.CellType.WEDGE,
+        pyvista.CellType.PYRAMID,
+    ]
+
+    @classmethod
+    def fetch_data(cls):
+        # Get all cell example functions,
+        # i.e. items from examples.cells that start with a capital letter
+        cell_funcs = [
+            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+        ]
+
+        # Init dict with all measures as keys
+        measures = {measure: set() for measure in _get_cell_qualilty_measures().keys()}
+
+        # Compute the cell quality of each cell type and add to dict if valid
+        for func in cell_funcs:
+            mesh = getattr(cells, func)()
+            cell_type = pv.CellType(mesh.celltypes[0])
+            mesh = mesh.cell_quality('all_valid')
+            for valid_measure in mesh.array_names:
+                measures[valid_measure].add(cell_type)
+
+        return [(measures, measure) for measure in measures.keys()]
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(
+            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        measures, measure = row_data
+
+        success = ':material-regular:`check;2em;sd-text-success`'
+        error = ':material-regular:`close;2em;sd-text-error`'
+
+        def _get_table_entry(cell_type):
+            return success if cell_type in measures[measure] else error
+
+        table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
+        return cls.row_template.format(f'``{measure}``', *table_entries)
 
 
 class LineStyleTable(DocTable):
@@ -2384,6 +2469,10 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables():  # noqa: D103
+    # Make cell quality table
+    os.makedirs(CELL_QUALITY_MEASURES_TABLE_DIR, exist_ok=True)
+    CellQualityMeasuresTable.generate()
+
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
