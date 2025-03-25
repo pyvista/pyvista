@@ -60,7 +60,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
-CELL_QUALITY_TABLE_DIR = 'api/core'
+CELL_QUALITY_MEASURES_TABLE_DIR = 'api/core'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -170,10 +170,10 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
-class CellQualityTable(DocTable):
+class CellQualityMeasuresTable(DocTable):
     """Class to generate table for cell quality measures."""
 
-    path = f'{CELL_QUALITY_TABLE_DIR}/cell_quality_measures_table.rst'
+    path = f'{CELL_QUALITY_MEASURES_TABLE_DIR}/cell_quality_measures_table.rst'
     header = _aligned_dedent(
         """
         |.. list-table:: Cell Quality Measures
@@ -2470,8 +2470,8 @@ CAROUSEL_LIST = [
 
 def make_all_tables():  # noqa: D103
     # Make cell quality table
-    os.makedirs(CELL_QUALITY_TABLE_DIR, exist_ok=True)
-    CellQualityTable.generate()
+    os.makedirs(CELL_QUALITY_MEASURES_TABLE_DIR, exist_ok=True)
+    CellQualityMeasuresTable.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
