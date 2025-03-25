@@ -2781,10 +2781,7 @@ class DataObjectFilters:
 
         .. _cell_quality_measures_table:
 
-        .. dropdown:: Cell Quality Measures
-            :open:
-
-            .. include:: /api/core/cell_quality/cell_quality_measures_table.rst
+        .. include:: /api/core/cell_quality/cell_quality_measures_table.rst
 
         .. note::
 
@@ -2801,7 +2798,7 @@ class DataObjectFilters:
 
             - A single measure or a sequence of measures listed in
               :ref:`cell_quality_measures_table`.
-            - ``'all'`` to compute all measures, or
+            - ``'all'`` to compute all measures.
             - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
               cell type(s).
 

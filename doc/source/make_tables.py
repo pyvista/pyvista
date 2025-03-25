@@ -62,7 +62,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
-CELL_QUALITY_TABLE_DIR = 'api/core/cell_quality'
+CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -182,14 +182,13 @@ CELL_QUALITY_TYPES = [
 ]
 
 
-class CellQualityTable(DocTable):
+class CellQualityMeasuresTable(DocTable):
     """Class to generate table for cell quality measures."""
 
-    path = f'{CELL_QUALITY_TABLE_DIR}/cell_quality_measures_table.rst'
+    path = f'{CELL_QUALITY_DIR}/cell_quality_measures_table.rst'
     header = _aligned_dedent(
         """
-        |.. list-table::
-        |   :name: cell_quality_measures_table
+        |.. list-table:: Cell Quality Measures
         |   :widths: 22 13 13 13 13 13 13
         |   :header-rows: 1
         |
@@ -263,7 +262,7 @@ class CellQualityInfoTable(DocTable):
     @property
     @final
     def path(cls):
-        return f'{CELL_QUALITY_TABLE_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
+        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
 
     header = _aligned_dedent(
         """
@@ -2585,8 +2584,8 @@ CAROUSEL_LIST = [
 
 def make_all_tables():  # noqa: D103
     # Make cell quality tables
-    os.makedirs(CELL_QUALITY_TABLE_DIR, exist_ok=True)
-    CellQualityTable.generate()
+    os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
+    CellQualityMeasuresTable.generate()
     CellQualityInfoTableTRIANGLE.generate()
     CellQualityInfoTableQUAD.generate()
     CellQualityInfoTableHEXAHEDRON.generate()
