@@ -176,7 +176,7 @@ class CellQualityTable(DocTable):
     path = f'{CELL_QUALITY_TABLE_DIR}/cell_quality_measures_table.rst'
     header = _aligned_dedent(
         """
-        |.. list-table::
+        |.. list-table:: Cell Quality Measures
         |   :name: cell_quality_measures_table
         |   :widths: 22 13 13 13 13 13 13
         |   :header-rows: 1
