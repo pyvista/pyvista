@@ -7,12 +7,10 @@ Computing Mesh Quality
 Leverage powerful VTK algorithms for computing mesh quality.
 
 Here we will use the :func:`~pyvista.DataObjectFilters.cell_quality` filter
-to compute the cell qualities. For a full list of the various quality metrics
-available, please refer to the documentation for that filter.
+to compute the cell qualities. The following quality measures are available
+for various cell types:
 
-Note that many of the measures may only apply to 2D cells or 3D cells. Examples for
-meshes with :attr:`~pyvista.CellType.TRIANGLE` and :attr:`~pyvista.CellType.TETRA` cells
-are given here.
+.. include:: /api/core/cell_quality_measures_table.rst
 
 """
 
