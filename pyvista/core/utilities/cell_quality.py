@@ -88,7 +88,7 @@ _CELL_QUALITY_INFO = [
     Info(TRIANGLE, 'min_angle', (30.0, 60.0), (0.0, 60.0), (0.0, 360.0), 60.0),
     Info(TRIANGLE, 'scaled_jacobian', (0.5, 2 * R33), (-2 * R33, 2 * R33), (-INF, INF), 1.0),
     Info(TRIANGLE, 'radius_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
-    Info(TRIANGLE, 'shape', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TRIANGLE, 'shape', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(TRIANGLE, 'shape_and_size', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
     Info(QUAD, 'area', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
     Info(QUAD, 'aspect_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
