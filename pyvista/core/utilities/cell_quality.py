@@ -158,7 +158,9 @@ for info in _CELL_QUALITY_INFO:
 _CELL_TYPE_NAMES = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
 
 
-def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -> CellQualityInfo:
+def cell_quality_info(
+    cell_type: CellType | str, quality_measure: _CellQualityLiteral
+) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
     This function returns information about a quality measure computed by
@@ -209,7 +211,7 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
     cell_type : CellType | str
         Cell type to get information about.
 
-    measure : str
+    quality_measure : str
         Quality measure to get information about.
 
     Returns
@@ -290,8 +292,8 @@ def cell_quality_info(cell_type: CellType | str, measure: _CellQualityLiteral) -
 
     # Lookup the measure info
     try:
-        return measures[measure]
+        return measures[quality_measure]
     except KeyError:
-        item = f'{value.name!r} measure {measure!r}'
+        item = f'{value.name!r} measure {quality_measure!r}'
         valid_options = list(measures.keys())
         raise_error(item, valid_options)
