@@ -1,5 +1,7 @@
 name: Build Documentation
-on:
+
+# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
+on: # zizmor: ignore[cache-poisoning]
   pull_request: # Uses cache
   workflow_dispatch: # Able to not use cache by user demand
     inputs:
@@ -34,6 +36,9 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
+
+permissions:
+  id-token: none
 
 jobs:
   doc:

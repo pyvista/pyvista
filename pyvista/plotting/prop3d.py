@@ -6,6 +6,7 @@ from abc import ABC
 from abc import abstractmethod
 from functools import wraps
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 
@@ -17,6 +18,8 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -328,6 +331,11 @@ class Prop3D(_vtk.vtkProp3D):
         The user matrix is the last transformation applied to the actor before
         rendering.
 
+        See Also
+        --------
+        transform
+            Apply a transformation to the :attr:`user_matrix`.
+
         Returns
         -------
         np.ndarray
@@ -370,6 +378,76 @@ class Prop3D(_vtk.vtkProp3D):
     def user_matrix(self, value: TransformLike) -> None:
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
+
+    def transform(
+        self,
+        trans: TransformLike,
+        multiply_mode: Literal['pre', 'post'] = 'post',
+        *,
+        inplace: bool = False,
+    ):
+        """Apply a transformation to this object's :attr:`user_matrix`.
+
+        .. note::
+
+            This applies a transformation by modifying the :attr:`user_matrix`. This
+            differs from methods like :meth:`rotate_x`, :meth:`rotate_y`, :meth:`rotate_z`,
+            and :meth:`rotation_from` which apply a transformation indirectly by modifying
+            the :attr:`orientation`. See the :class:`Prop3D` class description for more
+            information about how this class is transformed.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        trans : TransformLike
+            Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
+            or a SciPy ``Rotation`` instance.
+
+        multiply_mode : 'pre' | 'post', default: 'post'
+            Multiplication mode to use.
+
+            - ``'pre'``: pre-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+              ``user_matrix @ trans``. The transformation is applied `before` the
+              current user-matrix.
+            - ``'post'``: post-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+              ``trans @ user_matrix``. The transformation is applied `after` the
+              current user-matrix.
+
+        inplace : bool, default: False
+            When ``True``, modifies the prop inplace. Otherwise, a copy is returned.
+
+        Returns
+        -------
+        Prop3D
+            Transformed prop.
+
+        See Also
+        --------
+        pyvista.Transform
+            Describe linear transformations via a 4x4 matrix.
+        pyvista.DataObjectFilters.transform
+            Apply a transformation to a mesh.
+
+        """
+        # Validate input
+        _validation.check_contains(
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply_mode'
+        )
+        matrix = _validation.validate_transform4x4(trans)
+
+        # Update user matrix
+        new_matrix = (
+            self.user_matrix @ matrix if multiply_mode == 'pre' else matrix @ self.user_matrix
+        )
+        output = self if inplace else self.copy()
+        output.user_matrix = new_matrix
+        return output
+
+    @abstractmethod
+    def copy(self: Self, deep: bool = True) -> Self:  # numpydoc ignore=RT01
+        """Return a copy of this prop."""
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
