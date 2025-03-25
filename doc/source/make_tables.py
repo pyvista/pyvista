@@ -177,7 +177,6 @@ class CellQualityTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: Cell Quality Measures
-        |   :name: cell_quality_measures_table
         |   :widths: 22 13 13 13 13 13 13
         |   :header-rows: 1
         |
