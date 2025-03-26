@@ -14,6 +14,7 @@ for various cell types:
 
 """
 
+# sphinx_gallery_thumbnail_number = 2
 from __future__ import annotations
 
 import pyvista as pv
@@ -83,6 +84,7 @@ qual.plot(
     above_color='red',
     cpos='xy',
     zoom=1.5,
+    show_axes=False,
 )
 
 # %%
