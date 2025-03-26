@@ -2105,9 +2105,12 @@ def test_cell_quality_info(cell_type):
 CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
 
 
-def _compute_unit_cell_quality(info: CellQualityInfo, null_value=-1):
+def _compute_unit_cell_quality(info: CellQualityInfo, null_value=-42.42, degenerate=False):
     example_name = _CELL_TYPE_INFO[info.cell_type.name].example
     cell_mesh = getattr(ex.cells, example_name)()
+    if degenerate:
+        # Make first and second points the same
+        cell_mesh.points[0] = cell_mesh.points[1]
     qual = cell_mesh.cell_quality(info.quality_measure, null_value=null_value)
     return qual.active_scalars[0]
 
@@ -2131,7 +2134,7 @@ def xfail_wedge_negative_volume(info):
         )
 
 
-def xfail_size_is_zero(info):
+def xfail_size_returns_zero(info):
     fail_triangle = info.cell_type == pv.CellType.TRIANGLE and info.quality_measure in [
         'shape_and_size'
     ]
@@ -2150,7 +2153,15 @@ def xfail_size_is_zero(info):
         'shear_and_size',
     ]
     if fail_triangle or fail_quad or fail_tetra or fail_hexahedron:
-        pytest.xfail('Size-based measure returns zero (bug).')
+        pytest.xfail('Size-based measure always return zero (bug).')
+
+
+def xfail_distortion_returns_one(info):
+    if (
+        info.cell_type in [pv.CellType.TRIANGLE, pv.CellType.TETRA]
+        and info.quality_measure == 'distortion'
+    ):
+        pytest.xfail('Distortion always returns one (bug).')
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
@@ -2174,7 +2185,7 @@ def test_cell_quality_info_acceptable_range(info):
     """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_wedge_negative_volume(info)
-    xfail_size_is_zero(info)
+    xfail_size_returns_zero(info)
 
     acceptable_range = info.acceptable_range
 
@@ -2225,6 +2236,18 @@ def test_cell_quality_info_full_range(info):
 
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_degenerate_cell(info):
+    # Some cells / measures have bugs and return invalid values and are expected to fail
+    xfail_size_returns_zero(info)
+    xfail_distortion_returns_one(info)
+
+    optimal_quality = _compute_unit_cell_quality(info, degenerate=False)
+    degenerate_quality = _compute_unit_cell_quality(info, degenerate=True)
+    assert not np.isclose(optimal_quality, degenerate_quality)
 
 
 @pytest.mark.needs_vtk_version(9, 2)
