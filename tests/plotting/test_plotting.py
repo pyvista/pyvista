@@ -91,7 +91,6 @@ def using_mesa():
 
 # always set on Windows CI
 # These tests fail with mesa opengl on windows
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_windows_mesa = pytest.mark.skipif(
     using_mesa() and os.name == 'nt',
     reason='Does not display correctly within OSMesa on Windows',
@@ -278,7 +277,7 @@ def test_import_obj_with_texture():
     pl.show(cpos='xy')
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 def test_pbr(sphere, verify_image_cache):
     """Test PBR rendering"""
@@ -310,7 +309,7 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @skip_mac
 def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
@@ -327,7 +326,7 @@ def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @skip_mac
 def test_remove_environment_texture_cubemap(sphere):
     """Test remove_environment_texture with a cubemap."""
@@ -1810,7 +1809,7 @@ def test_subplot_groups_fail():
         pv.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_link_views(sphere):
     plotter = pv.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
@@ -1833,7 +1832,7 @@ def test_link_views(sphere):
     plotter.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_link_views_camera_set(sphere, verify_image_cache):
     p = pv.Plotter(shape=(1, 2))
     p.add_mesh(pv.Cone())
@@ -1971,7 +1970,7 @@ def test_volume_rendering_rectilinear(uniform):
     plotter.close()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
@@ -2049,7 +2048,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_opacity_by_array_direct(plane, verify_image_cache):
     # VTK regression 9.0.1 --> 9.1.0
     verify_image_cache.high_variance_test = True
@@ -3088,7 +3087,7 @@ def test_plot_categories_true(sphere):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @skip_9_0_X
 def test_depth_of_field():
     pl = pv.Plotter()
@@ -3135,7 +3134,7 @@ def test_ssao_pass_from_helper():
     ugrid.plot(ssao=True)
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_many_multi_pass():
     pl = pv.Plotter(lighting=None)
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3193,7 +3192,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
     multiblock_poly[:2].plot(preference='cell')
 
 
-@skip_windows  # because of opacity
+@pytest.mark.skip_windows('Test fails on Windows because of opacity')
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
 
@@ -3399,7 +3398,7 @@ def test_bool_scalars(sphere):
     plotter.show()
 
 
-@skip_windows  # because of pbr
+@pytest.mark.skip_windows('Test fails on Windows because of pbr')
 @skip_9_1_0  # pbr required
 def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
@@ -3667,7 +3666,7 @@ def test_view_xyz(direction, negative, colorful_tetrahedron):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian(sphere):
     sphere.plot(
         color='r',
@@ -3678,7 +3677,7 @@ def test_plot_points_gaussian(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_scalars(sphere):
     sphere.plot(
         scalars=sphere.points[:, 2],
@@ -3690,7 +3689,7 @@ def test_plot_points_gaussian_scalars(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_as_spheres(sphere):
     sphere.plot(
         color='b',
@@ -3702,7 +3701,7 @@ def test_plot_points_gaussian_as_spheres(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_scale(sphere):
     sphere['z'] = sphere.points[:, 2] * 0.1
     pl = pv.Plotter()
@@ -3781,7 +3780,7 @@ def test_remove_vertices_actor(sphere):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
@@ -4809,7 +4808,7 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     plot.show()
 
 
-@skip_windows  # Windows colors all plane cells red (bug?)
+@pytest.mark.skip_windows('Windows colors all plane cells red (bug?)')
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
 @pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
 def test_orthogonal_planes_source_normals(normal_sign, plane):
@@ -4835,7 +4834,7 @@ def test_orthogonal_planes_source_push(distance):
 
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
-@skip_windows
+@pytest.mark.skip_windows
 @skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
@@ -4848,7 +4847,7 @@ def test_orthogonal_planes_source_resolution(resolution):
 
 
 @skip_9_1_0
-@skip_windows
+@pytest.mark.skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
     [

@@ -224,6 +224,7 @@ log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+  'skip_windows(reason="Test fails on windows"): skip test for windows.',
 ]
 minversion = "7"
 testpaths = 'tests'

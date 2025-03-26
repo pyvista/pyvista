@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import platform
 import re
 from string import ascii_letters
@@ -23,7 +22,6 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = pytest.mark.skipif(
     platform.system() == 'Darwin' and platform.processor() == 'arm',
     reason='Test fails on Apple Silicon',
@@ -667,7 +665,7 @@ def test_active_texture_coordinates_name(plane):
         plane.field_data.active_texture_coordinates_name = 'arr'
 
 
-@skip_windows  # windows doesn't support np.complex256
+@pytest.mark.skip_windows("windows doesn't support np.complex256")
 @skip_apple_silicon  # same with Apple silicon (M1/M2)
 def test_complex_raises(plane):
     with pytest.raises(ValueError, match='Only numpy.complex64'):
