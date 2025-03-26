@@ -5,6 +5,7 @@ from importlib import metadata
 from inspect import Parameter
 from inspect import Signature
 import os
+import platform
 import re
 
 import numpy as np
@@ -322,6 +323,21 @@ def pytest_runtest_setup(item: pytest.Item):
                     r := 'reason',
                     kind=Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on Windows',
+                    annotation=str,
+                )
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        pytest.skip(bounds.arguments[r])
+
+    if (item_mark := item.get_closest_marker('skip_mac')) and (platform.system() == 'Darwin'):
+        sig = Signature(
+            [
+                Parameter(
+                    r := 'reason',
+                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    default='Test fails on MacOS',
                     annotation=str,
                 )
             ]

@@ -108,14 +108,6 @@ skip_lesser_9_3_X = pytest.mark.skipif(
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
-skip_mac_flaky = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='This is a flaky test on MacOS',
-)
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
@@ -310,7 +302,7 @@ def test_pbr(sphere, verify_image_cache):
 
 
 @pytest.mark.skip_windows
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     verify_image_cache.high_variance_test = True
@@ -327,7 +319,7 @@ def test_set_environment_texture_cubemap(sphere, verify_image_cache):
 
 
 @pytest.mark.skip_windows
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_remove_environment_texture_cubemap(sphere):
     """Test remove_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
@@ -2673,7 +2665,7 @@ def test_collision_plot(verify_image_cache):
     plotter.show()
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 @pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
@@ -2842,7 +2834,7 @@ def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading)
     sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
 
 
-@skip_mac_flaky
+@pytest.mark.skip_mac('This is a flaky test on MacOS')
 def test_splitting_active_cells(cube):
     cube.cell_data['cell_id'] = range(cube.n_cells)
     cube = cube.triangulate().subdivide(1)
