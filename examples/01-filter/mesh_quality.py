@@ -60,14 +60,15 @@ pl.show()
 
 
 # %%
+# Visualize Acceptable Range
+# ==========================
 # The previous plots show the full range of cell quality values present in the mesh.
 # However, it may be more useful to show the `acceptable` range of values instead.
 # Get the acceptable range for the ``shape`` quality measure using
 # :func:`~pyvista.cell_quality_info`.
 
 info = pv.cell_quality_info('TRIANGLE', 'shape')
-acceptable_range = info.acceptable_range
-print(acceptable_range)
+print(info)
 
 # %%
 # Plot the shape quality measure again but this time we color the cells based on
@@ -76,7 +77,7 @@ print(acceptable_range)
 
 qual.plot(
     scalars='shape',
-    clim=acceptable_range,
+    clim=info.acceptable_range,
     cmap='bwr',
     below_color='blue',
     above_color='red',
@@ -88,7 +89,7 @@ qual.plot(
 # Use :meth:`~pyvista.DataSetFilters.extract_values` to extract the "poor" quality
 # cells outside the acceptable range.
 
-unacceptable = qual.extract_values(scalars='shape', ranges=acceptable_range, invert=True)
+unacceptable = qual.extract_values(scalars='shape', ranges=info.acceptable_range, invert=True)
 
 # %%
 # Plot the unacceptable cells along with the original mesh as wireframe for context.
