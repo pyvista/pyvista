@@ -2135,25 +2135,10 @@ def xfail_wedge_negative_volume(info):
 
 
 def xfail_size_returns_zero(info):
-    fail_triangle = info.cell_type == pv.CellType.TRIANGLE and info.quality_measure in [
-        'shape_and_size'
-    ]
-    fail_quad = info.cell_type == pv.CellType.QUAD and info.quality_measure in [
-        'relative_size_squared',
-        'shape_and_size',
-        'shear_and_size',
-    ]
-    fail_tetra = info.cell_type == pv.CellType.TETRA and info.quality_measure in [
-        'relative_size_squared',
-        'shape_and_size',
-    ]
-    fail_hexahedron = info.cell_type == pv.CellType.HEXAHEDRON and info.quality_measure in [
-        'relative_size_squared',
-        'shape_and_size',
-        'shear_and_size',
-    ]
-    if fail_triangle or fail_quad or fail_tetra or fail_hexahedron:
-        pytest.xfail('Size-based measure always return zero (bug).')
+    if 'size' in info.quality_measure:
+        pytest.xfail(
+            'Size-based measures always return zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19645.'
+        )
 
 
 def xfail_distortion_returns_one(info):
@@ -2161,7 +2146,9 @@ def xfail_distortion_returns_one(info):
         info.cell_type in [pv.CellType.TRIANGLE, pv.CellType.TETRA]
         and info.quality_measure == 'distortion'
     ):
-        pytest.xfail('Distortion always returns one (bug).')
+        pytest.xfail(
+            'Distortion always returns one, see https://gitlab.kitware.com/vtk/vtk/-/issues/19646.'
+        )
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
@@ -2245,9 +2232,9 @@ def test_cell_quality_info_degenerate_cell(info):
     xfail_size_returns_zero(info)
     xfail_distortion_returns_one(info)
 
-    optimal_quality = _compute_unit_cell_quality(info, degenerate=False)
+    unit_cell_quality = _compute_unit_cell_quality(info, degenerate=False)
     degenerate_quality = _compute_unit_cell_quality(info, degenerate=True)
-    assert not np.isclose(optimal_quality, degenerate_quality)
+    assert not np.isclose(unit_cell_quality, degenerate_quality)
 
 
 @pytest.mark.needs_vtk_version(9, 2)
