@@ -1499,7 +1499,7 @@ class MultiBlock(
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self: MultiBlock, index: int) -> str | None:
+    def get_block_name(self: MultiBlock, index: int) -> str:
         """Return the string name of the block at the given index.
 
         Parameters
@@ -1525,12 +1525,11 @@ class MultiBlock(
 
         """
         index = range(self.n_blocks)[index]
-        meta = self.GetMetaData(index)
-        if meta is not None:
-            return meta.Get(_vtk.vtkCompositeDataSet.NAME())
-        return None
+        # Safely cast as vtkInformation since `None` case is caught by IndexError above
+        meta = cast(_vtk.vtkInformation, self.GetMetaData(index))
+        return meta.Get(_vtk.vtkCompositeDataSet.NAME())  # type:ignore[return-value]
 
-    def keys(self: MultiBlock) -> list[str | None]:
+    def keys(self: MultiBlock) -> list[str]:
         """Get all the block names in the dataset.
 
         Returns
@@ -1552,7 +1551,7 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self: MultiBlock) -> list[str | None]:
+    def _ipython_key_completions_(self: MultiBlock) -> list[str]:
         return self.keys()
 
     def replace(
