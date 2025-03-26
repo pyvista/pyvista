@@ -103,7 +103,7 @@ _CELL_QUALITY_INFO = [
     Info(QUAD, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
     Info(QUAD, 'radius_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
     Info(QUAD, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    Info(QUAD, 'scaled_jacobian', (0.3, 1.0), (-1, 1.0), (-1, 1.0), 1.0),
+    Info(QUAD, 'scaled_jacobian', (0.3, 1.0), (-1.0, 1.0), (-1.0, 1.0), 1.0),
     Info(QUAD, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
     Info(QUAD, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
@@ -135,7 +135,7 @@ _CELL_QUALITY_INFO = [
     Info(HEXAHEDRON, 'med_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
     Info(HEXAHEDRON, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
     Info(HEXAHEDRON, 'relative_size_squared', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), None),
-    Info(HEXAHEDRON, 'scaled_jacobian', (0.5, 1.0), (-1, 1.0), (-1, INF), 1.0),
+    Info(HEXAHEDRON, 'scaled_jacobian', (0.5, 1.0), (-1.0, 1.0), (-1.0, INF), 1.0),
     Info(HEXAHEDRON, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(HEXAHEDRON, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
     Info(HEXAHEDRON, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
@@ -252,7 +252,7 @@ def cell_quality_info(
 
     >>> info_quad = pv.cell_quality_info(pv.CellType.QUAD, 'scaled_jacobian')
     >>> info_quad
-    CellQualityInfo(cell_type=<CellType.QUAD: 9>, quality_measure='scaled_jacobian', acceptable_range=(0.3, 1.0), normal_range=(-1, 1.0), full_range=(-1, 1.0), unit_cell_value=1.0)
+    CellQualityInfo(cell_type=<CellType.QUAD: 9>, quality_measure='scaled_jacobian', acceptable_range=(0.3, 1.0), normal_range=(-1.0, 1.0), full_range=(-1.0, 1.0), unit_cell_value=1.0)
 
     Show the acceptable range. Note that it differs for quads compared to triangles.
 
