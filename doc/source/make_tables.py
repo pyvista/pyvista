@@ -33,6 +33,7 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import final
+from typing import get_args
 
 import numpy as np
 
@@ -42,6 +43,7 @@ from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
+from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
@@ -172,14 +174,7 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
-CELL_QUALITY_TYPES = [
-    pyvista.CellType.TRIANGLE,
-    pyvista.CellType.QUAD,
-    pyvista.CellType.TETRA,
-    pyvista.CellType.HEXAHEDRON,
-    pyvista.CellType.WEDGE,
-    pyvista.CellType.PYRAMID,
-]
+CELL_QUALITY_TYPES = get_args(_CellTypesLiteral)
 
 
 class CellQualityMeasuresTable(DocTable):

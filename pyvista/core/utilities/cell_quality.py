@@ -15,7 +15,7 @@ from pyvista.core.celltype import CellType
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-_CellQualityLiteral = Literal[
+_CellQualityMeasuresLiteral = Literal[
     'area',
     'aspect_frobenius',
     'aspect_gamma',
@@ -46,13 +46,36 @@ _CellQualityLiteral = Literal[
     'warpage',
 ]
 
+_CellTypesLiteral = Literal[
+    CellType.TRIANGLE,
+    CellType.QUAD,
+    CellType.TETRA,
+    CellType.HEXAHEDRON,
+    CellType.PYRAMID,
+    CellType.WEDGE,
+]
+_CellTypeNamesLiteral = Literal[
+    'TRIANGLE',
+    'triangle',
+    'QUAD',
+    'quad',
+    'TETRA',
+    'tetra',
+    'HEXAHEDRON',
+    'hexahedron',
+    'PYRAMID',
+    'pyramid',
+    'WEDGE',
+    'wedge',
+]
+
 
 @dataclass
 class CellQualityInfo:
     """Information about a cell's quality measure."""
 
     cell_type: CellType
-    quality_measure: _CellQualityLiteral
+    quality_measure: _CellQualityMeasuresLiteral
     acceptable_range: tuple[float, float] | None
     normal_range: tuple[float, float]
     full_range: tuple[float, float]
@@ -149,7 +172,7 @@ _CELL_QUALITY_INFO = [
 ]
 
 # Create lookup dict
-_CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityLiteral, CellQualityInfo]] = {}
+_CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityMeasuresLiteral, CellQualityInfo]] = {}
 for info in _CELL_QUALITY_INFO:
     _CELL_QUALITY_LOOKUP.setdefault(info.cell_type, {})
     _CELL_QUALITY_LOOKUP[info.cell_type][info.quality_measure] = info
@@ -159,7 +182,8 @@ _CELL_TYPE_NAMES = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
 
 
 def cell_quality_info(
-    cell_type: CellType | str, quality_measure: _CellQualityLiteral
+    cell_type: _CellTypesLiteral | _CellTypeNamesLiteral,
+    quality_measure: _CellQualityMeasuresLiteral,
 ) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 
@@ -209,10 +233,12 @@ def cell_quality_info(
     Parameters
     ----------
     cell_type : CellType | str
-        Cell type to get information about.
+        Cell type to get information about. May be a :class:`~pyvista.CellType` or the
+        name of a cell type as a string.
 
     quality_measure : str
-        Quality measure to get information about.
+        Quality measure to get information about. May be any quality measure from
+        :ref:`cell_quality_measures_table`.
 
     Returns
     -------

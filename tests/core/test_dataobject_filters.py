@@ -23,7 +23,7 @@ from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.filters.data_object import _get_cell_quality_measures
-from pyvista.core.utilities.cell_quality import _CellQualityLiteral
+from pyvista.core.utilities.cell_quality import _CellQualityMeasuresLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -531,7 +531,7 @@ def test_cell_quality():
 
 def test_cell_quality_measures(ant):
     # Get quality measures from type hints
-    hinted_measures = list(get_args(_CellQualityLiteral))
+    hinted_measures = list(get_args(_CellQualityMeasuresLiteral))
     if pv.vtk_version_info < (9, 2):
         # This measure was removed from VTK's API
         hinted_measures.insert(1, 'aspect_beta')
