@@ -2105,7 +2105,7 @@ def test_cell_quality_info(cell_type):
 CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
 
 
-def _compute_cell_quality(info: CellQualityInfo, null_value=-1):
+def _compute_unit_cell_quality(info: CellQualityInfo, null_value=-1):
     example_name = _CELL_TYPE_INFO[info.cell_type.name].example
     cell_mesh = getattr(ex.cells, example_name)()
     qual = cell_mesh.cell_quality(info.quality_measure, null_value=null_value)
@@ -2117,45 +2117,76 @@ def _compute_cell_quality(info: CellQualityInfo, null_value=-1):
 def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
-    qual_value = _compute_cell_quality(info, null_value)
+    qual_value = _compute_unit_cell_quality(info, null_value)
     if np.isclose(qual_value, null_value):
         pytest.fail(
             f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
 
 
-def xfail_wedge(info):
+def xfail_wedge_negative_volume(info):
     if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
         )
 
 
+def xfail_size_is_zero(info):
+    fail_triangle = info.cell_type == pv.CellType.TRIANGLE and info.quality_measure in [
+        'shape_and_size'
+    ]
+    fail_quad = info.cell_type == pv.CellType.QUAD and info.quality_measure in [
+        'relative_size_squared',
+        'shape_and_size',
+        'shear_and_size',
+    ]
+    fail_tetra = info.cell_type == pv.CellType.TETRA and info.quality_measure in [
+        'relative_size_squared',
+        'shape_and_size',
+    ]
+    fail_hexahedron = info.cell_type == pv.CellType.HEXAHEDRON and info.quality_measure in [
+        'relative_size_squared',
+        'shape_and_size',
+        'shear_and_size',
+    ]
+    if fail_triangle or fail_quad or fail_tetra or fail_hexahedron:
+        pytest.xfail('Size-based measure returns zero (bug).')
+
+
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
-    xfail_wedge(info)
-    # Ensure the reported unit cell value matches the actual unit cell mesh's value
-    qual_value = _compute_cell_quality(info)
+    xfail_wedge_negative_volume(info)
+    # Test that the actual computed measure for a unit cell matches the reported value
     unit_cell_value = info.unit_cell_value
-    if unit_cell_value is not None:
-        assert np.isclose(qual_value, unit_cell_value)
+
+    if unit_cell_value is None:
+        pytest.skip('No unit cell value to test.')
+
+    qual_value = _compute_unit_cell_quality(info)
+    assert np.isclose(qual_value, unit_cell_value)
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
-    xfail_wedge(info)
-    # Ensure the compute quality of the example cell is within the acceptable range
-    qual_value = _compute_cell_quality(info)
-    unit_cell_value = info.unit_cell_value
+    # Some cells / measures have bugs and return invalid values and are expected to fail
+    xfail_wedge_negative_volume(info)
+    xfail_size_is_zero(info)
+
+    # Test that the unit cell value is within the acceptable range
     acceptable_range = info.acceptable_range
-    if unit_cell_value is not None and acceptable_range is not None:
-        tol = 1e-6
-        upper_range = acceptable_range[1] + tol
-        lower_range = acceptable_range[0] - tol
-        assert qual_value >= lower_range
-        assert qual_value <= upper_range
+
+    if acceptable_range is None:
+        pytest.skip('No range available to test.')
+
+    unit_cell_value = info.unit_cell_value
+    if unit_cell_value is None:
+        # For some measures we compute this at runtime
+        unit_cell_value = _compute_unit_cell_quality(info)
+
+    assert unit_cell_value >= acceptable_range[0]
+    assert unit_cell_value <= acceptable_range[1]
 
 
 @pytest.mark.needs_vtk_version(9, 2)
