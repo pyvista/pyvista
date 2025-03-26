@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 
 import pytest
@@ -224,3 +225,35 @@ def test_needs_vtk_version(
 
     if version == (9, 0):
         results.stdout.re_match_lines([r'SKIPPED.*Test needs VTK 9.1 or newer'])
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='Needs Windows platform to run')
+def test_skip_windows(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.skip_windows
+    def test_skipped():
+        ...
+
+    def test_not_skipped():
+        ...
+
+    @pytest.mark.skip_windows(foo=1)
+    def test_skipped_wrong():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(skipped=1, passed=1, errors=1)
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_not_skipped' in report.passed
+    assert 'test_skipped' in report.skipped
+    assert 'test_skipped_wrong' in report.errors
