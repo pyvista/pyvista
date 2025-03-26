@@ -74,7 +74,7 @@ _CellTypeNamesLiteral = Literal[
 class CellQualityInfo:
     """Information about a cell's quality measure."""
 
-    cell_type: CellType
+    cell_type: _CellTypesLiteral
     quality_measure: _CellQualityMeasuresLiteral
     acceptable_range: tuple[float, float] | None
     normal_range: tuple[float, float]
@@ -92,12 +92,12 @@ ANGLE = float((180 / np.pi) * np.arccos(1 / 3))
 R22 = sqrt(2) / 2
 R33 = sqrt(3) / 3
 
-TRIANGLE = CellType.TRIANGLE
-QUAD = CellType.QUAD
-TETRA = CellType.TETRA
-HEXAHEDRON = CellType.HEXAHEDRON
-PYRAMID = CellType.PYRAMID
-WEDGE = CellType.WEDGE
+TRIANGLE: Literal[CellType.TRIANGLE] = CellType.TRIANGLE
+QUAD: Literal[CellType.QUAD] = CellType.QUAD
+TETRA: Literal[CellType.TETRA] = CellType.TETRA
+HEXAHEDRON: Literal[CellType.HEXAHEDRON] = CellType.HEXAHEDRON
+PYRAMID: Literal[CellType.PYRAMID] = CellType.PYRAMID
+WEDGE: Literal[CellType.WEDGE] = CellType.WEDGE
 
 Info = CellQualityInfo
 
