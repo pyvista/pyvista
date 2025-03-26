@@ -2786,8 +2786,7 @@ class DataObjectFilters:
         .. note::
 
             Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
-            for low-level technical information about how each metric is computed,
-            as well as the metric's full, normal, and acceptable range of values.
+            for low-level technical information about how each metric is computed.
 
         .. versionadded:: 0.45
 

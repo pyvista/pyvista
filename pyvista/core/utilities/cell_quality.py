@@ -197,8 +197,7 @@ def cell_quality_info(
     - ``unit_cell_value``: The quality measure value for a reference unit cell (e.g.
       equilateral triangle with edge length of one for triangles).
 
-    This information is extracted from the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_.
-    The info can help inform if a particular cell is of high or low quality.
+    This information can help inform if a particular cell is of high or low quality.
 
     See the tables below for a summary of all cell quality info available from this
     function.
@@ -215,6 +214,13 @@ def cell_quality_info(
 
     .. include:: /api/core/cell_quality/cell_quality_info_table_PYRAMID.rst
 
+
+    .. note::
+
+        The information returned by this function is based on the
+        `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_.
+        Since this reference has `known errors <https://gitlab.kitware.com/vtk/vtk/-/issues/19644>`_,
+        some values have been adjusted so that the returned values are correct.
 
     .. note::
 
