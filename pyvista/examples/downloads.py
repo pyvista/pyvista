@@ -7806,7 +7806,7 @@ class _WholeBodyCTUtilities:  # pragma: no cover
     def add_metadata(dataset: pyvista.MultiBlock, colors_module_path: str):
         # Add color and id mappings to dataset
         segmentations = cast(pyvista.MultiBlock, dataset['segmentations'])
-        label_names = sorted(cast(list[str], segmentations.keys()))
+        label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
         dataset.user_dict['names_to_colors'] = names_to_colors
@@ -7821,7 +7821,7 @@ class _WholeBodyCTUtilities:  # pragma: no cover
         # Initialize array with background values (zeros)
         n_points = cast(pyvista.ImageData, masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
-        label_names = sorted(cast(list[str], masks.keys()))
+        label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
             mask = cast(pyvista.ImageData, masks[name])
             label_map_array[mask.active_scalars == 1] = i + 1
