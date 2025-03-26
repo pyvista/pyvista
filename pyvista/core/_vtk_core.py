@@ -637,9 +637,13 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     >>> pv.vtk_verbosity()
     'max'
 
-    Use it as a context manager to temporarily turn it off.
+    Create a :func:`~pyvista.Sphere`. Note how many VTK debugging messages are now
+    generated as the sphere is created.
 
     >>> mesh = pv.Sphere()
+
+    Use it as a context manager to temporarily turn it off.
+
     >>> with pv.vtk_verbosity('off'):
     ...     mesh = mesh.cell_quality('volume')
 
@@ -647,6 +651,12 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
 
     >>> pv.vtk_verbosity()
     'max'
+
+    Note that the verbosity state is global and will persist between function
+    calls. If the context manager isn't used, the state needs to be reset explicitly.
+    Here, we set it back to its default value.
+
+    >>> _ = pv.vtk_verbosity('info')
 
     """
 
