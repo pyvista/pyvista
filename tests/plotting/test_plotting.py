@@ -2018,12 +2018,12 @@ def test_plot_depth_peeling():
     p.show()
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plot(airplane):
     airplane.plot(eye_dome_lighting=True)
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plotter(airplane):
     p = pv.Plotter()
     p.add_mesh(airplane)
@@ -2031,7 +2031,7 @@ def test_plot_eye_dome_lighting_plotter(airplane):
     p.show()
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_enable_disable(airplane):
     p = pv.Plotter()
     p.add_mesh(airplane)
