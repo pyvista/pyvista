@@ -228,7 +228,9 @@ class CellQualityMeasuresTable(DocTable):
         for func in cell_funcs:
             mesh = getattr(cells, func)()
             cell_type = pv.CellType(mesh.celltypes[0])
-            mesh = mesh.cell_quality('all_valid')
+            # Use a specific and non-default null value to avoid false negatives with
+            # vtkWedge caused by https://gitlab.kitware.com/vtk/vtk/-/issues/19643
+            mesh = mesh.cell_quality('all_valid', null_value=-42.42)
             for valid_measure in mesh.array_names:
                 measures[valid_measure].add(cell_type)
 
