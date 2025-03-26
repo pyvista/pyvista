@@ -1157,8 +1157,8 @@ class MultiBlock(
         )
 
         # Append blocks to output
+        reset_name = name_mode == 'reset'
         for index, name, block in iterator:
-            reset_name = name_mode == 'reset'
             if not reset_name and check_duplicate_keys:
                 if name in output_multi.keys():
                     # Duplicate block name - raise error
