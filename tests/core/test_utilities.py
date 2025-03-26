@@ -2156,8 +2156,9 @@ def xfail_size_is_zero(info):
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
+    """Test that the actual computed measure for a unit cell matches the reported value."""
     xfail_wedge_negative_volume(info)
-    # Test that the actual computed measure for a unit cell matches the reported value
+
     unit_cell_value = info.unit_cell_value
 
     if unit_cell_value is None:
@@ -2170,11 +2171,11 @@ def test_cell_quality_info_unit_cell_value(info):
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
+    """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_wedge_negative_volume(info)
     xfail_size_is_zero(info)
 
-    # Test that the unit cell value is within the acceptable range
     acceptable_range = info.acceptable_range
 
     if acceptable_range is None:
@@ -2187,6 +2188,43 @@ def test_cell_quality_info_acceptable_range(info):
 
     assert unit_cell_value >= acceptable_range[0]
     assert unit_cell_value <= acceptable_range[1]
+
+
+def _replace_range_infinity(rng):
+    rng = list(rng)
+    lower, upper = rng
+    if lower == -float('inf'):
+        rng[0] = np.finfo(lower).min
+    if upper == float('inf'):
+        rng[1] = np.finfo(upper).max
+    return rng
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_normal_range(info):
+    """Test that the normal range is broader than the acceptable range."""
+    acceptable_range = info.acceptable_range
+
+    if acceptable_range is None:
+        pytest.skip('No range available to test.')
+
+    acceptable_range = _replace_range_infinity(info.acceptable_range)
+    normal_range = _replace_range_infinity(info.normal_range)
+
+    assert normal_range[0] <= acceptable_range[0]
+    assert normal_range[1] >= acceptable_range[1]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_full_range(info):
+    """Test that the full range is broader than the normal range."""
+    normal_range = _replace_range_infinity(info.normal_range)
+    full_range = _replace_range_infinity(info.full_range)
+
+    assert full_range[0] <= normal_range[0]
+    assert full_range[1] >= normal_range[1]
 
 
 @pytest.mark.needs_vtk_version(9, 2)
