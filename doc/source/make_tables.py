@@ -268,9 +268,9 @@ class CellQualityInfoTable(DocTable):
 
     header = _aligned_dedent(
         """
-        |.. dropdown:: {} Cells
+        |.. dropdown:: {} Cell Info
         |
-        |   Info about {} quality measures.
+        |   Info about {} cell quality measures.
         |   See {} for an example unit cell.
         |
         |   .. list-table::
