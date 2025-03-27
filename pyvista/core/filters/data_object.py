@@ -1357,12 +1357,12 @@ class DataObjectFilters:
             # Add Cell IDs to all blocks and keep track of scalars to restore later
             active_scalars_info = []
             if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[arg-type]
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
             else:
-                blocks = [self]  # type: ignore[assignment]
+                blocks = [self]
             for block in blocks:
-                active_scalars_info.append(block.active_scalars_info)  # type: ignore[union-attr]
-                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)  # type: ignore[union-attr]
+                active_scalars_info.append(block.active_scalars_info)
+                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
 
         if isinstance(self, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
