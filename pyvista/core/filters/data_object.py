@@ -2939,7 +2939,6 @@ class DataObjectFilters:
             # all 'Size' measures
             mesh_quality.SetTriangleQualityMeasureToShapeAndSize()
             mesh_quality.Update()
-            mesh_quality.GetOutput()
 
             alg.SetInputDataObject(mesh_quality.GetOutput())
         else:
