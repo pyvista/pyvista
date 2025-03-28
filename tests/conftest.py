@@ -7,6 +7,7 @@ from inspect import Signature
 import os
 import platform
 import re
+from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
@@ -339,12 +340,33 @@ def pytest_runtest_setup(item: pytest.Item):
                     kind=Parameter.POSITIONAL_OR_KEYWORD,
                     default='Test fails on MacOS',
                     annotation=str,
-                )
+                ),
+                Parameter(
+                    p := 'processor',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Union[str, None],
+                ),
+                Parameter(
+                    m := 'machine',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Union[str, None],
+                ),
             ]
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        pytest.skip(bounds.arguments[r])
+
+        should_skip = True
+        if (proc := bounds.arguments[p]) is not None:
+            should_skip &= proc == platform.processor()
+
+        if (machine := bounds.arguments[m]) is not None:
+            should_skip &= machine == platform.machine()
+
+        if should_skip:
+            pytest.skip(bounds.arguments[r])
 
 
 def pytest_report_header(config):

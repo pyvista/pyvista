@@ -11,7 +11,6 @@ import io
 import os
 import pathlib
 from pathlib import Path
-import platform
 import re
 import time
 from types import FunctionType
@@ -4933,11 +4932,8 @@ def oblique_cone():
     return pv.examples.download_oblique_cone()
 
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
-
-@pytest.mark.skipif(
-    is_arm_mac, reason='Barely exceeds error threshold (slightly different rendering).'
+@pytest.mark.skip_mac(
+    'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
 def test_bounding_box(oblique_cone, box_style):
