@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import os
 import re
+from typing import TYPE_CHECKING
 
 import pytest
+from pytest_cases import parametrize
 
 import pyvista
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 pytest_plugins = 'pytester'
 
@@ -37,7 +42,7 @@ class RunResultsReport:
     passed = _ReportDescriptor()
     skipped = _ReportDescriptor()
     failed = _ReportDescriptor()
-    errors = _ReportDescriptor()
+    error = _ReportDescriptor()
     xpassed = _ReportDescriptor()
     xfailed = _ReportDescriptor()
 
@@ -256,4 +261,76 @@ def test_skip_windows(
 
     assert 'test_not_skipped' in report.passed
     assert 'test_skipped' in report.skipped
-    assert 'test_skipped_wrong' in report.errors
+    assert 'test_skipped_wrong' in report.error
+
+
+@pytest.fixture
+def _patch_mac_system(mocker: MockerFixture):
+    import platform
+
+    m = mocker.patch.object(platform, 'system')
+    m.return_value = 'Darwin'
+
+
+@pytest.mark.usefixtures('_patch_mac_system')
+@parametrize(processor=['foo', None], machine=['bar', None])
+def test_skip_mac(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+    mocker: MockerFixture,
+    processor: str | None,
+    machine: str | None,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.skip_mac
+    def test_skipped():
+        ...
+
+    def test_not_skipped():
+        ...
+
+    @pytest.mark.skip_mac(foo=1)
+    def test_skipped_wrong():
+        ...
+
+    @pytest.mark.skip_mac(processor="foo", machine="bar")
+    def test_skipped_platform_machine():
+        ...
+
+    """
+
+    import platform
+
+    m = mocker.patch.object(platform, 'processor')
+    m.return_value = processor
+
+    m = mocker.patch.object(platform, 'machine')
+    m.return_value = machine
+
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    skipped = 1
+    skipped += 1 if (processor is not None and machine is not None) else 0
+
+    passed = 2
+    passed -= 1 if (processor is not None and machine is not None) else 0
+
+    results.assert_outcomes(
+        skipped=skipped,
+        passed=passed,
+        errors=1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_not_skipped' in report.passed
+    assert 'test_skipped' in report.skipped
+    assert 'test_skipped_wrong' in report.error
+    if processor is not None and machine is not None:
+        assert 'test_skipped_platform_machine' in report.skipped
+    else:
+        assert 'test_skipped_platform_machine' in report.passed
