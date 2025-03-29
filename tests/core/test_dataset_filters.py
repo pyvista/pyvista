@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import itertools
 from pathlib import Path
-import platform
 import re
 from typing import TYPE_CHECKING
 from typing import Any
@@ -36,7 +35,6 @@ if TYPE_CHECKING:
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -132,7 +130,7 @@ def test_datasetfilters_init():
         pv.core.filters.DataSetFilters()
 
 
-@skip_mac
+@pytest.mark.skip_mac('Flaky Mac test')
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
 def test_clip_scalar_filter(datasets, both, invert):
