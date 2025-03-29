@@ -161,7 +161,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
         with:
           packages: xvfb

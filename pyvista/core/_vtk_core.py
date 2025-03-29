@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
+from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource as vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource as vtkImageGaussianSource
@@ -443,6 +444,7 @@ from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane as vtkTextureMapTo
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere as vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality as vtkCellQuality
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
+from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
@@ -636,16 +638,26 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     >>> pv.vtk_verbosity()
     'max'
 
-    Use it as a context manager to temporarily turn it off.
+    Create a :func:`~pyvista.Sphere`. Note how many VTK debugging messages are now
+    generated as the sphere is created.
 
     >>> mesh = pv.Sphere()
+
+    Use it as a context manager to temporarily turn it off.
+
     >>> with pv.vtk_verbosity('off'):
-    ...     mesh = mesh.compute_cell_quality('volume')
+    ...     mesh = mesh.cell_quality('volume')
 
     The state is restored to its previous value outside the context.
 
     >>> pv.vtk_verbosity()
     'max'
+
+    Note that the verbosity state is global and will persist between function
+    calls. If the context manager isn't used, the state needs to be reset explicitly.
+    Here, we set it back to its default value.
+
+    >>> _ = pv.vtk_verbosity('info')
 
     """
 
