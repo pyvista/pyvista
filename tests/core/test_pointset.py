@@ -7,6 +7,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
@@ -379,3 +380,31 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
 
     assert grid.dimensionality == dimensionality
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+def test_polyhedral_faces():
+    mesh = examples.cells.Polyhedron()
+
+    if pv.vtk_version_info < (9, 4):
+        match = '`polyhedral_faces` requires vtk>=9.4.0'
+        with pytest.raises(pv.VTKVersionError, match=match):
+            _ = mesh.polyhedral_faces
+    else:
+        expected_faces = [3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
+        faces = mesh.polyhedral_faces
+        assert isinstance(faces, np.ndarray)
+        assert np.array_equal(faces, expected_faces)
+
+
+def test_polyhedral_face_locations():
+    mesh = examples.cells.Polyhedron()
+
+    if pv.vtk_version_info < (9, 4):
+        match = '`polyhedral_face_locations` requires vtk>=9.4.0'
+        with pytest.raises(pv.VTKVersionError, match=match):
+            _ = mesh.polyhedral_face_locations
+    else:
+        expected_locations = [4, 0, 1, 2, 3]
+        locations = mesh.polyhedral_face_locations
+        assert isinstance(locations, np.ndarray)
+        assert np.array_equal(locations, expected_locations)
