@@ -2079,7 +2079,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(self.GetFaces())
 
     @property
-    def polyhedral_faces(self) -> NumpyArray[int]:
+    def polyhedron_faces(self) -> NumpyArray[int]:
         """Return the polyhedron faces.
 
         Returns
@@ -2089,7 +2089,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         if pyvista.vtk_version_info < (9, 4):
-            msg = '`polyhedral_faces` requires vtk>=9.4.0'
+            msg = '`polyhedron_faces` requires vtk>=9.4.0'
             raise VTKVersionError(msg)
         faces = self.GetPolyhedronFaces()  # vtkCellArray
         if faces is None:
@@ -2118,8 +2118,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(self.GetFaceLocations())
 
     @property
-    def polyhedral_face_locations(self) -> NumpyArray[int]:
-        """Return the polyhedral face locations.
+    def polyhedron_face_locations(self) -> NumpyArray[int]:
+        """Return the polyhedron face locations.
 
         Returns
         -------
@@ -2128,7 +2128,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         if pyvista.vtk_version_info < (9, 4):
-            msg = '`polyhedral_face_locations` requires vtk>=9.4.0'
+            msg = '`polyhedron_face_locations` requires vtk>=9.4.0'
             raise VTKVersionError(msg)
         faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
         if faces is None:
