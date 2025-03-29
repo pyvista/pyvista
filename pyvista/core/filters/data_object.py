@@ -234,7 +234,7 @@ class DataObjectFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+            self.points = self.points.astype(np.float32)  # type: ignore[assignment]
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
