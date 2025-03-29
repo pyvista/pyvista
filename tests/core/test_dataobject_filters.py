@@ -557,8 +557,8 @@ def test_cell_quality_measures(ant):
 )
 @pytest.mark.parametrize('measure', ['relative_size_squared', 'shape_and_size'])
 def test_cell_quality_size_measures(cell_mesh, measure):
-    qual = cell_mesh.cell_quality(measure)
-    assert np.isclose(qual[measure][0], 1.0)
+    quality = cell_mesh.cell_quality(measure)
+    assert np.isclose(quality[measure][0], 1.0)
 
 
 def test_cell_quality_all_valid(ant):
