@@ -2155,10 +2155,6 @@ def test_cell_quality_info_unit_cell_value(info):
     xfail_wedge_negative_volume(info)
 
     unit_cell_value = info.unit_cell_value
-
-    if unit_cell_value is None:
-        pytest.skip('No unit cell value to test.')
-
     qual_value = _compute_unit_cell_quality(info)
     assert np.isclose(qual_value, unit_cell_value)
 
@@ -2171,14 +2167,7 @@ def test_cell_quality_info_acceptable_range(info):
     xfail_wedge_negative_volume(info)
 
     acceptable_range = info.acceptable_range
-
-    if acceptable_range is None:
-        pytest.skip('No range available to test.')
-
     unit_cell_value = info.unit_cell_value
-    if unit_cell_value is None:
-        # For some measures we compute this at runtime
-        unit_cell_value = _compute_unit_cell_quality(info)
 
     assert unit_cell_value >= acceptable_range[0]
     assert unit_cell_value <= acceptable_range[1]
@@ -2198,11 +2187,6 @@ def _replace_range_infinity(rng):
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_normal_range(info):
     """Test that the normal range is broader than the acceptable range."""
-    acceptable_range = info.acceptable_range
-
-    if acceptable_range is None:
-        pytest.skip('No range available to test.')
-
     acceptable_range = _replace_range_infinity(info.acceptable_range)
     normal_range = _replace_range_infinity(info.normal_range)
 

@@ -76,10 +76,10 @@ class CellQualityInfo:
 
     cell_type: _CellTypesLiteral
     quality_measure: _CellQualityLiteral
-    acceptable_range: tuple[float, float] | None
+    acceptable_range: tuple[float, float]
     normal_range: tuple[float, float]
     full_range: tuple[float, float]
-    unit_cell_value: float | None
+    unit_cell_value: float
 
 
 def sqrt(num: float) -> float:  # noqa: D103
@@ -112,7 +112,7 @@ _CELL_QUALITY_INFO = [
     Info(TRIANGLE, 'scaled_jacobian', (0.5, 2 * R33), (-2 * R33, 2 * R33), (-INF, INF), 1.0),
     Info(TRIANGLE, 'radius_ratio', (1.0, 3.0), (1.0, INF), (1.0, INF), 1.0),
     Info(TRIANGLE, 'shape', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(TRIANGLE, 'shape_and_size', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TRIANGLE, 'shape_and_size', (0.25, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'area', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
     Info(QUAD, 'aspect_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
     Info(QUAD, 'condition', (1.0, 4), (1.0, INF), (1.0, INF), 1.0),
@@ -125,12 +125,12 @@ _CELL_QUALITY_INFO = [
     Info(QUAD, 'min_angle', (45.0, 90.0), (0.0, 90.0), (0.0, 360.0), 90.0),
     Info(QUAD, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
     Info(QUAD, 'radius_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
-    Info(QUAD, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(QUAD, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'scaled_jacobian', (0.3, 1.0), (-1.0, 1.0), (-1.0, 1.0), 1.0),
     Info(QUAD, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(QUAD, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(QUAD, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(QUAD, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(QUAD, 'skew', (0.0, 0.7), (0.0, 1.0), (0.0, 1.0), 0.0),
     Info(QUAD, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
     Info(QUAD, 'taper', (0.0, 0.7), (0.0, INF), (0.0, INF), 0.0),
@@ -144,25 +144,25 @@ _CELL_QUALITY_INFO = [
     Info(TETRA, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), R22),
     Info(TETRA, 'min_angle', (40, ANGLE), (0.0, ANGLE), (0.0, 360), ANGLE),
     Info(TETRA, 'radius_ratio', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
-    Info(TETRA, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TETRA, 'relative_size_squared', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(TETRA, 'scaled_jacobian', (0.5, 1.0), (-1.0, 1.0), (-INF, INF), 1.0),
     Info(TETRA, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(TETRA, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(TETRA, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(TETRA, 'volume', (0.0, INF), (-INF, INF), (-INF, INF), sqrt(2.0) / 12.0),
     Info(HEXAHEDRON, 'diagonal', (0.65, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
-    Info(HEXAHEDRON, 'dimension', None, (0.0, INF), (0.0, INF), R33),
+    Info(HEXAHEDRON, 'dimension', (0.0, INF), (0.0, INF), (0.0, INF), R33),
     Info(HEXAHEDRON, 'distortion', (0.5, 1.0), (0.0, 1.0), (-INF, INF), 1.0),
     Info(HEXAHEDRON, 'jacobian', (0.0, INF), (0.0, INF), (-INF, INF), 1.0),
     Info(HEXAHEDRON, 'max_edge_ratio', (1.0, 1.3), (1.0, INF), (1.0, INF), 1.0),
     Info(HEXAHEDRON, 'max_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
     Info(HEXAHEDRON, 'med_aspect_frobenius', (1.0, 3), (1.0, INF), (1.0, INF), 1.0),
     Info(HEXAHEDRON, 'oddy', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
-    Info(HEXAHEDRON, 'relative_size_squared', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(HEXAHEDRON, 'relative_size_squared', (0.5, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(HEXAHEDRON, 'scaled_jacobian', (0.5, 1.0), (-1.0, 1.0), (-1.0, INF), 1.0),
     Info(HEXAHEDRON, 'shape', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(HEXAHEDRON, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(HEXAHEDRON, 'shape_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(HEXAHEDRON, 'shear', (0.3, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
-    Info(HEXAHEDRON, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), None),
+    Info(HEXAHEDRON, 'shear_and_size', (0.2, 1.0), (0.0, 1.0), (0.0, 1.0), 1.0),
     Info(HEXAHEDRON, 'skew', (0.0, 0.5), (0.0, 1.0), (0.0, INF), 0.0),
     Info(HEXAHEDRON, 'stretch', (0.25, 1.0), (0.0, 1.0), (0.0, INF), 1.0),
     Info(HEXAHEDRON, 'taper', (0.0, 0.5), (0.0, INF), (0.0, INF), 0.0),
@@ -221,12 +221,6 @@ def cell_quality_info(
         `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_.
         Since this reference has `known errors <https://gitlab.kitware.com/vtk/vtk/-/issues/19644>`_,
         some values have been adjusted so that the returned values are correct.
-
-    .. note::
-
-        Some fields for some measures have a value of ``None``. This is done in cases
-        where an acceptable range may be application-specific, or where the unit cell
-        value is dependent on the data (e.g. any size-dependent measures).
 
     .. note::
 
