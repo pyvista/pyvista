@@ -82,8 +82,6 @@ jobs:
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-22.04
-    env:
-      PYTEST_PLOTTING_ARGS: "-v --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache --generated_image_dir debug_images"
     strategy:
       fail-fast: false
 
@@ -175,17 +173,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            tests/plotting \
-            --ignore=tests/plotting/test_charts.py \
-            $PYTEST_PLOTTING_ARGS
-
-      - name: Plotting Testing (charts only)
-        if: always()
-        run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            tests/plotting/test_charts.py $PYTEST_PLOTTING_ARGS
+        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
