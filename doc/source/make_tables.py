@@ -174,9 +174,6 @@ class DocTable:
         raise NotImplementedError(msg)
 
 
-CELL_QUALITY_TYPES = get_args(_CellTypesLiteral)
-
-
 class CellQualityMeasuresTable(DocTable):
     """Class to generate table for cell quality measures."""
 
@@ -208,6 +205,8 @@ class CellQualityMeasuresTable(DocTable):
         """,
     )
 
+    cell_types: ClassVar[_CellTypesLiteral] = get_args(_CellTypesLiteral)
+
     @classmethod
     def fetch_data(cls):
         # Get all cell example functions,
@@ -223,9 +222,7 @@ class CellQualityMeasuresTable(DocTable):
         for func in cell_funcs:
             mesh = getattr(cells, func)()
             cell_type = pv.CellType(mesh.celltypes[0])
-            # Use a specific and non-default null value to avoid false negatives with
-            # vtkWedge caused by https://gitlab.kitware.com/vtk/vtk/-/issues/19643
-            mesh = mesh.cell_quality('all_valid', null_value=-42.42)
+            mesh = mesh.cell_quality('all_valid')
             for valid_measure in mesh.array_names:
                 measures[valid_measure].add(cell_type)
 
@@ -234,7 +231,7 @@ class CellQualityMeasuresTable(DocTable):
     @classmethod
     def get_header(cls, data):
         return cls.header.format(
-            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in CELL_QUALITY_TYPES]
+            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
         )
 
     @classmethod
@@ -247,7 +244,7 @@ class CellQualityMeasuresTable(DocTable):
         def _get_table_entry(cell_type):
             return success if cell_type in measures[measure] else error
 
-        table_entries = [_get_table_entry(cell_type) for cell_type in CELL_QUALITY_TYPES]
+        table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
         return cls.row_template.format(f'``{measure}``', *table_entries)
 
 

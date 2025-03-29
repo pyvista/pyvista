@@ -252,7 +252,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
-    (r'py:.*', '.*_CellQualityMeasuresLiteral'),
+    (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*T'),
     #
     # Dataset-related types

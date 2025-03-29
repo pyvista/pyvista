@@ -15,7 +15,7 @@ from pyvista.core.celltype import CellType
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-_CellQualityMeasuresLiteral = Literal[
+_CellQualityLiteral = Literal[
     'area',
     'aspect_frobenius',
     'aspect_gamma',
@@ -75,7 +75,7 @@ class CellQualityInfo:
     """Information about a cell's quality measure."""
 
     cell_type: _CellTypesLiteral
-    quality_measure: _CellQualityMeasuresLiteral
+    quality_measure: _CellQualityLiteral
     acceptable_range: tuple[float, float] | None
     normal_range: tuple[float, float]
     full_range: tuple[float, float]
@@ -172,7 +172,7 @@ _CELL_QUALITY_INFO = [
 ]
 
 # Create lookup dict
-_CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityMeasuresLiteral, CellQualityInfo]] = {}
+_CELL_QUALITY_LOOKUP: dict[CellType, dict[_CellQualityLiteral, CellQualityInfo]] = {}
 for info in _CELL_QUALITY_INFO:
     _CELL_QUALITY_LOOKUP.setdefault(info.cell_type, {})
     _CELL_QUALITY_LOOKUP[info.cell_type][info.quality_measure] = info
@@ -183,7 +183,7 @@ _CELL_TYPE_NAMES = [typ.name for typ in _CELL_QUALITY_LOOKUP.keys()]
 
 def cell_quality_info(
     cell_type: _CellTypesLiteral | _CellTypeNamesLiteral,
-    quality_measure: _CellQualityMeasuresLiteral,
+    quality_measure: _CellQualityLiteral,
 ) -> CellQualityInfo:
     """Return information about a cell's quality measure.
 

@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
-from pyvista.core.utilities.cell_quality import _CellQualityMeasuresLiteral
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
 
 class DataObjectFilters:
@@ -2762,8 +2762,8 @@ class DataObjectFilters:
     def cell_quality(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         quality_measure: Literal['all', 'all_valid']
-        | _CellQualityMeasuresLiteral
-        | Sequence[_CellQualityMeasuresLiteral] = 'scaled_jacobian',
+        | _CellQualityLiteral
+        | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
         *,
         null_value: float = -1.0,
         progress_bar: bool = False,
@@ -2866,9 +2866,7 @@ class DataObjectFilters:
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         keep_valid_only = quality_measure == 'all_valid'
         measures_available = _get_cell_quality_measures()
-        measures_available_names = cast(
-            list[_CellQualityMeasuresLiteral], list(measures_available.keys())
-        )
+        measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if quality_measure in ['all', 'all_valid']:
             measures_requested = measures_available_names
         else:
@@ -2877,7 +2875,7 @@ class DataObjectFilters:
                 _validation.check_contains(
                     measures_available_names, must_contain=quality_measure, name='quality_measure'
                 )
-            measures_requested = cast(list[_CellQualityMeasuresLiteral], measures)
+            measures_requested = cast(list[_CellQualityLiteral], measures)
 
         cell_quality = functools.partial(
             DataObjectFilters._dataset_cell_quality,
