@@ -159,7 +159,8 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+        run: |
+          python -m pytest tests/test_init.py --cov=pyvista --cov-branch --cov-report=xml -v --ignore=tests/plotting --junitxml=junit-${{ join(matrix.* , '-') }}.xml
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -191,8 +192,16 @@ jobs:
 
       - uses: codecov/codecov-action@v4
         name: "Upload coverage to CodeCov"
+        if: always()
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: always()
+        uses: codecov/test-results-action@v1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ join(matrix.* , '-') }}
 
       - name: Check package
         run: |
