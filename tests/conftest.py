@@ -296,7 +296,7 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     try:
         bounds = sig.bind(*item_mark.args, **item_mark.kwargs)
     except TypeError as e:
-        msg = f'Marker {item_mark.name} called with incorrect arguments.\nSignature should be: @pytest.mark.{item_mark.name}{sig}'
+        msg = f'Marker `{item_mark.name}` called with incorrect arguments.\nSignature should be: @pytest.mark.{item_mark.name}{sig}'
         raise ValueError(msg) from e
     else:
         bounds.apply_defaults()
