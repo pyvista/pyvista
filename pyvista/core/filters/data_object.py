@@ -2924,25 +2924,41 @@ class DataObjectFilters:
         CELL_QUALITY = 'CellQuality'
 
         alg = _vtk.vtkCellQuality()
-        alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
+
+        if 'size' in ''.join(measures_requested):
+            # Need to compute mesh quality statistics to get average cell size.
+            # We only need to do this once. This will create field data arrays:
+            # 'TriArea', 'QuadArea', 'TetVolume', 'PyrVolume', 'WedgeVolume', 'HexVolume'
+            # which are used later by vtkCellQuality
+            mesh_quality = _vtk.vtkMeshQuality()
+            mesh_quality.SaveCellQualityOff()
+            mesh_quality.SetInputData(self)
+            # Setting any 'Size' measure for any cell (tri, quad, etc.) is sufficient to
+            # ensure all necessary base stats are computed for all cell types and for
+            # all 'Size' measures
+            mesh_quality.SetTriangleQualityMeasureToShapeAndSize()
+            mesh_quality.Update()
+
+            alg.SetInputDataObject(mesh_quality.GetOutput())
+        else:
+            alg.SetInputDataObject(self)
+
         output = self.copy()
 
-        # Disable VTK warnings/errors generated from computing invalid measures
-        with pyvista.vtk_verbosity('off'):
-            # Compute all measures
-            for measure in measures_requested:
-                # Set measure and update
-                getattr(alg, measures_available[measure])()
-                _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
+        # Compute all measures
+        for measure in measures_requested:
+            # Set measure and update
+            getattr(alg, measures_available[measure])()
+            _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
 
-                # Store the cell quality array with the output
-                cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
-                if keep_valid_only and (
-                    np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
-                ):
-                    continue
-                output.cell_data[measure] = cell_quality_array
+            # Store the cell quality array with the output
+            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+            if keep_valid_only and (
+                np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+            ):
+                continue
+            output.cell_data[measure] = cell_quality_array
         return output
 
 

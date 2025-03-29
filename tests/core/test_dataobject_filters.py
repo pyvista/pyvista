@@ -546,6 +546,21 @@ def test_cell_quality_measures(ant):
     assert qual.array_names == actual_measures
 
 
+@pytest.mark.parametrize(
+    'cell_mesh',
+    [
+        examples.cells.Triangle(),
+        examples.cells.Quadrilateral(),
+        examples.cells.Hexahedron(),
+        examples.cells.Tetrahedron(),
+    ],
+)
+@pytest.mark.parametrize('measure', ['relative_size_squared', 'shape_and_size'])
+def test_cell_quality_size_measures(cell_mesh, measure):
+    quality = cell_mesh.cell_quality(measure)
+    assert np.isclose(quality[measure][0], 1.0)
+
+
 def test_cell_quality_all_valid(ant):
     qual = ant.cell_quality('all_valid')
     assert AREA in qual.array_names
