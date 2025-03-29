@@ -279,7 +279,8 @@ class BaseViewer:
         """Export the scene as a zip file."""
         for view in self._html_views:
             return memoryview(view.export_html())
-        raise TypeError('This viewer cannot be exported.')
+        msg = 'This viewer cannot be exported.'
+        raise TypeError(msg)
 
     def ui(self):
         """Implement in derived classes."""

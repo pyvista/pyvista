@@ -14,12 +14,15 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
+    from scipy.spatial.transform import Rotation
+
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista.core._typing_core import MatrixLike
@@ -254,7 +257,12 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                [self.compose(t) for t in trans]
+                if all(isinstance(item, Sequence) for item in trans):
+                    # Init from a nested sequence array
+                    self.compose(trans)
+                else:
+                    # Init from sequence of transformations
+                    [self.compose(t) for t in trans]
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
@@ -263,30 +271,34 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`compose` this transform using post-multiply semantics.
@@ -301,15 +313,17 @@ class Transform(_vtk.vtkTransform):
             try:
                 transform = copied.compose(other, multiply_mode='post')
             except TypeError:
-                raise TypeError(
+                msg = (
                     f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
+                raise TypeError(msg)
             except ValueError:
-                raise ValueError(
+                msg = (
                     f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                     f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
                 )
+                raise ValueError(msg)
         return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
@@ -317,15 +331,17 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
@@ -913,6 +929,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate
             Rotate a mesh.
 
@@ -1010,6 +1028,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
 
@@ -1077,6 +1097,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
 
@@ -1144,6 +1166,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
 
@@ -1215,6 +1239,8 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
+        as_rotation
+            Get this transform's rotation component.
         pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
 
@@ -1266,6 +1292,10 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        decompose
 
         Examples
         --------
@@ -1639,6 +1669,14 @@ class Transform(_vtk.vtkTransform):
             shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
             is ``True``).
 
+        See Also
+        --------
+        compose
+            Compose a transformation.
+        as_rotation
+            Get this transform's rotation component.
+
+
         Examples
         --------
         Create a transform by composing scaling, rotation, and translation
@@ -1915,3 +1953,142 @@ class Transform(_vtk.vtkTransform):
     @check_finite.setter
     def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
+
+    def as_rotation(
+        self,
+        representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']
+        | None = None,
+        *args,
+        **kwargs,
+    ) -> Rotation | NumpyArray[float]:
+        """Return the rotation component as a SciPy :class:`~scipy.spatial.transform.Rotation` or any of its representations.
+
+        The current :attr:`matrix` is first decomposed to extract the rotation component
+        and then returned with the specified representation.
+
+        .. note::
+
+            This method depends on the ``scipy`` package which must be installed to use it.
+
+        Parameters
+        ----------
+        representation : str, optional
+            Representation of the rotation.
+
+            - ``'quat'``: Represent as a quaternion using :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using :meth:`~scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
+
+            If no representation is given, then an instance of :class:`scipy.spatial.transform.Rotation`
+            is returned by default.
+
+        *args
+            Arguments passed to the ``Rotation`` method for the specified
+            representation.
+
+        **kwargs
+            Keyword arguments passed to the ``Rotation`` method for the specified
+            representation.
+
+        Returns
+        -------
+        scipy.spatial.transform.Rotation | np.ndarray
+            Rotation object or array depending on the representation.
+
+        See Also
+        --------
+        decompose
+            Alternative method for obtaining the rotation component (and others).
+        rotate, rotate_x, rotate_y, rotate_z, rotate_vector
+            Compose a rotation matrix.
+
+        Examples
+        --------
+        Create a rotation matrix and initialize a :class:`Transform` from it.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> transform = pv.Transform(matrix)
+
+        Represent the rotation as :class:`scipy.spatial.transform.Rotation` instance.
+
+        >>> rot = transform.as_rotation()
+        >>> rot
+        <scipy.spatial.transform._rotation.Rotation ...>
+
+        Represent the rotation as a quaternion.
+
+        >>> rot = transform.as_rotation('quat')
+        >>> rot
+        array([0.        , 0.        , 0.70710678, 0.70710678])
+
+        Represent the rotation as a rotation vector. The vector has a direction
+        ``(0, 0, 1)`` and magnitude of ``pi/2``.
+
+        >>> rot = transform.as_rotation('rotvec')
+        >>> rot
+        array([0.        , 0.        , 1.57079633])
+
+        Represent the rotation as a Modified Rodrigues Parameters vector.
+
+        >>> rot = transform.as_rotation('mrp')
+        >>> rot
+        array([0.        , 0.        , 0.41421356])
+
+        Represent the rotation as x-y-z Euler angles in degrees.
+
+        >>> rot = transform.as_rotation('euler', 'xyz', degrees=True)
+        >>> rot
+        array([ 0.,  0., 90.])
+
+        Represent the rotation as extrinsic x-y-z Davenport angles in degrees.
+
+        >>> rot = transform.as_rotation(
+        ...     'davenport', np.eye(3), 'extrinsic', degrees=True
+        ... )
+        >>> rot
+        array([-1.27222187e-14,  0.00000000e+00,  9.00000000e+01])
+
+        """
+        try:
+            from scipy.spatial.transform import Rotation
+        except ImportError:
+            msg = "The 'scipy' package must be installed to use `as_rotation`"
+            raise ImportError(msg)
+
+        if isinstance(representation, str):
+            representation = representation.lower()  # type: ignore[assignment]
+
+        _validation.check_contains(
+            ['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport', None],
+            must_contain=representation,
+            name='representation',
+        )
+        if representation in ['rotation', 'matrix']:
+            assert_empty_kwargs(**kwargs)
+
+        _, R, _, _, _ = self.decompose()
+
+        if representation == 'matrix':
+            return R
+
+        rotation = Rotation.from_matrix(R)
+        if representation is None:
+            return rotation
+        elif representation == 'quat':
+            return rotation.as_quat(*args, **kwargs)
+        elif representation == 'rotvec':
+            return rotation.as_rotvec(*args, **kwargs)
+        elif representation == 'mrp':
+            return rotation.as_mrp(*args, **kwargs)
+        elif representation == 'euler':
+            return rotation.as_euler(*args, **kwargs)
+        elif representation == 'davenport':
+            return rotation.as_davenport(*args, **kwargs)
+        else:  # pragma: no cover
+            msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
+            raise RuntimeError(msg)
