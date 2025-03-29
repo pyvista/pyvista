@@ -255,6 +255,12 @@ def test_skip_windows(
     results = pytester.runpytest(p)
 
     results.assert_outcomes(skipped=1, passed=1, errors=1)
+    results.stdout.re_match_lines(
+        [
+            r'.*Marker skip_windows called with incorrect arguments\.',
+            r".*Signature should be: @pytest\.mark\.skip_windows\(reason: str = 'Test fails on Windows'\)",
+        ]
+    )
 
     results = results_parser.parse(results=results)
     report = RunResultsReport(results)
