@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 
 _CellQualityLiteral = Literal[
@@ -75,6 +76,8 @@ _CellQualityLiteral = Literal[
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
+
+    points: pyvista_ndarray
 
     @overload
     def transform(  # type: ignore[misc]
@@ -231,7 +234,7 @@ class DataObjectFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+            self.points = self.points.astype(np.float32)  # type: ignore[assignment]
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed

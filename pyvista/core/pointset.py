@@ -36,6 +36,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
@@ -2057,6 +2058,84 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
 
     @property
+    def faces(self) -> NumpyArray[int]:
+        """Return the polyhedron faces.
+
+        .. deprecated:: 0.45.0
+            This property is deprecated and will be removed in a future release.
+            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            may be removed in a future release of VTK. Please use
+            `polyhedral_faces` instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        # Suppress VTK deprecation warning
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            return convert_array(self.GetFaces())
+
+    @property
+    def polyhedron_faces(self) -> NumpyArray[int]:
+        """Return the polyhedron faces.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        if pyvista.vtk_version_info < (9, 4):
+            msg = '`polyhedron_faces` requires vtk>=9.4.0'
+            raise VTKVersionError(msg)
+        faces = self.GetPolyhedronFaces()  # vtkCellArray
+        if faces is None:
+            return np.array([], dtype=int)  # type: ignore[unreachable]
+        return convert_array(faces.GetData())
+
+    @property
+    def face_locations(self) -> NumpyArray[int]:
+        """Return polyhedron face locations.
+
+        .. deprecated:: 0.45.0
+            This property is deprecated and will be removed in a future release.
+            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            may be removed in a future release of VTK. Please use
+            `polyhedral_face_locations` instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face locations.
+
+        """
+        # Suppress VTK deprecation warning
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            return convert_array(self.GetFaceLocations())
+
+    @property
+    def polyhedron_face_locations(self) -> NumpyArray[int]:
+        """Return the polyhedron face locations.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        if pyvista.vtk_version_info < (9, 4):
+            msg = '`polyhedron_face_locations` requires vtk>=9.4.0'
+            raise VTKVersionError(msg)
+        faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
+        if faces is None:
+            return np.array([], dtype=int)  # type: ignore[unreachable]
+        return convert_array(faces.GetData())
+
+    @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
@@ -2580,6 +2659,15 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def points_matrix(self):  # numpydoc ignore=RT01
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
+
+    @property
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Do not use.
+
+        VTK 9.4 is now returning the vtkStructuredCellArray but this
+        instance is not usable. For now, we just return an empty array.
+        """
+        return np.array([], dtype=int)
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
