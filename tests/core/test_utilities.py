@@ -10,6 +10,7 @@ import platform
 import re
 import shutil
 from typing import TYPE_CHECKING
+from typing import Literal
 from unittest import mock
 import warnings
 
@@ -2105,12 +2106,15 @@ def test_cell_quality_info(cell_type):
 CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
 
 
-def _compute_unit_cell_quality(info: CellQualityInfo, null_value=-42.42, degenerate=False):
+def _compute_unit_cell_quality(
+    info: CellQualityInfo, null_value=-42.42, coincident: Literal['all', 'single', False] = False
+):
     example_name = _CELL_TYPE_INFO[info.cell_type.name].example
     cell_mesh = getattr(ex.cells, example_name)()
-    if degenerate:
-        # Make first and second points the same
-        cell_mesh.points[0] = cell_mesh.points[1]
+    if coincident == 'all':
+        cell_mesh.points[:] = 0.0
+    elif coincident == 'single':
+        cell_mesh.points[1] = cell_mesh.points[0]
     qual = cell_mesh.cell_quality(info.quality_measure, null_value=null_value)
     return qual.active_scalars[0]
 
@@ -2131,13 +2135,6 @@ def xfail_wedge_negative_volume(info):
     if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
-        )
-
-
-def xfail_size_returns_zero(info):
-    if 'size' in info.quality_measure:
-        pytest.xfail(
-            'Size-based measures always return zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19645.'
         )
 
 
@@ -2172,7 +2169,6 @@ def test_cell_quality_info_acceptable_range(info):
     """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_wedge_negative_volume(info)
-    xfail_size_returns_zero(info)
 
     acceptable_range = info.acceptable_range
 
@@ -2229,12 +2225,17 @@ def test_cell_quality_info_full_range(info):
 @pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_degenerate_cell(info):
     # Some cells / measures have bugs and return invalid values and are expected to fail
-    xfail_size_returns_zero(info)
     xfail_distortion_returns_one(info)
 
-    unit_cell_quality = _compute_unit_cell_quality(info, degenerate=False)
-    degenerate_quality = _compute_unit_cell_quality(info, degenerate=True)
-    assert not np.isclose(unit_cell_quality, degenerate_quality)
+    # Compare non-generate cell with degenerate cell with coincident point(s)
+    unit_cell_quality = _compute_unit_cell_quality(info, coincident=False)
+    all_coincident_quality = _compute_unit_cell_quality(info, coincident='all')
+    single_coincident_quality = _compute_unit_cell_quality(info, coincident='single')
+
+    # Quality must differ in at least one of the degeneracy cases
+    assert (not np.isclose(unit_cell_quality, all_coincident_quality)) or (
+        not np.isclose(unit_cell_quality, single_coincident_quality)
+    )
 
 
 @pytest.mark.needs_vtk_version(9, 2)

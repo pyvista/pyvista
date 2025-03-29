@@ -444,6 +444,7 @@ from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane as vtkTextureMapTo
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere as vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality as vtkCellQuality
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
+from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
