@@ -382,29 +382,26 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
 
 
-def test_polyhedron_faces():
-    mesh = examples.cells.Polyhedron()
-
+@pytest.mark.parametrize(
+    ('attr', 'mesh', 'expected'),
+    [
+        (
+            'polyhedron_faces',
+            examples.cells.Polyhedron(),
+            [3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3],
+        ),
+        ('polyhedron_face_locations', examples.cells.Polyhedron(), [4, 0, 1, 2, 3]),
+        ('polyhedron_faces', pv.UnstructuredGrid(), []),
+        ('polyhedron_face_locations', pv.UnstructuredGrid(), []),
+    ],
+)
+def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
     if pv.vtk_version_info < (9, 4):
-        match = '`polyhedron_faces` requires vtk>=9.4.0'
+        match = f'`{attr}` requires vtk>=9.4.0'
         with pytest.raises(pv.VTKVersionError, match=match):
-            _ = mesh.polyhedron_faces
+            getattr(mesh, attr)
     else:
-        expected_faces = [3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
-        faces = mesh.polyhedron_faces
-        assert isinstance(faces, np.ndarray)
-        assert np.array_equal(faces, expected_faces)
-
-
-def test_polyhedron_face_locations():
-    mesh = examples.cells.Polyhedron()
-
-    if pv.vtk_version_info < (9, 4):
-        match = '`polyhedron_face_locations` requires vtk>=9.4.0'
-        with pytest.raises(pv.VTKVersionError, match=match):
-            _ = mesh.polyhedron_face_locations
-    else:
-        expected_locations = [4, 0, 1, 2, 3]
-        locations = mesh.polyhedron_face_locations
-        assert isinstance(locations, np.ndarray)
-        assert np.array_equal(locations, expected_locations)
+        actual = getattr(mesh, attr)
+        assert isinstance(actual, np.ndarray)
+        assert actual.dtype == int
+        assert np.array_equal(actual, expected)
