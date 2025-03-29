@@ -7,6 +7,7 @@ from inspect import Signature
 import os
 import platform
 import re
+from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
@@ -344,13 +345,13 @@ def pytest_runtest_setup(item: pytest.Item):
                     p := 'processor',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=str | None,
+                    annotation=Union[str, None],
                 ),
                 Parameter(
                     m := 'machine',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=str | None,
+                    annotation=Union[str, None],
                 ),
             ]
         )
