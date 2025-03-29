@@ -1076,7 +1076,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     polyhedral_cells = mesh.faces
 
     if polyhedral_cells is not None and pyvista.vtk_version_info >= (9, 4):
-        raise VTKVersionError('We have not yet implemented polyhedral cells for VTK 9.4+')
+        msg = 'We have not yet implemented polyhedral cells for VTK 9.4+'
+        raise VTKVersionError(msg)
     elif polyhedral_cells is not None:
         locations = mesh.face_locations
         polyhedral_cell_faces = []

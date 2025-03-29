@@ -2089,8 +2089,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         if pyvista.vtk_version_info < (9, 4):
+            msg = '`polyhedral_faces` requires vtk>=9.4.0'
             raise VTKVersionError(
-                '`polyhedral_faces` requires vtk>=9.4.0',
+                msg,
             )  # pragma: no cover
         faces = self.GetPolyhedronFaces()  # vtkCellArray
         if faces is None:
@@ -2129,8 +2130,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         if pyvista.vtk_version_info < (9, 4):
+            msg = '`polyhedral_face_locations` requires vtk>=9.4.0'
             raise VTKVersionError(
-                '`polyhedral_face_locations` requires vtk>=9.4.0',
+                msg,
             )  # pragma: no cover
         faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
         if faces is None:
