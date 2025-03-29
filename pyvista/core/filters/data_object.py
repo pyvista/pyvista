@@ -39,38 +39,7 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
-
-
-_CellQualityLiteral = Literal[
-    'area',
-    'aspect_frobenius',
-    'aspect_gamma',
-    'aspect_ratio',
-    'collapse_ratio',
-    'condition',
-    'diagonal',
-    'dimension',
-    'distortion',
-    'jacobian',
-    'max_angle',
-    'max_aspect_frobenius',
-    'max_edge_ratio',
-    'med_aspect_frobenius',
-    'min_angle',
-    'oddy',
-    'radius_ratio',
-    'relative_size_squared',
-    'scaled_jacobian',
-    'shape',
-    'shape_and_size',
-    'shear',
-    'shear_and_size',
-    'skew',
-    'stretch',
-    'taper',
-    'volume',
-    'warpage',
-]
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
 
 class DataObjectFilters:
@@ -2812,13 +2781,12 @@ class DataObjectFilters:
 
         .. _cell_quality_measures_table:
 
-        .. include:: /api/core/cell_quality_measures_table.rst
+        .. include:: /api/core/cell_quality/cell_quality_measures_table.rst
 
         .. note::
 
             Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
-            for low-level technical information about how each metric is computed,
-            as well as the metric's full, normal, and acceptable range of values.
+            for low-level technical information about how each metric is computed.
 
         .. versionadded:: 0.45
 
@@ -2851,6 +2819,11 @@ class DataObjectFilters:
             Dataset with the computed mesh quality. Return type matches input.
             Cell data array(s) with the computed quality measure(s) are included.
 
+        See Also
+        --------
+        :func:`~pyvista.cell_quality_info`
+            Return information about a cell's quality measure, e.g. acceptable range.
+
         Examples
         --------
         Compute and plot the minimum angle of a sample sphere mesh.
@@ -2859,6 +2832,13 @@ class DataObjectFilters:
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
         >>> cqual = sphere.cell_quality('min_angle')
         >>> cqual.plot(show_edges=True)
+
+        Quality measures like ``'volume'`` do not apply to 2D cells, and a null value
+        of ``-1`` is returned.
+
+        >>> qual = sphere.cell_quality('volume')
+        >>> qual.get_data_range('volume')
+        (np.float64(-1.0), np.float64(-1.0))
 
         Compute all valid quality measures for the sphere. These measures all return
         non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
@@ -2885,7 +2865,7 @@ class DataObjectFilters:
         # Validate measures
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         keep_valid_only = quality_measure == 'all_valid'
-        measures_available = _get_cell_qualilty_measures()
+        measures_available = _get_cell_quality_measures()
         measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if quality_measure in ['all', 'all_valid']:
             measures_requested = measures_available_names
@@ -2962,7 +2942,7 @@ class DataObjectFilters:
         return output
 
 
-def _get_cell_qualilty_measures() -> dict[str, str]:
+def _get_cell_quality_measures() -> dict[str, str]:
     """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
     # Get possible quality measures dynamically
     str_start = 'SetQualityMeasureTo'

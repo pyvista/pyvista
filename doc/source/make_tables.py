@@ -33,13 +33,17 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import final
+from typing import get_args
 
 import numpy as np
 
 import pyvista
 import pyvista as pv
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.filters.data_object import _get_cell_qualilty_measures
+from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
+from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
@@ -60,7 +64,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
-CELL_QUALITY_MEASURES_TABLE_DIR = 'api/core'
+CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -173,7 +177,7 @@ class DocTable:
 class CellQualityMeasuresTable(DocTable):
     """Class to generate table for cell quality measures."""
 
-    path = f'{CELL_QUALITY_MEASURES_TABLE_DIR}/cell_quality_measures_table.rst'
+    path = f'{CELL_QUALITY_DIR}/cell_quality_measures_table.rst'
     header = _aligned_dedent(
         """
         |.. list-table:: Cell Quality Measures
@@ -201,15 +205,7 @@ class CellQualityMeasuresTable(DocTable):
         """,
     )
 
-    # Types to show in the table (from left-to-right)
-    cell_types: ClassVar[pyvista.CellType] = [
-        pyvista.CellType.TRIANGLE,
-        pyvista.CellType.QUAD,
-        pyvista.CellType.TETRA,
-        pyvista.CellType.HEXAHEDRON,
-        pyvista.CellType.WEDGE,
-        pyvista.CellType.PYRAMID,
-    ]
+    cell_types: ClassVar[_CellTypesLiteral] = get_args(_CellTypesLiteral)
 
     @classmethod
     def fetch_data(cls):
@@ -220,7 +216,7 @@ class CellQualityMeasuresTable(DocTable):
         ]
 
         # Init dict with all measures as keys
-        measures = {measure: set() for measure in _get_cell_qualilty_measures().keys()}
+        measures = {measure: set() for measure in _get_cell_quality_measures().keys()}
 
         # Compute the cell quality of each cell type and add to dict if valid
         for func in cell_funcs:
@@ -250,6 +246,118 @@ class CellQualityMeasuresTable(DocTable):
 
         table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
         return cls.row_template.format(f'``{measure}``', *table_entries)
+
+
+class CellQualityInfoTable(DocTable):
+    """Class to generate table for cell quality info."""
+
+    cell_type: pyvista.CellType
+
+    @property
+    @final
+    def path(cls):
+        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
+
+    header = _aligned_dedent(
+        """
+        |.. dropdown:: {} Cell Info
+        |
+        |   Info about {} cell quality measures.
+        |   See {} for an example unit cell.
+        |
+        |   .. list-table::
+        |       :widths: 20 20 20 20 20
+        |       :header-rows: 1
+        |
+        |       * - Measure
+        |         - Acceptable
+        |           Range
+        |         - Normal
+        |           Range
+        |         - Full
+        |           Range
+        |         - Unit Cell
+        |           Value
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |       * - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        return _CELL_QUALITY_LOOKUP[cls.cell_type].values()
+
+    @classmethod
+    def get_header(cls, data):
+        name = cls.cell_type.name
+        example = _CELL_TYPE_INFO[name].example
+        return cls.header.format(
+            name.capitalize(),
+            f':attr:`~pyvista.CellType.{name}`',
+            f':func:`~pyvista.examples.cells.{example}`',
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        def format_list(obj):
+            if obj is None:
+                return 'None'
+            return '[' + ', '.join(format_number(num) for num in obj) + ']'
+
+        def format_number(num):
+            if num is None:
+                return 'None'
+            if num == float('inf'):
+                return 'inf'
+            if num == -float('inf'):
+                return '-inf'
+
+            # Show max 3 significant digits
+            formatted = f'{num:.3g}'
+
+            # Ensure at least one decimal place
+            if 'e' in formatted or '.' in formatted:
+                return formatted
+            return f'{formatted}.0'
+
+        measure = f'``{row_data.quality_measure}``'
+        acceptable = format_list(row_data.acceptable_range)
+        normal = format_list(row_data.normal_range)
+        full = format_list(row_data.full_range)
+        value = format_number(row_data.unit_cell_value)
+
+        return cls.row_template.format(measure, acceptable, normal, full, value)
+
+
+class CellQualityInfoTableTRIANGLE(CellQualityInfoTable):
+    cell_type = pv.CellType.TRIANGLE
+
+
+class CellQualityInfoTableQUAD(CellQualityInfoTable):
+    cell_type = pv.CellType.QUAD
+
+
+class CellQualityInfoTableTETRA(CellQualityInfoTable):
+    cell_type = pv.CellType.TETRA
+
+
+class CellQualityInfoTableHEXAHEDRON(CellQualityInfoTable):
+    cell_type = pv.CellType.HEXAHEDRON
+
+
+class CellQualityInfoTableWEDGE(CellQualityInfoTable):
+    cell_type = pv.CellType.WEDGE
+
+
+class CellQualityInfoTablePYRAMID(CellQualityInfoTable):
+    cell_type = pv.CellType.PYRAMID
 
 
 class LineStyleTable(DocTable):
@@ -2469,9 +2577,15 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables():  # noqa: D103
-    # Make cell quality table
-    os.makedirs(CELL_QUALITY_MEASURES_TABLE_DIR, exist_ok=True)
+    # Make cell quality tables
+    os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
     CellQualityMeasuresTable.generate()
+    CellQualityInfoTableTRIANGLE.generate()
+    CellQualityInfoTableQUAD.generate()
+    CellQualityInfoTableHEXAHEDRON.generate()
+    CellQualityInfoTableTETRA.generate()
+    CellQualityInfoTableWEDGE.generate()
+    CellQualityInfoTablePYRAMID.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
