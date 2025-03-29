@@ -142,7 +142,8 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            raise TypeError('`lookup_table` must be a `pyvista.LookupTable`')
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
@@ -200,7 +201,8 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         elif value == 'nearest':
             self.SetInterpolationTypeToNearest()
         else:
-            raise ValueError('`interpolation_type` must be either "linear" or "nearest"')
+            msg = '`interpolation_type` must be either "linear" or "nearest"'
+            raise ValueError(msg)
 
     @property
     def opacity_unit_distance(self) -> float:  # numpydoc ignore=RT01

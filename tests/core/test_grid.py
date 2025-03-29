@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
+import re
+from typing import TYPE_CHECKING
 import weakref
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 import vtk
@@ -14,6 +18,9 @@ from pyvista import examples
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 test_path = str(Path(__file__).resolve().parent)
 
@@ -110,6 +117,19 @@ def test_init_bad_input():
 
     with pytest.raises(TypeError, match='requires the following arrays'):
         pv.UnstructuredGrid(*range(5))
+
+    with pytest.raises(TypeError, match='All input types must be sequences.'):
+        pv.UnstructuredGrid(*range(3))
+
+
+def test_check_consistency_raises(mocker: MockerFixture):
+    mocker.patch.object(pv.UnstructuredGrid, 'n_cells')
+    mocker.patch.object(pv.UnstructuredGrid, 'celltypes')
+
+    grid = pv.UnstructuredGrid()
+
+    with pytest.raises(ValueError):  # noqa: PT011
+        grid._check_for_consistency()
 
 
 def create_hex_example():
@@ -1308,6 +1328,14 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
 
+def test_UnstructuredGrid_cast_to_explicit_structured_grid_raises():
+    with pytest.raises(
+        TypeError,
+        match="'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required",
+    ):
+        pv.UnstructuredGrid().cast_to_explicit_structured_grid()
+
+
 def test_ExplicitStructuredGrid_init():
     grid = examples.load_explicit_structured()
     assert isinstance(grid, pv.ExplicitStructuredGrid)
@@ -1399,6 +1427,11 @@ def test_ExplicitStructuredGrid_save():
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
     Path('grid.vtu').unlink()
+
+
+def test_ExplicitStructuredGrid_save_raises():
+    with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
+        examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
 
 
 def test_ExplicitStructuredGrid_hide_cells():
@@ -1630,6 +1663,16 @@ def test_StructuredGrid_cast_to_explicit_structured_grid():
     assert (grid.cell_data['vtkGhostType'] > 0).sum() == 40
 
 
+def test_StructuredGrid_cast_to_explicit_structured_grid_raises():
+    xrng = np.arange(-10, 10, 20, dtype=np.float32)
+    x, y, z = np.meshgrid(*[xrng] * 3, indexing='ij')
+    grid = pv.StructuredGrid(x, y, z)
+    with pytest.raises(
+        TypeError, match='Only 3D structured grid can be casted to an explicit structured grid.'
+    ):
+        grid.cast_to_explicit_structured_grid()
+
+
 def test_copy_no_copy_wrap_object(datasets):
     for dataset in datasets:
         # different dataset types have different copy behavior for points
@@ -1679,3 +1722,62 @@ def test_grid_dimensionality(grid_class, dimensionality, dimensions):
 
     assert grid.dimensionality == dimensionality
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+@pytest.mark.parametrize('arg', [1, True, object()])
+def test_rect_grid_raises(arg):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Type ({type(arg)}) not understood by `RectilinearGrid`'),
+    ):
+        pv.RectilinearGrid(arg)
+
+
+@given(args=st.lists(st.none()).filter(lambda x: len(x) in [2, 3]))
+def test_rect_grid_raises_args(args):
+    with pytest.raises(
+        TypeError,
+        match=re.escape('Arguments not understood by `RectilinearGrid`.'),
+    ):
+        pv.RectilinearGrid(*args)
+
+
+def test_rect_grid_dimensions_raises():
+    g = pv.RectilinearGrid()
+    match = re.escape(
+        'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
+    )
+    with pytest.raises(AttributeError, match=match):
+        g.dimensions = 1
+
+
+@pytest.fixture
+def empty_poly_cast_to_ugrid():
+    cast_ugrid = pv.PolyData().cast_to_unstructured_grid()
+
+    # Likely VTK bug, these should not be None but they are
+    assert cast_ugrid.GetCells() is None
+    assert cast_ugrid.GetCellTypesArray() is None
+
+    # Make sure a proper ugrid does not have these as None
+    ugrid = pv.UnstructuredGrid()
+    assert isinstance(ugrid.GetCells(), vtk.vtkCellArray)
+    assert isinstance(ugrid.GetCellTypesArray(), vtk.vtkUnsignedCharArray)
+
+    return cast_ugrid
+
+
+def test_cells_empty(empty_poly_cast_to_ugrid):
+    assert empty_poly_cast_to_ugrid.cells.size == 0
+
+
+def test_celltypes_empty(empty_poly_cast_to_ugrid, hexbeam):
+    celltypes = empty_poly_cast_to_ugrid.celltypes
+    assert celltypes.size == 0
+    assert celltypes.dtype == hexbeam.celltypes.dtype
+
+
+def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
+    connectivity = empty_poly_cast_to_ugrid.cell_connectivity
+    assert connectivity.size == 0
+    assert connectivity.dtype == hexbeam.cell_connectivity.dtype

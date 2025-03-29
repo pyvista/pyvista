@@ -30,6 +30,9 @@ from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import BackgroundPlotter
+from pyvista.plotting import QtDeprecationError
+from pyvista.plotting import QtInteractor
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -44,6 +47,8 @@ from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
+
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -142,6 +147,29 @@ def multicomp_poly():
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
     return data
+
+
+def test_pyvista_qt_raises():
+    match = re.escape(QtDeprecationError.message.format(*[BackgroundPlotter.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        BackgroundPlotter()
+
+    match = re.escape(QtDeprecationError.message.format(*[QtInteractor.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        QtInteractor()
+
+
+def test_plotting_module_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotting
+
+    m = mocker.patch.object(plotting, 'inspect')
+    m.getattr_static.side_effect = AttributeError
+
+    match = re.escape(
+        'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `foo`'
+    )
+    with pytest.raises(AttributeError, match=match):
+        plotting.foo  # noqa: B018
 
 
 def test_import_gltf(verify_image_cache):
@@ -712,15 +740,19 @@ def test_plot_no_active_scalars(sphere):
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Convert error this method')
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Remove this method')
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Convert error this method')
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Remove this method')
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
 
 
 def test_plot_show_bounds(sphere):
@@ -1235,9 +1267,11 @@ def test_box_axes():
     with pytest.warns(pv.PyVistaDeprecationWarning):
         plotter.add_axes(box=True)
     if pv._version.version_info[:2] > (0, 47):
-        raise RuntimeError('Convert error this function')
+        msg = 'Convert error this function'
+        raise RuntimeError(msg)
     if pv._version.version_info[:2] > (0, 48):
-        raise RuntimeError('Remove this function')
+        msg = 'Remove this function'
+        raise RuntimeError(msg)
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
@@ -1247,9 +1281,11 @@ def test_box_axes_color_box():
     with pytest.warns(pv.PyVistaDeprecationWarning):
         plotter.add_axes(box=True, box_args={'color_box': True})
     if pv._version.version_info[:2] > (0, 47):
-        raise RuntimeError('Convert error this function')
+        msg = 'Convert error this function'
+        raise RuntimeError(msg)
     if pv._version.version_info[:2] > (0, 48):
-        raise RuntimeError('Remove this function')
+        msg = 'Remove this function'
+        raise RuntimeError(msg)
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
@@ -2089,6 +2125,15 @@ def test_opacity_by_array_preference():
     p.add_mesh(tetra.copy(), opacity=opacities, preference='cell')
     p.add_mesh(tetra.translate((2, 0, 0), inplace=False), opacity=opacities, preference='point')
     p.show()
+
+
+@pytest.mark.parametrize('mapping', [None, True, object()])
+def test_opacity_transfer_functions_raises(mapping):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Transfer function type ({type(mapping)}) not understood'),
+    ):
+        pv.opacity_transfer_function(mapping, n_colors=10)
 
 
 def test_opacity_transfer_functions():

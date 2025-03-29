@@ -134,22 +134,25 @@ class Texture(DataObject, _vtk.vtkTexture):
             # add each image to the cubemap
             for i, image in enumerate(uinput):
                 if not isinstance(image, pyvista.ImageData):
-                    raise TypeError(
+                    msg = (
                         'If a sequence, the each item in the first argument must be a '
-                        'pyvista.ImageData',
+                        'pyvista.ImageData'
                     )
+                    raise TypeError(msg)
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
         elif uinput is None:
             pass
         else:
-            raise TypeError(f'Cannot create a pyvista.Texture from ({type(uinput)})')
+            msg = f'Cannot create a pyvista.Texture from ({type(uinput)})'
+            raise TypeError(msg)
 
     def _from_file(self, filename, **kwargs):
         try:
             image = pyvista.read(filename, **kwargs)
-            if image.n_points < 2:
-                raise RuntimeError('Problem reading the image with VTK.')  # pragma: no cover
+            if image.n_points < 2:  # pragma: no cover
+                msg = 'Problem reading the image with VTK.'
+                raise RuntimeError(msg)
             self._from_image_data(image)
         except (KeyError, ValueError, OSError):
             self._from_array(_try_imageio_imread(filename))  # pragma: no cover
@@ -203,11 +206,13 @@ class Texture(DataObject, _vtk.vtkTexture):
         """Create a texture from a np.ndarray."""
         if image.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
-            raise ValueError('Input image must be nn by nm by RGB[A]')
+            msg = 'Input image must be nn by nm by RGB[A]'
+            raise ValueError(msg)
 
         if image.ndim == 3:
             if image.shape[2] not in [1, 3, 4]:
-                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+                msg = 'Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)'
+                raise ValueError(msg)
             n_components = image.shape[2]
         elif image.ndim == 2:
             n_components = 1
@@ -587,7 +592,8 @@ class Texture(DataObject, _vtk.vtkTexture):
         if not hasattr(self, 'GetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
+            msg = '`wrap` requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
 
         return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
@@ -596,7 +602,8 @@ class Texture(DataObject, _vtk.vtkTexture):
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
+            msg = '`wrap` requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
 
         self.SetWrap(value)
 

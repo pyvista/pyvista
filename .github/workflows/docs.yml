@@ -1,5 +1,7 @@
 name: Build Documentation
-on:
+
+# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
+on: # zizmor: ignore[cache-poisoning]
   pull_request: # Uses cache
   workflow_dispatch: # Able to not use cache by user demand
     inputs:
@@ -35,6 +37,9 @@ env:
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
 
+permissions:
+  id-token: none
+
 jobs:
   doc:
     name: Build Documentation
@@ -53,7 +58,7 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0

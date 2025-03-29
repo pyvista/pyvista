@@ -100,9 +100,9 @@ class DocSubs:
                     mem_sub = cls._wrap_member(m)
                     mem_sub.__doc__ = d
                     setattr(cls, member_name, mem_sub)
-                # Get the member function/property and substitute its docstring.
+                # Get the member function/property and safely substitute its docstring.
                 member = getattr(cls, member_name)
-                member.__doc__ = member.__doc__.format(**subs)
+                member.__doc__ = (member.__doc__ or '').format(**subs)
 
         # Secondly, register all members of this class that require substitutions in subclasses
         # Create copy of registered members so far
@@ -127,9 +127,8 @@ class DocSubs:
         elif isinstance(member, property):
             mem_sub = property(member.fget, member.fset, member.fdel)  # type: ignore[assignment]
         else:
-            raise NotImplementedError(
-                'Members other than methods and properties are currently not supported.',
-            )
+            msg = 'Members other than methods and properties are currently not supported.'
+            raise NotImplementedError(msg)
         return mem_sub
 
 
@@ -146,8 +145,13 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
-        raise ValueError('`member` must be a callable.')
-    member.__doc__ = DocSubs._DOC_TAG + member.__doc__
+        msg = '`member` must be a callable.'
+        raise ValueError(msg)
+
+    # Safeguard against None docstring when using -OO
+    existing_doc = member.__doc__ or ''
+    member.__doc__ = DocSubs._DOC_TAG + existing_doc
+
     return member
 
 
@@ -278,7 +282,8 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
             self._line_style = val
         except KeyError:
             formatted_styles = '", "'.join(self.LINE_STYLES.keys())
-            raise ValueError(f'Invalid line style. Allowed line styles: "{formatted_styles}"')
+            msg = f'Invalid line style. Allowed line styles: "{formatted_styles}"'
+            raise ValueError(msg)
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
@@ -639,7 +644,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             self._behavior = val
         except KeyError:
             formatted_behaviors = '", "'.join(self.BEHAVIORS.keys())
-            raise ValueError(f'Invalid behavior. Allowed behaviors: "{formatted_behaviors}"')
+            msg = f'Invalid behavior. Allowed behaviors: "{formatted_behaviors}"'
+            raise ValueError(msg)
 
     @property
     def margin(self):  # numpydoc ignore=RT01
@@ -1236,7 +1242,8 @@ class _Chart(DocSubs):
     @size.setter
     def size(self, val):
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError(f'Invalid size {val}.')
+            msg = f'Invalid size {val}.'
+            raise ValueError(msg)
         self._size = val
 
     @property
@@ -1266,7 +1273,8 @@ class _Chart(DocSubs):
     @loc.setter
     def loc(self, val):
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError(f'Invalid loc {val}.')
+            msg = f'Invalid loc {val}.'
+            raise ValueError(msg)
         self._loc = val
 
     @property
@@ -1993,9 +2001,8 @@ class _MultiCompPlot(_Plot):
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
-                raise ValueError(
-                    'Invalid colors specified, falling back to default color scheme.',
-                ) from e
+                msg = 'Invalid colors specified, falling back to default color scheme.'
+                raise ValueError(msg) from e
 
     @property
     @doc_subs
@@ -2062,7 +2069,8 @@ class _MultiCompPlot(_Plot):
                 for label in val:
                     self._labels.InsertNextValue(label)
         except TypeError:
-            raise ValueError('Invalid labels specified.')
+            msg = 'Invalid labels specified.'
+            raise ValueError(msg)
 
     @property
     @doc_subs
@@ -2482,7 +2490,8 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
             self._marker_style = val
         except KeyError:
             formatted_styles = '", "'.join(self.MARKER_STYLES.keys())
-            raise ValueError(f'Invalid marker style. Allowed marker styles: "{formatted_styles}"')
+            msg = f'Invalid marker style. Allowed marker styles: "{formatted_styles}"'
+            raise ValueError(msg)
 
 
 class AreaPlot(_Plot, _vtk.vtkPlotArea):
@@ -2897,9 +2906,8 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
             self._orientation = val
         except KeyError:
             formatted_orientations = '", "'.join(self.ORIENTATIONS.keys())
-            raise ValueError(
-                f'Invalid orientation. Allowed orientations: "{formatted_orientations}"',
-            )
+            msg = f'Invalid orientation. Allowed orientations: "{formatted_orientations}"'
+            raise ValueError(msg)
 
 
 class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
@@ -3654,7 +3662,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
             self._plots[plot_type].remove(plot)
             self.RemovePlotInstance(plot)
         except (KeyError, ValueError):
-            raise ValueError('The given plot is not part of this chart.')
+            msg = 'The given plot is not part of this chart.'
+            raise ValueError(msg)
 
     def clear(self, plot_type=None) -> None:
         """Remove all plots of the specified type from this chart.
@@ -4129,7 +4138,8 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+            msg = f'Cannot set the geometry of {type(self).__class__}'
+            raise AttributeError(msg)
         else:
             _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
@@ -4195,10 +4205,11 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
     @size.setter
     def size(self, val):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise ValueError(
+            msg = (
                 'Cannot set ChartBox geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.',
+                'Upgrade to VTK v9.2 or newer.'
             )
+            raise ValueError(msg)
         else:
             _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
@@ -4237,10 +4248,11 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
     @loc.setter
     def loc(self, val):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise ValueError(
+            msg = (
                 'Cannot set ChartBox geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.',
+                'Upgrade to VTK v9.2 or newer.'
             )
+            raise ValueError(msg)
         else:
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
@@ -4457,7 +4469,8 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+            msg = f'Cannot set the geometry of {type(self).__class__}'
+            raise AttributeError(msg)
         else:
             _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
@@ -4519,10 +4532,11 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
     @size.setter
     def size(self, val):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise ValueError(
+            msg = (
                 'Cannot set ChartPie geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.',
+                'Upgrade to VTK v9.2 or newer.'
             )
+            raise ValueError(msg)
         else:
             _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
@@ -4561,10 +4575,11 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
     @loc.setter
     def loc(self, val):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise ValueError(
+            msg = (
                 'Cannot set ChartPie geometry, it fills up the entire viewport by default. '
-                'Upgrade to VTK v9.2 or newer.',
+                'Upgrade to VTK v9.2 or newer.'
             )
+            raise ValueError(msg)
         else:
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
@@ -4763,7 +4778,8 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
 
     @_geometry.setter
     def _geometry(self, _):
-        raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+        msg = f'Cannot set the geometry of {type(self).__class__}'
+        raise AttributeError(msg)
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
     # @property
@@ -4788,7 +4804,8 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
     @position.setter
     def position(self, val):
         if len(val) != 2:
-            raise ValueError(f'Invalid position {val}, must be length 2.')
+            msg = f'Invalid position {val}, must be length 2.'
+            raise ValueError(msg)
         self.SetPosition(*val)
 
     @property
@@ -4998,7 +5015,8 @@ class Charts:
             self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         )
         if chart not in self._charts:  # pragma: no cover
-            raise ValueError('chart_index not present in charts collection.')
+            msg = 'chart_index not present in charts collection.'
+            raise ValueError(msg)
         self._charts.remove(chart)
         if self._scene is not None:
             self._scene.RemoveItem(chart)  # type: ignore[call-overload]
