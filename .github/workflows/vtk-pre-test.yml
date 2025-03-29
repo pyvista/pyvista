@@ -52,7 +52,7 @@ jobs:
       - name: Install PyVista Testing Requirements
         run: pip install .[test]
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
           packages: xvfb
           version: 3.0
