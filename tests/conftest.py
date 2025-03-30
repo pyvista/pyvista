@@ -16,6 +16,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.core._vtk_core import VersionInfo
+from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pyvista.OFF_SCREEN = True
 
@@ -316,6 +317,21 @@ def pytest_runtest_setup(item: pytest.Item):
         if pyvista.vtk_version_info < version_needed:
             version_str = '.'.join(map(str, version_needed))
             pytest.skip(f'Test needs VTK {version_str} or newer.')
+
+    if (item_mark := item.get_closest_marker('skip_egl')) and (uses_egl()):
+        sig = Signature(
+            [
+                Parameter(
+                    r := 'reason',
+                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    default='Test fails when using OSMesa/EGL VTK build',
+                    annotation=str,
+                )
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        pytest.skip(bounds.arguments[r])
 
     if (item_mark := item.get_closest_marker('skip_windows')) and (os.name == 'nt'):
         sig = Signature(

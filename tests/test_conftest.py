@@ -278,6 +278,69 @@ def _patch_mac_system(mocker: MockerFixture):
     m.return_value = 'Darwin'
 
 
+@pytest.fixture
+def _patch_uses_egl(mocker: MockerFixture):
+    from pyvista.plotting.utilities import gl_checks
+
+    m = mocker.patch.object(gl_checks, 'uses_egl')
+    m.return_value = True
+
+
+@pytest.mark.usefixtures('_patch_uses_egl')
+def test_skip_egl(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.skip_egl
+    def test_skipped():
+        ...
+
+    @pytest.mark.skip_egl(reason="foo")
+    def test_skipped_message():
+        ...
+
+    @pytest.mark.skip_egl("bar")
+    def test_skipped_message_args():
+        ...
+
+    def test_not_skipped():
+        ...
+
+    @pytest.mark.skip_egl(foo=1)
+    def test_skipped_wrong():
+        ...
+
+    """
+
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.stdout.re_match_lines(
+        [
+            r'.*Marker `skip_egl` called with incorrect arguments\.',
+            r'.*Signature should be: @pytest\.mark\.skip_egl\(reason.*\)',
+        ]
+    )
+
+    results.assert_outcomes(
+        skipped=3,
+        passed=1,
+        errors=1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_not_skipped' in report.passed
+    assert 'test_skipped' in report.skipped
+    assert 'test_skipped_message_args' in report.skipped
+    assert 'test_skipped_message' in report.skipped
+    assert 'test_skipped_wrong' in report.error
+
+
 @pytest.mark.usefixtures('_patch_mac_system')
 @parametrize(processor=['foo', None], machine=['bar', None])
 def test_skip_mac(

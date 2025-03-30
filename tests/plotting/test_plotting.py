@@ -40,7 +40,6 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
-from pyvista.plotting.utilities.gl_checks import uses_egl
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:
@@ -4023,10 +4022,7 @@ def test_plot_cubemap_alone(cubemap, verify_image_cache):
     cubemap.plot()
 
 
-@pytest.mark.skipif(
-    uses_egl(),
-    reason='Render window will be current with offscreen builds of VTK.',
-)
+@pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of VTK.')
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 
