@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+import weakref
+
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -78,8 +81,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     >>> actor.prop.apply_lookup_table(lut)
     >>> pl.show()
 
-
     """
+
+    _new_attr_exceptions: ClassVar[list[str]] = ['_lookup_table_', '_lookup_table_observer_id']
 
     def __init__(
         self,
@@ -94,6 +98,8 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     ):
         """Initialize the vtkVolumeProperty class."""
         super().__init__()
+        self._lookup_table_ = None
+        self._lookup_table_observer_id = None
         if lookup_table is not None:
             self.apply_lookup_table(lookup_table)
         if interpolation_type is not None:
@@ -110,6 +116,26 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
             self.shade = shade
         if opacity_unit_distance is not None:
             self.opacity_unit_distance = opacity_unit_distance
+
+    @property
+    def _lookup_table(self) -> pyvista.LookupTable | None:
+        """Get the lookup table if applied via apply_lookup_table."""
+        if self._lookup_table_ is not None:
+            return self._lookup_table_()
+        return None
+
+    @_lookup_table.setter
+    def _lookup_table(self, lookup_table: pyvista.LookupTable):
+        """Set the lookup table if applied via apply_lookup_table."""
+        if self._lookup_table is not None and self._lookup_table_observer_id is not None:
+            # Clean up the old lookup table observer
+            self._lookup_table.RemoveObserver(self._lookup_table_observer_id)
+            self._lookup_table_observer_id = None
+        self._lookup_table_ = weakref.ref(lookup_table)
+        self._lookup_table_observer_id = lookup_table.AddObserver(
+            _vtk.vtkCommand.ModifiedEvent,
+            lambda *_: self.apply_lookup_table(self._lookup_table),
+        )
 
     def apply_lookup_table(self, lookup_table: pyvista.LookupTable):
         """Apply a lookup table to the volume property.
@@ -144,9 +170,17 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         if not isinstance(lookup_table, pyvista.LookupTable):
             msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
             raise TypeError(msg)
-
+        if self._lookup_table != lookup_table:
+            self._lookup_table = lookup_table
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
+
+    def __del__(self):
+        """Clean up the lookup table observer when the object is deleted."""
+        if self._lookup_table_observer_id is not None and self._lookup_table is not None:
+            self._lookup_table.RemoveObserver(self._lookup_table_observer_id)
+            self._lookup_table_observer_id = None
+            self._lookup_table = None
 
     @property
     def interpolation_type(self) -> str:  # numpydoc ignore=RT01

@@ -1051,8 +1051,9 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         color_tf = _vtk.vtkColorTransferFunction()
         mn, mx = self.scalar_range
-        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
-            color_tf.AddRGBPoint(ii, *self.map_value(value, False))
+        for value in np.linspace(mn, mx, self.n_values):
+            # Be sure to index the point by the value to map the scalar range
+            color_tf.AddRGBPoint(value, *self.map_value(value, False))
         return color_tf
 
     def to_opacity_tf(self, clamping: bool = True) -> _vtk.vtkPiecewiseFunction:
@@ -1081,8 +1082,17 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()
         opacity_tf.SetClamping(clamping)
-        for ii, value in enumerate(self.values[:, 3]):
-            opacity_tf.AddPoint(ii, value / self.n_values)
+        mn, mx = self.scalar_range
+        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
+            alpha = self.values[ii, 3]
+            # vtkPiecewiseFunction expects alphas between 0 and 1
+            # our lookup table is between 0 and 255
+            alpha = alpha / 255
+            if alpha == 1.0:
+                # Let's not add a point for 1.0 as completely opaque values
+                # during volume rendering leaves a jarring effect
+                alpha = 0.998
+            opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
     def map_value(

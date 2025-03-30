@@ -3619,10 +3619,39 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 @skip_windows_mesa  # due to opacity
 def test_plotter_volume_lookup_table(uniform):
+    uniform.set_active_scalars('Spatial Point Data')
+
     lut = pv.LookupTable()
-    lut.alpha_range = (0, 1)
+    lut.apply_cmap('coolwarm', 255)
+    lut.apply_opacity('linear')
+    lut.scalar_range = uniform.get_data_range()
+
     pl = pv.Plotter()
-    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.add_volume(uniform, cmap=lut)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_lookup_table_reactive(uniform):
+    """Ensure that changes to the underlying lookup table are reflected by the volume property."""
+    uniform.set_active_scalars('Spatial Point Data')
+
+    pl = pv.Plotter()
+    actor = pl.add_volume(uniform, cmap='viridis', clim=[0, uniform.n_points // 2])
+    actor.mapper.lookup_table.apply_cmap('coolwarm', 255)
+    actor.mapper.lookup_table.apply_opacity('sigmoid')
+    actor.mapper.lookup_table.scalar_range = [0, uniform.n_points]
+    pl.render()
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_log_scale(uniform):
+    uniform.clear_data()
+    uniform['data'] = np.logspace(1, 5, uniform.n_points)
+
+    pl = pv.Plotter()
+    pl.add_volume(uniform, scalars='data', log_scale=True)
     pl.show()
 
 

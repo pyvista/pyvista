@@ -26,7 +26,6 @@ import uuid
 import warnings
 import weakref
 
-import matplotlib as mpl
 import numpy as np
 import scooby
 
@@ -4401,21 +4400,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if log_scale and clim[0] <= 0:
             clim = [sys.float_info.min, clim[1]]
 
-        # data must be between [0, 255], but not necessarily UINT8
-        # Preserve backwards compatibility and have same behavior as VTK.
-        if scalars.dtype != np.uint8 and clim != [0, 255]:
-            # must copy to avoid modifying inplace and remove any VTK weakref
-            scalars = np.array(scalars)
-            clim = np.asarray(clim, dtype=scalars.dtype)
-            scalars.clip(clim[0], clim[1], out=scalars)
-            if log_scale:
-                out = mpl.colors.LogNorm(clim[0], clim[1])(scalars)
-                scalars = out.data * 255
-            else:
-                if min_ is None:
-                    min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
-
         volume[title] = scalars
         volume.active_scalars_name = title
 
@@ -4475,7 +4459,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.volume.prop.independent_components = False
             show_scalar_bar = False
 
-        actor, prop = self.add_actor(
+        actor, _ = self.add_actor(
             self.volume,  # type: ignore[arg-type]
             reset_camera=reset_camera,
             name=name,
