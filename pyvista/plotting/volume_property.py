@@ -134,8 +134,24 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         self._lookup_table_ = weakref.ref(lookup_table)
         self._lookup_table_observer_id = lookup_table.AddObserver(
             _vtk.vtkCommand.ModifiedEvent,
-            lambda *_: self.apply_lookup_table(self._lookup_table),
+            lambda *_: self.reapply_lookup_table(),
         )
+
+    def reapply_lookup_table(self):
+        """Reapply the lookup table previously applied.
+
+        The VolumeProperty is unable to keep a dynamic link to the colors
+        and mapping laid out in the lookup table. This method allows you to
+        reapply the lookup table to the VolumeProperty. This is useful if
+        you modify the lookup table after it is applied to the
+        VolumeProperty.
+
+        We have our own modified event observer to reapply this automatically
+        when the lookup table is modified.
+
+        """
+        if self._lookup_table is not None:
+            self.apply_lookup_table(self._lookup_table)
 
     def apply_lookup_table(self, lookup_table: pyvista.LookupTable):
         """Apply a lookup table to the volume property.
