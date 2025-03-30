@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -3556,6 +3557,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
+        if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
+            # Down-sample texture when building documentation
+            image = pyvista.wrap(texture.GetInput())
+
+            # Scale uniformly so that the largest dimension is 128
+            max_dimension = 128
+            scale_factor = max_dimension / max(*image.dimensions)
+
+            image.resample(scale_factor, inplace=True, anti_aliasing=True)
+            texture.SetInputDataObject(image)
         self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
