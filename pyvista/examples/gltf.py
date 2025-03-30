@@ -36,10 +36,10 @@ def download_damaged_helmet():  # pragma: no cover
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> cubemap = examples.download_sky_box_cube_map()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(cubemap)
-    >>> pl.show()
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
+    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     """
     return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')

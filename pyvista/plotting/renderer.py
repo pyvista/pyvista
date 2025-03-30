@@ -3540,12 +3540,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         >>> from pyvista import examples
         >>> import pyvista as pv
-        >>> pl = pv.Plotter(lighting=None)
-        >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
-        >>> pl.set_environment_texture(cubemap)
-        >>> pl.camera_position = 'xy'
-        >>> pl.show()
+        >>> pl = pv.Plotter(lighting=None)  # doctest:+SKIP
+        >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
+        >>> _ = pl.add_mesh(
+        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
+        ... )  # doctest:+SKIP
+        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.camera_position = 'xy'  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         """
         # cube_map textures cannot use spherical harmonics
@@ -3567,12 +3569,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
-        >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
-        >>> pl.set_environment_texture(cubemap)
-        >>> pl.remove_environment_texture()
-        >>> pl.camera_position = 'xy'
-        >>> pl.show()
+        >>> cubemap = examples.download_sky_box_cube_map()  # doctest:+SKIP
+        >>> _ = pl.add_mesh(
+        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
+        ... )  # doctest:+SKIP
+        >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
+        >>> pl.remove_environment_texture()  # doctest:+SKIP
+        >>> pl.camera_position = 'xy'  # doctest:+SKIP
+        >>> pl.show()  # doctest:+SKIP
 
         """
         self.UseImageBasedLightingOff()

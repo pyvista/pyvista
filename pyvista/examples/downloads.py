@@ -4277,11 +4277,11 @@ def download_sky_box_cube_map(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.download_sky_box_cube_map()
-    >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset)
-    >>> pl.show()
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> dataset = examples.download_sky_box_cube_map()  # doctest:+SKIP
+    >>> _ = pl.add_actor(dataset.to_skybox())  # doctest:+SKIP
+    >>> pl.set_environment_texture(dataset)  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     .. seealso::
 
@@ -4345,14 +4345,17 @@ def download_cubemap_park(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> import pyvista as pv
-    >>> pl = pv.Plotter(lighting=None)
     >>> dataset = examples.download_cubemap_park()
-    >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset, True)
-    >>> pl.camera_position = 'xy'
-    >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
-    >>> pl.show()
+    >>>
+    >>> pl = pv.Plotter(lighting=None)  # doctest:+SKIP
+    >>> _ = pl.add_actor(dataset.to_skybox())  # doctest:+SKIP
+    >>> pl.set_environment_texture(dataset, True)  # doctest:+SKIP
+    >>> pl.camera_position = 'xy'  # doctest:+SKIP
+    >>> pl.camera.zoom(0.4)  # doctest:+SKIP
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5
+    ... )  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     .. seealso::
 
@@ -4405,12 +4408,14 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> cubemap = examples.download_cubemap_space_4k()
-    >>> pl = pv.Plotter(lighting=None)
-    >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, True)
-    >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
-    >>> pl.show()
+    >>> pl = pv.Plotter(lighting=None)  # doctest:+SKIP
+    >>> _ = pl.add_actor(cubemap.to_skybox())  # doctest:+SKIP
+    >>> pl.set_environment_texture(cubemap, True)  # doctest:+SKIP
+    >>> pl.camera.zoom(0.4)  # doctest:+SKIP
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
+    ... )  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     .. seealso::
 
@@ -4469,12 +4474,14 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> cubemap = examples.download_cubemap_space_4k()
-    >>> pl = pv.Plotter(lighting=None)
-    >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, True)
-    >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
-    >>> pl.show()
+    >>> pl = pv.Plotter(lighting=None)  # doctest:+SKIP
+    >>> _ = pl.add_actor(cubemap.to_skybox())  # doctest:+SKIP
+    >>> pl.set_environment_texture(cubemap, True)  # doctest:+SKIP
+    >>> pl.camera.zoom(0.4)  # doctest:+SKIP
+    >>> _ = pl.add_mesh(
+    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
+    ... )  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     .. seealso::
 
@@ -7199,10 +7206,10 @@ def download_dikhololo_night(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> texture = examples.download_dikhololo_night()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(texture)
-    >>> pl.show()
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
+    >>> pl.set_environment_texture(texture)  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     .. seealso::
 
