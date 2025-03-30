@@ -271,14 +271,6 @@ def test_skip_windows(
 
 
 @pytest.fixture
-def _patch_mac_system(mocker: MockerFixture):
-    import platform
-
-    m = mocker.patch.object(platform, 'system')
-    m.return_value = 'Darwin'
-
-
-@pytest.fixture
 def _patch_uses_egl(mocker: MockerFixture):
     from pyvista.plotting.utilities import gl_checks
 
@@ -339,6 +331,14 @@ def test_skip_egl(
     assert 'test_skipped_message_args' in report.skipped
     assert 'test_skipped_message' in report.skipped
     assert 'test_skipped_wrong' in report.error
+
+
+@pytest.fixture
+def _patch_mac_system(mocker: MockerFixture):
+    import platform
+
+    m = mocker.patch.object(platform, 'system')
+    m.return_value = 'Darwin'
 
 
 @pytest.mark.usefixtures('_patch_mac_system')

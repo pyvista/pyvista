@@ -89,9 +89,9 @@ def using_mesa():
 
 # always set on Windows CI
 # These tests fail with mesa opengl on windows
-skip_windows_mesa = pytest.mark.skipif(
-    using_mesa() and os.name == 'nt',
-    reason='Does not display correctly within OSMesa on Windows',
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
+    'Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason='Flaky on 9.0.X')
@@ -105,8 +105,6 @@ skip_lesser_9_3_X = pytest.mark.skipif(
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
-
-skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
 @pytest.fixture(autouse=True)

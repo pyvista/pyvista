@@ -318,7 +318,7 @@ def pytest_runtest_setup(item: pytest.Item):
             version_str = '.'.join(map(str, version_needed))
             pytest.skip(f'Test needs VTK {version_str} or newer.')
 
-    if (item_mark := item.get_closest_marker('skip_egl')) and (uses_egl()):
+    if item_mark := item.get_closest_marker('skip_egl'):
         sig = Signature(
             [
                 Parameter(
@@ -331,9 +331,10 @@ def pytest_runtest_setup(item: pytest.Item):
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        pytest.skip(bounds.arguments[r])
+        if uses_egl():
+            pytest.skip(bounds.arguments[r])
 
-    if (item_mark := item.get_closest_marker('skip_windows')) and (os.name == 'nt'):
+    if item_mark := item.get_closest_marker('skip_windows'):
         sig = Signature(
             [
                 Parameter(
@@ -346,9 +347,10 @@ def pytest_runtest_setup(item: pytest.Item):
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        pytest.skip(bounds.arguments[r])
+        if os.name == 'nt':
+            pytest.skip(bounds.arguments[r])
 
-    if (item_mark := item.get_closest_marker('skip_mac')) and (platform.system() == 'Darwin'):
+    if item_mark := item.get_closest_marker('skip_mac'):
         sig = Signature(
             [
                 Parameter(
@@ -374,7 +376,7 @@ def pytest_runtest_setup(item: pytest.Item):
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
 
-        should_skip = True
+        should_skip = platform.system() == 'Darwin'
         if (proc := bounds.arguments[p]) is not None:
             should_skip &= proc == platform.processor()
 
