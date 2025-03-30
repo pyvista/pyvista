@@ -91,6 +91,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
+    from .opts import InteractionStyle
+
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
 # EXPERIMENTAL: permit pyvista to kill the render window
@@ -2323,6 +2325,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def enable_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_2d_style."""
         self.iren.enable_2d_style()  # type: ignore[has-type]
+
+    @wraps(RenderWindowInteractor.enable_interaction_style)
+    def enable_interaction_style(
+        self, style: InteractionStyle | None = None
+    ) -> None:  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_interaction_style."""
+        self.iren.enable_interaction_style(style=style)  # type: ignore[has-type]
 
     def enable_stereo_render(self) -> None:
         """Enable anaglyph stereo rendering.
@@ -6723,7 +6732,7 @@ class Plotter(BasePlotter):
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.render_window)
         self.reset_key_events()
-        self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
+        self.enable_interaction_style()
         self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an
