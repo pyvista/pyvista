@@ -11,8 +11,7 @@ import sys
 import pytest
 
 from pyvista.plotting import system_supports_plotting
-
-from .conftest import flaky_test
+from tests.conftest import flaky_test
 
 pytest.importorskip('sphinx')
 
@@ -23,7 +22,7 @@ if not system_supports_plotting():
 ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
 
 
-@flaky_test(exceptions=(AssertionError, FileExistsError))
+@flaky_test(exceptions=(AssertionError,))
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
@@ -40,10 +39,8 @@ def test_tinypages(tmp_path, ename, evalue):
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
-    tmp_dir = tmp_path / f'{ename}_{evalue}'
-    tmp_dir.mkdir()
-    html_dir = tmp_dir / 'html'
-    doctree_dir = tmp_dir / 'doctrees'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
     # Build the pages with warnings turned into errors
     cmd = [
         sys.executable,

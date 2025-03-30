@@ -61,7 +61,7 @@ print(f'Maximum point index: {foo_sphere.max_point}')
 print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
-# Using an inplace operation like :func:`pyvista.DataSetFilters.rotate_y` does not
+# Using an inplace operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
@@ -113,7 +113,7 @@ print(f'Maximum point index: {foo_sphere.max_point}')
 print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
-# Using an inplace operation like :func:`rotate_y <pyvista.DataSetFilters.rotate_y>` does not
+# Using an inplace operation like :func:`~pyvista.DataObjectFilters.rotate_y` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)

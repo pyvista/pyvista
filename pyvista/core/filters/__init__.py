@@ -69,6 +69,7 @@ def _get_output(
 
 
 from .composite import CompositeFilters
+from .data_object import DataObjectFilters
 
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
 from .data_set import DataSetFilters
@@ -80,6 +81,7 @@ from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
     'CompositeFilters',
+    'DataObjectFilters',
     'DataSetFilters',
     'ImageDataFilters',
     'PolyDataFilters',

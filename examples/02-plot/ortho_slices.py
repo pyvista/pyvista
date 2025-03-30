@@ -6,7 +6,7 @@ Orthogonal Slices
 
 View three orthogonal slices from a mesh.
 
-Use the :func:`pyvista.DataSetFilters.slice_orthogonal` filter to create these
+Use the :func:`pyvista.DataObjectFilters.slice_orthogonal` filter to create these
 slices simultaneously.
 """
 

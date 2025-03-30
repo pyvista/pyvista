@@ -64,6 +64,12 @@ def insert_string_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
+@pytest.mark.parametrize('i', [1, None, object(), True])
+def test_setitem_raises(i):
+    with pytest.raises(TypeError, match='Only strings are valid keys for DataSetAttributes.'):
+        pv.Sphere().point_data[i] = 1
+
+
 def test_init(hexbeam):
     attributes = pv.DataSetAttributes(
         hexbeam.GetPointData(),
@@ -526,7 +532,8 @@ def test_value_should_exist(insert_arange_narray):
     for arr in dsa.values():
         if np.array_equal(sample_array, arr):
             return
-    raise AssertionError('Array not in values.')
+    msg = 'Array not in values.'
+    raise AssertionError(msg)
 
 
 def test_active_scalars_setter(hexbeam_point_attributes):
@@ -697,11 +704,13 @@ def test_active_t_coords_deprecated():
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.point_data.active_t_coords
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords = t_coords
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
 
 
 def test_active_t_coords_name_deprecated():
@@ -709,11 +718,13 @@ def test_active_t_coords_name_deprecated():
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         name = mesh.point_data.active_t_coords_name
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords_name = name
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('copy', [True, False])
