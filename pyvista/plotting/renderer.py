@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
-import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -3557,7 +3556,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
+        # if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
+        if True:
             # Down-sample texture when building documentation
             image = pyvista.wrap(texture.GetInput())
 
