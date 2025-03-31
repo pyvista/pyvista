@@ -3555,18 +3555,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if hasattr(self, 'UseSphericalHarmonicsOff'):
                 self.UseSphericalHarmonicsOff()
 
-        self.UseImageBasedLightingOn()
+        self.UseImageBasedLightingOff()
         # if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
         if True:
             # Down-sample texture when building documentation
-            image = pyvista.wrap(texture.GetInput())
+            if texture.cube_map:
+                images = [pyvista.wrap(texture.GetInputDataObject(i, 0)) for i in range(6)]
+            else:
+                images = [pyvista.wrap(texture.GetInput())]
+            for i, image in enumerate(images):
+                image.resample(0.25, inplace=True, anti_aliasing=True)
 
-            # Scale uniformly so that the largest dimension is 128
-            max_dimension = 128
-            scale_factor = max_dimension / max(*image.dimensions)
-
-            image.resample(scale_factor, inplace=True, anti_aliasing=True)
-            texture.SetInputDataObject(image)
+                texture.SetInputDataObject(i, image)
         self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
