@@ -338,7 +338,7 @@ def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_pat
             assert getattr(dataset_2, attr) == getattr(dataset, attr)
 
         # check data is the same:
-        assert dataset_2 == dataset, attr
+        assert dataset_2 == dataset
 
         for name in dataset.point_data:
             arr_have = dataset_2.point_data[name]
