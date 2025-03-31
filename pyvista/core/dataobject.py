@@ -404,17 +404,23 @@ class DataObject(_vtk.vtkPyVistaOverride):
         if isinstance(self, pyvista.ImageData):
             equal_attrs = ['extent', 'index_to_physical_matrix']
         else:
-            equal_attrs = [
-                'verts',  # DataObject
-                'points',  # DataObject
-                'lines',  # DataObject
-                'faces',  # DataObject
-                'cells',  # UnstructuredGrid
-                'celltypes',  # UnstructuredGrid
-                'strips',  # PolyData
-            ]
+            equal_attrs = ['points', 'cells']
+            if isinstance(self, pyvista.PolyData):
+                equal_attrs.extend(
+                    [
+                        'verts',  # DataObject
+                        'lines',  # DataObject
+                        'faces',  # DataObject
+                        'strips',  # PolyData
+                    ]
+                )
+            elif isinstance(self, pyvista.UnstructuredGrid):
+                equal_attrs.append('celltypes')
+
         for attr in equal_attrs:
-            if hasattr(self, attr):
+            # Only check equality for attributes defined by PyVista
+            # (i.e. ignore any default vtk snake_case attributes)
+            if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
                     return False
 

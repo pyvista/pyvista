@@ -2073,10 +2073,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of faces.
 
         """
-        # Suppress VTK deprecation warning
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            return convert_array(self.GetFaces())
+        return convert_array(self.GetFaces())
 
     @property
     def polyhedron_faces(self) -> NumpyArray[int]:
@@ -2112,10 +2109,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of face locations.
 
         """
-        # Suppress VTK deprecation warning
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            return convert_array(self.GetFaceLocations())
+        return convert_array(self.GetFaceLocations())
 
     @property
     def polyhedron_face_locations(self) -> NumpyArray[int]:
@@ -2659,15 +2653,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def points_matrix(self):  # numpydoc ignore=RT01
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
-
-    @property
-    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Do not use.
-
-        VTK 9.4 is now returning the vtkStructuredCellArray but this
-        instance is not usable. For now, we just return an empty array.
-        """
-        return np.array([], dtype=int)
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""

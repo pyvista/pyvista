@@ -767,3 +767,17 @@ class vtkPyVistaOverride:
                     break
 
         return cls
+
+
+def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
+    """Return True if the attribute is defined by a vtk class."""
+
+    def _find_defining_class(cls, attr):
+        """Find the class that defines a given attribute."""
+        for base in cls.__mro__:
+            if attr in base.__dict__:
+                return base
+        return None
+
+    cls = _find_defining_class(obj.__class__, attr)
+    return cls is not None and cls.__module__.startswith('vtkmodules')
