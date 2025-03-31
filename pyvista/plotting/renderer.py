@@ -3555,7 +3555,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if hasattr(self, 'UseSphericalHarmonicsOff'):
                 self.UseSphericalHarmonicsOff()
 
-        self.UseImageBasedLightingOff()
+        self.UseImageBasedLightingOn()
         # if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
         if True:
             # Down-sample texture when building documentation
