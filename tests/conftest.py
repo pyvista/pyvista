@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import functools
 from importlib import metadata
+from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
 import platform
 import re
+from typing import Optional
 from typing import Union
 
 import numpy as np
@@ -304,19 +306,80 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
         return bounds
 
 
+def _get_min_max_vtk_version(
+    item_mark: pytest.Mark,
+    sig: Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+
+    # Distinguish scenarios from positional arguments
+    if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['min'] is not None):
+        msg = f'Cannot specify both *args and `min` keyword argument to `{item_mark.name}` marker.'
+        raise ValueError(msg)
+
+    if len(args) > 0:
+        min_version = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
+        return min_version, bounds.arguments['max'], bounds
+
+    _min = bounds.arguments['min']
+    _max = bounds.arguments['max']
+
+    if _max is None and _min is None:
+        msg = (
+            f'Need to specify either `min` or `max` keyword arguments to `{item_mark.name}` marker.'
+        )
+        raise ValueError(msg)
+
+    return bounds.arguments['min'], bounds.arguments['max'], bounds
+
+
 def pytest_runtest_setup(item: pytest.Item):
     """Custom setup to handle skips based on VTK version.
 
     See custom marks in pyproject.toml.
     """
+
+    # this test needs a given VTK version
     if item_mark := item.get_closest_marker('needs_vtk_version'):
-        # this test needs the given VTK version
-        # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
-        args = item_mark.args
-        version_needed = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
-        if pyvista.vtk_version_info < version_needed:
-            version_str = '.'.join(map(str, version_needed))
-            pytest.skip(f'Test needs VTK {version_str} or newer.')
+        sig = Signature(
+            [
+                Parameter(
+                    'args',
+                    kind=Parameter.VAR_POSITIONAL,
+                    annotation=Union[int, tuple[int]],
+                ),
+                Parameter(
+                    'min',
+                    kind=Parameter.KEYWORD_ONLY,
+                    annotation=Optional[tuple[int]],
+                    default=None,
+                ),
+                Parameter(
+                    'max',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Optional[tuple[int]],
+                ),
+            ]
+        )
+        _min, _max, bounds = _get_min_max_vtk_version(item_mark=item_mark, sig=sig)
+        curr_version = pyvista.vtk_version_info
+
+        if _max is None and curr_version < _min:
+            pytest.skip(reason=f'Test needs VTK version > {_min}, current is {curr_version}.')
+
+        if _min is None and curr_version > _max:
+            pytest.skip(reason=f'Test needs VTK version < {_max}, current is {curr_version}.')
+
+        if _min is not None and _max is not None:
+            if _min > _max:
+                msg = 'Cannot specify a minimum version greater than the maximum one.'
+                raise ValueError(msg)
+
+            if curr_version < _min or curr_version > _max:
+                pytest.skip(
+                    reason=f'Test needs {_min} < VTK version < {_max}, current is {curr_version}.'
+                )
 
     if item_mark := item.get_closest_marker('skip_egl'):
         sig = Signature(
