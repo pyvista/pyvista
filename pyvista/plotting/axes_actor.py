@@ -7,7 +7,7 @@ from enum import Enum
 import warnings
 
 import pyvista
-from pyvista import BoundsTuple
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk
@@ -104,7 +104,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
         Returns
         -------
-        BoundsLike
+        BoundsTuple
             Bounding box.
             The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
