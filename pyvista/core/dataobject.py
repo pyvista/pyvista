@@ -406,14 +406,7 @@ class DataObject(_vtk.vtkPyVistaOverride):
         else:
             equal_attrs = ['points', 'cells']
             if isinstance(self, pyvista.PolyData):
-                equal_attrs.extend(
-                    [
-                        'verts',  # DataObject
-                        'lines',  # DataObject
-                        'faces',  # DataObject
-                        'strips',  # PolyData
-                    ]
-                )
+                equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
             elif isinstance(self, pyvista.UnstructuredGrid):
                 equal_attrs.append('celltypes')
 
