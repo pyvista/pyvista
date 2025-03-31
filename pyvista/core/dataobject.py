@@ -208,7 +208,8 @@ class DataObject(_vtk.vtkPyVistaOverride):
         file_ext = file_path.suffix
 
         if file_ext == '.vtkhdf' and binary is False:
-            raise ValueError('.vtkhdf files can only be written in binary format.')
+            msg = '.vtkhdf files can only be written in binary format.'
+            raise ValueError(msg)
 
         # store complex and bitarray types as field data
         self._store_metadata()
