@@ -24,18 +24,18 @@ def cube_faces_source():
     return pv.CubeFacesSource()
 
 
+@pytest.mark.needs_vtk_version(max=(9, 3))
 def test_capsule_source():
-    if pv.vtk_version_info < (9, 3):
-        algo = pv.CapsuleSource()
-        assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-        assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
-        assert algo.radius == 0.5
-        assert algo.cylinder_length == 1.0
-        assert algo.theta_resolution == 30
-        assert algo.phi_resolution == 30
-        direction = np.random.default_rng().random(3)
-        algo.direction = direction
-        assert np.array_equal(algo.direction, direction)
+    algo = pv.CapsuleSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+    assert algo.radius == 0.5
+    assert algo.cylinder_length == 1.0
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    direction = np.random.default_rng().random(3)
+    algo.direction = direction
+    assert np.array_equal(algo.direction, direction)
 
 
 def test_cone_source():

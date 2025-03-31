@@ -111,8 +111,8 @@ def test_axis_minor_tick_visibility(cube_axes_actor):
     assert cube_axes_actor.z_axis_minor_tick_visibility is False
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info >= (9, 3),
+@pytest.mark.needs_vtk_version(
+    max=(9, 3, 0),
     reason='title offset is a tuple of floats from vtk >= 9.3',
 )
 def test_title_offset(cube_axes_actor):
