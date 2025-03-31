@@ -3566,7 +3566,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             for i in range(6 if low_res.cube_map else 1):
                 low_res.SetInputDataObject(
-                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(0.25)
+                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(0.1)
                 )
 
             self.SetEnvironmentTexture(low_res, is_srgb)
