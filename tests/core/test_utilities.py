@@ -2090,10 +2090,16 @@ def test_vtk_verbosity_invalid_input(value):
 
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute():
-    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
-    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
-
     assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
     assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
 
-    assert not _vtk.is_vtk_attribute(object, 'foo')
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+
+    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+
+
+@pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute_input_type(obj):
+    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
