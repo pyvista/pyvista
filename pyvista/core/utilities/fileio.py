@@ -43,7 +43,12 @@ if TYPE_CHECKING:
 PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
 if TYPE_CHECKING:  # pragma: no cover
-    _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter, _vtk.vtkHDFWriter]
+    _VTKWriterAlias = Union[
+        _vtk.vtkXMLPartitionedDataSetWriter,
+        _vtk.vtkXMLWriter,
+        _vtk.vtkDataWriter,
+        _vtk.vtkHDFWriter,
+    ]
     _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')

@@ -42,7 +42,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
         # If VTK 9.4 or newer, then VTK must also be >9.1, and therefore _WRITERS is already initialized
-        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})  # type: ignore[dict-item]
+        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
