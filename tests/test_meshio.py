@@ -107,7 +107,17 @@ polyhedron = meshio.Mesh(
         ),
     ],
 )
-meshes = [beam, airplane, uniform, uniform2d, mesh2d, cow]
+meshes = [
+    beam,
+    airplane,
+    uniform,
+    uniform2d,
+    mesh2d,
+    cow,
+    empty,
+    points_only,
+    mixed_quad_pixel_voxel,
+]
 
 if pv.vtk_version_info < (9, 4):
     meshes.append(polyhedron)
