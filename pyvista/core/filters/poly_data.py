@@ -93,9 +93,7 @@ class PolyDataFilters(DataSetFilters):
         """Perform boolean operation."""
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
             msg = 'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.'
-            raise ValueError(
-                msg,
-            )
+            raise ValueError(msg)
         if not isinstance(other_mesh, pyvista.PolyData):
             msg = 'Input mesh must be PolyData.'
             raise TypeError(msg)
