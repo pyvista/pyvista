@@ -2073,10 +2073,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of faces.
 
         """
-        # Suppress VTK deprecation warning
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            return convert_array(self.GetFaces())
+        return convert_array(self.GetFaces())
 
     @property
     def polyhedron_faces(self) -> NumpyArray[int]:
@@ -2112,10 +2109,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             Array of face locations.
 
         """
-        # Suppress VTK deprecation warning
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
-            return convert_array(self.GetFaceLocations())
+        return convert_array(self.GetFaceLocations())
 
     @property
     def polyhedron_face_locations(self) -> NumpyArray[int]:

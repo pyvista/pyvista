@@ -16,7 +16,6 @@ import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
-from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
 @pytest.fixture
@@ -541,7 +540,7 @@ def test_anti_aliasing(default_theme):
         default_theme.anti_aliasing = 42
 
 
-@pytest.mark.skipif(uses_egl(), reason='Requires non-OSMesa/EGL VTK build.')
+@pytest.mark.skip_egl('Requires non-OSMesa/EGL VTK build.')
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'

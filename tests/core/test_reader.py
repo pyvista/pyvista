@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import pickle
 import re
@@ -26,9 +25,6 @@ try:
     import imageio
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
-
-
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
 def test_read_raises():
@@ -568,7 +564,7 @@ def test_pvdreader_no_time_group():
         assert dataset.part == i
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.

@@ -1073,13 +1073,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    polyhedral_cells = mesh.faces
-
-    if polyhedral_cells is not None and pyvista.vtk_version_info >= (9, 4):
-        msg = 'We have not yet implemented polyhedral cells for VTK 9.4+'
-        raise VTKVersionError(msg)
-    elif polyhedral_cells is not None:
+    if pyvista.vtk_version_info >= (9, 4):
+        polyhedral_cells = mesh.polyhedron_faces
+        if polyhedral_cells is None:
+            msg = 'We have not yet implemented polyhedral cells for VTK 9.4+'
+            raise VTKVersionError(msg)
+        locations = mesh.polyhedron_face_locations
+    else:
+        polyhedral_cells = mesh.faces
         locations = mesh.face_locations
+
+    if polyhedral_cells is not None:
         polyhedral_cell_faces = []
 
         for location in locations:

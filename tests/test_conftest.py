@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import os
 import re
+from typing import TYPE_CHECKING
 
 import pytest
+from pytest_cases import parametrize
 
 import pyvista
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 pytest_plugins = 'pytester'
 
@@ -36,7 +42,7 @@ class RunResultsReport:
     passed = _ReportDescriptor()
     skipped = _ReportDescriptor()
     failed = _ReportDescriptor()
-    errors = _ReportDescriptor()
+    error = _ReportDescriptor()
     xpassed = _ReportDescriptor()
     xfailed = _ReportDescriptor()
 
@@ -224,3 +230,183 @@ def test_needs_vtk_version(
 
     if version == (9, 0):
         results.stdout.re_match_lines([r'SKIPPED.*Test needs VTK 9.1 or newer'])
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='Needs Windows platform to run')
+def test_skip_windows(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.skip_windows
+    def test_skipped():
+        ...
+
+    def test_not_skipped():
+        ...
+
+    @pytest.mark.skip_windows(foo=1)
+    def test_skipped_wrong():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(skipped=1, passed=1, errors=1)
+    results.stdout.re_match_lines(
+        [
+            r'.*Marker `skip_windows` called with incorrect arguments\.',
+            r".*Signature should be: @pytest\.mark\.skip_windows\(reason: str = 'Test fails on Windows'\)",
+        ]
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_not_skipped' in report.passed
+    assert 'test_skipped' in report.skipped
+    assert 'test_skipped_wrong' in report.error
+
+
+@pytest.fixture
+def _patch_uses_egl(mocker: MockerFixture):
+    from pyvista.plotting.utilities import gl_checks
+
+    m = mocker.patch.object(gl_checks, 'uses_egl')
+    m.return_value = True
+
+
+@pytest.mark.usefixtures('_patch_uses_egl')
+def test_skip_egl(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.skip_egl
+    def test_skipped():
+        ...
+
+    @pytest.mark.skip_egl(reason="foo")
+    def test_skipped_message():
+        ...
+
+    @pytest.mark.skip_egl("bar")
+    def test_skipped_message_args():
+        ...
+
+    def test_not_skipped():
+        ...
+
+    @pytest.mark.skip_egl(foo=1)
+    def test_skipped_wrong():
+        ...
+
+    """
+
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.stdout.re_match_lines(
+        [
+            r'.*Marker `skip_egl` called with incorrect arguments\.',
+            r'.*Signature should be: @pytest\.mark\.skip_egl\(reason.*\)',
+        ]
+    )
+
+    results.assert_outcomes(
+        skipped=3,
+        passed=1,
+        errors=1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_not_skipped' in report.passed
+    assert 'test_skipped' in report.skipped
+    assert 'test_skipped_message_args' in report.skipped
+    assert 'test_skipped_message' in report.skipped
+    assert 'test_skipped_wrong' in report.error
+
+
+@pytest.fixture
+def _patch_mac_system(mocker: MockerFixture):
+    import platform
+
+    m = mocker.patch.object(platform, 'system')
+    m.return_value = 'Darwin'
+
+
+@pytest.mark.usefixtures('_patch_mac_system')
+@parametrize(processor=['foo', None], machine=['bar', None])
+def test_skip_mac(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+    mocker: MockerFixture,
+    processor: str | None,
+    machine: str | None,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.skip_mac
+    def test_skipped():
+        ...
+
+    def test_not_skipped():
+        ...
+
+    @pytest.mark.skip_mac(foo=1)
+    def test_skipped_wrong():
+        ...
+
+    @pytest.mark.skip_mac(processor="foo", machine="bar")
+    def test_skipped_platform_machine():
+        ...
+
+    """
+
+    import platform
+
+    m = mocker.patch.object(platform, 'processor')
+    m.return_value = processor
+
+    m = mocker.patch.object(platform, 'machine')
+    m.return_value = machine
+
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.stdout.re_match_lines(
+        [
+            r'.*Marker `skip_mac` called with incorrect arguments\.',
+            r'.*Signature should be: @pytest\.mark\.skip_mac\(reason.*processor.*machine.*\)',
+        ]
+    )
+
+    skipped = 1
+    skipped += 1 if (processor is not None and machine is not None) else 0
+
+    passed = 2
+    passed -= 1 if (processor is not None and machine is not None) else 0
+
+    results.assert_outcomes(
+        skipped=skipped,
+        passed=passed,
+        errors=1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_not_skipped' in report.passed
+    assert 'test_skipped' in report.skipped
+    assert 'test_skipped_wrong' in report.error
+    if processor is not None and machine is not None:
+        assert 'test_skipped_platform_machine' in report.skipped
+    else:
+        assert 'test_skipped_platform_machine' in report.passed
