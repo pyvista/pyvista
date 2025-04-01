@@ -3191,7 +3191,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
     multiblock_poly[:2].plot(preference='cell')
 
 
-@pytest.mark.skip_windows  # because of opacity
+@pytest.mark.skip_windows('Test fails on Windows because of opacity')
 @skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
