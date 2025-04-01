@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import platform
-
 import numpy as np
 import pytest
 import scipy
@@ -13,11 +11,6 @@ from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
-
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
 
 
 @pytest.fixture
@@ -149,7 +142,7 @@ def test_actor_mblock_copy_shallow(actor_from_multi_block):
     assert actor_copy.mapper.dataset is actor_from_multi_block.mapper.dataset
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_actor_texture(actor):
     texture = examples.download_masonry_texture()
     actor.texture = texture
