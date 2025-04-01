@@ -589,7 +589,6 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-
 if TYPE_CHECKING:
     from typing import Literal
 
