@@ -3512,7 +3512,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture, is_srgb=False) -> None:
+    def set_environment_texture(
+        self, texture, is_srgb=False, resample: bool | float = False
+    ) -> None:
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
@@ -3531,6 +3533,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
 
+        resample : bool | float, default: False
+            Resample the environment texture. Set this to a float to set the
+            sampling rate explicitly or set to ``True`` to downsample the
+            texture to 1/10th of its original resolution. Downsampling the
+            texture can substantially improve performance for some environments
+            (e.g. headless setups or with if GPU support is limited).
+
+            .. note::
+
+                This will resample the texture used for image-based lighting only,
+                e.g. the texture used for rendering reflective surfaces. It
+                does `not` resample the background texture.
+
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
@@ -3543,7 +3558,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
         >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
-        >>> pl.set_environment_texture(cubemap)
+        >>> pl.set_environment_texture(cubemap, resample=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
@@ -3556,20 +3571,23 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        # if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
-        if True:
-            # Down-sample texture when building documentation
-            low_res = pyvista.Texture()  # type: ignore[abstract]
-            low_res.cube_map = texture.cube_map
-            low_res.SetMipmap(texture.GetMipmap())
-            low_res.SetInterpolate(texture.GetInterpolate())
+        if resample:
+            resample = 0.1 if resample is True else resample
 
-            for i in range(6 if low_res.cube_map else 1):
-                low_res.SetInputDataObject(
-                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(0.1)
+            # Copy the texture
+            # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
+            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy.cube_map = texture.cube_map
+            texture_copy.SetMipmap(texture.GetMipmap())
+            texture_copy.SetInterpolate(texture.GetInterpolate())
+
+            # Resample the texture's images
+            for i in range(6 if texture_copy.cube_map else 1):
+                texture_copy.SetInputDataObject(
+                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
                 )
+            self.SetEnvironmentTexture(texture_copy, is_srgb)
 
-            self.SetEnvironmentTexture(low_res, is_srgb)
         self.SetBackgroundTexture(texture)
         self.Modified()
 
