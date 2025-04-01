@@ -274,7 +274,7 @@ def test_pbr(sphere, verify_image_cache):
     texture = examples.load_globe_texture()
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
+    pl.set_environment_texture(texture, resample=True)
     pl.add_light(pv.Light())
     pl.add_mesh(
         sphere,
@@ -322,7 +322,7 @@ def test_remove_environment_texture_cubemap(sphere):
     texture = examples.download_sky_box_cube_map()
 
     pl = pv.Plotter()
-    pl.set_environment_texture(texture)
+    pl.set_environment_texture(texture, resample=True)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
     pl.remove_environment_texture()
     pl.show()
