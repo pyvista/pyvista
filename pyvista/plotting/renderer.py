@@ -3559,7 +3559,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # if os.environ.get('PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'):
         if True:
             # Down-sample texture when building documentation
-            low_res = pyvista.Texture()
+            low_res = pyvista.Texture()  # type: ignore[abstract]
             low_res.cube_map = texture.cube_map
             low_res.SetMipmap(texture.GetMipmap())
             low_res.SetInterpolate(texture.GetInterpolate())
@@ -3591,7 +3591,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.UseImageBasedLightingOff()
         self.SetEnvironmentTexture(None)
-        self.SetBackgroundTexture(None)
+        self.SetBackgroundTexture(None)  # type: ignore[arg-type]
         self.Modified()
 
     def close(self) -> None:
