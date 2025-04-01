@@ -23,7 +23,7 @@ ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
 
 
 @flaky_test(exceptions=(AssertionError,))
-@pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
+@pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
 def test_tinypages(tmp_path, ename, evalue):
