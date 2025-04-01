@@ -43,7 +43,7 @@ The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
         Whether to display the source code. The default can be changed
-        using the ``plot_include_source`` variable in :file:`conf.py`.
+        using the ``pyvista_plot_include_source`` variable in :file:`conf.py`.
 
     encoding : str
         If this source file is in a non-UTF8 or non-ASCII encoding, the
@@ -88,31 +88,31 @@ include *alt*, *height*, *width*, *scale*, *align*.
 **Configuration options**
 The plot directive has the following configuration options:
 
-    plot_include_source : bool, default: True
+    pyvista_plot_include_source : bool, default: True
         Default value for the ``include-source`` directive option.
         Default is ``True``.
 
-    plot_basedir : str
+    pyvista_plot_basedir : str
         Base directory, to which ``plot::`` file names are relative
         to.  If ``None`` or unset, file names are relative to the
         directory where the file containing the directive is.
 
-    plot_html_show_formats : bool, default: True
+    pyvista_plot_html_show_formats : bool, default: True
         Whether to show links to the files in HTML. Default ``True``.
 
-    plot_template : str
+    pyvista_plot_template : str
         Provide a customized Jinja2 template for preparing restructured text.
 
-    plot_setup : str
+    pyvista_plot_setup : str
         Python code to be run before every plot directive block.
 
-    plot_cleanup : str
+    pyvista_plot_cleanup : str
         Python code to be run after every plot directive block.
 
-    plot_skip : bool, default: False
+    pyvista_plot_skip : bool, default: False
         Default value for the ``skip`` directive option.
 
-    plot_skip_optional : bool, default: False
+    pyvista_plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
 These options can be set by defining global variables of the same name in
@@ -221,14 +221,14 @@ def setup(app):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
-    app.add_config_value('plot_include_source', True, False)
-    app.add_config_value('plot_basedir', None, True)
-    app.add_config_value('plot_html_show_formats', True, True)
-    app.add_config_value('plot_template', None, True)
-    app.add_config_value('plot_setup', None, True)
-    app.add_config_value('plot_cleanup', None, True)
-    app.add_config_value(name='plot_skip', default=False, rebuild='html')
-    app.add_config_value(name='plot_skip_optional', default=False, rebuild='html')
+    app.add_config_value('pyvista_plot_include_source', True, False)
+    app.add_config_value('pyvista_plot_basedir', None, True)
+    app.add_config_value('pyvista_plot_html_show_formats', True, True)
+    app.add_config_value('pyvista_plot_template', None, True)
+    app.add_config_value('pyvista_plot_setup', None, True)
+    app.add_config_value('pyvista_plot_cleanup', None, True)
+    app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
     return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
@@ -435,8 +435,8 @@ def render_figures(
     ns = plot_context if context else {}
 
     # Check for setup and teardown code for plots
-    code_setup = config.plot_setup
-    code_cleanup = config.plot_cleanup
+    code_setup = config.pyvista_plot_setup
+    code_cleanup = config.pyvista_plot_cleanup
 
     if code_setup:
         _run_code(code_setup, code_path, ns, function_name)
@@ -494,10 +494,10 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     default_fmt = 'png'
 
-    options.setdefault('include-source', config.plot_include_source)
-    options.setdefault('skip', config.plot_skip)
+    options.setdefault('include-source', config.pyvista_plot_include_source)
+    options.setdefault('skip', config.pyvista_plot_skip)
 
-    skip = options['skip'] or (optional and config.plot_skip_optional)
+    skip = options['skip'] or (optional and config.pyvista_plot_skip_optional)
 
     keep_context = 'context' in options
     _ = None if not keep_context else options['context']
@@ -506,11 +506,11 @@ def run(arguments, content, options, state_machine, state, lineno):
     rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
-        if not config.plot_basedir:
+        if not config.pyvista_plot_basedir:
             source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
             source_file_name = str(
-                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0]),
+                Path(setup.confdir) / config.pyvista_plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -532,8 +532,8 @@ def run(arguments, content, options, state_machine, state, lineno):
     else:
         source_file_name = rst_file
         code = textwrap.dedent('\n'.join(map(str, content)))
-        counter = document.attributes.get('_plot_counter', 0) + 1
-        document.attributes['_plot_counter'] = counter
+        counter = document.attributes.get('_pyvista_plot_counter', 0) + 1
+        document.attributes['_pyvista_plot_counter'] = counter
         base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
         output_base = f'{base}-{counter}.py'
         function_name = None
@@ -558,7 +558,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
+    build_dir = str(Path(setup.app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -636,7 +636,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             if key in ('alt', 'height', 'width', 'scale', 'align')
         ]
 
-        result = jinja2.Template(config.plot_template or TEMPLATE).render(
+        result = jinja2.Template(config.pyvista_plot_template or TEMPLATE).render(
             default_fmt=default_fmt,
             dest_dir=dest_dir_link,
             build_dir=build_dir_link,
@@ -645,7 +645,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             options=opts,
             images=images,
             source_code=source_code,
-            html_show_formats=config.plot_html_show_formats and len(images),
+            html_show_formats=config.pyvista_plot_html_show_formats and len(images),
             caption=caption,
         )
 
