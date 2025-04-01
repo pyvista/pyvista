@@ -405,3 +405,7 @@ def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
         assert isinstance(actual, np.ndarray)
         assert actual.dtype == int
         assert np.array_equal(actual, expected)
+
+        with pytest.warns(DeprecationWarning):
+            # Test deprecation warning is emitted by VTK
+            getattr(mesh, attr.split('polyhedron_')[1])
