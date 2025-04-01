@@ -14,7 +14,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5

@@ -37,9 +37,41 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import TransformLike
     from pyvista import VectorLike
-    from pyvista.core._typing_core import ConcreteDataSetType
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
-    from pyvista.core.pyvista_ndarray import pyvista_ndarray
+    from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import _DataSetOrMultiBlockType
+    from pyvista.core._typing_core import _DataSetType
+
+
+_CellQualityLiteral = Literal[
+    'area',
+    'aspect_frobenius',
+    'aspect_gamma',
+    'aspect_ratio',
+    'collapse_ratio',
+    'condition',
+    'diagonal',
+    'dimension',
+    'distortion',
+    'jacobian',
+    'max_angle',
+    'max_aspect_frobenius',
+    'max_edge_ratio',
+    'med_aspect_frobenius',
+    'min_angle',
+    'oddy',
+    'radius_ratio',
+    'relative_size_squared',
+    'scaled_jacobian',
+    'shape',
+    'shape_and_size',
+    'shear',
+    'shear_and_size',
+    'skew',
+    'stretch',
+    'taper',
+    'volume',
+    'warpage',
+]
 
 
 class DataObjectFilters:
@@ -47,8 +79,24 @@ class DataObjectFilters:
 
     points: pyvista_ndarray
 
-    def transform(
-        self: ConcreteDataSetType | MultiBlock,
+    @overload
+    def transform(  # type: ignore[misc]
+        self: RectilinearGrid,
+        trans: TransformLike,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool | None = ...,
+        progress_bar: bool = ...,
+    ) -> StructuredGrid: ...
+    @overload
+    def transform(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        trans: TransformLike,
+        transform_all_input_vectors: bool = ...,
+        inplace: bool | None = ...,
+        progress_bar: bool = ...,
+    ) -> _DataSetOrMultiBlockType: ...
+    def transform(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,

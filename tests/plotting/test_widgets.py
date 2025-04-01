@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import re
 from typing import TYPE_CHECKING
 from typing import Literal
 from unittest.mock import ANY
