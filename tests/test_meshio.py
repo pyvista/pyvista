@@ -113,7 +113,6 @@ meshes = [
     uniform,
     uniform2d,
     mesh2d,
-    polyhedron,
     cow,
     empty,
     points_only,
