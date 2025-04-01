@@ -26,11 +26,10 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
             try:
                 issubclass(module_attr, object)
             except TypeError:
-                continue  # not a class
-            if issubclass(module_attr, (_vtk.vtkTextActor, _vtk.vtkCornerAnnotation)):
-                return  # Skip these classes
-            if hasattr(module_attr, attr):
-                class_types.append(module_attr)
+                pass  # not a class
+            else:
+                if hasattr(module_attr, attr):
+                    class_types.append(module_attr)
 
     # Get from core and plotting separately since plotting module has a lazy importer
     _get_classes_from_module(pv.core)
@@ -83,6 +82,9 @@ def get_property_return_type(prop: property):
 
 
 def test_bounds_tuple(class_with_bounds):
+    if _vtk.is_vtk_attribute(class_with_bounds, 'bounds'):
+        pytest.skip('bounds is defined by vtk, not pyvista.')
+
     # Define kwargs as required for some cases.
     kwargs = {}
     if class_with_bounds is pv.CubeAxesActor:
@@ -104,6 +106,9 @@ def test_bounds_tuple(class_with_bounds):
 
 
 def test_center_tuple(class_with_center):
+    if _vtk.is_vtk_attribute(class_with_center, 'center'):
+        pytest.skip('center is defined by vtk, not pyvista.')
+
     # Define kwargs as required for some cases.
     kwargs = {}
     if class_with_center is pv.CubeAxesActor:
