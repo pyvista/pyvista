@@ -26,11 +26,10 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
             try:
                 issubclass(module_attr, object)
             except TypeError:
-                continue  # not a class
-            if issubclass(module_attr, (_vtk.vtkTextActor, _vtk.vtkCornerAnnotation)):
-                return  # Skip these classes
-            if hasattr(module_attr, attr):
-                class_types.append(module_attr)
+                pass  # not a class
+            else:
+                if hasattr(module_attr, attr):
+                    class_types.append(module_attr)
 
     # Get from core and plotting separately since plotting module has a lazy importer
     _get_classes_from_module(pv.core)

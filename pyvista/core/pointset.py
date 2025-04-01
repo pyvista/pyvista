@@ -242,7 +242,7 @@ class _PointSet(DataSet):
         )
 
 
-class PointSet(_PointSet, _vtk.vtkPointSet):  # type: ignore[misc]
+class PointSet(_PointSet, _vtk.vtkPointSet):
     """Concrete class for storing a set of points.
 
     This is a concrete class representing a set of points that specifies the
@@ -508,7 +508,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):  # type: ignore[misc]
         raise PointSetCellOperationError
 
 
-class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):  # type: ignore[misc]
+class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
@@ -1748,7 +1748,7 @@ class PointGrid(_PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
-class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):  # type: ignore[misc]
+class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
     Can be initialized by the following:
@@ -2391,7 +2391,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return grid
 
 
-class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):  # type: ignore[misc]
+class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -2654,15 +2654,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid): 
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
 
-    @property
-    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Do not use.
-
-        VTK 9.4 is now returning the vtkStructuredCellArray but this
-        instance is not usable. For now, we just return an empty array.
-        """
-        return np.array([], dtype=int)
-
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = PointGrid._get_attrs(self)
@@ -2838,7 +2829,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid): 
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):  # type: ignore[misc]
+class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     """Extend the functionality of the ``vtk.vtkExplicitStructuredGrid`` class.
 
     Can be initialized by the following:

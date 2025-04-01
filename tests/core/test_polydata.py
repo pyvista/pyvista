@@ -1159,10 +1159,6 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info >= (9, 4, 0),
-    reason='Something has changed in VTK 9.4.0 that causes this test to fail',
-)
 def test_flip_normals(sphere):
     with pytest.warns(PyVistaDeprecationWarning):
         sphere.flip_normals()
