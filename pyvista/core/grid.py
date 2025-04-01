@@ -844,7 +844,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self.SetSpacing(*spacing_)
         self.Modified()
 
-    def _get_attrs(self):
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
         fmt = '{}, {}, {}'.format(*[pyvista.FLOAT_FORMAT] * 3)

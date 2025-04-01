@@ -37,9 +37,9 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import TransformLike
     from pyvista import VectorLike
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
-    from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 
 _CellQualityLiteral = Literal[

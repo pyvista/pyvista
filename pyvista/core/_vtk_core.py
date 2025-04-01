@@ -589,29 +589,22 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
+
 if TYPE_CHECKING:
     from typing import Literal
 
-class vtkPyVistaOverride:
-    """Base class to automatically override VTK classes with PyVista classes."""
+    _VerbosityOptions = (
+        Literal[
+            'off',
+            'error',
+            'warning',
+            'info',
+            'max',
+        ]
+        | int
+        | vtkLogger.Verbosity
+    )
 
-    def __init_subclass__(cls, **kwargs):
-        if vtk_version_info >= (9, 4):
-            # Check for VTK base classes and call the override method
-            for base in cls.__bases__:
-                if (
-                    hasattr(base, '__module__')
-                    and base.__module__.startswith('vtkmodules.')
-                    and hasattr(base, 'override')
-                ):
-                    # For now, just remove any overrides for these classes
-                    # There are clear issues with the current implementation
-                    # of overriding these classes upstream and until they are
-                    # resolved, we will entirely remove the overrides.
-                    # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
-                    # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
-                    base.override(None)
-                    break
 
 class _VTKVerbosity(contextlib.AbstractContextManager[None]):
     """Context manager to set VTK verbosity level.
