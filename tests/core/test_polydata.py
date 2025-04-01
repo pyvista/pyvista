@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
@@ -1158,13 +1159,9 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info >= (9, 4, 0),
-    reason='Something has changed in VTK 9.4.0 that causes this test to fail',
-)
-def test_flip_normals(sphere, plane):
-    sphere_flipped = sphere.copy()
-    sphere_flipped.flip_normals()
+def test_flip_normals(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        sphere.flip_normals()
 
 
 @pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
