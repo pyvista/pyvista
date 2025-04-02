@@ -83,7 +83,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
       - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
       - uses: pyvista/setup-headless-display-action@main
         with:
@@ -114,7 +114,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
         run: pip install -ve . # pyvista
