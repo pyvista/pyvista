@@ -10,6 +10,7 @@ import pickle
 import platform
 import re
 import shutil
+import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -2089,6 +2090,7 @@ def test_vtk_verbosity_invalid_input(value):
 T = TypeVar('T')
 
 
+@pytest.mark.skipif(sys.version_info <= (3, 10), reason='Test requires unpacking a type arg.')
 @pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int, float]]])
 def test_state_manager_invalid_type_arg(arg):
     if isinstance(arg, Iterable):
