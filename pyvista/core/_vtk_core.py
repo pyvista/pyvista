@@ -618,12 +618,14 @@ class _StateContextManager(contextlib.AbstractContextManager[None], Generic[T], 
         self._valid_states = self.get_literal_args()
         self._original_state: T | None = None
 
+    @property
     @abstractmethod
-    def _get_state(self) -> T:
+    def _state(self) -> T:
         """Get the current global state."""
 
+    @_state.setter
     @abstractmethod
-    def _set_state(self, state: T) -> None:
+    def _state(self, state: T) -> None:
         """Set the global state."""
 
     @final
@@ -641,20 +643,20 @@ class _StateContextManager(contextlib.AbstractContextManager[None], Generic[T], 
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context manager and restore original state."""
-        self._set_state(cast(T, self._original_state))
+        self._state = cast(T, self._original_state)
         self._original_state = None  # Reset
 
     def __call__(self, state: T | None = None):
         """Call the context manager."""
         if state is None:
-            return self._get_state()
+            return self._state
 
         self._validate_state(state)
 
         # Create new instance and store the local state to be restored when exiting
         output = self.__class__()
-        output._original_state = self._get_state()
-        output._set_state(state)
+        output._original_state = self._state
+        output._state = state
         return output
 
 
@@ -720,7 +722,8 @@ class _VTKVerbosity(_StateContextManager[_VerbosityOptions]):
 
     """
 
-    def _get_state(self) -> _VerbosityOptions:
+    @property
+    def _state(self) -> _VerbosityOptions:
         int_to_string: dict[int, _VerbosityOptions] = {
             -9: 'off',
             -2: 'error',
@@ -736,7 +739,8 @@ class _VTKVerbosity(_StateContextManager[_VerbosityOptions]):
             msg = 'This line should not be reachable.'  # pragma: no cover
             raise RuntimeWarning(msg)  # pragma: no cover
 
-    def _set_state(self, state: _VerbosityOptions):
+    @_state.setter
+    def _state(self, state: _VerbosityOptions):
         verbosity_str = self._validate_state(state)
         verbosity_int = vtkLogger.ConvertToVerbosity(verbosity_str.upper())
         vtkLogger.SetStderrVerbosity(verbosity_int)
