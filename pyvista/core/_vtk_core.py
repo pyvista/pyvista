@@ -13,6 +13,7 @@ import contextlib
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 from typing import cast
+from typing import get_args
 import warnings
 
 if TYPE_CHECKING:
@@ -594,21 +595,65 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-if TYPE_CHECKING:
-    _VerbosityOptions = (
-        Literal[
-            'off',
-            'error',
-            'warning',
-            'info',
-            'max',
-        ]
-        | int
-        | vtkLogger.Verbosity
-    )
+
+from abc import ABC
+from abc import abstractmethod
+import contextlib
+from typing import Generic
+from typing import Literal
+from typing import TypeVar
+
+T = TypeVar('T')
 
 
-class _VTKVerbosity(contextlib.AbstractContextManager[None]):
+class _StateContextManagerBase(contextlib.AbstractContextManager[None], Generic[T], ABC):
+    """Abstract base class for managing a global state variable."""
+
+    def __init__(self):
+        """Initialize context manager."""
+        self._original_state: T | None = None
+
+    @abstractmethod
+    def _get_state(self) -> T:
+        """Get the current global state."""
+
+    @abstractmethod
+    def _set_state(self, state: T) -> None:
+        """Set the global state."""
+
+    def __enter__(self):
+        """Enter context manager."""
+        if self._original_state is None:
+            msg = 'State must be set before using it as a context manager.'
+            raise ValueError(msg)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit context manager and restore original state."""
+        self._set_state(cast(T, self._original_state))
+        self._original_state = None  # Reset
+
+    def __call__(self, state: T | None = None):
+        """Call the context manager."""
+        if state is None:
+            return self._get_state()
+
+        # Create new instance and store the local state to be restored when exiting
+        output = self.__class__()
+        output._original_state = self._get_state()
+        output._set_state(state)
+        return output
+
+
+_VerbosityOptions = Literal[
+    'off',
+    'error',
+    'warning',
+    'info',
+    'max',
+]
+
+
+class _VTKVerbosity(_StateContextManagerBase[_VerbosityOptions]):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
@@ -664,88 +709,115 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
 
     """
 
-    @staticmethod
-    def _validate_verbosity(
-        verbosity: _VerbosityOptions,
-    ) -> vtkLogger.Verbosity:
-        if isinstance(verbosity, vtkLogger.Verbosity):
-            return verbosity
-        else:
-            try:
-                logger_verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
-                if logger_verbosity == vtkLogger.VERBOSITY_INVALID:
-                    raise AttributeError
-                else:
-                    return logger_verbosity
-            except AttributeError:
-                msg = (
-                    f"Invalid verbosity name '{verbosity}', must be one of:\n"
-                    f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
-                )
-                raise ValueError(msg)
-
-    @property
-    def _verbosity(self):
-        return vtkLogger.GetCurrentVerbosityCutoff()
-
-    @_verbosity.setter
-    def _verbosity(self, verbosity: _VerbosityOptions):
-        vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
-
-    @property
-    def _verbosity_string(self):
-        to_string = {
-            -10: 'invalid',
+    def _get_state(self) -> _VerbosityOptions:
+        int_to_string: dict[int, _VerbosityOptions] = {
             -9: 'off',
             -2: 'error',
             -1: 'warning',
             0: 'info',
-            1: '1',
-            2: '2',
-            3: '3',
-            4: '4',
-            5: '5',
-            6: '6',
-            7: '7',
-            8: '8',
             9: 'max',
         }
-        return to_string[self._verbosity]
+        state = vtkLogger.GetCurrentVerbosityCutoff()
+        try:
+            return int_to_string[vtkLogger.GetCurrentVerbosityCutoff()]
+        except KeyError:
+            _VTKVerbosity._validate_verbosity(state)
+            msg = 'This line should not be reachable.'
+            raise RuntimeWarning(msg)  # pragma: no cover
 
-    def __init__(self):
-        """Initialize context manager."""
-        self._original_verbosity = None
+    def _set_state(self, state: _VerbosityOptions):
+        verbosity_str = _VTKVerbosity._validate_verbosity(state)
+        verbosity_int = vtkLogger.ConvertToVerbosity(verbosity_str.upper())
+        vtkLogger.SetStderrVerbosity(verbosity_int)
 
-    def __enter__(self):
-        """Enter context manager."""
-        if self._original_verbosity is None:
-            msg = (
-                'Verbosity must be set to a value to use it as a context manager.\n'
-                'Call `vtk_verbosity()` with an argument to set its value.'
-            )
-            raise ValueError(msg)
+    @staticmethod
+    def _validate_verbosity(verbosity):
+        from pyvista import _validation
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit context manager."""
-        # Restore the original verbosity level
-        self._verbosity = self._original_verbosity
-        self._original_verbosity = None  # Reset
-
-    def __call__(self, verbosity: _VerbosityOptions | None = None):
-        """Call the context manager."""
-        if verbosity is None:
-            # Get the verbosity
-            return self._verbosity_string
-
-        # Create new instance and store the local state
-        # to be restored when exiting context
-        output = _VTKVerbosity()
-        output._original_verbosity = output._verbosity
-        output._verbosity = verbosity
-        return output
+        _validation.check_contains(
+            get_args(_VerbosityOptions), must_contain=verbosity, name='verbosity'
+        )
+        return verbosity
 
 
 vtk_verbosity = _VTKVerbosity()
+
+
+_VtkSnakeCaseOptions = Literal[
+    'allow',
+    'warning',
+    'error',
+]
+
+
+class _vtkSnakeCase(_StateContextManagerBase[_VtkSnakeCaseOptions]):
+    """Context manager to control access to VTK's pythonic snake_case API.
+
+    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
+    of `GetOutputPort`. These can easily be confused for PyVista attributes
+    which also use a snake_case convention. This class controls access to vtk's
+    new interface.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    state : 'allow' | 'warning' | 'error'
+        Allow or disallow the use of VTK's pythonic snake_case API with
+        PyVista-wrapped VTK classes.
+
+        - 'allow': Allow accessing VTK-defined snake_case attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+          attributes.
+        - 'error': Raise a :class:`~pyvista.PyVistaAttributeError` when accessing
+          VTK-defined snake_case attributes.
+
+    Examples
+    --------
+    Get the current access state for VTK's snake_case api.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_snake_case()
+    'error'
+
+    The following will raise an error because the `information` property is defined
+    by `vtkDataObject` and is not part of PyVista's API.
+
+    >>> pv.PolyData().information  # doctest: +SKIP
+
+    Allow use of VTK's snake_case attributes. No warning or error is raised.
+
+    >>> _ = pv.vtk_snake_case('allow')
+    >>> pv.PolyData().information
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.vtk_snake_case('error')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.vtk_snake_case('allow'):
+    ...     _ = pv.PolyData().information
+
+    >>> pv.vtk_snake_case()
+    'error
+
+    """
+
+    def _get_state(self) -> _VtkSnakeCaseOptions:
+        import pyvista as pv
+
+        return pv._VTK_SNAKE_CASE_STATE
+
+    def _set_state(self, state: _VtkSnakeCaseOptions):
+        import pyvista as pv
+
+        pv._VTK_SNAKE_CASE_STATE = state
+
+
+vtk_snake_case = _vtkSnakeCase()
 
 
 class vtkPyVistaOverride:
@@ -817,110 +889,3 @@ class DisableVtkSnakeCase:
                     else:
                         raise RuntimeWarning(msg)
         return super().__getattribute__(attr)
-
-
-if TYPE_CHECKING:
-    _VtkSnakeCaseApiState = Literal[
-        'allow',
-        'warning',
-        'error',
-    ]
-
-
-class _vtkSnakeCase(contextlib.AbstractContextManager[None]):
-    """Context manager to control access to VTK's pythonic snake_case API.
-
-    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
-    of `GetOutputPort`. These can easily be confused for PyVista attributes
-    which also use a snake_case convention. This class controls access to vtk's
-    new interface.
-
-    .. versionadded:: 0.45
-
-    Parameters
-    ----------
-    state : 'allow' | 'warning' | 'error'
-        Allow or disallow the use of VTK's pythonic snake_case API with
-        PyVista-wrapped VTK classes.
-
-        - 'allow': Allow accessing VTK-defined snake_case attributes.
-        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
-          attributes.
-        - 'error': Raise a :class:`~pyvista.PyVistaAttributeError` when accessing
-          VTK-defined snake_case attributes.
-
-    Examples
-    --------
-    Get the current access state for VTK's snake_case api.
-
-    >>> import pyvista as pv
-    >>> pv.vtk_snake_case()
-    'error'
-
-    The following will raise an error because the `information` property is defined
-    by `vtkDataObject` and is not part of PyVista's API.
-
-    >>> pv.PolyData().information  # doctest: +SKIP
-
-    Allow use of VTK's snake_case attributes. No warning or error is raised.
-
-    >>> _ = pv.vtk_snake_case('allow')
-    >>> pv.PolyData().information
-
-    Note that this state is global and will persist between function calls. Set it
-    back to its original state explicitly.
-
-    >>> _ pv.vtk_snake_case('error')
-
-    Use it as a context manager instead. This way, the state is only temporarily
-    modified and is automatically restored.
-
-    >>> with pv.vtk_snake_case('allow'):
-    ...     _ = pv.PolyData().information
-
-    >>> pv.vtk_snake_case()
-    'error
-
-    """
-
-    def __init__(self):
-        """Initialize context manager."""
-        self._old_state: _VtkSnakeCaseApiState | None = None
-
-    def __enter__(self):
-        """Enter context manager."""
-        if self._old_state is None:
-            msg = (
-                'Verbosity must be set to a value to use it as a context manager.\n'
-                'Call `vtk_verbosity()` with an argument to set its value.'
-            )
-            raise ValueError(msg)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit context manager."""
-        # Restore the original verbosity level
-        import pyvista as pv
-
-        pv._VTK_SNAKE_CASE_STATE = cast(_VtkSnakeCaseApiState, self._old_state)
-        self._old_state = None  # Reset
-
-    def __call__(
-        self,
-        state: _VtkSnakeCaseApiState | None = None,
-    ):
-        """Call the context manager."""
-        import pyvista as pv
-
-        if state is None:
-            # Get the state
-            return pv._VTK_SNAKE_CASE_STATE
-
-        # Create new instance and store the local state
-        # to be restored when exiting context
-        output = _vtkSnakeCase()
-        output._old_state = pv._VTK_SNAKE_CASE_STATE
-        pv._VTK_SNAKE_CASE_STATE = state
-        return output
-
-
-vtk_snake_case = _vtkSnakeCase()

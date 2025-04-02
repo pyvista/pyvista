@@ -2016,20 +2016,15 @@ def modifies_verbosity():
 @pytest.mark.parametrize(
     'verbosity',
     [
-        'OFF',
         'off',
         'error',
         'warning',
         'info',
-        'trace',
         'max',
-        *range(10),
-        '0',
-        _vtk.vtkLogger.VERBOSITY_OFF,
     ],
 )
 def test_vtk_verbosity_context(verbosity):
-    initial_verbosity = vtk.vtkLogger.VERBOSITY_4
+    initial_verbosity = vtk.vtkLogger.VERBOSITY_OFF
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
     with pv.vtk_verbosity(verbosity):
         ...
@@ -2051,10 +2046,7 @@ def test_vtk_verbosity_nested_context():
 
 @pytest.mark.usefixtures('modifies_verbosity')
 def test_vtk_verbosity_no_context():
-    match = re.escape(
-        'Verbosity must be set to a value to use it as a context manager.\n'
-        'Call `vtk_verbosity()` with an argument to set its value.'
-    )
+    match = re.escape('State must be set before using it as a context manager.')
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity:
             ...
@@ -2070,19 +2062,16 @@ def test_vtk_verbosity_no_context():
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
-@pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
-def test_vtk_verbosity_set_get(verbosity):
+def test_vtk_verbosity_set_get():
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
-    pv.vtk_verbosity(verbosity)
+    pv.vtk_verbosity('off')
     assert pv.vtk_verbosity() == 'off'
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
 
 
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
-    match = re.escape(
-        "must be one of:\n'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
-    )
+    match = re.escape("verbosity must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
