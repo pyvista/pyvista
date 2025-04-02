@@ -28,7 +28,6 @@ import vtk
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._vtk_core import T
 from pyvista.core._vtk_core import _StateManager
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
@@ -2085,6 +2084,9 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+T = TypeVar('T')
 
 
 @pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int, float]]])
