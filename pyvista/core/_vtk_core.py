@@ -796,7 +796,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
     return cls is not None and cls.__module__.startswith('vtkmodules')
 
 
-class DisableSnakeCaseAPI:
+class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
     def __getattribute__(self, attr):

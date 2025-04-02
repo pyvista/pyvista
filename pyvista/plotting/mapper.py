@@ -27,7 +27,7 @@ from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
-class _BaseMapper(_vtk.DisableSnakeCaseAPI, _vtk.vtkAbstractMapper):
+class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
     _new_attr_exceptions = ('_theme',)

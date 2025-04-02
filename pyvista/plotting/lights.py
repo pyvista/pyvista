@@ -19,7 +19,7 @@ except ImportError:  # pragma: no cover
 from typing import TYPE_CHECKING
 
 from pyvista.core import _validation
-from pyvista.core._vtk_core import DisableSnakeCaseAPI
+from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
@@ -41,7 +41,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(DisableSnakeCaseAPI, vtkLight):
+class Light(DisableVtkSnakeCase, vtkLight):
     """Light class.
 
     Parameters
