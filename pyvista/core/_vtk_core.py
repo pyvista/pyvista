@@ -12,7 +12,12 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 from typing import NamedTuple
+from typing import cast
 import warnings
+
+if TYPE_CHECKING:
+    from typing import Literal
+
 
 from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
@@ -590,8 +595,6 @@ def VTKVersionInfo():
 vtk_version_info = VTKVersionInfo()
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     _VerbosityOptions = (
         Literal[
             'off',
@@ -882,7 +885,7 @@ class _vtkSnakeCase(contextlib.AbstractContextManager[None]):
 
     def __init__(self):
         """Initialize context manager."""
-        self._old_state = None
+        self._old_state: _VtkSnakeCaseApiState | None = None
 
     def __enter__(self):
         """Enter context manager."""
@@ -898,10 +901,13 @@ class _vtkSnakeCase(contextlib.AbstractContextManager[None]):
         # Restore the original verbosity level
         import pyvista as pv
 
-        pv._VTK_SNAKE_CASE_STATE = self._old_state
+        pv._VTK_SNAKE_CASE_STATE = cast(_VtkSnakeCaseApiState, self._old_state)
         self._old_state = None  # Reset
 
-    def __call__(self, state: _VtkSnakeCaseApiState | None = None):
+    def __call__(
+        self,
+        state: _VtkSnakeCaseApiState | None = None,
+    ):
         """Call the context manager."""
         import pyvista as pv
 

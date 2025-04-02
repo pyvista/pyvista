@@ -75,7 +75,7 @@ DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
 
-_VTK_SNAKE_CASE_STATE = 'error'
+_VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
 
 # Import all modules for type checkers and linters
