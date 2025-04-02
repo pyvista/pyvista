@@ -32,7 +32,7 @@ dolfin
 
 # %%
 # Now we can work on and plot that Dolfin mesh.
-qual = dolfin.compute_cell_quality()
+qual = dolfin.cell_quality()
 qual.plot(show_edges=True, cpos='xy')
 # %%
 # .. tags:: load

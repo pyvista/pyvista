@@ -694,10 +694,11 @@ class Color:
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
             else:
-                raise ValueError(f'Unsupported color type: {type(color)}')
+                msg = f'Unsupported color type: {type(color)}'
+                raise ValueError(msg)
             self._name = color_names.get(self.hex_rgb, None)
         except ValueError as e:
-            raise ValueError(
+            msg = (
                 '\n'
                 f'\tInvalid color input: ({color})\n'
                 '\tMust be a string, rgb(a) sequence, or hex color string.  For example:\n'
@@ -705,22 +706,24 @@ class Color:
                 "\t\tcolor='w'\n"
                 '\t\tcolor=[1.0, 1.0, 1.0]\n'
                 '\t\tcolor=[255, 255, 255]\n'
-                "\t\tcolor='#FFFFFF'",
-            ) from e
+                "\t\tcolor='#FFFFFF'"
+            )
+            raise ValueError(msg) from e
 
         # Overwrite opacity if it is provided
         try:
             if opacity is not None:
                 self._opacity = self.convert_color_channel(opacity)
         except ValueError as e:
-            raise ValueError(
+            msg = (
                 '\n'
                 f'\tInvalid opacity input: ({opacity})'
                 '\tMust be an integer, float or string.  For example:\n'
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'",
-            ) from e
+                "\t\topacity='#FF'"
+            )
+            raise ValueError(msg) from e
 
     @staticmethod
     def strip_hex_prefix(h: str) -> str:
@@ -744,7 +747,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: float | np.floating[Any] | str,
+        val: float | np.floating[Any] | np.integer[Any] | str,
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
@@ -763,21 +766,33 @@ class Color:
             ``0`` and ``255``).
 
         """
+        # Check for numpy inputs to avoid unnecessary calls to np.issubdtype
+        arr = None
+        if isinstance(val, (np.ndarray, np.generic)):
+            arr = np.asanyarray(val)
+
+        # Convert non-integers to int
         if isinstance(val, str):
             # From hexadecimal value
             val = int(Color.strip_hex_prefix(val), 16)
-        elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
-            # From float
+        elif isinstance(val, float) or (
+            arr is not None and np.issubdtype(arr.dtype, np.floating) and arr.ndim == 0
+        ):
             val = int(round(255 * val))
-        if (
-            np.issubdtype(np.asarray(val).dtype, np.integer)
-            and np.size(val) == 1
+
+        # Check integers
+        if isinstance(val, int) and 0 <= val <= 255:
+            return val  # type: ignore[return-value]
+        elif isinstance(val, np.uint8) or (
+            arr is not None
+            and np.issubdtype(arr.dtype, np.integer)
+            and arr.ndim == 0
             and 0 <= val <= 255
         ):
-            # From integer
             return int(val)
         else:
-            raise ValueError(f'Unsupported color channel value provided: {val}')
+            msg = f'Unsupported color channel value provided: {val}'
+            raise ValueError(msg)
 
     def _from_rgba(self, rgba):
         """Construct color from an RGB(A) sequence."""
@@ -787,12 +802,14 @@ class Color:
             rgba = [*rgba, self._opacity]
         try:
             if len(rgba) != 4:
-                raise ValueError('Invalid length for RGBA sequence.')
+                msg = 'Invalid length for RGBA sequence.'
+                raise ValueError(msg)
             self._red, self._green, self._blue, self._opacity = (
                 self.convert_color_channel(c) for c in rgba
             )
         except ValueError:
-            raise ValueError(f'Invalid RGB(A) sequence: {arg}') from None
+            msg = f'Invalid RGB(A) sequence: {arg}'
+            raise ValueError(msg) from None
 
     def _from_dict(self, dct):
         """Construct color from an RGB(A) dictionary."""
@@ -809,7 +826,8 @@ class Color:
         try:
             self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
         except ValueError:
-            raise ValueError(f'Invalid hex string: {arg}') from None
+            msg = f'Invalid hex string: {arg}'
+            raise ValueError(msg) from None
 
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
@@ -828,7 +846,8 @@ class Color:
             try:
                 self._from_hex(n)
             except ValueError:
-                raise ValueError(f'Invalid color name or hex string: {arg}') from None
+                msg = f'Invalid color name or hex string: {arg}'
+                raise ValueError(msg) from None
 
     @property
     def int_rgba(self) -> tuple[int, int, int, int]:  # numpydoc ignore=RT01
@@ -1120,14 +1139,16 @@ class Color:
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
         if not isinstance(item, (str, slice, int, np.integer)):
-            raise TypeError('Invalid index specified, only strings and integers are supported.')
+            msg = 'Invalid index specified, only strings and integers are supported.'
+            raise TypeError(msg)
         if isinstance(item, str):
             for i, cnames in enumerate(self.CHANNEL_NAMES):
                 if item in cnames:
                     item = i
                     break
             else:
-                raise ValueError(f'Invalid string index {item!r}.')
+                msg = f'Invalid string index {item!r}.'
+                raise ValueError(msg)
         return self.float_rgba[item]
 
     def __iter__(self):
@@ -1194,7 +1215,8 @@ def get_cmap_safe(cmap):
             if inspect.ismodule(colormaps):  # pragma: no cover
                 # Backwards compatibility with matplotlib<3.5.0
                 if not hasattr(colormaps, cmap):
-                    raise ValueError(f'Invalid colormap "{cmap}"')
+                    msg = f'Invalid colormap "{cmap}"'
+                    raise ValueError(msg)
                 cmap = getattr(colormaps, cmap)
             else:
                 try:
@@ -1216,7 +1238,8 @@ def get_cmap_safe(cmap):
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
-                raise TypeError('When inputting a list as a cmap, each item should be a string.')
+                msg = 'When inputting a list as a cmap, each item should be a string.'
+                raise TypeError(msg)
 
         cmap = ListedColormap(cmap)
 
@@ -1291,7 +1314,8 @@ def color_scheme_to_cycler(scheme):
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:
-            raise ValueError(f'Color scheme not understood: {scheme}')
+            msg = f'Color scheme not understood: {scheme}'
+            raise ValueError(msg)
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
@@ -1338,10 +1362,12 @@ def get_cycler(color_cycler):
         elif color_cycler in COLOR_SCHEMES:
             return color_scheme_to_cycler(color_cycler)
         else:
-            raise ValueError(f'color cycler of name `{color_cycler}` not found.')
+            msg = f'color cycler of name `{color_cycler}` not found.'
+            raise ValueError(msg)
     elif isinstance(color_cycler, (tuple, list)):
         return cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
         return color_cycler
     else:
-        raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')
+        msg = f'color cycler of type {type(color_cycler)} not supported.'
+        raise TypeError(msg)

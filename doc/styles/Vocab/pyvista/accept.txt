@@ -127,6 +127,7 @@ monospaced
 msh
 multiphysic
 namespace
+nd
 numpy
 numpydoc
 omf

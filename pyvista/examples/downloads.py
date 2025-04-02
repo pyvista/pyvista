@@ -94,7 +94,7 @@ else:
     # provide helpful message if pooch path is inaccessible
     if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
         try:
-            Path(USER_DATA_PATH).mkdir(exist_ok=True)
+            Path(USER_DATA_PATH).mkdir(exist_ok=True, parents=True)
             if not os.access(USER_DATA_PATH, os.W_OK):
                 raise OSError
         except (PermissionError, OSError):
@@ -150,16 +150,19 @@ def file_from_files(target_path, fnames):
 
     if len(found_fnames) > 1:
         files_str = '\n'.join(found_fnames)
-        raise RuntimeError(f'Ambiguous "{target_path}". Multiple matches found:\n{files_str}')
+        msg = f'Ambiguous "{target_path}". Multiple matches found:\n{files_str}'
+        raise RuntimeError(msg)
 
     files_str = '\n'.join(fnames)
-    raise FileNotFoundError(f'Missing "{target_path}" from archive. Archive contains:\n{files_str}')
+    msg = f'Missing "{target_path}" from archive. Archive contains:\n{files_str}'
+    raise FileNotFoundError(msg)
 
 
 def _file_copier(input_file, output_file, *args, **kwargs):
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
-        raise FileNotFoundError(f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'")
+        msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"
+        raise FileNotFoundError(msg)
     shutil.copy(input_file, output_file)
 
 
@@ -295,7 +298,8 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 
     """
     if get_ext(filename) == '.zip':  # pragma: no cover
-        raise ValueError('Cannot download and read an archive file')
+        msg = 'Cannot download and read an archive file'
+        raise ValueError(msg)
 
     saved_file = download_file(filename)
     if not load:
@@ -2231,7 +2235,8 @@ def download_frog_tissue(load=True):  # pragma: no cover
         PyVistaDeprecationWarning,
     )
     if pyvista._version.version_info >= (0, 47):
-        raise RuntimeError('Remove this deprecated function')
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
 
     return _download_dataset(_dataset_frog_tissue, load=load)
 
@@ -4826,7 +4831,9 @@ def download_drill(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_drill, load=load)
+    # Silence warning: unexpected data at end of line in OBJ file
+    with pyvista.vtk_verbosity('off'):
+        return _download_dataset(_dataset_drill, load=load)
 
 
 _dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
@@ -5359,6 +5366,11 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
+    .. seealso::
+
+        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     # Deprecated on v0.44.0, estimated removal on v0.47.0
     warnings.warn(
@@ -5366,9 +5378,11 @@ def download_osmnx_graph(load=True):  # pragma: no cover
         PyVistaDeprecationWarning,
     )
     if pyvista._version.version_info >= (0, 47):
-        raise RuntimeError('Remove this deprecated function')
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
     if not importlib.util.find_spec('osmnx'):
-        raise ImportError('Install `osmnx` to use this example')
+        msg = 'Install `osmnx` to use this example'
+        raise ImportError(msg)
     return _download_dataset(_dataset_osmnx_graph, load=load)
 
 
@@ -5408,7 +5422,7 @@ def download_cavity(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
+        :ref:`Cavity Dataset <cavity_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`openfoam_example`
@@ -5767,10 +5781,11 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
 def _dataset_can_files_func():  # pragma: no cover
     if pyvista.vtk_version_info > (9, 1):
-        raise VTKVersionError(
+        msg = (
             'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.',
+            'Use `download_can_crushed_hdf` instead.'
         )
+        raise VTKVersionError(msg)
     can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
     can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
     can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
@@ -6151,7 +6166,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`CellsNd Dataset <cells_nd_dataset>`
+        :ref:`Cells Nd Dataset <cells_nd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -7784,13 +7799,14 @@ class _WholeBodyCTUtilities:  # pragma: no cover
 
             return dict(sorted(colors.items()))
         else:
-            raise RuntimeError('Unable to load colors.')
+            msg = 'Unable to load colors.'
+            raise RuntimeError(msg)
 
     @staticmethod
     def add_metadata(dataset: pyvista.MultiBlock, colors_module_path: str):
         # Add color and id mappings to dataset
         segmentations = cast(pyvista.MultiBlock, dataset['segmentations'])
-        label_names = sorted(cast(list[str], segmentations.keys()))
+        label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
         dataset.user_dict['names_to_colors'] = names_to_colors
@@ -7805,7 +7821,7 @@ class _WholeBodyCTUtilities:  # pragma: no cover
         # Initialize array with background values (zeros)
         n_points = cast(pyvista.ImageData, masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
-        label_names = sorted(cast(list[str], masks.keys()))
+        label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
             mask = cast(pyvista.ImageData, masks[name])
             label_map_array[mask.active_scalars == 1] = i + 1
@@ -8408,7 +8424,7 @@ def download_3gqp(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`3GQP Dataset <3gqp_dataset>`
+        :ref:`3gqp Dataset <3gqp_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -8439,6 +8455,11 @@ def download_full_head(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> dataset = examples.download_full_head()
     >>> dataset.plot(volume=True)
+
+    .. seealso::
+
+        :ref:`Full Head Dataset <full_head_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_full_head, load=load)
@@ -8482,7 +8503,9 @@ def download_nek5000(load=True):
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_nek5000, load=load)
+    # Silence info messages about 2D mesh found
+    with pyvista.vtk_verbosity('off'):
+        return _download_dataset(_dataset_nek5000, load=load)
 
 
 def _nek_5000_download():  # pragma: no cover

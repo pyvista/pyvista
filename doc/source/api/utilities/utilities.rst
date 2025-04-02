@@ -126,6 +126,7 @@ Miscellaneous
 
    start_xvfb
    Report
+   vtk_verbosity
 
 PyVista Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

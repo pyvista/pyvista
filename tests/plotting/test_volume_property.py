@@ -11,6 +11,12 @@ def vol_prop():
     return VolumeProperty()
 
 
+@pytest.mark.parametrize('lut', ['foo', None, True, object(), []])
+def test_apply_lookup_table_raises(vol_prop: VolumeProperty, lut):
+    with pytest.raises(TypeError, match='`lookup_table` must be a `pyvista.LookupTable`'):
+        vol_prop.apply_lookup_table(lut)
+
+
 def test_volume_lookup_table(vol_prop, skip_check_gc):
     lut = pv.LookupTable(cmap='bwr')
     lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])

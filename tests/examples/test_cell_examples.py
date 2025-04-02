@@ -1,9 +1,49 @@
 from __future__ import annotations
 
-import pytest
+import inspect
 
+import numpy as np
+import pytest
+from pytest_cases import parametrize
+
+import pyvista
 from pyvista import CellType
 from pyvista.examples import cells
+
+# Collect all functions in the cells module that start with a capital letter
+cell_example_functions = [
+    func for name, func in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+]
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+@parametrize('cell_example', cell_example_functions)
+def test_area_and_volume(cell_example):
+    mesh = cell_example()
+    assert isinstance(mesh, pyvista.UnstructuredGrid)
+    assert mesh.n_cells == 1
+
+    if mesh.celltypes[0] in [
+        pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON,
+        pyvista.CellType.TRIQUADRATIC_HEXAHEDRON,
+    ]:
+        pytest.xfail(
+            'Volume should be positive but returns zero, see https://gitlab.kitware.com/vtk/vtk/-/issues/19639'
+        )
+
+    # Test area and volume
+    dim = mesh.GetCell(0).GetCellDimension()
+    area = mesh.area
+    volume = mesh.volume
+    if dim == 2:
+        assert area > 0
+        assert np.isclose(volume, 0.0)
+    elif dim == 3:
+        assert np.isclose(area, 0.0)
+        assert volume > 0
+    else:
+        assert np.isclose(area, 0.0)
+        assert np.isclose(volume, 0.0)
 
 
 def test_empty():
@@ -46,6 +86,7 @@ def test_triangle():
     assert grid.celltypes[0] == CellType.TRIANGLE
     assert grid.n_cells == 1
     assert grid.n_points == 3
+    assert np.isclose(grid.area, np.sqrt(3) / 4)
 
 
 def test_triangle_strip():
@@ -67,6 +108,7 @@ def test_Quadrilateral():
     assert grid.celltypes[0] == CellType.QUAD
     assert grid.n_cells == 1
     assert grid.n_points == 4
+    assert np.isclose(grid.area, 1.0)
 
 
 def test_tetrahedron():
@@ -74,6 +116,7 @@ def test_tetrahedron():
     assert grid.celltypes[0] == CellType.TETRA
     assert grid.n_cells == 1
     assert grid.n_points == 4
+    assert np.isclose(grid.volume, np.sqrt(2) / 12)
 
 
 def test_hexagonal_prism():
@@ -88,6 +131,7 @@ def test_hexahedron():
     assert grid.celltypes[0] == CellType.HEXAHEDRON
     assert grid.n_cells == 1
     assert grid.n_points == 8
+    assert np.isclose(grid.volume, 1.0)
 
 
 def test_pyramid():
@@ -95,6 +139,7 @@ def test_pyramid():
     assert grid.celltypes[0] == CellType.PYRAMID
     assert grid.n_cells == 1
     assert grid.n_points == 5
+    assert np.isclose(grid.volume, np.sqrt(2.0) / 6.0)
 
 
 def test_wedge():
@@ -102,6 +147,7 @@ def test_wedge():
     assert grid.celltypes[0] == CellType.WEDGE
     assert grid.n_cells == 1
     assert grid.n_points == 6
+    assert np.isclose(grid.volume, np.sqrt(3.0) / 4.0)
 
 
 def test_pentagonal_prism():

@@ -682,6 +682,24 @@ def test_triangulate_filter(plane):
     assert not plane.extract_all_edges().is_all_triangles
 
 
+@pytest.mark.parametrize('pass_lines', [True, False])
+def test_triangulate_filter_pass_lines(sphere: pv.PolyData, plane: pv.PolyData, pass_lines: bool):
+    merge: pv.PolyData = plane + (lines := sphere.extract_all_edges())
+    tri: pv.PolyData = merge.triangulate(pass_lines=pass_lines, inplace=False)
+
+    assert tri.n_lines == (lines.n_cells if pass_lines else 0)
+    assert tri.is_all_triangles if not pass_lines else (not tri.is_all_triangles)
+
+
+@pytest.mark.parametrize('pass_verts', [True, False])
+def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
+    merge: pv.PolyData = plane + (verts := pv.PolyData([0.0, 1.0, 2.0]))
+    tri: pv.PolyData = merge.triangulate(pass_verts=pass_verts, inplace=False)
+
+    assert tri.n_verts == (verts.n_cells if pass_verts else 0)
+    assert tri.is_all_triangles if not pass_verts else (not tri.is_all_triangles)
+
+
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
@@ -1208,10 +1226,12 @@ def default_n_faces():
 
 def test_n_faces(default_n_faces):
     if pv._version.version_info[:2] > (0, 46):
-        raise RuntimeError('Convert non-strict n_faces use to error')
+        msg = 'Convert non-strict n_faces use to error'
+        raise RuntimeError(msg)
 
     if pv._version.version_info[:2] > (0, 49):
-        raise RuntimeError('Convert default n_faces behavior to strict')
+        msg = 'Convert default n_faces behavior to strict'
+        raise RuntimeError(msg)
 
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1335,9 +1355,11 @@ def test_n_faces_etc_deprecated(cells: str):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
+            msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
+            msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

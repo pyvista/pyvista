@@ -3,6 +3,7 @@ from __future__ import annotations
 import colorsys
 import importlib.util
 import itertools
+import re
 
 import matplotlib as mpl
 from matplotlib.colors import CSS4_COLORS
@@ -12,6 +13,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
@@ -29,22 +31,17 @@ def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
+@pytest.mark.parametrize('scheme', [object(), 1.0, None])
+def test_color_scheme_to_cycler_raises(scheme):
+    with pytest.raises(ValueError, match=f'Color scheme not understood: {scheme}'):
+        color_scheme_to_cycler(scheme=scheme)
+
+
 def test_color():
     name, name2 = 'blue', 'b'
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
     h = '0000ffff'
     i_opacity, f_opacity, h_opacity = 153, 0.6, '99'
-    invalid_colors = (
-        (300, 0, 0),
-        (0, -10, 0),
-        (0, 0, 1.5),
-        (-0.5, 0, 0),
-        (0, 0),
-        '#hh0000',
-        'invalid_name',
-        {'invalid_name': 100},
-    )
-    invalid_opacities = (275, -50, 2.4, -1.2, '#zz')
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
     h_prefixes = ('', '0x', '#')
@@ -85,13 +82,6 @@ def test_color():
         assert pv.Color(i_rgba, default_opacity=opacity) == i_rgba
     # Check default_color
     assert pv.Color(None, default_color=name) == i_rgba
-    # Check invalid colors and opacities
-    for invalid_color in invalid_colors:
-        with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color(invalid_color)
-    for invalid_opacity in invalid_opacities:
-        with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color('b', invalid_opacity)
     # Check hex and name getters
     assert pv.Color(name).hex_rgba == f'#{h}'
     assert pv.Color(name).hex_rgb == f'#{h[:-2]}'
@@ -113,6 +103,45 @@ def test_color():
         c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
+
+
+@pytest.mark.parametrize('opacity', [275, -50, 2.4, -1.2, '#zz'])
+def test_color_invalid_opacity(opacity):
+    match = (
+        'Must be an integer, float or string.  For example:'
+        "\n\t\topacity='1.0'"
+        "\n\t\topacity='255'"
+        "\n\t\topacity='#FF'"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Color('b', opacity)
+
+
+@pytest.mark.parametrize(
+    'color',
+    [
+        (300, 0, 0),
+        (0, -10, 0),
+        (0, 0, 1.5),
+        np.array((0, 0, 1.5), dtype=np.float16),
+        (-0.5, 0, 0),
+        (0, 0),
+        '#hh0000',
+        'invalid_name',
+        {'invalid_name': 100},
+    ],
+)
+def test_color_invalid_color(color):
+    match = (
+        'Must be a string, rgb(a) sequence, or hex color string.  For example:'
+        "\n\t\tcolor='white'"
+        "\n\t\tcolor='w'"
+        '\n\t\tcolor=[1.0, 1.0, 1.0]'
+        '\n\t\tcolor=[255, 255, 255]'
+        "\n\t\tcolor='#FFFFFF'"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Color(color)
 
 
 @pytest.mark.parametrize('delimiter', ['-', '_', ' '])
