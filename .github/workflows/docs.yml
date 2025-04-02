@@ -67,11 +67,6 @@ jobs:
         run: |
           pip install -e .[docs]
 
-      - name: Install custom OSMesa VTK variant
-        run: |
-          pip uninstall vtk -y
-          pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
-
       - name: PyVista Report
         run: |
           python -c "import pyvista;print(pyvista.Report())"
