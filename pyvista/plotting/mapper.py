@@ -71,7 +71,7 @@ class _BaseMapper(_vtk.DisableSnakeCaseAPI, _vtk.vtkAbstractMapper):
             Center of the active renderer.
 
         """
-        return self.GetCenter()  # type: ignore[attr-defined]
+        return self.GetCenter()
 
     def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
