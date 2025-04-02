@@ -600,8 +600,58 @@ vtk_version_info = VTKVersionInfo()
 T = TypeVar('T')
 
 
-class _StateContextManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
-    """Abstract base class for managing a global state variable."""
+class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
+    """Abstract base class for managing a global state variable.
+
+    Subclasses must:
+
+    - Specify a `Literal` as the subclass' type argument. The literal's
+      arguments must specify all allowable options for the state variable.
+    - Define a getter and setter for the state. Input validation is not
+      required - the input is automatically validated when setting the state.
+
+    Examples
+    --------
+    >>> from pyvista.core._vtk_core import _StateManager
+    >>> from typing import Literal
+
+    Define the available options as a ``Literal`` and initialize a global state variable.
+
+    >>> _StateOptions = Literal['on', 'off']
+    >>> _GLOBAL_STATE = ['off']  # Init global state. Use list to make it mutable.
+
+    Define the class and its state property.
+
+    >>> class MyState(_StateManager[_StateOptions]):
+    ...     @property
+    ...     def _state(self) -> _StateOptions:
+    ...         return _GLOBAL_STATE[0]
+    ...
+    ...     @_state.setter
+    ...     def _state(self, state: _StateOptions) -> None:
+    ...         _GLOBAL_STATE[0] = state
+
+    Finally, create an instance of the state manager.
+
+    >>> my_state = MyState()
+
+    Get the state.
+
+    >>> my_state()
+    'off'
+
+    Set the state.
+
+    >>> _ = my_state('on')
+    >>> my_state()
+    'on'
+
+    Use it as a context manager to set the state temporarily:
+
+    >>> with my_state('off'):
+    ...     ...
+
+    """
 
     @classmethod
     def get_literal_args(cls):
@@ -669,7 +719,7 @@ _VerbosityOptions = Literal[
 ]
 
 
-class _VTKVerbosity(_StateContextManager[_VerbosityOptions]):
+class _VTKVerbosity(_StateManager[_VerbosityOptions]):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
