@@ -12,7 +12,14 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 from typing import NamedTuple
+from typing import cast
+from typing import final
+from typing import get_args
 import warnings
+
+if TYPE_CHECKING:
+    from typing import Literal
+
 
 from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
@@ -589,30 +596,92 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-if TYPE_CHECKING:
-    from typing import Literal
 
-    _VerbosityOptions = (
-        Literal[
-            'off',
-            'error',
-            'warning',
-            'info',
-            'max',
-        ]
-        | int
-        | vtkLogger.Verbosity
-    )
+from abc import ABC
+from abc import abstractmethod
+import contextlib
+from typing import Generic
+from typing import Literal
+from typing import TypeVar
+
+T = TypeVar('T')
 
 
-class _VTKVerbosity(contextlib.AbstractContextManager[None]):
+class _StateContextManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
+    """Abstract base class for managing a global state variable."""
+
+    @classmethod
+    def get_literal_args(cls):
+        # Check the original base classes for generic arguments
+        for base in getattr(cls, '__orig_bases__', ()):
+            args = get_args(base)
+            if args:  # Ensure there's a valid type argument
+                return get_args(args[0])  # Extract the Literal values if present
+        msg = 'Base type must be typing.Literal'
+        raise TypeError(msg)
+
+    def __init__(self):
+        """Initialize context manager."""
+        self._valid_states = self.get_literal_args()
+        self._original_state: T | None = None
+
+    @abstractmethod
+    def _get_state(self) -> T:
+        """Get the current global state."""
+
+    @abstractmethod
+    def _set_state(self, state: T) -> None:
+        """Set the global state."""
+
+    @final
+    def _validate_state(self, state: T) -> T:
+        from pyvista import _validation
+
+        _validation.check_contains(self._valid_states, must_contain=state, name='state')
+        return state
+
+    def __enter__(self):
+        """Enter context manager."""
+        if self._original_state is None:
+            msg = 'State must be set before using it as a context manager.'
+            raise ValueError(msg)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit context manager and restore original state."""
+        self._set_state(cast(T, self._original_state))
+        self._original_state = None  # Reset
+
+    def __call__(self, state: T | None = None):
+        """Call the context manager."""
+        if state is None:
+            return self._get_state()
+
+        self._validate_state(state)
+
+        # Create new instance and store the local state to be restored when exiting
+        output = self.__class__()
+        output._original_state = self._get_state()
+        output._set_state(state)
+        return output
+
+
+_VerbosityOptions = Literal[
+    'off',
+    'error',
+    'warning',
+    'info',
+    'max',
+]
+
+
+class _VTKVerbosity(_StateContextManager[_VerbosityOptions]):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
 
     Parameters
     ----------
-    verbosity : int | str | vtkLogger.Verbosity
+    verbosity : str
         Verbosity of the ``vtkLogger`` to set.
 
         - ``'off'``: No output.
@@ -620,9 +689,6 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
         - ``'warning'``: Errors and warnings.
         - ``'info'``: Errors, warnings, and info messages.
         - ``'max'``: All messages, including debug info.
-
-        Integers between ``[-9, 9]`` or their string representation
-        are also accepted.
 
     Examples
     --------
@@ -661,85 +727,26 @@ class _VTKVerbosity(contextlib.AbstractContextManager[None]):
 
     """
 
-    @staticmethod
-    def _validate_verbosity(
-        verbosity: _VerbosityOptions,
-    ) -> vtkLogger.Verbosity:
-        if isinstance(verbosity, vtkLogger.Verbosity):
-            return verbosity
-        else:
-            try:
-                logger_verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
-                if logger_verbosity == vtkLogger.VERBOSITY_INVALID:
-                    raise AttributeError
-                else:
-                    return logger_verbosity
-            except AttributeError:
-                msg = (
-                    f"Invalid verbosity name '{verbosity}', must be one of:\n"
-                    f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
-                )
-                raise ValueError(msg)
-
-    @property
-    def _verbosity(self):
-        return vtkLogger.GetCurrentVerbosityCutoff()
-
-    @_verbosity.setter
-    def _verbosity(self, verbosity: _VerbosityOptions):
-        vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
-
-    @property
-    def _verbosity_string(self):
-        to_string = {
-            -10: 'invalid',
+    def _get_state(self) -> _VerbosityOptions:
+        int_to_string: dict[int, _VerbosityOptions] = {
             -9: 'off',
             -2: 'error',
             -1: 'warning',
             0: 'info',
-            1: '1',
-            2: '2',
-            3: '3',
-            4: '4',
-            5: '5',
-            6: '6',
-            7: '7',
-            8: '8',
             9: 'max',
         }
-        return to_string[self._verbosity]
+        state = vtkLogger.GetCurrentVerbosityCutoff()
+        try:
+            return int_to_string[vtkLogger.GetCurrentVerbosityCutoff()]
+        except KeyError:
+            self._validate_state(state)  # type: ignore[arg-type]
+            msg = 'This line should not be reachable.'  # pragma: no cover
+            raise RuntimeWarning(msg)  # pragma: no cover
 
-    def __init__(self):
-        """Initialize context manager."""
-        self._original_verbosity = None
-
-    def __enter__(self):
-        """Enter context manager."""
-        if self._original_verbosity is None:
-            msg = (
-                'Verbosity must be set to a value to use it as a context manager.\n'
-                'Call `vtk_verbosity()` with an argument to set its value.'
-            )
-            raise ValueError(msg)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit context manager."""
-        # Restore the original verbosity level
-        self._verbosity = self._original_verbosity
-        self._original_verbosity = None  # Reset
-
-    def __call__(self, verbosity: _VerbosityOptions | None = None):
-        """Call the context manager."""
-        if verbosity is None:
-            # Get the verbosity
-            return self._verbosity_string
-
-        # Create new instance and store the local state
-        # to be restored when exiting context
-        output = _VTKVerbosity()
-        output._original_verbosity = output._verbosity
-        output._verbosity = verbosity
-        return output
+    def _set_state(self, state: _VerbosityOptions):
+        verbosity_str = self._validate_state(state)
+        verbosity_int = vtkLogger.ConvertToVerbosity(verbosity_str.upper())
+        vtkLogger.SetStderrVerbosity(verbosity_int)
 
 
 vtk_verbosity = _VTKVerbosity()
