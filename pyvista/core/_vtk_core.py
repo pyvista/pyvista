@@ -743,7 +743,7 @@ class _VTKVerbosity(_StateContextManager[_VerbosityOptions]):
             return int_to_string[vtkLogger.GetCurrentVerbosityCutoff()]
         except KeyError:
             self._validate_state(state)  # type: ignore[arg-type]
-            msg = 'This line should not be reachable.'
+            msg = 'This line should not be reachable.'  # pragma: no cover
             raise RuntimeWarning(msg)  # pragma: no cover
 
     def _set_state(self, state: _VerbosityOptions):
