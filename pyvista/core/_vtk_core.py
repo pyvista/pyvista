@@ -13,6 +13,7 @@ import contextlib
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 from typing import cast
+from typing import final
 from typing import get_args
 import warnings
 
@@ -606,11 +607,22 @@ from typing import TypeVar
 T = TypeVar('T')
 
 
-class _StateContextManagerBase(contextlib.AbstractContextManager[None], Generic[T], ABC):
+class _StateContextManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
     """Abstract base class for managing a global state variable."""
+
+    @classmethod
+    def get_literal_args(cls):
+        # Check the original base classes for generic arguments
+        for base in getattr(cls, '__orig_bases__', ()):
+            args = get_args(base)
+            if args:  # Ensure there's a valid type argument
+                return get_args(args[0])  # Extract the Literal values if present
+        msg = 'Base type must be typing.Literal'
+        raise TypeError(msg)
 
     def __init__(self):
         """Initialize context manager."""
+        self._valid_states = self.get_literal_args()
         self._original_state: T | None = None
 
     @abstractmethod
@@ -620,6 +632,13 @@ class _StateContextManagerBase(contextlib.AbstractContextManager[None], Generic[
     @abstractmethod
     def _set_state(self, state: T) -> None:
         """Set the global state."""
+
+    @final
+    def _validate_state(self, state: T) -> T:
+        from pyvista import _validation
+
+        _validation.check_contains(self._valid_states, must_contain=state, name='state')
+        return state
 
     def __enter__(self):
         """Enter context manager."""
@@ -637,6 +656,8 @@ class _StateContextManagerBase(contextlib.AbstractContextManager[None], Generic[
         if state is None:
             return self._get_state()
 
+        self._validate_state(state)
+
         # Create new instance and store the local state to be restored when exiting
         output = self.__class__()
         output._original_state = self._get_state()
@@ -653,7 +674,7 @@ _VerbosityOptions = Literal[
 ]
 
 
-class _VTKVerbosity(_StateContextManagerBase[_VerbosityOptions]):
+class _VTKVerbosity(_StateContextManager[_VerbosityOptions]):
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
@@ -721,23 +742,14 @@ class _VTKVerbosity(_StateContextManagerBase[_VerbosityOptions]):
         try:
             return int_to_string[vtkLogger.GetCurrentVerbosityCutoff()]
         except KeyError:
-            _VTKVerbosity._validate_verbosity(state)
+            self._validate_state(state)
             msg = 'This line should not be reachable.'
             raise RuntimeWarning(msg)  # pragma: no cover
 
     def _set_state(self, state: _VerbosityOptions):
-        verbosity_str = _VTKVerbosity._validate_verbosity(state)
+        verbosity_str = self._validate_state(state)
         verbosity_int = vtkLogger.ConvertToVerbosity(verbosity_str.upper())
         vtkLogger.SetStderrVerbosity(verbosity_int)
-
-    @staticmethod
-    def _validate_verbosity(verbosity):
-        from pyvista import _validation
-
-        _validation.check_contains(
-            get_args(_VerbosityOptions), must_contain=verbosity, name='verbosity'
-        )
-        return verbosity
 
 
 vtk_verbosity = _VTKVerbosity()
@@ -750,7 +762,7 @@ _VtkSnakeCaseOptions = Literal[
 ]
 
 
-class _vtkSnakeCase(_StateContextManagerBase[_VtkSnakeCaseOptions]):
+class _vtkSnakeCase(_StateContextManager[_VtkSnakeCaseOptions]):
     """Context manager to control access to VTK's pythonic snake_case API.
 
     VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead

@@ -2071,7 +2071,7 @@ def test_vtk_verbosity_set_get():
 
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
-    match = re.escape("verbosity must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
+    match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
