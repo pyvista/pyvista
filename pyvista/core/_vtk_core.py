@@ -654,18 +654,26 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
     """
 
     @classmethod
-    def get_literal_args(cls):
-        # Check the original base classes for generic arguments
-        for base in getattr(cls, '__orig_bases__', ()):
-            args = get_args(base)
-            if args:  # Ensure there's a valid type argument
-                return get_args(args[0])  # Extract the Literal values if present
-        msg = 'Base type must be typing.Literal'
+    def _get_state_options_from_literal(cls):
+        bases = cls.__orig_bases__
+        state_manager_fullname = f'{_StateManager.__module__}.{_StateManager.__name__}'
+        for base in bases:
+            if str(base).startswith(state_manager_fullname):
+                # Get StateManager's typing args
+                state_manager_args = get_args(base)
+                if isinstance(state_manager_args, tuple) and len(state_manager_args) == 1:
+                    # There must only be one arg and it must be a non-empty Literal
+                    literal = state_manager_args[0]
+                    if str(literal).startswith('typing.Literal'):
+                        args = get_args(literal)
+                        if len(args) >= 1:
+                            return args
+        msg = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
         raise TypeError(msg)
 
     def __init__(self):
         """Initialize context manager."""
-        self._valid_states = self.get_literal_args()
+        self._valid_states = self._get_state_options_from_literal()
         self._original_state: T | None = None
 
     @property

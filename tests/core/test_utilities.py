@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,8 @@ import platform
 import re
 import shutil
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import TypeVar
 from unittest import mock
 import warnings
 
@@ -25,6 +28,8 @@ import vtk
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_core import T
+from pyvista.core._vtk_core import _StateManager
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -2068,6 +2073,11 @@ def test_vtk_verbosity_set_get():
     assert pv.vtk_verbosity() == 'off'
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
 
+    # Set this to an invalid state with vtk methods
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_1)
+    with pytest.raises(ValueError, match="state '1' is not valid"):
+        pv.vtk_verbosity()
+
 
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
@@ -2075,3 +2085,27 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int, float]]])
+def test_state_manager_invalid_type_arg(arg):
+    if isinstance(arg, Iterable):
+
+        class MyState(_StateManager[*arg]):  # ]
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+    else:
+
+        class MyState(_StateManager[arg]):  # ]
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+
+    match = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+    with pytest.raises(TypeError, match=match):
+        MyState()
