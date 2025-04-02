@@ -655,13 +655,12 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
 
     @classmethod
     def _get_state_options_from_literal(cls):
-        bases = cls.__orig_bases__
         state_manager_fullname = f'{_StateManager.__module__}.{_StateManager.__name__}'
-        for base in bases:
+        for base in getattr(cls, '__orig_bases__', ()):
             if str(base).startswith(state_manager_fullname):
                 # Get StateManager's typing args
                 state_manager_args = get_args(base)
-                if isinstance(state_manager_args, tuple) and len(state_manager_args) == 1:
+                if len(state_manager_args) == 1:
                     # There must only be one arg and it must be a non-empty Literal
                     literal = state_manager_args[0]
                     if str(literal).startswith('typing.Literal'):
