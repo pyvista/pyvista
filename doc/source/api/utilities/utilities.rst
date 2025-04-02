@@ -127,6 +127,7 @@ Miscellaneous
    start_xvfb
    Report
    vtk_verbosity
+   vtk_snake_case
 
 PyVista Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

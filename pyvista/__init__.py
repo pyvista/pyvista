@@ -19,6 +19,7 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._vtk_core import vtk_snake_case as vtk_snake_case
 from pyvista.core._vtk_core import vtk_verbosity as vtk_verbosity
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
@@ -73,6 +74,8 @@ PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9
 DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
+
+_VTK_SNAKE_CASE_STATE = 'error'
 
 
 # Import all modules for type checkers and linters

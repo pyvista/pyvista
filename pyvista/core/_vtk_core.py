@@ -799,12 +799,122 @@ class DisableSnakeCaseAPI:
     def __getattribute__(self, attr):
         if vtk_version_info >= (9, 4):
             # Raise error if accessing attributes from VTK's pythonic snake_case API
-            from pyvista.core.errors import PyVistaAPIAttributeError
+            from pyvista import _VTK_SNAKE_CASE_STATE
+            from pyvista.core.errors import PyVistaAttributeError
 
-            if (
-                attr not in ['__class__', '__init__']
-                and attr[0].islower()
-                and is_vtk_attribute(self, attr)
-            ):
-                raise PyVistaAPIAttributeError(attr=attr)
+            if _VTK_SNAKE_CASE_STATE != 'allow':
+                if (
+                    attr not in ['__class__', '__init__']
+                    and attr[0].islower()
+                    and is_vtk_attribute(self, attr)
+                ):
+                    msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
+                    if _VTK_SNAKE_CASE_STATE == 'error':
+                        raise PyVistaAttributeError(msg)
+                    else:
+                        raise RuntimeWarning(msg)
         return super().__getattribute__(attr)
+
+
+if TYPE_CHECKING:
+    _VtkSnakeCaseApiState = Literal[
+        'allow',
+        'warning',
+        'error',
+    ]
+
+
+class _vtkSnakeCase(contextlib.AbstractContextManager[None]):
+    """Context manager to control access to VTK's pythonic snake_case API.
+
+    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
+    of `GetOutputPort`. These can easily be confused for PyVista attributes
+    which also use a snake_case convention. This class controls access to vtk's
+    new interface.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    state : 'allow' | 'warning' | 'error'
+        Allow or disallow the use of VTK's pythonic snake_case API with
+        PyVista-wrapped VTK classes.
+
+        - 'allow': Allow accessing VTK-defined snake_case attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+          attributes.
+        - 'error': Raise a :class:`~pyvista.PyVistaAttributeError` when accessing
+          VTK-defined snake_case attributes.
+
+    Examples
+    --------
+    Get the current access state for VTK's snake_case api.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_snake_case()
+    'error'
+
+    The following will raise an error because the `information` property is defined
+    by `vtkDataObject` and is not part of PyVista's API.
+
+    >>> pv.PolyData().information  # doctest: +SKIP
+
+    Allow use of VTK's snake_case attributes. No warning or error is raised.
+
+    >>> _ = pv.vtk_snake_case('allow')
+    >>> pv.PolyData().information
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ pv.vtk_snake_case('error')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.vtk_snake_case('allow'):
+    ...     _ = pv.PolyData().information
+
+    >>> pv.vtk_snake_case()
+    'error
+
+    """
+
+    def __init__(self):
+        """Initialize context manager."""
+        self._old_state = None
+
+    def __enter__(self):
+        """Enter context manager."""
+        if self._old_state is None:
+            msg = (
+                'Verbosity must be set to a value to use it as a context manager.\n'
+                'Call `vtk_verbosity()` with an argument to set its value.'
+            )
+            raise ValueError(msg)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit context manager."""
+        # Restore the original verbosity level
+        import pyvista as pv
+
+        pv._VTK_SNAKE_CASE_STATE = self._old_state
+        self._old_state = None  # Reset
+
+    def __call__(self, state: _VtkSnakeCaseApiState | None = None):
+        """Call the context manager."""
+        import pyvista as pv
+
+        if state is None:
+            # Get the state
+            return pv._VTK_SNAKE_CASE_STATE
+
+        # Create new instance and store the local state
+        # to be restored when exiting context
+        output = _vtkSnakeCase()
+        output._old_state = pv._VTK_SNAKE_CASE_STATE
+        pv._VTK_SNAKE_CASE_STATE = state
+        return output
+
+
+vtk_snake_case = _vtkSnakeCase()

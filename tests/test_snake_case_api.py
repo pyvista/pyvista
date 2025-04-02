@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaAPIAttributeError
+from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
@@ -81,7 +81,8 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
 
     if pv.vtk_version_info >= (9, 4):
         # Test getting the snake_case equivalent raises error
-        with pytest.raises(PyVistaAPIAttributeError):
+        match = "The attribute 'global_warning_display' is defined by VTK and is not part of the PyVista API"
+        with pytest.raises(PyVistaAttributeError, match=match):
             getattr(instance, vtk_attr_snake_case)
     else:
         assert not hasattr(instance, vtk_attr_snake_case)

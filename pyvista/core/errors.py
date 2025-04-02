@@ -186,8 +186,8 @@ class PyVistaPipelineError(RuntimeError):
         super().__init__(message)
 
 
-class PyVistaAPIAttributeError(AttributeError):
-    """Requested feature is not supported by the installed VTK version.
+class PyVistaAttributeError(AttributeError):
+    """Exception when accessing an attribute that is not part of the PyVista API.
 
     Parameters
     ----------
@@ -198,14 +198,9 @@ class PyVistaAPIAttributeError(AttributeError):
 
     def __init__(
         self,
-        message=None,
-        attr=None,
+        message='The attribute is not part of the PyVista API',
     ) -> None:  # numpydoc ignore=PR01,RT01
-        """Empty init."""
-        if message is None:
-            attr = ' ' if attr is None else f' {attr} '
-            f'The attribute{attr}is not part of the PyVista API.'
-        AttributeError.__init__(self, message)
+        super().__init__(message)
 
 
 class PyVistaDeprecationWarning(Warning):
