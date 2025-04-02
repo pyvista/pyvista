@@ -19,7 +19,7 @@ pytest.importorskip('sphinx')
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
-ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
+ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 
 
 @flaky_test(exceptions=(AssertionError,))

@@ -221,6 +221,37 @@ def setup(app):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
+
+    legacy_keys = [
+        'plot_include_source',
+        'plot_basedir',
+        'plot_html_show_formats',
+        'plot_template',
+        'plot_setup',
+        'plot_cleanup',
+        'plot_skip',
+        'plot_skip_optional',
+    ]
+
+    def raise_on_legacy_config(app, config):
+        """Raise a RuntimeError when using legacy configuration parameters.
+
+        These parameters conflict with matplotlib's ``plot_directive``.
+
+        """
+        uses_matplotlib = 'matplotlib.sphinxext.plot_directive' in app.extensions
+
+        if not uses_matplotlib:
+            for key in legacy_keys:
+                if getattr(config, key, None) is not None:
+                    msg = (
+                        f"Sphinx config uses deprecated '{key}' without 'pyvista_' prefix. "
+                        f"Rename it to 'pyvista_{key}"
+                    )
+                    raise RuntimeError(msg)
+
+    app.connect('config-inited', raise_on_legacy_config)
+
     app.add_config_value('pyvista_plot_include_source', True, False)
     app.add_config_value('pyvista_plot_basedir', None, True)
     app.add_config_value('pyvista_plot_html_show_formats', True, True)
