@@ -243,7 +243,7 @@ def setup(app):
 
         if not uses_matplotlib:
             for key in legacy_keys:
-                if getattr(config, key, None) is not None:
+                if getattr(config, key, None) is not None:  # pragma: no cover
                     msg = (
                         f"Sphinx config uses deprecated '{key}' without 'pyvista_' prefix. "
                         f"Rename it to 'pyvista_{key}"
