@@ -801,6 +801,7 @@ class _vtkSnakeCase(_StateContextManager[_VtkSnakeCaseOptions]):
 
     >>> _ = pv.vtk_snake_case('allow')
     >>> pv.PolyData().information
+    <vtkmodules.vtkCommonCore.vtkInformation ...
 
     Note that this state is global and will persist between function calls. Set it
     back to its original state explicitly.
