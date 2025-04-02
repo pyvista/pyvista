@@ -9,17 +9,17 @@ the entire library.
 
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 import contextlib
-from typing import TYPE_CHECKING
+from typing import Generic
+from typing import Literal
 from typing import NamedTuple
+from typing import TypeVar
 from typing import cast
 from typing import final
 from typing import get_args
 import warnings
-
-if TYPE_CHECKING:
-    from typing import Literal
-
 
 from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
@@ -596,13 +596,6 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-
-from abc import ABC
-from abc import abstractmethod
-import contextlib
-from typing import Generic
-from typing import Literal
-from typing import TypeVar
 
 T = TypeVar('T')
 
