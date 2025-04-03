@@ -1554,7 +1554,7 @@ class Transform(_vtk.vtkTransform):
 
                 - ``'pre-multiply'`` pre-multiplies this transform with the actor's
                   :attr:`~pyvista.Prop3D.user_matrix`.
-                - ``'post-multiply'`` to post-multiplies this transform with the actor's
+                - ``'post-multiply'`` post-multiplies this transform with the actor's
                   user-matrix.
                 - ``'replace'`` replaces the actor's user-matrix with this transform's
                   :attr:`matrix`.
@@ -1906,10 +1906,16 @@ class Transform(_vtk.vtkTransform):
             Actor to apply the transformation to.
 
         mode : 'pre-multiply', 'post-multiply', 'replace', default: 'post-multiply'
-            When ``True``, all arrays with three components are
-            transformed. Otherwise, only the normals and vectors are
-            transformed. See the warning in :meth:`pyvista.DataObjectFilters.transform`
-            for more details.
+            Mode for transforming the actor:
+
+            - ``'pre-multiply'`` pre-multiplies this transform with the actor's
+              :attr:`~pyvista.Prop3D.user_matrix`.
+            - ``'post-multiply'``  post-multiplies this transform with the actor's
+              user-matrix.
+            - ``'replace'`` replaces the actor's user-matrix with this transform's
+              :attr:`matrix`.
+
+            By default, ``'post-multiply'`` mode is used.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
