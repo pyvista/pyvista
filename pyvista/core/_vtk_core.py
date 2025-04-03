@@ -649,7 +649,7 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
     Use it as a context manager to set the state temporarily:
 
     >>> with my_state('off'):
-    ...     ...
+    ...     pass
 
     """
 
