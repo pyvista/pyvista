@@ -1398,14 +1398,21 @@ class DataObjectFilters:
                 active_scalars_info.append(block.active_scalars_info)
                 block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
 
-        if isinstance(self, pyvista.PolyData):
+        # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
+        # with vtk >= 9.4. See https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        mesh_in = (
+            self.cast_to_poly_points()
+            if isinstance(self, pyvista.PointSet) and pyvista.vtk_version_info >= (9, 4)
+            else self
+        )
+        if isinstance(mesh_in, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
+        alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed

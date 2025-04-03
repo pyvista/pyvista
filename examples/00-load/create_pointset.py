@@ -35,6 +35,10 @@ clipped.plot(show_scalar_bar=False)
 # %%
 # Show the performance improvement when using a PointSet.
 # This is only available with VTK >= 9.1.0.
+#
+# .. note::
+#   In VTK >= 9.4, there is no longer a performance improvement due to a VTK bug
+#   https://gitlab.kitware.com/vtk/vtk/-/issues/19649
 
 # pset = lidar.cast_to_pointset()
 
