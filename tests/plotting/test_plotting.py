@@ -3675,6 +3675,21 @@ def test_plotter_volume_add_scalars_log_scale(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_opacity_n_colors():
+    # See https://github.com/pyvista/pyvista/issues/5505
+    grid = pv.ImageData(dimensions=(9, 9, 9))
+    grid['scalars'] = -grid.x
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, opacity='linear', n_colors=128)
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, opacity='linear', n_colors=5)
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
