@@ -38,7 +38,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+            .. image:: /../_build/pyvista_plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
