@@ -1704,7 +1704,12 @@ class Transform(_vtk.vtkTransform):
             _check_mode('actors', mode, allowed)
             if mode in ['post-multiply', None]:
                 return obj.transform(matrix, 'post', inplace=inplace)
-            return obj.transform(matrix, 'pre', inplace=inplace)
+            elif mode == 'pre-multiply':
+                return obj.transform(matrix, 'pre', inplace=inplace)
+            else:
+                out = obj.copy() if copy else obj
+                out.user_matrix = matrix
+                return out
 
         # Transform array
         allowed = ['points', 'vectors', None]
