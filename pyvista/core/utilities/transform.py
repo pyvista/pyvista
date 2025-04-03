@@ -1707,9 +1707,9 @@ class Transform(_vtk.vtkTransform):
             elif mode == 'pre-multiply':
                 return obj.transform(matrix, 'pre', inplace=inplace)
             else:
-                out = obj.copy() if copy else obj
-                out.user_matrix = matrix
-                return out
+                actor = obj.copy() if copy else obj
+                actor.user_matrix = matrix
+                return actor
 
         # Transform array
         allowed = ['points', 'vectors', None]
