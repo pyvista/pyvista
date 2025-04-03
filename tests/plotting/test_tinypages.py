@@ -119,3 +119,10 @@ def test_tinypages(tmp_path, ename, evalue):
     # check conditional execution
     assert (b'This plot may be skipped with no caption' in html_contents) == expected_optional
     assert plot_file(18, 0, 0).exists() == expected_optional
+
+    # check matplotlib plot exists
+    # we're using the same counter, but mpl doesn't add num and subnum
+    plt_num = 19
+    mpl_figure_file = html_dir / f'some_plots-{plt_num}.png'
+    assert mpl_figure_file.exists
+    assert b'This is a matplotlib plot.' in html_contents

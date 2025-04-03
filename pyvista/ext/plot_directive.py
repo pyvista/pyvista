@@ -563,8 +563,10 @@ def run(arguments, content, options, state_machine, state, lineno):
     else:
         source_file_name = rst_file
         code = textwrap.dedent('\n'.join(map(str, content)))
-        counter = document.attributes.get('_pyvista_plot_counter', 0) + 1
-        document.attributes['_pyvista_plot_counter'] = counter
+
+        # note: this reuses the existing matplotlib plot counter if available
+        counter = document.attributes.get('_plot_counter', 0) + 1
+        document.attributes['_plot_counter'] = counter
         base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
         output_base = f'{base}-{counter}.py'
         function_name = None
@@ -589,7 +591,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
+    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
