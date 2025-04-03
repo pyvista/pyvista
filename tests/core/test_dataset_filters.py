@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import itertools
 from pathlib import Path
-import platform
 import re
 from typing import TYPE_CHECKING
 from typing import Any
@@ -36,7 +35,6 @@ if TYPE_CHECKING:
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -132,7 +130,7 @@ def test_datasetfilters_init():
         pv.core.filters.DataSetFilters()
 
 
-@skip_mac
+@pytest.mark.skip_mac('Flaky Mac test')
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
 def test_clip_scalar_filter(datasets, both, invert):
@@ -1405,11 +1403,11 @@ def test_streamlines_max_length():
 
     def check_deprecation():
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(
-                'Convert error ``max_time`` parameter in ``streamlines_from_source``'
-            )
+            msg = 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 49):
-            raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
+            msg = 'Remove ``max_time`` parameter in ``streamlines_from_source``'
+            raise RuntimeError(msg)
 
     with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
         stream = mesh.streamlines(
@@ -3334,7 +3332,8 @@ def test_integrate_data_datasets(datasets):
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
         else:
-            raise ValueError('Unexpected integration')
+            msg = 'Unexpected integration'
+            raise ValueError(msg)
 
 
 def test_integrate_data():

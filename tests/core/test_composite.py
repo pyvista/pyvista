@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Generator
 import itertools
 import pathlib
-import platform
 import re
 import weakref
 
@@ -20,8 +19,6 @@ from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core.dataobject import USER_DICT_KEY
-
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 
 def test_multi_block_init_vtk():

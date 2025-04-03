@@ -252,6 +252,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*T'),
     #
     # Dataset-related types
@@ -323,6 +324,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Mesh'),
     (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
+    (r'py:.*', 'Rotation'),
     (r'py:.*', 'vtk.*'),
     (r'py:.*', '_vtk.*'),
     (r'py:.*', 'VTK'),

@@ -223,7 +223,8 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @tick_location.setter
     def tick_location(self, value: str):
         if not isinstance(value, str):
-            raise TypeError(f'`tick_location` must be a string, not {type(value)}')
+            msg = f'`tick_location` must be a string, not {type(value)}'  # type: ignore[unreachable]
+            raise TypeError(msg)
         value = value.lower()
         if value in ('inside'):
             self.SetTickLocationToInside()
@@ -232,10 +233,11 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         elif value in ('both'):
             self.SetTickLocationToBoth()
         else:
-            raise ValueError(
+            msg = (
                 f'Value of tick_location ("{value}") should be either "inside", "outside", '
-                'or "both".',
+                'or "both".'
             )
+            raise ValueError(msg)
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01

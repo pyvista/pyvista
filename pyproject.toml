@@ -7,7 +7,6 @@ authors = [{ name = 'PyVista Developers', email = 'info@pyvista.org' }]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Science/Research',
-  'License :: OSI Approved :: MIT License',
   'Operating System :: MacOS',
   'Operating System :: Microsoft :: Windows',
   'Operating System :: POSIX',
@@ -29,7 +28,7 @@ dependencies = [
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
-license = { text = 'MIT' }
+license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
 requires-python = '>=3.9'
@@ -70,7 +69,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.127.4',
+  'hypothesis<6.130.7',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -81,7 +80,7 @@ test = [
   'pyanalyze<=0.13.1',
   'pytest-cov<6.1.0',
   'pytest-memprof<0.3.0',
-  'pytest-mypy-plugins<3.2.0',
+  'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
@@ -109,13 +108,13 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.3.5',
+  'jupyterlab==4.3.6',
   'lxml==5.3.1',
   'meshio==5.3.5',
   'mypy-extensions==1.0.0',
   'mypy==1.15.0',
   'numpydoc==1.8.0',
-  'osmnx==2.0.1',
+  'osmnx==2.0.2',
   'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
   'pytest-pyvista==0.1.8',
@@ -137,9 +136,9 @@ docs = [
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
   'trame-vtk==2.8.15',
-  'trame-vuetify==2.8.1',
-  'trame==3.8.0',
-  'trimesh==4.6.4',
+  'trame-vuetify==2.9.0',
+  'trame==3.8.1',
+  'trimesh==4.6.6',
 ]
 
 dev = ['pre-commit', 'pyvista[test,typing]']
@@ -199,7 +198,7 @@ omit = [
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
-exclude_also = ['^\s*@overload\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
+exclude_also = ['^\s*@overload.*\n\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
@@ -215,7 +214,6 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
-  'ignore:Unable to access.*Manually specify the PyVista examples cache.*:UserWarning',                                  # https://github.com/pyvista/pyvista/pull/7009#issuecomment-2599890364
   'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
@@ -226,6 +224,9 @@ log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+  'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
+  'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_windows(reason="Test fails on Windows"): skip test for windows.',
 ]
 minversion = "7"
 testpaths = 'tests'
@@ -302,6 +303,7 @@ docstring-code-line-length = 75
 quote-style = 'single'
 
 [tool.ruff.lint]
+extend-safe-fixes = ['EM']
 extend-select = [
   'A',
   'AIR',
@@ -315,6 +317,7 @@ extend-select = [
   'DJ',
   'DTZ',
   'E',
+  'EM',
   'F',
   'FA',
   'FLY',
@@ -402,6 +405,7 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/*' = ['D100', 'D103']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
+'pyvista/core/filters/*' = ['PYI019']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
