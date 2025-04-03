@@ -1402,7 +1402,9 @@ class DataObjectFilters:
         # with vtk >= 9.4. See https://gitlab.kitware.com/vtk/vtk/-/issues/19649
         mesh_in = (
             self.cast_to_poly_points()
-            if isinstance(self, pyvista.PointSet) and pyvista.vtk_version_info >= (9, 4) and pyvista.vtk_version_info < (9,5)
+            if isinstance(self, pyvista.PointSet)
+            and pyvista.vtk_version_info >= (9, 4)
+            and pyvista.vtk_version_info < (9, 5)
             else self
         )
         if isinstance(mesh_in, pyvista.PolyData):
