@@ -1419,16 +1419,19 @@ class DataObjectFilters:
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
+        def _maybe_cast_to_point_set(in_):
+            return in_.cast_to_pointset() if isinstance(self, pyvista.PointSet) else in_
+
         if return_clipped:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
                 a, b = extract_crinkle_cells(self, a, b, active_scalars_info)
-            return a, b
+            return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
             clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
-        return clipped
+        return _maybe_cast_to_point_set(clipped)
 
     def clip(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
