@@ -1559,7 +1559,7 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
         )
 
     points_in_array = np.array(_get_points_from_object(obj))
-    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
+    out = transform.scale(SCALE).apply(obj, copy=copy)
 
     if not copy and return_self:
         assert out is obj
@@ -1576,6 +1576,89 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     inverted_points = _get_points_from_object(inverted)
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted
+
+
+@pytest.fixture
+def scale_transform():
+    return Transform() * SCALE
+
+
+@pytest.fixture
+def translate_transform():
+    return Transform() + VECTOR
+
+
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_points])
+@pytest.mark.parametrize('transformation', ['scale', 'translate'])
+def test_transform_apply_to_points(scale_transform, translate_transform, method, transformation):
+    array = np.array((0.0, 0.0, 1.0))
+
+    if transformation == 'scale':
+        trans = scale_transform
+        expected = array * SCALE
+    else:
+        trans = translate_transform
+        expected = array + VECTOR
+
+    if method == pv.Transform.apply:
+        transformed = method(trans, array, 'points')
+    else:
+        transformed = method(trans, array)
+    assert np.allclose(transformed, expected)
+
+
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_vectors])
+@pytest.mark.parametrize('transformation', ['scale', 'translate'])
+def test_transform_apply_to_vectors(scale_transform, translate_transform, method, transformation):
+    array = np.array((0.0, 0.0, 1.0))
+
+    if transformation == 'scale':
+        trans = scale_transform
+        expected = array * SCALE
+    else:
+        trans = translate_transform
+        expected = array
+
+    if method == pv.Transform.apply:
+        transformed = method(trans, array, 'vectors')
+    else:
+        transformed = method(trans, array)
+    assert np.allclose(transformed, expected)
+
+
+@pytest.mark.parametrize('mode', ['active_vectors', 'all_vectors'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_dataset])
+def test_transform_apply_to_dataset(scale_transform, mode, method):
+    vector = np.array(VECTOR, dtype=float)
+    mesh = pv.PolyData(vector)
+    mesh['vector'] = [vector]
+
+    expected = mesh['vector']
+    if mode == 'all_vectors':
+        expected = expected * SCALE
+
+    transformed = method(scale_transform, mesh, mode)
+    assert np.allclose(transformed['vector'], expected)
+
+
+def test_transform_apply_invalid_mode():
+    mesh = pv.PolyData()
+    array = np.ndarray(())
+    trans = pv.Transform()
+
+    match = (
+        "Transformation mode 'points' is not supported for datasets. Mode must be one of\n"
+        "['active_vectors', 'all_vectors', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(mesh, 'points')
+
+    match = (
+        "Transformation mode 'all_vectors' is not supported for arrays. Mode must be one of\n"
+        "['points', 'vectors', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(array, 'all_vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -1664,7 +1747,10 @@ def test_transform_identity(transform):
 def test_transform_init():
     matrix = np.diag((SCALE, SCALE, SCALE, 1))
     transform = Transform(matrix)
-    assert np.array_equal(transform.matrix, matrix)
+    assert np.allclose(transform.matrix, matrix)
+
+    transform = Transform(matrix.tolist())
+    assert np.allclose(transform.matrix, matrix)
 
     transform = Transform(matrix.tolist())
     assert np.array_equal(transform.matrix, matrix)
