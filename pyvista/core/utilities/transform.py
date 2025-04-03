@@ -1653,7 +1653,7 @@ class Transform(_vtk.vtkTransform):
             if mode_ not in allowed_modes:
                 msg = (
                     f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
-                    f'\n{allowed}'
+                    f'\n{allowed_modes}'
                 )
                 raise ValueError(msg)
 
