@@ -146,12 +146,10 @@ def test_pointset_clip_vtk_bug(sphere):
     alg.SetInputData(pointset)
     alg.Update()
     out = pv.wrap(alg.GetOutput())
-    if pv.vtk_version_info >= (9, 4):
-        msg = (
-            'Non-empty mesh returned for PointSet inputs. VTK bug may have been fixed https://gitlab.kitware.com/vtk/vtk/-/issues/19649\n'
-            'The PyVista `clip` filter should be updated to remove any casting from PointSet to PolyData'
-        )
-        assert out.is_empty, msg
+    if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+        # A vtk bug was introduced in 9.4 https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        # Which has been fixed for vtk 9.5: https://gitlab.kitware.com/vtk/vtk/-/merge_requests/12040
+        assert out.is_empty
     else:
         assert not out.is_empty
 

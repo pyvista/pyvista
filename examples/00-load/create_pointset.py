@@ -37,8 +37,8 @@ clipped.plot(show_scalar_bar=False)
 # This is only available with VTK >= 9.1.0.
 #
 # .. note::
-#   In VTK >= 9.4, there is no longer a performance improvement due to a VTK bug
-#   https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+#   For VTK 9.4, there is no performance improvement due to a VTK bug which
+#   has since been resolved: https://gitlab.kitware.com/vtk/vtk/-/issues/19649
 
 # pset = lidar.cast_to_pointset()
 
