@@ -1891,6 +1891,7 @@ class Transform(_vtk.vtkTransform):
         inverse: bool = False,
     ) -> Prop3D:
         """Apply the current transformation :attr:`matrix` to an actor.
+
         This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and
         examples.
 
