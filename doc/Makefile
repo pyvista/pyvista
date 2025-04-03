@@ -1,7 +1,9 @@
 # Minimal makefile for Sphinx documentation
 #
 
+ # headless rendering with OSMesa
 export PYVISTA_OFF_SCREEN := True
+export VTK_DEFAULT_OPENGL_WINDOW vtkOSOpenGLRenderWindow
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
