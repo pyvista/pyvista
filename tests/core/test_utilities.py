@@ -10,10 +10,10 @@ import pickle
 import platform
 import re
 import shutil
-import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
+from typing import get_args
 from unittest import mock
 import warnings
 
@@ -2090,12 +2090,10 @@ def test_vtk_verbosity_invalid_input(value):
 T = TypeVar('T')
 
 
-@pytest.mark.skipif(sys.version_info <= (3, 10), reason='Test requires unpacking a type arg.')
-@pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int, float]]])
-def test_state_manager_invalid_type_arg(arg):
-    if isinstance(arg, Iterable):
+def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
+    if arg2 is not None:
 
-        class MyState(_StateManager[*arg]):  # ]
+        class MyState(_StateManager[arg1, arg2]):
             @property
             def _state(self): ...
 
@@ -2103,13 +2101,36 @@ def test_state_manager_invalid_type_arg(arg):
             def _state(self, state): ...
     else:
 
-        class MyState(_StateManager[arg]):  # ]
+        class MyState(_StateManager[arg1]):
             @property
             def _state(self): ...
 
             @_state.setter
             def _state(self, state): ...
 
+    if sub_subclass:
+
+        class MyState2(MyState): ...
+
+        return MyState2
+    return MyState
+
+
+@pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int], [float]]])
+def test_state_manager_invalid_type_arg(arg):
+    if isinstance(arg, Iterable):
+        cls = _create_state_manager_subclass(*arg)
+    else:
+        cls = _create_state_manager_subclass(arg)
+
     match = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
     with pytest.raises(TypeError, match=match):
-        MyState()
+        cls()
+
+
+def test_state_manager_sub_subclass():
+    options = Literal['on', 'off']
+    cls = _create_state_manager_subclass(options, sub_subclass=True)
+    manager = cls()
+    manager('on')
+    assert manager._valid_states == get_args(options)
