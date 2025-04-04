@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 class _vtkWrapperMeta(type):
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
-        # Based on
+        # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
         sig = inspect.signature(cls.__init__)  # type: ignore[misc]
         params = list(sig.parameters.values())
         params.insert(
