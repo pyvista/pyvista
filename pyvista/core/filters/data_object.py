@@ -1368,14 +1368,14 @@ class DataObjectFilters:
                 block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
-        # with vtk >= 9.4. See https://gitlab.kitware.com/vtk/vtk/-/issues/19649
-        mesh_in = (
-            self.cast_to_poly_points()
-            if isinstance(self, pyvista.PointSet)
+        # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        apply_vtk_94x_patch = (
+            isinstance(self, pyvista.PointSet)
             and pyvista.vtk_version_info >= (9, 4)
             and pyvista.vtk_version_info < (9, 5)
-            else self
         )
+        mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
+
         if isinstance(mesh_in, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
@@ -1391,7 +1391,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
         def _maybe_cast_to_point_set(in_):
-            return in_.cast_to_pointset() if isinstance(self, pyvista.PointSet) else in_
+            return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
             a = _get_output(alg, oport=0)
