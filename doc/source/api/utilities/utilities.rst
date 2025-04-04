@@ -33,6 +33,7 @@ Features
    :toctree: _autosummary
 
    cartesian_to_spherical
+   cell_quality_info
    create_grid
    grid_from_sph_coords
    merge
