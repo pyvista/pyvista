@@ -30,6 +30,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
 class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
@@ -1466,41 +1467,37 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float],
         /,
+        mode: Literal['points', 'vectors'] | None = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
     def apply(
         self: Transform,
-        obj: DataSet,
+        obj: _DataSetOrMultiBlockType,
         /,
+        mode: Literal['active_vectors', 'all_vectors'] = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
-    ) -> DataSet: ...
-    @overload
-    def apply(
-        self: Transform,
-        obj: MultiBlock,
-        /,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
-    ) -> MultiBlock: ...
+    ) -> _DataSetOrMultiBlockType: ...
     def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
+        mode: Literal[
+            'points',
+            'vectors',
+            'active_vectors',
+            'all_vectors',
+        ]
+        | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
-        transform_all_input_vectors: bool = False,
     ):
-        """Apply the current transformation :attr:`matrix` to points or a dataset.
+        """Apply the current transformation :attr:`matrix` to points, vectors, or a dataset.
 
         .. note::
 
@@ -1511,8 +1508,33 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
+        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock
             Object to apply the transformation to.
+
+        mode : str, optional
+            Define how to apply the transformation. Different modes may be used depending
+            on the input type.
+
+            #.  For array inputs:
+
+                - ``'points'`` transforms point arrays.
+                - ``'vectors'`` transforms vector arrays. The translation component of
+                  the transformation is removed for vectors.
+
+                By default, ``'points'`` mode is used for array inputs.
+
+            #.  For dataset inputs:
+
+                The dataset's points are always transformed, and its vectors are
+                transformed based on the mode:
+
+                - ``'active_vectors'`` transforms active normals and active vectors
+                  arrays only.
+                - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
+                  with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+                  with :meth:`pyvista.DataObjectFilters.transform`.
+
+                By default, only ``'active_vectors'`` are transformed.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1520,22 +1542,24 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
-            ``False`` to transform the input directly and return it. Only applies to
-            NumPy arrays and datasets. A copy is always returned for tuple and list
-            inputs or point arrays with integers.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are transformed. Otherwise, only the points,
-            normals and active vectors are transformed. Has no effect if the input is
-            not a dataset.
+            ``False`` to transform the input directly and return it. Setting this to
+            ``False`` only applies to NumPy float arrays and datasets; a copy
+            is always returned for tuple and list inputs or arrays with integers.
 
         Returns
         -------
-        np.ndarray or pyvista.DataSet
+        np.ndarray | DataSet | MultiBlock
             Transformed array or dataset.
 
         See Also
         --------
+        apply_to_points
+            Equivalent to ``apply(obj, 'points')`` for point-array inputs.
+        apply_to_vectors
+            Equivalent to ``apply(obj, 'vectors')`` for vector-array inputs.
+        apply_to_dataset
+            Equivalent to ``apply(obj, mode)`` for dataset inputs where ``mode`` may be
+            ``'active_vectors'`` or ``'all_vectors'``.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
@@ -1545,51 +1569,104 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point = (1, 2, 3)
-        >>> transform = pv.Transform().scale(2)
-        >>> transformed_point = transform.apply(point)
-        >>> transformed_point
-        array([2., 4., 6.])
+        >>> point = (1.0, 2.0, 3.0)
+        >>> transform = pv.Transform().scale(2).translate((0.0, 0.0, 1.0))
+        >>> transformed = transform.apply(point)
+        >>> transformed
+        array([2., 4., 7.])
 
         Apply a transformation to a points array.
 
-        >>> points = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        >>> transformed_points = transform.apply(points)
-        >>> transformed_points
+        >>> array = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        >>> transformed = transform.apply(array)
+        >>> transformed
+        array([[ 2.,  4.,  7.],
+               [ 8., 10., 13.]])
+
+        Apply a transformation to a vector array. Use the same array as before but
+        use the ``'vectors'`` mode. Note how the translation component is not applied
+        to vectors.
+
+        >>> transformed = transform.apply(array, 'vectors')
+        >>> transformed
         array([[ 2.,  4.,  6.],
                [ 8., 10., 12.]])
 
         Apply a transformation to a dataset.
 
-        >>> dataset = pv.PolyData(points)
-        >>> transformed_dataset = transform.apply(dataset)
-        >>> transformed_dataset.points
+        >>> dataset = pv.PolyData(array)
+        >>> transformed = transform.apply(dataset)
+        >>> transformed.points
         pyvista_ndarray([[ 2.,  4.,  6.],
                          [ 8., 10., 12.]])
 
         Apply the inverse.
 
-        >>> inverted_dataset = transform.apply(dataset, inverse=True)
-        >>> inverted_dataset.points
-        pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]])
+        >>> transformed = transform.apply(dataset, inverse=True)
+        >>> transformed.points
+        pyvista_ndarray([[0.5, 1. , 1. ],
+                         [2. , 2.5, 2.5]])
 
         """
+
+        def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
+            if mode_ not in allowed_modes:
+                msg = (
+                    f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
+                    f'\n{allowed}'
+                )
+                raise ValueError(msg)
+
+        _validation.check_contains(
+            [
+                'points',
+                'vectors',
+                'active_vectors',
+                'all_vectors',
+                None,
+            ],
+            must_contain=mode,
+            name='mode',
+        )
+        _validation.check_instance(
+            obj,
+            (
+                np.ndarray,
+                Sequence,
+                pyvista.DataSet,
+                pyvista.MultiBlock,
+            ),
+        )
+
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+            allowed = ['active_vectors', 'all_vectors', None]
+            _check_mode('datasets', mode, allowed)
+            if mode in ['active_vectors', None]:
+                mode = None
+
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
-                transform_all_input_vectors=transform_all_input_vectors,
+                transform_all_input_vectors=bool(mode),
             )
 
         matrix = self.inverse_matrix if inverse else self.matrix
+
+        # Transform array
+        allowed = ['points', 'vectors', None]
+        _check_mode('arrays', mode, allowed)
+
+        if mode == 'vectors':
+            # Remove translation
+            matrix[:3, 3] = 0
+
         # Validate array - make sure we have floats
         array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
-        # Transform a single point
+        # Transform a 1D array
         out: NumpyArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
@@ -1598,12 +1675,154 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 out = array
             return out
 
-        # Transform many points
+        # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         if out is not None:
             return out
         else:
             return array
+
+    def apply_to_points(
+        self,
+        points: VectorLike[float] | MatrixLike[float],
+        /,
+        inverse: bool = False,
+        copy: bool = True,
+    ) -> NumpyArray[float]:
+        """Apply the current transformation :attr:`matrix` to a point or points.
+
+        This is equivalent to ``apply(points, 'points')``. See :meth:`apply` for
+        details and examples.
+
+        Parameters
+        ----------
+        points : VectorLike[float] | MatrixLike[float]
+            Single point or ``Nx3`` points array to apply the transformation to.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it. Only applies to
+            NumPy arrays. A copy is always returned for tuple and list
+            inputs or point arrays with integers.
+
+        Returns
+        -------
+        np.ndarray
+            Transformed points.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+
+        """
+        return self.apply(points, 'points', inverse=inverse, copy=copy)
+
+    def apply_to_vectors(
+        self,
+        vectors: VectorLike[float] | MatrixLike[float],
+        /,
+        inverse: bool = False,
+        copy: bool = True,
+    ) -> NumpyArray[float]:
+        """Apply the current transformation :attr:`matrix` to a vector or vectors.
+
+        This is equivalent to ``apply(vectors, 'vectors')``. See :meth:`apply` for
+        details and examples.
+
+        Parameters
+        ----------
+        vectors : VectorLike[float] | MatrixLike[float]
+            Single vector or ``Nx3`` vectors array to apply the transformation to.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it. Only applies to
+            NumPy arrays. A copy is always returned for tuple and list
+            inputs or point arrays with integers.
+
+        Returns
+        -------
+        np.ndarray
+            Transformed vectors.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+
+        """
+        return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
+
+    def apply_to_dataset(
+        self,
+        dataset: _DataSetOrMultiBlockType,
+        /,
+        mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
+        copy: bool = True,
+        inverse: bool = False,
+    ) -> _DataSetOrMultiBlockType:
+        """Apply the current transformation :attr:`matrix` to a dataset.
+
+        This is equivalent to ``apply(dataset, mode)``. See :meth:`apply` for details
+        and examples.
+
+        Parameters
+        ----------
+        dataset : DataSet | MultiBlock
+            Object to apply the transformation to.
+
+        mode : 'active_vectors' | 'all_vectors', default: 'active_vectors'
+            Mode for transforming the dataset's vectors:
+
+            - ``'active_vectors'`` transforms active normals and active vectors arrays
+              only.
+            - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
+              three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+              with :meth:`pyvista.DataObjectFilters.transform`.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Transformed dataset.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        pyvista.DataObjectFilters.transform
+            Transform a dataset.
+
+        """
+        return self.apply(dataset, mode, inverse=inverse, copy=copy)
 
     def decompose(
         self: Transform,
