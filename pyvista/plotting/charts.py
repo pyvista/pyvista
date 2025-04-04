@@ -463,10 +463,10 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     Attributes
     ----------
-    pen : Pen
+    pen : pyvista.plotting.charts.Pen
         Pen used to draw the axis.
 
-    grid_pen : Pen
+    grid_pen : pyvista.plotting.charts.Pen
         Pen used to draw the grid lines.
 
     """
