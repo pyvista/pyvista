@@ -3677,6 +3677,27 @@ def test_plotter_volume_opacity_n_colors():
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_clim():
+    # Validate that we can use clim with volume rendering
+    grid = pv.ImageData(dimensions=(9, 9, 9))
+    grid['scalars'] = np.arange(grid.n_points)
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, clim=[0, grid.n_points], show_scalar_bar=True)
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, clim=[grid.n_points * 0.25, grid.n_points * 0.75], show_scalar_bar=True)
+    pl.show()
+
+    # Validate that we can change clim on the mapper
+    pl = pv.Plotter()
+    actor = pl.add_volume(grid, clim=[0, grid.n_points], show_scalar_bar=True)
+    actor.mapper.scalar_range = [grid.n_points * 0.25, grid.n_points * 0.75]
+    pl.show()
+
+
 def test_plot_actor(sphere):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
