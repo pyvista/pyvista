@@ -10,6 +10,7 @@ import platform
 import re
 import shutil
 from typing import TYPE_CHECKING
+from typing import Literal
 from unittest import mock
 import warnings
 
@@ -25,6 +26,7 @@ import vtk
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
@@ -44,6 +46,8 @@ from pyvista.core.utilities.arrays import parse_field_choice
 from pyvista.core.utilities.arrays import raise_has_duplicates
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
+from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
+from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
@@ -2172,6 +2176,155 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.parametrize(
+    'cell_type', [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE']
+)
+def test_cell_quality_info(cell_type):
+    measure = 'area'
+    info = pv.cell_quality_info(cell_type, measure)
+    assert isinstance(info, CellQualityInfo)
+    assert info.cell_type == pv.CellType.TRIANGLE
+    assert info.quality_measure == measure
+
+
+CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
+
+
+def _compute_unit_cell_quality(
+    info: CellQualityInfo, null_value=-42.42, coincident: Literal['all', 'single', False] = False
+):
+    example_name = _CELL_TYPE_INFO[info.cell_type.name].example
+    cell_mesh = getattr(ex.cells, example_name)()
+    if coincident == 'all':
+        cell_mesh.points[:] = 0.0
+    elif coincident == 'single':
+        cell_mesh.points[1] = cell_mesh.points[0]
+    qual = cell_mesh.cell_quality(info.quality_measure, null_value=null_value)
+    return qual.active_scalars[0]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_valid_measures(info):
+    # Ensure the computed measure is not null
+    null_value = -1
+    qual_value = _compute_unit_cell_quality(info, null_value)
+    if np.isclose(qual_value, null_value):
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
+
+def xfail_wedge_negative_volume(info):
+    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
+        pytest.xfail(
+            'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
+        )
+
+
+def xfail_distortion_returns_one(info):
+    if (
+        info.cell_type in [pv.CellType.TRIANGLE, pv.CellType.TETRA]
+        and info.quality_measure == 'distortion'
+    ):
+        pytest.xfail(
+            'Distortion always returns one, see https://gitlab.kitware.com/vtk/vtk/-/issues/19646.'
+        )
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_unit_cell_value(info):
+    """Test that the actual computed measure for a unit cell matches the reported value."""
+    xfail_wedge_negative_volume(info)
+
+    unit_cell_value = info.unit_cell_value
+    qual_value = _compute_unit_cell_quality(info)
+    assert np.isclose(qual_value, unit_cell_value)
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_acceptable_range(info):
+    """Test that the unit cell value is within the acceptable range."""
+    # Some cells / measures have bugs and return invalid values and are expected to fail
+    xfail_wedge_negative_volume(info)
+
+    acceptable_range = info.acceptable_range
+    unit_cell_value = info.unit_cell_value
+
+    assert unit_cell_value >= acceptable_range[0]
+    assert unit_cell_value <= acceptable_range[1]
+
+
+def _replace_range_infinity(rng):
+    rng = list(rng)
+    lower, upper = rng
+    if lower == -float('inf'):
+        rng[0] = np.finfo(lower).min
+    if upper == float('inf'):
+        rng[1] = np.finfo(upper).max
+    return rng
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_normal_range(info):
+    """Test that the normal range is broader than the acceptable range."""
+    acceptable_range = _replace_range_infinity(info.acceptable_range)
+    normal_range = _replace_range_infinity(info.normal_range)
+
+    assert normal_range[0] <= acceptable_range[0]
+    assert normal_range[1] >= acceptable_range[1]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_full_range(info):
+    """Test that the full range is broader than the normal range."""
+    normal_range = _replace_range_infinity(info.normal_range)
+    full_range = _replace_range_infinity(info.full_range)
+
+    assert full_range[0] <= normal_range[0]
+    assert full_range[1] >= normal_range[1]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_degenerate_cell(info):
+    # Some cells / measures have bugs and return invalid values and are expected to fail
+    xfail_distortion_returns_one(info)
+
+    # Compare non-generate cell with degenerate cell with coincident point(s)
+    unit_cell_quality = _compute_unit_cell_quality(info, coincident=False)
+    all_coincident_quality = _compute_unit_cell_quality(info, coincident='all')
+    single_coincident_quality = _compute_unit_cell_quality(info, coincident='single')
+
+    # Quality must differ in at least one of the degeneracy cases
+    assert (not np.isclose(unit_cell_quality, all_coincident_quality)) or (
+        not np.isclose(unit_cell_quality, single_coincident_quality)
+    )
+
+
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_raises():
+    match = re.escape(
+        "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
+        "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE.name, 'area')
+
+    match = re.escape(
+        "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"
+        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', 'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
 
 
 @pytest.mark.needs_vtk_version(9, 4)
