@@ -583,7 +583,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def arrows(
-            self: Self,
+        self: Self,
     ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
@@ -602,7 +602,9 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> mesh_w_normals = mesh.compute_normals(cell_normals=True, point_normals=False)
+        >>> mesh_w_normals = mesh.compute_normals(
+        ...     cell_normals=True, point_normals=False
+        ... )
         >>> mesh_w_normals.active_vectors_name = 'Normals'
 
         Plot the active vectors as arrows. Show the original mesh as wireframe for
