@@ -478,8 +478,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         else:
             self._pen = Pen(color=(0, 0, 0))
             self._grid_pen = Pen(color=(0.95, 0.95, 0.95))
-            self.SetPen(self.pen)
-            self.SetGridPen(self.grid_pen)
+            self.SetPen(self._pen)
+            self.SetGridPen(self._grid_pen)
         self.label = label
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
