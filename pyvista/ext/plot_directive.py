@@ -86,6 +86,11 @@ include *alt*, *height*, *width*, *scale*, *align*.
 
 
 **Configuration options**
+
+.. versionchanged:: 0.45
+   Prior to v0.45, these directives conflicted with ``matplotlib``. All
+   directives have been prepended with ``pyvista_``.
+
 The plot directive has the following configuration options:
 
     pyvista_plot_include_source : bool, default: True
@@ -241,9 +246,9 @@ def setup(app):
         """
         uses_matplotlib = 'matplotlib.sphinxext.plot_directive' in app.extensions
 
-        if not uses_matplotlib:
+        if not uses_matplotlib:  # pragma: no cover
             for key in legacy_keys:
-                if getattr(config, key, None) is not None:  # pragma: no cover
+                if getattr(config, key, None) is not None:
                     msg = (
                         f"Sphinx config uses deprecated '{key}' without 'pyvista_' prefix. "
                         f"Rename it to 'pyvista_{key}"
