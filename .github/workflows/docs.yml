@@ -36,7 +36,7 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
-  PYVISTA_DOCUMENTATION_CI: "true"  # Flag for running CI-specific code
+  PYVISTA_DOCUMENTATION_CI: "true" # Flag for running CI-specific code
 
 permissions:
   id-token: none
