@@ -14,7 +14,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 #
 # We can allow tables of glyphs in a backward-compatible way by
 # allowing a sequence of geometries as well as single (scalar)
@@ -67,3 +67,5 @@ glyphs = mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0,
 plotter = pv.Plotter()
 plotter.add_mesh(glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False)
 plotter.show()
+# %%
+# .. tags:: filter

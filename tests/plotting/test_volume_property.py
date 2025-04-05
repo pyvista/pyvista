@@ -6,9 +6,15 @@ import pyvista as pv
 from pyvista.plotting.volume_property import VolumeProperty
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_prop():
     return VolumeProperty()
+
+
+@pytest.mark.parametrize('lut', ['foo', None, True, object(), []])
+def test_apply_lookup_table_raises(vol_prop: VolumeProperty, lut):
+    with pytest.raises(TypeError, match='`lookup_table` must be a `pyvista.LookupTable`'):
+        vol_prop.apply_lookup_table(lut)
 
 
 def test_volume_lookup_table(vol_prop, skip_check_gc):
@@ -82,4 +88,4 @@ def test_volume_property_copy(vol_prop):
 
 def test_volume_property_repr(vol_prop):
     assert 'Interpolation type:' in repr(vol_prop)
-    assert "nearest" in repr(vol_prop)
+    assert 'nearest' in repr(vol_prop)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
-from typing import cast
 import warnings
 import weakref
 
@@ -76,7 +75,7 @@ class RectangleSelection:
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
         frustum_source.Update()
-        return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
+        return pyvista.wrap(frustum_source.GetOutput())
 
     @property
     def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
@@ -98,6 +97,7 @@ class PointPickingElementHandler:
         The element type to pick.
     callback : callable, optional
         A callback function to be executed on picking events.
+
     """
 
     def __init__(self, mode: ElementType = ElementType.CELL, callback=None):
@@ -108,11 +108,11 @@ class PointPickingElementHandler:
     @property
     def picker(self):  # numpydoc ignore=RT01
         """Get or set the picker instance."""
-        return self._picker_()
+        return self._picker_()  # type: ignore[misc]
 
     @picker.setter
-    def picker(self, picker):  # numpydoc ignore=GL08
-        self._picker_ = weakref.ref(picker)
+    def picker(self, picker):
+        self._picker_ = weakref.ref(picker)  # type: ignore[assignment]
 
     def get_mesh(self):
         """Get the picked mesh.
@@ -173,7 +173,8 @@ class PointPickingElementHandler:
                     break
             if contains < 0:
                 # this shouldn't happen
-                raise RuntimeError('Trouble aligning point with face.')
+                msg = 'Trouble aligning point with face.'
+                raise RuntimeError(msg)
             face = face.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
@@ -266,7 +267,7 @@ class PickingInterface:  # numpydoc ignore=PR01
     def _clear_picking_representations(self):
         """Clear all picking representations."""
         for name in PICKED_REPRESENTATION_NAMES.values():
-            self.remove_actor(name)
+            self.remove_actor(name)  # type: ignore[attr-defined]
 
     @property
     def picked_point(self):  # numpydoc ignore=RT01
@@ -291,7 +292,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             Picked position or area as ``(x0, y0, x1, y1)``.
 
         """
-        renderer = self.iren.get_poked_renderer()
+        renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
         return renderer.get_pick_position()
 
     def pick_click_position(self):
@@ -303,11 +304,11 @@ class PickingInterface:  # numpydoc ignore=PR01
             Three item tuple with the 3D picked position.
 
         """
-        if self.click_position is None:
-            self.store_click_position()
-        renderer = self.iren.get_poked_renderer()
-        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)
-        return self.iren.picker.GetPickPosition()
+        if self.click_position is None:  # type: ignore[attr-defined]
+            self.store_click_position()  # type: ignore[attr-defined]
+        renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
+        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def pick_mouse_position(self):
         """Get corresponding mouse location in the 3D plot.
@@ -318,21 +319,21 @@ class PickingInterface:  # numpydoc ignore=PR01
             Three item tuple with the 3D picked position.
 
         """
-        if self.mouse_position is None:
-            self.store_mouse_position()
-        renderer = self.iren.get_poked_renderer()
-        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)
-        return self.iren.picker.GetPickPosition()
+        if self.mouse_position is None:  # type: ignore[attr-defined]
+            self.store_mouse_position()  # type: ignore[attr-defined]
+        renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
+        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def _init_click_picking_callback(self, left_clicking=False):
         if left_clicking:
-            self._picking_left_clicking_observer = self.iren.add_observer(
-                "LeftButtonPressEvent",
+            self._picking_left_clicking_observer = self.iren.add_observer(  # type: ignore[attr-defined]
+                'LeftButtonPressEvent',
                 partial(try_callback, _launch_pick_event),
             )
         else:
-            self._picking_right_clicking_observer = self.iren.add_observer(
-                "RightButtonPressEvent",
+            self._picking_right_clicking_observer = self.iren.add_observer(  # type: ignore[attr-defined]
+                'RightButtonPressEvent',
                 partial(try_callback, _launch_pick_event),
             )
 
@@ -355,10 +356,10 @@ class PickingInterface:  # numpydoc ignore=PR01
         """
         # remove left and right clicking observer if available
         if getattr(self, 'iren', None):
-            self.iren.remove_observer(self._picking_left_clicking_observer)
-            self.iren.remove_observer(self._picking_right_clicking_observer)
+            self.iren.remove_observer(self._picking_left_clicking_observer)  # type: ignore[attr-defined]
+            self.iren.remove_observer(self._picking_right_clicking_observer)  # type: ignore[attr-defined]
             # Reset to default picker
-            self.iren.reset_picker()
+            self.iren.reset_picker()  # type: ignore[attr-defined]
         self._picking_left_clicking_observer = None
         self._picking_right_clicking_observer = None
 
@@ -366,9 +367,8 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            raise PyVistaPickingError(
-                'Picking is already enabled, please disable previous picking with `disable_picking()`.',
-            )
+            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            raise PyVistaPickingError(msg)
 
     def enable_point_picking(
         self,
@@ -489,17 +489,17 @@ class PickingInterface:  # numpydoc ignore=PR01
                 # Clear the selection
                 self._picked_point = None
                 if clear_on_no_selection:
-                    with self_().iren.poked_subplot():
-                        self_()._clear_picking_representations()
+                    with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                        self_()._clear_picking_representations()  # type: ignore[union-attr]
                 return
-            with self_().iren.poked_subplot():
+            with self_().iren.poked_subplot():  # type: ignore[union-attr]
                 point = np.array(picker.GetPickPosition())
-                point /= self_().scale  # HACK: handle scale
-                self_()._picked_point = point
+                point /= self_().scale  # type: ignore[union-attr] # HACK: handle scale
+                self_()._picked_point = point  # type: ignore[union-attr]
                 if show_point:
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(
-                        self_().picked_point,
+                    self_().add_mesh(  # type: ignore[union-attr]
+                        self_().picked_point,  # type: ignore[union-attr]
                         color=color,
                         point_size=point_size,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
@@ -521,10 +521,10 @@ class PickingInterface:  # numpydoc ignore=PR01
                         _poked_context_callback(self_(), callback, self.picked_point)
 
         if picker is not None:  # If None, that means use already set picker
-            self.iren.picker = picker
-        if hasattr(self.iren.picker, 'SetTolerance'):
-            self.iren.picker.SetTolerance(tolerance)
-        self.iren.add_pick_observer(_end_pick_event)
+            self.iren.picker = picker  # type: ignore[attr-defined]
+        if hasattr(self.iren.picker, 'SetTolerance'):  # type: ignore[attr-defined]
+            self.iren.picker.SetTolerance(tolerance)  # type: ignore[attr-defined]
+        self.iren.add_pick_observer(_end_pick_event)  # type: ignore[attr-defined]
         self._init_click_picking_callback(left_clicking=left_clicking)
         self._picker_in_use = True
 
@@ -533,7 +533,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             if show_message is True:
                 show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick under the mouse'
-            self._picking_text = self.add_text(
+            self._picking_text = self.add_text(  # type: ignore[attr-defined]
                 str(show_message),
                 font_size=font_size,
                 name='_point_picking_message',
@@ -623,9 +623,9 @@ class PickingInterface:  # numpydoc ignore=PR01
             selection = RectangleSelection(frustum=picker.GetFrustum(), viewport=(x0, y0, x1, y1))
 
             if show_frustum:
-                with self_().iren.poked_subplot():
+                with self_().iren.poked_subplot():  # type: ignore[union-attr]
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(
+                    self_().add_mesh(  # type: ignore[union-attr]
                         selection.frustum_mesh,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['frustum']),
                         style=style,
@@ -638,23 +638,23 @@ class PickingInterface:  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, selection)
 
-        self.enable_rubber_band_style()  # TODO: better handle?
-        self.iren.picker = 'rendered'
-        self.iren.add_pick_observer(_end_pick_helper)
+        self.enable_rubber_band_style()  # type: ignore[attr-defined] # TODO: better handle?
+        self.iren.picker = 'rendered'  # type: ignore[attr-defined]
+        self.iren.add_pick_observer(_end_pick_helper)  # type: ignore[attr-defined]
         self._picker_in_use = True
 
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                show_message = "Press R to toggle selection tool"
-            self._picking_text = self.add_text(
+                show_message = 'Press R to toggle selection tool'
+            self._picking_text = self.add_text(  # type: ignore[attr-defined]
                 str(show_message),
                 font_size=font_size,
                 name='_rectangle_picking_message',
             )
 
         if start:
-            self.iren._style_class.StartSelect()
+            self.iren._style_class.StartSelect()  # type: ignore[attr-defined]
 
 
 class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
@@ -857,28 +857,27 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker = PickerType.from_any(picker)
         valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
-            raise ValueError(
-                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}',
-            )
+            msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
+            raise ValueError(msg)
 
         self_ = weakref.ref(self)
 
         def _end_pick_event(picked_point, picker):
             if not pickable_window and picker.GetActor() is None:
-                self_()._picked_point = None
-                self_()._picked_actor = None
-                self_()._picked_mesh = None
+                self_()._picked_point = None  # type: ignore[union-attr]
+                self_()._picked_actor = None  # type: ignore[union-attr]
+                self_()._picked_mesh = None  # type: ignore[union-attr]
                 if clear_on_no_selection:
-                    with self_().iren.poked_subplot():
-                        self_()._clear_picking_representations()
+                    with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                        self_()._clear_picking_representations()  # type: ignore[union-attr]
                 return
-            self_()._picked_actor = picker.GetActor()
-            self_()._picked_mesh = picker.GetDataSet()
+            self_()._picked_actor = picker.GetActor()  # type: ignore[union-attr]
+            self_()._picked_mesh = picker.GetDataSet()  # type: ignore[union-attr]
 
             if show_point:
-                with self_().iren.poked_subplot():
+                with self_().iren.poked_subplot():  # type: ignore[union-attr]
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(
+                    self_().add_mesh(  # type: ignore[union-attr]
                         picked_point,
                         color=color,
                         point_size=point_size,
@@ -1004,25 +1003,25 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):  # numpydoc ignore=GL08
+        def end_pick_call_back(*args):
             if callback:
                 if use_actor:
-                    _poked_context_callback(self_(), callback, self_()._picked_actor)
+                    _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
                 else:
-                    _poked_context_callback(self_(), callback, self_()._picked_mesh)
+                    _poked_context_callback(self_(), callback, self_()._picked_mesh)  # type: ignore[union-attr]
 
             if show:
                 # Select the renderer where the mesh is added.
-                active_renderer_index = self_().renderers._active_index
-                loc = self_().iren.get_event_subplot_loc()
-                self_().subplot(*loc)
+                active_renderer_index = self_().renderers._active_index  # type: ignore[union-attr]
+                loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]
+                self_().subplot(*loc)  # type: ignore[union-attr]
 
                 # Use try in case selection is empty or invalid
                 try:
-                    with self_().iren.poked_subplot():
+                    with self_().iren.poked_subplot():  # type: ignore[union-attr]
                         _kwargs = kwargs.copy()
-                        self_().add_mesh(
-                            self_()._picked_mesh,
+                        self_().add_mesh(  # type: ignore[union-attr]
+                            self_()._picked_mesh,  # type: ignore[union-attr]
                             name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['mesh']),
                             style=style,
                             color=color,
@@ -1032,20 +1031,19 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # pragma: no cover
-                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[call-overload]
 
                 # Reset to the active renderer.
-                loc = self_().renderers.index_to_loc(active_renderer_index)
-                self_().subplot(*loc)
+                loc = self_().renderers.index_to_loc(active_renderer_index)  # type: ignore[union-attr]
+                self_().subplot(*loc)  # type: ignore[union-attr]
 
                 # render here prior to running the callback
-                self_().render()
+                self_().render()  # type: ignore[union-attr]
 
         # add on-screen message about point-selection
-        if show_message:
-            if show_message is True:
-                show_message = 'Left-click' if left_clicking else 'Right-click'
-                show_message += ' or press P to pick single dataset under the mouse pointer'
+        if show_message and show_message is True:
+            show_message = 'Left-click' if left_clicking else 'Right-click'
+            show_message += ' or press P to pick single dataset under the mouse pointer'
 
         self.enable_surface_point_picking(
             callback=end_pick_call_back,
@@ -1113,20 +1111,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):  # numpydoc ignore=GL08
+        def finalize(picked):
             if picked is None:
                 # Indicates invalid pick
-                with self_().iren.poked_subplot():
-                    self_()._clear_picking_representations()
+                with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                    self_()._clear_picking_representations()  # type: ignore[union-attr]
                 return
 
             self._picked_cell = picked
 
             if show:
                 # Use try in case selection is empty
-                with self_().iren.poked_subplot():
+                with self_().iren.poked_subplot():  # type: ignore[union-attr]
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(
+                    self_().add_mesh(  # type: ignore[union-attr]
                         picked,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['through']),
                         style=style,
@@ -1138,13 +1136,17 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     )
 
             if callback is not None:
-                _poked_context_callback(self_(), callback, self_().picked_cells)
+                _poked_context_callback(self_(), callback, self_().picked_cells)  # type: ignore[union-attr]
 
-        def through_pick_callback(selection):  # numpydoc ignore=GL08
+        def through_pick_callback(selection):
             picked = pyvista.MultiBlock()
-            renderer = self_().iren.get_poked_renderer()
+            renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
-                if actor.GetMapper() and actor.GetPickable():
+                if (
+                    (mapper := actor.GetMapper())
+                    and hasattr(mapper, 'GetInputAsDataSet')
+                    and actor.GetPickable()
+                ):
                     input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
@@ -1154,13 +1156,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
-                self_()._picked_cell = None
+                self_()._picked_cell = None  # type: ignore[union-attr]
             elif picked.n_blocks == 1:
-                self_()._picked_cell = picked[0]
+                self_()._picked_cell = picked[0]  # type: ignore[union-attr]
             else:
-                self_()._picked_cell = picked
+                self_()._picked_cell = picked  # type: ignore[union-attr]
 
-            finalize(self_()._picked_cell)
+            finalize(self_()._picked_cell)  # type: ignore[union-attr]
 
         self.enable_rectangle_picking(
             callback=through_pick_callback,
@@ -1227,18 +1229,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):  # numpydoc ignore=GL08
+        def finalize(picked):
             if picked is None:
                 # Indicates invalid pick
-                with self_().iren.poked_subplot():
-                    self_()._clear_picking_representations()
+                with self_().iren.poked_subplot():  # type: ignore[union-attr]
+                    self_()._clear_picking_representations()  # type: ignore[union-attr]
                 return
 
             if show:
                 # Use try in case selection is empty
-                with self_().iren.poked_subplot():
+                with self_().iren.poked_subplot():  # type: ignore[union-attr]
                     _kwargs = kwargs.copy()
-                    self_().add_mesh(
+                    self_().add_mesh(  # type: ignore[union-attr]
                         picked,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['visible']),
                         style=style,
@@ -1252,9 +1254,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, picked)
 
-        def visible_pick_callback(selection):  # numpydoc ignore=GL08
+        def visible_pick_callback(selection):
             picked = pyvista.MultiBlock()
-            renderer = self_().iren.get_poked_renderer()
+            renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             x0, y0, x1, y1 = renderer.get_pick_position()
             # x0, y0, x1, y1 = selection.viewport
             if x0 >= 0:  # initial pick position is (-1, -1, -1, -1)
@@ -1282,13 +1284,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results.",
+                            'Display representations other than `surface` will result in incorrect results.',
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
-                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
-                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
@@ -1296,13 +1298,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 selection.UnRegister(selection)
 
             if len(picked) == 0 or picked.combine().n_cells < 1:
-                self_()._picked_cell = None
+                self_()._picked_cell = None  # type: ignore[union-attr]
             elif len(picked) == 1:
-                self_()._picked_cell = picked[0]
+                self_()._picked_cell = picked[0]  # type: ignore[union-attr]
             else:
-                self_()._picked_cell = picked
+                self_()._picked_cell = picked  # type: ignore[union-attr]
 
-            finalize(self_()._picked_cell)
+            finalize(self_()._picked_cell)  # type: ignore[union-attr]
 
         self.enable_rectangle_picking(
             callback=visible_pick_callback,
@@ -1430,7 +1432,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         show=True,
         show_message=True,
         font_size=18,
-        color='pink',
         tolerance=0.025,
         pickable_window=False,
         left_clicking=False,
@@ -1458,9 +1459,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         font_size : int, default: 18
             Sets the font size of the message.
-
-        color : ColorLike, default: "pink"
-            The color of the selected mesh when shown.
 
         tolerance : float, default: 0.025
             Specify tolerance for performing pick operation. Tolerance
@@ -1517,9 +1515,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 if mode in [ElementType.CELL, ElementType.FACE]:
                     picked = picked.extract_all_edges()
 
-                with self.iren.poked_subplot():
+                with self.iren.poked_subplot():  # type: ignore[attr-defined]
                     _kwargs = kwargs.copy()
-                    self.add_mesh(
+                    self.add_mesh(  # type: ignore[attr-defined]
                         picked,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['element']),
                         pickable=_kwargs.pop('pickable', False),
@@ -1535,7 +1533,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             callback=handler,
             show_message=show_message,
             font_size=font_size,
-            color=color,
             show_point=False,
             tolerance=tolerance,
             pickable_window=pickable_window,
@@ -1574,24 +1571,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         color.
 
         >>> import pyvista as pv
-        >>> multiblock = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> multiblock = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(multiblock)
         >>> def turn_blue(index, dataset):
         ...     mapper.block_attr[index].color = 'blue'
-        ...
         >>> pl.enable_block_picking(callback=turn_blue, side='left')
         >>> def clear_color(index, dataset):
         ...     mapper.block_attr[index].color = None
-        ...
         >>> pl.enable_block_picking(callback=clear_color, side='right')
         >>> pl.show()
 
         """
         # use a weak reference to enable garbage collection
-        renderer_ = weakref.ref(self.renderer)
+        renderer_ = weakref.ref(self.renderer)  # type: ignore[attr-defined]
         self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
@@ -1599,9 +1592,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01
             """Get the picked block and pass it to the user callback."""
-            x, y = self.mouse_position
+            x, y = self.mouse_position  # type: ignore[attr-defined]
             selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetRenderer(renderer_())
+            selector.SetRenderer(renderer_())  # type: ignore[arg-type]
             selector.SetArea(x, y, x, y)  # single pixel
             selection = selector.Select()
 
@@ -1623,7 +1616,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 if callable(callback):
                     _poked_context_callback(self_(), callback, self._picked_block_index, dataset)
 
-        self.track_click_position(callback=get_picked_block, viewport=True, side=side)
+        self.track_click_position(callback=get_picked_block, viewport=True, side=side)  # type: ignore[attr-defined]
 
 
 class PickingHelper(PickingMethods):
@@ -1638,13 +1631,13 @@ class PickingHelper(PickingMethods):
 
     def fly_to_mouse_position(self, focus=False):
         """Focus on last stored mouse position."""
-        if self.mouse_position is None:
-            self.store_mouse_position()
+        if self.mouse_position is None:  # type: ignore[attr-defined]
+            self.store_mouse_position()  # type: ignore[attr-defined]
         click_point = self.pick_mouse_position()
         if focus:
-            self.set_focus(click_point)
+            self.set_focus(click_point)  # type: ignore[attr-defined]
         else:
-            self.fly_to(click_point)
+            self.fly_to(click_point)  # type: ignore[attr-defined]
 
     def enable_fly_to_right_click(self, callback=None):
         """Set the camera to track right click positions.
@@ -1663,11 +1656,11 @@ class PickingHelper(PickingMethods):
 
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
-            self.fly_to(click_point)
+            self.fly_to(click_point)  # type: ignore[attr-defined]
             if callable(callback):
                 _poked_context_callback(self_(), callback, click_point)
 
-        self.track_click_position(callback=_the_callback, side="right")
+        self.track_click_position(callback=_the_callback, side='right')  # type: ignore[attr-defined]
 
     def enable_path_picking(
         self,
@@ -1730,7 +1723,7 @@ class PickingHelper(PickingMethods):
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points):  # numpydoc ignore=GL08
+        def make_line_cells(n_points):
             cells = np.arange(0, n_points, dtype=np.int_)
             return np.insert(cells, 0, n_points)
 
@@ -1743,9 +1736,9 @@ class PickingHelper(PickingMethods):
             self.picked_path = pyvista.PolyData(np.array(the_points))
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                with self.iren.poked_subplot():
+                with self.iren.poked_subplot():  # type: ignore[attr-defined]
                     _kwargs = kwargs.copy()
-                    self.add_mesh(
+                    self.add_mesh(  # type: ignore[attr-defined]
                         self.picked_path,
                         color=color,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
@@ -1760,12 +1753,12 @@ class PickingHelper(PickingMethods):
 
         def _clear_path_event_watcher():
             del the_points[:]
-            with self.iren.poked_subplot():
+            with self.iren.poked_subplot():  # type: ignore[attr-defined]
                 self._clear_picking_representations()
 
-        self.add_key_event('c', _clear_path_event_watcher)
+        self.add_key_event('c', _clear_path_event_watcher)  # type: ignore[attr-defined]
         if show_message is True:
-            show_message = "Press P to pick under the mouse\nPress C to clear"
+            show_message = 'Press P to pick under the mouse\nPress C to clear'
 
         self.enable_surface_point_picking(
             callback=_the_callback,
@@ -1854,7 +1847,7 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx = None
+        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:
@@ -1884,9 +1877,9 @@ class PickingHelper(PickingMethods):
             self._last_picked_idx = idx
 
             if show_path:
-                with self.iren.poked_subplot():
+                with self.iren.poked_subplot():  # type: ignore[attr-defined]
                     _kwargs = kwargs.copy()
-                    self.add_mesh(
+                    self.add_mesh(  # type: ignore[attr-defined]
                         self.picked_geodesic,
                         color=color,
                         name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
@@ -1901,13 +1894,13 @@ class PickingHelper(PickingMethods):
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
-            with self.iren.poked_subplot():
+            with self.iren.poked_subplot():  # type: ignore[attr-defined]
                 self._clear_picking_representations()
             self._last_picked_idx = None
 
-        self.add_key_event('c', _clear_g_path_event_watcher)
+        self.add_key_event('c', _clear_g_path_event_watcher)  # type: ignore[attr-defined]
         if show_message is True:
-            show_message = "Press P to pick under the mouse\nPress C to clear"
+            show_message = 'Press P to pick under the mouse\nPress C to clear'
 
         self.enable_surface_point_picking(
             callback=_the_callback,
@@ -1991,10 +1984,10 @@ class PickingHelper(PickingMethods):
 
         def _clear_horizon_event_watcher():
             self.picked_horizon = pyvista.PolyData()
-            with self.iren.poked_subplot():
+            with self.iren.poked_subplot():  # type: ignore[attr-defined]
                 self._clear_picking_representations()
 
-        self.add_key_event('c', _clear_horizon_event_watcher)
+        self.add_key_event('c', _clear_horizon_event_watcher)  # type: ignore[attr-defined]
 
         def _the_callback(path):
             if path.n_points < 2:
@@ -2003,9 +1996,9 @@ class PickingHelper(PickingMethods):
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                with self.iren.poked_subplot():
+                with self.iren.poked_subplot():  # type: ignore[attr-defined]
                     _kwargs = kwargs.copy()
-                    self.add_mesh(
+                    self.add_mesh(  # type: ignore[attr-defined]
                         self.picked_horizon,
                         name=_kwargs.get('name', PICKED_REPRESENTATION_NAMES['horizon']),
                         color=color,

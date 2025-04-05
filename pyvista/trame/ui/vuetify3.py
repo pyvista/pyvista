@@ -20,17 +20,17 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
 
 
 def button(click, icon, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify button."""
     with vuetify.VTooltip(location='bottom'):
-        with vuetify.Template(v_slot_activator='{ props }'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
             with vuetify.VBtn(
                 icon=True,
-                v_bind='props',
+                v_bind=('props',),
                 variant='text',
                 size='small',
                 click=click,
@@ -42,8 +42,8 @@ def button(click, icon, tooltip):  # numpydoc ignore=PR01
 def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify checkbox."""
     with vuetify.VTooltip(location='bottom'):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VCheckbox(
                     v_model=model,
                     true_icon=icons[0],
@@ -58,8 +58,8 @@ def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
 def slider(model, tooltip, **kwargs):  # numpydoc ignore=PR01
     """Create a vuetify slider."""
     with vuetify.VTooltip(bottom=True):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VSlider(v_model=model, **kwargs)
         html.Span(tooltip)
 
@@ -67,8 +67,8 @@ def slider(model, tooltip, **kwargs):  # numpydoc ignore=PR01
 def text_field(model, tooltip, **kwargs):  # numpydoc ignore=PR01
     """Create a vuetify text field."""
     with vuetify.VTooltip(bottom=True):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VTextField(v_model=model, **kwargs)
         html.Span(tooltip)
 
@@ -76,8 +76,8 @@ def text_field(model, tooltip, **kwargs):  # numpydoc ignore=PR01
 def select(model, tooltip, **kwargs):  # numpydoc ignore=PR01
     """Create a vuetify select menu."""
     with vuetify.VTooltip(bottom=True):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VSelect(v_model=model, **kwargs)
         html.Span(tooltip)
 
@@ -108,6 +108,7 @@ class Viewer(BaseViewer):
         -------
         VAppLayout (vue3)
             A layout this viewer can be embedded in.
+
         """
         return VAppLayout(*args, **kwargs)
 
@@ -136,14 +137,14 @@ class Viewer(BaseViewer):
         with vuetify.VRow(
             v_show=v_show,
             classes='pa-0 ma-0 align-center fill-height',
-            style="flex-wrap: nowrap",
+            style='flex-wrap: nowrap',
         ) as row:
             server = row.server
             # Listen to state changes
-            server.state.change(self.EDGES)(self.on_edge_visiblity_change)
-            server.state.change(self.GRID)(self.on_grid_visiblity_change)
-            server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
-            server.state.change(self.AXIS)(self.on_axis_visiblity_change)
+            server.state.change(self.EDGES)(self.on_edge_visibility_change)
+            server.state.change(self.GRID)(self.on_grid_visibility_change)
+            server.state.change(self.OUTLINE)(self.on_outline_visibility_change)
+            server.state.change(self.AXIS)(self.on_axis_visibility_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
             server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
@@ -205,7 +206,7 @@ class Viewer(BaseViewer):
             with vuetify.VRow(
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center fill-height',
-                style="flex-wrap: nowrap; flex: unset",
+                style='flex-wrap: nowrap; flex: unset',
             ):
                 checkbox(
                     model=(self.PARALLEL, False),
@@ -281,9 +282,8 @@ class Viewer(BaseViewer):
         if mode is None:
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
-            raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
-            )
+            msg = f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+            raise ValueError(msg)
         if mode != 'trame':
             default_server_rendering = mode == 'server'
 
@@ -311,7 +311,7 @@ class Viewer(BaseViewer):
                 ) as self.menu:
                     with vuetify.VRow(
                         classes='pa-0 ma-0 align-center fill-height',
-                        style="flex-wrap: nowrap",
+                        style='flex-wrap: nowrap',
                     ):
                         button(
                             click=f'{self.SHOW_UI}=!{self.SHOW_UI}',

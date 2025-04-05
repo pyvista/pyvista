@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING
 
 import pyvista
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
 
 BUILDING_GALLERY_ERROR_MSG = (
-    "pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture "
-    "images within sphinx_gallery or when building documentation using the "
-    "pyvista-plot directive."
+    'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
+    'images within sphinx_gallery or when building documentation using the '
+    'pyvista-plot directive.'
 )
 
 
@@ -46,14 +46,14 @@ def html_rst(
         # this has to be a kwarg...
         srcsetpaths = [{0: fl} for fl in figure_list]
 
-    images_rst = ""
+    images_rst = ''
     for i, hinnames in enumerate(srcsetpaths):
         srcset = _get_srcset_st(sources_dir, hinnames)
-        if srcset[-5:] == "vtksz":
-            png_file = figure_list[i][:-5] + "png"
+        if srcset[-5:] == 'vtksz':
+            png_file = figure_list[i][:-5] + 'png'
 
-            indented_firgure_rst = "\n".join(
-                " " * 5 + line for line in figure_rst([png_file], sources_dir).split("\n")
+            indented_firgure_rst = '\n'.join(
+                ' ' * 5 + line for line in figure_rst([png_file], sources_dir).split('\n')
             )
             images_rst += f"""
 \n
@@ -69,7 +69,7 @@ def html_rst(
        .. offlineviewer:: {figure_list[i]}\n\n"""
 
         else:
-            images_rst += "\n" + figure_rst([figure_list[i]], sources_dir) + "\n\n"
+            images_rst += '\n' + figure_rst([figure_list[i]], sources_dir) + '\n\n'
 
     return images_rst
 
@@ -79,7 +79,7 @@ def _process_events_before_scraping(plotter):
     if plotter.iren is not None and plotter.iren.initialized:
         # check for pyvistaqt app which can be specifically bound to pyvista plotter
         # objects in order to interact with qt, then process the events from qt
-        if hasattr(plotter, "app") and plotter.app is not None:
+        if hasattr(plotter, 'app') and plotter.app is not None:
             plotter.app.processEvents()
         plotter.update()
 
@@ -106,6 +106,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
     -------
     list[str]
         A list of the names of the images that were created.
+
     """
     image_names = []
     figures = pyvista.plotting.plotter._ALL_PLOTTERS
@@ -115,11 +116,11 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         # Make sure the extension is "png"
         path = Path(fname)
         fname_withoutextension = str(path.parent / path.stem)
-        fname = fname_withoutextension + ".png"
+        fname = fname_withoutextension + '.png'
 
-        if hasattr(plotter, "_gif_filename"):
+        if hasattr(plotter, '_gif_filename'):
             # move gif to fname
-            fname = fname[:-3] + "gif"
+            fname = fname[:-3] + 'gif'
             shutil.move(plotter._gif_filename, fname)
             image_names.append(fname)
         else:
@@ -127,8 +128,8 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
             if not dynamic or plotter.last_vtksz is None:
                 image_names.append(fname)
             else:  # pragma: no cover
-                fname = fname[:-3] + "vtksz"
-                with Path(fname).open("wb") as f:
+                fname = fname[:-3] + 'vtksz'
+                with Path(fname).open('wb') as f:
                     f.write(plotter.last_vtksz)
                     image_names.append(fname)
 
@@ -137,8 +138,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
 
 
 class Scraper:
-    """
-    Save ``pyvista.Plotter`` objects.
+    """Save ``pyvista.Plotter`` objects.
 
     Used by sphinx-gallery to generate the plots from the code in the examples.
 
@@ -149,9 +149,9 @@ class Scraper:
 
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
-        return f"<{type(self).__name__} object>"
+        return f'<{type(self).__name__} object>'
 
     def __call__(self, block, block_vars, gallery_conf):
         """Save the figures generated after running example code.
@@ -164,14 +164,13 @@ class Scraper:
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
-        image_path_iterator = block_vars["image_path_iterator"]
+        image_path_iterator = block_vars['image_path_iterator']
         image_names = generate_images(image_path_iterator, dynamic=False)
-        return figure_rst(image_names, gallery_conf["src_dir"])
+        return figure_rst(image_names, gallery_conf['src_dir'])
 
 
 class DynamicScraper:  # pragma: no cover
-    """
-    Save ``pyvista.Plotter`` objects dynamically.
+    """Save ``pyvista.Plotter`` objects dynamically.
 
     Used by sphinx-gallery to generate the plots from the code in the examples.
 
@@ -192,9 +191,9 @@ class DynamicScraper:  # pragma: no cover
 
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
-        return f"<{type(self).__name__} object>"
+        return f'<{type(self).__name__} object>'
 
     def __call__(self, block, block_vars, gallery_conf):  # pragma: no cover
         """Save the figures generated after running example code.
@@ -207,13 +206,13 @@ class DynamicScraper:  # pragma: no cover
 
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
-            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT",
+            'PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT',
             False,
         )
         # override with block specific value if it exists
-        if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split('\n'):
+        if 'PYVISTA_GALLERY_FORCE_STATIC = True' in block[1].split('\n'):
             force_static = True
-        elif "PYVISTA_GALLERY_FORCE_STATIC = False" in block[1].split('\n'):
+        elif 'PYVISTA_GALLERY_FORCE_STATIC = False' in block[1].split('\n'):
             force_static = False
 
         if force_static is None:
@@ -222,7 +221,7 @@ class DynamicScraper:  # pragma: no cover
 
         dynamic = not force_static
 
-        image_path_iterator = block_vars["image_path_iterator"]
+        image_path_iterator = block_vars['image_path_iterator']
         image_names = generate_images(image_path_iterator, dynamic=dynamic)
 
-        return html_rst(image_names, gallery_conf["src_dir"])
+        return html_rst(image_names, gallery_conf['src_dir'])

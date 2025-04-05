@@ -17,21 +17,21 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVista UI Template"
+state.trame__title = 'PyVista UI Template'
 
 # -----------------------------------------------------------------------------
 
 mesh = examples.load_random_hills()
 
 plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap="viridis")
+actor = plotter.add_mesh(mesh, cmap='viridis')
 
 
-@state.change("cmap")
-def update_cmap(cmap="viridis", **kwargs):
+@state.change('cmap')
+def update_cmap(cmap='viridis', **kwargs):
     actor.mapper.lookup_table.cmap = cmap
     ctrl.view_update()
 
@@ -42,19 +42,19 @@ def update_cmap(cmap="viridis", **kwargs):
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVista Colormaps")
+    layout.title.set_text('PyVista Colormaps')
 
     with layout.toolbar:
         vuetify3.VSpacer()
         vuetify3.VSelect(
-            label="Color map",
-            v_model=("cmap", "viridis"),
-            items=("array_list", plt.colormaps()),
+            label='Color map',
+            v_model=('cmap', 'viridis'),
+            items=('array_list', plt.colormaps()),
             hide_details=True,
-            density="compact",
+            density='compact',
             outlined=True,
-            classes="pt-1 ml-2",
-            style="max-width: 250px",
+            classes='pt-1 ml-2',
+            style='max-width: 250px',
         )
 
     with layout.content:

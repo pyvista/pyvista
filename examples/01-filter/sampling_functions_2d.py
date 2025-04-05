@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Generate Perlin Noise over a StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
@@ -31,7 +31,7 @@ noise = pv.perlin_noise(1, freq, (0, 0, 0))
 sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500, 500, 1))
 
 
-###############################################################################
+# %%
 # Warp by scalar
 # ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
@@ -53,7 +53,7 @@ water_level = z.max() - water_percent * diff
 mesh.points[z < water_level, 2] = water_level
 
 
-###############################################################################
+# %%
 # Show the terrain as a contour plot
 
 # make the water blue
@@ -73,7 +73,7 @@ pl.add_mesh(
 pl.show()
 
 
-###############################################################################
+# %%
 # Show the terrain with custom lighting and shadows
 
 pl = pv.Plotter(lighting=None)
@@ -81,3 +81,5 @@ pl.add_light(pv.Light((3, 1, 0.5), show_actor=True, positional=True, cone_angle=
 pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim)
 pl.enable_shadows = True
 pl.show()
+# %%
+# .. tags:: filter

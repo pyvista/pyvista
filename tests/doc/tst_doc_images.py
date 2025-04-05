@@ -25,6 +25,10 @@ FLAKY_TEST_CASES = [
     path for path in os.listdir(FLAKY_IMAGE_DIR) if Path(FLAKY_IMAGE_DIR, path).is_dir()
 ]
 
+MAX_VTKSZ_FILE_SIZE_MB = 50
+
+pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
+
 
 class _TestCaseTuple(NamedTuple):
     test_name: str
@@ -125,6 +129,12 @@ def pytest_generate_tests(metafunc):
         ids = [case.test_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
+    if 'vtksz_file' in metafunc.fixturenames:
+        # Generate a separate test case for each vtksz file
+        files = sorted(_get_file_paths(BUILD_IMAGE_DIR, ext='vtksz'))
+        ids = [str(Path(file).stem) for file in files]
+        metafunc.parametrize('vtksz_file', files, ids=ids)
+
 
 def _save_failed_test_image(source_path):
     """Save test image from cache or build to the failed image dir."""
@@ -139,7 +149,7 @@ def _save_failed_test_image(source_path):
     shutil.copy(source_path, dest_path)
 
 
-def test_docs(test_case: _TestCaseTuple):
+def test_static_images(test_case: _TestCaseTuple):
     fail_msg, fail_source = _test_both_images_exist(*test_case)
     if fail_msg:
         _save_failed_test_image(fail_source)
@@ -173,51 +183,55 @@ def _test_both_images_exist(filename, docs_image_path, cached_image_path):
             missing_path = BUILD_IMAGE_CACHE
 
         msg = (
-            f"Test setup failed for test image:\n"
-            f"\t{filename}\n"
-            f"The image exists in the {exists} directory:\n"
-            f"\t{exists_path}\n"
-            f"but is missing from the {missing} directory:\n"
-            f"\t{missing_path}\n"
+            f'Test setup failed for test image:\n'
+            f'\t{filename}\n'
+            f'The image exists in the {exists} directory:\n'
+            f'\t{exists_path}\n'
+            f'but is missing from the {missing} directory:\n'
+            f'\t{missing_path}\n'
         )
         return msg, source_path
     return None, None
 
 
 def _test_compare_images(test_name, docs_image_path, cached_image_path):
-    docs_image = pv.read(docs_image_path)
-    cached_image = pv.read(cached_image_path)
+    try:
+        docs_image = pv.read(docs_image_path)
+        cached_image = pv.read(cached_image_path)
 
-    # Check if test should fail or warn
-    error = pv.compare_images(docs_image, cached_image)
-    fail_msg = _check_compare_fail(test_name, error)
-    warn_msg = _check_compare_warn(test_name, error)
-    if fail_msg:
-        # Check if test case is flaky test
-        if test_name in FLAKY_TEST_CASES:
-            # Compare build image to other known valid versions
-            success_path = _is_false_positive(test_name, docs_image)
-            if success_path:
-                # Convert failure into a warning
-                warn_msg = fail_msg + (
-                    '\nTHIS IS A FLAKY TEST. It initially failed (as above) but passed when '
-                    f'compared to:\n\t{success_path}'
-                )
-                fail_msg = None
-            else:
-                # Test still fails
-                fail_msg += (
-                    '\nTHIS IS A FLAKY TEST. It initially failed (as above) and failed again for '
-                    f'all images in \n\t{Path(FLAKY_IMAGE_DIR, test_name)!s}.'
-                )
+        # Check if test should fail or warn
+        error = pv.compare_images(docs_image, cached_image)
+        fail_msg = _check_compare_fail(test_name, error)
+        warn_msg = _check_compare_warn(test_name, error)
+        if fail_msg:
+            # Check if test case is flaky test
+            if test_name in FLAKY_TEST_CASES:
+                # Compare build image to other known valid versions
+                success_path = _is_false_positive(test_name, docs_image)
+                if success_path:
+                    # Convert failure into a warning
+                    warn_msg = fail_msg + (
+                        '\nTHIS IS A FLAKY TEST. It initially failed (as above) but passed when '
+                        f'compared to:\n\t{success_path}'
+                    )
+                    fail_msg = None
+                else:
+                    # Test still fails
+                    fail_msg += (
+                        '\nTHIS IS A FLAKY TEST. It initially failed (as above) and failed again for '
+                        f'all images in \n\t{Path(FLAKY_IMAGE_DIR, test_name)!s}.'
+                    )
+    except RuntimeError as e:
+        warn_msg = None
+        fail_msg = repr(e)
     return warn_msg, fail_msg
 
 
 def _check_compare_fail(filename, error_, allowed_error=500.0):
     if error_ > allowed_error:
         return (
-            f"{filename} Exceeded image regression error of "
-            f"{allowed_error} with an image error equal to: {error_}"
+            f'{filename} Exceeded image regression error of '
+            f'{allowed_error} with an image error equal to: {error_}'
         )
     return None
 
@@ -225,9 +239,9 @@ def _check_compare_fail(filename, error_, allowed_error=500.0):
 def _check_compare_warn(filename, error_, allowed_warning=200.0):
     if error_ > allowed_warning:
         return (
-            f"{filename} Exceeded image regression warning of "
-            f"{allowed_warning} with an image error of "
-            f"{error_}"
+            f'{filename} Exceeded image regression warning of '
+            f'{allowed_warning} with an image error of '
+            f'{error_}'
         )
     return None
 
@@ -240,3 +254,19 @@ def _is_false_positive(test_name, docs_image):
         if _check_compare_fail(test_name, error) is None:
             return path
     return None
+
+
+def test_interactive_plot_file_size(vtksz_file: str):
+    filepath = Path(vtksz_file)
+    assert filepath.is_file()
+    size_bytes = filepath.stat().st_size
+    size_megabytes = round(size_bytes / 1_000_000)
+    if size_megabytes > MAX_VTKSZ_FILE_SIZE_MB:
+        rel_path = filepath.relative_to(ROOT_DIR)
+        msg = (
+            f'The generated interactive plot file is too large: \n'
+            f'\t{rel_path}\n'
+            f'Its size is {size_megabytes} MB, but must be less than {MAX_VTKSZ_FILE_SIZE_MB} MB.\n'
+            f'Consider reducing the complexity of the plot or forcing it to be static.'
+        )
+        pytest.fail(msg)

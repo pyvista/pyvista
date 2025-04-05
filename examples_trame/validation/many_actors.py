@@ -9,10 +9,10 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVista Many Actors"
+state.trame__title = 'PyVista Many Actors'
 
 # -----------------------------------------------------------------------------
 

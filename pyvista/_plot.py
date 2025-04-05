@@ -10,6 +10,8 @@ decouple the ``core`` and ``plotting`` APIs.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 
 import pyvista
@@ -198,9 +200,7 @@ def plot(
     ImageData. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.ImageData(
-    ...     dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5)
-    ... )
+    >>> grid = pv.ImageData(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
     >>> grid['data'] = np.abs(grid['data'] - grid['data'].max()) ** 3
     >>> grid.plot(volume=True)
@@ -213,7 +213,7 @@ def plot(
     before_close_callback = kwargs.pop('before_close_callback', None)
 
     # pop from kwargs here to avoid including them in add_mesh or add_volume
-    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
+    eye_dome_lighting = kwargs.pop('edl', eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
@@ -231,9 +231,9 @@ def plot(
         show_axes = pl.theme.axes.show
     if show_axes:
         if pl.theme.axes.box:
-            pl.add_box_axes()
+            pl.add_box_axes()  # type: ignore[call-arg]
         else:
-            pl.add_axes()
+            pl.add_axes()  # type: ignore[call-arg]
 
     if anti_aliasing:
         if anti_aliasing is True:
@@ -243,7 +243,16 @@ def plot(
     elif anti_aliasing is False:
         pl.disable_anti_aliasing()
 
-    pl.set_background(background)
+    try:
+        pl.set_background(background)
+    except (ValueError, TypeError):
+        if isinstance(background, (str, Path)):
+            path = Path(background)
+            if path.is_file():
+                pl.add_background_image(path)
+        else:
+            msg = f'Background must be color-like or a file path. Got {background} instead.'
+            raise ValueError(msg)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -263,37 +272,36 @@ def plot(
                     pl.add_volume(item, **kwargs)
                 else:
                     pl.add_mesh(item, **kwargs)
+    elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
+        pl.add_volume(var_item, **kwargs)
+    elif isinstance(var_item, pyvista.MultiBlock):
+        pl.add_composite(var_item, **kwargs)
     else:
-        if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-            pl.add_volume(var_item, **kwargs)
-        elif isinstance(var_item, pyvista.MultiBlock):
-            pl.add_composite(var_item, **kwargs)
-        else:
-            pl.add_mesh(var_item, **kwargs)
+        pl.add_mesh(var_item, **kwargs)
 
     if text:
         pl.add_text(text)
 
     if show_grid:
-        pl.show_grid()
+        pl.show_grid()  # type: ignore[call-arg]
     elif show_bounds:
-        pl.show_bounds()
+        pl.show_bounds()  # type: ignore[call-arg]
 
     if cpos is None:
-        cpos = pl.get_default_cam_pos()
+        cpos = pl.get_default_cam_pos()  # type: ignore[call-arg]
         pl.camera_position = cpos
         pl.camera_set = False
     else:
         pl.camera_position = cpos
 
     if eye_dome_lighting:
-        pl.enable_eye_dome_lighting()
+        pl.enable_eye_dome_lighting()  # type: ignore[call-arg]
 
     if parallel_projection:
-        pl.enable_parallel_projection()
+        pl.enable_parallel_projection()  # type: ignore[call-arg]
 
     if ssao:
-        pl.enable_ssao()
+        pl.enable_ssao()  # type: ignore[call-arg]
 
     if zoom is not None:
         pl.camera.zoom(zoom)

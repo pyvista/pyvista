@@ -2,10 +2,23 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
+
 import numpy as np
 
+from pyvista.core import _validation
 
-def axis_angle_rotation(axis, angle, point=None, deg=True):
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
+
+
+def axis_angle_rotation(
+    axis: VectorLike[float], angle: float, point: VectorLike[float] | None = None, deg: bool = True
+) -> NumpyArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
     Rotations around an axis that contains the origin can easily be
@@ -96,24 +109,21 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     if angle % (2 * np.pi) == 0:
         return np.eye(4)
 
-    axis = np.asarray(axis, dtype='float64')
-    if axis.shape != (3,):
-        raise ValueError('Axis must be a 3-length array-like.')
+    axis_ = _validation.validate_array3(axis, dtype_out=float, name='axis')
     if point is not None:
-        point = np.asarray(point)
-        if point.shape != (3,):
-            raise ValueError('Rotation center must be a 3-length array-like.')
+        point_ = _validation.validate_array3(point, dtype_out=float, name='point')
 
     # check and normalize
-    axis_norm = np.linalg.norm(axis)
+    axis_norm = np.linalg.norm(axis_)
     if np.isclose(axis_norm, 0):
-        raise ValueError('Cannot rotate around zero vector axis.')
+        msg = 'Cannot rotate around zero vector axis.'
+        raise ValueError(msg)
     if not np.isclose(axis_norm, 1):
-        axis = axis / axis_norm
+        axis_ = axis_ / axis_norm
 
     # build Rodrigues' rotation matrix
     K = np.zeros((3, 3))
-    K[[2, 0, 1], [1, 2, 0]] = axis
+    K[[2, 0, 1], [1, 2, 0]] = axis_
     K += -K.T
 
     # the cos and sin functions can introduce some numerical error
@@ -133,12 +143,14 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     if point is not None:
         # rotation of point p would be R @ (p - point) + point
         # which is R @ p + (point - R @ point)
-        augmented[:-1, -1] = point - R @ point
+        augmented[:-1, -1] = point_ - R @ point_
 
     return augmented
 
 
-def reflection(normal, point=None):
+def reflection(
+    normal: VectorLike[float], point: VectorLike[float] | None = None
+) -> NumpyArray[float]:
     """Return a 4x4 matrix for reflection across a normal about a point.
 
     Projection to a unit vector ``n`` can be computed using the dyadic
@@ -207,25 +219,26 @@ def reflection(normal, point=None):
     ...         [-1, 1, 1],
     ...     ]
     ... )
-    >>> mirrored = transformations.apply_transformation_to_points(
-    ...     trans, verts
-    ... )
+    >>> mirrored = transformations.apply_transformation_to_points(trans, verts)
     >>> np.allclose(mirrored, verts[[np.r_[4:8, 0:4]], :])
     True
 
     """
     normal = np.asarray(normal, dtype='float64')
     if normal.shape != (3,):
-        raise ValueError('Normal must be a 3-length array-like.')
+        msg = 'Normal must be a 3-length array-like.'
+        raise ValueError(msg)
     if point is not None:
         point = np.asarray(point)
         if point.shape != (3,):
-            raise ValueError('Plane reference point must be a 3-length array-like.')
+            msg = 'Plane reference point must be a 3-length array-like.'
+            raise ValueError(msg)
 
     # check and normalize
     normal_norm = np.linalg.norm(normal)
     if np.isclose(normal_norm, 0):
-        raise ValueError('Plane normal cannot be zero.')
+        msg = 'Plane normal cannot be zero.'
+        raise ValueError(msg)
     if not np.isclose(normal_norm, 1):
         normal = normal / normal_norm
 
@@ -243,7 +256,23 @@ def reflection(normal, point=None):
     return augmented
 
 
-def apply_transformation_to_points(transformation, points, inplace=False):
+@overload
+def apply_transformation_to_points(
+    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True] = True
+) -> None: ...
+@overload
+def apply_transformation_to_points(
+    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False
+) -> NumpyArray[float]: ...
+@overload
+def apply_transformation_to_points(
+    transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...
+) -> NumpyArray[float] | None: ...
+def apply_transformation_to_points(
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[True, False] = False,
+) -> NumpyArray[float] | None:
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
     Parameters
@@ -282,10 +311,12 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     """
     transformation_shape = transformation.shape
     if transformation_shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+        msg = '`transformation` must be of shape (3, 3) or (4, 4).'
+        raise ValueError(msg)
 
     if points.shape[1] != 3:
-        raise ValueError('`points` must be of shape (N, 3).')
+        msg = '`points` must be of shape (N, 3).'
+        raise ValueError(msg)
 
     if transformation_shape[0] == 4:
         # Divide by scale factor when homogeneous
@@ -310,3 +341,185 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     else:
         # otherwise return the new points
         return points_2
+
+
+def decomposition(
+    transformation: TransformLike,
+    *,
+    homogeneous: bool = False,
+) -> tuple[
+    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
+]:
+    """Decompose a transformation into its components.
+
+    The transformation matrix ``M`` is decomposed into five components:
+
+    - translation ``T``
+    - rotation ``R``
+    - reflection ``N``
+    - scaling ``S``
+    - shearing ``K``
+
+    such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
+    unique and is computed with polar matrix decomposition.
+
+    By default, compact representations of the transformations are returned (e.g. as a
+    3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
+
+    .. note::
+
+        - The rotation is orthonormal and right-handed with positive determinant.
+        - The scaling factors are positive.
+        - The reflection is either ``1`` (no reflection) or ``-1`` (has reflection)
+          and can be used like a scaling factor.
+
+    Parameters
+    ----------
+    transformation : TransformLike
+        Array or transform to decompose.
+
+    homogeneous : bool, default: False
+        If ``True``, return the components (translation, rotation, etc.) as 4x4
+        homogeneous matrices. By default, reflection is a scalar, translation and
+        scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
+
+    Returns
+    -------
+    numpy.ndarray
+        Translation component ``T``. Returned as a 3-element vector (or a 4x4
+        translation matrix if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Rotation component ``R``. Returned as a 3x3 orthonormal rotation matrix of row
+        vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 reflection
+        matrix if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
+        if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Shear component ``K``. Returned as a 3x3 matrix with ones on the diagonal and
+        shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
+        is ``True``).
+
+    Examples
+    --------
+    Decompose a transformation matrix which has scaling, rotation, and translation.
+
+    >>> import pyvista as pv
+    >>> matrix = [
+    ...     [0.0, -2.0, 0.0, 4.0],
+    ...     [1.0, 0.0, 0.0, 5.0],
+    ...     [0.0, 0.0, 3.0, 6.0],
+    ...     [0.0, 0.0, 0.0, 1.0],
+    ... ]
+    >>> T, R, N, S, K = pv.transformations.decomposition(matrix)
+
+    Since the input has no shear, this component is the identity matrix.
+
+    >>> K  # shear
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+
+    >>> S  # scale
+    array([1., 2., 3.])
+
+    There is no reflection so this component is ``1``.
+
+    >>> N  # reflection
+    array(1.)
+
+    >>> R  # rotation
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.]])
+
+    >>> T  # translation
+    array([4., 5., 6.])
+
+    Repeat the example, but this time with a small shear component of 0.1. Note how the
+    presence of shear also affects the values of the scaling and rotation components.
+
+    >>> matrix = [
+    ...     [0.0, -2.0, 0.0, 4.0],
+    ...     [1.0, 0.1, 0.0, 5.0],
+    ...     [0.0, 0.0, 3.0, 6.0],
+    ...     [0.0, 0.0, 0.0, 1.0],
+    ... ]
+    >>> T, R, N, S, K = pv.transformations.decomposition(matrix)
+
+    >>> K  # shear
+    array([[1.        , 0.03333333, 0.        ],
+           [0.01663894, 1.        , 0.        ],
+           [0.        , 0.        , 1.        ]])
+
+    >>> S  # scale
+    array([0.99944491, 2.0022213 , 3.        ])
+
+    >>> N  # reflection
+    array(1.)
+
+    >>> R  # rotation
+    array([[ 0.03331483, -0.99944491,  0.        ],
+           [ 0.99944491,  0.03331483,  0.        ],
+           [ 0.        ,  0.        ,  1.        ]])
+
+    >>> T  # translation
+    array([4., 5., 6.])
+
+    """
+    matrix4x4 = _validation.validate_transform4x4(transformation)
+
+    dtype_out = matrix4x4.dtype
+    I3 = np.eye(3, dtype=dtype_out)
+    I4 = np.eye(4, dtype=dtype_out)
+    matrix3x3 = matrix4x4[:3, :3]
+
+    T = matrix4x4[:3, 3]
+    RN, SK = _polar_decomposition(matrix3x3)
+
+    # Get scale from diagonals and shear from off-diagonals
+    S = np.diagonal(SK).copy()  # Copy since it's read only
+    K = (SK * (I3 == 0.0)) / S[:, np.newaxis] + I3
+
+    # Get reflection and ensure rotation is right-handed
+    if np.linalg.det(RN) < 0:
+        # Reflections are present
+        R = RN * -1
+        N = np.array(-1, dtype=dtype_out)
+    else:
+        R = RN
+        N = np.array(1, dtype=dtype_out)
+
+    if homogeneous:
+        T4 = I4.copy()
+        T4[:3, 3] = T
+
+        R4 = I4.copy()
+        R4[:3, :3] = R
+
+        N4 = I4.copy()
+        N4[:3, :3] = I3 * N
+
+        S4 = I4.copy()
+        S4[:3, :3] = I3 * S
+
+        K4 = I4.copy()
+        K4[:3, :3] = K
+
+        return T4, R4, N4, S4, K4
+    return T, R, N, S, K
+
+
+def _polar_decomposition(a: NumpyArray[float]) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    # Decompose `a=up` where u is orthonormal and p is positive semi-definite
+    # See scipy.linalg.polar for details
+    w, s, vh = np.linalg.svd(a, full_matrices=False)
+    u = w.dot(vh)
+    p = (vh.T.conj() * s).dot(vh)
+    return u, p

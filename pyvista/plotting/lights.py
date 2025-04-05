@@ -12,17 +12,19 @@ try:
     from vtkmodules.vtkRenderingCore import vtkLight
     from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight
-    from vtk import vtkLightActor
-    from vtk import vtkMatrix4x4
+    from vtk import vtkLight  # type: ignore[no-redef]
+    from vtk import vtkLightActor  # type: ignore[no-redef]
+    from vtk import vtkMatrix4x4  # type: ignore[no-redef]
 
 from typing import TYPE_CHECKING
 
+from pyvista.core import _validation
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from ..core._typing_core import TransformLike
     from ._typing import ColorLike
 
 
@@ -188,9 +190,8 @@ class Light(vtkLight):
                 )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
-            raise TypeError(
-                f'Parameter light_type must be int or str, not {type(light_type).__name__}.',
-            )
+            msg = f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
+            raise TypeError(msg)
         # LightType is an int subclass
 
         self.light_type = light_type
@@ -218,11 +219,11 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Print a repr specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
@@ -287,7 +288,7 @@ class Light(vtkLight):
         return self.GetShadowAttenuation()
 
     @shadow_attenuation.setter
-    def shadow_attenuation(self, value):  # numpydoc ignore=GL08
+    def shadow_attenuation(self, value):
         self.SetShadowAttenuation(value)
 
     @property
@@ -316,7 +317,7 @@ class Light(vtkLight):
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def ambient_color(self, color: ColorLike):
         self.SetAmbientColor(Color(color).float_rgb)
 
     @property
@@ -345,7 +346,7 @@ class Light(vtkLight):
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def diffuse_color(self, color: ColorLike):
         self.SetDiffuseColor(Color(color).float_rgb)
 
     @property
@@ -374,7 +375,7 @@ class Light(vtkLight):
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def specular_color(self, color: ColorLike):
         self.SetSpecularColor(Color(color).float_rgb)
 
     @property
@@ -405,7 +406,7 @@ class Light(vtkLight):
         return self.GetPosition()
 
     @position.setter
-    def position(self, pos):  # numpydoc ignore=GL08
+    def position(self, pos):
         self.SetPosition(pos)
 
     @property
@@ -459,7 +460,7 @@ class Light(vtkLight):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, pos):  # numpydoc ignore=GL08
+    def focal_point(self, pos):
         self.SetFocalPoint(pos)
 
     @property
@@ -505,24 +506,19 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
-        >>> light_bright = pv.Light(
-        ...     position=(3, 0, 0), light_type='scene light'
-        ... )
-        >>> light_dim = pv.Light(
-        ...     position=(0, 3, 0), light_type='scene light'
-        ... )
+        >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
+        >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
         ...     plotter.add_light(light)
-        ...
         >>> plotter.show()
 
         """
         return self.GetIntensity()
 
     @intensity.setter
-    def intensity(self, intensity):  # numpydoc ignore=GL08
+    def intensity(self, intensity):
         self.SetIntensity(intensity)
 
     @property
@@ -545,7 +541,7 @@ class Light(vtkLight):
         return bool(self.GetSwitch())
 
     @on.setter
-    def on(self, state):  # numpydoc ignore=GL08
+    def on(self, state):
         self.SetSwitch(state)
 
     @property
@@ -580,7 +576,7 @@ class Light(vtkLight):
         return bool(self.GetPositional())
 
     @positional.setter
-    def positional(self, state):  # numpydoc ignore=GL08
+    def positional(self, state):
         if not state:
             self.hide_actor()
         self.SetPositional(state)
@@ -598,16 +594,15 @@ class Light(vtkLight):
             return
 
         actor_state = self.cone_angle < 90 and self.positional
-        actor_name = self.actor.GetAddressAsString("")
+        actor_name = self.actor.GetAddressAsString('')
 
         # add or remove the actor from the renderer
         for renderer in self._renderers:
             if actor_state:
                 if actor_name not in renderer.actors:
                     renderer.add_actor(self.actor, render=False)
-            else:
-                if actor_name in renderer.actors:
-                    renderer.remove_actor(self.actor, render=False)
+            elif actor_name in renderer.actors:
+                renderer.remove_actor(self.actor, render=False)
 
     @property
     def exponent(self):  # numpydoc ignore=RT01
@@ -638,9 +633,7 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(
-        ...         pv.Plane((offset, 0, 0)), color='white'
-        ...     )
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -649,7 +642,6 @@ class Light(vtkLight):
         ...     light.positional = True
         ...     light.cone_angle = 80
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -657,7 +649,7 @@ class Light(vtkLight):
         return self.GetExponent()
 
     @exponent.setter
-    def exponent(self, exp):  # numpydoc ignore=GL08
+    def exponent(self, exp):
         self.SetExponent(exp)
 
     @property
@@ -686,17 +678,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(
-        ...         pv.Plane((offset, 0, 0)), color='white'
-        ...     )
-        ...     light = pv.Light(
-        ...         position=(offset, 0, 1), focal_point=(offset, 0, 0)
-        ...     )
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -704,7 +691,7 @@ class Light(vtkLight):
         return self.GetConeAngle()
 
     @cone_angle.setter
-    def cone_angle(self, angle):  # numpydoc ignore=GL08
+    def cone_angle(self, angle):
         if angle >= 90:
             self.hide_actor()
         self.SetConeAngle(angle)
@@ -738,7 +725,6 @@ class Light(vtkLight):
         ...     _ = plotter.add_mesh(
         ...         pv.Cube(center=(offset, offset, 0)), color='white'
         ...     )
-        ...
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
@@ -758,7 +744,7 @@ class Light(vtkLight):
         return self.GetAttenuationValues()
 
     @attenuation_values.setter
-    def attenuation_values(self, values):  # numpydoc ignore=GL08
+    def attenuation_values(self, values):
         self.SetAttenuationValues(values)
 
     @property
@@ -805,17 +791,12 @@ class Light(vtkLight):
         return self.GetTransformMatrix()
 
     @transform_matrix.setter
-    def transform_matrix(self, matrix):  # numpydoc ignore=GL08
+    def transform_matrix(self, matrix: TransformLike):
         if matrix is None or isinstance(matrix, vtkMatrix4x4):
-            trans = matrix
+            self.SetTransformMatrix(matrix)
         else:
-            try:
-                trans = vtkmatrix_from_array(matrix)
-            except ValueError:
-                raise ValueError(
-                    'Transformation matrix must be a 4-by-4 matrix or array-like.',
-                ) from None
-        self.SetTransformMatrix(trans)
+            trans = _validation.validate_transform4x4(matrix)
+            self.SetTransformMatrix(vtkmatrix_from_array(trans))
 
     @property
     def light_type(self):  # numpydoc ignore=RT01
@@ -871,12 +852,11 @@ class Light(vtkLight):
         return LightType(self.GetLightType())
 
     @light_type.setter
-    def light_type(self, ltype):  # numpydoc ignore=GL08
+    def light_type(self, ltype):
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
-            raise TypeError(
-                f'Light type must be an integer subclass instance, got {ltype} instead.',
-            )
+            msg = f'Light type must be an integer subclass instance, got {ltype} instead.'
+            raise TypeError(msg)
         self.SetLightType(ltype)
 
     @property
@@ -1070,7 +1050,7 @@ class Light(vtkLight):
             new_light.transform_matrix = self.transform_matrix
 
         # light actors are private, always copy, but copy visibility state as well
-        new_light.actor.SetVisibility(self.actor.GetVisibility())
+        new_light.actor.SetVisibility(self.actor.GetVisibility())  # type: ignore[union-attr]
 
         return new_light
 
@@ -1148,9 +1128,8 @@ class Light(vtkLight):
 
         """
         if not isinstance(vtk_light, vtkLight):
-            raise TypeError(
-                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.',
-            )
+            msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
+            raise TypeError(msg)
 
         light = cls()
         light.light_type = vtk_light.GetLightType()  # resets transformation matrix
@@ -1190,7 +1169,6 @@ class Light(vtkLight):
         >>> _ = plotter.add_mesh(pv.Cube(), color='white')
         >>> for light in plotter.renderer.lights:
         ...     light.intensity /= 5
-        ...
         >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
         >>> spotlight.positional = True
         >>> spotlight.cone_angle = 20
@@ -1203,7 +1181,7 @@ class Light(vtkLight):
         """
         if not self.positional or self.cone_angle >= 90:
             return
-        self.actor.VisibilityOn()
+        self.actor.VisibilityOn()  # type: ignore[union-attr]
 
     def hide_actor(self):
         """Hide the actor for a positional light that depicts the geometry of the beam.
@@ -1219,7 +1197,7 @@ class Light(vtkLight):
         """
         if not self.positional:
             return
-        self.actor.VisibilityOff()
+        self.actor.VisibilityOff()  # type: ignore[union-attr]
 
     @property
     def renderers(self):  # numpydoc ignore=RT01

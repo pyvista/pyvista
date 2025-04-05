@@ -89,7 +89,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         elif mesh.point_data.active_normals is None:
             mesh.compute_normals(cell_normals=False, inplace=True)
     except TypeError as e:
-        if "Normals cannot be computed" in repr(e):
+        if 'Normals cannot be computed' in repr(e):
             pass
         else:
             raise
@@ -150,18 +150,17 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn("Opacity scalars contain values over 1")
+                warnings.warn('Opacity scalars contain values over 1')
             if np.any(opacity < 0):
-                warnings.warn("Opacity scalars contain values less than 0")
+                warnings.warn('Opacity scalars contain values less than 0')
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
             opacity = opacity_transfer_function(opacity, n_colors)
         else:
             if scalars.shape[0] != opacity.shape[0]:
-                raise ValueError(
-                    "Opacity array and scalars array must have the same number of elements.",
-                )
+                msg = 'Opacity array and scalars array must have the same number of elements.'
+                raise ValueError(msg)
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
@@ -195,7 +194,6 @@ def _common_arg_parser(
     name,
     nan_color,
     nan_opacity,
-    color,
     texture,
     rgb,
     style,
@@ -205,7 +203,7 @@ def _common_arg_parser(
     # supported aliases
     clim = kwargs.pop('rng', clim)
     cmap = kwargs.pop('colormap', cmap)
-    culling = kwargs.pop("backface_culling", culling)
+    culling = kwargs.pop('backface_culling', culling)
     rgb = kwargs.pop('rgba', rgb)
     vertex_color = kwargs.pop('vertex_color', theme.edge_color)
     vertex_style = kwargs.pop('vertex_style', 'points')
@@ -248,9 +246,6 @@ def _common_arg_parser(
 
     nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)
 
-    if color is True:
-        color = theme.color
-
     if texture is False:
         texture = None
 
@@ -264,10 +259,9 @@ def _common_arg_parser(
     else:
         interpolation = theme.lighting_params.interpolation
 
-    if "scalar" in kwargs:
-        raise TypeError(
-            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?",
-        )
+    if 'scalar' in kwargs:
+        msg = '`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?'
+        raise TypeError(msg)
 
     assert_empty_kwargs(**kwargs)
     return (
@@ -282,7 +276,6 @@ def _common_arg_parser(
         culling,
         name,
         nan_color,
-        color,
         texture,
         rgb,
         interpolation,

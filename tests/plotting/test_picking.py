@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import os
+import re
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -8,6 +9,9 @@ import vtk
 
 import pyvista as pv
 from pyvista.plotting.errors import PyVistaPickingError
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -299,7 +303,7 @@ def test_point_picking(left_clicking):
     pv.vtk_version_info < (9, 2, 0),
     reason='Hardware picker unavailable for VTK<9.2',
 )
-@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+@pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
     class Tracker:
@@ -478,7 +482,6 @@ def test_fly_to_mouse_position(verify_image_cache, sphere):
 
 def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
-
     pl = pv.Plotter()
     width, height = pl.window_size
     actor, mapper = pl.add_composite(multiblock_poly)
@@ -592,3 +595,22 @@ def test_switch_picking_type():
 
     assert points
     assert len(points[0]) == 3
+
+
+@pytest.mark.parametrize('picker', ['foo', 1000])
+def test_picker_raises(picker, mocker: MockerFixture):
+    pl = pv.Plotter()  # patching need to occur after init
+
+    from pyvista.plotting import picking
+
+    m = mocker.patch.object(typ := picking.PickerType, 'from_any')
+    m.return_value = None
+
+    types = [typ.POINT, typ.CELL, typ.HARDWARE, typ.VOLUME]
+    match = re.escape(
+        f'Invalid picker choice for surface picking. Use one of: {types}',
+    )
+    with pytest.raises(ValueError, match=match):
+        pl.enable_surface_point_picking(picker=picker)
+
+    m.assert_called_once_with(picker)

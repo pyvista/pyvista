@@ -14,7 +14,7 @@ from pyvista.core.errors import PointSetNotSupported
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
 )
 
 
@@ -88,7 +88,7 @@ def test_pointset(pointset):
 
 
 def test_save(tmpdir, pointset):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'{"tmp.xyz"}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'{"tmp.xyz"}'))
     pointset.save(filename)
     points = np.loadtxt(filename)
     assert np.allclose(points, pointset.points)
@@ -131,7 +131,7 @@ def test_filters_return_pointset(sphere):
 
 
 @pytest.mark.parametrize(
-    ("force_float", "expected_data_type"),
+    ('force_float', 'expected_data_type'),
     [(False, np.int64), (True, np.float32)],
 )
 def test_pointset_force_float(force_float, expected_data_type):
@@ -252,8 +252,8 @@ def test_threshold_percent(pointset):
 def test_explode(pointset):
     out = pointset.explode(1)
     assert isinstance(out, pv.PointSet)
-    ori_xlen = pointset.bounds[1] - pointset.bounds[0]
-    new_xlen = out.bounds[1] - out.bounds[0]
+    ori_xlen = pointset.bounds.x_max - pointset.bounds.x_min
+    new_xlen = out.bounds.x_max - out.bounds.x_min
     assert np.isclose(2 * ori_xlen, new_xlen)
 
 
@@ -345,3 +345,37 @@ def test_rotate_vector():
     pset = pv.PointSet(np_points)
     pset.rotate_vector([1, 2, 1], 45, inplace=True)
     assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])
+
+
+def test_rotate():
+    np_points = np.array([1, 1, 1], dtype=float)
+    pset = pv.PointSet(np_points)
+    pset.rotate([[-1, 0, 0], [0, -1, 0], [0, 0, -1]], inplace=True)
+    assert np.allclose(pset.points, [-1, -1, -1])
+
+
+@pytest.mark.parametrize(
+    ('grid_class', 'dimensionality', 'dimensions'),
+    [
+        (pv.ExplicitStructuredGrid, 3, (2, 42, 142)),
+        (pv.StructuredGrid, 0, (1, 1, 1)),
+        (pv.StructuredGrid, 1, (1, 42, 1)),
+        (pv.StructuredGrid, 2, (42, 1, 142)),
+        (pv.StructuredGrid, 3, (2, 42, 142)),
+    ],
+)
+def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
+    if grid_class == pv.ExplicitStructuredGrid:
+        # ExplicitStructuredGrid only supports 3D
+        grid = pv.examples.load_explicit_structured(dimensions=dimensions)
+    elif grid_class == pv.StructuredGrid:
+        x, y, z = np.meshgrid(
+            np.arange(dimensions[0], dtype=np.float32),
+            np.arange(dimensions[1], dtype=np.float32),
+            np.arange(dimensions[2], dtype=np.float32),
+            indexing='ij',
+        )
+        grid = grid_class(x, y, z)
+
+    assert grid.dimensionality == dimensionality
+    assert grid.dimensionality == grid.get_cell(0).GetCellDimension()

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import os
-import platform
+import re
 from string import ascii_letters
 from string import digits
 from string import whitespace
@@ -22,24 +21,18 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-skip_apple_silicon = pytest.mark.skipif(
-    platform.system() == 'Darwin' and platform.processor() == 'arm',
-    reason='Test fails on Apple Silicon',
-)
 
-
-@pytest.fixture()
+@pytest.fixture
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def hexbeam_field_attributes(hexbeam):
     return hexbeam.field_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_arange_narray(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
@@ -47,7 +40,7 @@ def insert_arange_narray(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.ones(n_points, np.bool_)
@@ -55,12 +48,18 @@ def insert_bool_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_string_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
-    sample_array = np.repeat("A", n_points)
+    sample_array = np.repeat('A', n_points)
     hexbeam_point_attributes.set_array(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
+
+
+@pytest.mark.parametrize('i', [1, None, object(), True])
+def test_setitem_raises(i):
+    with pytest.raises(TypeError, match='Only strings are valid keys for DataSetAttributes.'):
+        pv.Sphere().point_data[i] = 1
 
 
 def test_init(hexbeam):
@@ -169,6 +168,29 @@ def test_active_scalars_name(sphere):
 
     sphere.point_data.active_scalars_name = None
     assert sphere.point_data.active_scalars_name is None
+
+
+def test_active_normals_name():
+    # Load dataset known to have active normals by default
+    sphere = pv.Sphere()
+    assert sphere.point_data._active_normals_name == 'Normals'
+    sphere.clear_data()
+    assert sphere.point_data._active_normals_name is None
+
+    # Set name of custom normals
+    key = 'data0'
+    normals = np.array([[0, 1, 0]] * sphere.n_points)
+    sphere.point_data[key] = normals
+    assert sphere.point_data._active_normals_name is None
+    sphere.point_data._active_normals_name = key
+    assert sphere.point_data._active_normals_name == 'data0'
+
+    # Test raises
+    sphere.point_data[key] = range(sphere.n_points)
+    with pytest.raises(ValueError, match=re.escape('data0 needs 3 components, has (1)')):
+        sphere.point_data._active_normals_name = key
+    with pytest.raises(KeyError, match='DataSetAttribute does not contain "foobar"'):
+        sphere.point_data._active_normals_name = 'foobar'
 
 
 def test_set_scalars(sphere):
@@ -502,7 +524,8 @@ def test_value_should_exist(insert_arange_narray):
     for arr in dsa.values():
         if np.array_equal(sample_array, arr):
             return
-    raise AssertionError('Array not in values.')
+    msg = 'Array not in values.'
+    raise AssertionError(msg)
 
 
 def test_active_scalars_setter(hexbeam_point_attributes):
@@ -526,18 +549,18 @@ def test_active_scalars_setter_no_override(hexbeam):
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):
     if not ''.join(arr).isascii():
         with pytest.raises(ValueError, match='non-ASCII'):
-            hexbeam.field_data["foo"] = arr
+            hexbeam.field_data['foo'] = arr
         return
 
     # https://github.com/pyvista/pyvista/pull/934
-    hexbeam.field_data["foo"] = arr
+    hexbeam.field_data['foo'] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
-    assert "foo" in extracted.field_data
+    assert 'foo' in extracted.field_data
 
 
 def test_assign_labels_to_points(hexbeam):
     hexbeam.point_data.clear()
-    labels = [f"Label {i}" for i in range(hexbeam.n_points)]
+    labels = [f'Label {i}' for i in range(hexbeam.n_points)]
     hexbeam['labels'] = labels
     assert (hexbeam['labels'] == labels).all()
 
@@ -636,8 +659,8 @@ def test_active_texture_coordinates_name(plane):
         plane.field_data.active_texture_coordinates_name = 'arr'
 
 
-@skip_windows  # windows doesn't support np.complex256
-@skip_apple_silicon  # same with Apple silicon (M1/M2)
+@pytest.mark.skip_windows("windows doesn't support np.complex256")
+@pytest.mark.skip_mac('Test fails on Apple silicon (M1/M2)', processor='arm')
 def test_complex_raises(plane):
     with pytest.raises(ValueError, match='Only numpy.complex64'):
         plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
@@ -672,21 +695,52 @@ def test_active_t_coords_deprecated():
     mesh = pv.Cube()
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info >= (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+        if pv._version.version_info[:2] > (0, 46):
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info >= (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+        if pv._version.version_info[:2] > (0, 46):
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
 
 
 def test_active_t_coords_name_deprecated():
     mesh = pv.Cube()
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info >= (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+        if pv._version.version_info[:2] > (0, 46):
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info >= (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+        if pv._version.version_info[:2] > (0, 46):
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
+
+
+@pytest.mark.parametrize('copy', [True, False])
+def test_update(uniform, copy):
+    new_mesh = pv.ImageData(dimensions=uniform.dimensions)
+
+    # Test point data
+    new_mesh.point_data.update(uniform.point_data, copy=copy)
+    for array_name in uniform.point_data.keys():
+        shares_memory = np.shares_memory(
+            new_mesh.point_data[array_name], uniform.point_data[array_name]
+        )
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory
+
+    # Test cell data
+    new_mesh.cell_data.update(uniform.cell_data, copy=copy)
+    for array_name in uniform.cell_data.keys():
+        shares_memory = np.shares_memory(
+            new_mesh.cell_data[array_name], uniform.cell_data[array_name]
+        )
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory

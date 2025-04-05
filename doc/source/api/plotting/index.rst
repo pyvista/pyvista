@@ -31,12 +31,14 @@ all plotting functionality in PyVista.
    Axes
    AxesActor
    AxesAssembly
+   AxesAssemblySymmetric
    CameraPosition
    CornerAnnotation
    CubeAxesActor
    DataSetMapper
    Label
    LookupTable
+   PlanesAssembly
    Plotter
    Prop3D
    Property

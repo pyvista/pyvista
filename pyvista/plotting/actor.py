@@ -8,18 +8,21 @@ from typing import ClassVar
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .mapper import _BaseMapper
 
 
 @no_new_attr
-class Actor(Prop3D, _vtk.vtkActor):
+class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     """Wrap vtkActor.
 
     This class represents the geometry & properties in a rendered
@@ -85,7 +88,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
-    def __init__(self, mapper=None, prop=None, name=None):
+    def __init__(self, mapper=None, prop=None, name=None) -> None:
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -95,19 +98,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         else:
             self.prop = prop
         self._name = name
-
-    @property
-    def name(self) -> str:  # numpydoc ignore=RT01
-        """Get or set the unique name identifier used by PyVista."""
-        if self._name is None:
-            self._name = f'{type(self).__name__}({self.memory_address})'
-        return self._name
-
-    @name.setter
-    def name(self, value: str):  # numpydoc ignore=GL08
-        if not value:
-            raise ValueError('Name must be truthy.')
-        self._name = value
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
@@ -140,10 +130,10 @@ class Actor(Prop3D, _vtk.vtkActor):
           N Arrays:   1
 
         """
-        return self.GetMapper()
+        return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):  # numpydoc ignore=GL08
+    def mapper(self, obj) -> None:
         self.SetMapper(obj)
 
     @property
@@ -165,7 +155,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):  # numpydoc ignore=GL08
+    def prop(self, obj: Property) -> None:
         self.SetProperty(obj)
 
     @property
@@ -200,13 +190,13 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetTexture()
 
     @texture.setter
-    def texture(self, obj):  # numpydoc ignore=GL08
+    def texture(self, obj) -> None:
         self.SetTexture(obj)
 
     @property
     def memory_address(self):  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
-        return self.GetAddressAsString("")
+        return self.GetAddressAsString('')
 
     @property
     def pickable(self) -> bool:  # numpydoc ignore=RT01
@@ -228,12 +218,17 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value):  # numpydoc ignore=GL08
+    def pickable(self, value) -> None:
         self.SetPickable(value)
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set actor visibility.
+
+        See Also
+        --------
+        use_bounds
+        pyvista.Plotter.compute_bounds
 
         Examples
         --------
@@ -241,20 +236,65 @@ class Actor(Prop3D, _vtk.vtkActor):
         visibility of the actor.
 
         >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor = pl.add_mesh(mesh)
+        >>> pl.bounds
+        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+
         >>> actor.visibility = False
-        >>> actor.visibility
-        False
+        >>> pl.bounds
+        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
         """
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):  # numpydoc ignore=GL08
+    def visibility(self, value: bool) -> None:
         self.SetVisibility(value)
 
-    def plot(self, **kwargs):
+    @property
+    def use_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set the use of actor's bounds.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        visibility
+        pyvista.Plotter.compute_bounds
+
+        Examples
+        --------
+        Create an actor using the :class:`pyvista.Plotter` and then change the
+        use of bounds for the actor.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(mesh)
+        >>> pl.bounds
+        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+
+        >>> actor.use_bounds = False
+        >>> pl.bounds
+        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+
+        Although the actor's bounds are no longer used, the actor remains visible.
+
+        >>> actor.visibility
+        True
+
+        """
+        return bool(self.GetUseBounds())
+
+    @use_bounds.setter
+    def use_bounds(self, value: bool) -> None:
+        self.SetUseBounds(value)
+
+    def plot(self, **kwargs) -> None:
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
@@ -279,10 +319,10 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         """
         pl = pyvista.Plotter()
-        pl.add_actor(self)
+        pl.add_actor(self)  # type: ignore[arg-type]
         pl.show(**kwargs)
 
-    def copy(self, deep=True) -> Actor:
+    def copy(self: Self, deep: bool = True) -> Self:
         """Create a copy of this actor.
 
         Parameters
@@ -294,14 +334,14 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Returns
         -------
-        pyvista.Actor
+        Actor
             Deep or shallow copy of this actor.
 
         Examples
         --------
-        Create an actor of a cube by adding it to a :class:`pyvista.Plotter`
+        Create an actor of a cube by adding it to a :class:`~pyvista.Plotter`
         and then copy the actor, change the properties, and add it back to the
-        :class:`pyvista.Plotter`.
+        :class:`~pyvista.Plotter`.
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
@@ -316,9 +356,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> pl.show()
 
         """
-        new_actor = Actor()
+        new_actor = type(self)()
         if deep:
-            new_actor.mapper = self.mapper.copy()
+            if self.mapper is not None:
+                new_actor.mapper = self.mapper.copy()
             new_actor.prop = self.prop.copy()
         else:
             new_actor.ShallowCopy(self)
@@ -326,10 +367,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -390,8 +428,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         if self.GetBackfaceProperty() is None:
             self.SetBackfaceProperty(self.prop.copy())
-        return self.GetBackfaceProperty()
+        return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
-    def backface_prop(self, value: pyvista.Property):  # numpydoc ignore=GL08
+    def backface_prop(self, value: pyvista.Property) -> None:
         self.SetBackfaceProperty(value)

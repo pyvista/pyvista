@@ -23,22 +23,24 @@ jobs:
     # only for pull requests, run only when 'vtk_master' label exists
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master') }}
     name: Linux VTK Master Testing
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
+        python-version: [3.9, "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          cache-dependency-path: requirements_test.txt
 
       - uses: actions/cache@v4
         with:
@@ -47,23 +49,35 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Install pyvista
-        run: pip install . --no-deps
+      - name: Install PyVista Testing Requirements
+        run: pip install .[test]
 
-      - name: Install Testing Requirements
-        run: pip install -r requirements_test.txt
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+        with:
+          packages: xvfb
+          version: 3.0
 
-      - name: Set up VTK with OSMesa
+      - name: Install nightly VTK
         run: |
-          pip uninstall vtk -y
-          pip install vtk_osmesa --pre --no-cache --extra-index-url https://wheels.vtk.org
+          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+
+      - name: Core Testing (no GL)
+        run: python -m pytest --cov=pyvista -v tests/core tests/examples
+
+      - name: Plotting Testing (uses GL)
+        run: xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: debug_images
 
       - name: Software Report
+        if: always()
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
-          pip show vtk_osmesa
-
-      - name: Unit Testing
-        run: pytest -v tests/ --fail_extra_image_cache
+          pip show vtk

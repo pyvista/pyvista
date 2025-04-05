@@ -27,13 +27,13 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Data to display
 t = np.linspace(0, 5, 50)
 h = np.sin(t)
 v = np.cos(t)
 
-###############################################################################
+# %%
 # Define a Matplotlib figure.
 # Use a tight layout to keep axis labels visible on smaller figures.
 
@@ -44,7 +44,7 @@ ax.set_xlabel('Time (s)')
 _ = ax.set_ylabel('Height (m)')
 # sphinx_gallery_defer_figures
 
-###############################################################################
+# %%
 # Define plotter, add the created matplotlib figure as the first (left) chart
 # to the scene, and define a second (right) chart.
 
@@ -55,14 +55,14 @@ p.add_chart(h_chart)
 v_chart = pv.Chart2D(
     size=(0.46, 0.25),
     loc=(0.52, 0.06),
-    x_label="Time (s)",
-    y_label="Velocity (m/s)",
+    x_label='Time (s)',
+    y_label='Velocity (m/s)',
 )
 v_line = v_chart.line(t[:1], v[:1])
 v_chart.y_range = (-1, 1)
 v_chart.background_color = (1.0, 1.0, 1.0, 0.4)
 p.add_chart(v_chart)
-p.add_mesh(pv.Sphere(1), name="sphere", render=False)
+p.add_mesh(pv.Sphere(1), name='sphere', render=False)
 p.show(auto_close=False, interactive=True, interactive_update=True)
 
 
@@ -72,7 +72,7 @@ def update_time(time):
     h_line.set_xdata(t[: k + 1])
     h_line.set_ydata(h[: k + 1])
     v_line.update(t[: k + 1], v[: k + 1])
-    p.add_mesh(pv.Sphere(1, center=(0, 0, h[k])), name="sphere", render=False)
+    p.add_mesh(pv.Sphere(1, center=(0, 0, h[k])), name='sphere', render=False)
     p.update()
 
 
@@ -80,7 +80,7 @@ time_slider = p.add_slider_widget(
     update_time,
     [np.min(t), np.max(t)],
     0,
-    "Time",
+    'Time',
     (0.25, 0.9),
     (0.75, 0.9),
     interaction_event='always',
@@ -93,3 +93,5 @@ for i in range(1, 50):
     update_time(t[i])
 
 p.show()  # Keep plotter open to let user play with time slider
+# %%
+# .. tags:: plot

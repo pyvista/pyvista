@@ -20,6 +20,7 @@ Disc, <function Disc at 0x7f72f5cac280>
 Dodecahedron, <function Dodecahedron at 0x7f72f5cacaf0>
 Ellipse, <function Ellipse at 0x7f72f5cac820>
 EnSightReader, <class 'pyvista.utilities.reader.EnSightReader'>
+ExodusIIReader, <class 'pyvista.utilities.reader.ExodusIIReader'>
 FacetReader, <class 'pyvista.utilities.reader.FacetReader'>
 FieldAssociation, <enum 'FieldAssociation'>
 FluentReader, <class 'pyvista.utilities.reader.FluentReader'>

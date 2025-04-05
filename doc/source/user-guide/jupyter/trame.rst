@@ -19,6 +19,7 @@ within Jupyter:
 .. code-block:: python
 
     import pyvista as pv
+
     sphere = pv.Sphere()
 
     # short example
@@ -34,6 +35,7 @@ For convenience, you can enable ``trame`` by default with:
 .. code-block:: python
 
     import pyvista as pv
+
     pv.set_jupyter_backend('trame')
 
 
@@ -53,6 +55,7 @@ or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call
 .. code-block:: python
 
     import pyvista as pv
+
     pv.set_jupyter_backend('client')
 
     pv.Cone().plot()
@@ -61,6 +64,7 @@ or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call
 .. code-block:: python
 
     import pyvista as pv
+
     pv.set_jupyter_backend('trame')
 
     pl = pv.Plotter()
@@ -199,24 +203,9 @@ Other Considerations
 ++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
 
-If you do not have GPU acceleration, be sure to start up a virtual
-framebuffer using ``Xvfb``.  You can either start it using bash with:
+If you do not have GPU acceleration, alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available:
 
 .. code-block:: bash
 
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    which Xvfb
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-    set +x
-    exec "$@"
-
-
-Or alternatively, start it using the built in
-``pyvista.start_xvfb()``.  Please be sure to install ``xvfb`` and
-``libgl1-mesa-glx`` with:
-
-.. code-block:: bash
-
-    sudo apt-get install libgl1-mesa-dev xvfb
+    pip uninstall vtk -y
+    pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa

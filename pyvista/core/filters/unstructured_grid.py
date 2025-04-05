@@ -20,12 +20,12 @@ class UnstructuredGridFilters(DataSetFilters):
     @wraps(PolyDataFilters.delaunay_2d)
     def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
-        return PolyDataFilters.delaunay_2d(self, *args, **kwargs)
+        return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
     @wraps(PolyDataFilters.reconstruct_surface)
     def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
-        return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)
+        return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
 
     def subdivide_tetra(self):
         """Subdivide each tetrahedron into twelve tetrahedrons.
@@ -57,11 +57,11 @@ class UnstructuredGridFilters(DataSetFilters):
     def clean(
         self,
         tolerance=0,
-        remove_unused_points=True,
-        produce_merge_map=True,
-        average_point_data=True,
+        remove_unused_points: bool = True,
+        produce_merge_map: bool = True,
+        average_point_data: bool = True,
         merging_array_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
@@ -142,10 +142,12 @@ class UnstructuredGridFilters(DataSetFilters):
         try:
             from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
         except ImportError:  # pragma no cover
-            raise VTKVersionError("UnstructuredGrid.clean requires VTK >= 9.2.2") from None
+            msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
+            raise VTKVersionError(msg) from None
 
         alg = vtkStaticCleanUnstructuredGrid()
-        alg.SetInputDataObject(self)
+        # https://github.com/pyvista/pyvista/pull/6337
+        alg.SetInputDataObject(self.copy())  # type: ignore[attr-defined]
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
         alg.SetMergingArray(merging_array_name)

@@ -7,20 +7,25 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTEST_ADDOPTS: "--color=yes"
+
+permissions:
+  id-token: none
+
 jobs:
   docstringcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.12
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
       - uses: actions/cache@v4
         with:
@@ -31,8 +36,7 @@ jobs:
 
       - name: Install pyvista and doctest requirements
         run: |
-          pip install -e . --no-deps
-          pip install -r requirements_test.txt vtk
+          pip install -e .[test]
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -54,6 +58,17 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install test dependencies
+        run: pip install .[docs]
+
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
       - name: "Run Vale"
@@ -66,5 +81,6 @@ jobs:
           filter_mode: nofilter
           fail_on_error: true
           version: 2.29.5
+          reviewdog_url: https://github.com/reviewdog/reviewdog/releases/download/v0.17.5/reviewdog_0.17.5_Linux_x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -93,10 +93,12 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    BoxSource
    ConeSource
    CubeSource
+   CubeFacesSource
    CylinderSource
    DiscSource
    LineSource
    MultipleLinesSource
+   OrthogonalPlanesSource
    PlaneSource
    PlatonicSolidSource
    PolygonSource

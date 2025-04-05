@@ -1,4 +1,4 @@
-FROM jupyter/base-notebook:python-3.10
+FROM jupyter/base-notebook:python-3.11
 LABEL maintainer="PyVista Developers"
 LABEL repo="https://github.com/pyvista/pyvista"
 

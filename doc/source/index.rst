@@ -61,6 +61,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
 
    getting-started/index
    user-guide/index
+   tags/tagsindex
    examples/index
    api/index
    extras/index
@@ -173,8 +174,7 @@ Subtract a sphere from a cube mesh.
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
         grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
-        surf = grid.extract_surface().triangulate()
-        surf.flip_normals()
+        surf = grid.extract_surface().triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations
@@ -272,7 +272,7 @@ Status
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :target: https://www.python.org/downloads/
 
 +----------------------+----------------+-------------+

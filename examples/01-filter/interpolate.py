@@ -1,24 +1,12 @@
 """
 .. _interpolate_example:
 
-Interpolating
-~~~~~~~~~~~~~
-
-There are two main methods of interpolating or sampling data from a target mesh
-in PyVista. :func:`pyvista.DataSetFilters.interpolate` uses a distance weighting
-kernel to interpolate point data from nearby points of the target mesh onto
-the desired points.
-:func:`pyvista.DataSetFilters.sample` interpolates data using the
-interpolation scheme of the enclosing cell from the target mesh.
-
-If the target mesh is a point cloud, i.e. there is no connectivity in the cell
-structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
-preferred.  If interpolation is desired within the cells of the target mesh, then
-:func:`pyvista.DataSetFilters.sample` is typically desired.
-
+Detailed Interpolating Points
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example uses :func:`pyvista.DataSetFilters.interpolate`.
-For :func:`pyvista.DataSetFilters.sample`, see :ref:`resampling_example`.
+:func:`pyvista.DataObjectFilters.sample` is similar, and the two
+methods are compared in :ref:`interpolate_sample_example`.
 
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
@@ -30,7 +18,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Simple Surface Interpolation
 # ++++++++++++++++++++++++++++
 # Resample the points' arrays onto a surface
@@ -40,23 +28,23 @@ surface = examples.download_saddle_surface()
 points = examples.download_sparse_points()
 
 p = pv.Plotter()
-p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True)
+p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
 p.add_mesh(surface)
 p.show()
 
-###############################################################################
+# %%
 # Run the interpolation
 
 interpolated = surface.interpolate(points, radius=12.0)
 
 
 p = pv.Plotter()
-p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True)
-p.add_mesh(interpolated, scalars="val")
+p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+p.add_mesh(interpolated, scalars='val')
 p.show()
 
 
-###############################################################################
+# %%
 # Complex Interpolation
 # +++++++++++++++++++++
 # In this example, we will in interpolate sparse points in 3D space into a
@@ -70,15 +58,15 @@ p.show()
 # Download the sparse data
 probes = examples.download_thermal_probes()
 
-###############################################################################
+# %%
 # Create the interpolation grid around the sparse data
 grid = pv.ImageData()
 grid.origin = (329700, 4252600, -2700)
 grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)
 
-###############################################################################
-dargs = dict(cmap="coolwarm", clim=[0, 300], scalars="temperature (C)")
+# %%
+dargs = dict(cmap='coolwarm', clim=[0, 300], scalars='temperature (C)')
 cpos = [
     (364280.5723737897, 4285326.164400684, 14093.431895014139),
     (337748.7217949739, 4261154.45054595, -637.1092549935128),
@@ -91,11 +79,11 @@ p.add_mesh(probes, render_points_as_spheres=True, **dargs)
 p.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # Run an interpolation
 interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_points')
 
-###############################################################################
+# %%
 # Visualize the results
 
 # sphinx_gallery_start_ignore
@@ -113,3 +101,5 @@ p.add_mesh(interp.contour(5), opacity=0.5, **dargs)
 p.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
 p.link_views()
 p.show(cpos=cpos)
+# %%
+# .. tags:: filter

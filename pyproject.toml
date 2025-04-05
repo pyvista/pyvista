@@ -1,94 +1,174 @@
 [build-system]
-requires = ['setuptools']
 build-backend = 'setuptools.build_meta'
+requires = ['setuptools']
 
 [project]
-name = 'pyvista'
-description = 'Easier Pythonic interface to VTK'
-authors = [
-    {name = 'PyVista Developers', email = 'info@pyvista.org'},
-]
-readme = 'README.rst'
-requires-python = '>=3.8'
-keywords = ['vtk', 'numpy', 'plotting', 'mesh']
-license = {text = 'MIT'}
+authors = [{ name = 'PyVista Developers', email = 'info@pyvista.org' }]
 classifiers = [
-    'Development Status :: 5 - Production/Stable',
-    'Intended Audience :: Science/Research',
-    'Topic :: Scientific/Engineering :: Information Analysis',
-    'License :: OSI Approved :: MIT License',
-    'Operating System :: Microsoft :: Windows',
-    'Operating System :: POSIX',
-    'Operating System :: MacOS',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: 3.11',
-    'Programming Language :: Python :: 3.12',
+  'Development Status :: 5 - Production/Stable',
+  'Intended Audience :: Science/Research',
+  'Operating System :: MacOS',
+  'Operating System :: Microsoft :: Windows',
+  'Operating System :: POSIX',
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.9',
+  'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
-    'matplotlib>=3.0.1',
-    'numpy>=1.21.0',  # minimum typing support
-    'pillow',
-    'pooch',
-    'scooby>=0.5.1',
-    'vtk',  # keep without version constraints
-    'typing-extensions',
+  'matplotlib>=3.0.1',
+  'numpy>=1.21.0',     # minimum typing support
+  'pillow',
+  'pooch',
+  'scooby>=0.5.1',
+  'typing-extensions',
+  'vtk<9.4.0',
 ]
+description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
+keywords = ['mesh', 'numpy', 'plotting', 'vtk']
+license = 'MIT'
+name = 'pyvista'
+readme = 'README.rst'
+requires-python = '>=3.9'
 
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
-colormaps = [
-    'cmocean',
-    'colorcet',
-]
-io = [
-    'imageio',
-    'meshio>=5.2'
-]
+colormaps = ['cmocean', 'colorcet']
+io = ['imageio', 'meshio>=5.2']
 jupyter = [
-    'ipywidgets',
-    'jupyter-server-proxy',
-    'nest_asyncio',
-    'trame>=2.5.2',
-    'trame-client>=2.12.7',
-    'trame-server>=2.11.7',
-    'trame-vtk>=2.5.8',
-    'trame-vuetify>=2.3.1',
+  'ipywidgets',
+  'jupyter-server-proxy',
+  'nest_asyncio',
+  'trame-client>=2.12.7',
+  'trame-server>=2.11.7',
+  'trame-vtk>=2.5.8',
+  'trame-vuetify>=2.3.1',
+  'trame>=2.5.2',
 ]
+
+pinned = [ # Pinned versions of core dependencies
+  'matplotlib<3.10.2',
+  'numpy<2.2.0',
+  'pillow<11.2.0',
+  'pooch<1.9.0',
+  'scooby<0.11.0',
+  'typing-extensions<4.13.0',
+]
+
+typing = [
+  'mypy<1.14.0',
+  'npt-promote==0.2',
+  'numpy>=2.0.0',
+  'pyvista[pinned]',
+  'trimesh<4.6.0',
+]
+
+test = [
+  'cmocean<4.0.4',
+  'colorcet<3.2.0',
+  'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
+  'hypothesis<6.130.7',
+  'imageio-ffmpeg<0.6.0',
+  'imageio<2.37.0',
+  'ipython<9.0.0',
+  'ipywidgets<9.0.0',
+  'meshio<5.4.0',
+  'nest_asyncio<1.6.1',
+  'numpydoc==1.8.0',
+  'pyanalyze<=0.13.1',
+  'pytest-cov<6.1.0',
+  'pytest-memprof<0.3.0',
+  'pytest-mypy-plugins<3.3.0',
+  'pytest-pyvista==0.1.8',
+  'pytest-xdist<3.7.0',
+  'pytest<8.4.0',
+  'pytest_cases<3.8.7',
+  'pytest_mock<3.15.0',
+  'pyvista[pinned]',
+  'scipy<1.14.2',
+  'sphinx-book-theme<1.2.0',
+  'sphinx-gallery<0.19.0',
+  'sphinx<8.2.0',
+  'sphinx_design<0.7.0',
+  'sympy<1.14.0',
+  'tqdm<4.68.0',
+  'trame-vtk>=2.5.8,<2.8.12',
+  'trame-vuetify>=2.3.1,<2.7.2',
+  'trame>=2.5.2,<3.7.1',
+  'trimesh<4.6.0',
+  'typing-extensions<4.13.0',
+]
+
+docs = [
+  'cmocean==4.0.3',
+  'colorcet==3.1.0',
+  'enum-tools==0.12.0',
+  'imageio-ffmpeg==0.6.0',
+  'imageio==2.37.0',
+  'jupyter_sphinx==0.5.3',
+  'jupyterlab==4.3.6',
+  'lxml==5.3.1',
+  'meshio==5.3.5',
+  'mypy-extensions==1.0.0',
+  'mypy==1.15.0',
+  'numpydoc==1.8.0',
+  'osmnx==2.0.2',
+  'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pypandoc==1.15',
+  'pytest-pyvista==0.1.8',
+  'pytest-sphinx==0.6.3',
+  'pyvista[pinned]',
+  'scipy==1.15.2',
+  'sphinx-autobuild==2024.10.3',
+  'sphinx-book-theme==1.1.4',
+  'sphinx-copybutton==0.5.2',
+  'sphinx-design==0.6.1',
+  'sphinx-gallery==0.19.0',
+  'sphinx-notfound-page==1.1.0',
+  'sphinx-sitemap==2.6.0',
+  'sphinx-tags==0.4.0',
+  'sphinx-toolbox==3.9.0',
+  'sphinx==8.2.1',
+  'sphinxcontrib-asciinema==0.4.2',
+  'sphinxcontrib-websupport==2.0.0',
+  'sphinxext-opengraph==0.9.1',
+  'sympy==1.13.3',
+  'trame-vtk==2.8.15',
+  'trame-vuetify==2.9.0',
+  'trame==3.8.1',
+  'trimesh==4.6.6',
+]
+
+dev = ['pre-commit', 'pyvista[test,typing]']
 
 [project.urls]
+'Bug Tracker' = 'https://github.com/pyvista/pyvista/issues'
 Documentation = 'https://docs.pyvista.org/'
-"Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
-"Source Code" = 'https://github.com/pyvista/pyvista'
+'Source Code' = 'https://github.com/pyvista/pyvista'
 
 [tool.setuptools.dynamic]
-version = {attr = 'pyvista._version.__version__'}
+version = { attr = 'pyvista._version.__version__' }
 
 [tool.setuptools.packages.find]
-include = [
-    'pyvista',
-    'pyvista.*',
-]
+include = ['pyvista', 'pyvista.*']
 
 [tool.setuptools.package-data]
-pyvista = [
-    'py.typed',
-]
-"pyvista.examples" = [
-    '2k_earth_daymap.jpg',
-    'airplane.ply',
-    'ant.ply',
-    'channels.vti',
-    'globe.vtk',
-    'hexbeam.vtk',
-    'nut.ply',
-    'pyvista_logo.png',
-    'rectilinear.vtk',
-    'sphere.ply',
-    'uniform.vtk',
-    'frog_tissues.vti',
+pyvista = ['py.typed']
+'pyvista.examples' = [
+  '2k_earth_daymap.jpg',
+  'airplane.ply',
+  'ant.ply',
+  'channels.vti',
+  'frog_tissues.vti',
+  'globe.vtk',
+  'hexbeam.vtk',
+  'nut.ply',
+  'pyvista_logo.png',
+  'rectilinear.vtk',
+  'sphere.ply',
+  'uniform.vtk',
 ]
 
 [tool.blackdoc]
@@ -99,315 +179,295 @@ pyvista = [
 line-length = 75
 
 [tool.build_sphinx]
+all_files = 1
+build-dir = './doc/_build'
 source-dir = 'doc'
-build-dir  = './doc/_build'
-all_files  = 1
 
 [tool.upload_sphinx]
 upload-dir = 'doc/_build/html'
 
-[tool.pydocstyle]
-match = '(?!coverage).*.py'
-convention = "numpy"
-add-ignore = ["D404"]
-
 [tool.codespell]
-skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
-ignore-words = "doc/styles/Vocab/pyvista/accept.txt"
+ignore-words = 'doc/styles/Vocab/pyvista/accept.txt'
 quiet-level = 3
+skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
 
 [tool.coverage.run]
 omit = [
-    'pyvista/ext/coverage.py',
-    'pyvista/conftest.py',
-    # kept for backwards compatibility:
-    'pyvista/plotting/theme.py',
+  'pyvista/conftest.py',
+  'pyvista/ext/coverage.py',
+  'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
+[tool.coverage.report]
+exclude_also = ['^\s*@overload.*\n\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
 [tool.pytest.ini_options]
-junit_family='legacy'
-filterwarnings = [
-    'ignore::FutureWarning',
-    'ignore::PendingDeprecationWarning',
-    'ignore::DeprecationWarning',
-    # bogus numpy ABI warning (see numpy/#432)
-    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',
-    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
-    'ignore:.*Given trait value dtype "float64":UserWarning',
-    'ignore:.*The NumPy module was reloaded*:UserWarning',
-    'error::pyvista.PyVistaDeprecationWarning'
-]
+addopts = ['--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
-testpaths = 'tests'
-markers = [
-    'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
-    'needs_download: this test downloads data during execution',
+
+# Keep spaces between filter warnings since order matters (see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings)
+filterwarnings = [
+  'error',
+
+  'ignore:.*Given trait value dtype "float64":UserWarning',                                                              # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
+  'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
+  'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
+  'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
+
+  'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
-image_cache_dir = "tests/plotting/image_cache"
+image_cache_dir = 'tests/plotting/image_cache'
+junit_family = 'legacy'
+log_cli_level = "INFO"
+markers = [
+  'needs_download: this test downloads data during execution',
+  'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+  'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
+  'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_windows(reason="Test fails on Windows"): skip test for windows.',
+]
+minversion = "7"
+testpaths = 'tests'
+xfail_strict = true
 
 [tool.mypy]
-ignore_missing_imports = true
+check_untyped_defs = true
 disallow_any_generics = true
+disallow_subclassing_any = true
+enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
+exclude = ['pyvista/ext/']
+extra_checks = true
+ignore_missing_imports = true
+no_implicit_reexport = true
+packages = ['pyvista']
+plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
-warn_unused_ignores = true
+strict_equality = true
 warn_redundant_casts = true
-plugins = ['numpy.typing.mypy_plugin','npt_promote']
-enable_error_code = [
-    "ignore-without-code",
-]
-
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
 
 [tool.numpydoc_validation]
 checks = [
-    "all",  # all but the following:
-    "GL01",  # Contradicts numpydoc examples
-    "GL02",  # Permit a blank line after the end of our docstring
-    "GL03",  # Considering enforcing
-    "GL06",  # Found unknown section
-    "GL07",  # "Sections are in the wrong order. Correct order is: {correct_sections}",
-    "GL09",  # Deprecation warning should precede extended summary (check broken)
-    "SA01",  # Not all docstrings need a see also
-    "SA04",  # See also section does not need descriptions
-    "SS05",  # Appears to be broken.
-    "ES01",  # Not all docstrings need an extend summary.
-    "EX01",  # Examples: Will eventually enforce
-    "YD01",  # Yields: No plan to enforce
+  'all', # all but the following:
+  #
+  'ES01', # Not all docstrings need an extend summary.
+  'EX01', # Examples: Will eventually enforce
+  'GL01', # Contradicts numpydoc examples
+  'GL02', # Permit a blank line after the end of our docstring
+  'GL03', # Considering enforcing
+  'GL06', # Found unknown section
+  'GL07', # 'Sections are in the wrong order. Correct order is: {correct_sections}',
+  'GL08', # The object does not have a docstring
+  'GL09', # Deprecation warning should precede extended summary (check broken)
+  'PR01', # 'Parameters {missing_params} not documented',
+  'PR02', # 'Unknown parameters {unknown_params}',
+  'PR03', # 'Wrong parameters order. Actual: {actual_params}. Documented: {documented_params}',
+  'PR04', # 'Parameter "{param_name}" has no type',
+  'PR05', # 'Parameter "{param_name}" type should not finish with "."',
+  'PR06', # 'Parameter "{param_name}" type should use "{right_type}" instead of "{wrong_type}"',
+  'PR07', # 'Parameter "{param_name}" has no description',
+  'PR08', # 'Parameter "{param_name}" description should start with a capital letter",
+  'PR09', # 'Parameter "{param_name}" description should finish with "."',
+  'PR10', # 'Parameter "{param_name}" requires a space before the colon separating the parameter name and type",
+  'SA01', # Not all docstrings need a see also
+  'SA04', # See also section does not need descriptions
+  'SS05', # Appears to be broken.
+  'YD01', # Yields: No plan to enforce
 ]
-
-exclude = [  # don't report on objects that match any of these regex
-    '\.BasePlotter$',  # Issue with class parameter documentation
-    '\.Plotter$',  # Issue with class parameter documentation
-    '\.WidgetHelper$',
-    '\.PickingHelper$',
-    '\.from_dict$',
-    '\.to_dict$',
-    '\.__init__$',
-    '\.__new__$',
-    '\.__getattr__$',
-    '\.keys$',
-    '\.values$',
-    '\.items$',
-    '\._.*$',  # Ignore anything that's private (e.g., starts with _)
-    # parm of abstract classes
-    '\._BaseMapper$',
-    '\.CompositeFilters$',
-    '\.DataObject$',
-    '\.DataSet$',
-    '\.DataSetFilters$',
-    '\.ExplicitStructuredGrid$',
-    '\.Grid$',
-    '\.MultiBlock$',
-    '\.PartitionedDataSet$',
-    '\.PointGrid$',
-    '\.PointSet$',
-    '\.PolyDataFilters$',
-    '\.RectilinearGrid$',
-    '\.StructuredGrid$',
-    '\.Table$',
-    '\.Table\.save$',
-    '\.ImageData$',
-    '\.ImageDataFilters$',
-    '\.UnstructuredGrid$',
-    '\.UnstructuredGridFilters$',
-    # classes inherit from BaseReader
-    '\.*Reader(\.|$)',
-    # internal
-    '\.Renderer$',
-    # deprecated
-    '\.boolean_add$',
-    '\.boolean_cut$',
-    '\.add_field_array$',
-    '\.DataSetAttributes\.append$',
-    # will be removed or refactored
-    '^pv_pythreejs\..*$',
-    '^pv_ipygany\..*$',
-    '^notebook\..*$',
-    # Documentation extensions or utilities
-    '^viewer_directive\..*$',
-    '^plot_directive\..*$',
-    '^coverage\..*$',
-    '\.pv_html_page_context$',
-    # Internal
-    '^observers\..*$',
-    # methods we probably should make private
-    '\.store_click_position$',
-    '\.store_mouse_position$',
-    '\.fly_to_mouse_position$',
-    '\.key_press_event$',
-    '\.left_button_down$',
-    # MISC
-    '\.ActiveArrayInfo$',
-    '\.CellType$',
-    '\.DataObject\.copy_meta_from$',
-    '\.FieldAssociation$',
-    '\.InterpolationType$',
-    '\.RepresentationType$',
-    '\.ElementType$',
-    '\.MultiBlock\.copy_meta_from$',
-    # wraps
-    '\.Plotter\.enable_depth_peeling$',
-    '\.add_scalar_bar$',
-    # called from inherited
-    '\.Table\.copy_meta_from$',
-    # Type alias
-    '\.ColorLike$',
-    '\.Chart$',
-    '\.ArrayLike$',
-    '\.MatrixLike$',
-    '\.VectorLike$',
-    '\.TransformLike$',
-    '\.BoundsLike$',
-    '\.CellsLike$',
-    '\.CellsArrayLike$',
-    # PointSet *args and **kwargs for wrapped parameters
-    '\.PointSet(\.|$)',
-    # Mixin methods from collections.abc
-    '\.MultiBlock\.clear$',
-    '\.MultiBlock\.count$',
-    '\.MultiBlock\.index$',
-    '\.MultiBlock\.remove$',
-    # Enumerations
-    '\.Plot3DFunctionEnum$',
-    # VTK methods
-    '\.override$',
-    # trame
-    '\.Viewer(\.|$)',
-    '\.PyVistaRemoteView(\.|$)',
-    '\.PyVistaLocalView(\.|$)',
-    '\.PyVistaRemoteLocalView(\.|$)',
-    '\.Texture(\.|$)',  # awaiting Texture refactor
+exclude = [ # don't report on objects that match any of these regex
+  '\.*Reader(\.|$)',        # classes inherit from BaseReader
+  '\._.*$',                 # Ignore anything that's private (e.g., starts with _)
+  '^coverage\..*$',
+  '^plot_directive\..*$',
+  '^viewer_directive\..*$',
 ]
 
 [tool.ruff]
-exclude = [
-    '.git',
-    'pycache__',
-    'build',
-    'dist',
-    'doc/examples',
-    'doc/_build',
-]
-line-length = 100
+exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
 indent-width = 4
+line-length = 100
 
 [tool.ruff.format]
-docstring-code-format = false
-quote-style = "preserve"
+docstring-code-format = true
+# From https://numpydoc.readthedocs.io/en/latest/format.html
+# Extended discussion: https://github.com/pyvista/pyvista/pull/4129
+# The length of docstring lines should be kept to 75 characters to facilitate
+# reading the docstrings in text terminals.
+docstring-code-line-length = 75
+
+quote-style = 'single'
 
 [tool.ruff.lint]
-external = ["E131", "D102", "D105"]
-ignore = [
-    # https://github.com/pyvista/pyvista/pull/6030
-    "B028",
-    # https://github.com/pyvista/pyvista/pull/6022
-    "B904",
-    # whitespace before ':'
-    "E203",
-    # line break before binary operator
-    # "W503",
-    # line length too long
-    "E501",
-    # do not assign a lambda expression, use a def
-    "E731",
-    # too many leading '#' for block comment
-    "E266",
-    # ambiguous variable name
-    "E741",
-    # module level import not at top of file
-    "E402",
-    # Quotes (temporary)
-    "Q0",
-    # bare excepts (temporary)
-    # "B001", "E722",
-    "E722",
-    # 'from module import *' used; unable to detect undefined names
-    "F403",
-    # https://github.com/pyvista/pyvista/pull/6037
-    "PERF203",
-    # https://github.com/pyvista/pyvista/pull/5877
-    "SIM102",
-    # https://github.com/pyvista/pyvista/pull/5888
-    "SIM117",
-    # https://github.com/pyvista/pyvista/pull/5837
-    "SIM118",
-    # https://github.com/pyvista/pyvista/pull/5911
-    "RET505",
-    "RET506",
-    "RET507",
-    # The following rules may cause conflicts when used with the formatter
-    "COM812",
-    "ISC001",
-]
-fixable = ["ALL"]
-unfixable = []
+extend-safe-fixes = ['EM']
 extend-select = [
-    "A",
-    "AIR",
-    "ASYNC",
-    "B",
-    "C4",
-    "COM",
-    "DJ",
-    "DTZ",
-    "E",
-    "F",
-    "FA",
-    "FLY",
-    "I",
-    "ICN",
-    "INT",
-    "ISC",
-    "LOG",
-    "NPY",
-    "PERF",
-    "PGH",
-    "PIE",
-    "PLC",
-    "PLR0402",
-    "PLR1711",
-    "PLR1714",
-    "PLW0127",
-    "PT",
-    "PTH",
-    "PYI",
-    "Q",
-    "RET",
-    "RSE",
-    "RUF",
-    "SIM",
-    "T10",
-    "TCH",
-    "TRIO",
-    "TRY201",
-    "TRY300",
-    "TRY302",
-    "UP",
-    "W",
-    "YTT",
+  'A',
+  'AIR',
+  'ANN',
+  'ASYNC',
+  'ASYNC1',
+  'B',
+  'C4',
+  'COM',
+  'D',
+  'DJ',
+  'DTZ',
+  'E',
+  'EM',
+  'F',
+  'FA',
+  'FLY',
+  'I',
+  'ICN',
+  'INP',
+  'INT',
+  'ISC',
+  'LOG',
+  'NPY',
+  'PERF',
+  'PGH',
+  'PIE',
+  'PLC',
+  'PLR0402',
+  'PLR1711',
+  'PLR1714',
+  'PLR1730',
+  'PLR5501',
+  'PLW0127',
+  'PT',
+  'PTH',
+  'PYI',
+  'Q',
+  'RET',
+  'RSE',
+  'RUF',
+  'SIM',
+  'T10',
+  'TCH',
+  'TRY201',
+  'TRY203',
+  'TRY300',
+  'UP',
+  'W',
+  'YTT',
 ]
+external = ['E131']
+fixable = ['ALL']
+ignore = [
+  'ANN002',  # Missing annotations for `*args`
+  'ANN003',  # Missing annotations for `*kwargs`
+  'ANN401',  # Disallow `Any`
+  'B028',    # https://github.com/pyvista/pyvista/pull/6030
+  'B904',    # https://github.com/pyvista/pyvista/pull/6022
+  'COM812',  # May cause conflicts when used with the formatter
+  'D105',    # Missing docstring in magic method
+  'D107',    # Missing docstring in `__init__`
+  'D203',    # May conflict with the formatter
+  'D211',    # Incompatible with D203
+  'D213',    # Incompatible with D212
+  'D402',    # First line should not be the function's signature
+  'D416',    # Section name ends in colon
+  'E203',    # whitespace before ':'
+  'E266',    # too many leading '#' for block comment
+  'E402',    # module level import not at top of file
+  'E501',    # line length too long
+  'E722',
+  'E731',    # do not assign a lambda expression, use a def
+  'E741',    # ambiguous variable name
+  'F403',    # 'from module import *' used; unable to detect undefined names
+  'ISC001',  # May cause conflicts when used with the formatter
+  'PERF203', # https://github.com/pyvista/pyvista/pull/6037
+  'Q0',      # Quotes (temporary)
+  'RET505',  # https://github.com/pyvista/pyvista/pull/5911
+  'RET506',  # https://github.com/pyvista/pyvista/pull/5911
+  'RET507',  # https://github.com/pyvista/pyvista/pull/5911
+  'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
+  'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
+  'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
+]
+unfixable = ['F401']
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
-"examples/**" = [
-    # https://github.com/pyvista/pyvista/pull/6014
-    "B015",
-    # https://github.com/pyvista/pyvista/pull/6019
-    "B018",
+'__init__.py' = ['PLC0414']
+'doc/source/make_tables.py' = ['D101', 'D102']
+'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115']
+'examples/**' = [
+  'B015', # https://github.com/pyvista/pyvista/pull/6014
+  'B018', # https://github.com/pyvista/pyvista/pull/6019
 ]
+'examples_trame/*' = ['D100', 'D103']
+'examples_trame/tests*' = ['D']
+'pyvista/core/_vtk_core*' = ['PLC0414']
+'pyvista/core/filters/*' = ['PYI019']
+'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
+'pyvista/plotting/_typing.py' = ['PLC0414']
+'pyvista/plotting/_vtk.py' = ['PLC0414']
+'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
+'pyvista/utilities/*' = ['F401'] # deprecated modules
+'tests/*' = ['D', 'INP']
+
+# ANN ignores for `pyvista/core`
+# TODO: Add annotations to any files listed below and remove it from this list
+'pyvista/core/_validation/_cast_array.py' = ['ANN']
+'pyvista/core/_validation/validate.py' = ['ANN202']
+'pyvista/core/_vtk_core.py' = ['ANN']
+'pyvista/core/errors.py' = ['ANN']
+'pyvista/core/filters**' = ['ANN']
+'pyvista/core/objects.py' = ['ANN']
+'pyvista/core/partitioned.py' = ['ANN']
+'pyvista/core/pointset.py' = ['ANN']
+'pyvista/core/utilities/cell.py' = ['ANN']
+'pyvista/core/utilities/cells.py' = ['ANN']
+'pyvista/core/utilities/docs.py' = ['ANN']
+'pyvista/core/utilities/features.py' = ['ANN']
+'pyvista/core/utilities/helpers.py' = ['ANN']
+'pyvista/core/utilities/image_sources.py' = ['ANN']
+'pyvista/core/utilities/observers.py' = ['ANN']
+'pyvista/core/utilities/reader.py' = ['ANN']
+
+# ANN ignores for `pyvista/plotting`
+'pyvista/plotting*' = ['ANN']
+
+# All other ANN ignores
+'doc*' = ['ANN', 'INP']
+'examples*' = ['ANN', 'INP']
+'pyvista/__init__.py' = ['ANN']
+'pyvista/_plot.py' = ['ANN']
+'pyvista/conftest.py' = ['ANN']
+'pyvista/demos*' = ['ANN']
+'pyvista/errors.py' = ['ANN']
+'pyvista/examples*' = ['ANN']
+'pyvista/ext*' = ['ANN']
+'pyvista/jupyter*' = ['ANN']
+'pyvista/report.py' = ['ANN']
+'pyvista/trame*' = ['ANN']
+'pyvista/utilities/__init__.py' = ['ANN']
+'tests*' = ['ANN']
 
 [tool.ruff.lint.isort]
-# Sort by name, don't cluster "from" vs "import"
-force-sort-within-sections = true
-# Combines "as" imports on the same line
-combine-as-imports = true
-# https://github.com/pyvista/pyvista/pull/5712
-required-imports = ["from __future__ import annotations"]
-# https://github.com/pyvista/pyvista/pull/5712
-force-single-line = true
+combine-as-imports = true # Combines 'as' imports on the same line
+force-single-line = true # https://github.com/pyvista/pyvista/pull/5712
+force-sort-within-sections = true # Sort by name, don't cluster 'from' vs 'import'
+required-imports = [
+  'from __future__ import annotations', # https://github.com/pyvista/pyvista/pull/5712
+]
 
 [tool.ruff.lint.pyupgrade]
-# Preserve types, even if a file imports `from __future__ import annotations`.
-keep-runtime-typing = true
+keep-runtime-typing = true # Preserve types, even if a file imports `from __future__ import annotations`.
+
+[tool.repo-review]
+ignore = [
+  'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
+  'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
+  'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+  'PY004', # we have a 'doc' folder, not 'docs'
+  'PY007', # tox support
+  'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
+]

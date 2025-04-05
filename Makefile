@@ -5,7 +5,8 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
-# doctest-modules-local-namespace must be off screen to avoid plotting everything
+# must be off screen to avoid plotting everything
+doctest-modules: export PYVISTA_OFF_SCREEN = True
 doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
 doctest-modules:
@@ -15,9 +16,6 @@ doctest-modules:
 doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"
 	python tests/check_doctest_names.py
-
-example-coverage:
-	python -m ansys.tools.example_coverage -f pyvista
 
 coverage:
 	@echo "Running coverage"

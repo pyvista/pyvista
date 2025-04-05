@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from unittest import mock
 
 import numpy as np
@@ -10,7 +11,7 @@ from pyvista import examples
 from pyvista import pyvista_ndarray
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyvista_ndarray_1d():
     return pyvista_ndarray([1.0, 2.0, 3.0])
 
@@ -64,7 +65,7 @@ def test_modifying_modifies_dataset():
 
 # TODO: This currently doesn't work for single element indexing operations!
 # in these cases, the __array_finalize__ method is not called
-@pytest.mark.skip()
+@pytest.mark.skip
 def test_slices_are_associated_single_index():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
@@ -96,3 +97,12 @@ def test_add_1d():
     pv_arr = pyvista_ndarray([1]) + pyvista_ndarray([1])
     np_arr = np.array([1]) + np.array([1])
     assert np.array_equal(pv_arr, np_arr)
+
+
+@pytest.mark.parametrize('val', [1, True, None])
+def test_raises(val):
+    match = re.escape(
+        f'pyvista_ndarray got an invalid type {type(val)}. Expected an Iterable or vtk.vtkAbstractArray'
+    )
+    with pytest.raises(TypeError, match=match):
+        pyvista_ndarray(val)

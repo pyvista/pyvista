@@ -38,7 +38,7 @@ backface_params = dict(color='orangered')
 meshes.plot(color='aquamarine', backface_params=backface_params, smooth_shading=True)
 
 
-###############################################################################
+# %%
 # A more interesting use case is helping visualize the orientation of complex,
 # self-intersecting surfaces. For instance :func:`Catalan's minimal surface
 # <pyvista.ParametricCatalanMinimal>` has a complex shape, and coloring the
@@ -57,7 +57,7 @@ bprop.specular_power = 50.0
 plotter.show()
 
 
-###############################################################################
+# %%
 # In the case of non-orientable surfaces, adding specific backface properties can
 # make the non-orientable quality very obvious by the emergence of "seams"
 # where the face properties are discontinuous.
@@ -70,7 +70,7 @@ backface_params = dict(color='mediumseagreen', specular=1.0, specular_power=50.0
 meshes.plot(color='gold', backface_params=backface_params, smooth_shading=True)
 
 
-###############################################################################
+# %%
 # Of course we aren't constrained to only setting distinct colors for backfaces;
 # most :class:`pyvista.Property` attributes can be overridden. However, some of
 # these have no effect, while others merely don't make any sense. For instance,
@@ -89,7 +89,7 @@ orbit = plotter.generate_orbital_path(n_points=24, shift=0.0, viewup=viewup)
 plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
 
-###############################################################################
+# %%
 # Apply Backface Properties to Textured Meshes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Backface textures can also be applied to meshes that have textures applied to
@@ -116,7 +116,7 @@ pl.add_mesh(
 pl.show()
 
 
-###############################################################################
+# %%
 # Backface Properties and Physically Based Rendering
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Note that backfaces are automatically culled when physically based rendering
@@ -137,6 +137,8 @@ pl.add_mesh(
 pl.show()
 
 
-###############################################################################
+# %%
 # See also the :ref:`sphere_eversion_example` example which relies on
 # distinguishing the inside and the outside of a sphere.
+#
+# .. tags:: plot

@@ -9,11 +9,11 @@ This example shows how you can use :func:`enable_depth_of_field
 
 """
 
-# sphinx_gallery_start_ignore
-# depth field modification does not seem to work in interactive mode
 from __future__ import annotations
 
-PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_start_ignore
+# depth field modification does not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
@@ -21,7 +21,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Generate a bunch of bunnies
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create many bunnies using the :func:`glyph <pyvista.DataSetFilters.glyph>`
@@ -39,7 +39,7 @@ bunnies = grid.glyph(geom=mesh, scale=False, orient=False)
 bunnies
 
 
-###############################################################################
+# %%
 # Show the plot without enabling depth of field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -65,7 +65,7 @@ pl.set_environment_texture(cubemap)
 pl.show()
 
 
-###############################################################################
+# %%
 # Show the plot while enabling depth of field
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -77,3 +77,5 @@ pl.enable_depth_of_field()
 pl.enable_anti_aliasing('ssaa')
 pl.set_environment_texture(cubemap)
 pl.show()
+# %%
+# .. tags:: plot

@@ -1,4 +1,4 @@
-"""This module contains the VolumeProperty class."""
+"""Wrapper for vtkVolumeProperty."""
 
 from __future__ import annotations
 
@@ -142,7 +142,8 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            raise TypeError('`lookup_table` must be a `pyvista.LookupTable`')
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
@@ -194,13 +195,14 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetInterpolationTypeAsString().split()[0].lower()
 
     @interpolation_type.setter
-    def interpolation_type(self, value: str):  # numpydoc ignore=GL08
+    def interpolation_type(self, value: str):
         if value == 'linear':
             self.SetInterpolationTypeToLinear()
         elif value == 'nearest':
             self.SetInterpolationTypeToNearest()
         else:
-            raise ValueError('`interpolation_type` must be either "linear" or "nearest"')
+            msg = '`interpolation_type` must be either "linear" or "nearest"'
+            raise ValueError(msg)
 
     @property
     def opacity_unit_distance(self) -> float:  # numpydoc ignore=RT01
@@ -216,7 +218,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetScalarOpacityUnitDistance()
 
     @opacity_unit_distance.setter
-    def opacity_unit_distance(self, value: float):  # numpydoc ignore=GL08
+    def opacity_unit_distance(self, value: float):
         self.SetScalarOpacityUnitDistance(value)
 
     @property
@@ -236,7 +238,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetShade())
 
     @shade.setter
-    def shade(self, value: bool):  # numpydoc ignore=GL08
+    def shade(self, value: bool):
         self.SetShade(value)
 
     @property
@@ -262,7 +264,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetIndependentComponents())
 
     @independent_components.setter
-    def independent_components(self, value: bool):  # numpydoc ignore=GL08
+    def independent_components(self, value: bool):
         self.SetIndependentComponents(value)
 
     @property
@@ -280,7 +282,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):  # numpydoc ignore=GL08
+    def ambient(self, value: float):
         self.SetAmbient(value)
 
     @property
@@ -298,7 +300,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):  # numpydoc ignore=GL08
+    def diffuse(self, value: float):
         self.SetDiffuse(value)
 
     @property
@@ -317,7 +319,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):  # numpydoc ignore=GL08
+    def specular(self, value: float):
         self.SetSpecular(value)
 
     @property
@@ -330,7 +332,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):  # numpydoc ignore=GL08
+    def specular_power(self, value: float):
         self.SetSpecularPower(value)
 
     def copy(self) -> VolumeProperty:
@@ -355,7 +357,10 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         for attr in dir(self):
             if not attr.startswith('_') and attr[0].islower():
                 name = ' '.join(attr.split('_')).capitalize() + ':'
-                value = getattr(self, attr)
+                try:
+                    value = getattr(self, attr)
+                except AttributeError:  # pragma:no cover
+                    continue
                 if callable(value):
                     continue
                 if isinstance(value, str):

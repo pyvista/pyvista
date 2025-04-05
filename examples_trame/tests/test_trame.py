@@ -1,32 +1,33 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import subprocess
 
 import pytest
 
 THIS_PATH = Path(__file__).parent.absolute()
+EXAMPLES_DIR = Path(__file__).parent.parent.absolute()
 
 
-@pytest.mark.parametrize(
-    "server_path",
-    [
-        "../advanced/contour.py",
-        "../advanced/custom_ui.py",
-        "../basic/actor_color.py",
-        "../basic/algorithm.py",
-        "../basic/file_viewer.py",
-        "../basic/mesh_scalars.py",
-        "../basic/multi_views.py",
-        "../basic/PyVistaLocalView.py",
-        "../basic/PyVistaRemoteLocalView.py",
-        "../basic/PyVistaRemoteView.py",
-        "../basic/ui_template.py",
-        "../validation/many_actors.py",
-    ],
-)
-def test_serve(server_path):
+def collect_example_files():
+    test_files = []
+    for dirpath, _, filenames in os.walk(EXAMPLES_DIR):
+        if THIS_PATH.match(dirpath) or dirpath.endswith('__pycache__'):
+            continue
+        for filename in filenames:
+            full_path = Path(dirpath) / filename
+            if not filename.endswith('.py'):
+                continue
+            # Use relative path and cast to str for better repr in pytest output
+            rel_path = full_path.relative_to(EXAMPLES_DIR)
+            test_files.append(str(rel_path))
+    return test_files
+
+
+@pytest.mark.parametrize('test_file', collect_example_files())
+def test_serve(test_file):
     returncode = subprocess.run(
-        ["python", Path(THIS_PATH) / server_path, "--serve", "-t", "1"],
+        ['python', EXAMPLES_DIR / test_file, '--serve', '--timeout', '1', '--port', '0'],
     ).returncode
     assert returncode == 0

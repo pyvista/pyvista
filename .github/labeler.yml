@@ -10,7 +10,6 @@ maintenance:
       - changed-files:
           - any-glob-to-any-file: ".github/**/*"
           - any-glob-to-any-file: "codecov.yml"
-          - any-glob-to-any-file: ".flake8"
           - any-glob-to-any-file: "Makefile"
           - any-glob-to-any-file: "pyproject.toml"
           - any-glob-to-any-file: ".pre-commit-config.yaml"
@@ -18,7 +17,6 @@ dependencies:
   - any:
       - changed-files:
           - any-glob-to-any-file: "requirements*"
-          - any-glob-to-any-file: "environment.yml"
           - any-glob-to-any-file: ".pre-commit-config.yaml"
 docker:
   - any:

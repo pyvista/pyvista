@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import os
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import pytest
 import vtk
 
@@ -12,12 +16,30 @@ import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
-from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_theme():
     return pv.plotting.themes.Theme()
+
+
+@pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
+def test_theme_trame_raises(default_theme: pv.themes.Theme, trame):
+    with pytest.raises(TypeError, match='Configuration type must be `_TrameConfig`.'):
+        default_theme.trame = trame
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(image_scale=st.integers().filter(lambda x: x < 1))
+def test_theme_image_scale_raises(default_theme: pv.themes.Theme, image_scale):
+    with pytest.raises(ValueError, match='Scale factor must be a positive integer.'):
+        default_theme.image_scale = image_scale
+
+
+@pytest.mark.parametrize('lighting_params', [1, None, object(), True, pv.Sphere()])
+def test_theme_lightning_params_raises(default_theme: pv.themes.Theme, lighting_params):
+    with pytest.raises(TypeError, match='Configuration type must be `_LightingConfig`.'):
+        default_theme.lighting_params = lighting_params
 
 
 @pytest.mark.parametrize(
@@ -110,11 +132,11 @@ def test_invalid_color_str_single_char():
 
 
 def test_color_str():
-    clr = colors.Color("k")
+    clr = colors.Color('k')
     assert clr == (0.0, 0.0, 0.0)
-    clr = colors.Color("black")
+    clr = colors.Color('black')
     assert clr == (0.0, 0.0, 0.0)
-    clr = colors.Color("white")
+    clr = colors.Color('white')
     assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
@@ -299,7 +321,7 @@ def test_window_size(default_theme):
 
 
 def test_camera(default_theme):
-    with pytest.raises(TypeError, match="camera value must either be a"):
+    with pytest.raises(TypeError, match='camera value must either be a'):
         default_theme.camera = [1, 0, 0]
 
     # test _CameraConfig usage
@@ -426,7 +448,7 @@ def test_repr(default_theme):
     for line in rep.splitlines():
         if ':' in line:
             pref, *rest = line.split(':', 1)
-            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
+            assert pref.endswith(' '), f'Key str too long or need to raise key length:\n{pref!r}'
 
 
 def test_theme_slots(default_theme):
@@ -475,8 +497,11 @@ def test_plotter_set_theme():
     assert pl.theme == my_theme
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+)
 def test_load_theme(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     pv.plotting.themes.DarkTheme().save(filename)
     loaded_theme = pv.load_theme(filename)
     assert loaded_theme == pv.plotting.themes.DarkTheme()
@@ -485,8 +510,11 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pv.plotting.themes.DarkTheme()
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+)
 def test_save_before_close_callback(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
@@ -512,7 +540,7 @@ def test_anti_aliasing(default_theme):
         default_theme.anti_aliasing = 42
 
 
-@pytest.mark.skipif(uses_egl(), reason="Requires non-OSMesa/EGL VTK build.")
+@pytest.mark.skip_egl('Requires non-OSMesa/EGL VTK build.')
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'
@@ -652,11 +680,13 @@ def test_trame_config():
     assert trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
 
-    trame_config.server_proxy_enabled = True
+    with pytest.warns(UserWarning, match='Enabling server_proxy will disable jupyter_extension'):
+        trame_config.server_proxy_enabled = True
     assert not trame_config.jupyter_extension_enabled
     assert trame_config.server_proxy_enabled
 
-    trame_config.jupyter_extension_enabled = True
+    with pytest.warns(UserWarning, match='Enabling jupyter_extension will disable server_proxy'):
+        trame_config.jupyter_extension_enabled = True
     assert trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
 

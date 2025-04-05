@@ -13,7 +13,6 @@ import pyvista as pv
 from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests
-pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
 pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
 
@@ -39,8 +38,8 @@ def _is_vtk(obj):
         return False
 
 
-@pytest.fixture()
-def skip_check_gc(check_gc):  # noqa: PT004
+@pytest.fixture
+def skip_check_gc(check_gc):
     """Skip check_gc fixture."""
     check_gc.skip = True
 
@@ -95,11 +94,19 @@ def check_gc():
     assert len(after) == 0, msg
 
 
-@pytest.fixture()
+@pytest.fixture
 def colorful_tetrahedron():
     mesh = pv.Tetrahedron()
-    mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
+    mesh.cell_data['colors'] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
     return mesh
+
+
+@pytest.fixture(autouse=True)
+def set_default_theme():
+    """Reset the testing theme for every test."""
+    pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
+    yield
+    pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
 
 
 def make_two_char_img(text):
@@ -117,7 +124,7 @@ def make_two_char_img(text):
     return pv.Texture(pl.screenshot()).to_image()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cubemap(texture):
     """Sample texture as a cubemap."""
     return pv.Texture(

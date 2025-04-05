@@ -6,7 +6,7 @@ import pytest
 import pyvista as pv
 
 
-@pytest.fixture()
+@pytest.fixture
 def tiny_rectilinear():
     xrng = np.linspace(0, 3, 4)
     yrng = np.linspace(0, 3, 5)
@@ -59,9 +59,9 @@ def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
 
 def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
     # test that data isn't passed
-    tiny_rectilinear["cell_data"] = np.ones(tiny_rectilinear.n_cells)
-    tiny_rectilinear["point_data"] = np.arange(tiny_rectilinear.n_points)
-    tiny_rectilinear.set_active_scalars("cell_data")
+    tiny_rectilinear['cell_data'] = np.ones(tiny_rectilinear.n_cells)
+    tiny_rectilinear['point_data'] = np.arange(tiny_rectilinear.n_points)
+    tiny_rectilinear.set_active_scalars('cell_data')
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=False)
     assert not tet_grid.cell_data
     assert not tet_grid.point_data
@@ -69,15 +69,15 @@ def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
     # test with cell data
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=True)
     assert tet_grid.cell_data
-    assert "cell_data" in tet_grid.cell_data
-    assert "point_data" in tet_grid.point_data
-    assert tet_grid.active_scalars_name == "cell_data"
+    assert 'cell_data' in tet_grid.cell_data
+    assert 'point_data' in tet_grid.point_data
+    assert tet_grid.active_scalars_name == 'cell_data'
 
     # automatically added
     assert 'vtkOriginalCellIds' in tet_grid.cell_data
 
     # Test point data active
-    tiny_rectilinear.set_active_scalars("point_data")
-    assert tiny_rectilinear.active_scalars_name == "point_data"
+    tiny_rectilinear.set_active_scalars('point_data')
+    assert tiny_rectilinear.active_scalars_name == 'point_data'
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=True)
-    assert tet_grid.active_scalars_name == "point_data"
+    assert tet_grid.active_scalars_name == 'point_data'

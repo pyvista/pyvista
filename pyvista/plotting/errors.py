@@ -27,7 +27,7 @@ class InvalidCameraError(ValueError):  # numpydoc ignore=PR01
 class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01
     """Exception when the render window is not available."""
 
-    def __init__(self, message="Render window is not available."):
+    def __init__(self, message='Render window is not available.'):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 

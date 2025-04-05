@@ -57,9 +57,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
     Load a skybox given a directory, prefix, and file extension.
 
     >>> import pyvista as pv
-    >>> skybox = pv.cubemap(
-    ...     'my_directory', 'skybox', '.jpeg'
-    ... )  # doctest:+SKIP
+    >>> skybox = pv.cubemap('my_directory', 'skybox', '.jpeg')  # doctest:+SKIP
 
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
@@ -105,7 +103,8 @@ def cubemap_from_filenames(image_paths):
 
     """
     if len(image_paths) != 6:
-        raise ValueError("image_paths must contain 6 paths")
+        msg = 'image_paths must contain 6 paths'
+        raise ValueError(msg)
 
     return _cubemap_from_paths(image_paths)
 
@@ -115,13 +114,12 @@ def _cubemap_from_paths(image_paths):
     for image_path in image_paths:
         if not Path(image_path).is_file():
             file_str = '\n'.join(image_paths)
-            raise FileNotFoundError(
-                f'Unable to locate {image_path}\n'
-                'Expected to find the following files:\n'
-                f'{file_str}',
+            msg = (
+                f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}'
             )
+            raise FileNotFoundError(msg)
 
-    texture = pyvista.Texture()
+    texture = pyvista.Texture()  # type: ignore[abstract]
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
     texture.cube_map = True  # Must be set prior to setting images

@@ -20,7 +20,7 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
 
 
@@ -102,6 +102,7 @@ class Viewer(BaseViewer):
         -------
         VAppLayout (vue2)
             A layout this viewer can be embedded in.
+
         """
         return VAppLayout(*args, **kwargs)
 
@@ -133,10 +134,10 @@ class Viewer(BaseViewer):
         ) as row:
             server = row.server
             # Listen to state changes
-            server.state.change(self.EDGES)(self.on_edge_visiblity_change)
-            server.state.change(self.GRID)(self.on_grid_visiblity_change)
-            server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
-            server.state.change(self.AXIS)(self.on_axis_visiblity_change)
+            server.state.change(self.EDGES)(self.on_edge_visibility_change)
+            server.state.change(self.GRID)(self.on_grid_visibility_change)
+            server.state.change(self.OUTLINE)(self.on_outline_visibility_change)
+            server.state.change(self.AXIS)(self.on_axis_visibility_change)
             server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
@@ -273,9 +274,8 @@ class Viewer(BaseViewer):
         if mode is None:
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
-            raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
-            )
+            msg = f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+            raise ValueError(msg)
         if mode != 'trame':
             default_server_rendering = mode == 'server'
 
