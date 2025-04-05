@@ -3243,6 +3243,10 @@ class Theme(_ThemeConfig):
             path = str(logo_file)
         self._logo_file = path
 
+    def __dict__(self):
+        """Return a dictionary of the theme's attributes."""
+        return self.to_dict()
+
 
 class DarkTheme(Theme):
     """Dark mode theme.

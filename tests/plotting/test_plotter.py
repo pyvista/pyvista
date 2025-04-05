@@ -878,3 +878,12 @@ def test_plotter_shape():
     assert isinstance(pl.shape, tuple)
     assert pl.shape == (1, 2)
     assert isinstance(pl.shape[0], int)
+
+
+def test_theme_dict():
+    """Test the Theme.__dict__ method."""
+    theme = pv.Theme()
+    theme_dict = theme.__dict__()
+    assert isinstance(theme_dict, dict)
+    theme_dict = dict(theme)
+    assert isinstance(theme_dict, dict)
