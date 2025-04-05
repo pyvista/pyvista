@@ -604,7 +604,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh, compute the normals and set them active.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Box()
+        >>> mesh = pv.Cube()
         >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
 
