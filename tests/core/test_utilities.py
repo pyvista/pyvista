@@ -29,7 +29,6 @@ import vtk
 import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._vtk_core import _StateManager
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
@@ -65,6 +64,7 @@ from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
