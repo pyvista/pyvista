@@ -3700,14 +3700,17 @@ def test_plotter_volume_clim():
 
 @skip_windows_mesa  # due to opacity
 def test_plotter_volume_clim_uint():
-    # Validate that add_volume does not set 0-255 as the default clim for uint data
-    # for example the frog tissue dataset is uint with values 0-29 and we want
+    # Validate that add_volume does not set 0-255 as the default clim for uint8 data
+    # for example the `load_frog_tissues` dataset is uint8 with values 0-29 and we want
     # add_volume to automatically set the clim to 0-29 as that is the valid range
-    frog = examples.load_frog_tissues()
+    # Let's validate this with a toy dataset:
+    volume = pv.ImageData(dimensions=(3,3,3))
+    volume["data"] = np.arange(volume.n_points).astype(np.uint8)
+
     pl = pv.Plotter()
-    actor = pl.add_volume(frog, show_scalar_bar=True)
+    actor = pl.add_volume(volume, show_scalar_bar=True)
     pl.show()
-    assert actor.mapper.scalar_range == (0, 29)
+    assert actor.mapper.scalar_range == (0, np.prod(volume.dimensions) - 1)
 
 
 def test_plot_actor(sphere):
