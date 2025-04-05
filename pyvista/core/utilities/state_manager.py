@@ -5,14 +5,17 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 import contextlib
+from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
-from typing import Self
 from typing import TypeVar
 from typing import cast
 from typing import final
 from typing import get_args
 from typing import overload
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from pyvista.core import _vtk_core as _vtk
 
