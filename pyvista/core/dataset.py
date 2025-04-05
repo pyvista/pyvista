@@ -587,9 +587,12 @@ class DataSet(DataSetFilters, DataObject):
     ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
-        Arrows will be located at the points of the mesh and
+        Arrows will be located at the points or cells of the mesh and
         their size will be dependent on the norm of the vector.
-        Their direction will be the "direction" of the vector
+        Their direction will be the "direction" of the vector.
+
+        If there are both active point and cell vectors, preference is
+        given to the point vectors.
 
         Returns
         -------
@@ -602,9 +605,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Box()
-        >>> mesh_w_normals = mesh.compute_normals(
-        ...     cell_normals=True, point_normals=False
-        ... )
+        >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
 
         Plot the active vectors as arrows. Show the original mesh as wireframe for
