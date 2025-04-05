@@ -35,7 +35,7 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
 
     Examples
     --------
-    >>> from pyvista.core._vtk_core import _StateManager
+    >>> from pyvista.core.utilities.state_manager import _StateManager
     >>> from typing import Literal
 
     Define the available options as a ``Literal`` and initialize a global state variable.
