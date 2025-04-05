@@ -3597,6 +3597,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
                 )
             self.SetEnvironmentTexture(texture_copy, is_srgb)
+        else:
+            self.SetEnvironmentTexture(texture, is_srgb)
 
         self.SetBackgroundTexture(texture)
         self.Modified()

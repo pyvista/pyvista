@@ -496,8 +496,8 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Plot a cubemap as a skybox.
 
-        >>> cube_map = examples.download_dikhololo_night()
-        >>> cube_map.plot()
+        >>> cube_map = examples.download_sky_box_cube_map()
+        >>> cube_map.plot(resample=True)
 
         """
         if self.cube_map:
@@ -515,9 +515,10 @@ class Texture(DataObject, _vtk.vtkTexture):
         zoom = kwargs.pop('zoom', 0.5)
         show_axes = kwargs.pop('show_axes', True)
         lighting = kwargs.pop('lighting', None)
+        resample = kwargs.pop('resample', False)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, is_srgb=True)  # type: ignore[arg-type]
+        pl.set_environment_texture(self, is_srgb=True, resample=resample)  # type: ignore[arg-type]
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
