@@ -9,6 +9,7 @@ concurrency:
 
 env:
   PYTEST_ADDOPTS: "--color=yes"
+  PYVISTA_DOCUMENTATION_CI: "true"  # Flag for running CI-specific code
 
 permissions:
   id-token: none
