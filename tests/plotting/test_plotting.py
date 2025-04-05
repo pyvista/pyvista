@@ -3698,6 +3698,18 @@ def test_plotter_volume_clim():
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_clim_uint():
+    # Validate that add_volume does not set 0-255 as the default clim for uint data
+    # for example the frog tissue dataset is uint with values 0-29 and we want
+    # add_volume to automatically set the clim to 0-29 as that is the valid range
+    frog = examples.load_frog_tissues()
+    pl = pv.Plotter()
+    actor = pl.add_volume(frog, show_scalar_bar=True)
+    pl.show()
+    assert actor.mapper.scalar_range == (0, 29)
+
+
 def test_plot_actor(sphere):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
