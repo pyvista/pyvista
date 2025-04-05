@@ -3573,7 +3573,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        if not resample and os.environ['PYVISTA_DOCUMENTATION_CI'] == 'true':
+        running_ci = os.environ.get('PYVISTA_DOCUMENTATION_CI', 'false').lower() == 'true'
+        if not resample and running_ci:
             msg = (
                 'Environment texture must be resampled for CI to reduce test times.\n'
                 'Set `resample=True` or to a specific value.'
