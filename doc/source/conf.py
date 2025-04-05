@@ -21,9 +21,6 @@ faulthandler.enable()
 # Note that `import make_tables` below imports pyvista.
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
-# Flag for running CI-specific code
-os.environ['PYVISTA_DOCUMENTATION_CI'] = 'true'
-
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
