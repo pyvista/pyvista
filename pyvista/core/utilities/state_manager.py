@@ -14,10 +14,11 @@ from typing import final
 from typing import get_args
 from typing import overload
 
+from pyvista.core import _vtk_core as _vtk
+
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-from pyvista.core import _vtk_core as _vtk
 
 T = TypeVar('T')
 
@@ -216,8 +217,9 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
         }
         state = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         try:
-            return int_to_string[_vtk.vtkLogger.GetCurrentVerbosityCutoff()]
+            return int_to_string[state]
         except KeyError:
+            # Unsupported state, raise error using validation method
             self._validate_state(state)  # type: ignore[arg-type]
             msg = 'This line should not be reachable.'  # pragma: no cover
             raise RuntimeWarning(msg)  # pragma: no cover
