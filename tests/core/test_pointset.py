@@ -7,6 +7,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
@@ -379,3 +380,32 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
 
     assert grid.dimensionality == dimensionality
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+@pytest.mark.parametrize(
+    ('attr', 'mesh', 'expected'),
+    [
+        (
+            'polyhedron_faces',
+            examples.cells.Polyhedron(),
+            [3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3],
+        ),
+        ('polyhedron_face_locations', examples.cells.Polyhedron(), [4, 0, 1, 2, 3]),
+        ('polyhedron_faces', pv.UnstructuredGrid(), []),
+        ('polyhedron_face_locations', pv.UnstructuredGrid(), []),
+    ],
+)
+def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
+    if pv.vtk_version_info < (9, 4):
+        match = f'`{attr}` requires vtk>=9.4.0'
+        with pytest.raises(pv.VTKVersionError, match=match):
+            getattr(mesh, attr)
+    else:
+        actual = getattr(mesh, attr)
+        assert isinstance(actual, np.ndarray)
+        assert actual.dtype == int
+        assert np.array_equal(actual, expected)
+
+        with pytest.warns(DeprecationWarning):
+            # Test deprecation warning is emitted by VTK
+            getattr(mesh, attr.split('polyhedron_')[1])

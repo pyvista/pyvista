@@ -57,6 +57,8 @@ class _vtkWrapper(metaclass=_vtkWrapperMeta):
         if item in unwrapped_attrs or wrapped is None:
             return super().__getattribute__(item)
         else:
+            if item[0].islower():
+                return super().__getattribute__(item)
             try:
                 return wrapped.__getattribute__(item)
             except AttributeError:

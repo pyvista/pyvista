@@ -610,7 +610,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.vtkCellArray):
+class CellArray(_vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
     """PyVista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
