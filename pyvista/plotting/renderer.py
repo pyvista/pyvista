@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -20,6 +21,7 @@ from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaTestingWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -3571,6 +3573,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
+        if not resample and os.environ['PYVISTA_DOCUMENTATION_CI'] == 'true':
+            msg = (
+                'Environment texture must be resampled for CI to reduce test times.\n'
+                'Set `resample=True` or to a specific value.'
+            )
+            raise PyVistaTestingWarning(msg)
+
         if resample:
             resample = 0.1 if resample is True else resample
 
