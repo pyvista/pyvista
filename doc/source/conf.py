@@ -247,10 +247,12 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_PointGridType'),
     (r'py:.*', '.*_PointSetType'),
     (r'py:.*', '.*_DataSetType'),
+    (r'py:.*', '.*_DataSetOrMultiBlockType'),
     (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*T'),
     #
     # Dataset-related types
@@ -297,6 +299,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'colors.Colormap'),
     (r'py:.*', 'colors.ListedColormap'),
+    (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     #
@@ -497,12 +500,12 @@ from numpydoc.docscrape_sphinx import SphinxDocString
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
-plot_setup = """
+pyvista_plot_setup = """
 from pyvista import set_plot_theme as __s_p_t
 __s_p_t('document')
 del __s_p_t
 """
-plot_cleanup = plot_setup
+pyvista_plot_cleanup = pyvista_plot_setup
 
 
 def _str_examples(self):
