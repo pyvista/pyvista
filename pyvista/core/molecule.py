@@ -17,7 +17,7 @@ class Molecule(_vtk.vtkMolecule):
 
     """
 
-    def __init__(self):
+    def __init__(self):  # noqa: ANN204
         super().__init__()
 
     @property
@@ -33,7 +33,7 @@ class Molecule(_vtk.vtkMolecule):
         return self.GetNumberOfAtoms()
 
     @property
-    def n_bonds(self):
+    def n_bonds(self):  # noqa: ANN201
         """Return the number of bonds.
 
         Returns
