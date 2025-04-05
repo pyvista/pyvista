@@ -3247,6 +3247,10 @@ class Theme(_ThemeConfig):
         """Return a dictionary of the theme's attributes."""
         return self.to_dict()
 
+    def __iter__(self):
+        """Return the dict representation when calling dict(self)."""
+        yield from self.to_dict().items()
+
 
 class DarkTheme(Theme):
     """Dark mode theme.
