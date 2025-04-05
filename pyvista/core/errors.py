@@ -196,3 +196,7 @@ class PyVistaFutureWarning(Warning):
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
+
+
+class PyVistaTestingWarning(Warning):
+    """Warning for CI-specific testing."""

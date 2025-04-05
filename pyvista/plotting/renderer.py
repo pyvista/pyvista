@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -20,6 +21,7 @@ from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaTestingWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -3512,7 +3514,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture, is_srgb=False) -> None:
+    def set_environment_texture(
+        self, texture, is_srgb=False, resample: bool | float = False
+    ) -> None:
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
@@ -3531,6 +3535,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
 
+        resample : bool | float, default: False
+            Resample the environment texture. Set this to a float to set the
+            sampling rate explicitly or set to ``True`` to downsample the
+            texture to 1/10th of its original resolution. Downsampling the
+            texture can substantially improve performance for some environments
+            (e.g. headless setups or with if GPU support is limited).
+
+            .. note::
+
+                This will resample the texture used for image-based lighting only,
+                e.g. the texture used for rendering reflective surfaces. It
+                does `not` resample the background texture.
+
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
@@ -3543,7 +3560,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
         >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
-        >>> pl.set_environment_texture(cubemap)
+        >>> pl.set_environment_texture(cubemap, resample=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
@@ -3556,7 +3573,34 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture, is_srgb)
+        running_ci = os.environ.get('PYVISTA_DOCUMENTATION_CI', 'false').lower() == 'true'
+        if not resample and running_ci:
+            msg = (
+                'Environment texture must be resampled for CI to reduce test times.\n'
+                'Set `resample=True` or to a specific value.'
+            )
+            raise PyVistaTestingWarning(msg)
+
+        if resample:
+            resample = 0.1 if resample is True else resample
+
+            # Copy the texture
+            # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
+            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy.cube_map = texture.cube_map
+            texture_copy.SetMipmap(texture.GetMipmap())
+            texture_copy.SetInterpolate(texture.GetInterpolate())
+
+            # Resample the texture's images
+            for i in range(6 if texture_copy.cube_map else 1):
+                texture_copy.SetInputDataObject(
+                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
+                )
+            self.SetEnvironmentTexture(texture_copy, is_srgb)
+        else:
+            self.SetEnvironmentTexture(texture, is_srgb)
+
+        self.SetBackgroundTexture(texture)
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3569,7 +3613,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
         >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
-        >>> pl.set_environment_texture(cubemap)
+        >>> pl.set_environment_texture(cubemap, resample=True)
         >>> pl.remove_environment_texture()
         >>> pl.camera_position = 'xy'
         >>> pl.show()
@@ -3577,6 +3621,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.UseImageBasedLightingOff()
         self.SetEnvironmentTexture(None)
+        self.SetBackgroundTexture(None)  # type: ignore[arg-type]
         self.Modified()
 
     def close(self) -> None:

@@ -4280,7 +4280,7 @@ def download_sky_box_cube_map(load=True):  # pragma: no cover
     >>> pl = pv.Plotter()
     >>> dataset = examples.download_sky_box_cube_map()
     >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset)
+    >>> pl.set_environment_texture(dataset, resample=True)
     >>> pl.show()
 
     .. seealso::
@@ -4348,7 +4348,7 @@ def download_cubemap_park(load=True):  # pragma: no cover
     >>> pl = pv.Plotter(lighting=None)
     >>> dataset = examples.download_cubemap_park()
     >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset, True)
+    >>> pl.set_environment_texture(dataset, is_srgb=True, resample=True)
     >>> pl.camera_position = 'xy'
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
@@ -4407,7 +4407,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
     >>> cubemap = examples.download_cubemap_space_4k()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, True)
+    >>> pl.set_environment_texture(cubemap, is_srgb=True, resample=True)
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
@@ -4471,7 +4471,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
     >>> cubemap = examples.download_cubemap_space_4k()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, True)
+    >>> pl.set_environment_texture(cubemap, is_srgb=True, resample=True)
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
@@ -7201,7 +7201,7 @@ def download_dikhololo_night(load=True):  # pragma: no cover
     >>> texture = examples.download_dikhololo_night()
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(texture)
+    >>> pl.set_environment_texture(texture, resample=True)
     >>> pl.show()
 
     .. seealso::
