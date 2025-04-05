@@ -3704,8 +3704,8 @@ def test_plotter_volume_clim_uint():
     # for example the `load_frog_tissues` dataset is uint8 with values 0-29 and we want
     # add_volume to automatically set the clim to 0-29 as that is the valid range
     # Let's validate this with a toy dataset:
-    volume = pv.ImageData(dimensions=(3,3,3))
-    volume["data"] = np.arange(volume.n_points).astype(np.uint8)
+    volume = pv.ImageData(dimensions=(3, 3, 3))
+    volume['data'] = np.arange(volume.n_points).astype(np.uint8)
 
     pl = pv.Plotter()
     actor = pl.add_volume(volume, show_scalar_bar=True)
