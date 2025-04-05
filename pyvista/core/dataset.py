@@ -601,7 +601,7 @@ class DataSet(DataSetFilters, DataObject):
         Create a mesh, compute the normals and set them active.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Cube()
+        >>> mesh = pv.Box()
         >>> mesh_w_normals = mesh.compute_normals(
         ...     cell_normals=True, point_normals=False
         ... )
@@ -612,8 +612,8 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> arrows = mesh_w_normals.arrows
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(mesh, style='wireframe')
-        >>> pl.add_mesh(arrows, color='red')
+        >>> _ = pl.add_mesh(mesh, style='wireframe')
+        >>> _ = pl.add_mesh(arrows, color='red')
         >>> pl.show()
 
         """
