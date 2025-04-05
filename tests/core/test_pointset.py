@@ -131,6 +131,29 @@ def test_filters_return_pointset(sphere):
     assert isinstance(clipped, pv.PointSet)
 
 
+def test_pointset_clip_vtk_bug(sphere):
+    pointset = sphere.cast_to_pointset()
+    alg = vtk.vtkTableBasedClipDataSet()
+    alg.SetClipFunction(pv.generate_plane((1, 0, 0), (0, 0, 0)))
+
+    # Filter works with PolyData
+    alg.SetInputData(sphere)
+    alg.Update()
+    out = pv.wrap(alg.GetOutput())
+    assert not out.is_empty
+
+    # Bug: filter returns empty mesh with PointSet
+    alg.SetInputData(pointset)
+    alg.Update()
+    out = pv.wrap(alg.GetOutput())
+    if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+        # A vtk bug was introduced in 9.4 https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        # Which has been fixed for vtk 9.5: https://gitlab.kitware.com/vtk/vtk/-/merge_requests/12040
+        assert out.is_empty
+    else:
+        assert not out.is_empty
+
+
 @pytest.mark.parametrize(
     ('force_float', 'expected_data_type'),
     [(False, np.int64), (True, np.float32)],
