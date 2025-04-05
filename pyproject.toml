@@ -7,7 +7,6 @@ authors = [{ name = 'PyVista Developers', email = 'info@pyvista.org' }]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Science/Research',
-  'License :: OSI Approved :: MIT License',
   'Operating System :: MacOS',
   'Operating System :: Microsoft :: Windows',
   'Operating System :: POSIX',
@@ -29,7 +28,7 @@ dependencies = [
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
-license = { text = 'MIT' }
+license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
 requires-python = '>=3.9'
@@ -50,7 +49,7 @@ jupyter = [
 ]
 
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.10.1',
+  'matplotlib<3.10.2',
   'numpy<2.2.0',
   'pillow<11.2.0',
   'pooch<1.9.0',
@@ -70,7 +69,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.124.9',
+  'hypothesis<6.130.7',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -81,6 +80,7 @@ test = [
   'pyanalyze<=0.13.1',
   'pytest-cov<6.1.0',
   'pytest-memprof<0.3.0',
+  'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
@@ -108,37 +108,37 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.3.5',
-  'lxml==5.3.0',
+  'jupyterlab==4.3.6',
+  'lxml==5.3.1',
   'meshio==5.3.5',
   'mypy-extensions==1.0.0',
-  'mypy==1.14.1',
+  'mypy==1.15.0',
   'numpydoc==1.8.0',
-  'osmnx==2.0.1',
+  'osmnx==2.0.2',
   'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
   'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
-  'scipy==1.15.1',
+  'scipy==1.15.2',
   'sphinx-autobuild==2024.10.3',
-  'sphinx-book-theme==1.1.3',
+  'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
   'sphinx-design==0.6.1',
-  'sphinx-gallery==0.18.0',
+  'sphinx-gallery==0.19.0',
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.6.0',
   'sphinx-tags==0.4.0',
-  'sphinx-toolbox==3.8.1',
-  'sphinx==8.1.3',
+  'sphinx-toolbox==3.9.0',
+  'sphinx==8.2.1',
   'sphinxcontrib-asciinema==0.4.2',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
-  'trame-vtk==2.8.14',
-  'trame-vuetify==2.8.1',
-  'trame==3.7.6',
-  'trimesh==4.6.1',
+  'trame-vtk==2.8.15',
+  'trame-vuetify==2.9.0',
+  'trame==3.8.1',
+  'trimesh==4.6.6',
 ]
 
 dev = ['pre-commit', 'pyvista[test,typing]']
@@ -198,8 +198,7 @@ omit = [
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
-exclude_also = ['if TYPE_CHECKING:']
-
+exclude_also = ['^\s*@overload.*\n\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
@@ -215,7 +214,6 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
-  'ignore:Unable to access.*Manually specify the PyVista examples cache.*:UserWarning',                                  # https://github.com/pyvista/pyvista/pull/7009#issuecomment-2599890364
   'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
@@ -226,6 +224,9 @@ log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+  'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
+  'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_windows(reason="Test fails on Windows"): skip test for windows.',
 ]
 minversion = "7"
 testpaths = 'tests'
@@ -241,7 +242,7 @@ extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
-plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
+plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true
@@ -302,6 +303,7 @@ docstring-code-line-length = 75
 quote-style = 'single'
 
 [tool.ruff.lint]
+extend-safe-fixes = ['EM']
 extend-select = [
   'A',
   'AIR',
@@ -315,11 +317,13 @@ extend-select = [
   'DJ',
   'DTZ',
   'E',
+  'EM',
   'F',
   'FA',
   'FLY',
   'I',
   'ICN',
+  'INP',
   'INT',
   'ISC',
   'LOG',
@@ -331,6 +335,8 @@ extend-select = [
   'PLR0402',
   'PLR1711',
   'PLR1714',
+  'PLR1730',
+  'PLR5501',
   'PLW0127',
   'PT',
   'PTH',
@@ -399,12 +405,13 @@ allow-dict-calls-with-keyword-arguments = true
 'examples_trame/*' = ['D100', 'D103']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
+'pyvista/core/filters/*' = ['PYI019']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D']
+'tests/*' = ['D', 'INP']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list
@@ -429,8 +436,8 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting*' = ['ANN']
 
 # All other ANN ignores
-'doc*' = ['ANN']
-'examples*' = ['ANN']
+'doc*' = ['ANN', 'INP']
+'examples*' = ['ANN', 'INP']
 'pyvista/__init__.py' = ['ANN']
 'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
@@ -460,6 +467,7 @@ ignore = [
   'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
   'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+  'PY004', # we have a 'doc' folder, not 'docs'
   'PY007', # tox support
   'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
 ]

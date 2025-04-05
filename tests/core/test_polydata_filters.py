@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
+
 import pytest
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_contour_banded_raise(sphere):
@@ -45,6 +51,59 @@ def test_contour_banded_points(sphere):
     )
     assert out['data'].min() <= rng[0]
     assert out['data'].max() >= rng[1]
+
+
+@pytest.mark.parametrize(
+    'other_mesh',
+    [
+        pv.UnstructuredGrid(),
+        pv.ImageData(),
+        pv.StructuredGrid(),
+    ],
+    ids=['ugrid', 'image', 'structured'],
+)
+def test_boolean_raises(other_mesh):
+    with pytest.raises(TypeError, match='Input mesh must be PolyData.'):
+        pv.Sphere()._boolean('union', other_mesh=other_mesh, tolerance=0.0, progress_bar=False)
+
+
+def test_clean_raises(mocker: MockerFixture):
+    from pyvista.core.filters import poly_data
+
+    m = mocker.patch.object(poly_data, '_get_output')
+    m.return_value = pv.PolyData()
+
+    sp = pv.Sphere()
+    with pytest.raises(ValueError, match='Clean tolerance is too high. Empty mesh returned.'):
+        sp.clean()
+
+
+def test_flip_normals_raises():
+    plane = pv.Plane()
+    with (
+        pytest.raises(NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'),
+        pytest.warns(PyVistaDeprecationWarning),
+    ):
+        plane.flip_normals()
+
+
+def test_contour_banded_raises(mocker: MockerFixture):
+    from pyvista.core.filters import poly_data
+
+    m = mocker.patch.object(poly_data, 'get_array')
+    m.return_value = None
+
+    sp = pv.Sphere()
+
+    with pytest.raises(ValueError, match='No arrays present to contour.'):
+        sp.contour_banded(1)
+
+    m.return_value = 'foo'
+    m = mocker.patch.object(poly_data, 'get_array_association')
+    m.return_value = 'foo'
+
+    with pytest.raises(ValueError, match='Only point data can be contoured.'):
+        sp.contour_banded(1)
 
 
 def test_boolean_intersect_edge_case():
@@ -104,68 +163,6 @@ def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()
     assert ribbon.n_cells
-
-
-@pytest.fixture
-def oriented_image():
-    image = pv.ImageData()
-    image.spacing = (1.1, 1.2, 1.3)
-    image.dimensions = (10, 11, 12)
-    image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
-    image['scalars'] = np.ones((image.n_points,))
-    return image
-
-
-@pytest.fixture
-def oriented_polydata(oriented_image):
-    oriented_poly = oriented_image.pad_image().contour_labels(smoothing=False)
-    assert np.allclose(oriented_poly.bounds, oriented_image.points_to_cells().bounds, atol=0.1)
-    return oriented_poly
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
-    mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
-    assert mask.bounds == oriented_image.bounds
-    mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
-    assert mask_as_surface.bounds == oriented_polydata.bounds
-
-
-def test_voxelize_binary_mask_raises(sphere):
-    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), spacing=(4, 5, 6))
-
-    match = 'Spacing and cell length percentile cannot both be set. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(spacing=(4, 5, 6), cell_length_percentile=0.2)
-
-    match = 'Spacing and mesh length fraction cannot both be set. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(spacing=(4, 5, 6), mesh_length_fraction=0.2)
-
-    match = (
-        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
-    )
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(mesh_length_fraction=1 / 100, cell_length_percentile=0.2)
-
-    match = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), rounding_func=np.round)
-
-    for parameter in [
-        'dimensions',
-        'spacing',
-        'rounding_func',
-        'cell_length_percentile',
-        'cell_length_sample_size',
-        'mesh_length_fraction',
-    ]:
-        kwargs = {parameter: 0}  # Give parameter any value for test
-        match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
-        with pytest.raises(TypeError, match=match):
-            sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
 
 
 def test_ruled_surface():

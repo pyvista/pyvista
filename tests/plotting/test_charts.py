@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-import platform
 import weakref
 
 import numpy as np
@@ -14,11 +13,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
-
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
 
 
 @pytest.fixture(autouse=True)
@@ -181,7 +175,7 @@ def test_wrapping():
     assert pen.GetWidth() == width
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_brush():
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     t_masonry = examples.download_masonry_texture()
@@ -625,9 +619,9 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     sz = 5
     st, st_inv = 'o', '^'
     l = 'Scatter'
-    assert (
-        st_inv not in charts.ScatterPlot2D.MARKER_STYLES
-    ), 'New marker styles added? Change this test.'
+    assert st_inv not in charts.ScatterPlot2D.MARKER_STYLES, (
+        'New marker styles added? Change this test.'
+    )
 
     # Test constructor
     plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
@@ -1227,7 +1221,7 @@ def test_chart_interaction():
     assert pl.iren._context_style.GetScene() is None
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy

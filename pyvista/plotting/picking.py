@@ -173,7 +173,8 @@ class PointPickingElementHandler:
                     break
             if contains < 0:
                 # this shouldn't happen
-                raise RuntimeError('Trouble aligning point with face.')
+                msg = 'Trouble aligning point with face.'
+                raise RuntimeError(msg)
             face = face.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
@@ -366,9 +367,8 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            raise PyVistaPickingError(
-                'Picking is already enabled, please disable previous picking with `disable_picking()`.',
-            )
+            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            raise PyVistaPickingError(msg)
 
     def enable_point_picking(
         self,
@@ -857,9 +857,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker = PickerType.from_any(picker)
         valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
-            raise ValueError(
-                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}',
-            )
+            msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
+            raise ValueError(msg)
 
         self_ = weakref.ref(self)
 
@@ -1143,7 +1142,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
-                if actor.GetMapper() and actor.GetPickable():
+                if (
+                    (mapper := actor.GetMapper())
+                    and hasattr(mapper, 'GetInputAsDataSet')
+                    and actor.GetPickable()
+                ):
                     input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
