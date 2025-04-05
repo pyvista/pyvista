@@ -1958,6 +1958,17 @@ def test_volume_rendering_rectilinear(uniform):
     plotter.close()
 
 
+@skip_windows_mesa  # due to opacity
+@pytest.mark.parametrize('mapper', ['fixed_point', 'gpu', 'open_gl', 'smart'])
+def test_volume_rendering_mappers_image_data(mapper):
+    image = pv.ImageData(dimensions=(50, 50, 50))
+    image['scalars'] = -image.x
+
+    plotter = pv.Plotter()
+    plotter.add_volume(image, mapper=mapper)
+    plotter.show()
+
+
 @pytest.mark.skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
