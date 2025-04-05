@@ -48,6 +48,7 @@ from pyvista.core.utilities.misc import _check_range
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
+from .opts import InteractionStyle
 from .opts import InterpolationType
 from .tools import parse_font_family
 
@@ -1743,6 +1744,7 @@ class Theme(_ThemeConfig):
         '_full_screen',
         '_hidden_line_removal',
         '_image_scale',
+        '_interaction_style',
         '_interactive',
         '_interpolate_before_map',
         '_jupyter_backend',
@@ -1857,6 +1859,8 @@ class Theme(_ThemeConfig):
         self._edge_opacity = 1.0
 
         self._logo_file = None
+
+        self._interaction_style = InteractionStyle.TRACKBALL
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -3242,6 +3246,38 @@ class Theme(_ThemeConfig):
                 raise FileNotFoundError(msg)
             path = str(logo_file)
         self._logo_file = path
+
+    @property
+    def interaction_style(self) -> InteractionStyle:
+        """Return or set the default interaction style.
+
+        Returns
+        -------
+        InteractionStyle
+            The default interaction style.
+
+        Examples
+        --------
+        Set the default interaction style to ``'trackball'``.
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pyvista.plotting.opts import InteractionStyle
+        >>> pv.global_theme.interaction_style = InteractionStyle.TERRAIN
+
+        Now the default interaction style is set to terrain style.
+
+        >>> mesh = examples.download_st_helens().warp_by_scalar()
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(mesh, show_edges=True)
+        >>> pl.show()
+
+        """
+        return self._interaction_style
+
+    @interaction_style.setter
+    def interaction_style(self, interaction_style: InteractionStyle):
+        """Set the default interaction style."""
+        self._interaction_style = InteractionStyle.from_any(interaction_style)
 
 
 class DarkTheme(Theme):
