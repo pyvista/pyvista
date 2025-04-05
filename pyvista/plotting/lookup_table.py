@@ -1056,7 +1056,9 @@ class LookupTable(_vtk.vtkLookupTable):
             color_tf.AddRGBPoint(value, *self.map_value(value, False))
         return color_tf
 
-    def to_opacity_tf(self, clamping: bool = True) -> _vtk.vtkPiecewiseFunction:
+    def to_opacity_tf(
+        self, clamping: bool = True, max_clip: float = 0.998
+    ) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
 
         Parameters
@@ -1065,6 +1067,12 @@ class LookupTable(_vtk.vtkLookupTable):
             When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
 
             .. versionadded:: 0.44
+
+        max_clip : float, default: 0.998
+            The maximum value to clip the opacity to. This is useful for volume rendering
+            to avoid the jarring effect of completely opaque values.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -1088,10 +1096,7 @@ class LookupTable(_vtk.vtkLookupTable):
             # vtkPiecewiseFunction expects alphas between 0 and 1
             # our lookup table is between 0 and 255
             alpha = alpha / 255
-            if alpha == 1.0:
-                # Let's not add a point for 1.0 as completely opaque values
-                # during volume rendering leaves a jarring effect
-                alpha = 0.998
+            alpha = min(alpha, max_clip)
             opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
