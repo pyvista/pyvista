@@ -885,5 +885,4 @@ def test_theme_dict():
     theme = pv.Theme()
     theme_dict = theme.__dict__()
     assert isinstance(theme_dict, dict)
-    theme_dict = dict(theme)
-    assert isinstance(theme_dict, dict)
+    assert isinstance(dict(theme), dict)
