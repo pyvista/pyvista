@@ -25,6 +25,7 @@ pygments_style = 'sphinx'
 
 extensions = [
     'numpydoc',
+    'matplotlib.sphinxext.plot_directive',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autosummary',
