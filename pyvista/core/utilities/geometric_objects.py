@@ -1283,6 +1283,10 @@ def Cube(
     if clean:
         cube.clean(inplace=True)
 
+        # Fix incorrect default point normals
+        del cube.point_data['Normals']
+        cube = cube.compute_normals(point_normals=True, cell_normals=False)
+
     return cube
 
 
