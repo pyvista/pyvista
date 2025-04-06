@@ -329,6 +329,25 @@ def test_remove_environment_texture_cubemap(sphere):
     pl.show()
 
 
+@pytest.fixture
+def documentation_ci_env_var():
+    var = 'PYVISTA_DOCUMENTATION_CI'
+    os.environ[var] = 'true'
+    yield
+    del os.environ[var]
+
+
+@pytest.mark.usefixtures('documentation_ci_env_var')
+def test_set_environment_texture_warns_ci(sphere):
+    """Test remove_environment_texture with a cubemap."""
+    texture = examples.download_sky_box_cube_map()
+    pl = pv.Plotter()
+
+    match = 'Environment texture must be resampled for CI to reduce test times.'
+    with pytest.warns(pv.PyVistaTestingWarning, match=match):
+        pl.set_environment_texture(texture, resample=False)
+
+
 def test_plot_pyvista_ndarray(sphere):
     # verify we can plot pyvista_ndarray
     pv.plot(sphere.points)
