@@ -827,9 +827,11 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+            msg = 'Passing `pad_singleton_dims` should raise an error.'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `pad_singleton_dims`.')
+            msg = 'Remove `pad_singleton_dims`.'
+            raise RuntimeError(msg)
 
     match = (
         'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
@@ -837,9 +839,11 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+            msg = 'Passing `pad_singleton_dims` should raise an error.'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `pad_singleton_dims`.')
+            msg = 'Remove `pad_singleton_dims`.'
+            raise RuntimeError(msg)
 
 
 @pytest.fixture
@@ -1001,12 +1005,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
-        ),
-    ):
+    match = re.escape(
+        'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+    )
+    with pytest.raises(ValueError, match=match):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'
@@ -1285,3 +1287,30 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+
+def test_select_values(uniform):
+    selected = uniform.select_values(ranges=uniform.get_data_range())
+    assert isinstance(selected, pv.ImageData)
+    assert selected is not uniform
+    assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+def test_select_values_split(uniform):
+    unique_values = np.unique(uniform.active_scalars)
+    selected = uniform.select_values(values=unique_values, split=True)
+    assert isinstance(selected, pv.MultiBlock)
+    assert isinstance(selected[0], pv.ImageData)
+    assert len(selected) == len(unique_values)
+
+
+def test_select_values_empty_input():
+    selected = pv.ImageData().select_values()
+    assert isinstance(selected, pv.ImageData)
+
+
+@pytest.mark.parametrize('dtype', [np.uint16, int, float])
+def test_select_values_dtype(uniform, dtype):
+    uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
+    selected = uniform.select_values([0])
+    assert selected.active_scalars.dtype == dtype

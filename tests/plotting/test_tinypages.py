@@ -11,8 +11,7 @@ import sys
 import pytest
 
 from pyvista.plotting import system_supports_plotting
-
-from .conftest import flaky_test
+from tests.conftest import flaky_test
 
 pytest.importorskip('sphinx')
 
@@ -20,11 +19,11 @@ pytest.importorskip('sphinx')
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
-ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
+ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 
 
-@flaky_test(exceptions=(AssertionError, FileExistsError))
-@pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
+@flaky_test(exceptions=(AssertionError,))
+@pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
 def test_tinypages(tmp_path, ename, evalue):
@@ -40,10 +39,8 @@ def test_tinypages(tmp_path, ename, evalue):
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
-    tmp_dir = tmp_path / f'{ename}_{evalue}'
-    tmp_dir.mkdir()
-    html_dir = tmp_dir / 'html'
-    doctree_dir = tmp_dir / 'doctrees'
+    html_dir = tmp_path / 'html'
+    doctree_dir = tmp_path / 'doctrees'
     # Build the pages with warnings turned into errors
     cmd = [
         sys.executable,
@@ -122,3 +119,10 @@ def test_tinypages(tmp_path, ename, evalue):
     # check conditional execution
     assert (b'This plot may be skipped with no caption' in html_contents) == expected_optional
     assert plot_file(18, 0, 0).exists() == expected_optional
+
+    # check matplotlib plot exists
+    # we're using the same counter, but mpl doesn't add num and subnum
+    plt_num = 19
+    mpl_figure_file = html_dir / f'some_plots-{plt_num}.png'
+    assert mpl_figure_file.exists
+    assert b'This is a matplotlib plot.' in html_contents

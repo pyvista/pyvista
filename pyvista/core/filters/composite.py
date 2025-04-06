@@ -186,7 +186,7 @@ class CompositeFilters(DataObjectFilters):
                     nested = ' '
                 else:
                     nested = ' nested '
-                    index = ''.join([f'[{id_}]' for id_ in ids_])
+                    index = _format_nested_index(ids)
                 msg = (
                     f"The filter '{func_name}'\n"
                     f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
@@ -364,10 +364,11 @@ class CompositeFilters(DataObjectFilters):
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
-            raise RuntimeError(
+            msg = (
                 'This multiblock contains non-PolyData datasets. Convert all the '
-                'datasets to PolyData with `as_polydata`',
+                'datasets to PolyData with `as_polydata`'
             )
+            raise RuntimeError(msg)
 
         # track original point indices
         if split_vertices and track_vertices:
@@ -387,3 +388,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+
+def _format_nested_index(index: tuple[int, ...]) -> str:
+    return ''.join([f'[{ind}]' for ind in index])

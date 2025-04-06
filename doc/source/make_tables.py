@@ -33,13 +33,19 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import final
+from typing import get_args
 
 import numpy as np
 
 import pyvista
 import pyvista as pv
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
+from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -58,6 +64,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
+CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -147,12 +154,14 @@ class DocTable:
     @classmethod
     def fetch_data(cls):
         """Get a list of row_data used to generate the table."""
-        raise NotImplementedError('Subclasses should specify a fetch_data method.')
+        msg = 'Subclasses should specify a fetch_data method.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_header(cls, data):
         """Get the table's header rst."""
-        raise NotImplementedError('Subclasses should specify a table header.')
+        msg = 'Subclasses should specify a table header.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_row(cls, i, row_data):
@@ -161,7 +170,194 @@ class DocTable:
         Can return ``None`` if no row should be generated for the provided ``row_data``.
 
         """
-        raise NotImplementedError('Subclasses should specify a get_row method.')
+        msg = 'Subclasses should specify a get_row method.'
+        raise NotImplementedError(msg)
+
+
+class CellQualityMeasuresTable(DocTable):
+    """Class to generate table for cell quality measures."""
+
+    path = f'{CELL_QUALITY_DIR}/cell_quality_measures_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table:: Cell Quality Measures
+        |   :widths: 22 13 13 13 13 13 13
+        |   :header-rows: 1
+        |
+        |   * - Measure
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    cell_types: ClassVar[_CellTypesLiteral] = get_args(_CellTypesLiteral)
+
+    @classmethod
+    def fetch_data(cls):
+        # Get all cell example functions,
+        # i.e. items from examples.cells that start with a capital letter
+        cell_funcs = [
+            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+        ]
+
+        # Init dict with all measures as keys
+        measures = {measure: set() for measure in _get_cell_quality_measures().keys()}
+
+        # Compute the cell quality of each cell type and add to dict if valid
+        for func in cell_funcs:
+            mesh = getattr(cells, func)()
+            cell_type = pv.CellType(mesh.celltypes[0])
+            mesh = mesh.cell_quality('all_valid')
+            for valid_measure in mesh.array_names:
+                measures[valid_measure].add(cell_type)
+
+        return [(measures, measure) for measure in measures.keys()]
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(
+            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        measures, measure = row_data
+
+        success = ':material-regular:`check;2em;sd-text-success`'
+        error = ':material-regular:`close;2em;sd-text-error`'
+
+        def _get_table_entry(cell_type):
+            return success if cell_type in measures[measure] else error
+
+        table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
+        return cls.row_template.format(f'``{measure}``', *table_entries)
+
+
+class CellQualityInfoTable(DocTable):
+    """Class to generate table for cell quality info."""
+
+    cell_type: pyvista.CellType
+
+    @property
+    @final
+    def path(cls):
+        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
+
+    header = _aligned_dedent(
+        """
+        |.. dropdown:: {} Cell Info
+        |
+        |   Info about {} cell quality measures.
+        |   See {} for an example unit cell.
+        |
+        |   .. list-table::
+        |       :widths: 20 20 20 20 20
+        |       :header-rows: 1
+        |
+        |       * - Measure
+        |         - Acceptable
+        |           Range
+        |         - Normal
+        |           Range
+        |         - Full
+        |           Range
+        |         - Unit Cell
+        |           Value
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |       * - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        return _CELL_QUALITY_LOOKUP[cls.cell_type].values()
+
+    @classmethod
+    def get_header(cls, data):
+        name = cls.cell_type.name
+        example = _CELL_TYPE_INFO[name].example
+        return cls.header.format(
+            name.capitalize(),
+            f':attr:`~pyvista.CellType.{name}`',
+            f':func:`~pyvista.examples.cells.{example}`',
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        def format_list(obj):
+            if obj is None:
+                return 'None'
+            return '[' + ', '.join(format_number(num) for num in obj) + ']'
+
+        def format_number(num):
+            if num is None:
+                return 'None'
+            if num == float('inf'):
+                return 'inf'
+            if num == -float('inf'):
+                return '-inf'
+
+            # Show max 3 significant digits
+            formatted = f'{num:.3g}'
+
+            # Ensure at least one decimal place
+            if 'e' in formatted or '.' in formatted:
+                return formatted
+            return f'{formatted}.0'
+
+        measure = f'``{row_data.quality_measure}``'
+        acceptable = format_list(row_data.acceptable_range)
+        normal = format_list(row_data.normal_range)
+        full = format_list(row_data.full_range)
+        value = format_number(row_data.unit_cell_value)
+
+        return cls.row_template.format(measure, acceptable, normal, full, value)
+
+
+class CellQualityInfoTableTRIANGLE(CellQualityInfoTable):
+    cell_type = pv.CellType.TRIANGLE
+
+
+class CellQualityInfoTableQUAD(CellQualityInfoTable):
+    cell_type = pv.CellType.QUAD
+
+
+class CellQualityInfoTableTETRA(CellQualityInfoTable):
+    cell_type = pv.CellType.TETRA
+
+
+class CellQualityInfoTableHEXAHEDRON(CellQualityInfoTable):
+    cell_type = pv.CellType.HEXAHEDRON
+
+
+class CellQualityInfoTableWEDGE(CellQualityInfoTable):
+    cell_type = pv.CellType.WEDGE
+
+
+class CellQualityInfoTablePYRAMID(CellQualityInfoTable):
+    cell_type = pv.CellType.PYRAMID
 
 
 class LineStyleTable(DocTable):
@@ -443,7 +639,8 @@ def _get_color_source_badge(name: str) -> str:
     elif name in _format_color_dict(_VTK_COLORS):
         return ':bdg-secondary:`VTK`'
     else:
-        raise KeyError(f'Invalid color name "{name}".')
+        msg = f'Invalid color name "{name}".'
+        raise KeyError(msg)
 
 
 def _sort_colors_by_hls(colors: Sequence[Color]):
@@ -525,10 +722,11 @@ def classify_color(color: Color) -> ColorClassification:
     elif VIOLET_UPPER_BOUND <= hue < MAGENTA_UPPER_BOUND:
         return ColorClassification.MAGENTA
     else:
-        raise RuntimeError(
+        msg = (
             f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
             f'Double-check classifier logic.'
         )
+        raise RuntimeError(msg)
 
 
 class ColorClassificationTable(ColorTable):
@@ -1136,7 +1334,8 @@ class DatasetCard:
                 func = getattr(pyvista.examples.examples, func_name)
 
         if func is None:
-            raise RuntimeError(f'Dataset function {func_name} does not exist.')
+            msg = f'Dataset function {func_name} does not exist.'
+            raise RuntimeError(msg)
         return func, func_name
 
     @staticmethod
@@ -1156,7 +1355,8 @@ class DatasetCard:
         def find_seealso_refs(func: FunctionType) -> list[str]:
             """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
             if not callable(func):
-                raise ValueError('Input must be a callable function.')
+                msg = 'Input must be a callable function.'
+                raise ValueError(msg)
 
             # Get the docstring of the function
             docstring = func.__doc__
@@ -1240,7 +1440,8 @@ class DatasetCard:
             elif isinstance(badge, CellTypeBadge):
                 pass  # process these separately
             elif isinstance(badge, _BaseDatasetBadge):
-                raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
+                msg = f'No implementation for badge type {type(badge)}.'
+                raise NotImplementedError(msg)
         all_badges = module_badges + datatype_badges + special_badges + category_badges
         return ' '.join([badge.generate() for badge in all_badges])
 
@@ -2376,6 +2577,16 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables():  # noqa: D103
+    # Make cell quality tables
+    os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
+    CellQualityMeasuresTable.generate()
+    CellQualityInfoTableTRIANGLE.generate()
+    CellQualityInfoTableQUAD.generate()
+    CellQualityInfoTableHEXAHEDRON.generate()
+    CellQualityInfoTableTETRA.generate()
+    CellQualityInfoTableWEDGE.generate()
+    CellQualityInfoTablePYRAMID.generate()
+
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)

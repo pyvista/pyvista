@@ -135,11 +135,12 @@ def _cast_to_numpy(
             # we requested a copy but didn't end up with one
             out = out.copy()
     except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f'Input cannot be cast as {np.ndarray}.') from e
+        msg = f'Input cannot be cast as {np.ndarray}.'
+        raise ValueError(msg) from e
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
-        raise TypeError(f'Array must have real numbers. Got dtype {out.dtype.type}')
+        msg = f'Array must have real numbers. Got dtype {out.dtype.type}'
+        raise TypeError(msg)
     elif out.dtype.name == 'object':
-        raise TypeError(
-            f'Object arrays are not supported. Got {arr} when casting to a NumPy array.'
-        )
+        msg = f'Object arrays are not supported. Got {arr} when casting to a NumPy array.'
+        raise TypeError(msg)
     return out

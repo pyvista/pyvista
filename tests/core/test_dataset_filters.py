@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import itertools
 from pathlib import Path
-import platform
 import re
 from typing import TYPE_CHECKING
 from typing import Any
@@ -11,6 +10,8 @@ from typing import NamedTuple
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from hypothesis import given
+from hypothesis import strategies as st
 from hypothesis.strategies import composite
 from hypothesis.strategies import floats
 from hypothesis.strategies import integers
@@ -29,11 +30,11 @@ from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
     import vtk
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -90,12 +91,46 @@ def uniform_vec():
     return mesh
 
 
+def test_threshold_raises(mocker: MockerFixture):
+    from pyvista.core.filters import data_set
+
+    m = mocker.patch.object(data_set, 'get_array')
+    m.return_value = None
+    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+        pv.Sphere().threshold(1.0)
+
+
+def test_contour_raises(mocker: MockerFixture):
+    from pyvista.core.filters import data_set
+
+    m = mocker.patch.object(data_set, 'set_default_active_scalars')
+    m().name = 'foo'
+
+    with pytest.raises(ValueError, match='Input dataset for the contour filter must have scalar.'):
+        pv.PolyData().contour()
+
+
+def test_wrap_by_vector_raises(mocker: MockerFixture):
+    from pyvista.core.filters import data_set
+
+    m = mocker.patch.object(data_set, 'get_array')
+    m.return_value = None
+    with pytest.raises(ValueError, match='No vectors present to warp by vector.'):
+        pv.Sphere().warp_by_vector()
+
+
+@given(strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point']))
+def test_interpolate_raises(strategy):
+    with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
+        pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
+
+
 def test_datasetfilters_init():
     with pytest.raises(TypeError):
         pv.core.filters.DataSetFilters()
 
 
-@skip_mac
+@pytest.mark.skip_mac('Flaky Mac test')
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
 def test_clip_scalar_filter(datasets, both, invert):
@@ -1368,11 +1403,11 @@ def test_streamlines_max_length():
 
     def check_deprecation():
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(
-                'Convert error ``max_time`` parameter in ``streamlines_from_source``'
-            )
+            msg = 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 49):
-            raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
+            msg = 'Remove ``max_time`` parameter in ``streamlines_from_source``'
+            raise RuntimeError(msg)
 
     with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
         stream = mesh.streamlines(
@@ -3297,7 +3332,8 @@ def test_integrate_data_datasets(datasets):
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
         else:
-            raise ValueError('Unexpected integration')
+            msg = 'Unexpected integration'
+            raise ValueError(msg)
 
 
 def test_integrate_data():
