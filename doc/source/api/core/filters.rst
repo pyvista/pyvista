@@ -5,6 +5,17 @@ Filters
 
 .. currentmodule:: pyvista
 
+Data Object Filters
+~~~~~~~~~~~~~~~~~~~
+The :class:`pyvista.DataObjectFilters` is inherited by :class:`pyvista.DataSet`
+and :class:`pyvista.MultiBlock`. These filters are the most general and are
+available as callable methods directly from any PyVista dataset or multi-block.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   DataObjectFilters
+
 Dataset Filters
 ~~~~~~~~~~~~~~~
 The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.DataSet` making

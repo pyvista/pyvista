@@ -133,13 +133,13 @@ these can be loaded with:
 
 This mesh can then be written to a .vtk file using:
 
-.. code:: python
+.. code-block:: python
 
     mesh.save('plane.vtk')
 
 These meshes are identical.
 
-.. code:: python
+.. code-block:: python
 
     import numpy as np
 
@@ -221,24 +221,38 @@ initializing.
    >>> import numpy as np
    >>> import pyvista
    >>> from pyvista import CellType
-   >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-   >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
-   >>> cell1 = np.array([[0, 0, 0],
-   ...                   [1, 0, 0],
-   ...                   [1, 1, 0],
-   ...                   [0, 1, 0],
-   ...                   [0, 0, 1],
-   ...                   [1, 0, 1],
-   ...                   [1, 1, 1],
-   ...                   [0, 1, 1]], dtype=np.float32)
-   >>> cell2 = np.array([[0, 0, 2],
-   ...                   [1, 0, 2],
-   ...                   [1, 1, 2],
-   ...                   [0, 1, 2],
-   ...                   [0, 0, 3],
-   ...                   [1, 0, 3],
-   ...                   [1, 1, 3],
-   ...                   [0, 1, 3]], dtype=np.float32)
+   >>> cells = np.array(
+   ...     [8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15]
+   ... )
+   >>> cell_type = np.array(
+   ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
+   ... )
+   >>> cell1 = np.array(
+   ...     [
+   ...         [0, 0, 0],
+   ...         [1, 0, 0],
+   ...         [1, 1, 0],
+   ...         [0, 1, 0],
+   ...         [0, 0, 1],
+   ...         [1, 0, 1],
+   ...         [1, 1, 1],
+   ...         [0, 1, 1],
+   ...     ],
+   ...     dtype=np.float32,
+   ... )
+   >>> cell2 = np.array(
+   ...     [
+   ...         [0, 0, 2],
+   ...         [1, 0, 2],
+   ...         [1, 1, 2],
+   ...         [0, 1, 2],
+   ...         [0, 0, 3],
+   ...         [1, 0, 3],
+   ...         [1, 1, 3],
+   ...         [0, 1, 3],
+   ...     ],
+   ...     dtype=np.float32,
+   ... )
    >>> points = np.vstack((cell1, cell2))
    >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
    >>> grid
@@ -304,7 +318,7 @@ Loading from File
 ~~~~~~~~~~~~~~~~~
 Structured grids can be loaded from a ``vtk`` file.
 
-.. code:: python
+.. code-block:: python
 
     grid = pv.StructuredGrid(filename)
 

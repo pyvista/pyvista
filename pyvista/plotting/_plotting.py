@@ -159,9 +159,8 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             opacity = opacity_transfer_function(opacity, n_colors)
         else:
             if scalars.shape[0] != opacity.shape[0]:
-                raise ValueError(
-                    'Opacity array and scalars array must have the same number of elements.',
-                )
+                msg = 'Opacity array and scalars array must have the same number of elements.'
+                raise ValueError(msg)
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
@@ -195,7 +194,6 @@ def _common_arg_parser(
     name,
     nan_color,
     nan_opacity,
-    color,
     texture,
     rgb,
     style,
@@ -248,9 +246,6 @@ def _common_arg_parser(
 
     nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)
 
-    if color is True:
-        color = theme.color
-
     if texture is False:
         texture = None
 
@@ -265,9 +260,8 @@ def _common_arg_parser(
         interpolation = theme.lighting_params.interpolation
 
     if 'scalar' in kwargs:
-        raise TypeError(
-            '`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?',
-        )
+        msg = '`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?'
+        raise TypeError(msg)
 
     assert_empty_kwargs(**kwargs)
     return (
@@ -282,7 +276,6 @@ def _common_arg_parser(
         culling,
         name,
         nan_color,
-        color,
         texture,
         rgb,
         interpolation,

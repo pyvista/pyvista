@@ -159,9 +159,7 @@ You can create a `NumPy <https://numpy.org/>`_ points array with:
 .. jupyter-execute::
 
    >>> import numpy as np
-   >>> np_points = np.array([[0, 0, 0],
-   ...                       [1, 0, 0],
-   ...                       [0.5, 0.667, 0]])
+   >>> np_points = np.array([[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]])
    >>> np_points
 
 We use a :class:`numpy.ndarray` here so that PyVista directly "points"
@@ -210,9 +208,7 @@ of lists via:
 
 .. jupyter-execute::
 
-   >>> points = [[0, 0, 0],
-   ...           [1, 0, 0],
-   ...           [0.5, 0.667, 0]]
+   >>> points = [[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]]
 
 When used in the context of |PolyData| to create the
 mesh, this list will automatically be wrapped using NumPy and then
@@ -253,9 +249,7 @@ can see the entire process.
    :context:
 
    >>> import pyvista
-   >>> points = [[0, 0, 0],
-   ...           [1, 0, 0],
-   ...           [0.5, 0.667, 0]]
+   >>> points = [[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]]
    >>> mesh = pyvista.PolyData(points)
    >>> mesh.plot(show_bounds=True, cpos='xy', point_size=20)
 
@@ -325,8 +319,12 @@ While we're at it, let's annotate this plot to describe this mesh.
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
    >>> label_coords = mesh.points + [0, 0, 0.01]
-   >>> pl.add_point_labels(label_coords, [f'Point {i}' for i in range(3)],
-   ...                     font_size=20, point_size=20)
+   >>> pl.add_point_labels(
+   ...     label_coords,
+   ...     [f'Point {i}' for i in range(3)],
+   ...     font_size=20,
+   ...     point_size=20,
+   ... )
    >>> pl.add_point_labels([0.43, 0.2, 0], ['Cell 0'], font_size=20)
    >>> pl.camera_position = 'xy'
    >>> pl.show()
@@ -421,8 +419,9 @@ Let's also plot this basic mesh:
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
-   >>> pl.add_point_labels(label_coords, point_labels,
-   ...                     font_size=25, point_size=20)
+   >>> pl.add_point_labels(
+   ...     label_coords, point_labels, font_size=25, point_size=20
+   ... )
    >>> cell_labels = [f'Cell {i}' for i in range(ugrid.n_cells)]
    >>> pl.add_point_labels(ugrid.cell_centers(), cell_labels, font_size=25)
    >>> pl.camera_position = 'xy'
@@ -574,8 +573,9 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
    >>> label_coords = ugrid.points + [0, 0, 0.02]
    >>> point_labels = [f'Point {i}' for i in range(ugrid.n_points)]
-   >>> pl.add_point_labels(label_coords, point_labels,
-   ...                     font_size=25, point_size=20)
+   >>> pl.add_point_labels(
+   ...     label_coords, point_labels, font_size=25, point_size=20
+   ... )
    >>> pl.camera_position = 'xy'
    >>> pl.show()
 
@@ -711,19 +711,17 @@ various coordinates. This differs from :attr:`active_scalars
 to be non-directional even if they contain several components (as in
 the case of RGB data).
 
-Vectors are treated differently within VTK than scalars when
-performing transformations using the :func:`transform()
-<pyvista.DataSetFilters.transform>` filter. Unlike scalar
-arrays, vector arrays will be transformed along with the geometry as
-these vectors represent quantities with direction.
+Vectors are treated differently within VTK than scalars when performing
+transformations using the :func:`~pyvista.DataObjectFilters.transform`
+filter. Unlike scalar arrays, vector arrays will be transformed along
+with the geometry as these vectors represent quantities with direction.
 
 .. note::
 
    VTK permits only one "active" vector. If you have multiple vector
-   arrays that you wish to transform, set
-   ``transform_all_input_vectors=True`` in :func:`transform()
-   <pyvista.DataSetFilters.transform>`. Be aware that this will
-   transform any array with three components, so multi-component
+   arrays that you wish to transform, set ``transform_all_input_vectors=True``
+   in :func:`~pyvista.DataObjectFilters.transform`. Be aware that this
+   will transform any array with three components, so multi-component
    scalar arrays like RGB arrays will have to be discarded after
    transformation.
 

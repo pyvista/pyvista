@@ -200,9 +200,7 @@ def plot(
     ImageData. Note ``volume=True`` is passed.
 
     >>> import numpy as np
-    >>> grid = pv.ImageData(
-    ...     dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5)
-    ... )
+    >>> grid = pv.ImageData(dimensions=(32, 32, 32), spacing=(0.5, 0.5, 0.5))
     >>> grid['data'] = np.linalg.norm(grid.center - grid.points, axis=1)
     >>> grid['data'] = np.abs(grid['data'] - grid['data'].max()) ** 3
     >>> grid.plot(volume=True)
@@ -253,9 +251,8 @@ def plot(
             if path.is_file():
                 pl.add_background_image(path)
         else:
-            raise ValueError(
-                f'Background must be color-like or a file path. Got {background} instead.'
-            )
+            msg = f'Background must be color-like or a file path. Got {background} instead.'
+            raise ValueError(msg)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -275,13 +272,12 @@ def plot(
                     pl.add_volume(item, **kwargs)
                 else:
                     pl.add_mesh(item, **kwargs)
+    elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
+        pl.add_volume(var_item, **kwargs)
+    elif isinstance(var_item, pyvista.MultiBlock):
+        pl.add_composite(var_item, **kwargs)
     else:
-        if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-            pl.add_volume(var_item, **kwargs)
-        elif isinstance(var_item, pyvista.MultiBlock):
-            pl.add_composite(var_item, **kwargs)
-        else:
-            pl.add_mesh(var_item, **kwargs)
+        pl.add_mesh(var_item, **kwargs)
 
     if text:
         pl.add_text(text)

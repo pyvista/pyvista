@@ -41,14 +41,16 @@ requires a few lines of code.
    :include-source: False
    :context:
 
-   >>> bunny_cpos = [( 0.14826, 0.275729,  0.4215911),
-   ...               (-0.01684, 0.110154, -0.0015369),
-   ...               (-0.15446, 0.939031, -0.3071841)]
+   >>> bunny_cpos = [
+   ...     (0.14826, 0.275729, 0.4215911),
+   ...     (-0.01684, 0.110154, -0.0015369),
+   ...     (-0.15446, 0.939031, -0.3071841),
+   ... ]
 
 +----------------------------------------------------+-------------------------------------+
 | Read and plot STL file using `vtk`_                | Read an STL file using PyVista      |
 +====================================================+=====================================+
-| .. code:: python                                   | .. code:: python                    |
+| .. code-block:: python                             | .. code-block:: python              |
 |                                                    |                                     |
 |    import vtk                                      |    import pyvista                   |
 |    reader = vtk.vtkSTLReader()                     |    mesh = pyvista.read('bunny.stl') |

@@ -12,7 +12,7 @@ When running VTK v9, you need to add several additional
 (we'll name it ``pyvista.spec``) following the directions given at
 `Using Spec Files <https://pyinstaller.readthedocs.io/en/stable/spec-files.html>`__.  Modify the ``Analysis`` and add the following hidden imports:
 
-.. code:: python
+.. code-block:: python
 
     main_py = os.path.join(some_path, "main.py")
     a = Analysis(

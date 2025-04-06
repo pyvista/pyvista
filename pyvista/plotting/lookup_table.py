@@ -18,7 +18,9 @@ from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from matplotlib import colors
+
     from ._typing import ColorLike
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
@@ -74,14 +76,14 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None):  # type: ignore[override]
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
         """
         if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
+            return np.ndarray.__array_wrap__(self, out_arr, context, return_scalar)
 
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
@@ -199,7 +201,7 @@ class LookupTable(_vtk.vtkLookupTable):
     """
 
     _nan_color_set = False
-    _cmap = None
+    _cmap: colors.Colormap | colors.ListedColormap | None = None
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
@@ -222,7 +224,8 @@ class LookupTable(_vtk.vtkLookupTable):
     ):
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
-            raise ValueError('Cannot set both `cmap` and `values`.')
+            msg = 'Cannot set both `cmap` and `values`.'
+            raise ValueError(msg)
 
         if cmap is not None:
             self.apply_cmap(cmap, n_values=n_values, flip=flip)
@@ -327,7 +330,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> str | None:  # numpydoc ignore=RT01
+    def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
         Examples
@@ -565,7 +568,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.
@@ -605,7 +608,8 @@ class LookupTable(_vtk.vtkLookupTable):
         try:
             self.SetRamp(RAMP_MAP_INV[value])
         except KeyError:
-            raise ValueError(f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}')
+            msg = f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}'
+            raise ValueError(msg)
         self.rebuild()
 
     @property
@@ -637,7 +641,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: bool | ColorLike):
+    def above_range_color(self, value: bool | ColorLike | None):
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -701,7 +705,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: bool | ColorLike):
+    def below_range_color(self, value: bool | ColorLike | None):
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
@@ -831,7 +835,8 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         if isinstance(opacity, (float, int)):
             if not 0 <= opacity <= 1:
-                raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
+                msg = f'Opacity must be between 0 and 1, got {opacity}'
+                raise ValueError(msg)
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
@@ -910,9 +915,8 @@ class LookupTable(_vtk.vtkLookupTable):
             self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            raise RuntimeError(
-                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.',
-            )
+            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
             self.ForceBuild()
@@ -937,7 +941,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
-            return {}
+            return {}  # type: ignore[unreachable]
         n_items = vtk_values.GetSize()
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
@@ -1127,4 +1131,5 @@ class LookupTable(_vtk.vtkLookupTable):
             try:
                 return np.array([self.map_value(item) for item in value])
             except:
-                raise TypeError('LookupTable __call__ expects a single value or an iterable.')
+                msg = 'LookupTable __call__ expects a single value or an iterable.'
+                raise TypeError(msg)

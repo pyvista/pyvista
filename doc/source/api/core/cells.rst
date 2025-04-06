@@ -56,3 +56,4 @@ Class Definition
    :toctree: _autosummary
 
    pyvista.Cell
+   pyvista.CellArray

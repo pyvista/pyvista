@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -12,11 +13,7 @@ from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 
-HAS_IMAGEIO = True
-try:
-    import imageio  # noqa: F401
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
+HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
 @pytest.mark.skip_plotting
@@ -160,3 +157,5 @@ def test_gif_reader(gif_file):
         data_name = f'frame{i}'
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])
+
+    img.close()

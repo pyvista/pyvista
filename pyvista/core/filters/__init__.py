@@ -23,7 +23,6 @@ Examples
 
 """
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -33,7 +32,7 @@ import pyvista
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .. import _vtk_core as _vtk
 
 
@@ -70,6 +69,7 @@ def _get_output(
 
 
 from .composite import CompositeFilters
+from .data_object import DataObjectFilters
 
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
 from .data_set import DataSetFilters
@@ -80,13 +80,14 @@ from .structured_grid import StructuredGridFilters
 from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
-    '_update_alg',
-    '_get_output',
     'CompositeFilters',
+    'DataObjectFilters',
     'DataSetFilters',
+    'ImageDataFilters',
     'PolyDataFilters',
     'RectilinearGridFilters',
     'StructuredGridFilters',
-    'ImageDataFilters',
     'UnstructuredGridFilters',
+    '_get_output',
+    '_update_alg',
 ]

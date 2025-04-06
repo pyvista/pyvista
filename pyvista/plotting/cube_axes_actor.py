@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
+from typing import cast
+import warnings
 
 import numpy as np
 
@@ -12,7 +15,7 @@ from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
@@ -220,7 +223,8 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @tick_location.setter
     def tick_location(self, value: str):
         if not isinstance(value, str):
-            raise TypeError(f'`tick_location` must be a string, not {type(value)}')
+            msg = f'`tick_location` must be a string, not {type(value)}'  # type: ignore[unreachable]
+            raise TypeError(msg)
         value = value.lower()
         if value in ('inside'):
             self.SetTickLocationToInside()
@@ -229,10 +233,11 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         elif value in ('both'):
             self.SetTickLocationToBoth()
         else:
-            raise ValueError(
+            msg = (
                 f'Value of tick_location ("{value}") should be either "inside", "outside", '
-                'or "both".',
+                'or "both".'
             )
+            raise ValueError(msg)
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -288,12 +293,34 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetLabelOffset(offset)
 
     @property
-    def title_offset(self) -> float:  # numpydoc ignore=RT01
+    def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
+        if pyvista.vtk_version_info >= (9, 3):
+            offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
+            self.GetTitleOffset(offx, offy)  # type: ignore[call-overload]
+            return offx, offy  # type: ignore[return-value]
+
         return self.GetTitleOffset()
 
     @title_offset.setter
-    def title_offset(self, offset: float):
+    def title_offset(self, offset: float | MutableSequence[float]):
+        vtk_geq_9_3 = pyvista.vtk_version_info >= (9, 3)
+
+        if vtk_geq_9_3:
+            if isinstance(offset, float):
+                msg = f'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of (x,y) offsets. Setting the x offset to {(x := 0.0)}'
+                warnings.warn(msg, UserWarning)
+                self.SetTitleOffset([x, offset])
+            else:
+                self.SetTitleOffset(offset)
+            return
+
+        if isinstance(offset, MutableSequence):
+            msg = f'Setting title_offset with a sequence is only supported from vtk >= 9.3. Considering only the second value (ie. y-offset) of {(y := offset[1])}'
+            warnings.warn(msg, UserWarning)
+            self.SetTitleOffset(y)
+            return
+
         self.SetTitleOffset(offset)
 
     @property
@@ -545,17 +572,20 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @property
     def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x-axis labels."""
-        return convert_string_array(self.GetAxisLabels(0))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(0))
+        return convert_string_array(labels_vtk).tolist()
 
     @property
     def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y-axis labels."""
-        return convert_string_array(self.GetAxisLabels(1))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(1))
+        return convert_string_array(labels_vtk).tolist()
 
     @property
     def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z-axis labels."""
-        return convert_string_array(self.GetAxisLabels(2))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(2))
+        return convert_string_array(labels_vtk).tolist()
 
     def update_bounds(self, bounds):
         """Update the bounds of this actor.

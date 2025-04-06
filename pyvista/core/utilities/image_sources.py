@@ -10,7 +10,7 @@ from pyvista.core.utilities.misc import no_new_attr
 
 from .helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
@@ -41,7 +41,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
     ...     center=(10, 10, 0),
     ...     radius=(3, 4, 5),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -163,7 +163,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     maxiter=100,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -267,7 +267,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     maximum=255,
     ...     seed=0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -423,7 +423,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     ...     amplitude=255,
     ...     direction=(1.0, 0.0, 0.0),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -622,7 +622,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     ...     maximum=255,
     ...     std=100.0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -783,7 +783,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
     ...     extent=(0, 20, 0, 20, 0, 0),
     ...     spacing=(1, 1, 1),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-import contextlib
+import os
+from typing import TYPE_CHECKING
+from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
@@ -13,8 +15,15 @@ from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 
-with contextlib.suppress(ImportError):
-    from scipy.spatial.transform import Rotation
+if TYPE_CHECKING or os.environ.get(
+    'PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
+):  # pragma: no cover
+    try:
+        from scipy.spatial.transform import Rotation
+    except ImportError:
+        Rotation = None
+else:
+    Rotation = None
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
@@ -44,7 +53,7 @@ ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
-if 'Rotation' in locals():
+if Rotation is not None:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
 else:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
@@ -79,3 +88,9 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+
+InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
+InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
+
+Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
+"""

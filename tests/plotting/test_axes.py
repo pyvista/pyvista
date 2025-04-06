@@ -13,7 +13,7 @@ from pyvista.plotting.opts import RepresentationType
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: PT004
+def skip_check_gc(skip_check_gc):
     """All the tests here fail gc."""
 
 
@@ -176,7 +176,7 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.y_label == new_labels[1]
     assert axes_actor.z_label == new_labels[2]
 
-    match = 'Labels must be a list or tuple with three items. Got abc instead.'
+    match = 'Labels must be a list or tuple. Got abc instead.'
     with pytest.raises(ValueError, match=match):
         axes_actor.labels = 'abc'
 
