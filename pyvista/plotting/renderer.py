@@ -3548,6 +3548,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 e.g. the texture used for rendering reflective surfaces. It
                 does `not` resample the background texture.
 
+            .. versionadded:: 0.45
+
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
