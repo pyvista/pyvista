@@ -3576,7 +3576,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         self.UseImageBasedLightingOn()
         running_ci = os.environ.get('PYVISTA_DOCUMENTATION_CI', 'false').lower() == 'true'
-        if (not resample) and running_ci:
+        if not resample and running_ci:
             msg = 'Environment texture must be resampled for CI to reduce test times.'
             warnings.warn(msg, PyVistaTestingWarning)
 
