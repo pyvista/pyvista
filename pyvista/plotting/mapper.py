@@ -1150,20 +1150,46 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+        self.InteractiveAdjustSampleDistancesOff()
 
 
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
