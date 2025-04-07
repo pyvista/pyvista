@@ -97,11 +97,11 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = cast('Optional[pyvista.ImageData]', wrap(imfilter.GetOutput()))
+    image = cast(Optional[pyvista.ImageData], wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
-    img_array = cast('NumpyArray[float]', point_array(image, 'ImageScalars'))
+    img_array = cast(NumpyArray[float], point_array(image, 'ImageScalars'))
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]

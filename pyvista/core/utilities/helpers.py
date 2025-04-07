@@ -193,7 +193,7 @@ def wrap(
         # Return object if it is already wrapped
         from pyvista import DataObject  # avoid circular import
 
-        return cast('DataObject', dataset)
+        return cast(DataObject, dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to

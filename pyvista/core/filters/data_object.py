@@ -1926,7 +1926,7 @@ class DataObjectFilters:
         elif isinstance(axis, str):
             ax_str = axis.lower()
             if ax_str in labels:
-                ax_label = cast('XYZLiteral', ax_str)
+                ax_label = cast(XYZLiteral, ax_str)
                 ax_index = label_to_index[ax_label]
             else:
                 msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
@@ -2867,9 +2867,7 @@ class DataObjectFilters:
         _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
         keep_valid_only = quality_measure == 'all_valid'
         measures_available = _get_cell_quality_measures()
-        measures_available_names = cast(
-            'list[_CellQualityLiteral]', list(measures_available.keys())
-        )
+        measures_available_names = cast(list[_CellQualityLiteral], list(measures_available.keys()))
         if quality_measure in ['all', 'all_valid']:
             measures_requested = measures_available_names
         else:
@@ -2878,7 +2876,7 @@ class DataObjectFilters:
                 _validation.check_contains(
                     measures_available_names, must_contain=quality_measure, name='quality_measure'
                 )
-            measures_requested = cast('list[_CellQualityLiteral]', measures)
+            measures_requested = cast(list[_CellQualityLiteral], measures)
 
         cell_quality = functools.partial(
             DataObjectFilters._dataset_cell_quality,

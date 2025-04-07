@@ -382,7 +382,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast('Optional[pyvista.DataSet]', wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
+        return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
 
     @dataset.setter
     def dataset(

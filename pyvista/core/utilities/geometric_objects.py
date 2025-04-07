@@ -1669,7 +1669,7 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast('pyvista.ImageData', wrap(wavelet_source.GetOutput()))
+    return cast(pyvista.ImageData, wrap(wavelet_source.GetOutput()))
 
 
 def CircularArc(
@@ -1756,7 +1756,7 @@ def CircularArc(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pyvista.PolyData', arc)
+    return cast(pyvista.PolyData, arc)
 
 
 def CircularArcFromNormal(
@@ -1836,7 +1836,7 @@ def CircularArcFromNormal(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, angle_, resolution + 1)
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pyvista.PolyData', arc)
+    return cast(pyvista.PolyData, arc)
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:

@@ -14,7 +14,6 @@ from typing import TypeVar
 import warnings
 
 import numpy as np
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from typing import Any
@@ -115,7 +114,7 @@ class AnnotatedIntEnum(int, enum.Enum):
 
     annotation: str
 
-    def __new__(cls, value: int, annotation: str) -> Self:
+    def __new__(cls: type[T], value: int, annotation: str) -> T:
         """Initialize."""
         obj = int.__new__(cls, value)
         obj._value_ = value
@@ -123,7 +122,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         return obj
 
     @classmethod
-    def from_str(cls, input_str: str) -> Self:
+    def from_str(cls: type[T], input_str: str) -> T:
         """Create an enum member from a string.
 
         Parameters
@@ -149,7 +148,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(msg)
 
     @classmethod
-    def from_any(cls, value: AnnotatedIntEnum | int | str) -> Self:
+    def from_any(cls: type[T], value: AnnotatedIntEnum | int | str) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters

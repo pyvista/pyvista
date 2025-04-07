@@ -572,19 +572,19 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @property
     def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x-axis labels."""
-        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(0))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(0))
         return convert_string_array(labels_vtk).tolist()
 
     @property
     def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y-axis labels."""
-        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(1))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(1))
         return convert_string_array(labels_vtk).tolist()
 
     @property
     def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z-axis labels."""
-        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(2))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(2))
         return convert_string_array(labels_vtk).tolist()
 
     def update_bounds(self, bounds):
