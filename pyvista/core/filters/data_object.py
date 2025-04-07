@@ -2845,7 +2845,7 @@ class DataObjectFilters:
 
         >>> cqual = sphere.cell_quality('all_valid')
         >>> valid_measures = cqual.cell_data.keys()
-        >>> valid_measures # doctest: +NORMALIZE_WHITESPACE
+        >>> valid_measures  # doctest: +NORMALIZE_WHITESPACE
         ['area',
          'aspect_frobenius',
          'aspect_ratio',
