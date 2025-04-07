@@ -2084,7 +2084,7 @@ class DataSetFilters(DataObjectFilters):
                     msg = "`region_ids` must be specified when `extraction_mode='specified'`."
                     raise ValueError(msg)
                 else:
-                    region_ids = cast(NumpyArray[int], variable_input)
+                    region_ids = cast('NumpyArray[int]', variable_input)
             # this mode returns scalar data with shape that may not match
             # the number of cells/points, so we extract all and filter later
             # alg.SetExtractionModeToSpecifiedRegions()
@@ -2098,7 +2098,7 @@ class DataSetFilters(DataObjectFilters):
                     msg = "`cell_ids` must be specified when `extraction_mode='cell_seed'`."
                     raise ValueError(msg)
                 else:
-                    cell_ids = cast(NumpyArray[int], variable_input)
+                    cell_ids = cast('NumpyArray[int]', variable_input)
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
             for i in _unravel_and_validate_ids(cell_ids):
@@ -2110,7 +2110,7 @@ class DataSetFilters(DataObjectFilters):
                     msg = "`point_ids` must be specified when `extraction_mode='point_seed'`."
                     raise ValueError(msg)
                 else:
-                    point_ids = cast(NumpyArray[int], variable_input)
+                    point_ids = cast('NumpyArray[int]', variable_input)
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
             for i in _unravel_and_validate_ids(point_ids):
@@ -2122,7 +2122,7 @@ class DataSetFilters(DataObjectFilters):
                     msg = "`closest_point` must be specified when `extraction_mode='closest'`."
                     raise ValueError(msg)
                 else:
-                    closest_point = cast(NumpyArray[float], variable_input)
+                    closest_point = cast('NumpyArray[float]', variable_input)
             alg.SetExtractionModeToClosestPointRegion()
             alg.SetClosestPoint(*closest_point)
 
@@ -2890,7 +2890,7 @@ class DataSetFilters(DataObjectFilters):
             alg = point_source
 
         alg.Update()
-        input_source = cast(pyvista.DataSet, wrap(alg.GetOutput()))
+        input_source = cast('pyvista.DataSet', wrap(alg.GetOutput()))
 
         output = self.streamlines_from_source(
             input_source,
@@ -3035,7 +3035,7 @@ class DataSetFilters(DataObjectFilters):
             raise ValueError(msg)
         else:
             integration_direction_ = cast(
-                Literal['both', 'back', 'backward', 'forward'], integration_direction
+                'Literal["both", "back", "backward", "forward"]', integration_direction
             )
         if integrator_type not in [2, 4, 45]:
             msg = 'Integrator type must be one of `2`, `4`, or `45`.'
@@ -6238,7 +6238,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Modify box
         for face in box:
-            face = cast(pyvista.PolyData, face)
+            face = cast('pyvista.PolyData', face)
             if box_style == 'outline':
                 face.copy_from(pyvista.lines_from_points(face.points))
             if oriented:
@@ -6251,8 +6251,8 @@ class DataSetFilters(DataObjectFilters):
                 axes = np.eye(3)
                 point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
             else:
-                matrix = cast(NumpyArray[float], matrix)
-                inverse_matrix = cast(NumpyArray[float], inverse_matrix)
+                matrix = cast('NumpyArray[float]', matrix)
+                inverse_matrix = cast('NumpyArray[float]', inverse_matrix)
                 axes = matrix[:3, :3]  # principal axes
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
@@ -6667,7 +6667,7 @@ class DataSetFilters(DataObjectFilters):
         else:  # Use numpy
             # Get mapping from input ID to output ID
             arr = cast(
-                pyvista.pyvista_ndarray, get_array(self, scalars, preference=preference, err=True)
+                'pyvista.pyvista_ndarray', get_array(self, scalars, preference=preference, err=True)
             )
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
             if sort:
@@ -7000,7 +7000,7 @@ class DataSetFilters(DataObjectFilters):
             if coloring_mode is not None:
                 msg = 'Coloring mode cannot be set when a color dictionary is specified.'
                 raise TypeError(msg)
-            colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
+            colors_ = _local_validate_color_sequence(cast('list[ColorLike]', list(colors.values())))
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
             items = zip(colors.keys(), color_rgb_sequence)
 
@@ -7019,7 +7019,7 @@ class DataSetFilters(DataObjectFilters):
                         msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
                         raise ValueError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
-                    cmap_colors = cast(list[list[float]], cmap.colors)
+                    cmap_colors = cast('list[list[float]]', cmap.colors)
                     if color_type == 'float_rgb':
                         color_rgb_sequence = cmap_colors
                         _is_rgb_sequence = True

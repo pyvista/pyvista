@@ -277,7 +277,7 @@ class _DatasetLoader:
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
             if isinstance(data, pv.Texture):
-                data = cast(pv.ImageData, pv.wrap(data.GetInput()))
+                data = cast('pv.ImageData', pv.wrap(data.GetInput()))
             try:
                 if isinstance(data, pv.ExplicitStructuredGrid):
                     # extract_cells_by_type does not support this datatype

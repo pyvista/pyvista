@@ -2117,8 +2117,8 @@ class DataSet(DataSetFilters, DataObject):
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(
-            cast(Sequence[float], pointa),
-            cast(Sequence[float], pointb),
+            cast('Sequence[float]', pointa),
+            cast('Sequence[float]', pointb),
             tolerance,
             id_list,
         )
@@ -2179,14 +2179,14 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(cast(_vtk.vtkDataSet, self))
+        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         cell = _vtk.vtkGenericCell()
         locator.IntersectWithLine(
-            cast(Sequence[float], pointa),
-            cast(Sequence[float], pointb),
+            cast('Sequence[float]', pointa),
+            cast('Sequence[float]', pointb),
             tolerance,
             points,
             id_list,
@@ -2226,7 +2226,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Bounds must be a length six tuple of floats.'
             raise TypeError(msg)
         locator = _vtk.vtkCellTreeLocator()
-        locator.SetDataSet(cast(_vtk.vtkDataSet, self))
+        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsWithinBounds(list(bounds), id_list)

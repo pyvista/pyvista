@@ -85,7 +85,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast(NumpyArray[float], pyvista.point_array(edges, 'point_ind'))
+        orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
