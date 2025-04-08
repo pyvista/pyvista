@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 from typing import NamedTuple
 import warnings
+from xml.etree import ElementTree as ET
 
 from PIL import Image
 import pytest
@@ -16,7 +17,8 @@ import pyvista as pv
 
 ROOT_DIR = str(Path(__file__).parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-BUILD_IMAGE_DIR = str(Path(BUILD_DIR) / 'html' / '_images')
+HTML_DIR = str(Path(ROOT_DIR) / 'html')
+BUILD_IMAGE_DIR = str(Path(HTML_DIR) / '_images')
 DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
 DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
 BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
@@ -26,6 +28,10 @@ FLAKY_TEST_CASES = [
 ]
 
 MAX_VTKSZ_FILE_SIZE_MB = 50
+
+# Same value as `sphinx_gallery_conf['junit']` in `conf.py`
+SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
+SPHINX_GALLERY_EXAMPLE_MAX_TIME = 60.0  # Measured in seconds
 
 pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
@@ -270,3 +276,46 @@ def test_interactive_plot_file_size(vtksz_file: str):
             f'Consider reducing the complexity of the plot or forcing it to be static.'
         )
         pytest.fail(msg)
+
+
+def load_test_cases_from_xml(path) -> list[dict[str, str | int | float | bool | None]]:
+    """Parse test cases from the generated JUnit XML file."""
+    tree = ET.parse(path)
+    root = tree.getroot()
+    cases = []
+    for testcase in root.findall('testcase'):
+        name = testcase.attrib['name']
+        time = float(testcase.attrib['time'])
+        skipped_elem = testcase.find('skipped')
+        skipped = skipped_elem is not None
+        skip_msg = skipped_elem.attrib.get('message') if skipped else None
+        cases.append(
+            {
+                'name': name,
+                'file': testcase.attrib['file'],
+                'classname': testcase.attrib['classname'],
+                'line': int(testcase.attrib['line']),
+                'time': time,
+                'skipped': skipped,
+                'skip_message': skip_msg,
+            }
+        )
+    return cases
+
+
+TEST_CASES = load_test_cases_from_xml(HTML_DIR / SPHINX_GALLERY_CONF_JUNIT)
+IDS = [case['classname'] for case in TEST_CASES]
+
+
+@pytest.mark.parametrize('testcase', TEST_CASES, ids=IDS)
+def test_gallery_example_execution_time(testcase):
+    if testcase['skipped']:
+        pytest.skip(testcase['skip_message'] or 'Skipped test.')
+
+    msg = (
+        f"Sphinx gallery example '{testcase['name']}' from file\n"
+        f'\t{testcase["file"]}\n'
+        f'has an execution time: {testcase["time"]} seconds\n'
+        f'which exceeds the maximum allowed: {SPHINX_GALLERY_EXAMPLE_MAX_TIME} seconds.'
+    )
+    assert testcase['time'] < SPHINX_GALLERY_EXAMPLE_MAX_TIME, msg
