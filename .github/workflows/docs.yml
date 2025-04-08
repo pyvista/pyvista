@@ -111,7 +111,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation Images
-        run: pytest tests/doc/tst_doc_images.py
+        run: pytest tests/doc/tst_doc.py
 
       - name: Upload Images for Failed Tests
         if: ${{ failure() && hashFiles('_doc_debug_images_failed/**/*.jpg') != '' }}
