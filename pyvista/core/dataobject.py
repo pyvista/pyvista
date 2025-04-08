@@ -181,7 +181,7 @@ class DataObject(_vtk.vtkPyVistaOverride):
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
-                mesh_ = cast(pyvista.DataSet, mesh_)  # type: ignore[unreachable]
+                mesh_ = cast('pyvista.DataSet', mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
                     writer.SetArrayName(texture)
                     array_name = texture

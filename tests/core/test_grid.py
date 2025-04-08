@@ -1442,7 +1442,7 @@ def test_ExplicitStructuredGrid_hide_cells():
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
     32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
-    """.split(),
+    """.split(),  # noqa: SIM905
         dtype=np.uint8,
     )
 
@@ -1549,7 +1549,7 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61
     62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61 62 63 63 61
     54 55 55 53 26 27 27 25 30 31 31 29 30 31 31 29 30 31 31 29 22 23 23 21
-    """.split(),
+    """.split(),  # noqa: SIM905
         dtype=int,
     )
 
@@ -1575,7 +1575,7 @@ def test_ExplicitStructuredGrid_compute_connections():
     5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6
     6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 3 4 4 3 4 5 5 4 4 5 5
     4 4 5 5 4 3 4 4 3
-    """.split(),
+    """.split(),  # noqa: SIM905
         dtype=int,
     )
 

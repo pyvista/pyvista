@@ -1119,7 +1119,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[tuple[float, float, float], tuple[float, float, float, float]],
+            'Union[tuple[float, float, float], tuple[float, float, float, float]]',
             tuple(color),
         )
 

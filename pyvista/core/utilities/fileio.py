@@ -78,7 +78,7 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
 
     """
     supported = {'vtk', 'xml', 'legacy'}
-    format_ = cast(Literal['vtk', 'xml', 'legacy'], format.lower())
+    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
     if format_ not in supported:
         msg = (
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
@@ -464,7 +464,7 @@ def read_exodus(
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast(pyvista.DataSet, wrap(reader.GetOutput()))
+    return cast('pyvista.DataSet', wrap(reader.GetOutput()))
 
 
 def read_grdecl(

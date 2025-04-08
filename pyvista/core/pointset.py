@@ -113,7 +113,7 @@ class _PointSet(DataSet):
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
-        DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
+        DataSet.shallow_copy(self, cast('_vtk.vtkDataObject', to_copy))
 
     def remove_cells(
         self,
@@ -1818,7 +1818,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Initialize the unstructured grid."""
         super().__init__()
 
-        if not len(args):
+        if not args:
             return
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkUnstructuredGrid):
