@@ -46,6 +46,7 @@ pyvista.global_theme.font.size = 22
 pyvista.global_theme.font.label_size = 22
 pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
+pyvista.global_theme.resample_environment_texture = True  # Speed up build times
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = str(Path('./images/').resolve() / 'auto-generated/')

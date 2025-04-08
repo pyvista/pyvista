@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
-import os
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -21,7 +20,6 @@ from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import PyVistaTestingWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -3515,7 +3513,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     def set_environment_texture(
-        self, texture, is_srgb=False, resample: bool | float = False
+        self, texture, is_srgb=False, resample: bool | float | None = None
     ) -> None:
         """Set the environment texture used for image based lighting.
 
@@ -3535,12 +3533,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
 
-        resample : bool | float, default: False
+        resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
             sampling rate explicitly or set to ``True`` to downsample the
-            texture to 1/10th of its original resolution. Downsampling the
-            texture can substantially improve performance for some environments
-            (e.g. headless setups or with if GPU support is limited).
+            texture to 1/16th of its original resolution. By default, the
+            theme value for ``resample_environment_texture`` is used, which
+            is ``False`` for the standard theme.
+
+            Downsampling the texture can substantially improve performance for
+            some environments, e.g. headless setups or if GPU support is limited.
 
             .. note::
 
@@ -3575,13 +3576,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        running_ci = os.environ.get('PYVISTA_DOCUMENTATION_CI', 'false').lower() == 'true'
-        if not resample and running_ci:
-            msg = 'Environment texture must be resampled for CI to reduce test times.'
-            warnings.warn(msg, PyVistaTestingWarning)
+
+        if resample is None:
+            resample = pyvista.global_theme.resample_environment_texture
 
         if resample:
-            resample = 0.1 if resample is True else resample
+            resample = 1 / 16 if resample is True else resample
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300

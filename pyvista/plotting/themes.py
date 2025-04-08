@@ -1760,6 +1760,7 @@ class Theme(_ThemeConfig):
         '_point_size',
         '_render_lines_as_tubes',
         '_render_points_as_spheres',
+        '_resample_environment_texture',
         '_return_cpos',
         '_sharp_edges_feature_angle',
         '_show_edges',
@@ -1857,6 +1858,8 @@ class Theme(_ThemeConfig):
         self._edge_opacity = 1.0
 
         self._logo_file = None
+
+        self._resample_environment_texture = False
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -3205,6 +3208,41 @@ class Theme(_ThemeConfig):
         self._lighting_params = config
 
     @property
+    def resample_environment_texture(self) -> bool | float:  # numpydoc ignore=RT01
+        """Set or return resampling environment texture.
+
+        Resample the environment texture when using :meth:`~pyvista.Plotter.set_environment_texture`.
+        Set this to a float to set the sampling rate explicitly or set
+        to ``True`` to downsample the texture to 1/16th of its original
+        resolution.
+
+        Downsampling the texture can substantially improve performance for
+        some environments, e.g. headless setups or if GPU support is limited.
+
+        Examples
+        --------
+        Enable resampling the environment texture globally.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.resample_environment_texture = True
+        >>> pv.global_theme.resample_environment_texture
+        True
+
+        Disable the splitting of sharp edges globally.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.split_sharp_edges = False
+        >>> pv.global_theme.split_sharp_edges
+        False
+
+        """
+        return self._resample_environment_texture
+
+    @resample_environment_texture.setter
+    def resample_environment_texture(self, value: bool | float):
+        self._resample_environment_texture = value
+
+    @property
     def logo_file(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the logo file.
 
@@ -3394,6 +3432,9 @@ class _TestingTheme(Theme):
     Also disables ``return_cpos`` to make it easier for us to write
     examples without returning camera positions.
 
+    Resampling is also enabled for environment textures since this
+    can be very slow without a GPU.
+
     """
 
     def __init__(self):
@@ -3403,6 +3444,7 @@ class _TestingTheme(Theme):
         self.window_size = [400, 400]
         self.axes.show = False
         self.return_cpos = False
+        self.resample_environment_texture = True
 
 
 class _NATIVE_THEMES(Enum):
