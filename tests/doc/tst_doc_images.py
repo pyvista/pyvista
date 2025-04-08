@@ -17,7 +17,7 @@ import pyvista as pv
 
 ROOT_DIR = str(Path(__file__).parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-HTML_DIR = str(Path(ROOT_DIR) / 'html')
+HTML_DIR = str(Path(BUILD_DIR) / 'html')
 BUILD_IMAGE_DIR = str(Path(HTML_DIR) / '_images')
 DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
 DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
