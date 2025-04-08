@@ -1859,7 +1859,7 @@ class Theme(_ThemeConfig):
 
         self._logo_file = None
 
-        self._resample_environment_texture = False
+        self._resample_environment_texture: bool | float = False
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
