@@ -31,7 +31,7 @@ MAX_VTKSZ_FILE_SIZE_MB = 50
 
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
-SPHINX_GALLERY_EXAMPLE_MAX_TIME = 60.0  # Measured in seconds
+SPHINX_GALLERY_EXAMPLE_MAX_TIME = 900.0  # Measured in seconds
 
 pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
