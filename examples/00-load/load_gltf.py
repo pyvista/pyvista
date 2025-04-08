@@ -32,7 +32,7 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 pl = pyvista.Plotter()
 pl.import_gltf(helmet_file)
-pl.set_environment_texture(texture, resample=True)
+pl.set_environment_texture(texture)
 pl.camera.zoom(1.7)
 pl.show()
 

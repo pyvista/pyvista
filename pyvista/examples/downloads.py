@@ -4280,7 +4280,7 @@ def download_sky_box_cube_map(load=True):  # pragma: no cover
     >>> pl = pv.Plotter()
     >>> dataset = examples.download_sky_box_cube_map()
     >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset, resample=True)
+    >>> pl.set_environment_texture(dataset)
     >>> pl.show()
 
     .. seealso::

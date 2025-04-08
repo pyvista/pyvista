@@ -42,7 +42,7 @@ cubemap = examples.download_sky_box_cube_map()
 # finish.
 p = pv.Plotter()
 p.add_actor(cubemap.to_skybox())
-p.set_environment_texture(cubemap, resample=True)  # For reflecting the environment off the mesh
+p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
 p.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
 
 # Define a nice camera perspective

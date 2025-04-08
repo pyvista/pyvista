@@ -274,7 +274,7 @@ def test_pbr(sphere, verify_image_cache):
     texture = examples.load_globe_texture()
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture, resample=True)
+    pl.set_environment_texture(texture)
     pl.add_light(pv.Light())
     pl.add_mesh(
         sphere,
@@ -323,29 +323,10 @@ def test_remove_environment_texture_cubemap(sphere):
     texture = examples.download_sky_box_cube_map()
 
     pl = pv.Plotter()
-    pl.set_environment_texture(texture, resample=True)
+    pl.set_environment_texture(texture)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
     pl.remove_environment_texture()
     pl.show()
-
-
-@pytest.fixture
-def documentation_ci_env_var():
-    var = 'PYVISTA_DOCUMENTATION_CI'
-    os.environ[var] = 'true'
-    yield
-    del os.environ[var]
-
-
-@pytest.mark.usefixtures('documentation_ci_env_var')
-def test_set_environment_texture_warns_ci(sphere):
-    """Test remove_environment_texture with a cubemap."""
-    texture = examples.download_sky_box_cube_map()
-    pl = pv.Plotter()
-
-    match = 'Environment texture must be resampled for CI to reduce test times.'
-    with pytest.warns(pv.PyVistaTestingWarning, match=match):
-        pl.set_environment_texture(texture, resample=False)
 
 
 def test_plot_pyvista_ndarray(sphere):

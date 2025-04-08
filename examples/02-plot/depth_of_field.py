@@ -61,7 +61,7 @@ pl = pv.Plotter()
 pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos
-pl.set_environment_texture(cubemap, resample=True)
+pl.set_environment_texture(cubemap)
 pl.show()
 
 
