@@ -311,9 +311,9 @@ def test_sphinx_gallery_execution_time(testcase):
         pytest.skip(testcase['skip_message'] or 'Skipped test.')
 
     msg = (
-        f"Sphinx gallery example '{testcase['name']}' from file\n"
+        f"\nSphinx gallery example '{testcase['name']}' from file\n"
         f'\t{testcase["file"]}\n'
-        f'has an execution time: {testcase["time"]} seconds\n'
+        f'has an execution time: {testcase["time"]:.3f} seconds\n'
         f'which exceeds the maximum allowed: {SPHINX_GALLERY_EXAMPLE_MAX_TIME} seconds.'
     )
     assert testcase['time'] < SPHINX_GALLERY_EXAMPLE_MAX_TIME, msg
