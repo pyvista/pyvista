@@ -33,7 +33,7 @@ from pyvista.report import Report as Report
 from pyvista.report import get_gpu_info as get_gpu_info
 
 # get the int type from vtk
-ID_TYPE = cast(int, _get_vtk_id_type())
+ID_TYPE = cast('int', _get_vtk_id_type())
 
 # determine if using at least vtk 9.0.0
 if vtk_version_info.major < 9:  # pragma: no cover

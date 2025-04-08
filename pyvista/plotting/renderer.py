@@ -888,7 +888,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if self.has_charts:
-            cast(Charts, self._charts).remove_chart(chart_or_index)
+            cast('Charts', self._charts).remove_chart(chart_or_index)
 
     @property
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01

@@ -81,7 +81,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if isinstance(dataset, _vtk.VTKObjectWrapper):
             obj.dataset.Set(dataset.VTKObject)
         else:
-            obj.dataset.Set(cast(_vtk.vtkDataSet, dataset))
+            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
         return obj
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
