@@ -628,7 +628,7 @@ class DataSet(DataSetFilters, DataObject):
 
         field, vectors_name = self.active_vectors_info
         # Cast type since we know name is not None since vectors is not None at this point
-        vectors_name = cast(str, vectors_name)
+        vectors_name = cast('str', vectors_name)
 
         scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(vectors, axis=1)
