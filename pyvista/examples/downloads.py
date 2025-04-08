@@ -4407,7 +4407,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
     >>> cubemap = examples.download_cubemap_space_4k()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, is_srgb=True, resample=True)
+    >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
@@ -4471,7 +4471,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
     >>> cubemap = examples.download_cubemap_space_4k()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, is_srgb=True, resample=True)
+    >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
@@ -7201,7 +7201,7 @@ def download_dikhololo_night(load=True):  # pragma: no cover
     >>> texture = examples.download_dikhololo_night()
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(texture, resample=True)
+    >>> pl.set_environment_texture(texture)
     >>> pl.show()
 
     .. seealso::
