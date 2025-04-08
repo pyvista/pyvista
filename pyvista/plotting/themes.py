@@ -3219,6 +3219,8 @@ class Theme(_ThemeConfig):
         Downsampling the texture can substantially improve performance for
         some environments, e.g. headless setups or if GPU support is limited.
 
+        .. versionadded:: 0.45
+
         Examples
         --------
         Enable resampling the environment texture globally.
@@ -3228,11 +3230,11 @@ class Theme(_ThemeConfig):
         >>> pv.global_theme.resample_environment_texture
         True
 
-        Disable the splitting of sharp edges globally.
+        Disable the resampling the environment texture.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.split_sharp_edges = False
-        >>> pv.global_theme.split_sharp_edges
+        >>> pv.global_theme.resample_environment_texture = False
+        >>> pv.global_theme.resample_environment_texture
         False
 
         """

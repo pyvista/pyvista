@@ -517,7 +517,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         lighting = kwargs.pop('lighting', None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, is_srgb=True)  # type: ignore[arg-type]
+        pl.set_environment_texture(self, True)  # type: ignore[arg-type]
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
