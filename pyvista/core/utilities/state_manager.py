@@ -123,7 +123,7 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: ANN001, ANN204
         """Exit context manager and restore original state."""
-        self._state = cast(T, self._original_state)
+        self._state = cast('T', self._original_state)
         self._original_state = None  # Reset
 
     @overload
