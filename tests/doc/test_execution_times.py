@@ -45,7 +45,7 @@ IDS = [case['classname'] for case in TEST_CASES]
 
 
 @pytest.mark.parametrize('testcase', TEST_CASES, ids=IDS)
-def test_gallery_example(testcase):
+def test_gallery_example_execution_time(testcase):
     if testcase['skipped']:
         pytest.skip(testcase['skip_message'] or 'Skipped test.')
 
