@@ -63,7 +63,7 @@ def download_sheen_chair():  # pragma: no cover
     >>> cubemap = examples.download_sky_box_cube_map()
     >>> pl = pv.Plotter()  # doctest:+SKIP
     >>> pl.import_gltf(gltf_file)  # doctest:+SKIP
-    >>> pl.set_environment_texture(cubemap, resample=True)  # doctest:+SKIP
+    >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
     >>> pl.show()  # doctest:+SKIP
 
     """

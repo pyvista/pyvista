@@ -60,7 +60,7 @@ p.show(cpos=cpos)
 colors = ['red', 'teal', 'black', 'orange', 'silver']
 
 p = pv.Plotter()
-p.set_environment_texture(cubemap, resample=True)
+p.set_environment_texture(cubemap)
 
 for i, j in product(range(5), range(6)):
     sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
