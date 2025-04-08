@@ -12,7 +12,6 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -34,6 +33,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
     from pyvista import PolyData
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -85,7 +85,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast(NumpyArray[float], pyvista.point_array(edges, 'point_ind'))
+        orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
