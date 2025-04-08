@@ -10,7 +10,7 @@ from pyvista.typing.mypy_plugin import promote_type
 
 TEST_DIR = str(Path(__file__).parent)
 ROOT_DIR = str(Path(TEST_DIR).parent.parent.parent)
-assert 'tests' in os.listdir(ROOT_DIR)
+assert 'tests' in os.listdir(ROOT_DIR)  # noqa: PTH208
 MYPY_PLUGIN_MODULE = str(Path(ROOT_DIR) / 'pyvista' / 'typing' / 'mypy_plugin.py')
 MYPY_CONFIG_FILE_NO_PLUGIN = str(Path(TEST_DIR) / 'mypy_no_plugin.ini')
 MYPY_CONFIG_FILE_USE_PLUGIN = str(Path(TEST_DIR) / 'mypy_use_plugin.ini')

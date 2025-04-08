@@ -1,1 +1,1 @@
-"""PyVista plugin for static type-checking with mypy."""  # noqa:A005
+"""PyVista plugin for static type-checking with mypy."""

@@ -473,7 +473,7 @@ class AffineWidget3D:
             Widget origin.
 
         """
-        return cast(tuple[float, float, float], tuple(self._origin))
+        return cast('tuple[float, float, float]', tuple(self._origin))
 
     @origin.setter
     def origin(self, value):
