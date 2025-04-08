@@ -571,8 +571,9 @@ def run(arguments, content, options, state_machine, state, lineno):
         # note: this reuses the existing matplotlib plot counter if available
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        base, ext = Path(source_file_name).name.split('.', 1)
-        output_base = f'{base}-{counter}.py'
+        base = Path(source_file_name).stem
+        ext = Path(source_file_name).suffix
+        output_base = f'{base}-{counter}{ext}'
         function_name = None
         caption = options.get('caption', '')
 
