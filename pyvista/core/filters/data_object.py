@@ -2845,8 +2845,7 @@ class DataObjectFilters:
 
         >>> cqual = sphere.cell_quality('all_valid')
         >>> valid_measures = cqual.cell_data.keys()
-        >>> joined = ',\n '.join(repr(measure) for measure in valid_measures)
-        >>> print(f'[{joined}]')
+        >>> valid_measures  # doctest: +NORMALIZE_WHITESPACE
         ['area',
          'aspect_frobenius',
          'aspect_ratio',
