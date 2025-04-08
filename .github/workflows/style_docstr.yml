@@ -7,6 +7,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTEST_ADDOPTS: "--color=yes"
+
 permissions:
   id-token: none
 
