@@ -454,6 +454,7 @@ class ResetPyVista:
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
         pyvista.set_plot_theme('document')
+        pyvista.global_theme.resample_environment_texture = True
 
     def __repr__(self):
         return 'ResetPyVista'
