@@ -132,9 +132,9 @@ class Observer:
     def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
         if kind == 'ERROR':
-            logging.error(alert)
+            logging.error(alert)  # noqa: LOG015
         else:
-            logging.warning(alert)
+            logging.warning(alert)  # noqa: LOG015
 
     def __call__(self, _obj, _event, message) -> None:
         """Declare standard call function for the observer.
@@ -243,7 +243,7 @@ class ProgressMonitor:
     def handler(self, sig, frame) -> None:
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
-        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
     def __call__(self, obj, *args) -> None:
         """Call progress update callback.
