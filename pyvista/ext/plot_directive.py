@@ -129,7 +129,6 @@ from __future__ import annotations
 
 import doctest
 import os
-from os.path import relpath
 from pathlib import Path
 import re
 import shutil
@@ -572,13 +571,13 @@ def run(arguments, content, options, state_machine, state, lineno):
         # note: this reuses the existing matplotlib plot counter if available
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
+        base, ext = Path(source_file_name).name.split('.', 1)
         output_base = f'{base}-{counter}.py'
         function_name = None
         caption = options.get('caption', '')
 
-    base, source_ext = os.path.splitext(output_base)  # noqa: PTH122
-    if source_ext in ('.py', '.rst', '.txt'):
+    base, source_ext = Path(output_base).name.split('.', 1)
+    if source_ext in ('py', 'rst', 'txt'):
         output_base = base
     else:
         source_ext = ''
@@ -592,7 +591,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = relpath(source_file_name, setup.confdir)
+    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
@@ -608,12 +607,9 @@ def run(arguments, content, options, state_machine, state, lineno):
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.join(  # noqa: PTH118
-        relpath(setup.confdir, rst_dir),
-        source_rel_dir,
-    ).replace(os.path.sep, '/')
+    dest_dir_link = os.path.relpath(setup.confdir, rst_dir).replace(os.path.sep, '/')
     try:
-        build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
+        build_dir_link = os.path.relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
