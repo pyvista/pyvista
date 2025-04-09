@@ -283,7 +283,10 @@ def marker_names(item: pytest.Item):
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     test_downloads = config.getoption('--test_downloads')
 
+    fail_slow_enabled = True  # "CI" in os.environ
     for item in items:
+        item.add_marker(pytest.mark.fail_slow('1s', enabled=fail_slow_enabled))
+
         # skip all tests that need downloads
         if not test_downloads:
             if 'needs_download' in marker_names(item):

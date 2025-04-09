@@ -21,3 +21,10 @@ def reset_gloal_theme():
     # creating test side effects
     yield
     pyvista.global_theme.restore_defaults()
+
+
+def pytest_collection_modifyitems(config, items):
+    """Modify collected tests."""
+    enabled = True  # "CI" in os.environ
+    for item in items:
+        item.add_marker(pytest.mark.fail_slow('0.1s', enabled=enabled))
