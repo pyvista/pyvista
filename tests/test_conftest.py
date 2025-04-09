@@ -264,6 +264,26 @@ class Cases_needs_vtk:
 
         return tests, dict(passed=1)
 
+    def case_multiple_decorating(self, monkeypatch: pytest.MonkeyPatch):
+        """Test when decorating multiple times"""
+
+        tests = """
+        import pytest
+
+        @pytest.mark.needs_vtk_version(9, 1)
+        @pytest.mark.needs_vtk_version(max=(9, 3))
+        def test_1(): ...
+
+        @pytest.mark.needs_vtk_version(max=(9, 3))
+        @pytest.mark.needs_vtk_version(9, 1)
+        def test_2(): ...
+
+        """
+
+        monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2, 0))
+
+        return tests, dict(skipped=2)
+
     @case
     @parametrize(between=[True, False])
     def case_min_max(self, between: bool, monkeypatch: pytest.MonkeyPatch):
@@ -359,8 +379,52 @@ class Cases_needs_vtk:
 
         return tests, dict(errors=2)
 
+    @case(tags='reason')
+    def case_reason_default(self, monkeypatch: pytest.MonkeyPatch):
+        """Test the reason kwargs"""
 
-@parametrize_with_cases('tests, outcome', cases=Cases_needs_vtk, filter=~ft.has_tag('raises'))
+        tests = """
+        import pytest
+
+        @pytest.mark.needs_vtk_version(9, 1)
+        def test_1(): ...
+
+        @pytest.mark.needs_vtk_version(9, 1, max=(9, 2))
+        def test_2(): ...
+
+        @pytest.mark.needs_vtk_version(max=(8, 1))
+        def test_3(): ...
+
+        """
+
+        monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2))
+
+        return tests, [
+            r'SKIPPED.*Test needs VTK version >= \(9, 1, 0\), current is \(8, 2\)',
+            r'SKIPPED.*Test needs \(9, 1, 0\) <= VTK version < \(9, 2, 0\), current is \(8, 2\).',
+            r'SKIPPED.*Test needs VTK version < \(8, 1, 0\), current is \(8, 2\).',
+        ]
+
+    @case(tags='reason')
+    def case_reason_custom(self, monkeypatch: pytest.MonkeyPatch):
+        """Test the custom reason kwargs"""
+
+        tests = """
+        import pytest
+
+        @pytest.mark.needs_vtk_version(9, 1, reason="foo")
+        def test(): ...
+
+        """
+
+        monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2))
+
+        return tests, ['SKIPPED.*foo']
+
+
+@parametrize_with_cases(
+    'tests, outcome', cases=Cases_needs_vtk, filter=~ft.has_tag('raises') & ~ft.has_tag('reason')
+)
 def test_needs_vtk_version(tests: str, outcome: dict, pytester: pytest.Pytester):
     p = pytester.makepyfile(tests)
     results = pytester.runpytest(p)
@@ -374,6 +438,14 @@ def test_needs_vtk_version_raises(tests: str, outcome: dict, pytester: pytest.Py
     results = pytester.runpytest(p)
 
     results.assert_outcomes(**outcome)
+
+
+@parametrize_with_cases('tests, match', cases=Cases_needs_vtk, has_tag='reason')
+def test_needs_vtk_version_reason(tests: str, match: list[str], pytester: pytest.Pytester):
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.stdout.re_match_lines(match)
 
 
 @pytest.mark.skipif(os.name != 'nt', reason='Needs Windows platform to run')

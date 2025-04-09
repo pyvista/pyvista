@@ -366,7 +366,7 @@ def pytest_runtest_setup(item: pytest.Item):
     """
 
     # this test needs a given VTK version
-    if item_mark := item.get_closest_marker('needs_vtk_version'):
+    for item_mark in item.iter_markers('needs_vtk_version'):
         sig = Signature(
             [
                 Parameter(
