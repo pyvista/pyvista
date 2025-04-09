@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 from typing import NamedTuple
 import warnings
-from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import parse
 
 from PIL import Image
 import pytest
@@ -30,6 +30,8 @@ MAX_VTKSZ_FILE_SIZE_MB = 50
 # Same value as `sphinx_gallery_conf['junit']` in `conf.py`
 SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
 SPHINX_GALLERY_EXAMPLE_MAX_TIME = 900.0  # Measured in seconds
+XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
+assert XML_FILE.is_file()
 
 pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
@@ -276,44 +278,15 @@ def test_interactive_plot_file_size(vtksz_file: str):
         pytest.fail(msg)
 
 
-def load_test_cases_from_xml(path) -> list[dict[str, str | int | float | bool | None]]:
-    """Parse test cases from the generated JUnit XML file."""
-    tree = ET.parse(path)
-    root = tree.getroot()
-    cases = []
-    for testcase in root.findall('testcase'):
-        name = testcase.attrib['name']
-        time = float(testcase.attrib['time'])
-        skipped_elem = testcase.find('skipped')
-        skipped = skipped_elem is not None
-        skip_msg = skipped_elem.attrib.get('message') if skipped else None
-        cases.append(
-            {
-                'name': name,
-                'file': testcase.attrib['file'],
-                'classname': testcase.attrib['classname'],
-                'line': int(testcase.attrib['line']),
-                'time': time,
-                'skipped': skipped,
-                'skip_message': skip_msg,
-            }
+xml_root = parse(XML_FILE).getroot()
+test_cases = [dict(case.attrib) for case in xml_root.iterfind('testcase')]
+test_ids = [case['classname'] for case in test_cases]
+
+
+@pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
+def test_execution_times(testcase):
+    if float(testcase['time']) > SPHINX_GALLERY_EXAMPLE_MAX_TIME:
+        pytest.fail(
+            f'Gallery example {testcase["name"]!r} from {testcase["file"]!r}\n'
+            f'Took too long to run: Duration {testcase["time"]}s > {SPHINX_GALLERY_EXAMPLE_MAX_TIME}s',
         )
-    return cases
-
-
-TEST_CASES = load_test_cases_from_xml(HTML_DIR / SPHINX_GALLERY_CONF_JUNIT)
-IDS = [case['classname'] for case in TEST_CASES]
-
-
-@pytest.mark.parametrize('testcase', TEST_CASES, ids=IDS)
-def test_sphinx_gallery_execution_time(testcase):
-    if testcase['skipped']:
-        pytest.skip(testcase['skip_message'] or 'Skipped test.')
-
-    msg = (
-        f"\nSphinx gallery example '{testcase['name']}' from file\n"
-        f'\t{testcase["file"]}\n'
-        f'has an execution time: {testcase["time"]:.3f} seconds\n'
-        f'which exceeds the maximum allowed: {SPHINX_GALLERY_EXAMPLE_MAX_TIME} seconds.'
-    )
-    assert testcase['time'] < SPHINX_GALLERY_EXAMPLE_MAX_TIME, msg
