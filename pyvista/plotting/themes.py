@@ -3425,7 +3425,7 @@ class DocumentProTheme(DocumentTheme):
         self.depth_peeling.enabled = True
 
 
-class DocumentBuildTheme(DocumentTheme):
+class _DocumentBuildTheme(DocumentTheme):
     """Theme used for building the documentation."""
 
     def __init__(self):
@@ -3466,7 +3466,7 @@ class _NATIVE_THEMES(Enum):
     paraview = ParaViewTheme
     document = DocumentTheme
     document_pro = DocumentProTheme
-    document_build = DocumentBuildTheme
+    document_build = _DocumentBuildTheme
     dark = DarkTheme
     default = document
     testing = _TestingTheme
