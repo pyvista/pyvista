@@ -3415,6 +3415,7 @@ class DocumentProTheme(DocumentTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        self.name = 'document_pro'
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
@@ -3422,6 +3423,21 @@ class DocumentProTheme(DocumentTheme):
         self.depth_peeling.number_of_peels = 4
         self.depth_peeling.occlusion_ratio = 0.0
         self.depth_peeling.enabled = True
+
+
+class DocumentBuildTheme(DocumentTheme):
+    """Theme used for building the documentation."""
+
+    def __init__(self):
+        """Initialize the theme."""
+        super().__init__()
+        self.name = 'document_build'
+        self.window_size = [1024, 768]
+        self.font.size = 22
+        self.font.label_size = 22
+        self.font.title_size = 22
+        self.return_cpos = False
+        self.resample_environment_texture = True
 
 
 class _TestingTheme(Theme):
@@ -3455,6 +3471,7 @@ class _NATIVE_THEMES(Enum):
     paraview = ParaViewTheme
     document = DocumentTheme
     document_pro = DocumentProTheme
+    document_build = DocumentBuildTheme
     dark = DarkTheme
     default = document
     testing = _TestingTheme
