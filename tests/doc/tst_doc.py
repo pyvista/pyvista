@@ -284,7 +284,7 @@ test_ids = [case['classname'] for case in test_cases]
 
 
 @pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
-def test_execution_times(testcase):
+def test_sphinx_gallery_execution_times(testcase):
     if float(testcase['time']) > SPHINX_GALLERY_EXAMPLE_MAX_TIME:
         pytest.fail(
             f'Gallery example {testcase["name"]!r} from {testcase["file"]!r}\n'
