@@ -15,11 +15,11 @@ def autoclose_plotters():
 
 
 @pytest.fixture(autouse=True)
-def set_default_theme():
-    """Reset the theme for every test."""
+def reset_gloal_theme():
+    """Reset global_theme."""
     # this stops any doctest-module tests from overriding the global theme and
     # creating test side effects
-    pyvista.global_theme.load_theme('document')
+    pyvista.set_plot_theme('document')
     pyvista.global_theme.resample_environment_texture = True  # Speed up CI
     yield
-    pyvista.global_theme.load_theme('document')
+    pyvista.global_theme.restore_defaults()
