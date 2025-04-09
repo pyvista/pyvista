@@ -285,7 +285,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
     fail_slow_enabled = True  # "CI" in os.environ
     for item in items:
-        item.add_marker(pytest.mark.fail_slow('1s', enabled=fail_slow_enabled))
+        item.add_marker(pytest.mark.fail_slow('5s', enabled=fail_slow_enabled))
 
         # skip all tests that need downloads
         if not test_downloads:

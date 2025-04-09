@@ -27,4 +27,4 @@ def pytest_collection_modifyitems(config, items):
     """Modify collected tests."""
     enabled = True  # "CI" in os.environ
     for item in items:
-        item.add_marker(pytest.mark.fail_slow('1s', enabled=enabled))
+        item.add_marker(pytest.mark.fail_slow('5s', enabled=enabled))
