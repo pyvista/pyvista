@@ -1073,34 +1073,21 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    if pyvista.vtk_version_info < (9, 4):
-        polyhedral_cells: VectorLike[int] = pyvista.convert_array(mesh.GetFaces())
+    def split(arr: VectorLike[int]) -> VectorLike[VectorLike[int]]:
+        i, offsets = 0, [0]
 
-        if polyhedral_cells is not None:
-            locations = pyvista.convert_array(mesh.GetFaceLocations())
-            polyhedral_cell_faces: list[list[VectorLike[int]]] = []
+        while i < len(arr):
+            offsets.append(arr[i] + 1)
+            i += offsets[-1]
 
-            for location in locations:
-                if location == -1:
-                    polyhedral_cell_faces.append([])
-                    continue
+        offsets = np.cumsum(offsets)
 
-                n_faces = polyhedral_cells[location]
-                i = location + 1
-                faces: list[VectorLike[int]] = []
+        return [arr[i1 + 1:i2] for i1, i2 in zip(offsets[:-1], offsets[1:])]
 
-                while len(faces) < n_faces:
-                    n_vertices = polyhedral_cells[i]
-                    faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
-                    i += n_vertices + 1
+    polyhedron_faces = split(mesh.polyhedron_faces)
 
-                polyhedral_cell_faces.append(faces)
-
-    else:
-        from ..cell import _get_irregular_cells
-
-        polyhedron_faces = _get_irregular_cells(mesh.GetPolyhedronFaces())
-        polyhedron_locations = _get_irregular_cells(mesh.GetPolyhedronFaceLocations())
+    if polyhedron_faces:
+        polyhedron_locations = split(mesh.polyhedron_face_locations)
         polyhedral_cell_faces = [
             [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
         ]
