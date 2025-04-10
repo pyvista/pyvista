@@ -1072,6 +1072,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
+    def delete_axes_widget(self):
+        """Remove and delete the current axes widget."""
+        if hasattr(self, 'axes_widget'):
+            self.axes_actor = None
+            # HACK: set the viewport to a tiny value to hide the widget first
+            # This is due to an issue with a blue box appearing after removal
+            # Tracked in https://gitlab.kitware.com/vtk/vtk/-/issues/19592
+            self.axes_widget.SetViewport(0.0, 0.0, 0.0001, 0.0001)
+            if self.axes_widget.GetEnabled():
+                self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
+
     def add_orientation_widget(
         self,
         actor,
@@ -1136,10 +1149,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 actor.prop.color = color
             actor.prop.opacity = opacity
         if hasattr(self, 'axes_widget'):
-            # Delete the old one
-            self.axes_widget.EnabledOff()  # type: ignore[has-type]
-            self.Modified()
-            del self.axes_widget  # type: ignore[has-type]
+            self.delete_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -1266,10 +1276,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self.delete_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1488,10 +1495,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self.delete_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -1537,9 +1541,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
-            self.axes_widget.EnabledOff()
-            self.Modified()
+        self.delete_axes_widget()
 
     def show_axes(self) -> None:
         """Show the axes orientation widget.
@@ -3582,10 +3584,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        if hasattr(self, 'axes_widget'):
-            self.hide_axes()  # Necessary to avoid segfault
-            self.axes_actor = None
-            del self.axes_widget
+        self.delete_axes_widget()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -4266,7 +4265,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
         if xy_label_mode:
-            legend_scale.SetLabelModeToXYCoordinates()
+            if pyvista.vtk_version_info >= (9, 4):
+                legend_scale.SetLabelModeToCoordinates()
+            else:
+                legend_scale.SetLabelModeToXYCoordinates()
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
