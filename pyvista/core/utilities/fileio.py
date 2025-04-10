@@ -21,6 +21,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
 
 from .observers import Observer
 
@@ -1072,10 +1073,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+    if pyvista.vtk_version_info >= (9, 4):
+        polyhedral_cells = mesh.polyhedron_faces
+        if polyhedral_cells is None:
+            msg = 'We have not yet implemented polyhedral cells for VTK 9.4+'
+            raise VTKVersionError(msg)
+        locations = mesh.polyhedron_face_locations
+    else:
+        polyhedral_cells = mesh.faces
+        locations = mesh.face_locations
 
     if polyhedral_cells is not None:
-        locations = pyvista.convert_array(mesh.GetFaceLocations())
         polyhedral_cell_faces = []
 
         for location in locations:

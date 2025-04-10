@@ -220,6 +220,8 @@ def test_axis_init():
     assert np.allclose(axis.range, r_fix)
     assert axis.behavior == 'fixed'
     assert axis.grid
+    assert isinstance(axis.pen, charts.Pen)
+    assert isinstance(axis.grid_pen, charts.Pen)
 
 
 def test_axis_label(axis):
