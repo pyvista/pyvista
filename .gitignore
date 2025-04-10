@@ -103,3 +103,6 @@ venv/
 
 # VSCode
 .vscode/
+
+# Ignore tags file
+tags
