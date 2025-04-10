@@ -849,16 +849,19 @@ copies of the images are made as follows:
 
 #. If the comparison between the two images fails:
 
-    - The cache image is copied to ``./_doc_debug_images_failed/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/from_build``
+    - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
 
 #.  If an image is in the cache but missing from the build:
 
-    - The cache image is copied to  ``./_doc_debug_images_failed/from_cache``
+    - The cache image is copied to  ``./_doc_debug_images_failed/errors/from_cache``
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+
+If a warning is generated instead of an error, images are saved to the
+``warnings`` sub-directory instead ``errors``.
 
 To resolve failed tests, any images in ``from_build`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
