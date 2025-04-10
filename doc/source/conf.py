@@ -40,7 +40,7 @@ pyvista.set_error_output_file('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
 pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
-pyvista.set_plot_theme('document')
+pyvista.set_plot_theme('document_build')
 pyvista.global_theme.window_size = [1024, 768]
 pyvista.global_theme.font.size = 22
 pyvista.global_theme.font.label_size = 22
@@ -452,7 +452,7 @@ class ResetPyVista:
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-        pyvista.set_plot_theme('document')
+        pyvista.set_plot_theme('document_build')
 
     def __repr__(self):
         return 'ResetPyVista'
@@ -502,7 +502,7 @@ IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
 from pyvista import set_plot_theme as __s_p_t
-__s_p_t('document')
+__s_p_t('document_build')
 del __s_p_t
 """
 pyvista_plot_cleanup = pyvista_plot_setup
