@@ -25,11 +25,11 @@ from pyvista import examples
 # looking at the directory containing the file we downloaded.
 filename = examples.download_blood_vessels(load=False)
 path = str(Path(filename).parent)
-os.listdir(path)
+os.listdir(path)  # noqa: PTH208
 
 
 # %%
-os.listdir(str(Path(path) / 'T0000000500'))
+os.listdir(str(Path(path) / 'T0000000500'))  # noqa: PTH208
 
 
 # %%

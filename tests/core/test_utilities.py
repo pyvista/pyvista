@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,8 @@ import re
 import shutil
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeVar
+from typing import get_args
 from unittest import mock
 import warnings
 
@@ -61,6 +64,7 @@ from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
@@ -2106,20 +2110,15 @@ def modifies_verbosity():
 @pytest.mark.parametrize(
     'verbosity',
     [
-        'OFF',
         'off',
         'error',
         'warning',
         'info',
-        'trace',
         'max',
-        *range(10),
-        '0',
-        _vtk.vtkLogger.VERBOSITY_OFF,
     ],
 )
 def test_vtk_verbosity_context(verbosity):
-    initial_verbosity = vtk.vtkLogger.VERBOSITY_4
+    initial_verbosity = vtk.vtkLogger.VERBOSITY_OFF
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
     with pv.vtk_verbosity(verbosity):
         ...
@@ -2141,10 +2140,7 @@ def test_vtk_verbosity_nested_context():
 
 @pytest.mark.usefixtures('modifies_verbosity')
 def test_vtk_verbosity_no_context():
-    match = re.escape(
-        'Verbosity must be set to a value to use it as a context manager.\n'
-        'Call `vtk_verbosity()` with an argument to set its value.'
-    )
+    match = re.escape('State must be set before using it as a context manager.')
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity:
             ...
@@ -2160,22 +2156,73 @@ def test_vtk_verbosity_no_context():
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
-@pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
-def test_vtk_verbosity_set_get(verbosity):
+def test_vtk_verbosity_set_get():
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
-    pv.vtk_verbosity(verbosity)
+    pv.vtk_verbosity('off')
     assert pv.vtk_verbosity() == 'off'
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
+
+    # Set this to an invalid state with vtk methods
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_1)
+    with pytest.raises(ValueError, match="state '1' is not valid"):
+        pv.vtk_verbosity()
 
 
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
-    match = re.escape(
-        "must be one of:\n'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
-    )
+    match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+T = TypeVar('T')
+
+
+def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
+    if arg2 is not None:
+
+        class MyState(_StateManager[arg1, arg2]):
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+    else:
+
+        class MyState(_StateManager[arg1]):
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+
+    if sub_subclass:
+
+        class MyState2(MyState): ...
+
+        return MyState2
+    return MyState
+
+
+@pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int], [float]]])
+def test_state_manager_invalid_type_arg(arg):
+    if isinstance(arg, Iterable):
+        cls = _create_state_manager_subclass(*arg)
+    else:
+        cls = _create_state_manager_subclass(arg)
+
+    match = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+    with pytest.raises(TypeError, match=match):
+        cls()
+
+
+def test_state_manager_sub_subclass():
+    options = Literal['on', 'off']
+    cls = _create_state_manager_subclass(options, sub_subclass=True)
+    manager = cls()
+    manager('on')
+    assert manager._valid_states == get_args(options)
 
 
 @pytest.mark.parametrize(
@@ -2325,3 +2372,20 @@ def test_cell_quality_info_raises():
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute():
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+
+    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+
+
+@pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute_input_type(obj):
+    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
