@@ -94,8 +94,8 @@ jobs:
       - uses: nick-fields/retry@v3
         with:
           max_attempts: 3
+          timeout_minutes: 15
           command: pytest ./tests
-          working-directory: pyvistaqt
 
   geovista:
     name: GeoVista
