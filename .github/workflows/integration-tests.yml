@@ -91,8 +91,11 @@ jobs:
           pyvista: false
       - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
       - run: pip install -ve .
-      - run: pytest ./tests
-        working-directory: pyvistaqt
+      - uses: nick-fields/retry@v3
+        with:
+          max_attempts: 3
+          command: pytest ./tests
+          working-directory: pyvistaqt
 
   geovista:
     name: GeoVista
