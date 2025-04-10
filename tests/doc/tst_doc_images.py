@@ -135,9 +135,9 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('vtksz_file', files, ids=ids)
 
 
-def _save_failed_test_image(source_path, parent_dir: Literal['warnings', 'errors', 'flaky']):
+def _save_failed_test_image(source_path, category: Literal['warnings', 'errors', 'flaky']):
     """Save test image from cache or build to the failed image dir."""
-    parent_dir = Path(parent_dir)
+    parent_dir = Path(category)
     if Path(source_path).parent == Path(BUILD_IMAGE_CACHE):
         dest_dirname = 'from_cache'
     else:
