@@ -587,3 +587,51 @@ def VTKVersionInfo():
 
 
 vtk_version_info = VTKVersionInfo()
+
+
+class vtkPyVistaOverride:
+    """Base class to automatically override VTK classes with PyVista classes."""
+
+    def __init_subclass__(cls, **kwargs):
+        if vtk_version_info >= (9, 4):
+            # Check for VTK base classes and call the override method
+            for base in cls.__bases__:
+                if (
+                    hasattr(base, '__module__')
+                    and base.__module__.startswith('vtkmodules.')
+                    and hasattr(base, 'override')
+                ):
+                    # For now, just remove any overrides for these classes
+                    # There are clear issues with the current implementation
+                    # of overriding these classes upstream and until they are
+                    # resolved, we will entirely remove the overrides.
+                    # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
+                    # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
+                    base.override(None)
+                    break
+
+        return cls
+
+
+def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
+    """Return True if the attribute is defined by a vtk class.
+
+    Parameters
+    ----------
+    obj : object
+        Class or instance to check.
+
+    attr : str
+        Name of the attribute to check.
+
+    """
+
+    def _find_defining_class(cls, attr):
+        """Find the class that defines a given attribute."""
+        for base in cls.__mro__:
+            if attr in base.__dict__:
+                return base
+        return None
+
+    cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
+    return cls is not None and cls.__module__.startswith('vtkmodules')
