@@ -168,15 +168,14 @@ meshes = [
     airplane,
     uniform,
     uniform2d,
+    hybrid,
     mesh2d,
+    polyhedron,
     cow,
     empty,
     points_only,
     mixed_quad_pixel_voxel,
 ]
-
-if pv.vtk_version_info < (9, 4):
-    meshes.append(polyhedron)
 
 
 @pytest.mark.parametrize('mesh_in', meshes)
