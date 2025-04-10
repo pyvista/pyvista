@@ -143,6 +143,7 @@ def _save_failed_test_image(source_path, parent_dir: Literal['warnings', 'errors
     else:
         dest_dirname = 'from_build'
     Path(DEBUG_IMAGE_FAILED_DIR).mkdir(exist_ok=True)
+    Path(DEBUG_IMAGE_FAILED_DIR, parent_dir).mkdir(exist_ok=True)
     dest_dir = Path(DEBUG_IMAGE_FAILED_DIR, parent_dir, dest_dirname)
     dest_dir.mkdir(exist_ok=True)
     dest_path = Path(dest_dir, Path(source_path).name)
