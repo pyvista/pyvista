@@ -2372,3 +2372,20 @@ def test_cell_quality_info_raises():
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute():
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+
+    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+
+
+@pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute_input_type(obj):
+    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')

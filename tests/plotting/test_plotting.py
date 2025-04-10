@@ -103,6 +103,10 @@ skip_lesser_9_3_X = pytest.mark.skipif(
     pv.vtk_version_info < (9, 3),
     reason='Functions not implemented before 9.3.X',
 )
+skip_lesser_9_4_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 4),
+    reason='Functions not implemented before 9.4.X or invalid results prior',
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -1563,6 +1567,7 @@ def test_vector_array_with_points(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pv.Plotter()
@@ -1596,6 +1601,7 @@ def test_vector_array(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
     copy_vector_values_points = multicomp_poly['vector_values_points'].copy()
@@ -2062,6 +2068,7 @@ def test_opacity_by_array_direct(plane, verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2071,6 +2078,7 @@ def test_opacity_by_array(uniform):
     p.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2103,6 +2111,7 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+@skip_windows_mesa
 def test_opacity_by_array_preference():
     tetra = pv.Tetrahedron()  # 4 points, 4 cells
     opacities = np.linspace(0.2, 0.8, tetra.n_points)
@@ -3074,6 +3083,7 @@ def test_add_text_font_file():
     plotter.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pv.Plotter()
@@ -3081,6 +3091,7 @@ def test_plot_categories_int(sphere):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_true(sphere):
     sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
     pl = pv.Plotter()
@@ -3194,6 +3205,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 
 
 @pytest.mark.skip_windows('Test fails on Windows because of opacity')
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
 
@@ -3217,6 +3229,7 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
     pl.show()
 
 
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
@@ -3253,6 +3266,7 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_composite_poly_component_norm(multiblock_poly):
     for ii, block in enumerate(multiblock_poly):
         data = block.compute_normals().point_data['Normals']
@@ -3391,6 +3405,7 @@ def test_multi_plot_scalars(verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_bool_scalars(sphere):
     sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
     sphere['scalars'][::2] = 1
@@ -3569,6 +3584,7 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.plot()
 
 
+@skip_windows_mesa
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
