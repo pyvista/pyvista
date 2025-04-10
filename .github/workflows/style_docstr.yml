@@ -10,11 +10,16 @@ concurrency:
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
+permissions:
+  id-token: none
+
 jobs:
   docstringcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,7 +39,7 @@ jobs:
           pip install -e .[test]
 
       - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@v2
+        uses: pyvista/setup-headless-display-action@v3
 
       - name: Software Report
         run: |
@@ -53,6 +58,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5

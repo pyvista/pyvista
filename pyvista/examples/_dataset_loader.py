@@ -277,7 +277,7 @@ class _DatasetLoader:
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
             if isinstance(data, pv.Texture):
-                data = cast(pv.ImageData, pv.wrap(data.GetInput()))
+                data = cast('pv.ImageData', pv.wrap(data.GetInput()))
             try:
                 if isinstance(data, pv.ExplicitStructuredGrid):
                     # extract_cells_by_type does not support this datatype
@@ -286,7 +286,7 @@ class _DatasetLoader:
                     [cell_types.update({cell_type: None}) for cell_type in cells]
                 else:
                     for cell_type in pv.CellType:
-                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr, misc]
+                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
                         if extracted.n_cells > 0:
                             cell_types[cell_type] = None
             except AttributeError:
@@ -396,12 +396,13 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                 read_func = lambda path: _load_as_multiblock(  # type: ignore[assignment]
                     [
                         _SingleFileDatasetLoader(str(Path(path, fname)))
-                        for fname in sorted(os.listdir(path))
+                        for fname in sorted(os.listdir(path))  # noqa: PTH208
                     ],
                 )
                 return read_func(path) if load_func is None else load_func(read_func(path))
             else:
-                raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
+                msg = f'Error loading dataset from path:\n\t{self.path}'
+                raise RuntimeError(msg)
 
 
 class _DownloadableFile(_SingleFile, _Downloadable[str]):

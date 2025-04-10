@@ -21,9 +21,9 @@ DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
 DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
 BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
 FLAKY_IMAGE_DIR = str(Path(__file__).parent / 'flaky_tests')
-FLAKY_TEST_CASES = [
-    path for path in os.listdir(FLAKY_IMAGE_DIR) if Path(FLAKY_IMAGE_DIR, path).is_dir()
-]
+FLAKY_TEST_CASES = [path.name for path in Path(FLAKY_IMAGE_DIR).iterdir() if path.is_dir()]
+
+MAX_VTKSZ_FILE_SIZE_MB = 50
 
 pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
@@ -127,6 +127,12 @@ def pytest_generate_tests(metafunc):
         ids = [case.test_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
+    if 'vtksz_file' in metafunc.fixturenames:
+        # Generate a separate test case for each vtksz file
+        files = sorted(_get_file_paths(BUILD_IMAGE_DIR, ext='vtksz'))
+        ids = [str(Path(file).stem) for file in files]
+        metafunc.parametrize('vtksz_file', files, ids=ids)
+
 
 def _save_failed_test_image(source_path):
     """Save test image from cache or build to the failed image dir."""
@@ -141,7 +147,7 @@ def _save_failed_test_image(source_path):
     shutil.copy(source_path, dest_path)
 
 
-def test_docs(test_case: _TestCaseTuple):
+def test_static_images(test_case: _TestCaseTuple):
     fail_msg, fail_source = _test_both_images_exist(*test_case)
     if fail_msg:
         _save_failed_test_image(fail_source)
@@ -246,3 +252,19 @@ def _is_false_positive(test_name, docs_image):
         if _check_compare_fail(test_name, error) is None:
             return path
     return None
+
+
+def test_interactive_plot_file_size(vtksz_file: str):
+    filepath = Path(vtksz_file)
+    assert filepath.is_file()
+    size_bytes = filepath.stat().st_size
+    size_megabytes = round(size_bytes / 1_000_000)
+    if size_megabytes > MAX_VTKSZ_FILE_SIZE_MB:
+        rel_path = filepath.relative_to(ROOT_DIR)
+        msg = (
+            f'The generated interactive plot file is too large: \n'
+            f'\t{rel_path}\n'
+            f'Its size is {size_megabytes} MB, but must be less than {MAX_VTKSZ_FILE_SIZE_MB} MB.\n'
+            f'Consider reducing the complexity of the plot or forcing it to be static.'
+        )
+        pytest.fail(msg)

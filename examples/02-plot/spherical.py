@@ -40,7 +40,8 @@ def _cell_bounds(points, bound_position=0.5):
 
     """
     if points.ndim != 1:
-        raise ValueError('Only 1D points are allowed.')
+        msg = 'Only 1D points are allowed.'
+        raise ValueError(msg)
     diffs = np.diff(points)
     delta = diffs[0] * bound_position
     return np.concatenate([[points[0] - delta], points + delta])

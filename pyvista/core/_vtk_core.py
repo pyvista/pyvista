@@ -13,6 +13,7 @@ import contextlib
 from typing import NamedTuple
 import warnings
 
+from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource as vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource as vtkImageGaussianSource
@@ -320,6 +321,7 @@ from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCe
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation
 from vtkmodules.vtkFiltersCore import vtkResampleWithDataSet as vtkResampleWithDataSet
+from vtkmodules.vtkFiltersCore import vtkReverseSense as vtkReverseSense
 from vtkmodules.vtkFiltersCore import vtkSmoothPolyDataFilter as vtkSmoothPolyDataFilter
 from vtkmodules.vtkFiltersCore import vtkStripper as vtkStripper
 from vtkmodules.vtkFiltersCore import vtkThreshold as vtkThreshold
@@ -441,17 +443,21 @@ from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane as vtkTextureMapTo
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere as vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality as vtkCellQuality
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
+from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
 
+from vtkmodules.vtkImagingCore import vtkAbstractImageInterpolator as vtkAbstractImageInterpolator
 from vtkmodules.vtkImagingCore import vtkExtractVOI as vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageConstantPad as vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageFlip as vtkImageFlip
+from vtkmodules.vtkImagingCore import vtkImageInterpolator as vtkImageInterpolator
 from vtkmodules.vtkImagingCore import vtkImageMirrorPad as vtkImageMirrorPad
-from vtkmodules.vtkImagingCore import vtkImageResample as vtkImageResample
+from vtkmodules.vtkImagingCore import vtkImageResize as vtkImageResize
+from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincInterpolator
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
@@ -523,7 +529,8 @@ except ImportError:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
+            msg = 'Chart backgrounds require the vtkPythonContext2D module'
+            raise VTKVersionError(msg)
 
 
 from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
@@ -580,3 +587,51 @@ def VTKVersionInfo():
 
 
 vtk_version_info = VTKVersionInfo()
+
+
+class vtkPyVistaOverride:
+    """Base class to automatically override VTK classes with PyVista classes."""
+
+    def __init_subclass__(cls, **kwargs):
+        if vtk_version_info >= (9, 4):
+            # Check for VTK base classes and call the override method
+            for base in cls.__bases__:
+                if (
+                    hasattr(base, '__module__')
+                    and base.__module__.startswith('vtkmodules.')
+                    and hasattr(base, 'override')
+                ):
+                    # For now, just remove any overrides for these classes
+                    # There are clear issues with the current implementation
+                    # of overriding these classes upstream and until they are
+                    # resolved, we will entirely remove the overrides.
+                    # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
+                    # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
+                    base.override(None)
+                    break
+
+        return cls
+
+
+def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
+    """Return True if the attribute is defined by a vtk class.
+
+    Parameters
+    ----------
+    obj : object
+        Class or instance to check.
+
+    attr : str
+        Name of the attribute to check.
+
+    """
+
+    def _find_defining_class(cls, attr):
+        """Find the class that defines a given attribute."""
+        for base in cls.__mro__:
+            if attr in base.__dict__:
+                return base
+        return None
+
+    cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
+    return cls is not None and cls.__module__.startswith('vtkmodules')

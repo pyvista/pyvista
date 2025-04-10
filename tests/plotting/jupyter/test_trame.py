@@ -156,7 +156,7 @@ def test_trame(client_type):
     assert hasattr(pl.renderer, 'axes_actor')
     server.state[viewer.AXIS] = False
     viewer.on_axis_visibility_change(**server.state.to_dict())
-    assert not pl.renderer.axes_widget.GetEnabled()
+    assert not hasattr(pl.renderer, 'axes_widget')
 
     server.state[viewer.SERVER_RENDERING] = False
     viewer.on_rendering_mode_change(**server.state.to_dict())
@@ -428,3 +428,14 @@ def test_embeddable_widget(skip_check_gc):
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
+
+
+def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
+    from pyvista.trame import jupyter
+
+    monkeypatch.setattr(jupyter, 'HTML', object)
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.Widget(viewer=None, src=None)
+
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.EmbeddableWidget(plotter=None, width=None, height=None)

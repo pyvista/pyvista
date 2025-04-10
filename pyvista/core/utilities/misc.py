@@ -14,9 +14,11 @@ from typing import TypeVar
 import warnings
 
 import numpy as np
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import ClassVar
 
     from .._typing_core import ArrayLike
     from .._typing_core import NumpyArray
@@ -76,11 +78,13 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        raise TypeError(f'{name} must be a length three iterable of floats.')
+        msg = f'{name} must be a length three iterable of floats.'  # type: ignore[unreachable]
+        raise TypeError(msg)
     if len(point) != 3:
         if name == '':
             name = 'Vector'
-        raise ValueError(f'{name} must be a length three iterable of floats.')
+        msg = f'{name} must be a length three iterable of floats.'
+        raise ValueError(msg)
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
@@ -98,7 +102,8 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
     def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202
         if cls is cls_:
-            raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
+            msg = f'{cls.__name__} is an abstract class and may not be instantiated.'
+            raise TypeError(msg)
         return super(cls_, cls).__new__(cls)
 
     cls_.__new__ = __new__
@@ -110,7 +115,7 @@ class AnnotatedIntEnum(int, enum.Enum):
 
     annotation: str
 
-    def __new__(cls: type[T], value: int, annotation: str) -> T:
+    def __new__(cls, value: int, annotation: str) -> Self:
         """Initialize."""
         obj = int.__new__(cls, value)
         obj._value_ = value
@@ -118,7 +123,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         return obj
 
     @classmethod
-    def from_str(cls: type[T], input_str: str) -> T:
+    def from_str(cls, input_str: str) -> Self:
         """Create an enum member from a string.
 
         Parameters
@@ -140,10 +145,11 @@ class AnnotatedIntEnum(int, enum.Enum):
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
-        raise ValueError(f'{cls.__name__} has no value matching {input_str}')
+        msg = f'{cls.__name__} has no value matching {input_str}'
+        raise ValueError(msg)
 
     @classmethod
-    def from_any(cls: type[T], value: AnnotatedIntEnum | int | str) -> T:
+    def from_any(cls, value: AnnotatedIntEnum | int | str) -> Self:
         """Create an enum member from a string, int, etc.
 
         Parameters
@@ -169,7 +175,8 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f'{cls.__name__} has no value matching {value}')
+            msg = f'{cls.__name__} has no value matching {value}'  # type: ignore[unreachable]
+            raise ValueError(msg)
 
 
 @cache
@@ -266,9 +273,8 @@ class conditional_decorator:
 def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
-        raise ValueError(
-            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
-        )
+        msg = f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        raise ValueError(msg)
 
 
 def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
@@ -285,10 +291,11 @@ def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
         ):
             object.__setattr__(self, name, value)
         else:
-            raise AttributeError(
+            msg = (
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}',
+                f'{self.__class__.__name__}'
             )
+            raise AttributeError(msg)
 
     cls.__setattr__ = __setattr__
     return cls
@@ -342,3 +349,33 @@ class _classproperty(property):
 
     def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
         return self.fget(owner_cls)  # type: ignore[misc]
+
+
+class _NameMixin:
+    """Add a 'name' property to a class.
+
+    .. versionadded:: 0.45
+
+    """
+
+    # In case subclasses use @no_new_attr mixin
+    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
+
+    @property
+    def name(self) -> str:  # numpydoc ignore=RT01
+        """Get or set the unique name identifier used by PyVista."""
+        if not hasattr(self, '_name') or self._name is None:
+            address = (
+                self.GetAddressAsString('')
+                if hasattr(self, 'GetAddressAsString')
+                else hex(id(self))
+            )
+            return f'{type(self).__name__}({address})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if not value:
+            msg = 'Name must be truthy.'
+            raise ValueError(msg)
+        self._name = str(value)

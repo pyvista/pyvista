@@ -9,7 +9,11 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 
+empty = pv.UnstructuredGrid()
 cow = examples.download_cow().cast_to_unstructured_grid()
+points_only = cow.copy()
+points_only.cells = np.array((), dtype=int)
+assert points_only.n_cells == 0
 beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
@@ -69,6 +73,12 @@ hybrid = pv.UnstructuredGrid(
         [2.0, 0.5, 1.0],
         [-1.0, 0.5, 1.0],
     ],
+)
+mixed_quad_pixel_voxel = (
+    examples.cells.Quadrilateral()
+    + examples.cells.Pixel()
+    + examples.cells.Hexahedron()
+    + examples.cells.Voxel()
 )
 mesh2d = meshio.Mesh(
     points=[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
@@ -153,11 +163,23 @@ polyhedron = meshio.Mesh(
         ),
     ],
 )
+meshes = [
+    beam,
+    airplane,
+    uniform,
+    uniform2d,
+    mesh2d,
+    cow,
+    empty,
+    points_only,
+    mixed_quad_pixel_voxel,
+]
+
+if pv.vtk_version_info < (9, 4):
+    meshes.append(polyhedron)
 
 
-@pytest.mark.parametrize(
-    'mesh_in', [beam, airplane, uniform, uniform2d, hybrid, mesh2d, polyhedron, cow]
-)
+@pytest.mark.parametrize('mesh_in', meshes)
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
@@ -172,6 +194,29 @@ def test_meshio(mesh_in, tmpdir):
     elif (mesh_in.celltypes == pv.CellType.VOXEL).all():
         cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:, [0, 1, 2, 4, 3, 5, 6, 8, 7]].ravel()
         assert np.allclose(cells, mesh.cells)
+    # Mixed cell types with voxels or pixels
+    elif np.isin(mesh_in.celltypes, [pv.CellType.PIXEL, pv.CellType.VOXEL]).any():
+        cells_in = []
+
+        for cell_type, cell in mesh_in.cells_dict.items():
+            for indices in cell:
+                # Pixel
+                if cell_type == pv.CellType.PIXEL:
+                    cells_in.extend([len(indices), *indices[[0, 1, 3, 2]].tolist()])
+                # Voxel
+                elif cell_type == pv.CellType.VOXEL:
+                    cells_in.extend([len(indices), *indices[[0, 1, 3, 2, 4, 5, 7, 6]].tolist()])
+                else:
+                    cells_in.extend([len(indices), *indices.tolist()])
+
+        cells_out = [
+            i
+            for cell in mesh.cells_dict.values()
+            for indices in cell
+            for i in [len(indices), *indices.tolist()]
+        ]
+
+        assert cells_in == cells_out
     else:
         assert np.allclose(mesh_in.cells, mesh.cells)
     for k, v in mesh_in.point_data.items():

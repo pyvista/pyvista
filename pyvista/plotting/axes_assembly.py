@@ -21,6 +21,7 @@ from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -75,7 +76,7 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -99,6 +100,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         origin: VectorLike[float],
         scale: float | VectorLike[float],
         user_matrix: MatrixLike[float] | None,
+        name: str | None = None,
     ):
         super().__init__()
 
@@ -153,6 +155,8 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.scale = scale  # type: ignore[assignment]
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
+
+        self._name = name  # type: ignore[assignment]
 
     @property
     def parts(self):
@@ -352,6 +356,11 @@ class AxesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -448,6 +457,7 @@ class AxesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -475,6 +485,7 @@ class AxesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -802,9 +813,8 @@ class AxesAssembly(_XYZAssembly):
             values = [value] * len(actors)
 
         if len(values) != len(actors):
-            raise ValueError(
-                f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
-            )
+            msg = f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
+            raise ValueError(msg)
 
         # Sequence is valid, now set values
         for actor, val in zip(actors, values):
@@ -848,11 +858,13 @@ class AxesAssembly(_XYZAssembly):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
         valid_axis_official = valid_axis[3:]
         if axis not in valid_axis:
-            raise ValueError(f'Axis must be one of {valid_axis_official}.')
+            msg = f'Axis must be one of {valid_axis_official}.'
+            raise ValueError(msg)
         valid_part = [0, 1, 'shaft', 'tip', 'all']
         valid_part_official = valid_part[2:]
         if part not in valid_part:
-            raise ValueError(f'Part must be one of {valid_part_official}.')
+            msg = f'Part must be one of {valid_part_official}.'
+            raise ValueError(msg)
 
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
@@ -971,6 +983,11 @@ class AxesAssemblySymmetric(AxesAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -1036,6 +1053,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -1064,6 +1082,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -1343,6 +1362,11 @@ class PlanesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the assembly. Defaults to the identity
         matrix. The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.OrthogonalPlanesSource`.
 
@@ -1445,6 +1469,7 @@ class PlanesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
         # Init plane actors
@@ -1485,6 +1510,7 @@ class PlanesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
 
         self.opacity = opacity  # type: ignore[assignment]
@@ -1843,7 +1869,8 @@ class PlanesAssembly(_XYZAssembly):
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
         if not hasattr(self, '_camera'):
-            raise ValueError('Camera has not been set.')
+            msg = 'Camera has not been set.'
+            raise ValueError(msg)
         return self._camera
 
     @camera.setter

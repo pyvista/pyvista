@@ -636,16 +636,18 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
         from sympy.abc import theta
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
-        raise ImportError(
-            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',
-        ) from None
+        msg = '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+        raise ImportError(msg) from None
 
     if n < 1:
-        raise ValueError('`n` must be at least 1')
+        msg = '`n` must be at least 1'
+        raise ValueError(msg)
     if l not in range(n):
-        raise ValueError(f'`l` must be one of: {list(range(n))}')
+        msg = f'`l` must be one of: {list(range(n))}'
+        raise ValueError(msg)
     if m not in range(-l, l + 1):
-        raise ValueError(f'`m` must be one of: {list(range(-l, l + 1))}')
+        msg = f'`m` must be one of: {list(range(-l, l + 1))}'
+        raise ValueError(msg)
 
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
 
@@ -675,6 +677,17 @@ _dataset_hydrogen_orbital = _DatasetLoader(_hydrogen_orbital_load_func)
 def load_logo():
     """Load the PyVista logo as a :class:`pyvista.ImageData`.
 
+    .. note::
+
+        Alternative versions of the logo file are also available from the ``logo``
+        directory at https://github.com/pyvista/pyvista/. This includes
+        higher-resolution ``.png`` files and a vectorized ``.svg`` version.
+
+    .. versionchanged:: 0.45
+
+        The dimensions of the image is now ``1389 x 592``.
+        Previously, it was ``1920 x 718``.
+
     Returns
     -------
     pyvista.ImageData
@@ -684,6 +697,9 @@ def load_logo():
     --------
     >>> from pyvista import examples
     >>> image = examples.load_logo()
+    >>> image.dimensions
+    (1389, 592, 1)
+
     >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::

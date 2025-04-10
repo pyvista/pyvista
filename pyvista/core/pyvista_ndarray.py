@@ -70,17 +70,18 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         else:
-            raise TypeError(
+            msg = (
                 f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray',
+                'Expected an Iterable or vtk.vtkAbstractArray'
             )
+            raise TypeError(msg)
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()
         if isinstance(dataset, _vtk.VTKObjectWrapper):
             obj.dataset.Set(dataset.VTKObject)
         else:
-            obj.dataset.Set(cast(_vtk.vtkDataSet, dataset))
+            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
         return obj
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:

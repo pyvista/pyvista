@@ -22,7 +22,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # +++++++++++++++
 #
 # Clip any dataset by a user defined plane using the
-# :func:`pyvista.DataSetFilters.clip` filter
+# :func:`pyvista.DataObjectFilters.clip` filter
 dataset = examples.download_bunny_coarse()
 clipped = dataset.clip('y', invert=False)
 
@@ -39,7 +39,7 @@ p.show()
 # ++++++++++++++++
 #
 # Clip any dataset by a set of XYZ bounds using the
-# :func:`pyvista.DataSetFilters.clip_box` filter.
+# :func:`pyvista.DataObjectFilters.clip_box` filter.
 dataset = examples.download_office()
 
 bounds = [2, 4.5, 2, 4.5, 1, 3]
@@ -57,7 +57,7 @@ p.show()
 # +++++++++++++++++++++
 #
 # Clip any dataset by an arbitrarily rotated solid box using the
-# :func:`pyvista.DataSetFilters.clip_box` filter.
+# :func:`pyvista.DataObjectFilters.clip_box` filter.
 mesh = examples.load_airplane()
 
 # Use `pv.Box()` or `pv.Cube()` to create a region of interest
@@ -90,8 +90,8 @@ p.show()
 # cells on the boundary, but want to preserve the input cell structure and to
 # pass the entire cell on through the boundary.
 #
-# This option is available for :func:`pyvista.DataSetFilters.clip`,
-# :func:`pyvista.DataSetFilters.clip_box`, and
+# This option is available for :func:`pyvista.DataObjectFilters.clip`,
+# :func:`pyvista.DataObjectFilters.clip_box`, and
 # :func:`pyvista.DataSetFilters.clip_surface`, but not available when clipping
 # by scalar in :func:`pyvista.DataSetFilters.clip_scalar`.
 

@@ -33,13 +33,19 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import final
+from typing import get_args
 
 import numpy as np
 
 import pyvista
 import pyvista as pv
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
+from pyvista.core.utilities.cell_quality import _CellTypesLiteral
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -58,6 +64,7 @@ if TYPE_CHECKING:
     from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
+CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -111,6 +118,7 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
+        print(f'generating tables... {cls.__name__}', flush=True)
         assert cls.path is not None, f'Subclass {cls} should specify a path.'
         if isinstance(cls.path, property):
             cls.path = cls.path.fget(cls)
@@ -146,12 +154,14 @@ class DocTable:
     @classmethod
     def fetch_data(cls):
         """Get a list of row_data used to generate the table."""
-        raise NotImplementedError('Subclasses should specify a fetch_data method.')
+        msg = 'Subclasses should specify a fetch_data method.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_header(cls, data):
         """Get the table's header rst."""
-        raise NotImplementedError('Subclasses should specify a table header.')
+        msg = 'Subclasses should specify a table header.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_row(cls, i, row_data):
@@ -160,7 +170,194 @@ class DocTable:
         Can return ``None`` if no row should be generated for the provided ``row_data``.
 
         """
-        raise NotImplementedError('Subclasses should specify a get_row method.')
+        msg = 'Subclasses should specify a get_row method.'
+        raise NotImplementedError(msg)
+
+
+class CellQualityMeasuresTable(DocTable):
+    """Class to generate table for cell quality measures."""
+
+    path = f'{CELL_QUALITY_DIR}/cell_quality_measures_table.rst'
+    header = _aligned_dedent(
+        """
+        |.. list-table:: Cell Quality Measures
+        |   :widths: 22 13 13 13 13 13 13
+        |   :header-rows: 1
+        |
+        |   * - Measure
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    cell_types: ClassVar[_CellTypesLiteral] = get_args(_CellTypesLiteral)
+
+    @classmethod
+    def fetch_data(cls):
+        # Get all cell example functions,
+        # i.e. items from examples.cells that start with a capital letter
+        cell_funcs = [
+            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+        ]
+
+        # Init dict with all measures as keys
+        measures = {measure: set() for measure in _get_cell_quality_measures().keys()}
+
+        # Compute the cell quality of each cell type and add to dict if valid
+        for func in cell_funcs:
+            mesh = getattr(cells, func)()
+            cell_type = pv.CellType(mesh.celltypes[0])
+            mesh = mesh.cell_quality('all_valid')
+            for valid_measure in mesh.array_names:
+                measures[valid_measure].add(cell_type)
+
+        return [(measures, measure) for measure in measures.keys()]
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(
+            *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        measures, measure = row_data
+
+        success = ':material-regular:`check;2em;sd-text-success`'
+        error = ':material-regular:`close;2em;sd-text-error`'
+
+        def _get_table_entry(cell_type):
+            return success if cell_type in measures[measure] else error
+
+        table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
+        return cls.row_template.format(f'``{measure}``', *table_entries)
+
+
+class CellQualityInfoTable(DocTable):
+    """Class to generate table for cell quality info."""
+
+    cell_type: pyvista.CellType
+
+    @property
+    @final
+    def path(cls):
+        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
+
+    header = _aligned_dedent(
+        """
+        |.. dropdown:: {} Cell Info
+        |
+        |   Info about {} cell quality measures.
+        |   See {} for an example unit cell.
+        |
+        |   .. list-table::
+        |       :widths: 20 20 20 20 20
+        |       :header-rows: 1
+        |
+        |       * - Measure
+        |         - Acceptable
+        |           Range
+        |         - Normal
+        |           Range
+        |         - Full
+        |           Range
+        |         - Unit Cell
+        |           Value
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |       * - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        |         - {}
+        """,
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        return _CELL_QUALITY_LOOKUP[cls.cell_type].values()
+
+    @classmethod
+    def get_header(cls, data):
+        name = cls.cell_type.name
+        example = _CELL_TYPE_INFO[name].example
+        return cls.header.format(
+            name.capitalize(),
+            f':attr:`~pyvista.CellType.{name}`',
+            f':func:`~pyvista.examples.cells.{example}`',
+        )
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        def format_list(obj):
+            if obj is None:
+                return 'None'
+            return '[' + ', '.join(format_number(num) for num in obj) + ']'
+
+        def format_number(num):
+            if num is None:
+                return 'None'
+            if num == float('inf'):
+                return 'inf'
+            if num == -float('inf'):
+                return '-inf'
+
+            # Show max 3 significant digits
+            formatted = f'{num:.3g}'
+
+            # Ensure at least one decimal place
+            if 'e' in formatted or '.' in formatted:
+                return formatted
+            return f'{formatted}.0'
+
+        measure = f'``{row_data.quality_measure}``'
+        acceptable = format_list(row_data.acceptable_range)
+        normal = format_list(row_data.normal_range)
+        full = format_list(row_data.full_range)
+        value = format_number(row_data.unit_cell_value)
+
+        return cls.row_template.format(measure, acceptable, normal, full, value)
+
+
+class CellQualityInfoTableTRIANGLE(CellQualityInfoTable):
+    cell_type = pv.CellType.TRIANGLE
+
+
+class CellQualityInfoTableQUAD(CellQualityInfoTable):
+    cell_type = pv.CellType.QUAD
+
+
+class CellQualityInfoTableTETRA(CellQualityInfoTable):
+    cell_type = pv.CellType.TETRA
+
+
+class CellQualityInfoTableHEXAHEDRON(CellQualityInfoTable):
+    cell_type = pv.CellType.HEXAHEDRON
+
+
+class CellQualityInfoTableWEDGE(CellQualityInfoTable):
+    cell_type = pv.CellType.WEDGE
+
+
+class CellQualityInfoTablePYRAMID(CellQualityInfoTable):
+    cell_type = pv.CellType.PYRAMID
 
 
 class LineStyleTable(DocTable):
@@ -442,7 +639,8 @@ def _get_color_source_badge(name: str) -> str:
     elif name in _format_color_dict(_VTK_COLORS):
         return ':bdg-secondary:`VTK`'
     else:
-        raise KeyError(f'Invalid color name "{name}".')
+        msg = f'Invalid color name "{name}".'
+        raise KeyError(msg)
 
 
 def _sort_colors_by_hls(colors: Sequence[Color]):
@@ -524,10 +722,11 @@ def classify_color(color: Color) -> ColorClassification:
     elif VIOLET_UPPER_BOUND <= hue < MAGENTA_UPPER_BOUND:
         return ColorClassification.MAGENTA
     else:
-        raise RuntimeError(
+        msg = (
             f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
             f'Double-check classifier logic.'
         )
+        raise RuntimeError(msg)
 
 
 class ColorClassificationTable(ColorTable):
@@ -744,7 +943,7 @@ class DatasetCard:
         - 2x2 grid for large screens
         - 4x1 grid for small screens
 
-    Each card has roughly following structure:
+    Each card has roughly the following structure:
 
         +-Card----------------------+
         | Header: Dataset name      |
@@ -758,7 +957,7 @@ class DatasetCard:
         | +-----------------------+ |
         | | File metadata         | |
         | +-----------------------+ |
-        |                           |
+        | See also                  |
         | Footer: Data source links |
         +---------------------------+
 
@@ -808,6 +1007,8 @@ class DatasetCard:
         |            :octicon:`file` File Info
         |            ^^^
         |            {}
+        |
+        |   {}
         |
         |   {}
         |
@@ -865,6 +1066,12 @@ class DatasetCard:
         |   :class-body: sd-px-0 sd-py-0 sd-rounded-3
         |
         |   .. image:: /{}
+        """,
+    )[1:-1]
+
+    seealso_template = _aligned_dedent(
+        """
+        |See also {}
         """,
     )[1:-1]
 
@@ -992,6 +1199,11 @@ class DatasetCard:
             n_arrays,
         ) = DatasetCard._generate_dataset_properties(self.loader)
 
+        # Get cross-references from docs
+        cross_references = DatasetCard._generate_cross_references(
+            self.dataset_name, index_name, header_name
+        )
+
         # Generate rst for badges
         carousel_badges = self._generate_carousel_badges(self._badges)
         celltype_badges = self._generate_celltype_badges(self._badges)
@@ -1021,6 +1233,7 @@ class DatasetCard:
             file_ext,
             reader_type,
         )
+        seealso_block = self._create_seealso_block(cross_references)
         footer_block = self._create_footer_block(datasource_links)
 
         # Create two versions of the card
@@ -1031,6 +1244,7 @@ class DatasetCard:
             img_block,
             dataset_props_block,
             file_info_block,
+            seealso_block,
             footer_block,
         )
         # Second version has a ref label in header
@@ -1040,6 +1254,7 @@ class DatasetCard:
             img_block,
             dataset_props_block,
             file_info_block,
+            seealso_block,
             footer_block,
         )
 
@@ -1102,23 +1317,112 @@ class DatasetCard:
         )
 
     @staticmethod
+    def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
+        # Get the corresponding function of the loader
+        func = None
+
+        # Get `download` function from downloads.py or planets.py
+        func_name = 'download_' + dataset_name
+        if hasattr(pyvista.examples.downloads, func_name):
+            func = getattr(pyvista.examples.downloads, func_name)
+        elif hasattr(pyvista.examples.planets, func_name):
+            func = getattr(pyvista.examples.planets, func_name)
+        else:
+            # Get `load` function from examples.py
+            func_name = 'load_' + dataset_name
+            if hasattr(pyvista.examples.examples, func_name):
+                func = getattr(pyvista.examples.examples, func_name)
+
+        if func is None:
+            msg = f'Dataset function {func_name} does not exist.'
+            raise RuntimeError(msg)
+        return func, func_name
+
+    @staticmethod
     def _generate_dataset_name(dataset_name: str):
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
-        # Get the corresponding function of the loader
-        try:
-            func_name = 'download_' + dataset_name
-            func = getattr(pyvista.examples.downloads, func_name)
-        except AttributeError:
-            func_name = 'load_' + dataset_name
-            func = getattr(pyvista.examples.examples, func_name)
-
         # Get the card's header info
+        func, func_name = DatasetCard._get_dataset_function(dataset_name)
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
         return index_name, header, func_ref, func_doc, func_name
+
+    @staticmethod
+    def _generate_cross_references(dataset_name: str, index_name: str, header_name):
+        def find_seealso_refs(func: FunctionType) -> list[str]:
+            """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
+            if not callable(func):
+                msg = 'Input must be a callable function.'
+                raise ValueError(msg)
+
+            # Get the docstring of the function
+            docstring = func.__doc__
+            if not docstring:
+                return []
+
+            # Search for the .. seealso:: section
+            seealso_start = docstring.find('.. seealso::')
+            if seealso_start == -1:
+                return []
+
+            # Extract lines from the start of the seealso section
+            lines = docstring[seealso_start:].splitlines()
+
+            # Determine the expected indentation of the section body
+            refs = []
+            body_indent = None
+
+            for line in lines[1:]:  # Skip the .. seealso:: line itself
+                if not line.strip():  # Allow blank lines within the block
+                    continue
+
+                # Detect indentation level of the body
+                if body_indent is None and line.startswith(' '):
+                    body_indent = len(line) - len(line.lstrip())
+
+                # Stop if the line is less indented than the body
+                current_indent = len(line) - len(line.lstrip())
+                if body_indent is not None and current_indent < body_indent:
+                    break
+
+                # Only capture lines starting with :ref:
+                if line.strip().startswith(':ref:'):
+                    refs.append(line.strip())
+
+            return refs
+
+        func, _ = DatasetCard._get_dataset_function(dataset_name)
+        refs = find_seealso_refs(func)
+
+        # Filter the references
+        self_ref = f':ref:`{header_name} <{index_name}>`'
+        self_ref_count = 0
+        keep_refs = []
+        for ref in refs:
+            # strip any refs to galleries since there is already a badge for that
+            if '_gallery' in ref:
+                continue
+            # skip refs to self
+            if self_ref in ref:
+                self_ref_count += 1
+                continue
+
+            keep_refs.append(ref)
+
+        assert self_ref_count == 1, (
+            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding entry in the Dataset Gallery.\n"
+            f'A reference link should be included in a see also directive, e.g.:\n'
+            f'\n'
+            f'    .. seealso::\n'
+            f'\n'
+            f'        {self_ref}\n'
+            '            See this dataset in the Dataset Gallery for more info.'
+        )
+
+        return ', '.join(keep_refs)
 
     @staticmethod
     def _generate_carousel_badges(badges: list[_BaseDatasetBadge]):
@@ -1136,7 +1440,8 @@ class DatasetCard:
             elif isinstance(badge, CellTypeBadge):
                 pass  # process these separately
             elif isinstance(badge, _BaseDatasetBadge):
-                raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
+                msg = f'No implementation for badge type {type(badge)}.'
+                raise NotImplementedError(msg)
         all_badges = module_badges + datatype_badges + special_badges + category_badges
         return ' '.join([badge.generate() for badge in all_badges])
 
@@ -1296,6 +1601,17 @@ class DatasetCard:
             file_info_fields,
             indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
         )
+
+    @classmethod
+    def _create_seealso_block(cls, cross_references):
+        if cross_references:
+            return cls._format_and_indent_from_template(
+                cross_references,
+                template=cls.seealso_template,
+                indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+            )
+        # Return empty content
+        return ''
 
     @classmethod
     def _create_footer_block(cls, datasource_links):
@@ -1498,6 +1814,7 @@ class DatasetCardFetcher:
         """Download and load all datasets and initialize a card object for each dataset."""
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
+        cls._init_cards_from_module(pv.examples.planets)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -1523,6 +1840,7 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 # Load data
+                print(f'loading datasets... {dataset_name}', flush=True)
                 try:
                     if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
@@ -1929,10 +2247,13 @@ class DownloadsCarousel(DatasetGalleryCarousel):
 class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
 
-    # TODO: add planets datasets
     name = 'planets_carousel'
     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
-    badge = ModuleBadge('Planets', ref='planets_gallery')
+    badge = ModuleBadge('Planets', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -2232,6 +2553,7 @@ CAROUSEL_LIST = [
     AllDatasetsCarousel,
     BuiltinCarousel,
     DownloadsCarousel,
+    PlanetsCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
@@ -2255,6 +2577,16 @@ CAROUSEL_LIST = [
 
 
 def make_all_tables():  # noqa: D103
+    # Make cell quality tables
+    os.makedirs(CELL_QUALITY_DIR, exist_ok=True)
+    CellQualityMeasuresTable.generate()
+    CellQualityInfoTableTRIANGLE.generate()
+    CellQualityInfoTableQUAD.generate()
+    CellQualityInfoTableHEXAHEDRON.generate()
+    CellQualityInfoTableTETRA.generate()
+    CellQualityInfoTableWEDGE.generate()
+    CellQualityInfoTablePYRAMID.generate()
+
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)

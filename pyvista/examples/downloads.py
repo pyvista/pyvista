@@ -30,6 +30,7 @@ from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
 import sys
+from typing import cast
 import warnings
 
 import numpy as np
@@ -93,7 +94,7 @@ else:
     # provide helpful message if pooch path is inaccessible
     if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
         try:
-            Path(USER_DATA_PATH).mkdir(exist_ok=True)
+            Path(USER_DATA_PATH).mkdir(exist_ok=True, parents=True)
             if not os.access(USER_DATA_PATH, os.W_OK):
                 raise OSError
         except (PermissionError, OSError):
@@ -149,16 +150,19 @@ def file_from_files(target_path, fnames):
 
     if len(found_fnames) > 1:
         files_str = '\n'.join(found_fnames)
-        raise RuntimeError(f'Ambiguous "{target_path}". Multiple matches found:\n{files_str}')
+        msg = f'Ambiguous "{target_path}". Multiple matches found:\n{files_str}'
+        raise RuntimeError(msg)
 
     files_str = '\n'.join(fnames)
-    raise FileNotFoundError(f'Missing "{target_path}" from archive. Archive contains:\n{files_str}')
+    msg = f'Missing "{target_path}" from archive. Archive contains:\n{files_str}'
+    raise FileNotFoundError(msg)
 
 
 def _file_copier(input_file, output_file, *args, **kwargs):
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
-        raise FileNotFoundError(f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'")
+        msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"
+        raise FileNotFoundError(msg)
     shutil.copy(input_file, output_file)
 
 
@@ -294,7 +298,8 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 
     """
     if get_ext(filename) == '.zip':  # pragma: no cover
-        raise ValueError('Cannot download and read an archive file')
+        msg = 'Cannot download and read an archive file'
+        raise ValueError(msg)
 
     saved_file = download_file(filename)
     if not load:
@@ -2230,7 +2235,8 @@ def download_frog_tissue(load=True):  # pragma: no cover
         PyVistaDeprecationWarning,
     )
     if pyvista._version.version_info >= (0, 47):
-        raise RuntimeError('Remove this deprecated function')
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
 
     return _download_dataset(_dataset_frog_tissue, load=load)
 
@@ -4825,22 +4831,37 @@ def download_drill(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_drill, load=load)
+    # Silence warning: unexpected data at end of line in OBJ file
+    with pyvista.vtk_verbosity('off'):
+        return _download_dataset(_dataset_drill, load=load)
 
 
 _dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
 
 
-def download_action_figure(load=True):  # pragma: no cover
+def download_action_figure(load=True, *, high_resolution=False):  # pragma: no cover
     """Download scan of an action figure.
 
     Originally obtained from Laser Design.
+
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 31 thousand cells is now returned.
+        Previously, a high-resolution version with 630 thousand cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 95% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -4880,10 +4901,13 @@ def download_action_figure(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_action_figure_high_res, load=load)
     return _download_dataset(_dataset_action_figure, load=load)
 
 
-_dataset_action_figure = _SingleFileDownloadableDatasetLoader('tigerfighter.obj')
+_dataset_action_figure = _SingleFileDownloadableDatasetLoader('tigerfighter_decimated.obj')
+__dataset_action_figure_high_res = _SingleFileDownloadableDatasetLoader('tigerfighter.obj')
 
 
 def download_notch_stress(load=True):  # pragma: no cover
@@ -5342,6 +5366,11 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
+    .. seealso::
+
+        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     # Deprecated on v0.44.0, estimated removal on v0.47.0
     warnings.warn(
@@ -5349,9 +5378,11 @@ def download_osmnx_graph(load=True):  # pragma: no cover
         PyVistaDeprecationWarning,
     )
     if pyvista._version.version_info >= (0, 47):
-        raise RuntimeError('Remove this deprecated function')
+        msg = 'Remove this deprecated function'
+        raise RuntimeError(msg)
     if not importlib.util.find_spec('osmnx'):
-        raise ImportError('Install `osmnx` to use this example')
+        msg = 'Install `osmnx` to use this example'
+        raise ImportError(msg)
     return _download_dataset(_dataset_osmnx_graph, load=load)
 
 
@@ -5391,7 +5422,7 @@ def download_cavity(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
+        :ref:`Cavity Dataset <cavity_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`openfoam_example`
@@ -5750,10 +5781,11 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
 def _dataset_can_files_func():  # pragma: no cover
     if pyvista.vtk_version_info > (9, 1):
-        raise VTKVersionError(
+        msg = (
             'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.',
+            'Use `download_can_crushed_hdf` instead.'
         )
+        raise VTKVersionError(msg)
     can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
     can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
     can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
@@ -6134,7 +6166,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`CellsNd Dataset <cells_nd_dataset>`
+        :ref:`Cells Nd Dataset <cells_nd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -6686,7 +6718,7 @@ _dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_black_vase(load=True):  # pragma: no cover
+def download_black_vase(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a black vase scan created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6698,11 +6730,24 @@ def download_black_vase(load=True):  # pragma: no cover
     For more details, see `Ivan Nikolov Datasets
     <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 31 thousand cells is now returned.
+        Previously, a high-resolution version with 3.1 million cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 99% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -6721,12 +6766,12 @@ def download_black_vase(load=True):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3136652
-      N Points:   1611789
+      N Cells:    31366
+      N Points:   17337
       N Strips:   0
-      X Bounds:   -1.092e+02, 1.533e+02
-      Y Bounds:   -1.200e+02, 1.415e+02
-      Z Bounds:   1.666e+01, 4.077e+02
+      X Bounds:   -1.091e+02, 1.533e+02
+      Y Bounds:   -1.200e+02, 1.416e+02
+      Z Bounds:   1.667e+01, 4.078e+02
       N Arrays:   0
 
     .. seealso::
@@ -6735,16 +6780,21 @@ def download_black_vase(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_black_vase_high_res, load=load)
     return _download_dataset(_dataset_black_vase, load=load)
 
 
 _dataset_black_vase = _SingleFileDownloadableDatasetLoader(
+    'ivan-nikolov/blackVase_decimated.vtp',
+)
+__dataset_black_vase_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/blackVase.zip',
     target_file='blackVase.vtp',
 )
 
 
-def download_ivan_angel(load=True):  # pragma: no cover
+def download_ivan_angel(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6756,11 +6806,24 @@ def download_ivan_angel(load=True):  # pragma: no cover
     For more details, see `Ivan Nikolov Datasets
     <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 36 thousand cells is now returned.
+        Previously, a high-resolution version with 3.6 million cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 99% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -6784,12 +6847,12 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3580454
-      N Points:   1811531
+      N Cells:    35804
+      N Points:   18412
       N Strips:   0
-      X Bounds:   -1.147e+02, 8.468e+01
-      Y Bounds:   -6.996e+01, 9.247e+01
-      Z Bounds:   -1.171e+02, 2.052e+02
+      X Bounds:   -1.146e+02, 8.470e+01
+      Y Bounds:   -6.987e+01, 9.254e+01
+      Z Bounds:   -1.166e+02, 2.052e+02
       N Arrays:   0
 
     .. seealso::
@@ -6798,16 +6861,21 @@ def download_ivan_angel(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_ivan_angel_high_res, load=load)
     return _download_dataset(_dataset_ivan_angel, load=load)
 
 
 _dataset_ivan_angel = _SingleFileDownloadableDatasetLoader(
+    'ivan-nikolov/Angel_decimated.vtp',
+)
+__dataset_ivan_angel_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/Angel.zip',
     target_file='Angel.vtp',
 )
 
 
-def download_bird_bath(load=True):  # pragma: no cover
+def download_bird_bath(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a scan of a bird bath created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6819,11 +6887,24 @@ def download_bird_bath(load=True):  # pragma: no cover
     For more details, see `Ivan Nikolov Datasets
     <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 35 thousand cells is now returned.
+        Previously, a high-resolution version with 3.5 million cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 99% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -6842,12 +6923,12 @@ def download_bird_bath(load=True):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3507935
-      N Points:   1831383
+      N Cells:    35079
+      N Points:   18796
       N Strips:   0
-      X Bounds:   -1.601e+02, 1.483e+02
-      Y Bounds:   -1.521e+02, 1.547e+02
-      Z Bounds:   -4.241e+00, 1.409e+02
+      X Bounds:   -1.600e+02, 1.482e+02
+      Y Bounds:   -1.522e+02, 1.547e+02
+      Z Bounds:   -5.491e-01, 1.408e+02
       N Arrays:   0
 
     .. seealso::
@@ -6856,16 +6937,19 @@ def download_bird_bath(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_bird_bath_high_res, load=load)
     return _download_dataset(_dataset_bird_bath, load=load)
 
 
-_dataset_bird_bath = _SingleFileDownloadableDatasetLoader(
+_dataset_bird_bath = _SingleFileDownloadableDatasetLoader('ivan-nikolov/birdBath_decimated.vtp')
+__dataset_bird_bath_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/birdBath.zip',
     target_file='birdBath.vtp',
 )
 
 
-def download_owl(load=True):  # pragma: no cover
+def download_owl(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a scan of an owl statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6877,11 +6961,24 @@ def download_owl(load=True):  # pragma: no cover
     For more details, see `Ivan Nikolov Datasets
     <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 24 thousand cells is now returned.
+        Previously, a high-resolution version with 2.4 million cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 99% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -6905,12 +7002,12 @@ def download_owl(load=True):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    2440707
-      N Points:   1221756
+      N Cells:    24407
+      N Points:   12442
       N Strips:   0
-      X Bounds:   -5.834e+01, 7.047e+01
-      Y Bounds:   -7.006e+01, 6.658e+01
-      Z Bounds:   1.676e+00, 2.013e+02
+      X Bounds:   -5.834e+01, 7.048e+01
+      Y Bounds:   -7.005e+01, 6.657e+01
+      Z Bounds:   1.814e+00, 2.013e+02
       N Arrays:   0
 
     .. seealso::
@@ -6919,13 +7016,18 @@ def download_owl(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_owl_high_res, load=load)
     return _download_dataset(_dataset_owl, load=load)
 
 
-_dataset_owl = _SingleFileDownloadableDatasetLoader('ivan-nikolov/owl.zip', target_file='owl.vtp')
+_dataset_owl = _SingleFileDownloadableDatasetLoader('ivan-nikolov/owl_decimated.vtp')
+__dataset_owl_high_res = _SingleFileDownloadableDatasetLoader(
+    'ivan-nikolov/owl.zip', target_file='owl.vtp'
+)
 
 
-def download_plastic_vase(load=True):  # pragma: no cover
+def download_plastic_vase(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a scan of a plastic vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6937,11 +7039,24 @@ def download_plastic_vase(load=True):  # pragma: no cover
     For more details, see `Ivan Nikolov Datasets
     <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 36 thousand cells is now returned.
+        Previously, a high-resolution version with 3.6 million cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 99% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -6960,11 +7075,11 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3570967
-      N Points:   1796805
+      N Cells:    35708
+      N Points:   18238
       N Strips:   0
-      X Bounds:   -1.364e+02, 1.929e+02
-      Y Bounds:   -1.677e+02, 1.603e+02
+      X Bounds:   -1.364e+02, 1.928e+02
+      Y Bounds:   -1.677e+02, 1.602e+02
       Z Bounds:   1.209e+02, 4.090e+02
       N Arrays:   0
 
@@ -6974,16 +7089,21 @@ def download_plastic_vase(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_plastic_vase_high_res, load=load)
     return _download_dataset(_dataset_plastic_vase, load=load)
 
 
 _dataset_plastic_vase = _SingleFileDownloadableDatasetLoader(
+    'ivan-nikolov/plasticVase_decimated.vtp'
+)
+__dataset_plastic_vase_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/plasticVase.zip',
     target_file='plasticVase.vtp',
 )
 
 
-def download_sea_vase(load=True):  # pragma: no cover
+def download_sea_vase(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a scan of a sea vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6995,11 +7115,24 @@ def download_sea_vase(load=True):  # pragma: no cover
     For more details, see `Ivan Nikolov Datasets
     <https://github.com/pyvista/vtk-data/tree/master/Data/ivan-nikolov>`_
 
+    .. versionchanged:: 0.45
+
+        A decimated version of this dataset with 35 thousand cells is now returned.
+        Previously, a high-resolution version with 3.5 million cells was returned.
+        Use ``high_resolution=True`` for the high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
+        is returned with 99% reduction.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -7018,12 +7151,12 @@ def download_sea_vase(load=True):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3548473
-      N Points:   1810012
+      N Cells:    35483
+      N Points:   18063
       N Strips:   0
-      X Bounds:   -1.666e+02, 1.465e+02
-      Y Bounds:   -1.742e+02, 1.384e+02
-      Z Bounds:   -1.500e+02, 2.992e+02
+      X Bounds:   -1.664e+02, 1.463e+02
+      Y Bounds:   -1.741e+02, 1.382e+02
+      Z Bounds:   -1.497e+02, 2.992e+02
       N Arrays:   0
 
     .. seealso::
@@ -7032,10 +7165,13 @@ def download_sea_vase(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_sea_vase_high_res, load=load)
     return _download_dataset(_dataset_sea_vase, load=load)
 
 
-_dataset_sea_vase = _SingleFileDownloadableDatasetLoader(
+_dataset_sea_vase = _SingleFileDownloadableDatasetLoader('ivan-nikolov/seaVase_decimated.vtp')
+__dataset_sea_vase_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/seaVase.zip',
     target_file='seaVase.vtp',
 )
@@ -7491,7 +7627,7 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_whole_body_ct_male(load=True):  # pragma: no cover
+def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma: no cover
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -7532,11 +7668,25 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
         The label ids are the ids used by the included label map.
 
+    .. versionchanged:: 0.45
+
+        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        is now returned. Previously, a high-resolution version with dimensions
+        ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
+        high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample>` version
+        with a ``0.5`` sampling rate is returned.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -7556,13 +7706,13 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      55561506
-      N Points:     56012800
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.190e+02
-      Dimensions:   320, 320, 547
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Cells:      6876432
+      N Points:     6988800
+      X Bounds:     7.500e-01, 4.778e+02
+      Y Bounds:     7.500e-01, 4.778e+02
+      Z Bounds:     7.527e-01, 8.182e+02
+      Dimensions:   160, 160, 273
+      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
@@ -7603,7 +7753,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> _ = pl.add_volume(
     ...     ct_image,
     ...     cmap='bone',
-    ...     opacity='sigmoid_9',
+    ...     opacity='sigmoid_8',
     ...     show_scalar_bar=False,
     ... )
     >>> _ = pl.add_mesh(colored_mesh)
@@ -7630,13 +7780,15 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
             See additional examples using this dataset.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_whole_body_ct_male_high_res, load=load)
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
 
 
-def _whole_body_ct_load_func(files):  # pragma: no cover
-    def _import_colors_dict():
+class _WholeBodyCTUtilities:  # pragma: no cover
+    @staticmethod
+    def import_colors_dict(module_path):
         # Import `colors` dict from downloaded `colors.py` module
-        module_path = files[1].path
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -7647,58 +7799,77 @@ def _whole_body_ct_load_func(files):  # pragma: no cover
 
             return dict(sorted(colors.items()))
         else:
-            raise RuntimeError('Unable to load colors.')
+            msg = 'Unable to load colors.'
+            raise RuntimeError(msg)
 
-    # Process the dataset to create a label map from the segmentation masks
-    dataset = files[0].load()
-    segmentations = dataset['segmentations']
-
-    # Create label map array from segmentation masks
-    # Initialize array with background values (zeros)
-    label_map_array = np.zeros((segmentations[0].n_points,), dtype=np.uint8)
-    label_names = sorted(segmentations.keys())
-    for i, name in enumerate(label_names):
-        label_map_array[segmentations[name].active_scalars == 1] = i + 1
-
-    # Add scalars to a new image
-    label_map_image = segmentations[0].copy()
-    label_map_image.clear_data()
-    label_map_image['label_map'] = label_map_array
-
-    # Add label map to dataset
-    dataset['label_map'] = label_map_image
-
-    # Add color and id mappings to dataset
-    names_to_colors = _import_colors_dict()
-    names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
-    dataset.user_dict['names_to_colors'] = names_to_colors
-    dataset.user_dict['names_to_ids'] = names_to_ids
-    dataset.user_dict['ids_to_colors'] = dict(
-        sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
-    )
-
-    return dataset
-
-
-def _whole_body_ct_files_func(name):  # pragma: no cover
-    def func():
-        # Multiple files needed for read, but only one gets loaded
-        dataset = _SingleFileDownloadableDatasetLoader(
-            f'whole_body_ct/{name}.zip',
-            target_file=name,
+    @staticmethod
+    def add_metadata(dataset: pyvista.MultiBlock, colors_module_path: str):
+        # Add color and id mappings to dataset
+        segmentations = cast('pyvista.MultiBlock', dataset['segmentations'])
+        label_names = sorted(segmentations.keys())
+        names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
+        names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
+        dataset.user_dict['names_to_colors'] = names_to_colors
+        dataset.user_dict['names_to_ids'] = names_to_ids
+        dataset.user_dict['ids_to_colors'] = dict(
+            sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
         )
-        colors = _DownloadableFile('whole_body_ct/colors.py')
-        return dataset, colors
 
-    return func
+    @staticmethod
+    def label_map_from_masks(masks: pyvista.MultiBlock):
+        # Create label map array from segmentation masks
+        # Initialize array with background values (zeros)
+        n_points = cast('pyvista.ImageData', masks[0]).n_points
+        label_map_array = np.zeros((n_points,), dtype=np.uint8)
+        label_names = sorted(masks.keys())
+        for i, name in enumerate(label_names):
+            mask = cast('pyvista.ImageData', masks[name])
+            label_map_array[mask.active_scalars == 1] = i + 1
+
+        # Add scalars to a new image
+        label_map_image = pyvista.ImageData()
+        label_map_image.copy_structure(cast('pyvista.ImageData', masks[0]))
+        label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
+        return label_map_image
+
+    @staticmethod
+    def load_func(files):  # pragma: no cover
+        dataset_file, colors_module = files
+        dataset = dataset_file.load()
+
+        # Create label map and add to dataset
+        dataset['label_map'] = _WholeBodyCTUtilities.label_map_from_masks(dataset['segmentations'])
+
+        # Add metadata
+        _WholeBodyCTUtilities.add_metadata(dataset, colors_module.path)
+        return dataset
+
+    @staticmethod
+    def files_func(name):  # pragma: no cover
+        # Resampled version is saved as a multiblock
+        target_file = f'{name}.vtm' if 'resampled' in name else name
+
+        def func():
+            # Multiple files needed for read, but only one gets loaded
+            dataset = _SingleFileDownloadableDatasetLoader(
+                f'whole_body_ct/{name}.zip',
+                target_file=target_file,
+            )
+            colors = _DownloadableFile('whole_body_ct/colors.py')
+            return dataset, colors
+
+        return func
 
 
 _dataset_whole_body_ct_male = _MultiFileDownloadableDatasetLoader(
-    _whole_body_ct_files_func('s1397'), load_func=_whole_body_ct_load_func
+    _WholeBodyCTUtilities.files_func('s1397_resampled'), load_func=_WholeBodyCTUtilities.load_func
+)
+__dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
+    _WholeBodyCTUtilities.files_func('s1397'), load_func=_WholeBodyCTUtilities.load_func
 )
 
 
-def download_whole_body_ct_female(load=True):  # pragma: no cover
+def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragma: no cover
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -7739,11 +7910,25 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
         The label ids are the ids used by the included label map.
 
+    .. versionchanged:: 0.45
+
+        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        is now returned. Previously, a high-resolution version with dimensions
+        ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
+        high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample>` version
+        with a ``0.5`` sampling rate is returned.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -7768,13 +7953,13 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      55154462
-      N Points:     55603200
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.130e+02
-      Dimensions:   320, 320, 543
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Cells:      6825870
+      N Points:     6937600
+      X Bounds:     7.500e-01, 4.778e+02
+      Y Bounds:     7.500e-01, 4.778e+02
+      Z Bounds:     7.528e-01, 8.122e+02
+      Dimensions:   160, 160, 271
+      Spacing:      3.000e+00, 3.000e+00, 3.006e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
@@ -7842,11 +8027,16 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
             See additional examples using this dataset.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_whole_body_ct_female_high_res, load=load)
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
 _dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
-    _whole_body_ct_files_func('s1380'), load_func=_whole_body_ct_load_func
+    _WholeBodyCTUtilities.files_func('s1380_resampled'), load_func=_WholeBodyCTUtilities.load_func
+)
+__dataset_whole_body_ct_female_high_res = _MultiFileDownloadableDatasetLoader(
+    _WholeBodyCTUtilities.files_func('s1380'), load_func=_WholeBodyCTUtilities.load_func
 )
 
 
@@ -8234,7 +8424,7 @@ def download_3gqp(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`3GQP Dataset <3gqp_dataset>`
+        :ref:`3gqp Dataset <3gqp_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -8265,6 +8455,11 @@ def download_full_head(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> dataset = examples.download_full_head()
     >>> dataset.plot(volume=True)
+
+    .. seealso::
+
+        :ref:`Full Head Dataset <full_head_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_full_head, load=load)
@@ -8308,7 +8503,9 @@ def download_nek5000(load=True):
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_nek5000, load=load)
+    # Silence info messages about 2D mesh found
+    with pyvista.vtk_verbosity('off'):
+        return _download_dataset(_dataset_nek5000, load=load)
 
 
 def _nek_5000_download():  # pragma: no cover

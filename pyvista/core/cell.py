@@ -118,7 +118,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
-                raise TypeError(f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}')
+                msg = f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}'  # type: ignore[unreachable]
+                raise TypeError(msg)
             # cell type must be set first before deep or shallow copy
             if cell_type is None:
                 self.SetCellType(vtk_cell.GetCellType())
@@ -225,7 +226,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
             else:
                 return pyvista.PolyData(self.points.copy(), faces=cells)
         else:
-            raise ValueError(f'3D cells cannot be cast to PolyData: got cell type {self.type}')
+            msg = f'3D cells cannot be cast to PolyData: got cell type {self.type}'
+            raise ValueError(msg)
 
     def cast_to_unstructured_grid(self: Self) -> UnstructuredGrid:
         """Cast this cell to an unstructured grid.
@@ -413,7 +415,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
         """
         if index + 1 > self.n_edges:
-            raise IndexError(f'Invalid index {index} for a cell with {self.n_edges} edges.')
+            msg = f'Invalid index {index} for a cell with {self.n_edges} edges.'
+            raise IndexError(msg)
 
         # must deep copy here as multiple sequental calls to GetEdge overwrite
         # the underlying pointer
@@ -488,12 +491,13 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         # must deep copy here as sequental calls overwrite the underlying pointer
         if index + 1 > self.n_faces:
-            raise IndexError(f'Invalid index {index} for a cell with {self.n_faces} faces.')
+            msg = f'Invalid index {index} for a cell with {self.n_faces} faces.'
+            raise IndexError(msg)
 
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
         cell = self.GetFace(index)
-        return Cell(cell, deep=True, cell_type=cast(CellType, cell.GetCellType()))  # type: ignore[abstract]
+        return Cell(cell, deep=True, cell_type=cast('CellType', cell.GetCellType()))  # type: ignore[abstract]
 
     @property
     def bounds(self: Self) -> BoundsTuple:
@@ -541,7 +545,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(tuple[float, float, float], tuple(center))
+        return cast('tuple[float, float, float]', tuple(center))
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
@@ -606,7 +610,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.vtkCellArray):
+class CellArray(_vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
     """PyVista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -689,13 +693,12 @@ class CellArray(_vtk.vtkCellArray):
 
         # https://github.com/pyvista/pyvista/pull/5404
         if imported_size != cells.size:
-            raise CellSizeError(
-                message=(
-                    f'Cell array size is invalid. Size ({cells.size}) does not'
-                    f' match expected size ({imported_size}). This is likely'
-                    ' due to invalid connectivity array.'
-                ),
+            msg = (
+                f'Cell array size is invalid. Size ({cells.size}) does not'
+                f' match expected size ({imported_size}). This is likely'
+                ' due to invalid connectivity array.'
             )
+            raise CellSizeError(msg)
         self.__offsets = self.__connectivity = None
 
     @property

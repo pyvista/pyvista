@@ -61,6 +61,18 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         """
         return BoundsTuple(*self.GetBounds())  # type: ignore[attr-defined]
 
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center of mapper.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of the active renderer.
+
+        """
+        return self.GetCenter()  # type: ignore[attr-defined]
+
     def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
 
@@ -180,7 +192,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         elif value == 'map':
             self.SetColorModeToMapScalars()  # type: ignore[attr-defined]
         else:
-            raise ValueError('Color mode must be either "default", "direct" or "map"')
+            msg = 'Color mode must be either "default", "direct" or "map"'
+            raise ValueError(msg)
 
     @property
     def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
@@ -306,10 +319,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         elif scalar_mode == 'field':
             self.SetScalarModeToUseFieldData()  # type: ignore[attr-defined]
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".',
+                '"default", "point", "cell", "point_field", "cell_field" or "field".'
             )
+            raise ValueError(msg)
 
     @property
     def scalar_visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -380,7 +394,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
+        return cast('Optional[pyvista.DataSet]', wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
 
     @dataset.setter
     def dataset(
@@ -636,7 +650,8 @@ class _DataSetMapper(_BaseMapper):
                 or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
                 if not isinstance(component, (int, type(None))):
-                    raise TypeError('component must be either None or an integer')
+                    msg = 'component must be either None or an integer'
+                    raise TypeError(msg)
                 if component is None:
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
                     scalars_name = f'{scalars_name}-normed'
@@ -644,10 +659,11 @@ class _DataSetMapper(_BaseMapper):
                     scalars = np.array(scalars[:, component]).copy()
                     scalars_name = f'{scalars_name}-{component}'
                 else:
-                    raise ValueError(
+                    msg = (
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}',
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
                     )
+                    raise ValueError(msg)
             else:
                 scalars = scalars.ravel()
 
@@ -787,7 +803,8 @@ class _DataSetMapper(_BaseMapper):
         elif resolve == 'shift_zbuffer':
             self.SetResolveCoincidentTopologyToShiftZBuffer()  # type: ignore[attr-defined]
         else:
-            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
+            msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+            raise ValueError(msg)
 
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
@@ -815,11 +832,12 @@ class _DataSetMapper(_BaseMapper):
         elif opacity.size == self.dataset.n_cells:  # type: ignore[union-attr]
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
         else:  # pragma: no cover
-            raise ValueError(
+            msg = (
                 f'Opacity array size ({opacity.size}) does not equal '
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
                 f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
             )
+            raise ValueError(msg)
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
 
@@ -970,13 +988,15 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     @scale_array.setter
     def scale_array(self, name: str):
         if not self.dataset:  # pragma: no cover
-            raise RuntimeError('Missing dataset.')
+            msg = 'Missing dataset.'
+            raise RuntimeError(msg)
         if name not in self.dataset.point_data:
             available_arrays = ', '.join(self.dataset.point_data.keys())
-            raise KeyError(
+            msg = (
                 f'Point array "{name}" does not exist. '
-                f'Available point arrays are: {available_arrays}',
+                f'Available point arrays are: {available_arrays}'
             )
+            raise KeyError(msg)
 
         self.scale_factor = 1.0
         self.SetScaleArray(name)
@@ -1103,7 +1123,8 @@ class _BaseVolumeMapper(_BaseMapper):
         value = self.GetBlendMode()  # type: ignore[attr-defined]
         mode = {0: 'composite', 1: 'maximum', 2: 'minimum', 3: 'average', 4: 'additive'}.get(value)
         if mode is None:  # pragma: no cover
-            raise NotImplementedError(f'Unsupported blend mode return value {value}')
+            msg = f'Unsupported blend mode return value {value}'
+            raise NotImplementedError(msg)
         return mode
 
     @blend_mode.setter
@@ -1123,13 +1144,15 @@ class _BaseVolumeMapper(_BaseMapper):
             elif value in ['minimum', 'min', 'minimum_intensity']:
                 self.SetBlendModeToMinimumIntensity()  # type: ignore[attr-defined]
             else:
-                raise ValueError(
+                msg = (
                     f'Blending mode {value!r} invalid. '
                     'Please choose either "additive", '
-                    '"composite", "minimum" or "maximum".',
+                    '"composite", "minimum" or "maximum".'
                 )
+                raise ValueError(msg)
         else:
-            raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
+            msg = f'`blend_mode` should be either an int or str, not `{type(value)}`'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
     def __del__(self) -> None:
         if hasattr(self, '_lut'):
@@ -1139,20 +1162,46 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+        self.InteractiveAdjustSampleDistancesOff()
 
 
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
