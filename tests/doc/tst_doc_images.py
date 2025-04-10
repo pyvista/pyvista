@@ -164,7 +164,7 @@ def test_static_images(test_case: _TestCaseTuple):
 
     if warn_msg:
         parent_dir = (
-            'flaky' if Path(test_case.cached_image_path).name in FLAKY_TEST_CASES else 'warnings'
+            'flaky' if Path(test_case.cached_image_path).stem in FLAKY_TEST_CASES else 'warnings'
         )
         _save_failed_test_image(test_case.docs_image_path, parent_dir)
         _save_failed_test_image(test_case.cached_image_path, parent_dir)
