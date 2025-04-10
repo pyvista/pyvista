@@ -7,6 +7,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
@@ -128,6 +129,29 @@ def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
     assert isinstance(clipped, pv.PointSet)
+
+
+def test_pointset_clip_vtk_bug(sphere):
+    pointset = sphere.cast_to_pointset()
+    alg = vtk.vtkTableBasedClipDataSet()
+    alg.SetClipFunction(pv.generate_plane((1, 0, 0), (0, 0, 0)))
+
+    # Filter works with PolyData
+    alg.SetInputData(sphere)
+    alg.Update()
+    out = pv.wrap(alg.GetOutput())
+    assert not out.is_empty
+
+    # Bug: filter returns empty mesh with PointSet
+    alg.SetInputData(pointset)
+    alg.Update()
+    out = pv.wrap(alg.GetOutput())
+    if pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+        # A vtk bug was introduced in 9.4 https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        # Which has been fixed for vtk 9.5: https://gitlab.kitware.com/vtk/vtk/-/merge_requests/12040
+        assert out.is_empty
+    else:
+        assert not out.is_empty
 
 
 @pytest.mark.parametrize(
@@ -379,3 +403,32 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
 
     assert grid.dimensionality == dimensionality
     assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
+
+
+@pytest.mark.parametrize(
+    ('attr', 'mesh', 'expected'),
+    [
+        (
+            'polyhedron_faces',
+            examples.cells.Polyhedron(),
+            [3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3],
+        ),
+        ('polyhedron_face_locations', examples.cells.Polyhedron(), [4, 0, 1, 2, 3]),
+        ('polyhedron_faces', pv.UnstructuredGrid(), []),
+        ('polyhedron_face_locations', pv.UnstructuredGrid(), []),
+    ],
+)
+def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
+    if pv.vtk_version_info < (9, 4):
+        match = f'`{attr}` requires vtk>=9.4.0'
+        with pytest.raises(pv.VTKVersionError, match=match):
+            getattr(mesh, attr)
+    else:
+        actual = getattr(mesh, attr)
+        assert isinstance(actual, np.ndarray)
+        assert actual.dtype == int
+        assert np.array_equal(actual, expected)
+
+        with pytest.warns(DeprecationWarning):
+            # Test deprecation warning is emitted by VTK
+            getattr(mesh, attr.split('polyhedron_')[1])

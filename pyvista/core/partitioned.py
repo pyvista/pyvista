@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .dataset import DataSet
 
 
-class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
+class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
     """Wrapper for the ``vtkPartitionedDataSet`` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.

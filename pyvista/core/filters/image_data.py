@@ -853,7 +853,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return cast(pyvista.ImageData, wrap(alg.GetOutput()))
+        return cast('pyvista.ImageData', wrap(alg.GetOutput()))
 
     def contour_labeled(
         self,
@@ -1598,7 +1598,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
                 select_inputs,
                 select_outputs,
             )
@@ -3835,7 +3835,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Generate output array
         input_array = cast(
-            pyvista.pyvista_ndarray, get_array(self, name=array_name, preference=association)
+            'pyvista.pyvista_ndarray', get_array(self, name=array_name, preference=association)
         )
         array_out = np.full_like(input_array, fill_value=fill_value)
         replacement_values = (

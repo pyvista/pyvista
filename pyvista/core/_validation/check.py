@@ -1204,15 +1204,15 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
 
     # Return early for common inputs
     if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
-        return cast(_Shape, shape)
+        return cast('_Shape', shape)
 
     def _is_valid_dim(d: Any) -> bool:
         return isinstance(d, int) and d >= -1
 
     if _is_valid_dim(shape):
-        return (cast(int, shape),)
+        return (cast('int', shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast(_Shape, shape)
+        return cast('_Shape', shape)
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error

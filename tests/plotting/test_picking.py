@@ -175,7 +175,7 @@ def test_surface_point_picking(sphere, left_clicking):
     else:
         pl.iren._mouse_right_button_click(width // 2, height // 2)
 
-    assert len(picked)
+    assert picked
     assert pl.picked_point is not None
 
     # invalid selection

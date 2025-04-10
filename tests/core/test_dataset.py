@@ -485,6 +485,23 @@ def test_arrows():
     assert arrows.active_vectors_name == 'GlyphVector'
 
 
+def test_arrows_cell_data():
+    box = pv.Box().compute_normals(cell_normals=True, point_normals=False)
+    assert box.array_names == ['Normals']
+    assert box.cell_data.keys() == ['Normals']
+    assert box.arrows is None
+
+    box.set_active_vectors('Normals')
+    arrows = box.arrows
+    # Test that there are as many arrows as there are vectors
+    num_parts_per_arrow = pv.Arrow().split_bodies().n_blocks
+    num_parts = arrows.split_bodies().n_blocks
+    num_arrows = num_parts / num_parts_per_arrow
+
+    num_vectors = len(box['Normals'])
+    assert num_arrows == num_vectors
+
+
 def test_arrows_ndim_raises(mocker: MockerFixture):
     m = mocker.patch.object(pv.DataSet, 'active_vectors')
     mocker.patch.object(pv.DataSet, 'active_vectors_name')

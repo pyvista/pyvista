@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING
 from typing import cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:
+    from pyvista import ImageData
+    from pyvista.core._typing_core import NumpyArray
 
 
 def remove_alpha(img):
@@ -97,11 +100,11 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = cast(Optional[pyvista.ImageData], wrap(imfilter.GetOutput()))
+    image = cast('ImageData | None', wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
-    img_array = cast(NumpyArray[float], point_array(image, 'ImageScalars'))
+    img_array = cast('NumpyArray[float]', point_array(image, 'ImageScalars'))
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]

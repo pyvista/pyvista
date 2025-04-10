@@ -54,8 +54,8 @@ def _get_output(
     active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = cast(pyvista.DataObject, wrap(algorithm.GetInputDataObject(iport, iconnection)))
-    data = cast(pyvista.DataObject, wrap(algorithm.GetOutputDataObject(oport)))
+    ido = cast('pyvista.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
+    data = cast('pyvista.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:

@@ -497,7 +497,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
         cell = self.GetFace(index)
-        return Cell(cell, deep=True, cell_type=cast(CellType, cell.GetCellType()))  # type: ignore[abstract]
+        return Cell(cell, deep=True, cell_type=cast('CellType', cell.GetCellType()))  # type: ignore[abstract]
 
     @property
     def bounds(self: Self) -> BoundsTuple:
@@ -545,7 +545,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(tuple[float, float, float], tuple(center))
+        return cast('tuple[float, float, float]', tuple(center))
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
@@ -610,7 +610,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.vtkCellArray):
+class CellArray(_vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
     """PyVista wrapping of vtkCellArray.
 
     Provides convenience functions to simplify creating a CellArray from

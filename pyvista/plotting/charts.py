@@ -57,6 +57,8 @@ class _vtkWrapper(metaclass=_vtkWrapperMeta):
         if item in unwrapped_attrs or wrapped is None:
             return super().__getattribute__(item)
         else:
+            if item[0].islower():
+                return super().__getattribute__(item)
             try:
                 return wrapped.__getattribute__(item)
             except AttributeError:
@@ -459,14 +461,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     grid : bool, default: True
         Flag to toggle grid lines visibility for this axis.
 
-    Attributes
-    ----------
-    pen : Pen
-        Pen used to draw the axis.
-
-    grid_pen : Pen
-        Pen used to draw the grid lines.
-
     """
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
@@ -479,17 +473,27 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # SetPen and SetGridPen methods are not available for older VTK versions,
             # so fallback to using wrapper objects.
-            self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
+            self._pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
+            self._grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
         else:
-            self.pen = Pen(color=(0, 0, 0))
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95))
-            self.SetPen(self.pen)
-            self.SetGridPen(self.grid_pen)
+            self._pen = Pen(color=(0, 0, 0))
+            self._grid_pen = Pen(color=(0.95, 0.95, 0.95))
+            self.SetPen(self._pen)
+            self.SetGridPen(self._grid_pen)
         self.label = label
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
         self.grid = grid
+
+    @property
+    def pen(self) -> Pen:  # numpydoc ignore=RT01
+        """Pen used to draw the axis."""
+        return self._pen
+
+    @property
+    def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
+        """Pen used to draw the grid lines."""
+        return self._grid_pen
 
     @property
     def label(self):  # numpydoc ignore=RT01

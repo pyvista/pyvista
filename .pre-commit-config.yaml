@@ -64,12 +64,12 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.31.2
+    rev: 0.32.1
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.9
+    rev: v0.11.4
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
@@ -91,7 +91,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.10.0-2
+    rev: v3.11.0-1
     hooks:
       - id: shfmt
 
@@ -103,6 +103,6 @@ repos:
         args: [--option, "reorder_arrays=true", --option, "reorder_keys=true"]
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.3.0
+    rev: v1.5.2
     hooks:
       - id: zizmor

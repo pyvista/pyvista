@@ -867,7 +867,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
             )
             raise AmbiguousDataError(msg)
     field, name = mesh.active_vectors_info
-    return _ActiveArrayExistsInfoTuple(field, cast(str, name))
+    return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
 def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoTuple:
@@ -931,7 +931,7 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
             )
             raise AmbiguousDataError(msg)
     field, name = mesh.active_scalars_info
-    return _ActiveArrayExistsInfoTuple(field, cast(str, name))
+    return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
 _JSONValueType = Union[

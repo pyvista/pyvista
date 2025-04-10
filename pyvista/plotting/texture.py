@@ -496,7 +496,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Plot a cubemap as a skybox.
 
-        >>> cube_map = examples.download_dikhololo_night()
+        >>> cube_map = examples.download_sky_box_cube_map()
         >>> cube_map.plot()
 
         """

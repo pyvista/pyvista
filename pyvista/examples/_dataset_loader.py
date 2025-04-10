@@ -277,7 +277,7 @@ class _DatasetLoader:
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
             if isinstance(data, pv.Texture):
-                data = cast(pv.ImageData, pv.wrap(data.GetInput()))
+                data = cast('pv.ImageData', pv.wrap(data.GetInput()))
             try:
                 if isinstance(data, pv.ExplicitStructuredGrid):
                     # extract_cells_by_type does not support this datatype
@@ -396,7 +396,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                 read_func = lambda path: _load_as_multiblock(  # type: ignore[assignment]
                     [
                         _SingleFileDatasetLoader(str(Path(path, fname)))
-                        for fname in sorted(os.listdir(path))
+                        for fname in sorted(os.listdir(path))  # noqa: PTH208
                     ],
                 )
                 return read_func(path) if load_func is None else load_func(read_func(path))

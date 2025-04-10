@@ -20,7 +20,7 @@ from pyvista import examples
 # First, let's load a **triangulated** mesh to subdivide. We can use the
 # :func:`pyvista.DataObjectFilters.triangulate` filter to ensure the mesh we are
 # using is purely triangles.
-mesh = examples.download_bunny_coarse().triangulate()
+mesh = examples.download_bunny_coarse().triangulate().clean()
 
 cpos = [
     (-0.02788175062966399, 0.19293295656233056, 0.4334449972621349),

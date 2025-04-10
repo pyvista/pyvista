@@ -487,6 +487,11 @@ def test_cube():
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
 
+    assert 'Normals' in cube.point_data.keys()
+    normals = cube.point_data['Normals']
+    expected = 0.57735026
+    assert np.allclose(np.abs(normals), expected)
+
 
 @pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
 def test_cube_point_dtype(point_dtype):

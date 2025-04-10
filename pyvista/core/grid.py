@@ -311,7 +311,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
         if TYPE_CHECKING:
-            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+            out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
     @property  # type: ignore[explicit-override, override]

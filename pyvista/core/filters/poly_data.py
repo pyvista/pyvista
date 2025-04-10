@@ -12,7 +12,6 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -34,6 +33,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
     from pyvista import PolyData
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -85,13 +85,13 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = cast(NumpyArray[float], pyvista.point_array(edges, 'point_ind'))
+        orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar: bool = False):
         """Perform boolean operation."""
-        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined, has-type]
+        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
             msg = 'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.'
             raise ValueError(msg)
         if not isinstance(other_mesh, pyvista.PolyData):
@@ -2551,7 +2551,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined, has-type]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2809,7 +2809,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Regenerate face and point arrays
         uni = np.unique(f.compress(fmask, 0), return_inverse=True)
-        new_points = self.points.take(uni[0], 0)  # type: ignore[has-type]
+        new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
         faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
@@ -3245,7 +3245,7 @@ class PolyDataFilters(DataSetFilters):
         plane = generate_plane(normal, origin)
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
-        np.apply_along_axis(f, 1, mesh.points)  # type: ignore[call-overload, has-type]
+        np.apply_along_axis(f, 1, mesh.points)
         return mesh
 
     def ribbon(

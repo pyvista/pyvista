@@ -233,7 +233,7 @@ def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
 
     # Test all datasets loaded as multiblock
     filenames = sorted(
-        [Path(fname).stem for fname in os.listdir(examples_local_repository_tmp_dir)],
+        [Path(fname).stem for fname in Path(examples_local_repository_tmp_dir).iterdir()],
     )
     loader = _SingleFileDatasetLoader(examples_local_repository_tmp_dir)
     dataset = loader.load()

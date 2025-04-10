@@ -21,9 +21,7 @@ DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
 DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
 BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
 FLAKY_IMAGE_DIR = str(Path(__file__).parent / 'flaky_tests')
-FLAKY_TEST_CASES = [
-    path for path in os.listdir(FLAKY_IMAGE_DIR) if Path(FLAKY_IMAGE_DIR, path).is_dir()
-]
+FLAKY_TEST_CASES = [path.name for path in Path(FLAKY_IMAGE_DIR).iterdir() if path.is_dir()]
 
 MAX_VTKSZ_FILE_SIZE_MB = 50
 

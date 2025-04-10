@@ -31,7 +31,6 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -89,6 +88,7 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -4236,7 +4236,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast(pyvista.ImageData, wrap(cast(NumpyArray[float], volume)))
+                volume = cast('pyvista.ImageData', wrap(cast('NumpyArray[float]', volume)))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -4246,7 +4246,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
                 #   to remove the need to cast the type here
-                volume = cast(Union[pyvista.MultiBlock, pyvista.DataSet], wrap(volume))
+                volume = cast('Union[pyvista.MultiBlock, pyvista.DataSet]', wrap(volume))
                 if not is_pyvista_dataset(volume):
                     msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
                     raise TypeError(msg)
@@ -4337,7 +4337,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
             raise TypeError(msg)
 
-        volume = cast(pyvista.DataSet, volume)
+        volume = cast('pyvista.DataSet', volume)
         if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -4773,7 +4773,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
-        title = args[0] if len(args) else kwargs.get('title', '')
+        title = args[0] if args else kwargs.get('title', '')
         if title is None:
             title = ''
         kwargs['title'] = title

@@ -191,3 +191,16 @@ but the source will always be included with a conditional caption:
 
    import pyvista
    pyvista.Cube().plot()
+
+**Plot 19** Shows a ``matplotlib`` plot to to show that both plot directives
+ can coexist.
+
+.. plot::
+   :caption: This is a matplotlib plot.
+
+   import matplotlib.pyplot as plt
+   import numpy as np
+
+   x = np.linspace(0, 2*np.pi)
+   plt.plot(x, np.sin(x))
+   plt.show()
