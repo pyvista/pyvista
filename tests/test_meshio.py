@@ -18,6 +18,62 @@ beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
 uniform2d = pv.ImageData(dimensions=(10, 10, 1)).cast_to_unstructured_grid()
+cells = [
+    8, 0, 1, 2, 3, 4, 5, 6, 7,
+    5, 4, 5, 6, 7, 8,
+    4, 4, 8, 7, 9,
+    4, 5, 6, 8, 10,
+    6, 1, 11, 5, 2, 12, 6,
+    6, 13, 0, 4, 14, 3, 7,
+    30, 7,
+    3, 5, 6, 10,
+    3, 11, 12, 15,
+    3, 5, 11, 15,
+    3, 5, 15, 10,
+    3, 6, 10, 15,
+    3, 6, 15, 12,
+    4, 11, 12, 6, 5,
+    30, 7,
+    3, 4, 7, 9,
+    3, 13, 14, 16,
+    3, 4, 16, 13,
+    3, 4, 9, 16,
+    3, 7, 9, 16,
+    3, 7, 16, 14,
+    4, 13, 14, 7, 4,
+]  # fmt: skip
+hybrid = pv.UnstructuredGrid(
+    cells,
+    [
+        pv.CellType.HEXAHEDRON,
+        pv.CellType.PYRAMID,
+        pv.CellType.TETRA,
+        pv.CellType.TETRA,
+        pv.CellType.WEDGE,
+        pv.CellType.WEDGE,
+        pv.CellType.POLYHEDRON,
+        pv.CellType.POLYHEDRON,
+    ],
+    [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.5, 0.5, 1.5],
+        [0.0, 0.5, 1.5],
+        [1.0, 0.5, 1.5],
+        [2.0, 0.0, 0.0],
+        [2.0, 1.0, 0.0],
+        [-1.0, 0.0, 0.0],
+        [-1.0, 1.0, 0.0],
+        [2.0, 0.5, 1.0],
+        [-1.0, 0.5, 1.0],
+    ],
+)
 mixed_quad_pixel_voxel = (
     examples.cells.Quadrilateral()
     + examples.cells.Pixel()
@@ -112,15 +168,14 @@ meshes = [
     airplane,
     uniform,
     uniform2d,
+    hybrid,
     mesh2d,
+    polyhedron,
     cow,
     empty,
     points_only,
     mixed_quad_pixel_voxel,
 ]
-
-if pv.vtk_version_info < (9, 4):
-    meshes.append(polyhedron)
 
 
 @pytest.mark.parametrize('mesh_in', meshes)

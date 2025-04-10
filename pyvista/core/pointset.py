@@ -2086,12 +2086,33 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         if pyvista.vtk_version_info < (9, 4):
-            msg = '`polyhedron_faces` requires vtk>=9.4.0'
-            raise VTKVersionError(msg)
-        faces = self.GetPolyhedronFaces()  # vtkCellArray
-        if faces is None:
-            return np.array([], dtype=int)  # type: ignore[unreachable]
-        return convert_array(faces.GetData())
+            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+
+            if polyhedron_faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+
+            cell_faces = []
+            i = 0
+
+            while i < len(polyhedron_faces):
+                faces_: list[VectorLike[int]] = []
+                n_faces = polyhedron_faces[i]
+                i += 1
+
+                while len(faces_) < n_faces:
+                    n_vertices = polyhedron_faces[i]
+                    faces_.append([n_vertices, *polyhedron_faces[i + 1 : i + 1 + n_vertices]])
+                    i += n_vertices + 1
+
+                cell_faces.append(np.concatenate(faces_))
+
+            return np.concatenate(cell_faces)
+
+        else:
+            faces = self.GetPolyhedronFaces()  # vtkCellArray
+            if faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+            return convert_array(faces.GetData())
 
     @property
     def face_locations(self) -> NumpyArray[int]:
@@ -2122,12 +2143,39 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         """
         if pyvista.vtk_version_info < (9, 4):
-            msg = '`polyhedron_face_locations` requires vtk>=9.4.0'
-            raise VTKVersionError(msg)
-        faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
-        if faces is None:
-            return np.array([], dtype=int)  # type: ignore[unreachable]
-        return convert_array(faces.GetData())
+            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+
+            if polyhedron_faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+
+            i, face_counts = 0, []
+
+            while i < len(polyhedron_faces):
+                n_faces = polyhedron_faces[i]
+                face_counts.append(n_faces)
+                face_count = 0
+                i += 1
+
+                while face_count < n_faces:
+                    i += polyhedron_faces[i] + 1
+                    face_count += 1
+
+            locations = [[0]] * self.n_cells
+            face_count = 0
+
+            for i, n_faces in zip(
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
+            ):
+                locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
+                face_count += n_faces
+
+            return np.concatenate(locations)
+
+        else:
+            faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
+            if faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+            return convert_array(faces.GetData())
 
     @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
