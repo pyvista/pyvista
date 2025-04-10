@@ -1072,22 +1072,23 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    def split(arr: VectorLike[int]) -> VectorLike[VectorLike[int]]:
-        i, offsets = 0, [0]
+    def split(arr: VectorLike[int]) -> list[VectorLike[int]]:
+        i = 0
+        offsets: list[int] = [0]
 
         while i < len(arr):
-            offsets.append(arr[i] + 1)
+            offsets.append(int(arr[i]) + 1)
             i += offsets[-1]
 
-        offsets = np.cumsum(offsets)
+        offsets_ = np.cumsum(offsets)
 
-        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets[:-1], offsets[1:])]
+        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:])]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
     if polyhedron_faces:
         polyhedron_locations = split(mesh.polyhedron_face_locations)
-        polyhedral_cell_faces = [
+        polyhedral_cell_faces: list[list[VectorLike[int]]] = [
             [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
         ]
 

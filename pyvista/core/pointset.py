@@ -2095,16 +2095,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             i = 0
 
             while i < len(polyhedron_faces):
-                faces = []
+                faces_: list[VectorLike[int]] = []
                 n_faces = polyhedron_faces[i]
                 i += 1
 
-                while len(faces) < n_faces:
+                while len(faces_) < n_faces:
                     n_vertices = polyhedron_faces[i]
-                    faces.append([n_vertices, *polyhedron_faces[i + 1 : i + 1 + n_vertices]])
+                    faces_.append([n_vertices, *polyhedron_faces[i + 1 : i + 1 + n_vertices]])
                     i += n_vertices + 1
 
-                cell_faces.append(np.concatenate(faces))
+                cell_faces.append(np.concatenate(faces_))
 
             return np.concatenate(cell_faces)
 
