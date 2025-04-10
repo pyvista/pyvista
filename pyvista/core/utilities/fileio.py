@@ -1082,7 +1082,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         offsets = np.cumsum(offsets)
 
-        return [arr[i1 + 1:i2] for i1, i2 in zip(offsets[:-1], offsets[1:])]
+        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets[:-1], offsets[1:])]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
