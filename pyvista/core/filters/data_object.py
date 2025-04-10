@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import TransformLike
     from pyvista import VectorLike
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -44,6 +45,8 @@ if TYPE_CHECKING:
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
+
+    points: pyvista_ndarray
 
     @overload
     def transform(  # type: ignore[misc]
@@ -200,7 +203,7 @@ class DataObjectFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+            self.points = self.points.astype(np.float32)  # type: ignore[assignment]
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
@@ -1364,30 +1367,42 @@ class DataObjectFilters:
                 active_scalars_info.append(block.active_scalars_info)
                 block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
 
-        if isinstance(self, pyvista.PolyData):
+        # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
+        # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        apply_vtk_94x_patch = (
+            isinstance(self, pyvista.PointSet)
+            and pyvista.vtk_version_info >= (9, 4)
+            and pyvista.vtk_version_info < (9, 5)
+        )
+        mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
+
+        if isinstance(mesh_in, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
+        alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
+        def _maybe_cast_to_point_set(in_):
+            return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
+
         if return_clipped:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
                 a, b = extract_crinkle_cells(self, a, b, active_scalars_info)
-            return a, b
+            return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
             clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
-        return clipped
+        return _maybe_cast_to_point_set(clipped)
 
     def clip(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
