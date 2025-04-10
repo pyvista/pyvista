@@ -814,11 +814,11 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     pv.FIGURE_PATH = str(tmpdir)
     pv.ON_SCREENSHOT = True
 
-    entries = os.listdir(pv.FIGURE_PATH)
+    entries = os.listdir(pv.FIGURE_PATH)  # noqa: PTH208
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show()
-    entries_after = os.listdir(pv.FIGURE_PATH)
+    entries_after = os.listdir(pv.FIGURE_PATH)  # noqa: PTH208
     assert len(entries) + 1 == len(entries_after)
 
     res_file = next(iter(set(entries_after) - set(entries)))

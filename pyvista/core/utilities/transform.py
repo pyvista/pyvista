@@ -34,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
-class Transform(_vtk.vtkTransform):
+class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
     """Describes linear transformations via a 4x4 matrix.
 
     A :class:`Transform` can be used to describe the full range of linear (also known

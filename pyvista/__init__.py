@@ -22,7 +22,6 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
-from pyvista.core._vtk_core import vtk_verbosity as vtk_verbosity
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
@@ -33,7 +32,7 @@ from pyvista.report import Report as Report
 from pyvista.report import get_gpu_info as get_gpu_info
 
 # get the int type from vtk
-ID_TYPE = cast(int, _get_vtk_id_type())
+ID_TYPE = cast('int', _get_vtk_id_type())
 
 # determine if using at least vtk 9.0.0
 if vtk_version_info.major < 9:  # pragma: no cover
