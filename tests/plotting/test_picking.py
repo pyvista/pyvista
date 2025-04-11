@@ -299,10 +299,7 @@ def test_point_picking(left_clicking):
     assert picked
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 2, 0),
-    reason='Hardware picker unavailable for VTK<9.2',
-)
+@pytest.mark.needs_vtk_version(9, 2, 0, reason='Hardware picker unavailable for VTK<9.2')
 @pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):

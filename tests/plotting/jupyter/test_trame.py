@@ -35,18 +35,14 @@ try:
 except:
     has_trame = False
 
-# skip all tests if VTK<9.1.0
-if pv.vtk_version_info < (9, 1):
-    pytestmark = pytest.mark.skip
-else:
-    skip_no_trame = pytest.mark.skipif(not has_trame, reason='Requires trame')
-    pytestmark = [
-        skip_no_trame,
-        pytest.mark.skip_plotting,
-        pytest.mark.filterwarnings(
-            r'ignore:It is recommended to use web\.AppKey instances for keys:aiohttp.web_exceptions.NotAppKeyWarning'
-        ),
-    ]
+pytestmark = [
+    pytest.mark.needs_vtk_version(9, 1),
+    pytest.mark.skipif(not has_trame, reason='Requires trame'),
+    pytest.mark.skip_plotting,
+    pytest.mark.filterwarnings(
+        r'ignore:It is recommended to use web\.AppKey instances for keys:aiohttp.web_exceptions.NotAppKeyWarning'
+    ),
+]
 
 
 def test_set_jupyter_backend_trame():
