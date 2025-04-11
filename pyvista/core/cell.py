@@ -86,7 +86,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
       N Faces:    0
       N Edges:    3
       X Bounds:   -5.406e-02, -5.551e-17
-      Y Bounds:    0.000e+00, 1.124e-02
+      Y Bounds:   0.000e+00, 1.124e-02
       Z Bounds:   -5.000e-01, -4.971e-01
 
     Get the 0-th cell from a :class:`pyvista.UnstructuredGrid`.
