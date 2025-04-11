@@ -713,7 +713,7 @@ def test_plotter_add_volume_clim(uniform: pv.ImageData):
     arr = uniform.x.astype(np.uint8)
     pl = pv.Plotter()
     vol = pl.add_volume(uniform, scalars=arr)
-    assert vol.mapper.scalar_range == (0, 255)
+    assert vol.mapper.scalar_range == (arr.min(), arr.max())
 
     clim = [-10, 20]
     pl = pv.Plotter()
