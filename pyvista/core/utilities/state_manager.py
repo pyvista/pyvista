@@ -231,3 +231,79 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
 
 
 vtk_verbosity = _VTKVerbosity()
+
+
+_VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
+
+
+class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
+    """Context manager to control access to VTK's pythonic snake_case API.
+
+    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
+    of `GetOutputPort`. These can easily be confused for PyVista attributes
+    which also use a snake_case convention. This class controls access to vtk's
+    new interface.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    state : 'allow' | 'warning' | 'error'
+        Allow or disallow the use of VTK's pythonic snake_case API with
+        PyVista-wrapped VTK classes.
+
+        - 'allow': Allow accessing VTK-defined snake_case attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+          attributes.
+        - 'error': Raise a ``PyVistaAttributeError`` when accessing
+          VTK-defined snake_case attributes.
+
+    Examples
+    --------
+    Get the current access state for VTK's snake_case api.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_snake_case()
+    'error'
+
+    The following will raise an error because the `information` property is defined
+    by `vtkDataObject` and is not part of PyVista's API.
+
+    >>> # pv.PolyData().information
+
+    Allow use of VTK's snake_case attributes. No warning or error is raised.
+
+    >>> _ = pv.vtk_snake_case('allow')
+    >>> pv.PolyData().information
+    <vtkmodules.vtkCommonCore.vtkInformation...
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.vtk_snake_case('error')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.vtk_snake_case('allow'):
+    ...     _ = pv.PolyData().information
+
+    >>> pv.vtk_snake_case()
+    'error'
+
+    """
+
+    @property
+    def _state(self) -> _VtkSnakeCaseOptions:
+        import pyvista as pv
+
+        return pv._VTK_SNAKE_CASE_STATE
+
+    @_state.setter
+    def _state(self, state: _VtkSnakeCaseOptions) -> None:
+        import pyvista as pv
+
+        pv._VTK_SNAKE_CASE_STATE = state
+
+
+vtk_snake_case = _vtkSnakeCase()

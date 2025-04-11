@@ -92,7 +92,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
 
 
 @no_new_attr
-class LookupTable(_vtk.vtkLookupTable):
+class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
