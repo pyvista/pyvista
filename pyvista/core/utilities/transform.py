@@ -1743,6 +1743,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         points: VectorLike[float] | MatrixLike[float],
         /,
+        *,
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
@@ -1789,6 +1790,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         vectors: VectorLike[float] | MatrixLike[float],
         /,
+        *,
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
@@ -1835,6 +1837,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         dataset: _DataSetOrMultiBlockType,
         /,
+        *,
         mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
         copy: bool = True,
         inverse: bool = False,
@@ -1891,6 +1894,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         actor: Prop3D,
         /,
+        *,
         mode: Literal['pre-multiply', 'post-multiply', 'replace'] = 'post-multiply',
         copy: bool = True,
         inverse: bool = False,
