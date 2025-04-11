@@ -22,3 +22,10 @@ def reset_global_theme():
     pyvista.set_plot_theme('document_build')
     yield
     pyvista.set_plot_theme('document_build')
+
+
+def pytest_collection_modifyitems(config, items):
+    """Modify collected tests."""
+    enabled = True  # "CI" in os.environ
+    for item in items:
+        item.add_marker(pytest.mark.fail_slow('5s', enabled=enabled))
