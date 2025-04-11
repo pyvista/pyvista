@@ -6,6 +6,7 @@ import glob
 import os
 from pathlib import Path
 import shutil
+from typing import Literal
 from typing import NamedTuple
 import warnings
 
@@ -134,14 +135,16 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('vtksz_file', files, ids=ids)
 
 
-def _save_failed_test_image(source_path):
+def _save_failed_test_image(source_path, category: Literal['warnings', 'errors', 'flaky']):
     """Save test image from cache or build to the failed image dir."""
+    parent_dir = Path(category)
     if Path(source_path).parent == Path(BUILD_IMAGE_CACHE):
         dest_dirname = 'from_cache'
     else:
         dest_dirname = 'from_build'
     Path(DEBUG_IMAGE_FAILED_DIR).mkdir(exist_ok=True)
-    dest_dir = Path(DEBUG_IMAGE_FAILED_DIR, dest_dirname)
+    Path(DEBUG_IMAGE_FAILED_DIR, parent_dir).mkdir(exist_ok=True)
+    dest_dir = Path(DEBUG_IMAGE_FAILED_DIR, parent_dir, dest_dirname)
     dest_dir.mkdir(exist_ok=True)
     dest_path = Path(dest_dir, Path(source_path).name)
     shutil.copy(source_path, dest_path)
@@ -150,16 +153,21 @@ def _save_failed_test_image(source_path):
 def test_static_images(test_case: _TestCaseTuple):
     fail_msg, fail_source = _test_both_images_exist(*test_case)
     if fail_msg:
-        _save_failed_test_image(fail_source)
+        _save_failed_test_image(fail_source, 'errors')
         pytest.fail(fail_msg)
 
     warn_msg, fail_msg = _test_compare_images(*test_case)
     if fail_msg:
-        _save_failed_test_image(test_case.docs_image_path)
-        _save_failed_test_image(test_case.cached_image_path)
+        _save_failed_test_image(test_case.docs_image_path, 'errors')
+        _save_failed_test_image(test_case.cached_image_path, 'errors')
         pytest.fail(fail_msg)
 
     if warn_msg:
+        parent_dir = (
+            'flaky' if Path(test_case.cached_image_path).stem in FLAKY_TEST_CASES else 'warnings'
+        )
+        _save_failed_test_image(test_case.docs_image_path, parent_dir)
+        _save_failed_test_image(test_case.cached_image_path, parent_dir)
         warnings.warn(warn_msg)
 
 
