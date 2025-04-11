@@ -311,7 +311,7 @@ if _vtk.vtk_version_info < (9, 3):
 
 
 @no_new_attr
-class ConeSource(_vtk.vtkConeSource):
+class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -569,7 +569,7 @@ class ConeSource(_vtk.vtkConeSource):
 
 
 @no_new_attr
-class CylinderSource(_vtk.vtkCylinderSource):
+class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -834,7 +834,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
 
 @no_new_attr
-class MultipleLinesSource(_vtk.vtkLineSource):
+class MultipleLinesSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -895,7 +895,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
-class Text3DSource(vtkVectorText):
+class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
     """3D text from a string.
 
     Generate 3D text from a string with a specified width, height or depth.
@@ -1190,7 +1190,7 @@ class Text3DSource(vtkVectorText):
 
 
 @no_new_attr
-class CubeSource(_vtk.vtkCubeSource):
+class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1422,7 +1422,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
 
 @no_new_attr
-class DiscSource(_vtk.vtkDiskSource):
+class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
     """Disc source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1617,7 +1617,7 @@ class DiscSource(_vtk.vtkDiskSource):
 
 
 @no_new_attr
-class LineSource(_vtk.vtkLineSource):
+class LineSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1737,7 +1737,7 @@ class LineSource(_vtk.vtkLineSource):
 
 
 @no_new_attr
-class SphereSource(_vtk.vtkSphereSource):
+class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2034,7 +2034,7 @@ class SphereSource(_vtk.vtkSphereSource):
 
 
 @no_new_attr
-class PolygonSource(_vtk.vtkRegularPolygonSource):
+class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2218,7 +2218,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
 
 
 @no_new_attr
-class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
+class PlatonicSolidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2322,7 +2322,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
 
 @no_new_attr
-class PlaneSource(_vtk.vtkPlaneSource):
+class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2560,7 +2560,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
 
 
 @no_new_attr
-class ArrowSource(_vtk.vtkArrowSource):
+class ArrowSource(_vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
     """Create a arrow source.
 
     .. versionadded:: 0.44
@@ -2734,7 +2734,7 @@ class ArrowSource(_vtk.vtkArrowSource):
 
 
 @no_new_attr
-class BoxSource(_vtk.vtkTessellatedBoxSource):
+class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2850,7 +2850,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
 
 @no_new_attr
-class SuperquadricSource(_vtk.vtkSuperquadricSource):
+class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
     """Create superquadric source.
 
     .. versionadded:: 0.44

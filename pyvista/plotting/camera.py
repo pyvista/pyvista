@@ -15,7 +15,7 @@ from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_vtk.vtkCamera):
+class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters

@@ -18,6 +18,7 @@ from .errors import NotAllTrianglesError as NotAllTrianglesError
 from .errors import PointSetCellOperationError as PointSetCellOperationError
 from .errors import PointSetDimensionReductionError as PointSetDimensionReductionError
 from .errors import PointSetNotSupported as PointSetNotSupported
+from .errors import PyVistaAttributeError as PyVistaAttributeError
 from .errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning
 from .errors import PyVistaFutureWarning as PyVistaFutureWarning

@@ -261,7 +261,7 @@ class BlockAttributes:
         )
 
 
-class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
+class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplayAttributes):
     """Block attributes.
 
     Parameters

@@ -305,14 +305,6 @@ def test_default_pickle_format():
     assert pv.PICKLE_FORMAT == 'vtk' if pv.vtk_version_info >= (9, 3) else 'xml'
 
 
-@pytest.fixture
-def _modifies_pickle_format():
-    before = pv.PICKLE_FORMAT
-    yield
-    pv.PICKLE_FORMAT = before
-
-
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 @pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
 def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_path):
@@ -361,7 +353,6 @@ def n_points(dataset):
     return dataset.n_points
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -375,7 +366,6 @@ def test_pickle_multiprocessing(datasets, pickle_format):
         assert r == dataset.n_points
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -395,7 +385,6 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
         assert unpickled == multiblock
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_user_dict(sphere, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -411,7 +400,6 @@ def test_pickle_user_dict(sphere, pickle_format):
     assert unpickled.user_dict == user_dict
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_set_pickle_format(pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -423,7 +411,6 @@ def test_set_pickle_format(pickle_format):
         assert pickle_format == pv.PICKLE_FORMAT
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 def test_pickle_invalid_format(sphere):
     match = 'Unsupported pickle format `invalid_format`.'
     with pytest.raises(ValueError, match=match):
