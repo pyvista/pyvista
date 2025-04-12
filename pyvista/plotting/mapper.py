@@ -61,6 +61,18 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         """
         return BoundsTuple(*self.GetBounds())  # type: ignore[attr-defined]
 
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center of mapper.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of the active renderer.
+
+        """
+        return self.GetCenter()  # type: ignore[attr-defined]
+
     def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
 
@@ -382,7 +394,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
+        return cast('Optional[pyvista.DataSet]', wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
 
     @dataset.setter
     def dataset(
@@ -823,7 +835,7 @@ class _DataSetMapper(_BaseMapper):
             msg = (
                 f'Opacity array size ({opacity.size}) does not equal '
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                f'number of cells ({self.dataset.n_cells}).'  # type: ignore[union-attr]
+                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
             )
             raise ValueError(msg)
 
@@ -1150,20 +1162,46 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+        self.InteractiveAdjustSampleDistancesOff()
 
 
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()

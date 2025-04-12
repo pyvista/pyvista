@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pyvista
-from pyvista.plotting import _vtk
 
 
 def cubemap(path='', prefix='', ext='.jpg'):
@@ -126,11 +125,7 @@ def _cubemap_from_paths(image_paths):
 
     # add each image to the cubemap
     for i, fn in enumerate(image_paths):
-        image = pyvista.read(fn)
-        flip = _vtk.vtkImageFlip()
-        flip.SetInputDataObject(image)
-        flip.SetFilteredAxis(1)  # flip y-axis
-        flip.Update()
-        texture.SetInputDataObject(i, flip.GetOutput())
+        # Read and flip along y-axis
+        texture.SetInputDataObject(i, pyvista.read(fn)._flip_uniform(1))
 
     return texture

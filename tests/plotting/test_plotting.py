@@ -11,7 +11,6 @@ import io
 import os
 import pathlib
 from pathlib import Path
-import platform
 import re
 import time
 from types import FunctionType
@@ -41,7 +40,6 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
-from pyvista.plotting.utilities.gl_checks import uses_egl
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:
@@ -91,10 +89,9 @@ def using_mesa():
 
 # always set on Windows CI
 # These tests fail with mesa opengl on windows
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-skip_windows_mesa = pytest.mark.skipif(
-    using_mesa() and os.name == 'nt',
-    reason='Does not display correctly within OSMesa on Windows',
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
+    'Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason='Flaky on 9.0.X')
@@ -106,18 +103,12 @@ skip_lesser_9_3_X = pytest.mark.skipif(
     pv.vtk_version_info < (9, 3),
     reason='Functions not implemented before 9.3.X',
 )
+skip_lesser_9_4_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 4),
+    reason='Functions not implemented before 9.4.X or invalid results prior',
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
-
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
-skip_mac_flaky = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='This is a flaky test on MacOS',
-)
-skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
 @pytest.fixture(autouse=True)
@@ -278,7 +269,7 @@ def test_import_obj_with_texture():
     pl.show(cpos='xy')
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 def test_pbr(sphere, verify_image_cache):
     """Test PBR rendering"""
@@ -310,16 +301,18 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@skip_windows
-@skip_mac
-def test_set_environment_texture_cubemap(sphere, verify_image_cache):
+@pytest.mark.skip_windows
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
+@pytest.mark.parametrize('resample', [True, False])
+@pytest.mark.needs_vtk_version(9, 1)  # GC issue
+def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
     """Test set_environment_texture with a cubemap."""
     verify_image_cache.high_variance_test = True
 
     texture = examples.download_sky_box_cube_map()
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
+    pl.set_environment_texture(texture, resample=resample)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
@@ -327,8 +320,8 @@ def test_set_environment_texture_cubemap(sphere, verify_image_cache):
     pl.show()
 
 
-@skip_windows
-@skip_mac
+@pytest.mark.skip_windows
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_remove_environment_texture_cubemap(sphere):
     """Test remove_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
@@ -1574,6 +1567,7 @@ def test_vector_array_with_points(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pv.Plotter()
@@ -1607,6 +1601,7 @@ def test_vector_array(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
     copy_vector_values_points = multicomp_poly['vector_values_points'].copy()
@@ -1810,7 +1805,7 @@ def test_subplot_groups_fail():
         pv.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_link_views(sphere):
     plotter = pv.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
@@ -1833,7 +1828,7 @@ def test_link_views(sphere):
     plotter.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_link_views_camera_set(sphere, verify_image_cache):
     p = pv.Plotter(shape=(1, 2))
     p.add_mesh(pv.Cone())
@@ -1971,7 +1966,18 @@ def test_volume_rendering_rectilinear(uniform):
     plotter.close()
 
 
-@skip_windows
+@skip_windows_mesa  # due to opacity
+@pytest.mark.parametrize('mapper', ['fixed_point', 'gpu', 'open_gl', 'smart'])
+def test_volume_rendering_mappers_image_data(mapper):
+    image = pv.ImageData(dimensions=(50, 50, 50))
+    image['scalars'] = -image.x
+
+    plotter = pv.Plotter()
+    plotter.add_volume(image, mapper=mapper)
+    plotter.show()
+
+
+@pytest.mark.skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
@@ -2027,12 +2033,12 @@ def test_plot_depth_peeling():
     p.show()
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plot(airplane):
     airplane.plot(eye_dome_lighting=True)
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plotter(airplane):
     p = pv.Plotter()
     p.add_mesh(airplane)
@@ -2040,7 +2046,7 @@ def test_plot_eye_dome_lighting_plotter(airplane):
     p.show()
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_enable_disable(airplane):
     p = pv.Plotter()
     p.add_mesh(airplane)
@@ -2049,7 +2055,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_opacity_by_array_direct(plane, verify_image_cache):
     # VTK regression 9.0.1 --> 9.1.0
     verify_image_cache.high_variance_test = True
@@ -2062,6 +2068,7 @@ def test_opacity_by_array_direct(plane, verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2071,6 +2078,7 @@ def test_opacity_by_array(uniform):
     p.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2103,6 +2111,7 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+@skip_windows_mesa
 def test_opacity_by_array_preference():
     tetra = pv.Tetrahedron()  # 4 points, 4 cells
     opacities = np.linspace(0.2, 0.8, tetra.n_points)
@@ -2674,7 +2683,7 @@ def test_collision_plot(verify_image_cache):
     plotter.show()
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 @pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
@@ -2843,7 +2852,7 @@ def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading)
     sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
 
 
-@skip_mac_flaky
+@pytest.mark.skip_mac('This is a flaky test on MacOS')
 def test_splitting_active_cells(cube):
     cube.cell_data['cell_id'] = range(cube.n_cells)
     cube = cube.triangulate().subdivide(1)
@@ -3074,6 +3083,7 @@ def test_add_text_font_file():
     plotter.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pv.Plotter()
@@ -3081,6 +3091,7 @@ def test_plot_categories_int(sphere):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_true(sphere):
     sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
     pl = pv.Plotter()
@@ -3088,7 +3099,7 @@ def test_plot_categories_true(sphere):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @skip_9_0_X
 def test_depth_of_field():
     pl = pv.Plotter()
@@ -3135,7 +3146,7 @@ def test_ssao_pass_from_helper():
     ugrid.plot(ssao=True)
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_many_multi_pass():
     pl = pv.Plotter(lighting=None)
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3193,7 +3204,8 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
     multiblock_poly[:2].plot(preference='cell')
 
 
-@skip_windows  # because of opacity
+@pytest.mark.skip_windows('Test fails on Windows because of opacity')
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
 
@@ -3217,6 +3229,7 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
     pl.show()
 
 
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
@@ -3253,6 +3266,7 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_composite_poly_component_norm(multiblock_poly):
     for ii, block in enumerate(multiblock_poly):
         data = block.compute_normals().point_data['Normals']
@@ -3391,6 +3405,7 @@ def test_multi_plot_scalars(verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_bool_scalars(sphere):
     sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
     sphere['scalars'][::2] = 1
@@ -3399,7 +3414,7 @@ def test_bool_scalars(sphere):
     plotter.show()
 
 
-@skip_windows  # because of pbr
+@pytest.mark.skip_windows('Test fails on Windows because of pbr')
 @skip_9_1_0  # pbr required
 def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
@@ -3569,6 +3584,7 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.plot()
 
 
+@skip_windows_mesa
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
@@ -3667,7 +3683,7 @@ def test_view_xyz(direction, negative, colorful_tetrahedron):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian(sphere):
     sphere.plot(
         color='r',
@@ -3678,7 +3694,7 @@ def test_plot_points_gaussian(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_scalars(sphere):
     sphere.plot(
         scalars=sphere.points[:, 2],
@@ -3690,7 +3706,7 @@ def test_plot_points_gaussian_scalars(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_as_spheres(sphere):
     sphere.plot(
         color='b',
@@ -3702,7 +3718,7 @@ def test_plot_points_gaussian_as_spheres(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_scale(sphere):
     sphere['z'] = sphere.points[:, 2] * 0.1
     pl = pv.Plotter()
@@ -3781,7 +3797,7 @@ def test_remove_vertices_actor(sphere):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
@@ -4033,10 +4049,7 @@ def test_plot_cubemap_alone(cubemap, verify_image_cache):
     cubemap.plot()
 
 
-@pytest.mark.skipif(
-    uses_egl(),
-    reason='Render window will be current with offscreen builds of VTK.',
-)
+@pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of VTK.')
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -4809,7 +4822,7 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     plot.show()
 
 
-@skip_windows  # Windows colors all plane cells red (bug?)
+@pytest.mark.skip_windows('Windows colors all plane cells red (bug?)')
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
 @pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
 def test_orthogonal_planes_source_normals(normal_sign, plane):
@@ -4835,7 +4848,7 @@ def test_orthogonal_planes_source_push(distance):
 
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
-@skip_windows
+@pytest.mark.skip_windows
 @skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
@@ -4848,7 +4861,7 @@ def test_orthogonal_planes_source_resolution(resolution):
 
 
 @skip_9_1_0
-@skip_windows
+@pytest.mark.skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
     [
@@ -4942,11 +4955,8 @@ def oblique_cone():
     return pv.examples.download_oblique_cone()
 
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
-
-@pytest.mark.skipif(
-    is_arm_mac, reason='Barely exceeds error threshold (slightly different rendering).'
+@pytest.mark.skip_mac(
+    'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
 def test_bounding_box(oblique_cone, box_style):

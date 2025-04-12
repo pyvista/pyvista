@@ -36,6 +36,7 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
+  VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
 
 permissions:
   id-token: none
@@ -66,11 +67,6 @@ jobs:
       - name: Install PyVista and dependencies
         run: |
           pip install -e .[docs]
-
-      - name: Install custom OSMesa VTK variant
-        run: |
-          pip uninstall vtk -y
-          pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
 
       - name: PyVista Report
         run: |
@@ -114,7 +110,7 @@ jobs:
         run: pytest tests/doc/tst_doc_images.py
 
       - name: Upload Images for Failed Tests
-        if: ${{ failure() && hashFiles('_doc_debug_images_failed/**/*.jpg') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images-failed

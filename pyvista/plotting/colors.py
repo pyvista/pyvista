@@ -778,7 +778,7 @@ class Color:
         elif isinstance(val, float) or (
             arr is not None and np.issubdtype(arr.dtype, np.floating) and arr.ndim == 0
         ):
-            val = int(round(255 * val))
+            val = round(255 * val)
 
         # Check integers
         if isinstance(val, int) and 0 <= val <= 255:

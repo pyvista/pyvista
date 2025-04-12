@@ -198,7 +198,7 @@ if _vtk.vtk_version_info < (9, 3):
 
             """
             valid_direction = _validation.validate_array3(direction, dtype_out=float, to_tuple=True)
-            self._direction = cast(tuple[float, float, float], valid_direction)
+            self._direction = cast('tuple[float, float, float]', valid_direction)
 
         @property
         def cylinder_length(self: CapsuleSource) -> float:
@@ -668,7 +668,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         """
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast(tuple[float, float, float], valid_center)
+        self._center = cast('tuple[float, float, float]', valid_center)
 
     @property
     def direction(self: CylinderSource) -> tuple[float, float, float]:
@@ -695,7 +695,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         """
         valid_direction = _validation.validate_array3(direction, dtype_out=float, to_tuple=True)
-        self._direction = cast(tuple[float, float, float], valid_direction)
+        self._direction = cast('tuple[float, float, float]', valid_direction)
 
     @property
     def radius(self: CylinderSource) -> float:
@@ -1033,7 +1033,7 @@ class Text3DSource(vtkVectorText):
     @center.setter
     def center(self: Text3DSource, center: VectorLike[float]) -> None:
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast(tuple[float, float, float], valid_center)
+        self._center = cast('tuple[float, float, float]', valid_center)
 
     @property
     def normal(self: Text3DSource) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1047,7 +1047,7 @@ class Text3DSource(vtkVectorText):
     @normal.setter
     def normal(self: Text3DSource, normal: VectorLike[float]) -> None:
         normal_ = _validation.validate_array3(normal, dtype_out=float, to_tuple=True)
-        self._normal = cast(tuple[float, float, float], normal_)
+        self._normal = cast('tuple[float, float, float]', normal_)
 
     @property
     def width(self: Text3DSource) -> float | None:  # numpydoc ignore=RT01
@@ -3820,7 +3820,7 @@ class OrthogonalPlanesSource:
     @property
     def normal_sign(self: OrthogonalPlanesSource) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the sign of the plane's normal vectors."""
-        return cast(tuple[str, str, str], self._normal_sign)
+        return cast('tuple[str, str, str]', self._normal_sign)
 
     @normal_sign.setter
     def normal_sign(
@@ -3850,7 +3850,7 @@ class OrthogonalPlanesSource:
     @property
     def resolution(self: OrthogonalPlanesSource) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return or set the resolution of the planes."""
-        return cast(tuple[int, int, int], tuple(self._resolution))
+        return cast('tuple[int, int, int]', tuple(self._resolution))
 
     @resolution.setter
     def resolution(self: OrthogonalPlanesSource, resolution: int | VectorLike[int]) -> None:
@@ -3914,7 +3914,7 @@ class OrthogonalPlanesSource:
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
-        valid_names = cast(tuple[str, str, str], tuple(names))
+        valid_names = cast('tuple[str, str, str]', tuple(names))
         self._names = valid_names
 
         output = self._output
@@ -4340,7 +4340,7 @@ class CubeFacesSource(CubeSource):
                 '-' + names[2],
             )
         )
-        self._names = cast(tuple[str, str, str, str, str, str], valid_names)
+        self._names = cast('tuple[str, str, str, str, str, str]', valid_names)
 
     def update(self: CubeFacesSource) -> None:
         """Update the output of the source."""
@@ -4424,7 +4424,7 @@ class CubeFacesSource(CubeSource):
                 points += vector
 
             # Set poly as a single quad cell
-            face_poly.points = points  # type: ignore[union-attr, has-type]
+            face_poly.points = points  # type: ignore[union-attr]
             face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
 
             if frame_width is not None:
@@ -4434,7 +4434,7 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points  # type: ignore[union-attr, has-type]
+                face_poly.points = frame_points  # type: ignore[union-attr]
                 face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property

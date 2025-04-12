@@ -45,10 +45,8 @@ jobs:
         run: |
           pip install -e .[test]
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
-        with:
-          packages: xvfb
-          version: 3.0
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v3
 
       - name: Software Report
         run: |

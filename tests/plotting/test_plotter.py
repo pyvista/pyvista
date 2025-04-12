@@ -21,13 +21,12 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
-from pyvista.plotting.utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.mark.skipif(uses_egl(), reason='OSMesa/EGL builds will not fail.')
+@pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
     plotter = pv.Plotter()
     with pytest.raises(AttributeError, match='not yet been set up'):
@@ -51,7 +50,7 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
     assert actor.prop.render_lines_as_tubes
 
 
-@pytest.mark.skipif(uses_egl(), reason='OSMesa/EGL builds will not fail.')
+@pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_screenshot_fail_suppressed_rendering():
     plotter = pv.Plotter()
     plotter.suppress_rendering = True
@@ -815,11 +814,11 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     pv.FIGURE_PATH = str(tmpdir)
     pv.ON_SCREENSHOT = True
 
-    entries = os.listdir(pv.FIGURE_PATH)
+    entries = os.listdir(pv.FIGURE_PATH)  # noqa: PTH208
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show()
-    entries_after = os.listdir(pv.FIGURE_PATH)
+    entries_after = os.listdir(pv.FIGURE_PATH)  # noqa: PTH208
     assert len(entries) + 1 == len(entries_after)
 
     res_file = next(iter(set(entries_after) - set(entries)))

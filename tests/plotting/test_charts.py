@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-import platform
 import weakref
 
 import numpy as np
@@ -14,11 +13,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
-
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
 
 
 @pytest.fixture(autouse=True)
@@ -181,7 +175,7 @@ def test_wrapping():
     assert pen.GetWidth() == width
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_brush():
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     t_masonry = examples.download_masonry_texture()
@@ -226,6 +220,8 @@ def test_axis_init():
     assert np.allclose(axis.range, r_fix)
     assert axis.behavior == 'fixed'
     assert axis.grid
+    assert isinstance(axis.pen, charts.Pen)
+    assert isinstance(axis.grid_pen, charts.Pen)
 
 
 def test_axis_label(axis):
@@ -1227,7 +1223,7 @@ def test_chart_interaction():
     assert pl.iren._context_style.GetScene() is None
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy
