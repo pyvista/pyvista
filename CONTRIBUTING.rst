@@ -533,6 +533,43 @@ for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
 
+The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
+If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
+custom pytest marker ``needs_vtk_version``, enabling the following usage:
+
+.. code-block:: python
+
+    @pytest.mark.needs_vtk_version(9, 1)
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version((9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(max=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(8, 2, max=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(max=(9, 1))
+    @pytest.mark.needs_vtk_version(8, 2)
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(9, 1, reason='custom reason')
+    def test():
+        """Test is skipped with a custom message"""
+
+
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:

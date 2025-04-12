@@ -101,7 +101,7 @@ skip_lesser_9_0_X = pytest.mark.needs_vtk_version(
 skip_lesser_9_3_X = pytest.mark.needs_vtk_version(
     9, 3, reason='Functions not implemented before 9.3.X'
 )
-skip_lesser_9_4_X = pytest.mark.need_vtk_version(
+skip_lesser_9_4_X = pytest.mark.needs_vtk_version(
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
 
