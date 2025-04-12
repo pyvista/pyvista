@@ -1,5 +1,19 @@
-import pyvista as pv
+"""
+Demonstrate the Farthest Point Sampling algorithm.
+
+The script generates random 3D points, performs Farthest Point Sampling,
+and visualizes the results using PyVista.
+"""
+
+from __future__ import annotations
+
 import numpy as np
+
+import pyvista as pv
+
+# Create a random number generator
+rng = np.random.default_rng()
+
 
 def farthest_point_sampling(points, k):
     """
@@ -19,10 +33,10 @@ def farthest_point_sampling(points, k):
 
     References
     ----------
-    Y. Eldar et al., "The farthest point strategy for progressive image sampling," 1994.
+    Y. Eldar, M. Lindenbaum, M. Porat and Y. Y. Zeevi, "The farthest point strategy for progressive image sampling," Proceedings of the 12th IAPR International Conference on Pattern Recognition, Vol. 2 - Conference B: Computer Vision & Image Processing. (Cat. No.94CH3440-5), Jerusalem, Israel, 1994, pp. 93-97 vol.3, doi: 10.1109/ICPR.1994.577129.
     """
     n_points = points.shape[0]
-    sampled_indices = [np.random.randint(n_points)]
+    sampled_indices = [rng.integers(n_points)]
     distances = np.full(n_points, np.inf)
 
     for _ in range(1, k):
@@ -34,9 +48,10 @@ def farthest_point_sampling(points, k):
 
     return points[sampled_indices]
 
+
 # Generate random points for demonstration
 n_points = 1000
-points = np.random.rand(n_points, 3)
+points = rng.random((n_points, 3))
 
 # Perform Farthest Point Sampling
 k = 10
@@ -47,7 +62,11 @@ cloud = pv.PolyData(points)
 sampled_cloud = pv.PolyData(sampled_points)
 
 plotter = pv.Plotter()
-plotter.add_mesh(cloud, color="blue", point_size=5, render_points_as_spheres=True, label="Original Points")
-plotter.add_mesh(sampled_cloud, color="red", point_size=10, render_points_as_spheres=True, label="Sampled Points")
+plotter.add_mesh(
+    cloud, color='blue', point_size=5, render_points_as_spheres=True, label='Original Points'
+)
+plotter.add_mesh(
+    sampled_cloud, color='red', point_size=10, render_points_as_spheres=True, label='Sampled Points'
+)
 plotter.add_legend()
 plotter.show()
