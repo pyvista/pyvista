@@ -3432,6 +3432,11 @@ class _DocumentBuildTheme(DocumentTheme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'document_build'
+        self.window_size = [1024, 768]
+        self.font.size = 22
+        self.font.label_size = 22
+        self.font.title_size = 22
+        self.return_cpos = False
         self.resample_environment_texture = True
 
 
