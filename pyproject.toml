@@ -13,6 +13,7 @@ classifiers = [
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
   'Programming Language :: Python :: 3.9',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
@@ -71,7 +72,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.130.7',
+  'hypothesis<6.131.1',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
