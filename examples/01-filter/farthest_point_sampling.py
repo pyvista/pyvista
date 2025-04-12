@@ -34,6 +34,7 @@ def farthest_point_sampling(points, k):
     References
     ----------
     Y. Eldar et al., "The farthest point strategy for progressive image sampling", 1994.
+
     """
     n_points = points.shape[0]
     sampled_indices = [rng.integers(n_points)]
