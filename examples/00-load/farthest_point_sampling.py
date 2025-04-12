@@ -16,6 +16,10 @@ def farthest_point_sampling(points, k):
     -------
     sampled_points : np.ndarray
         Sampled points as a numpy array of shape (k, 3).
+
+    References
+    ----------
+    Y. Eldar, M. Lindenbaum, M. Porat and Y. Y. Zeevi, "The farthest point strategy for progressive image sampling," Proceedings of the 12th IAPR International Conference on Pattern Recognition, Vol. 2 - Conference B: Computer Vision & Image Processing. (Cat. No.94CH3440-5), Jerusalem, Israel, 1994, pp. 93-97 vol.3, doi: 10.1109/ICPR.1994.577129.
     """
     n_points = points.shape[0]
     sampled_indices = [np.random.randint(n_points)]
