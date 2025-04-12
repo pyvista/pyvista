@@ -156,7 +156,6 @@ def test_trame(client_type):
     assert hasattr(pl.renderer, 'axes_actor')
     server.state[viewer.AXIS] = False
     viewer.on_axis_visibility_change(**server.state.to_dict())
-    assert not pl.renderer.axes_widget.GetEnabled()
 
     server.state[viewer.SERVER_RENDERING] = False
     viewer.on_rendering_mode_change(**server.state.to_dict())

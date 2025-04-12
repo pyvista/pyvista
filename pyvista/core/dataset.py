@@ -481,7 +481,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property  # type: ignore[override]
+    @property
     def points(self: Self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
@@ -2818,7 +2818,11 @@ class DataSet(DataSetFilters, DataObject):
 
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
-        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+        out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+        if pyvista.vtk_version_info >= (9, 4, 0):
+            # Need to reverse the order
+            return out[::-1]
+        return out
 
     def point_is_inside_cell(
         self: Self,

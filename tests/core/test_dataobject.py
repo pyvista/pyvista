@@ -337,16 +337,8 @@ def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_pat
         for attr in dataset.__dict__:
             assert getattr(dataset_2, attr) == getattr(dataset, attr)
 
-        # check data is the same
-        for attr in ('n_cells', 'n_points', 'n_arrays'):
-            if hasattr(dataset, attr):
-                assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        for attr in ('cells', 'points'):
-            if hasattr(dataset, attr):
-                arr_have = getattr(dataset_2, attr)
-                arr_expected = getattr(dataset, attr)
-                assert arr_have == pytest.approx(arr_expected)
+        # check data is the same:
+        assert dataset_2 == dataset
 
         for name in dataset.point_data:
             arr_have = dataset_2.point_data[name]

@@ -1649,9 +1649,30 @@ def test_transform_apply_to_dataset(scale_transform, mode, method):
     assert np.allclose(transformed['vector'], expected)
 
 
+@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
+def test_transform_apply_to_actor(scale_transform, translate_transform, mode, method):
+    expected_matrix = scale_transform.matrix
+    actor = pv.Actor()
+
+    transformed = method(scale_transform, actor, mode)
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+    # Transform again
+    transformed = method(translate_transform, transformed, mode)
+    if mode == 'replace':
+        expected_matrix = translate_transform.matrix
+    else:
+        expected_matrix = scale_transform.compose(
+            translate_transform, multiply_mode=mode.split('-')[0]
+        ).matrix
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+
 def test_transform_apply_invalid_mode():
     mesh = pv.PolyData()
     array = np.ndarray(())
+    actor = pv.Actor()
     trans = pv.Transform()
 
     match = (
@@ -1667,6 +1688,13 @@ def test_transform_apply_invalid_mode():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         trans.apply(array, 'all_vectors')
+
+    match = (
+        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
+        "['replace', 'pre-multiply', 'post-multiply', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -2372,3 +2400,20 @@ def test_cell_quality_info_raises():
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute():
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+
+    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+
+
+@pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute_input_type(obj):
+    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
