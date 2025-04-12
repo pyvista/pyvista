@@ -189,7 +189,7 @@ jobs:
           which python
           pip list
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
