@@ -483,6 +483,7 @@ sphinx_gallery_conf = {
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
+    'parallel': 4,
 }
 
 suppress_warnings = ['config.cache']
