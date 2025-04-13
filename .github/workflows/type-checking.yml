@@ -1,6 +1,9 @@
 name: Static Type Checking
 
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
