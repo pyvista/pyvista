@@ -42,14 +42,6 @@ ColorLike.__doc__ = 'Any object convertible to a :class:`Color`.'
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 
 
-class Silhouette(TypedDict, total=False):
-    color: ColorLike
-    line_width: float
-    opacity: float
-    feature_angle: float
-    decimate: float
-
-
 class BackfaceParams(TypedDict, total=False):
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
@@ -71,3 +63,42 @@ class BackfaceParams(TypedDict, total=False):
     line_width: float
     culling: Literal['back', 'front', 'none'] | bool
     edge_opacity: float
+
+
+class ScalarBarArgs(TypedDict, total=False):
+    title: str
+    mapper: _vtk.vtkMapper
+    n_labels: int
+    italic: bool
+    bold: bool
+    title_font_size: float
+    label_font_size: float
+    color: ColorLike
+    font_family: Literal['courier', 'times', 'arial']
+    shadow: bool
+    width: float
+    height: float
+    position_x: float
+    position_y: float
+    vertical: bool
+    interactive: bool
+    fmt: str
+    use_opacity: bool
+    outline: bool
+    nan_annotation: bool
+    below_label: str
+    above_label: str
+    background_color: ColorLike
+    n_colors: int
+    fill: bool
+    render: bool
+    theme: Theme
+    unconstrained_font_size: bool
+
+
+class Silhouette(TypedDict, total=False):
+    color: ColorLike
+    line_width: float
+    opacity: float
+    feature_angle: float
+    decimate: float

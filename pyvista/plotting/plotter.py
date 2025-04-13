@@ -98,6 +98,7 @@ if TYPE_CHECKING:
     from pyvista.plotting import Light
     from pyvista.plotting._typing import BackfaceParams
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import ScalarBarArgs
     from pyvista.plotting._typing import Silhouette
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.trame.jupyter import EmbeddableWidget
@@ -2487,7 +2488,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap: str | list[str] | pyvista.LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
-        scalar_bar_args: dict | None = None,
+        scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
         multi_colors: bool | str | Cycler | Sequence[ColorLike] = False,
         name: str | None = None,
@@ -2505,7 +2506,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         rgb: bool | None = None,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
-        annotations: dict | None = None,
+        annotations: dict[float, str] | None = None,
         pickable: bool = True,
         preference: Literal['point', 'cell'] = 'point',
         log_scale: bool = False,
@@ -3018,7 +3019,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap: str | list[str] | pyvista.LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
-        scalar_bar_args: dict | None = None,
+        scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
         multi_colors: bool = False,
         name: str | None = None,
@@ -3956,9 +3957,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         multi_colors: bool = False,
         blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = 'composite',
         mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart'] | None = None,
-        scalar_bar_args: dict | None = None,
+        scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
-        annotations: dict | None = None,
+        annotations: dict[float, str] | None = None,
         pickable: bool = True,
         preference: Literal['point', 'cell'] = 'point',
         opacity_unit_distance: float | None = None,
@@ -3970,7 +3971,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         user_matrix: NumpyArray[float] | _vtk.vtkMatrix4x4 | None = None,
         log_scale: bool = False,
         **kwargs,
-    ) -> pyvista.Actor:
+    ) -> Actor:
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4546,7 +4547,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity: float | None = None,
         feature_angle: float | None = None,
         decimate: float | None = None,
-    ) -> pyvista.Actor:
+    ) -> Actor:
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
