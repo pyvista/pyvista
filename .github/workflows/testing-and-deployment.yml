@@ -3,6 +3,7 @@ name: Unit Testing and Deployment
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
+  merge_group:
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
