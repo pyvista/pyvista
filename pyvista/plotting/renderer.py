@@ -266,7 +266,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkOpenGLRenderer):
+class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -1072,7 +1072,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
-    def delete_axes_widget(self):
+    def _delete_axes_widget(self):
         """Remove and delete the current axes widget."""
         if hasattr(self, 'axes_widget'):
             self.axes_actor = None
@@ -1148,8 +1148,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        if hasattr(self, 'axes_widget'):
-            self.delete_axes_widget()
+        self._delete_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -1276,7 +1275,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self.delete_axes_widget()
+        self._delete_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1495,7 +1494,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self.delete_axes_widget()
+        self._delete_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -1541,7 +1540,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        self.delete_axes_widget()
+        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
+            self.axes_widget.EnabledOff()
+            self.Modified()
 
     def show_axes(self) -> None:
         """Show the axes orientation widget.
@@ -3628,7 +3629,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self.delete_axes_widget()
+        self._delete_axes_widget()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)

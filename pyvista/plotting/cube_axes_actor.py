@@ -47,7 +47,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     return labels
 
 
-class CubeAxesActor(_vtk.vtkCubeAxesActor):
+class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     """Wrap vtkCubeAxesActor.
 
     This class is created to wrap vtkCubeAxesActor, which is used to draw axes

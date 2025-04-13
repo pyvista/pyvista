@@ -34,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
-class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
+class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTransform):
     """Describes linear transformations via a 4x4 matrix.
 
     A :class:`Transform` can be used to describe the full range of linear (also known
@@ -1743,6 +1743,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         points: VectorLike[float] | MatrixLike[float],
         /,
+        *,
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
@@ -1789,6 +1790,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         vectors: VectorLike[float] | MatrixLike[float],
         /,
+        *,
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
@@ -1836,6 +1838,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         dataset: _DataSetOrMultiBlockType,
         /,
         mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
+        *,
         copy: bool = True,
         inverse: bool = False,
     ) -> _DataSetOrMultiBlockType:
@@ -1892,6 +1895,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         actor: Prop3D,
         /,
         mode: Literal['pre-multiply', 'post-multiply', 'replace'] = 'post-multiply',
+        *,
         copy: bool = True,
         inverse: bool = False,
     ) -> Prop3D:

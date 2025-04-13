@@ -418,7 +418,11 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
-from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+
+with contextlib.suppress(ImportError):
+    # Deprecated in 9.3
+    from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
@@ -611,6 +615,29 @@ class vtkPyVistaOverride:
                     break
 
         return cls
+
+
+class DisableVtkSnakeCase:
+    """Base class to raise error if using VTK's `snake_case` API."""
+
+    def __getattribute__(self, attr):
+        if vtk_version_info >= (9, 4):
+            # Raise error if accessing attributes from VTK's pythonic snake_case API
+            import pyvista as pv
+
+            state = pv._VTK_SNAKE_CASE_STATE
+            if state != 'allow':
+                if (
+                    attr not in ['__class__', '__init__']
+                    and attr[0].islower()
+                    and is_vtk_attribute(self, attr)
+                ):
+                    msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
+                    if state == 'error':
+                        raise pv.PyVistaAttributeError(msg)
+                    else:
+                        warnings.warn(msg, RuntimeWarning)
+        return super().__getattribute__(attr)
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
