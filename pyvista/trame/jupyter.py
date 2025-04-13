@@ -10,7 +10,6 @@ from typing import Concatenate
 from typing import Literal
 import warnings
 
-from IPython.lib.display import IFrame
 from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
