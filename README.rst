@@ -112,8 +112,12 @@ Status badges
 .. |GitHub Repo stars| image:: https://img.shields.io/github/stars/pyvista/pyvista
    :target: https://github.com/pyvista/pyvista/stargazers
 
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/pyvista.svg?color=orange&logo=python&label=python&logoColor=white
+    :target: https://pypi.org/project/pyvista
+    :alt: Python versions
+
 +----------------------+------------------------------------------------+
-| Deployment           | |pypi| |conda| |Packaging status|              |
+| Deployment           | |pypi| |pyversions| |conda| |Packaging status| |
 +----------------------+------------------------------------------------+
 | Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
 +----------------------+------------------------------------------------+
