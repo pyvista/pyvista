@@ -11,10 +11,28 @@ Includes:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import Literal
 import warnings
 
+if TYPE_CHECKING:
+    import io
+    from pathlib import Path
 
-def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
+    from IPython.lib.display import IFrame
+    from PIL.Image import Image
+
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.trame.jupyter import EmbeddableWidget
+    from pyvista.trame.jupyter import Widget
+
+
+def handle_plotter(
+    plotter: Plotter,
+    backend: Literal['static', 'trame', 'html'] | None = None,
+    screenshot: str | Path | io.BytesIO | bool | None = None,
+    **kwargs: dict,
+) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
 
     Returns
@@ -40,7 +58,9 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
     return show_static_image(plotter, screenshot)
 
 
-def show_static_image(plotter, screenshot):  # numpydoc ignore=RT01
+def show_static_image(
+    plotter: Plotter, screenshot: str | Path | io.BytesIO | bool | None
+) -> Image:  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
 

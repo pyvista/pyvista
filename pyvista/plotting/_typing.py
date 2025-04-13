@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import TypedDict
 from typing import Union
 
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
@@ -13,6 +15,8 @@ from pyvista.core._typing_core import NumpyArray
 from . import _vtk
 
 if TYPE_CHECKING:
+    from pyvista.plotting.themes import Theme
+
     from .charts import Chart2D as Chart2D
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
@@ -36,3 +40,34 @@ ColorLike = Union[
 # when it is put beneath the definition somehow?
 ColorLike.__doc__ = 'Any object convertible to a :class:`Color`.'
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
+
+
+class Silhouette(TypedDict, total=False):
+    color: ColorLike
+    line_width: float
+    opacity: float
+    feature_angle: float
+    decimate: float
+
+
+class BackfaceParams(TypedDict, total=False):
+    theme: Theme
+    interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
+    color: ColorLike
+    style: Literal['surface', 'wireframe', 'points']
+    metallic: float
+    roughness: float
+    point_size: float
+    opacity: float
+    ambient: float
+    diffuse: float
+    specular: float
+    specular_power: float
+    show_edges: bool
+    edge_color: ColorLike
+    render_points_as_spheres: bool
+    render_lines_as_tubes: bool
+    lighting: bool
+    line_width: float
+    culling: Literal['back', 'front', 'none'] | bool
+    edge_opacity: float
