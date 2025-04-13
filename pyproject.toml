@@ -136,11 +136,11 @@ docs = [
   'sphinx==8.2.1',
   'sphinxcontrib-asciinema==0.4.2',
   'sphinxcontrib-websupport==2.0.0',
-  'sphinxext-opengraph==0.9.1',
+  'sphinxext-opengraph==0.10.0',
   'sympy==1.13.3',
   'trame-vtk==2.8.15',
-  'trame-vuetify==2.9.0',
-  'trame==3.8.1',
+  'trame-vuetify==3.0.0',
+  'trame==3.8.2',
   'trimesh==4.6.6',
 ]
 
