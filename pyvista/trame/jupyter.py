@@ -285,7 +285,7 @@ def show_trame(
     | None = None,
     default_server_rendering: bool = True,
     handler: Callable[Concatenate[Viewer, str, ...], IFrame] | None = None,
-    **kwargs: dict,
+    **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget:
     """Run and display the trame application in jupyter's event loop.
 
@@ -376,9 +376,9 @@ def show_trame(
     if plotter._window_size_unset:
         dw, dh = '99%', '600px'
     else:
-        dw, dh = plotter.window_size
-        dw = f'{dw}px'
-        dh = f'{dh}px'
+        width, height = plotter.window_size
+        dw = f'{width}px'
+        dh = f'{height}px'
     kwargs.setdefault('width', dw)
     kwargs.setdefault('height', dh)
 

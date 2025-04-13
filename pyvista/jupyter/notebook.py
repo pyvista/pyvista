@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 from typing import Literal
 import warnings
 
+import numpy as np
+
 if TYPE_CHECKING:
     import io
     from pathlib import Path
@@ -29,9 +31,9 @@ if TYPE_CHECKING:
 
 def handle_plotter(
     plotter: Plotter,
-    backend: Literal['static', 'trame', 'html'] | None = None,
+    backend: Literal['trame', 'server', 'client', 'html'] | None = None,
     screenshot: str | Path | io.BytesIO | bool | None = None,
-    **kwargs: dict,
+    **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
 
@@ -68,4 +70,5 @@ def show_static_image(
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
+    assert isinstance(plotter.last_image, np.ndarray)
     return PIL.Image.fromarray(plotter.last_image)
