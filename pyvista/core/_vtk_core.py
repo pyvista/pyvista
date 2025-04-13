@@ -418,7 +418,11 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
-from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+
+with contextlib.suppress(ImportError):
+    # Deprecated in 9.3
+    from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
