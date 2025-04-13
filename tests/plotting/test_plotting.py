@@ -3648,6 +3648,7 @@ def test_plotter_volume_lookup_table(uniform):
 
 
 @skip_windows_mesa  # due to opacity
+@pytest.mark.usefixtures('skip_check_gc')
 def test_plotter_volume_lookup_table_reactive(uniform):
     """Ensure that changes to the underlying lookup table are reflected by the volume property."""
     uniform.set_active_scalars('Spatial Point Data')
@@ -3655,6 +3656,21 @@ def test_plotter_volume_lookup_table_reactive(uniform):
     pl = pv.Plotter()
     actor = pl.add_volume(uniform, cmap='viridis', clim=[0, uniform.n_points // 2])
     actor.mapper.lookup_table.apply_cmap('coolwarm', 255)
+    actor.mapper.lookup_table.apply_opacity('sigmoid')
+    actor.mapper.lookup_table.scalar_range = [0, uniform.n_points]
+    pl.render()
+    pl.show()
+
+    # Test switching out the lookup table
+    pl = pv.Plotter()
+    actor = pl.add_volume(
+        uniform, cmap='viridis', clim=[0, uniform.n_points // 2], show_scalar_bar=False
+    )
+
+    lut = pv.LookupTable()
+    lut.apply_cmap('coolwarm', 255)
+    actor.mapper.lookup_table = lut
+    actor.prop.apply_lookup_table(actor.mapper.lookup_table)
     actor.mapper.lookup_table.apply_opacity('sigmoid')
     actor.mapper.lookup_table.scalar_range = [0, uniform.n_points]
     pl.render()
