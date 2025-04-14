@@ -96,6 +96,7 @@ if TYPE_CHECKING:
 
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
     from pyvista.plotting import Light
     from pyvista.plotting._typing import BackfaceParams
     from pyvista.plotting._typing import ColorLike
@@ -298,7 +299,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
-        self.mesh = None
+        self.mesh: pyvista.MultiBlock | None = None
         if title is None:
             title = self._theme.title
         self.title = str(title)
@@ -355,7 +356,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_depth_null = None
         self.last_image_depth = None
         self.last_image = None
-        self.last_vtksz = None
+        self.last_vtksz: str | Path | None = None
         self._has_background_layer = False
         if image_scale is None:
             image_scale = self._theme.image_scale
@@ -479,7 +480,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
             importer.SetFileName(str(filename))
         else:
-            importer.SetFileName(filename)
+            importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -519,7 +520,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
             importer.SetFileName(str(filename))
         else:
-            importer.SetFileName(filename)
+            importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -555,7 +556,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
             importer.SetFileName(str(filename))
         else:
-            importer.SetFileName(filename)
+            importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -597,11 +598,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(filename)
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         filename_mtl = filename.with_suffix('.mtl')
         if filename_mtl.is_file():
-            importer.SetFileNameMTL(filename_mtl)
-            importer.SetTexturePath(filename_mtl.parents[0])
+            importer.SetFileNameMTL(filename_mtl)  # type: ignore[arg-type]
+            importer.SetTexturePath(filename_mtl.parents[0])  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -872,7 +873,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError(msg)
 
         exporter = vtkVRMLExporter()
-        exporter.SetFileName(filename)
+        exporter.SetFileName(filename)  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
@@ -2054,7 +2055,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             callback(self)
 
     def add_on_render_callback(
-        self, callback: Callable[[Plotter], None], render_event: bool = False
+        self, callback: Callable[[BasePlotter], None], render_event: bool = False
     ) -> None:
         """Add a method to be called post-render.
 
@@ -2080,7 +2081,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clear all callback methods previously registered with ``render()``."""
         for renderer in self.renderers:
             renderer.RemoveObservers(_vtk.vtkCommand.RenderEvent)
-        self._on_render_callbacks: set[Callable[[BasePlotter], None]] = set()
+        self._on_render_callbacks = set()
 
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -2487,13 +2488,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
-        interpolate_before_map: bool = True,
+        interpolate_before_map: bool | None = True,
         cmap: str | list[str] | pyvista.LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
-        multi_colors: bool | str | Cycler[ColorLike, ColorLike] | Sequence[ColorLike] = False,
+        multi_colors: bool | str | Cycler[str, ColorLike] | Sequence[ColorLike] = False,
         name: str | None = None,
         render_points_as_spheres: bool | None = None,
         render_lines_as_tubes: bool | None = None,
@@ -2887,7 +2888,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 feature_angle=feature_angle,
             )
 
-        self.mapper = CompositePolyDataMapper(
+        self.mapper: CompositePolyDataMapper | PointGaussianMapper = CompositePolyDataMapper(
             dataset,
             theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
@@ -2967,7 +2968,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Only show scalar bar if there are scalars
         if show_scalar_bar and scalars is not None and isinstance(scalar_bar_args, Mapping):
-            self.add_scalar_bar(**scalar_bar_args)
+            self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3767,7 +3768,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            self.mapper.set_scalars(  # type: ignore[call-arg]
+            self.mapper.set_scalars(
                 scalars,
                 scalars_name,
                 n_colors,
@@ -3927,7 +3928,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
         scalars: str | NumpyArray[float] | None = None,
         clim: Sequence[float] | float | None = None,
-        resolution: list | None = None,
+        resolution: VectorLike[float] | None = None,
         opacity: Literal[
             'linear',
             'linear_r',
@@ -3974,7 +3975,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         user_matrix: NumpyArray[float] | _vtk.vtkMatrix4x4 | None = None,
         log_scale: bool = False,
         **kwargs,
-    ) -> Actor:
+    ) -> Actor | list[Actor]:
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4355,6 +4356,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
+                assert isinstance(a, Actor)
 
                 actors.append(a)
             return actors
@@ -4921,7 +4923,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-    def update_coordinates(self, points, mesh=None, render=True) -> None:
+    def update_coordinates(self, points, mesh=None, render: bool | None = True) -> None:
         """Update the points of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -5828,7 +5830,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_point_scalar_labels(
         self,
         points: Sequence[float] | NumpyArray[float] | pyvista.DataSet,
-        labels: list | str,
+        labels: list[str] | str,
         fmt: str | None = None,
         preamble: str = '',
         **kwargs,
@@ -6118,7 +6120,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
             writer.SetFilePrefix(str(filepath.with_suffix('')))
         else:
-            writer.SetFilePrefix(filepath.with_suffix(''))
+            writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -6445,7 +6447,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
             exporter.SetFilePrefix(str(filename.with_suffix('')))
         else:
-            exporter.SetFilePrefix(filename.with_suffix(''))
+            exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
@@ -7291,7 +7293,7 @@ class Plotter(BasePlotter):
         """
         alg = _vtk.vtkCursor3D()
         alg.SetModelBounds(bounds)
-        alg.SetFocalPoint(focal_point)
+        alg.SetFocalPoint(focal_point)  # type: ignore[call-overload]
         alg.AllOn()
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
