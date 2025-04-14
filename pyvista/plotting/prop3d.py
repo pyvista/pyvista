@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-class Prop3D(_vtk.vtkProp3D):
+class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
     """Prop3D wrapper for vtkProp3D.
 
     Used to represent an entity in a rendering scene. It provides spatial

@@ -782,17 +782,11 @@ def test_axis_rotation_not_inplace():
     assert not np.allclose(p, p_out)
 
 
-def test_bad_instantiation():
+@pytest.mark.parametrize('name', ['DataSet', 'Grid', 'DataSetFilters', 'PointGrid', 'DataObject'])
+def test_init_abstract_class(name):
+    klass = getattr(pv, name)
     with pytest.raises(TypeError):
-        pv.DataSet()
-    with pytest.raises(TypeError):
-        pv.Grid()
-    with pytest.raises(TypeError):
-        pv.DataSetFilters()
-    with pytest.raises(TypeError):
-        pv.PointGrid()
-    with pytest.raises(TypeError):
-        pv.DataObject()
+        klass()
 
 
 def test_string_arrays():

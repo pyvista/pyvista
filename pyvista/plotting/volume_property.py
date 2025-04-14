@@ -9,7 +9,7 @@ from . import _vtk
 
 
 @no_new_attr
-class VolumeProperty(_vtk.vtkVolumeProperty):
+class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     """Wrap the VTK class vtkVolumeProperty.
 
     This class is used to represent common properties associated with volume

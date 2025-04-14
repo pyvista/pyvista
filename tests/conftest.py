@@ -94,6 +94,19 @@ def set_mpl():
         mpl.use('agg', force=True)
 
 
+@pytest.fixture(autouse=True)
+def reset_global_state():
+    yield
+
+    pyvista.vtk_snake_case('error')
+    assert pyvista.vtk_snake_case() == 'error'
+
+    pyvista.vtk_verbosity('info')
+    assert pyvista.vtk_verbosity() == 'info'
+
+    pyvista.PICKLE_FORMAT = 'vtk'
+
+
 @pytest.fixture
 def cube():
     return pyvista.Cube()
