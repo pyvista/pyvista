@@ -133,12 +133,10 @@ class MultiBlock(
     plot = pyvista._plot.plot
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
     def __init__(self: MultiBlock, *args, **kwargs) -> None:
-        # Nested inside init (for now) to deal with circular import error
-        #  if we try to use vtk_version_info at the top level definition of the class.
-        if pyvista.vtk_version_info >= (9, 4):  # pragma: no cover
-            self._WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
         """Initialize multi block."""
         super().__init__()
         deep = kwargs.pop('deep', False)

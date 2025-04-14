@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     _VTKWriterAlias = Union[
         _vtk.vtkXMLPartitionedDataSetWriter,
         _vtk.vtkXMLWriter,
