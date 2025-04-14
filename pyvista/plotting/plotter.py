@@ -354,8 +354,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log.debug('BasePlotter init stop')
 
         self._image_depth_null = None
-        self.last_image_depth = None
-        self.last_image = None
+        self.last_image_depth: pyvista.pyvista_ndarray | None = None
+        self.last_image: pyvista.pyvista_ndarray | None = None
         self.last_vtksz: str | Path | None = None
         self._has_background_layer = False
         if image_scale is None:
@@ -3971,7 +3971,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         diffuse: float = 0.7,  # TODO: different default for volumes
         specular: float = 0.2,  # TODO: different default for volumes
         specular_power: float = 10.0,  # TODO: different default for volumes
-        render: bool = True,
+        render: bool | None = True,
         user_matrix: NumpyArray[float] | _vtk.vtkMatrix4x4 | None = None,
         log_scale: bool = False,
         **kwargs,
@@ -4294,7 +4294,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif len(resolution) != 3:
                     msg = 'Invalid resolution dimensions.'
                     raise ValueError(msg)
-                volume.spacing = resolution
+                volume.spacing = resolution  # type: ignore[assignment]
             else:
                 # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
                 #   to remove the need to cast the type here
@@ -4508,7 +4508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
-        self.mapper.dataset = volume  # type: ignore[assignment]
+        self.mapper.dataset = volume
         self.mapper.blend_mode = blending
         self.mapper.update()
 
@@ -4541,7 +4541,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Add scalar bar if scalars are available
         if show_scalar_bar and scalars is not None:
-            self.add_scalar_bar(**scalar_bar_args)
+            self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
         self.renderer.Modified()
         return actor
@@ -4845,7 +4845,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(**kwargs)
 
-    def update_scalars(self, scalars, mesh=None, render=True) -> None:
+    def update_scalars(self, scalars, mesh=None, render: bool = True) -> None:
         """Update scalars of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -4923,7 +4923,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-    def update_coordinates(self, points, mesh=None, render: bool | None = True) -> None:
+    def update_coordinates(
+        self,
+        points: pyvista.pyvista_ndarray,
+        mesh: _vtk.vtkPolyData | _vtk.vtkUnstructuredGrid | None = None,
+        render: bool | None = True,
+    ) -> None:
         """Update the points of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -4958,9 +4963,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVistaDeprecationWarning,
         )
         if mesh is None:
-            mesh = self.mesh
+            mesh = self.mesh  # type: ignore[assignment]
 
-        mesh.points = points
+        mesh.points = points  # type: ignore[union-attr]
 
         # only render when the plotter has already been shown
         if render is None:
@@ -5036,7 +5041,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mesh = None
         self.mapper = None  # type: ignore[assignment]
         self.volume = None  # type: ignore[assignment]
-        self.text = None
+        self.text: pyvista.CornerAnnotation | pyvista.Text | None = None
 
     def add_text(
         self,
@@ -5179,7 +5184,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             text_prop.font_size = int(font_size * 2)
-        self.text.prop = text_prop  # type: ignore[attr-defined]
+        self.text.prop = text_prop
         self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return self.text
 
@@ -5710,7 +5715,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if font_family is None:
-            font_family = self._theme.font.family
+            font_family = self._theme.font.family  # type: ignore[assignment]
         if font_size is None:
             font_size = self._theme.font.size
         point_color = Color(point_color, default_color=self._theme.color)
@@ -6008,10 +6013,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @staticmethod
     def _save_image(
-        image: NumpyArray[np.uint8],
+        image: pyvista.pyvista_ndarray,
         filename: str | Path | io.BytesIO | bool | None,
         return_img: bool,
-    ) -> NumpyArray[np.uint8] | None:
+    ) -> pyvista.pyvista_ndarray | None:
         """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
@@ -6136,7 +6141,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return_img: bool = True,
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
-    ) -> NumpyArray[np.uint8] | None:
+    ) -> pyvista.pyvista_ndarray | None:
         """Take screenshot at current camera position.
 
         Parameters
@@ -6294,7 +6299,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Point to fly to in the form of ``(x, y, z)``.
 
         """
-        self.iren.fly_to(self.renderer, point)
+        self.iren.fly_to(self.renderer, point)  # type: ignore[attr-defined]
 
     def orbit_on_path(
         self,
@@ -6387,8 +6392,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for point in points_seq:
                 tstart = time.time()  # include the render time in the step time
                 self.set_position(point, render=False)
-                self.set_focus(focus, render=False)
-                self.set_viewup(viewup, render=False)
+                self.set_focus(focus, render=False)  # type: ignore[arg-type]
+                self.set_viewup(viewup, render=False)  # type: ignore[arg-type]
                 self.renderer.ResetCameraClippingRange()
                 if write_frames:
                     self.write_frame()
@@ -6525,7 +6530,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
-            self.iren.add_observer('ModifiedEvent', renderer.resize)
+            self.iren.add_observer('ModifiedEvent', renderer.resize)  # type: ignore[attr-defined]
 
     @wraps(Renderers.remove_background_image)
     def remove_background_image(self) -> None:  # numpydoc ignore=PR01,RT01
@@ -6824,11 +6829,11 @@ class Plotter(BasePlotter):
             interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
-        self.iren.set_render_window(self.render_window)
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)  # type: ignore[assignment]
+        self.iren.set_render_window(self.render_window)  # type: ignore[attr-defined]
         self.reset_key_events()
         self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
-        self.iren.add_observer('KeyPressEvent', self.key_press_event)
+        self.iren.add_observer('KeyPressEvent', self.key_press_event)  # type: ignore[attr-defined]
 
         # Set camera widget based on theme. This requires that an
         # interactor be present.
@@ -6853,7 +6858,7 @@ class Plotter(BasePlotter):
 
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
-            self.enable_anti_aliasing(self.theme.anti_aliasing)
+            self.enable_anti_aliasing(self.theme.anti_aliasing)  # type: ignore[arg-type]
 
         if self.theme.camera.parallel_projection:
             self.enable_parallel_projection()  # type: ignore[call-arg]
@@ -7107,15 +7112,15 @@ class Plotter(BasePlotter):
         if interactive and not self.off_screen:
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
-                self.iren.update_style()
+                self.iren.update_style()  # type: ignore[attr-defined]
                 if not interactive_update:
                     # Resolves #1260
                     if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()
-                    self.iren.start()
+                        self.iren.process_events()  # type: ignore[attr-defined]
+                    self.iren.start()  # type: ignore[attr-defined]
 
                 if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
-                    self.iren.initialize()
+                    self.iren.initialize()  # type: ignore[attr-defined]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
@@ -7327,7 +7332,7 @@ class Plotter(BasePlotter):
 _ALL_PLOTTERS: dict[str, BasePlotter] = {}
 
 
-def _kill_display(disp_id: str) -> None:  # pragma: no cover
+def _kill_display(disp_id: str | None) -> None:  # pragma: no cover
     """Forcibly close the display on Linux.
 
     See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
