@@ -419,16 +419,12 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
     ],
 )
 def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
-    if pv.vtk_version_info < (9, 4):
-        match = f'`{attr}` requires vtk>=9.4.0'
-        with pytest.raises(pv.VTKVersionError, match=match):
-            getattr(mesh, attr)
-    else:
-        actual = getattr(mesh, attr)
-        assert isinstance(actual, np.ndarray)
-        assert actual.dtype == int
-        assert np.array_equal(actual, expected)
+    actual = getattr(mesh, attr)
+    assert isinstance(actual, np.ndarray)
+    assert actual.dtype == int
+    assert np.array_equal(actual, expected)
 
+    if pv.vtk_version_info >= (9, 4):
         with pytest.warns(DeprecationWarning):
             # Test deprecation warning is emitted by VTK
             getattr(mesh, attr.split('polyhedron_')[1])
