@@ -20,6 +20,7 @@ except ImportError:  # pragma: no cover
 
 
 from vtkmodules.vtkRenderingOpenGL2 import vtkCameraPass as vtkCameraPass
+
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkRenderingOpenGL2 import (
         vtkCompositePolyDataMapper2 as vtkCompositePolyDataMapper2,
