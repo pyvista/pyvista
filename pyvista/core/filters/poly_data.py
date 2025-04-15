@@ -428,7 +428,7 @@ class PolyDataFilters(DataSetFilters):
         merge_points: bool = True,
         tolerance=0.0,
         inplace: bool = False,
-        main_has_priority: bool = True,
+        main_has_priority: bool | None = None,
         progress_bar: bool = False,
     ):
         """Merge this mesh with one or more datasets.
@@ -483,6 +483,11 @@ class PolyDataFilters(DataSetFilters):
             When this parameter is ``True`` and ``merge_points=True``,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
+
+            .. deprecated:: 0.45
+
+                This keyword will be removed in a future version. The main mesh
+                always has priority with VTK > 9.4.2.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.

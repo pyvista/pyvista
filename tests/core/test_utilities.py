@@ -852,14 +852,6 @@ def test_merge(sphere, cube, datasets):
     merged = pv.merge(
         [sphere_a, sphere_b],
         merge_points=True,
-        main_has_priority=False,
-    )
-    assert np.allclose(merged['data'], 1)
-
-    merged = pv.merge(
-        [sphere_a, sphere_b],
-        merge_points=True,
-        main_has_priority=True,
     )
     assert np.allclose(merged['data'], 0)
 

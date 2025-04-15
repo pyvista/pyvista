@@ -3613,12 +3613,8 @@ def test_merge_points():
     celltypes = [pv.CellType.LINE]
     points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
     pdata = pv.UnstructuredGrid(cells, celltypes, points)
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=1.0).n_points == 1
-    )
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
-    )
+    assert pdata.merge(pdata, merge_points=True, tolerance=1.0).n_points == 1
+    assert pdata.merge(pdata, merge_points=True, tolerance=0.1).n_points == 2
 
 
 @pytest.mark.parametrize('inplace', [True, False])
