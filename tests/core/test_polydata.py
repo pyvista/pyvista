@@ -577,21 +577,26 @@ def test_merge_main_has_priority(input_, main_has_priority):
     if pv.vtk_version_info > (9, 4, 2):
         merged = mesh.merge(other)
         expected_to_match = mesh
-        match = (
-            "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-            'The main mesh will always have priority in a future version.'
-        )
-        if main_has_priority:
-            with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-                mesh.merge(other, main_has_priority=main_has_priority)
-        else:
-            with pytest.raises(ValueError, match=match):
-                mesh.merge(other, main_has_priority=main_has_priority)
     else:
-        merged = mesh.merge(other, main_has_priority=main_has_priority)
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
         expected_to_match = mesh if main_has_priority else other
     assert matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
+
+
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
+    match = (
+        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+        'The main mesh will always have priority in a future version.'
+    )
+    if main_has_priority is False and pv.vtk_version_info > (9, 4, 2):
+        with pytest.raises(ValueError, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
+    else:
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
 
 
 def test_add(sphere, sphere_shifted):
