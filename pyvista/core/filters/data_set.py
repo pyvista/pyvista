@@ -5250,6 +5250,9 @@ class DataSetFilters(DataObjectFilters):
                 raise ValueError(msg)
             else:
                 warnings.warn(msg, pyvista.PyVistaDeprecationWarning)
+        elif main_has_priority is None and not vtk_greater_942:
+            # Set default for older VTK:
+            main_has_priority = True
 
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
