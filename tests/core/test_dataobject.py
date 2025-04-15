@@ -266,13 +266,16 @@ def test_user_dict_write_read(tmp_path, data_object, ext):
 
 def test_user_dict_persists_with_merge_filter():
     sphere1 = pv.Sphere()
-    sphere1.user_dict['name'] = 'sphere1'
+    name1 = 'sphere1'
+    sphere1.user_dict['name'] = name1
 
     sphere2 = pv.Sphere()
-    sphere2.user_dict['name'] = 'sphere2'
+    name2 = 'sphere2'
+    sphere2.user_dict['name'] = name2
 
+    expected = name1 if pv.vtk_version_info > (9, 4, 2) else name2
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == 'sphere2'
+    assert merged.user_dict['name'] == expected
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):
