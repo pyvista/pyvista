@@ -273,9 +273,8 @@ def test_user_dict_persists_with_merge_filter():
     name2 = 'sphere2'
     sphere2.user_dict['name'] = name2
 
-    expected = name1 if pv.vtk_version_info > (9, 4, 2) else name2
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == expected
+    assert merged.user_dict['name'] == name1
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):

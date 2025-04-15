@@ -5255,6 +5255,10 @@ class DataSetFilters(DataObjectFilters):
         append_filter.SetMergePoints(merge_points)
         append_filter.SetTolerance(tolerance)
 
+        # For vtk 9.4.2 and earlier, the last appended mesh has priority.
+        # For newer vtk, the first appended mesh has priority. We apply
+        # logic accordingly to ensure the main mesh is appended in the
+        # correct order
         append_main_first = (not main_has_priority) or vtk_greater_942
         if append_main_first:
             append_filter.AddInputData(self)

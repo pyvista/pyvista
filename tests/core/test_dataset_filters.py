@@ -2043,7 +2043,7 @@ def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = (small_box + big_box).extract_geometry().connectivity()
+    labeled = (big_box + small_box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2178,9 +2178,8 @@ def test_split_values_extract_values_component(
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
     assert expected_n_blocks == len(expected_volume)
-    assert all(
-        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
-    )
+    for block, volume in zip(multiblock, expected_volume):
+        assert np.isclose(block.volume, volume)
 
 
 def test_extract_values_split_ranges_values(labeled_data):
