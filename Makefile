@@ -94,6 +94,6 @@ coverage-docs:
 	@cat doc/_build/coverage/python.txt
 
 # Install vale first with `pip install vale`
-ci-docstyle:
+docstyle:
 	@echo "Running vale"
-	vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst,_autosummary,source/examples}*'
+	@vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst,_autosummary,source/examples}*'
