@@ -29,14 +29,14 @@ jobs:
           python-version: 3.13
           cache: "pip"
 
-      - name: Install PyVista test requirements
-        run: pip install .[typing]
+      - name: Install PyVista typing requirements
+        run: make ci-install-typing
 
       - name: Run Mypy
         run: mypy
 
       - name: Software Report
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          make ci-report
           which python
           pip list
