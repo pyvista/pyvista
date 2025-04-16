@@ -15,6 +15,7 @@ from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
+from .mapper import _mapper_get_data_set_input, _mapper_has_data_set_input
 from .errors import PyVistaPickingError
 from .opts import ElementType
 from .opts import PickerType
@@ -1144,10 +1145,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             for actor in renderer.actors.values():
                 if (
                     (mapper := actor.GetMapper())
-                    and hasattr(mapper, 'GetInputAsDataSet')
+                    and _mapper_has_data_set_input(mapper)
                     and actor.GetPickable()
                 ):
-                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    input_mesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
@@ -1286,7 +1287,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         warnings.warn(
                             'Display representations other than `surface` will result in incorrect results.',
                         )
-                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
                     smesh['original_cell_ids'] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()

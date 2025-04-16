@@ -20,7 +20,6 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
-from typing import Union
 from typing import cast
 import uuid
 import warnings
@@ -58,7 +57,7 @@ from .errors import RenderWindowUnavailable
 from .mapper import DataSetMapper
 from .mapper import FixedPointVolumeRayCastMapper
 from .mapper import GPUVolumeRayCastMapper
-from .mapper import OpenGLGPUVolumeRayCastMapper
+from .mapper import OpenGLGPUVolumeRayCastMapper, _mapper_get_data_set_input, _mapper_has_data_set_input
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
@@ -6358,8 +6357,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper = actor.GetMapper()
 
                 # ignore any mappers whose inputs are not datasets
-                if hasattr(mapper, 'GetInputAsDataSet'):
-                    datasets.append(wrap(mapper.GetInputAsDataSet()))
+                if _mapper_has_data_set_input(mapper):
+                    datasets.append(wrap(_mapper_get_data_set_input(mapper)))
 
         return datasets
 
