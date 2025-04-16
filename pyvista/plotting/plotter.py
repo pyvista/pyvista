@@ -20,6 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import Union
 from typing import cast
 import uuid
 import warnings
@@ -4247,7 +4248,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
                 #   to remove the need to cast the type here
-                volume = cast('pyvista.MultiBlock | pyvista.DataSet', wrap(volume))
+                volume = cast('Union[pyvista.MultiBlock, pyvista.DataSet]', wrap(volume))
                 if not is_pyvista_dataset(volume):
                     msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
                     raise TypeError(msg)
