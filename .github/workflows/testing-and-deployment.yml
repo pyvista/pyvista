@@ -113,9 +113,6 @@ jobs:
           - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
-          - python-version: "3.13"
-            vtk-version: "dev"
-            numpy-version: "latest"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -142,13 +139,8 @@ jobs:
           pip install dist/pyvista*.whl
 
       - name: Set up vtk
-        if: ${{ matrix.vtk-version != 'latest'  && matrix.vtk-version != 'dev'  }}
+        if: ${{ matrix.vtk-version != 'latest' }}
         run: pip install vtk==${{ matrix.vtk-version }}
-
-      - name: Install latest VTK dev wheel
-        if: ${{ matrix.vtk-version == 'dev' }}
-        run: |
-          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
@@ -222,6 +214,75 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+
+  VTK-dev:
+    # only for pull requests, run only when 'vtk-dev-testing' label exists
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing'))
+    name: Linux VTK Dev Testing
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pyvista/examples
+          key: Examples-1-${{ hashFiles('*') }}
+          restore-keys: |
+            Examples-1-
+
+      - name: Install Testing Requirements
+        run: pip install .[test]
+
+      - name: Install VTK dev wheel
+        run: |
+          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+
+      - name: Core Testing (no GL)
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+        if: always()
+        with:
+          packages: xvfb
+          version: 3.0
+
+      - name: Software Report (Plotting Dependencies)
+        if: always()
+        run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
+
+      - name: Plotting Testing (uses GL)
+        if: always()
+        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: debug_images
+
+      - name: Software Report
+        if: always()
+        run: |
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
+          pip show vtk
 
   windows:
     name: Windows Unit Testing
