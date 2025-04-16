@@ -35,23 +35,22 @@ jobs:
             Examples-Data-
 
       - name: Install pyvista and doctest requirements
-        run: |
-          pip install -e .[test]
+        run: make ci-install-test
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v3
 
       - name: Software Report
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          make ci-report
           which python
           pip list
 
       - name: Test Package Docstrings
-        run: make doctest-modules
+        run: make ci-doctest-modules
 
       - name: Test Package Docstrings with Local Namespace
-        run: make doctest-modules-local-namespace
+        run: make ci-doctest-modules-local-namespace
 
   vale:
     name: Vale
@@ -67,7 +66,7 @@ jobs:
           python-version: 3.13
 
       - name: Install test dependencies
-        run: pip install .[docs]
+        run: make ci-install-docs
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
