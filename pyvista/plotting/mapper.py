@@ -1074,7 +1074,6 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        # GetInputAsDataSet unavailable on volume mappers
         return wrap(_mapper_get_data_set_input(self))
 
     @dataset.setter
@@ -1208,12 +1207,20 @@ class UnstructuredGridVolumeRayCastMapper(
 
 
 def _mapper_has_data_set_input(mapper):
-    """Check if mapper has a data set input using the appropriate method based on vtk version."""
+    """Check if mapper has a data set input using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
 
 
 def _mapper_get_data_set_input(mapper):
-    """Get data set input from mapper using the appropriate method based on vtk version."""
+    """Get data set input from mapper using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
     return (
         mapper.GetDataSetInput()
         if hasattr(mapper, 'GetDataSetInput')
