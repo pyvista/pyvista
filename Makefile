@@ -16,7 +16,7 @@ ci-install-docs:
 
 ci-install-typing:
 	@echo "Installing PyVista typing dependencies"
-    pip install '.[typing]'
+	pip install '.[typing]'
 
 ci-install-vtk-dev:
 	@echo "Install latest VTK dev wheel"
