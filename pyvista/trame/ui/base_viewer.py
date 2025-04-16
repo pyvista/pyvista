@@ -215,7 +215,7 @@ class BaseViewer:
                 renderer.remove_bounding_box()
         self.update()
 
-    def on_axis_visiblity_change(self, **kwargs):
+    def on_axis_visibility_change(self, **kwargs):
         """Handle outline visibility.
 
         Parameters
