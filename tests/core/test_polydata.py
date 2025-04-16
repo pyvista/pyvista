@@ -550,8 +550,11 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_main_has_priority(input_):
+@pytest.mark.parametrize(
+    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
+)
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
@@ -571,12 +574,9 @@ def test_merge_main_has_priority(input_):
             for j in (this.points == point).all(-1).nonzero()
         )
 
-    merged = mesh.merge(other, main_has_priority=True)
-    assert matching_point_data(merged, mesh, 'present_in_both')
-    assert merged.active_scalars_name == 'present_in_both'
-
-    merged = mesh.merge(other, main_has_priority=False)
-    assert matching_point_data(merged, other, 'present_in_both')
+    merged = mesh.merge(other, main_has_priority=main_has_priority)
+    expected_to_match = mesh if main_has_priority else other
+    assert matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
 
