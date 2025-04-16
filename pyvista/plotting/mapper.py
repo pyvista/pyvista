@@ -394,7 +394,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast('Optional[pyvista.DataSet]', wrap(self.GetDataSetInput()))
+        return cast('Optional[pyvista.DataSet]', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
     def dataset(
@@ -1209,8 +1209,17 @@ class UnstructuredGridVolumeRayCastMapper(
 
 def _mapper_has_data_set_input(mapper):
     """Check if mapper has a data set input using the appropriate method based on vtk version."""
-    return hasattr(mapper, 'GetDataSetInput') if _vtk.vtk_version_info > (9,4,2) else hasattr(mapper, 'GetInputAsDataSet')
+    return (
+        hasattr(mapper, 'GetDataSetInput')
+        if _vtk.vtk_version_info > (9, 4, 2)
+        else hasattr(mapper, 'GetInputAsDataSet')
+    )
+
 
 def _mapper_get_data_set_input(mapper):
     """Get data set input from mapper using the appropriate method based on vtk version."""
-    return mapper.GetDataSetInput() if _vtk.vtk_version_info > (9,4,2) else mapper.GetInputAsDataSet()
+    return (
+        mapper.GetDataSetInput()
+        if _vtk.vtk_version_info > (9, 4, 2)
+        else mapper.GetInputAsDataSet()
+    )

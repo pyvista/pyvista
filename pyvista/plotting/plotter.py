@@ -57,10 +57,12 @@ from .errors import RenderWindowUnavailable
 from .mapper import DataSetMapper
 from .mapper import FixedPointVolumeRayCastMapper
 from .mapper import GPUVolumeRayCastMapper
-from .mapper import OpenGLGPUVolumeRayCastMapper, _mapper_get_data_set_input, _mapper_has_data_set_input
+from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Renderer
@@ -4245,7 +4247,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
                 #   to remove the need to cast the type here
-                volume = cast('Union[pyvista.MultiBlock, pyvista.DataSet]', wrap(volume))
+                volume = cast('pyvista.MultiBlock | pyvista.DataSet', wrap(volume))
                 if not is_pyvista_dataset(volume):
                     msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
                     raise TypeError(msg)

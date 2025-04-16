@@ -15,8 +15,9 @@ from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
-from .mapper import _mapper_get_data_set_input, _mapper_has_data_set_input
 from .errors import PyVistaPickingError
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .opts import ElementType
 from .opts import PickerType
 
