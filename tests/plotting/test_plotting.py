@@ -3669,10 +3669,9 @@ def test_plotter_volume_lookup_table_reactive(uniform):
 
     lut = pv.LookupTable()
     lut.apply_cmap('coolwarm', 255)
-    actor.mapper.lookup_table = lut
-    actor.prop.apply_lookup_table(actor.mapper.lookup_table)
-    actor.mapper.lookup_table.apply_opacity('sigmoid')
-    actor.mapper.lookup_table.scalar_range = [0, uniform.n_points]
+    actor.prop.apply_lookup_table(lut)
+    lut.apply_opacity('sigmoid')
+    lut.scalar_range = [0, uniform.n_points]
     pl.render()
     pl.show()
 
