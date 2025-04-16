@@ -179,7 +179,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a make ci-test-plotting
+        run: xvfb-run -a make ci-test-plotting-cov
 
       - name: Upload Generated Images
         if: always()
