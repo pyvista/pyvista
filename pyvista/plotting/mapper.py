@@ -1209,17 +1209,13 @@ class UnstructuredGridVolumeRayCastMapper(
 
 def _mapper_has_data_set_input(mapper):
     """Check if mapper has a data set input using the appropriate method based on vtk version."""
-    return (
-        hasattr(mapper, 'GetDataSetInput')
-        if _vtk.vtk_version_info > (9, 4, 2)
-        else hasattr(mapper, 'GetInputAsDataSet')
-    )
+    return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
 
 
 def _mapper_get_data_set_input(mapper):
     """Get data set input from mapper using the appropriate method based on vtk version."""
     return (
         mapper.GetDataSetInput()
-        if _vtk.vtk_version_info > (9, 4, 2)
+        if hasattr(mapper, 'GetDataSetInput')
         else mapper.GetInputAsDataSet()
     )
