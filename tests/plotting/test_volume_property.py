@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import gc
+
 import pytest
 
 import pyvista as pv
@@ -89,3 +91,16 @@ def test_volume_property_copy(vol_prop):
 def test_volume_property_repr(vol_prop):
     assert 'Interpolation type:' in repr(vol_prop)
     assert 'nearest' in repr(vol_prop)
+
+
+def test_volume_property_del(vol_prop):
+    # Create a mock lookup table
+    lut = pv.LookupTable(cmap='bwr')
+    vol_prop.apply_lookup_table(lut)
+
+    # Ensure observer is set
+    assert vol_prop._lookup_table_observer_id is not None
+
+    # Delete the volume property and ensure cleanup
+    del vol_prop
+    gc.collect()  # Force garbage collection
