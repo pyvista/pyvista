@@ -49,6 +49,7 @@ from pyvista.examples import cells
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
+from pyvista.examples._dataset_loader import _DownloadableFile
 from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
 from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
 from pyvista.plotting.colors import _CSS_COLORS
@@ -1327,6 +1328,12 @@ class DatasetCard:
             func = getattr(pyvista.examples.downloads, func_name)
         elif hasattr(pyvista.examples.planets, func_name):
             func = getattr(pyvista.examples.planets, func_name)
+        elif hasattr(pyvista.examples.vrml, func_name):
+            func = getattr(pyvista.examples.vrml, func_name)
+        elif hasattr(pyvista.examples.download_3ds, func_name):
+            func = getattr(pyvista.examples.download_3ds, func_name)
+        elif hasattr(pyvista.examples.gltf, func_name):
+            func = getattr(pyvista.examples.gltf, func_name)
         else:
             # Get `load` function from examples.py
             func_name = 'load_' + dataset_name
@@ -1815,6 +1822,9 @@ class DatasetCardFetcher:
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
         cls._init_cards_from_module(pv.examples.planets)
+        cls._init_cards_from_module(pv.examples.vrml)
+        cls._init_cards_from_module(pv.examples.download_3ds)
+        cls._init_cards_from_module(pv.examples.gltf)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -1830,7 +1840,9 @@ class DatasetCardFetcher:
         for name, item in sorted(module_members.items()):
             # Extract data set name from loader name
 
-            if name.startswith('_dataset_') and isinstance(item, _DatasetLoader):
+            if name.startswith('_dataset_') and isinstance(
+                item, (_DatasetLoader, _DownloadableFile)
+            ):
                 # Create a card for this dataset
                 dataset_name = name.replace('_dataset_', '')
                 dataset_loader = item
@@ -1848,8 +1860,9 @@ class DatasetCardFetcher:
                     # caused by 'download_can', this error is handled later
                     pass
                 else:
-                    dataset_loader.load_and_store_dataset()
-                    assert dataset_loader.dataset is not None
+                    if isinstance(dataset_loader, _DatasetLoader):
+                        dataset_loader.load_and_store_dataset()
+                        assert dataset_loader.dataset is not None
 
     @classmethod
     def generate_rst_all_cards(cls):
@@ -2224,7 +2237,7 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
     name = 'builtin_carousel'
-    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
+    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`~pyvista.examples.examples` module.'
     badge = ModuleBadge('Built-in', ref='modules_gallery')
 
     @classmethod
@@ -2236,7 +2249,7 @@ class DownloadsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the downloads module."""
 
     name = 'downloads_carousel'
-    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
+    doc = 'Datasets from the :mod:`~pyvista.examples.downloads` module.'
     badge = ModuleBadge('Downloads', ref='modules_gallery')
 
     @classmethod
@@ -2248,12 +2261,48 @@ class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
 
     name = 'planets_carousel'
-    doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
+    doc = 'Datasets from the :mod:`~pyvista.examples.planets` module.'
     badge = ModuleBadge('Planets', ref='modules_gallery')
 
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
+
+
+class VrmlCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the vrml module."""
+
+    name = 'vrml_carousel'
+    doc = 'Datasets from the :mod:`~pyvista.examples.vrml` module.'
+    badge = ModuleBadge('VRML', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.vrml)
+
+
+class Download3dsCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the 3ds module."""
+
+    name = '3ds_carousel'
+    doc = 'Datasets from the :mod:`~pyvista.examples.download_3ds` module.'
+    badge = ModuleBadge('3DS', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.download_3ds)
+
+
+class GltfCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the gltf module."""
+
+    name = 'gltf_carousel'
+    doc = 'Datasets from the :mod:`~pyvista.examples.gltf` module.'
+    badge = ModuleBadge('GLTF', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.gltf)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -2554,6 +2603,9 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
+    VrmlCarousel,
+    # Download3dsCarousel,
+    # GltfCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
