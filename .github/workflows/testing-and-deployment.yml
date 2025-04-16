@@ -63,17 +63,17 @@ jobs:
           cache: "pip"
 
       - name: Install PyVista test dependencies
-        run: pip install .[test]
+        run: make ci-install-test
 
       - name: Report
-        run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
+        run: make ci-report-no-gpu
 
       - name: Test Core API
-        run: pytest -v --ignore=tests/plotting
+        run: make ci-test-core
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: make ci-test-plotting
 
       - name: Upload Generated Images
         if: always()
@@ -144,10 +144,10 @@ jobs:
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
-        run: python -c "import pyvista; print(pyvista.Report());"
+        run: make ci-report
 
       - name: Install Testing Requirements
-        run: pip install .[test]
+        run: make ci-install-test
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
@@ -165,7 +165,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+        run: make ci-test-core-cov
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -175,11 +175,11 @@ jobs:
 
       - name: Software Report (Plotting Dependencies)
         if: always()
-        run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
+        run: xvfb-run -a make ci-report
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: xvfb-run -a make ci-test-plotting
 
       - name: Upload Generated Images
         if: always()
@@ -191,7 +191,7 @@ jobs:
       - name: Software Report
         if: always()
         run: |
-          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          xvfb-run -a make ci-report
           which python
           pip list
 
@@ -239,10 +239,10 @@ jobs:
         uses: pyvista/setup-headless-display-action@v3
 
       - name: Install PyVista test dependencies
-        run: pip install .[test]
+        run: make ci-install-test
 
       - name: Report
-        run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+        run: make ci-report-no-gpu
 
       - name: Set example data path as env variable
         run: |
@@ -258,11 +258,11 @@ jobs:
             Examples-1-
 
       - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting
+        run: make ci-test-core
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: make ci-test-plotting
 
       - name: Upload Generated Images
         if: always()
