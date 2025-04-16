@@ -543,10 +543,12 @@ run tests with the latest VTK dev wheels. To install these locally, run
     pip install vtk --upgrade --pre --extra-index-url https://wheels.vtk.org
 
 For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
-the VTK dev wheels.
+the VTK dev wheels. The tests only run when the label is applied.
 
-The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
-rerun the CI with the label applied.
+.. note::
+
+    The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
+    closed/re-opened to rerun the CI with the label applied.
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
