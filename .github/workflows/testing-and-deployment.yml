@@ -216,8 +216,10 @@ jobs:
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
   VTK-dev:
-    # only for pull requests, run only when 'vtk-dev-testing' label exists
-    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
+    # run only when pull or push with 'vtk-dev-testing' label
+    if: |
+      (github.event_name == 'pull_request' || github.event_name == 'push') &&
+      contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
       contents: read
