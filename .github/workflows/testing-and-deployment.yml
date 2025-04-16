@@ -113,6 +113,9 @@ jobs:
           - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
+          - python-version: "3.13"
+            vtk-version: "dev"
+            numpy-version: "latest"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -139,8 +142,13 @@ jobs:
           pip install dist/pyvista*.whl
 
       - name: Set up vtk
-        if: ${{ matrix.vtk-version != 'latest' }}
+        if: ${{ matrix.vtk-version != 'latest'  && matrix.vtk-version != 'dev'  }}
         run: pip install vtk==${{ matrix.vtk-version }}
+
+      - name: Install latest VTK dev wheel
+        if: ${{ matrix.vtk-version == 'dev' }}
+        run: |
+          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
