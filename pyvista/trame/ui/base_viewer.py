@@ -215,7 +215,7 @@ class BaseViewer:
                 renderer.remove_bounding_box()
         self.update()
 
-    def on_axis_visibility_change(self, **kwargs):
+    def on_axis_visiblity_change(self, **kwargs):
         """Handle outline visibility.
 
         Parameters
@@ -231,15 +231,19 @@ class BaseViewer:
             else:
                 renderer.hide_axes()
         for view in self._html_views:
-            if view.set_widgets:
+            # Check if 'set_widgets' is defined directly in the class, not just as a dynamic attribute
+            if 'set_widgets' in type(view).__dict__:
+                method = getattr(view, 'set_widgets', None)
                 # VtkRemoteView does not have set_widgets function, but VtkRemoteLocalView and VtkLocalView do.
-                view.set_widgets(
-                    [
-                        ren.axes_widget
-                        for ren in self.plotter.renderers
-                        if hasattr(ren, 'axes_widget')
-                    ],
-                )
+                if callable(method):
+                    method(
+                        [
+                            ren.axes_widget
+                            for ren in self.plotter.renderers
+                            if hasattr(ren, 'axes_widget')
+                        ]
+                    )
+
         self.update()
 
     def on_rendering_mode_change(self, **kwargs):
