@@ -189,8 +189,8 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
 
     def __del__(self):
         """Clean up the lookup table observer when the object is deleted."""
-        if self._lookup_table_observer_id is not None and self._lookup_table_ is not None:
-            self._lookup_table_.RemoveObserver(self._lookup_table_observer_id)
+        if self._lookup_table_observer_id is not None and self._lookup_table is not None:
+            self._lookup_table.RemoveObserver(self._lookup_table_observer_id)
             self._lookup_table_observer_id = None
         self._lookup_table_ = None
 
