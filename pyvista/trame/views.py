@@ -162,12 +162,6 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):  # type: ignore[misc]
         """Wrap update call."""
         return self.update(*args, **kwargs)
 
-    def _post_initialize(self):
-        super()._post_initialize()
-        self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
-        )
-
 
 class PyVistaLocalView(VtkLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame VtkLocalView for in-browser rendering.
