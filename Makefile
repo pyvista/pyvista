@@ -5,17 +5,76 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
+### Install commands ###
+ci-install-test:
+	@echo "Installing PyVista test dependencies"
+	pip install '.[test]'
+
+ci-install-docs:
+	@echo "Installing PyVista docs dependencies"
+	pip install '.[docs]'
+
+ci-install-typing:
+	@echo "Installing PyVista typing dependencies"
+    pip install '.[typing]''
+
+ci-install-vtk-dev:
+	@echo "Install latest VTK dev wheel"
+	pip install vtk --upgrade --pre --no-cache --extra-index-url https://wheels.vtk.org
+
+### Report commands ###
+PYVISTA_REPORT = python -c "import pyvista; print(pyvista.Report(gpu=$(GPU_FLAG))); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+
+ci-report:
+	@$(eval GPU_FLAG = True)
+	$(PYVISTA_REPORT)
+
+ci-report-no-gpu:
+	@$(eval GPU_FLAG = False)
+	$(PYVISTA_REPORT)
+
+### Pytest commands ###
+PYTEST = python -m pytest -v
+
+# Define commands and args for CORE tests
+PYTEST_CORE_ARGS = --ignore=tests/plotting
+PYTEST_CORE_ARGS_COV = --cov=pyvista --cov-branch
+PYTEST_CORE = $(PYTEST) $(PYTEST_CORE_ARGS)
+PYTEST_CORE_COV = $(PYTEST_CORE) $(PYTEST_CORE_ARGS_COV)
+
+# Define commands and args for PLOTTING tests
+PYTEST_PLOTTING_ARGS = tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+PYTEST_PLOTTING_ARGS_COV = $(PYTEST_CORE_ARGS_COV) --cov-append --cov-report=xml
+PYTEST_PLOTTING = $(PYTEST) $(PYTEST_PLOTTING_ARGS)
+PYTEST_PLOTTING_COV = $(PYTEST_PLOTTING) $(PYTEST_PLOTTING_ARGS_COV)
+
+ci-test-core:
+	@echo "Running core tests"
+	$(PYTEST_CORE)
+
+ci-test-core-cov:
+	@echo "Running core tests with test coverage"
+	$(PYTEST_CORE_COV)
+
+ci-test-plotting:
+	@echo "Running plotting tests"
+	$(PYTEST_PLOTTING)
+
+ci-test-plotting-cov:
+	@echo "Running plotting tests with test coverage"
+	$(PYTEST_PLOTTING_COV)
+
 # must be off screen to avoid plotting everything
-doctest-modules: export PYVISTA_OFF_SCREEN = True
-doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
+ci-doctest-modules: export PYVISTA_OFF_SCREEN = True
+ci-doctest-modules-local-namespace: export PYVISTA_OFF_SCREEN = True
 
-doctest-modules:
+ci-doctest-modules:
 	@echo "Running module doctesting"
-	pytest -v --doctest-modules pyvista
+	$(PYTEST) --doctest-modules pyvista
 
-doctest-modules-local-namespace:
+ci-doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"
-	python tests/check_doctest_names.py
+	$(PYTEST) tests/check_doctest_names.py
 
 coverage:
 	@echo "Running coverage"
