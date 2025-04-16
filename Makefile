@@ -5,7 +5,7 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
-### Install commands ###
+### Installation targets ###
 ci-install-test:
 	@echo "Installing PyVista test dependencies"
 	pip install '.[test]'
@@ -22,7 +22,7 @@ ci-install-vtk-dev:
 	@echo "Install latest VTK dev wheel"
 	pip install vtk --upgrade --pre --no-cache --extra-index-url https://wheels.vtk.org
 
-### Report commands ###
+### Report targets ###
 PYVISTA_REPORT = python -c "import pyvista; print(pyvista.Report(gpu=$(GPU_FLAG))); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
 ci-report:
@@ -33,16 +33,16 @@ ci-report-no-gpu:
 	@$(eval GPU_FLAG = False)
 	$(PYVISTA_REPORT)
 
-### Pytest commands ###
+### Pytest targets ###
 PYTEST = python -m pytest -v
 
-# Define commands and args for CORE tests
+# Definitions for CORE tests
 PYTEST_CORE_ARGS = --ignore=tests/plotting
 PYTEST_CORE_ARGS_COV = --cov=pyvista --cov-branch
 PYTEST_CORE = $(PYTEST) $(PYTEST_CORE_ARGS)
 PYTEST_CORE_COV = $(PYTEST_CORE) $(PYTEST_CORE_ARGS_COV)
 
-# Define commands and args for PLOTTING tests
+# Definitions for PLOTTING tests
 PYTEST_PLOTTING_ARGS = tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 PYTEST_PLOTTING_ARGS_COV = $(PYTEST_CORE_ARGS_COV) --cov-append --cov-report=xml
 PYTEST_PLOTTING = $(PYTEST) $(PYTEST_PLOTTING_ARGS)
@@ -94,6 +94,6 @@ coverage-docs:
 	@cat doc/_build/coverage/python.txt
 
 # Install vale first with `pip install vale`
-docstyle:
+ci-docstyle:
 	@echo "Running vale"
-	@vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst,_autosummary,source/examples}*'
+	vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst,_autosummary,source/examples}*'
