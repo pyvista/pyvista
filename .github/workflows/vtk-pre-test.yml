@@ -50,7 +50,7 @@ jobs:
             Examples-1-
 
       - name: Install PyVista Testing Requirements
-        run: pip install .[test]
+        run: make ci-install-test
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
@@ -58,14 +58,13 @@ jobs:
           version: 3.0
 
       - name: Install nightly VTK
-        run: |
-          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+        run: make ci-install-vtk-dev
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista -v tests/core tests/examples
+        run: make ci-test-core
 
       - name: Plotting Testing (uses GL)
-        run: xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+        run: xvfb-run -a make ci-test-plotting
 
       - name: Upload Generated Images
         if: always()
@@ -77,7 +76,7 @@ jobs:
       - name: Software Report
         if: always()
         run: |
-          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          xvfb-run -a make ci-report
           which python
           pip list
           pip show vtk
