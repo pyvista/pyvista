@@ -74,7 +74,7 @@ ci-doctest-modules:
 
 ci-doctest-modules-local-namespace:
 	@echo "Running module doctesting using docstring local namespace"
-	$(PYTEST) tests/check_doctest_names.py
+	python tests/check_doctest_names.py
 
 coverage:
 	@echo "Running coverage"
