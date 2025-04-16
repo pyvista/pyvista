@@ -217,7 +217,7 @@ jobs:
 
   VTK-dev:
     # only for pull requests, run only when 'vtk-dev-testing' label exists
-    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing'))
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
       contents: read
