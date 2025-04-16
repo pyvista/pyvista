@@ -69,7 +69,7 @@ jobs:
 
       - name: PyVista Report
         run: |
-          python -c "import pyvista;print(pyvista.Report())"
+          make ci-report
           echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
           pip list
 
