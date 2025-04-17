@@ -67,7 +67,7 @@ ci-test-plotting-cov:
 	$(PYTEST_PLOTTING_COV)
 
 ci-test-doc:
-	@echo "Running plotting tests with test coverage"
+	@echo "Running documentation tests"
 	$(PYTEST) tests/doc/tst_doc_images.py
 
 # must be off screen to avoid plotting everything
