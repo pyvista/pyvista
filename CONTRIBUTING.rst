@@ -535,7 +535,7 @@ if no simple alternative solution has been found.
 
 The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
 If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
-custom pytest marker ``needs_vtk_version``, enabling the following usage:
+custom pytest marker ``needs_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
 
 .. code-block:: python
 
@@ -554,7 +554,7 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage:
         """Test is skipped if pv.vtk_version_info >= (9,1)"""
 
 
-    @pytest.mark.needs_vtk_version(greater_than=(8, 2), less_than=(9, 1))
+    @pytest.mark.needs_vtk_version(at_least=(8, 2), less_than=(9, 1))
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
 

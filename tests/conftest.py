@@ -339,21 +339,19 @@ def _get_min_max_vtk_version(
         return val + (0,) * (expected - l)
 
     # Distinguish scenarios from positional arguments
-    if (len(args := bounds.arguments['args']) > 0) and (
-        bounds.arguments['greater_than'] is not None
-    ):
-        msg = f'Cannot specify both *args and `greater_than` keyword argument to `{item_mark.name}` marker.'
+    if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['at_least'] is not None):
+        msg = f'Cannot specify both *args and `at_least` keyword argument to `{item_mark.name}` marker.'
         raise ValueError(msg)
 
     if len(args) > 0:
         min_version = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
         return _pad_version(min_version), _pad_version(bounds.arguments['less_than']), bounds
 
-    _min = bounds.arguments['greater_than']
+    _min = bounds.arguments['at_least']
     _max = bounds.arguments['less_than']
 
     if _max is None and _min is None:
-        msg = f'Need to specify either `greater_than` or `less_than` keyword arguments to `{item_mark.name}` marker.'
+        msg = f'Need to specify either `at_least` or `less_than` keyword arguments to `{item_mark.name}` marker.'
         raise ValueError(msg)
 
     return _pad_version(_min), _pad_version(_max), bounds
@@ -375,7 +373,7 @@ def pytest_runtest_setup(item: pytest.Item):
                     annotation=Union[int, tuple[int]],
                 ),
                 Parameter(
-                    'greater_than',
+                    'at_least',
                     kind=Parameter.KEYWORD_ONLY,
                     annotation=Optional[tuple[int]],
                     default=None,
