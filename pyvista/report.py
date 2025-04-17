@@ -162,6 +162,11 @@ class Report(scooby.Report):
         """Generate a :class:`scooby.Report` instance."""
         from pyvista.plotting.tools import check_math_text_support
 
+        try:
+            from vtkmodules.vtkRenderingCore import vtkRenderWindow
+        except ImportError:
+            vtkRenderWindow = None
+
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
@@ -202,6 +207,8 @@ class Report(scooby.Report):
                 ('GPU Details', 'None'),
             ]
 
+        if vtkRenderWindow:
+            extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
         extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
