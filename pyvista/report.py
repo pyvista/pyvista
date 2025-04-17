@@ -163,7 +163,7 @@ class Report(scooby.Report):
         from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
         from pyvista.plotting.tools import check_math_text_support
-        
+
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
