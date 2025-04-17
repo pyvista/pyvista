@@ -19,7 +19,7 @@ ci-install-typing:
 	pip install '.[typing]'
 
 ci-install-vtk-dev:
-	@echo "Install latest VTK dev wheel"
+	@echo "Installing latest VTK dev wheel"
 	pip install vtk --upgrade --pre --no-cache --extra-index-url https://wheels.vtk.org
 
 ### Report targets ###
@@ -34,7 +34,9 @@ ci-report-no-gpu:
 	$(PYVISTA_REPORT)
 
 ### Pytest targets ###
-PYTEST = python -m pytest -v
+PYTEST_ENV = PYTEST_ADDOPTS="--color=yes"
+PYTEST_ARGS = -v
+PYTEST = $(PYTEST_ENV) python -m pytest $(PYTEST_ARGS)
 
 # Definitions for CORE tests
 PYTEST_CORE_ARGS = --ignore=tests/plotting
@@ -63,6 +65,10 @@ ci-test-plotting:
 ci-test-plotting-cov:
 	@echo "Running plotting tests with test coverage"
 	$(PYTEST_PLOTTING_COV)
+
+ci-test-doc:
+	@echo "Running plotting tests with test coverage"
+	$(PYTEST) tests/doc/tst_doc_images.py
 
 # must be off screen to avoid plotting everything
 ci-doctest-modules: export PYVISTA_OFF_SCREEN = True
