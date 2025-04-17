@@ -34,7 +34,6 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
-  PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
   VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
 
@@ -106,7 +105,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation Images
-        run: pytest tests/doc/tst_doc_images.py
+        run: make ci-test-doc
 
       - name: Upload Images for Failed Tests
         if: always()
