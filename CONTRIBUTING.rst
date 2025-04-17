@@ -549,17 +549,17 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage:
         """Test is skipped if pv.vtk_version_info < (9,1)"""
 
 
-    @pytest.mark.needs_vtk_version(max=(9, 1))
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1)"""
 
 
-    @pytest.mark.needs_vtk_version(8, 2, max=(9, 1))
+    @pytest.mark.needs_vtk_version(greater_than=(8, 2), less_than=(9, 1))
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
 
 
-    @pytest.mark.needs_vtk_version(max=(9, 1))
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
     @pytest.mark.needs_vtk_version(8, 2)
     def test():
         """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""

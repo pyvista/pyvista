@@ -671,7 +671,7 @@ def test_openfoamreader_read_data_time_point():
 
 
 @pytest.mark.needs_vtk_version(
-    max=(9, 3),
+    less_than=(9, 3),
     reason='polyhedra decomposition was removed after 9.3',
 )
 def test_openfoam_decompose_polyhedra():

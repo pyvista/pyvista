@@ -24,7 +24,7 @@ def cube_faces_source():
     return pv.CubeFacesSource()
 
 
-@pytest.mark.needs_vtk_version(max=(9, 3))
+@pytest.mark.needs_vtk_version(less_than=(9, 3))
 def test_capsule_source():
     algo = pv.CapsuleSource()
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))

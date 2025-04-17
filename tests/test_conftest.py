@@ -193,10 +193,10 @@ class Cases_needs_vtk:
         @pytest.mark.needs_vtk_version((9, 1, 0))
         def test_greater_9_1_tuple_2(): ...
 
-        @pytest.mark.needs_vtk_version(min=(9, 1))
+        @pytest.mark.needs_vtk_version(greater_than=(9, 1))
         def test_greater_9_1_kwargs(): ...
 
-        @pytest.mark.needs_vtk_version(min=(9, 2))
+        @pytest.mark.needs_vtk_version(greater_than=(9, 2))
         def test_greater_9_2(): ...
         """
 
@@ -213,13 +213,13 @@ class Cases_needs_vtk:
         tests = """
         import pytest
 
-        @pytest.mark.needs_vtk_version(max=(9, 1))
+        @pytest.mark.needs_vtk_version(less_than=(9, 1))
         def test_smaller_9_1(): ...
 
-        @pytest.mark.needs_vtk_version(max=(9,))
+        @pytest.mark.needs_vtk_version(less_than=(9,))
         def test_smaller_9(): ...
 
-        @pytest.mark.needs_vtk_version(max=(9, 1, 2))
+        @pytest.mark.needs_vtk_version(less_than=(9, 1, 2))
         def test_smaller_9_1_2(): ...
 
         """
@@ -236,10 +236,10 @@ class Cases_needs_vtk:
         tests = """
         import pytest
 
-        @pytest.mark.needs_vtk_version(max=(9, 1))
+        @pytest.mark.needs_vtk_version(less_than=(9, 1))
         def test_smaller_9_1_tuple1(): ...
 
-        @pytest.mark.needs_vtk_version(max=(9, 1, 0))
+        @pytest.mark.needs_vtk_version(less_than=(9, 1, 0))
         def test_smaller_9_1_tuple2(): ...
 
         """
@@ -255,7 +255,7 @@ class Cases_needs_vtk:
         tests = """
         import pytest
 
-        @pytest.mark.needs_vtk_version(min=(9, 1))
+        @pytest.mark.needs_vtk_version(greater_than=(9, 1))
         def test_smaller_9_1_tuple1(): ...
 
         """
@@ -271,10 +271,10 @@ class Cases_needs_vtk:
         import pytest
 
         @pytest.mark.needs_vtk_version(9, 1)
-        @pytest.mark.needs_vtk_version(max=(9, 3))
+        @pytest.mark.needs_vtk_version(less_than=(9, 3))
         def test_1(): ...
 
-        @pytest.mark.needs_vtk_version(max=(9, 3))
+        @pytest.mark.needs_vtk_version(less_than=(9, 3))
         @pytest.mark.needs_vtk_version(9, 1)
         def test_2(): ...
 
@@ -292,19 +292,19 @@ class Cases_needs_vtk:
         tests = """
         import pytest
 
-        @pytest.mark.needs_vtk_version(min=(8, 2), max=(9, 1))
+        @pytest.mark.needs_vtk_version(greater_than=(8, 2), less_than=(9, 1))
         def test_between(): ...
 
-        @pytest.mark.needs_vtk_version((8, 2), max=(9, 1))
+        @pytest.mark.needs_vtk_version((8, 2), less_than=(9, 1))
         def test_between_tuple(): ...
 
-        @pytest.mark.needs_vtk_version(8, 2, max=(9, 1))
+        @pytest.mark.needs_vtk_version(8, 2, less_than=(9, 1))
         def test_between_variadic(): ...
 
-        @pytest.mark.needs_vtk_version(8, 2, max=(9, 2))
+        @pytest.mark.needs_vtk_version(8, 2, less_than=(9, 2))
         def test_between_variadic_max_equals(): ...
 
-        @pytest.mark.needs_vtk_version(9, max=(9, 2))
+        @pytest.mark.needs_vtk_version(9, less_than=(9, 2))
         def test_between_variadic_min_equals(): ...
 
         """
@@ -338,10 +338,10 @@ class Cases_needs_vtk:
         tests = """
         import pytest
 
-        @pytest.mark.needs_vtk_version(9, 2, 1, min=(8, 1))
+        @pytest.mark.needs_vtk_version(9, 2, 1, greater_than=(8, 1))
         def test_1(): ...
 
-        @pytest.mark.needs_vtk_version((9, 2), min=(9, 1))
+        @pytest.mark.needs_vtk_version((9, 2), greater_than=(9, 1))
         def test_2(): ...
         """
 
@@ -354,10 +354,10 @@ class Cases_needs_vtk:
         tests = """
         import pytest
 
-        @pytest.mark.needs_vtk_version(9, 2, 1, max=(8, 1))
+        @pytest.mark.needs_vtk_version(9, 2, 1, less_than=(8, 1))
         def test_1(): ...
 
-        @pytest.mark.needs_vtk_version((9, 2, 1), max=(8, 1))
+        @pytest.mark.needs_vtk_version((9, 2, 1), less_than=(8, 1))
         def test_2(): ...
         """
 
@@ -373,7 +373,7 @@ class Cases_needs_vtk:
         @pytest.mark.needs_vtk_version(9, 2, 1, 2)
         def test_1(): ...
 
-        @pytest.mark.needs_vtk_version(max=(8, 1, 0, 1))
+        @pytest.mark.needs_vtk_version(less_than=(8, 1, 0, 1))
         def test_2(): ...
         """
 
@@ -389,10 +389,10 @@ class Cases_needs_vtk:
         @pytest.mark.needs_vtk_version(9, 1)
         def test_1(): ...
 
-        @pytest.mark.needs_vtk_version(9, 1, max=(9, 2))
+        @pytest.mark.needs_vtk_version(9, 1, less_than=(9, 2))
         def test_2(): ...
 
-        @pytest.mark.needs_vtk_version(max=(8, 1))
+        @pytest.mark.needs_vtk_version(less_than=(8, 1))
         def test_3(): ...
 
         """
