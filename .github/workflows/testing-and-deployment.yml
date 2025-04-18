@@ -112,11 +112,13 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+
+      - name: Install tox-uv
+        run: uv pip install tox-uv
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -131,12 +133,9 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Install tox-uv
-        run: pip install tox-uv
-
       - name: Run tests
         run: |
-          tox run -f py${{matrix.python-version}} numpy_${{matrix.numpy-version}} vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
+          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
 
       - name: Upload Generated Images
         if: always()
@@ -179,17 +178,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.1
 
       - name: Install tox-uv
-        run: pip install tox-uv
+        run: uv pip install tox-uv
+
+      - name: Run tests
+        run: tox run -e py${{ matrix.python-version }}
 
       - name: Set example data path as env variable
         run: |
@@ -203,9 +204,6 @@ jobs:
           key: Examples-1-${{ hashFiles('*') }}
           restore-keys: |
             Examples-1-
-
-      - name: Run tests
-        run: tox run -e py${{ matrix.config.python-version }}
 
       - name: Upload Generated Images
         if: always()
