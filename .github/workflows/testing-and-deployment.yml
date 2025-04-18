@@ -20,7 +20,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
-  PYTEST_ADDOPTS: "--color=yes"
+  PYTEST_ADDOPTS: "--color=yes -v"
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -62,20 +62,11 @@ jobs:
           if: env.USE_CACHE == 'true'
           cache: "pip"
 
-      - name: Install PyVista test dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
+      - name: Install tox-uv
+        run: pip install tox-uv
 
-      - name: Report
-        run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
-
-      - name: Test Core API
-        run: pytest -v --ignore=tests/plotting
-
-      - name: Test Plotting
-        if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+      - name: Run tests
+        run: tox run -e py${{ matrix.config.python-version }}
 
       - name: Upload Generated Images
         if: always()
@@ -127,6 +118,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+        if: always()
+        with:
+          packages: xvfb
+          version: 3.0
+
       - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
@@ -134,56 +131,12 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Build wheel and install pyvista
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Run tests
         run: |
-          pip install build
-          python -m build --wheel
-          pip install dist/pyvista*.whl
-
-      - name: Set up vtk
-        if: ${{ matrix.vtk-version != 'latest' }}
-        run: pip install vtk==${{ matrix.vtk-version }}
-
-      # Make sure PyVista does not break from non-core dependencies
-      - name: Software Report (Core Dependencies)
-        run: python -c "import pyvista; print(pyvista.Report());"
-
-      - name: Install Testing Requirements
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
-
-      - name: Set up numpy
-        if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
-        run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
-
-      - name: Limit Matplotlib for VTK<9.2.2
-        if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
-        run: pip install 'matplotlib<3.6'
-
-      - name: Install latest numpy 2.0 beta/rc
-        if: ${{ matrix.numpy-version == 'nightly' }}
-        run: |
-          pip uninstall numpy matplotlib -y
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
-
-      - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
-
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
-        if: always()
-        with:
-          packages: xvfb
-          version: 3.0
-
-      - name: Software Report (Plotting Dependencies)
-        if: always()
-        run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
-
-      - name: Plotting Testing (uses GL)
-        if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+          tox run -f py${{matrix.python-version}} numpy_${{matrix.numpy-version}} vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
 
       - name: Upload Generated Images
         if: always()
@@ -191,13 +144,6 @@ jobs:
         with:
           name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: debug_images
-
-      - name: Software Report
-        if: always()
-        run: |
-          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
-          which python
-          pip list
 
       - uses: codecov/codecov-action@v5
         name: "Upload coverage to CodeCov"
@@ -242,13 +188,8 @@ jobs:
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.1
 
-      - name: Install PyVista test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install . --group test
-
-      - name: Report
-        run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+      - name: Install tox-uv
+        run: pip install tox-uv
 
       - name: Set example data path as env variable
         run: |
@@ -263,12 +204,8 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting
-
-      - name: Test Plotting
-        if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+      - name: Run tests
+        run: tox run -e py${{ matrix.config.python-version }}
 
       - name: Upload Generated Images
         if: always()
