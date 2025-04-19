@@ -94,7 +94,7 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
-    from cycler import Cycler
+    import cycler
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
@@ -2508,7 +2508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera: bool | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
-        multi_colors: bool | str | Cycler[str, ColorLike] | Sequence[ColorLike] = False,
+        multi_colors: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = False,
         name: str | None = None,
         render_points_as_spheres: bool | None = None,
         render_lines_as_tubes: bool | None = None,
@@ -7029,7 +7029,7 @@ class Plotter(BasePlotter):
             * [Window height x Window width x 4] if the theme sets
               ``transparent_background=True``.
 
-        widget : ipywidgets.Widget
+        widget : Widget | EmbeddableWidget | IFrame | Image
             IPython widget when ``return_viewer=True``.
 
         Notes
