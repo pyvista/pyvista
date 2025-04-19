@@ -5554,7 +5554,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_point_labels(
         self,
         points: Sequence[float] | NumpyArray[float] | pyvista.DataSet | _vtk.vtkAlgorithm,
-        labels: list[str] | str,
+        labels: list[str | int] | str,
         italic: bool = False,
         bold: bool = True,
         font_size: float | None = None,
@@ -5857,7 +5857,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_point_scalar_labels(
         self,
         points: MatrixLike[float] | VectorLike[float] | pyvista.DataSet,
-        labels: list[str] | str,
+        labels: list[str | int] | str,
         fmt: str | None = None,
         preamble: str = '',
         **kwargs,
@@ -6502,7 +6502,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self.renderers
 
     def add_background_image(
-        self, image_path: str, scale: float = 1.0, auto_resize: bool = True, as_global: bool = True
+        self,
+        image_path: str | Path,
+        scale: float = 1.0,
+        auto_resize: bool = True,
+        as_global: bool = True,
     ) -> None:
         """Add a background image to a plot.
 
@@ -6761,7 +6765,7 @@ class Plotter(BasePlotter):
         self,
         off_screen: bool | None = None,
         notebook: bool | None = None,
-        shape: Sequence[int] = (1, 1),
+        shape: Sequence[int] | str = (1, 1),
         groups: Sequence[int] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,

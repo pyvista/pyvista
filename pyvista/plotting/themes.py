@@ -2342,7 +2342,7 @@ class Theme(_ThemeConfig):
     def cmap(self, cmap):
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
-            msg = f'Invalid color map {cmap}'
+            msg = f'Invalid color map {cmap}'  # type: ignore[unreachable]
             raise ValueError(msg)
         self._cmap = cmap
 

@@ -130,7 +130,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
             else:  # pragma: no cover
                 fname = fname[:-3] + 'vtksz'
                 with Path(fname).open('wb') as f:
-                    f.write(plotter.last_vtksz)
+                    f.write(plotter.last_vtksz)  # type: ignore[arg-type]
                     image_names.append(fname)
 
     pyvista.close_all()  # close and clear all plotters

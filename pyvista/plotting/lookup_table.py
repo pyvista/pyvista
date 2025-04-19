@@ -999,7 +999,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         mesh = pyvista.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
+        pl = pyvista.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
