@@ -138,7 +138,7 @@ jobs:
 
       - name: Run tests
         run: |
-          xvfb-run tox run -f py${{matrix.python-version}} numpy_${{matrix.numpy-version}} vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
+          xvfb-run -a tox run -f py${{matrix.python-version}} numpy_${{matrix.numpy-version}} vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
 
       - name: Upload Generated Images
         if: always()
