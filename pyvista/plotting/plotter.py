@@ -4507,7 +4507,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 cmap = self._theme.cmap
 
             mpl_cmap = get_cmap_safe(cmap)
-            assert isinstance(cmap, (str, list, pyvista.LookupTable))
             if categories:
                 if categories is True:
                     n_colors = len(np.unique(scalars))
