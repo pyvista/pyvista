@@ -15,7 +15,9 @@ from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
 
-def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
+def prepare_smooth_shading(
+    mesh: pyvista.DataSet, scalars, texture, split_sharp_edges, feature_angle, preference
+) -> tuple[pyvista.PolyData, pyvista.pyvista_ndarray]:
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with Phong shading to have active normals.
@@ -98,7 +100,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
 
-    return mesh, scalars
+    return mesh, scalars  # type: ignore[return-value]
 
 
 def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):

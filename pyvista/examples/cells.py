@@ -51,7 +51,7 @@ def plot_cell(grid, cpos=None, **kwargs):
     pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
     pl.add_point_labels(
         grid.points,
-        range(grid.n_points),
+        list(range(grid.n_points)),
         always_visible=True,
         fill_shape=False,
         margin=0,
