@@ -22,7 +22,6 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from types import NoneType
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import Union
@@ -3560,10 +3559,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if algo is not None:
                 msg = 'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 raise TypeError(msg)
-            if not isinstance(opacity, (float, int, NoneType)):
+            if not isinstance(opacity, (float, int, type(None))):
                 msg = f'`opacity` must be a float, int or None type, not ({type(opacity)})'
                 raise TypeError(msg)
-            if not isinstance(scalars, (str, NoneType)):
+            if not isinstance(scalars, (str, type(None))):
                 msg = f'`scalars` must be a string or None type for MultiBlock mesh, not ({type(scalars)})'
                 raise TypeError(msg)
             actor, _ = self.add_composite(
