@@ -123,6 +123,29 @@ def test_trame(client_type):
 
     viewer = get_viewer(pl)
 
+    class FakeView:
+        def __init__(self):
+            self.widgets_received = None
+
+        def set_widgets(self, widgets):
+            # capture what was passed in
+            self.widgets_received = widgets
+
+    fake_view = FakeView()
+    viewer._html_views.append(fake_view)
+
+    for ren in pl.renderer.actors:
+        ren.axes_widget = f'widget_for_{id(ren)}'
+
+    server.state[viewer.AXIS] = True
+    viewer.on_axis_visibility_change(**server.state.to_dict())
+
+    expected = [ren.axes_widget for ren in pl.renderer.actors]
+    assert fake_view.widgets_received == expected
+
+    server.state[viewer.AXIS] = False
+    viewer.on_axis_visibility_change(**server.state.to_dict())
+
     for cp in ['xy', 'xz', 'yz', 'isometric']:
         exec(f'viewer.view_{cp}()')
         cpos = list(pl.camera_position)
@@ -171,7 +194,6 @@ def test_trame(client_type):
     assert len(viewer.views) == 1
 
     viewer.export()
-
     assert isinstance(viewer.screenshot(), memoryview)
 
 
