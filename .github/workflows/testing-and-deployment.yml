@@ -65,8 +65,11 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      - name: Run tests
-        run: tox run -e py${{ matrix.config.python-version }}
+      - name: Test Core API (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core
+
+      - name: Test Plotting
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Generated Images
         if: always()
@@ -133,9 +136,13 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Run tests
+      - name: Test Core API (no GL)
         run: |
-          xvfb-run -a tox run -f py${{matrix.python-version}} numpy_${{matrix.numpy-version}} vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
+          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}-core --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
+
+      - name: Test Plotting
+        run: |
+          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}-plotting --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
 
       - name: Upload Generated Images
         if: always()
@@ -189,8 +196,11 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - name: Run tests
-        run: tox run -e py${{ matrix.python-version }}
+      - name: Test Core API (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core
+
+      - name: Test Plotting
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Set example data path as env variable
         run: |
