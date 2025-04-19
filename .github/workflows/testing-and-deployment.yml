@@ -63,9 +63,7 @@ jobs:
           cache: "pip"
 
       - name: Install tox-uv
-        run: |
-          pip install uv
-          uv pip install tox-uv
+        run: pip install tox-uv
 
       - name: Run tests
         run: tox run -e py${{ matrix.config.python-version }}
