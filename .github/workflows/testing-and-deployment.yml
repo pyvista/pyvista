@@ -55,21 +55,20 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install uv and set the python version ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@v5
+      - name: Set up Python ${{ matrix.config.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.config.python-version }}
+          if: env.USE_CACHE == 'true'
+          cache: "pip"
 
       - name: Install tox-uv
         run: |
-          uv venv pyvista_env
-          source pyvista_env/bin/activate
+          pip install uv
           uv pip install tox-uv
 
       - name: Run tests
-        run: |
-          source pyvista_env/bin/activate
-          tox run -e py${{ matrix.config.python-version }}
+        run: tox run -e py${{ matrix.config.python-version }}
 
       - name: Upload Generated Images
         if: always()
