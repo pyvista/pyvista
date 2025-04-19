@@ -6,11 +6,11 @@ from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypeGuard
 from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import TypeGuard
 
 import pyvista
 from pyvista.core import _validation
