@@ -498,7 +498,8 @@ def test_plotter_set_theme():
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning',
+    'ignore:SyntaxWarning',  # due to unescaped backslash in trame-vuetify
 )
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
