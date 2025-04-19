@@ -470,6 +470,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():
@@ -2202,6 +2203,23 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_vtk_snake_case():
+    assert pv.vtk_snake_case() == 'error'
+    match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
+
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        _ = pv.PolyData().information
+
+    pv.vtk_snake_case('allow')
+    assert pv.vtk_snake_case() == 'allow'
+    _ = pv.PolyData().information
+
+    with pv.vtk_snake_case('warning'):
+        with pytest.warns(RuntimeWarning, match=match):
+            _ = pv.PolyData().information
 
 
 T = TypeVar('T')

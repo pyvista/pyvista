@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
+class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
@@ -161,7 +161,7 @@ class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(_NameMixin, _vtk.vtkTextActor):
+class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -454,7 +454,7 @@ class Label(_Prop3DMixin, Text):
 
 
 @no_new_attr
-class TextProperty(_vtk.vtkTextProperty):
+class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters

@@ -32,12 +32,6 @@ This module can be used for scientific plotting for presentations and
 research papers as well as a supporting module for other mesh
 dependent Python modules.
 
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on X: |tweet|
-
-
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder

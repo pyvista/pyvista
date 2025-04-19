@@ -13,7 +13,7 @@ from .opts import InterpolationType
 
 
 @no_new_attr
-class Property(_vtk.vtkProperty):
+class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     """Wrap vtkProperty and expose it pythonically.
 
     This class is used to set the property of actors.
