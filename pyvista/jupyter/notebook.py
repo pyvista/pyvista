@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 def handle_plotter(
     plotter: Plotter,
-    backend: Literal['trame', 'server', 'client', 'html'] | None = None,
+    backend: Literal['static', 'client', 'server', 'trame', 'html', 'none'] | None = None,
     screenshot: str | Path | io.BytesIO | bool | None = None,
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:

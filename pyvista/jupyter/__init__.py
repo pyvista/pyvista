@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+from typing import Literal
 
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
@@ -17,7 +18,9 @@ ALLOWED_BACKENDS = [
 ]
 
 
-def _validate_jupyter_backend(backend):
+def _validate_jupyter_backend(
+    backend: str | None,
+) -> Literal['static', 'client', 'server', 'trame', 'html', 'none']:
     """Validate that a jupyter backend is valid.
 
     Returns the normalized name of the backend. Raises if the backend is invalid.
@@ -47,9 +50,7 @@ def _validate_jupyter_backend(backend):
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
 
-    if backend == 'none':
-        backend = None
-    return backend
+    return backend  # type: ignore[return-value]
 
 
 def set_jupyter_backend(backend, name=None, **kwargs):

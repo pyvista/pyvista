@@ -274,7 +274,7 @@ def initialize(
 
 def show_trame(
     plotter: Plotter,
-    mode: Literal['trame', 'server', 'client', 'html'] | None = None,
+    mode: Literal['static', 'client', 'server', 'trame', 'html', 'none'] | None = None,
     name: str | None = None,
     server_proxy_enabled: bool | None = None,
     server_proxy_prefix: str | None = None,
