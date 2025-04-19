@@ -4391,7 +4391,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
-                assert isinstance(a, Actor)
+                a = cast('Actor', a)
 
                 actors.append(a)
             return actors
@@ -4446,8 +4446,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar_bar_args.setdefault('title', title)
         elif not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)  # type: ignore[unreachable]
+        scalars = cast('NumpyArray[float]', scalars)
 
-        assert isinstance(scalars, np.ndarray)
         if not np.issubdtype(scalars.dtype, np.number):
             msg = 'Non-numeric scalars are currently not supported for volume rendering.'
             raise TypeError(msg)
