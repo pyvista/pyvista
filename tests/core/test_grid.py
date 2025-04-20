@@ -29,9 +29,8 @@ HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
 STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
-pointsetmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
+pointsetmark = pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class'
 )
 
 
@@ -1629,9 +1628,8 @@ def test_ExplicitStructuredGrid_raise_init():
         )
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 2, 2),
-    reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean',
+@pytest.mark.needs_vtk_version(
+    9, 2, 2, reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean'
 )
 def test_ExplicitStructuredGrid_clean():
     grid = examples.load_explicit_structured()

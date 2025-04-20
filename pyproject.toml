@@ -226,7 +226,7 @@ junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
-  'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+  'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
