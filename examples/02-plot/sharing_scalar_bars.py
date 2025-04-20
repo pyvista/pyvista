@@ -50,25 +50,27 @@ pl.show()
 # %%
 # By default, a unique scalar bar is used for all plotted scalars with unique names:
 
-# Create a cube mesh with 4 scalar arrays
+# Create a cube mesh with four scalar arrays
 cube = pv.Cube()
 cube.cell_data['scalars1'] = range(0, 6, 1)
 cube.cell_data['scalars2'] = range(0, 12, 2)
 cube.cell_data['scalars3'] = range(0, 18, 3)
 cube.cell_data['scalars4'] = range(0, 24, 4)
 
-# Plot the 4 scalar arrays - note how there is 1 scalar bar for each plotted scalar
+# Plot the four scalar arrays - note how there is one scalar bar for each plotted
+# scalar. A shallow copy of cube is made when plotting each scalar array since
+# a mesh can have only one active scalar
 pl = pv.Plotter(shape=(2, 2), border_width=1)
 pl.add_mesh(cube, scalars="scalars1", cmap='coolwarm')
 pl.camera.zoom(0.75)
 pl.subplot(0, 1)
-pl.add_mesh(cube, scalars="scalars2", cmap='coolwarm')
+pl.add_mesh(cube.copy(deep=False), scalars="scalars2", cmap='coolwarm')
 pl.camera.zoom(0.75)
 pl.subplot(1, 0)
-pl.add_mesh(cube, scalars="scalars3", cmap='coolwarm')
+pl.add_mesh(cube.copy(deep=False), scalars="scalars3", cmap='coolwarm')
 pl.camera.zoom(0.75)
 pl.subplot(1, 1)
-pl.add_mesh(cube, scalars="scalars4", cmap='coolwarm')
+pl.add_mesh(cube.copy(deep=False), scalars="scalars4", cmap='coolwarm')
 pl.camera.zoom(0.75)
 pl.show()
 
@@ -76,21 +78,21 @@ pl.show()
 # To share a scalar bar among different subplots, use a common scalar bar title
 # among those subplots:
 
-# Plot the 4 scalar arrays - use 1 scalar bar for each row
+# Plot the four scalar arrays - use one scalar bar for each row
 pl = pv.Plotter(shape=(2, 2), border_width=1)
 pl.add_mesh(cube, scalars="scalars1", cmap='coolwarm',
             scalar_bar_args={'title': 'Scalars 1 & 2'})
 pl.camera.zoom(0.75)
 pl.subplot(0, 1)
-pl.add_mesh(cube, scalars="scalars2", cmap='coolwarm',
+pl.add_mesh(cube.copy(deep=False), scalars="scalars2", cmap='coolwarm',
             scalar_bar_args={'title': 'Scalars 1 & 2'})
 pl.camera.zoom(0.75)
 pl.subplot(1, 0)
-pl.add_mesh(cube, scalars="scalars3", cmap='coolwarm',
+pl.add_mesh(cube.copy(deep=False), scalars="scalars3", cmap='coolwarm',
             scalar_bar_args={'title': 'Scalars 3 & 4'})
 pl.camera.zoom(0.75)
 pl.subplot(1, 1)
-pl.add_mesh(cube, scalars="scalars4", cmap='coolwarm',
+pl.add_mesh(cube.copy(deep=False), scalars="scalars4", cmap='coolwarm',
             scalar_bar_args={'title': 'Scalars 3 & 4'})
 pl.camera.zoom(0.75)
 pl.show()
