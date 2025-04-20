@@ -6,7 +6,6 @@ import asyncio
 import logging
 import os
 from typing import TYPE_CHECKING
-from typing import Concatenate
 from typing import Literal
 import warnings
 
@@ -14,6 +13,7 @@ from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
+from typing_extensions import Concatenate
 
 try:
     from ipywidgets.widgets import HTML
