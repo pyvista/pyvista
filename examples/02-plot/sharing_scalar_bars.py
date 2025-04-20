@@ -57,7 +57,7 @@ cube.cell_data['scalars2'] = range(0, 12, 2)
 cube.cell_data['scalars3'] = range(0, 18, 3)
 cube.cell_data['scalars4'] = range(0, 24, 4)
 
-# Plot the 4 scalar arrays - not how there is 1 scalar bar for each plotted scalar
+# Plot the 4 scalar arrays - note how there is 1 scalar bar for each plotted scalar
 pl = pv.Plotter(shape=(2, 2), border_width=1)
 pl.add_mesh(cube, scalars="scalars1", cmap='coolwarm')
 pl.camera.zoom(0.75)
