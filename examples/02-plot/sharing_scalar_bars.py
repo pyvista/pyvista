@@ -9,7 +9,7 @@ each plotted array.
 
 """
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 3
 from __future__ import annotations
 
 import pyvista as pv
