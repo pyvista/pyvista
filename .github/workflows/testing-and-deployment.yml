@@ -37,7 +37,7 @@ permissions:
 
 jobs:
   macOS:
-    name: Mac OS Unit Testing
+    name: Mac OS Unit Testing - Python ${{ matrix.config.python-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +76,7 @@ jobs:
           path: debug_images
 
   Linux:
-    name: Linux Unit Testing
+    name: Linux Unit Testing - Python ${{ matrix.python-version }} - VTK ${{ matrix.vtk-version }} - Numpy ${{ matrix.numpy-version }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -162,7 +162,7 @@ jobs:
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
   windows:
-    name: Windows Unit Testing
+    name: Windows Unit Testing - Python ${{ matrix.python-version }}
     runs-on: windows-latest
     env:
       CI_WINDOWS: true
