@@ -150,10 +150,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check package
-        run: |
-          pip install build twine
-          python -m build
-          twine check --strict dist/*
+        run: tox run -e check_package
 
       - name: Upload to PyPi
         if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
@@ -169,6 +166,7 @@ jobs:
     runs-on: windows-latest
     env:
       CI_WINDOWS: true
+      PYVISTA_EXAMPLE_DATA_PATH: ${{ github.workspace }}\.pyvista_examples
     strategy:
       fail-fast: false
       matrix:
@@ -189,21 +187,19 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - name: Run tests
-        run: tox run -e py${{ matrix.python-version }}
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
 
-      - name: Set example data path as env variable
-        run: |
-          chcp 65001 #set code page to utf-8
-          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
-
-      - name: Cache example data
+      - name: Cache example data path
         uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: Examples-1-${{ hashFiles('*') }}
           restore-keys: |
             Examples-1-
+
+      - name: Run tests
+        run: tox run -e py${{ matrix.python-version }}
 
       - name: Upload Generated Images
         if: always()
