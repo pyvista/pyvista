@@ -135,7 +135,7 @@ jobs:
 
       - name: Run tests
         run: |
-          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}} --  --cov=pyvista --cov-branch --cov-append --cov-report=xml
+          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
 
       - name: Upload Generated Images
         if: always()
@@ -166,7 +166,7 @@ jobs:
     runs-on: windows-latest
     env:
       CI_WINDOWS: true
-      PYVISTA_EXAMPLE_DATA_PATH: ${{ github.workspace }}\.pyvista_examples
+      PYVISTA_USERDATA_PATH: ${{ github.workspace }}\.pyvista_examples
     strategy:
       fail-fast: false
       matrix:
@@ -193,7 +193,7 @@ jobs:
       - name: Cache example data path
         uses: actions/cache@v4
         with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
           key: Examples-1-${{ hashFiles('*') }}
           restore-keys: |
             Examples-1-
