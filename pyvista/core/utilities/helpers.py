@@ -294,7 +294,7 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal_ = _validation.validate_array3(normal, dtype_out=float)
-    normal_ /= np.linalg.norm(normal_)
+    normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane
