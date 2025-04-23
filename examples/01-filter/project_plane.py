@@ -1,4 +1,6 @@
 """
+.. _project_plane_example:
+
 Project to a Plane
 ~~~~~~~~~~~~~~~~~~
 

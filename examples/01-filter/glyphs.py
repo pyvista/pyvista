@@ -1,5 +1,5 @@
 """
-.. _glyph_example:
+.. _glyphs_example:
 
 Plotting Glyphs (Vectors or PolyData)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,6 @@
 """
+.. _clear_example:
+
 Clearing a Mesh or the Entire Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

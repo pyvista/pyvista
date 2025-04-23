@@ -1,5 +1,5 @@
 """
-.. _warp_by_vectors_example:
+.. _warp_by_vector_example:
 
 Warping by Vectors
 ~~~~~~~~~~~~~~~~~~

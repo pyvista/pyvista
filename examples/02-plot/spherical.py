@@ -1,4 +1,6 @@
 """
+.. _spherical_example:
+
 Plot data in spherical coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

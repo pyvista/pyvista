@@ -1,5 +1,5 @@
 """
-.. _light_actors_example:
+.. _actors_example:
 
 Light Actors
 ~~~~~~~~~~~~

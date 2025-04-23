@@ -1,5 +1,5 @@
 """
-.. _plot_spheres_example:
+.. _points_gaussian_scale_example:
 
 Scaled Gaussian Points
 ----------------------

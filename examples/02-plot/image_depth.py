@@ -1,4 +1,6 @@
 """
+ .. _image_depth_example:
+
 Render a depth image
 ~~~~~~~~~~~~~~~~~~~~
 

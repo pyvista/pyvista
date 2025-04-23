@@ -1,5 +1,5 @@
 """
-.. _gif_movie_example:
+.. _gif_example:
 
 Create a GIF Movie
 ~~~~~~~~~~~~~~~~~~

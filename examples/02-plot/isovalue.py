@@ -1,5 +1,5 @@
 """
-.. _moving_isovalue_example:
+.. _isovalue_example:
 
 Moving Isovalue
 ~~~~~~~~~~~~~~~

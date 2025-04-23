@@ -1,5 +1,5 @@
 """
-.. _orthogonal_slices_example:
+.. _ortho_slices_example:
 
 Orthogonal Slices
 ~~~~~~~~~~~~~~~~~

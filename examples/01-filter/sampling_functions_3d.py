@@ -1,4 +1,6 @@
 """
+.. _sampling_functions_3d_example:
+
 Sample Function: Perlin Noise in 3D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Here we use :func:`pyvista.core.utilities.features.sample_function` to sample

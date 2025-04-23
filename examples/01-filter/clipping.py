@@ -1,5 +1,5 @@
 """
-.. _clip_with_plane_box_example:
+.. _clipping_example:
 
 Clipping with Planes & Boxes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

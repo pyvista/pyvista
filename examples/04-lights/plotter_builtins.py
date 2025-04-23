@@ -1,5 +1,5 @@
 """
-.. _plotter_lighting_example:
+.. _plotter_builtins_example:
 
 Plotter Lighting Systems
 ~~~~~~~~~~~~~~~~~~~~~~~~
