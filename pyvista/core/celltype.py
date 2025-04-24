@@ -886,6 +886,9 @@ class CellType(IntEnum):
         :ref:`create_polyhedron_example`
             Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
 
+        :ref:`create_polydata_strips_example`
+            Example creating a mesh with :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells.
+
         :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 

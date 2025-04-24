@@ -2733,7 +2733,8 @@ class DataObjectFilters:
         >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
-        See :ref:`sample_interpolate_example` for more examples using this filter.
+        See :ref:`resample_example` and :ref:`interpolate_sample_example`
+        for more examples using this filter.
 
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object

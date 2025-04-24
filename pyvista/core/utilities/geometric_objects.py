@@ -458,6 +458,7 @@ def Sphere(
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
 
     Examples
     --------

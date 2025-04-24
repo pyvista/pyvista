@@ -4,8 +4,8 @@
 Multiple Slider Widgets
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Use a class based callback to track multiple slider widgets for updating a
-single mesh.
+Use :func:`~pyvista.Plotter.add_slider_widget` and a class-based callback
+to track multiple slider widgets for updating a single mesh.
 
 In this example we simply change a few parameters for the
 :func:`pyvista.Sphere` method, but this could easily be applied to any

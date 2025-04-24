@@ -2049,6 +2049,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         pyvista.CubeAxesActor
             Bounds actor.
 
+        See Also
+        --------
+        :ref:`bounds_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2499,7 +2503,13 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.Modified()
 
     def clear(self) -> None:
-        """Remove all actors and properties."""
+        """Remove all actors and properties.
+
+        See Also
+        --------
+        :ref:`clear_example`
+
+        """
         self.clear_actors()
         if self._charts is not None:
             self._charts.deep_clean()
@@ -3392,6 +3402,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
 
+        See Also
+        --------
+        :ref:`ssao_example`
+
         Examples
         --------
         Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
@@ -3861,6 +3875,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkLegendBoxActor
             Actor for the legend.
+
+        See Also
+        --------
+        :ref:`legend_example`
 
         Examples
         --------

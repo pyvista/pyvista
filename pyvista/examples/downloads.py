@@ -450,6 +450,8 @@ def download_puppy(load=True):  # pragma: no cover
 
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
 
+        :ref:`read_image_example`
+
     """
     return _download_dataset(_dataset_puppy, load=load)
 
@@ -3931,6 +3933,8 @@ def download_dolfin(load=True):  # pragma: no cover
         :ref:`Dolfin Dataset <dolfin_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`read_dolfin_example`
+
     """
     return _download_dataset(_dataset_dolfin, load=load)
 
@@ -4063,7 +4067,7 @@ def download_embryo(load=True):  # pragma: no cover
         This dataset is used in the following examples:
 
         * :ref:`contouring_example`
-        * :ref:`sample_interpolate_example`
+        * :ref:`resample_example`
         * :ref:`slice_orthogonal_example`
 
     """
@@ -6698,6 +6702,8 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
 
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`fea_hertzian_contact_pressure_example`
 
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
 

@@ -2414,6 +2414,11 @@ class PolyDataFilters(DataSetFilters):
             Indices of the intersection cells.  Empty array if no
             intersections.
 
+        See Also
+        --------
+        :ref:`ray_trace_moeller_example`
+            Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
+
         Examples
         --------
         Compute the intersection between a ray from the origin to
@@ -3224,6 +3229,11 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             The points of this mesh projected onto a plane.
 
+        See Also
+        --------
+        :ref:`project_plane_example`
+        :ref:`project_points_tessellate_example`
+
         Examples
         --------
         Flatten a sphere to the XY plane.
@@ -3535,6 +3545,10 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Rotationally extruded mesh.
 
+        See Also
+        --------
+        :ref:`extrude_rotate_example`
+
         Examples
         --------
         Create a "spring" using the rotational extrusion filter.
@@ -3668,6 +3682,10 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Extruded mesh trimmed by a surface.
+
+        See Also
+        --------
+        :ref:`extrude_trim_example`
 
         Examples
         --------

@@ -1605,8 +1605,8 @@ class DataSetFilters(DataObjectFilters):
         ... )
         >>> pl.show()
 
-        See :ref:`glyph_example` and :ref:`glyph_table_example` for more
-        examples using this filter.
+        See :ref:`glyph_example`, :ref:`movie_glyphs_example`, and
+        :ref:`glyph_table_example` for more examples using this filter.
 
         """
         dataset = self
@@ -2588,6 +2588,10 @@ class DataSetFilters(DataObjectFilters):
         pyvista.PolyData
             Mesh containing the ``point_data['SelectedPoints']`` array.
 
+        See Also
+        --------
+        :ref:`extract_cells_inside_surface_example`
+
         Examples
         --------
         Determine which points on a plane are inside a manifold sphere
@@ -2737,7 +2741,8 @@ class DataSetFilters(DataObjectFilters):
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
-        See :ref:`interpolate_example` for more examples using this filter.
+        See :ref:`interpolate_example`, :ref:`interpolate_sample_example`,
+        and :ref:`resample_example` for more examples using this filter.
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
@@ -3923,6 +3928,10 @@ class DataSetFilters(DataObjectFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        :ref:`plot_over_circular_arc_example`
 
         Examples
         --------

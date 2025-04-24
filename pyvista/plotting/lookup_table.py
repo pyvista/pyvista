@@ -161,6 +161,10 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         range to annotate on the scalar bar and the values are the string
         annotations.
 
+    See Also
+    --------
+    :ref:`lookup_table_example`
+
     Examples
     --------
     Plot the lookup table with the default VTK color map.
