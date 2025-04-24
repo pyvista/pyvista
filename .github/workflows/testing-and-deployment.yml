@@ -144,6 +144,9 @@ jobs:
           name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: debug_images
 
+      - name: Install coverage
+        run: uv pip install coverage
+
       - uses: codecov/codecov-action@v5
         name: "Upload coverage to CodeCov"
         env:
@@ -154,8 +157,7 @@ jobs:
 
       - name: Upload to PyPi
         if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
-        run: |
-          twine upload --skip-existing dist/pyvista*
+        run: tox run -e publish_package
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
