@@ -2742,7 +2742,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         See :ref:`interpolate_example`, :ref:`interpolate_sample_example`,
-        and :ref:`resample_example` for more examples using this filter.
+        and :ref:`resampling_example` for more examples using this filter.
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)

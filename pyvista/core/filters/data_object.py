@@ -2733,7 +2733,7 @@ class DataObjectFilters:
         >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
-        See :ref:`resample_example` and :ref:`interpolate_sample_example`
+        See :ref:`resampling_example` and :ref:`interpolate_sample_example`
         for more examples using this filter.
 
         """

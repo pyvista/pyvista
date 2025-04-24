@@ -19,7 +19,7 @@ preferred.  If interpolation is desired within the cells of the target mesh, the
 Here the two methods are compared and contrasted using a simple example of
 sampling data from a mesh in a rectangular domain. This example demonstrates the
 main differences above. For more complex uses, see :ref:`interpolate_example`
-and :ref:`resample_example`.
+and :ref:`resampling_example`.
 
 """
 

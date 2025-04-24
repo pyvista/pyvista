@@ -4067,7 +4067,7 @@ def download_embryo(load=True):  # pragma: no cover
         This dataset is used in the following examples:
 
         * :ref:`contouring_example`
-        * :ref:`resample_example`
+        * :ref:`resampling_example`
         * :ref:`slice_orthogonal_example`
 
     """
