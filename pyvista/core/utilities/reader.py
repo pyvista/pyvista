@@ -2854,10 +2854,11 @@ class FLUENTCFFReader(BaseReader):
         # we need to check if it exists since VTK doesn't do it
         if cell_array not in self.cell_arrays:
             basename = Path(self.path).name
-            raise ValueError(
+            msg = (
                 f'cell_array "{cell_array}" does not exist in {basename}.\n\n'
                 f'Available arrays: {self.cell_arrays}'
             )
+            raise ValueError(msg)
         self.reader.SetCellArrayStatus(cell_array, enabled)
 
     def disable_cell_array(self, cell_array: str) -> None:
