@@ -1,5 +1,5 @@
 """
-.. _compute_volume_example:
+.. _volumetric_analysis_example:
 
 Volumetric Analysis
 ~~~~~~~~~~~~~~~~~~~

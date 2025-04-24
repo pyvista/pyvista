@@ -1,11 +1,11 @@
 """
-.. _actors_example:
+.. _light_actors_example:
 
 Light Actors
 ~~~~~~~~~~~~
 
 Positional lights in PyVista have customizable beam shapes, see the
-:ref:`light_beam_shape_example` example. Spotlights are special in
+:ref:`beam_shape_example` example. Spotlights are special in
 the sense that they are unidirectional lights with a finite position,
 so they can be visualized using a cone.
 

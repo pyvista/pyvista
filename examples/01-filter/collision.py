@@ -1,5 +1,5 @@
 """
-.. _collisions_example:
+.. _collision_example:
 
 Collision
 ~~~~~~~~~

@@ -1,5 +1,5 @@
 """
-.. _resample_example:
+.. _sample_interpolate_example:
 
 Detailed Resampling
 ~~~~~~~~~~~~~~~~~~~

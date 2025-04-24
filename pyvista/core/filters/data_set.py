@@ -468,7 +468,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         See :ref:`clip_with_surface_example` and
-        :ref:`voxelize_surface_mesh_example` for more examples using
+        :ref:`voxelize_example` for more examples using
         this filter.
 
         """
@@ -821,7 +821,7 @@ class DataSetFilters(DataObjectFilters):
         ...     show_edges=True,
         ... )
 
-        See :ref:`common_filter_example` and :ref:`image_representations_example`
+        See :ref:`using_filters_example` and :ref:`image_representations_example`
         for more examples using this filter.
 
         """
@@ -968,7 +968,7 @@ class DataSetFilters(DataObjectFilters):
         ...     show_edges=True,
         ... )
 
-        See :ref:`common_filter_example` for more examples using a similar filter.
+        See :ref:`using_filters_example` for more examples using a similar filter.
 
         """
         tscalars = set_default_active_scalars(self).name if scalars is None else scalars
@@ -1048,7 +1048,7 @@ class DataSetFilters(DataObjectFilters):
         >>> outline = sphere.outline()
         >>> pv.plot([sphere, outline], line_width=5)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkOutlineFilter()
@@ -1259,7 +1259,7 @@ class DataSetFilters(DataObjectFilters):
         ... )
         >>> out.plot(color='lightblue', smooth_shading=True)
 
-        See :ref:`common_filter_example` or
+        See :ref:`using_filters_example` or
         :ref:`marching_cubes_example` for more examples using this
         filter.
 
@@ -1803,7 +1803,7 @@ class DataSetFilters(DataObjectFilters):
         must also have at least one point with scalar values in the
         specified range to be considered connected.
 
-        See :ref:`connectivity_example` and :ref:`volumetric_example` for
+        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
         more examples using this filter.
 
         .. versionadded:: 0.43.0
@@ -2223,7 +2223,7 @@ class DataSetFilters(DataObjectFilters):
         >>> largest = mesh.extract_largest()
         >>> largest.plot()
 
-        See :ref:`connectivity_example` and :ref:`volumetric_example` for
+        See :ref:`connectivity_example` and :ref:`volumetric_analysis_example` for
         more examples using this filter.
 
         .. seealso::
@@ -2443,7 +2443,7 @@ class DataSetFilters(DataObjectFilters):
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
-        See :ref:`warp_by_vectors_example` and :ref:`eigenmodes_example` for
+        See :ref:`warp_by_vector_example` and :ref:`warp_by_vector_eigenmodes_example` for
         more examples using this filter.
 
         """
@@ -3233,7 +3233,7 @@ class DataSetFilters(DataObjectFilters):
         >>> plotter.view_xy()
         >>> plotter.show()
 
-        See :ref:`2d_streamlines_example` for more examples using this filter.
+        See :ref:`streamlines_2d_example` for more examples using this filter.s
 
         """
         if integrator_type not in [2, 4]:
@@ -5769,7 +5769,7 @@ class DataSetFilters(DataObjectFilters):
         >>> integrated['data'][0]
         np.float64(6.28)
 
-        See the :ref:`integrate_example` for more examples using this filter.
+        See the :ref:`integrate_data_example` for more examples using this filter.
 
         """
         if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover

@@ -3214,7 +3214,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blur_example` for a full example using this method.
+        See :ref:`blurring_example` for a full example using this method.
 
         """
         self._render_passes.add_blur_pass()

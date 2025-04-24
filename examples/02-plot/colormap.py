@@ -1,5 +1,5 @@
 """
-.. _cmap_example:
+.. _colormap_example:
 
 Colormap Choices
 ~~~~~~~~~~~~~~~~

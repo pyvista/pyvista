@@ -883,7 +883,7 @@ class CellType(IntEnum):
         :ref:`linear_cells_example`
             Detailed example using linear cells.
 
-        :ref:`polyhedron_example`
+        :ref:`create_polyhedron_example`
             Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
 
         :mod:`pyvista.examples.cells`

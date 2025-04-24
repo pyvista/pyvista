@@ -1,5 +1,5 @@
 """
-.. _surface_picking_example:
+.. _surface_point_picking_example:
 
 Picking a Point on the Surface of a Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

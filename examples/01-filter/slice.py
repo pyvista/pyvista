@@ -1,5 +1,5 @@
 """
-.. _slicing_example:
+.. _slice_example:
 
 Slicing
 ~~~~~~~

@@ -452,7 +452,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_gltf` for a full example using this method.
+        See :ref:`load_gltf_example` for a full example using this method.
 
         """
         filename = Path(filename).expanduser().resolve()
@@ -5204,7 +5204,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
-        See :ref:`gif_movie_example` for a full example using this method.
+        See :ref:`gif_example` for a full example using this method.
 
         """
         try:
@@ -6150,7 +6150,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
         ... )
 
-        See :ref:`orbiting_example` for a full example using this method.
+        See :ref:`orbit_example` for a full example using this method.
 
         """
         if viewup is None:
@@ -6238,7 +6238,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
         >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
-        See :ref:`orbiting_example` for a full example using this method.
+        See :ref:`orbit_example` for a full example using this method.
 
         """
         if focus is None:

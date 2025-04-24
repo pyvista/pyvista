@@ -194,7 +194,7 @@ and plots the meshes with various colors.
 Unstructured Grid Creation
 --------------------------
 
-See :ref:`create_unstructured_example` for an example on how to create an
+See :ref:`create_unstructured_surface_example` for an example on how to create an
 unstructured grid from NumPy arrays.
 
 
@@ -295,7 +295,7 @@ Creating from NumPy Arrays
 A structured grid can be created directly from numpy arrays. This is useful
 when creating a grid from scratch or copying it from another format.
 
-Also see :ref:`create_structured` for an example on creating a structured
+Also see :ref:`create_structured_surface_example` for an example on creating a structured
 grid from NumPy arrays.
 
 

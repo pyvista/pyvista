@@ -1,5 +1,5 @@
 """
-.. _sampling_functions_3d_example:
+.. _perlin_noise_3d_example:
 
 Sample Function: Perlin Noise in 3D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

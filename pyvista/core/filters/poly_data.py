@@ -186,7 +186,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         return self._boolean('union', other_mesh, tolerance, progress_bar=progress_bar)
@@ -258,7 +258,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         bool_inter = self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
@@ -331,7 +331,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
@@ -2971,7 +2971,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_flipped.point_data['Normals'][0]
         pyvista_ndarray([0., 0., 1.], dtype=float32)
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         return self._reverse_sense(
@@ -3137,7 +3137,7 @@ class PolyDataFilters(DataSetFilters):
         >>> tess = comb.delaunay_2d(edge_source=comb)
         >>> tess.plot(cpos='xy', show_edges=True)
 
-        See :ref:`triangulated_surface` for more examples using this filter.
+        See :ref:`create_tri_surface_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkDelaunay2D()
