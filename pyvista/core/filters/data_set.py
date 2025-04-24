@@ -2355,7 +2355,7 @@ class DataSetFilters(DataObjectFilters):
         >>> warped = mesh.warp_by_scalar('Elevation')
         >>> warped.plot(cmap='gist_earth', show_scalar_bar=False)
 
-        See :ref:`surface_normal_example` for more examples using this filter.
+        See :ref:`compute_normals_example` for more examples using this filter.
 
         """
         factor = kwargs.pop('scale_factor', factor)

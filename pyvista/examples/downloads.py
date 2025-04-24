@@ -976,7 +976,7 @@ def download_topo_global(load=True):  # pragma: no cover
 
         This dataset is used in the following examples:
 
-        * :ref:`surface_normal_example`
+        * :ref:`compute_normals_example`
         * :ref:`background_image_example`
 
     """
@@ -1243,7 +1243,7 @@ def download_nefertiti(load=True):  # pragma: no cover
 
         This dataset is used in the following examples:
 
-        * :ref:`surface_normal_example`
+        * :ref:`compute_normals_example`
         * :ref:`extract_edges_example`
         * :ref:`show_edges_example`
         * :ref:`edl_example`

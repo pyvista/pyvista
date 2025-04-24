@@ -112,7 +112,7 @@ cell types. All faces are assumed to be polygons, hence the name
 "Poly" data.
 
 Click on the attributes above to see examples of how to add geometric
-features to an empty. See :ref:`create_poly` for an example on
+features to an empty. See :ref:`create_poly_example` for an example on
 creating a :class:`pyvista.PolyData` object from NumPy arrays.
 
 

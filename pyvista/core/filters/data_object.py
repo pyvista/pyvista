@@ -2213,7 +2213,7 @@ class DataObjectFilters:
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
         array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         # Fix the projection line:

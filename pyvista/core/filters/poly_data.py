@@ -1919,7 +1919,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
 
-        See :ref:`surface_normal_example` for more examples using this filter.
+        See :ref:`compute_normals_example` for more examples using this filter.
 
         """
         # track original point indices
