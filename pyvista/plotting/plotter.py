@@ -1032,7 +1032,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         See Also
         --------
+        link_views
         :ref:`multi_window_example`
+        :ref:`sharing_scalar_bars_example`
 
         Examples
         --------
@@ -4643,6 +4645,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
+
+        See Also
+        --------
+        subplot
 
         Examples
         --------

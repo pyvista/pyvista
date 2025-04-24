@@ -5071,7 +5071,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
         :ref:`Cylinder Crossflow Dataset <cylinder_crossflow_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`streamlines_2d_example`
+        :ref:`streamlines_2D_example`
             Example using this dataset.
 
     """
