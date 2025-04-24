@@ -117,9 +117,6 @@ def test_example_has_cross_reference_from_api(test_case):
         pytest.fail(msg)
 
 
-def test_example_filename_is_snake_case(): ...
-
-
 @pytest.mark.parametrize('test_case', TEST_CASES, ids=TEST_CASE_IDS)
 def test_example_anchor(test_case):
     def format_anchor(anchor):
