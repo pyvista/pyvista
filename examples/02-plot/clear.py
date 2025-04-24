@@ -4,7 +4,8 @@
 Clearing a Mesh or the Entire Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates how to remove elements from a scene.
+This example demonstrates how to remove elements from a scene using
+:meth:`~pyvista.Plotter.clear`.
 
 """
 

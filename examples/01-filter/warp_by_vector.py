@@ -4,8 +4,8 @@
 Warping by Vectors
 ~~~~~~~~~~~~~~~~~~
 
-This example applies the ``warp_by_vector`` filter to a sphere mesh that has
-3D displacement vectors defined at each node.
+This example applies the :meth:`~pyvista.DataSetFilters.warp_by_vector`
+filter to a sphere mesh that has 3D displacement vectors defined at each node.
 """
 
 # %%

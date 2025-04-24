@@ -4,6 +4,8 @@
 Attenuation
 ~~~~~~~~~~~
 
+This example shows how use :attr:`~pyvista.Light.attenuation_values`.
+
 Attenuation is the phenomenon of light's intensity being gradually dampened as
 it propagates through a medium. In PyVista positional lights can show attenuation.
 The quadratic attenuation model uses three parameters to describe attenuation:

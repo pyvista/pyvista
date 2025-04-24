@@ -4,7 +4,8 @@
 Extrude Rotation
 ~~~~~~~~~~~~~~~~
 Sweep polygonal data creating "skirt" from free edges and lines, and
-lines from vertices.
+lines from vertices using the :meth:`~pyvista.PolyDataFilters.extrude_rotate`
+filter.
 
 This takes polygonal data as input and generates polygonal data on
 output. The input dataset is swept around the z-axis to create

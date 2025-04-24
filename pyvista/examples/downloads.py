@@ -2661,7 +2661,7 @@ def download_brain(load=True):  # pragma: no cover
         * :ref:`gaussian_smoothing_example`
         * :ref:`slice_example`
         * :ref:`depth_peeling_example`
-        * :ref:`isovalue_example`
+        * :ref:`moving_isovalue_example`
         * :ref:`plane_widget_example`
 
     """
