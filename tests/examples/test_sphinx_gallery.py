@@ -132,7 +132,7 @@ def test_example_anchor(test_case):
 
     if test_case.anchor != expected_anchor:
         msg = (
-            f'Example has an incorrect reference anchor at the top of the file.'
+            f'Example has an incorrect reference anchor at the top of the file.\n'
             f'Actual: {format_anchor(test_case.anchor)!r}\n'
             f'Expected: {format_anchor(expected_anchor)!r}'
         )
