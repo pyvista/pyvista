@@ -1,4 +1,4 @@
-Contributing
+xContributing
 ============
 
 .. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
@@ -862,7 +862,7 @@ To test all the images, run ``pytest`` with:
 
 .. code-block:: bash
 
-   pytest tests/doc/tst_doc.py::test_static_images
+   pytest tests/doc/tst_doc_build.py::test_static_images
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -954,7 +954,7 @@ To test that interactive plots do not exceed this limit, run:
 
 .. code:: bash
 
-   pytest tests/doc/tst_doc.py::test_interactive_plot_file_size
+   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
