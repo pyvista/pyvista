@@ -191,9 +191,7 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        from pyvista import DataObject  # avoid circular import
-
-        return cast(DataObject, dataset)
+        return cast('DataObject', dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -296,7 +294,7 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal_ = _validation.validate_array3(normal, dtype_out=float)
-    normal_ /= np.linalg.norm(normal_)
+    normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane

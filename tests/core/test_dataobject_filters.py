@@ -22,8 +22,8 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
-from pyvista.core.filters.data_object import _CellQualityLiteral
-from pyvista.core.filters.data_object import _get_cell_qualilty_measures
+from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -537,13 +537,28 @@ def test_cell_quality_measures(ant):
         hinted_measures.insert(1, 'aspect_beta')
 
     # Get quality measures from the VTK class
-    actual_measures = list(_get_cell_qualilty_measures().keys())
+    actual_measures = list(_get_cell_quality_measures().keys())
     msg = 'VTK API has changed. Update type hints and docstring for `cell_quality`.'
     assert actual_measures == hinted_measures, msg
 
     # Test 'all' measure keys
     qual = ant.cell_quality('all')
     assert qual.array_names == actual_measures
+
+
+@pytest.mark.parametrize(
+    'cell_mesh',
+    [
+        examples.cells.Triangle(),
+        examples.cells.Quadrilateral(),
+        examples.cells.Hexahedron(),
+        examples.cells.Tetrahedron(),
+    ],
+)
+@pytest.mark.parametrize('measure', ['relative_size_squared', 'shape_and_size'])
+def test_cell_quality_size_measures(cell_mesh, measure):
+    quality = cell_mesh.cell_quality(measure)
+    assert np.isclose(quality[measure][0], 1.0)
 
 
 def test_cell_quality_all_valid(ant):

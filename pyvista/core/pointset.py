@@ -36,6 +36,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
@@ -112,7 +113,7 @@ class _PointSet(DataSet):
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
-        DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
+        DataSet.shallow_copy(self, cast('_vtk.vtkDataObject', to_copy))
 
     def remove_cells(
         self,
@@ -1817,7 +1818,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Initialize the unstructured grid."""
         super().__init__()
 
-        if not len(args):
+        if not args:
             return
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkUnstructuredGrid):
@@ -2055,6 +2056,126 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def _get_cells(self):
         cells = self.GetCells()
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
+
+    @property
+    def faces(self) -> NumpyArray[int]:
+        """Return the polyhedron faces.
+
+        .. deprecated:: 0.45.0
+            This property is deprecated and will be removed in a future release.
+            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            may be removed in a future release of VTK. Please use
+            `polyhedral_faces` instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        return convert_array(self.GetFaces())
+
+    @property
+    def polyhedron_faces(self) -> NumpyArray[int]:
+        """Return the polyhedron faces.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        if pyvista.vtk_version_info < (9, 4):
+            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+
+            if polyhedron_faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+
+            cell_faces = []
+            i = 0
+
+            while i < len(polyhedron_faces):
+                faces_: list[VectorLike[int]] = []
+                n_faces = polyhedron_faces[i]
+                i += 1
+
+                while len(faces_) < n_faces:
+                    n_vertices = polyhedron_faces[i]
+                    faces_.append([n_vertices, *polyhedron_faces[i + 1 : i + 1 + n_vertices]])
+                    i += n_vertices + 1
+
+                cell_faces.append(np.concatenate(faces_))
+
+            return np.concatenate(cell_faces)
+
+        else:
+            faces = self.GetPolyhedronFaces()  # vtkCellArray
+            if faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+            return convert_array(faces.GetData())
+
+    @property
+    def face_locations(self) -> NumpyArray[int]:
+        """Return polyhedron face locations.
+
+        .. deprecated:: 0.45.0
+            This property is deprecated and will be removed in a future release.
+            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            may be removed in a future release of VTK. Please use
+            `polyhedral_face_locations` instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face locations.
+
+        """
+        return convert_array(self.GetFaceLocations())
+
+    @property
+    def polyhedron_face_locations(self) -> NumpyArray[int]:
+        """Return the polyhedron face locations.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        if pyvista.vtk_version_info < (9, 4):
+            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+
+            if polyhedron_faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+
+            i, face_counts = 0, []
+
+            while i < len(polyhedron_faces):
+                n_faces = polyhedron_faces[i]
+                face_counts.append(n_faces)
+                face_count = 0
+                i += 1
+
+                while face_count < n_faces:
+                    i += polyhedron_faces[i] + 1
+                    face_count += 1
+
+            locations = [[0]] * self.n_cells
+            face_count = 0
+
+            for i, n_faces in zip(
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
+            ):
+                locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
+                face_count += n_faces
+
+            return np.concatenate(locations)
+
+        else:
+            faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
+            if faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+            return convert_array(faces.GetData())
 
     @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01

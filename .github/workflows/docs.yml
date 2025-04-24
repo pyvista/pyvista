@@ -36,6 +36,7 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
+  VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
 
 permissions:
   id-token: none
@@ -55,10 +56,10 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
@@ -66,11 +67,6 @@ jobs:
       - name: Install PyVista and dependencies
         run: |
           pip install -e .[docs]
-
-      - name: Install custom OSMesa VTK variant
-        run: |
-          pip uninstall vtk -y
-          pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
 
       - name: PyVista Report
         run: |
@@ -114,7 +110,7 @@ jobs:
         run: pytest tests/doc/tst_doc_images.py
 
       - name: Upload Images for Failed Tests
-        if: ${{ failure() && hashFiles('_doc_debug_images_failed/**/*.jpg') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images-failed
@@ -228,7 +224,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Install Dependencies
         run: |
           pip install cookiecutter

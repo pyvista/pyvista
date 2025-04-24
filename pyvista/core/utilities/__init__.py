@@ -113,6 +113,7 @@ from .image_sources import ImageSinusoidSource as ImageSinusoidSource
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource as CapsuleSource
 
+from .cell_quality import cell_quality_info as cell_quality_info
 from .helpers import axis_rotation as axis_rotation
 from .helpers import generate_plane as generate_plane
 from .helpers import is_inside_bounds as is_inside_bounds
@@ -228,4 +229,6 @@ from .reader import XMLRectilinearGridReader as XMLRectilinearGridReader
 from .reader import XMLStructuredGridReader as XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader as XMLUnstructuredGridReader
 from .reader import get_reader as get_reader
+from .state_manager import vtk_snake_case as vtk_snake_case
+from .state_manager import vtk_verbosity as vtk_verbosity
 from .transform import Transform as Transform

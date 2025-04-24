@@ -26,12 +26,10 @@ import uuid
 import warnings
 import weakref
 
-import matplotlib as mpl
 import numpy as np
 import scooby
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -63,6 +61,8 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Renderer
@@ -89,6 +89,7 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -4236,7 +4237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast(pyvista.ImageData, wrap(cast(NumpyArray[float], volume)))
+                volume = cast('pyvista.ImageData', wrap(cast('NumpyArray[float]', volume)))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -4246,7 +4247,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
                 #   to remove the need to cast the type here
-                volume = cast(Union[pyvista.MultiBlock, pyvista.DataSet], wrap(volume))
+                volume = cast('Union[pyvista.MultiBlock, pyvista.DataSet]', wrap(volume))
                 if not is_pyvista_dataset(volume):
                     msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
                     raise TypeError(msg)
@@ -4337,7 +4338,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
             raise TypeError(msg)
 
-        volume = cast(pyvista.DataSet, volume)
+        volume = cast('pyvista.DataSet', volume)
         if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -4390,31 +4391,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Set scalars range
         min_, max_ = None, None
         if clim is None:
-            if scalars.dtype == np.uint8:
-                clim = [0, 255]
-            else:
-                min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                clim = [min_, max_]
+            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
+            clim = [min_, max_]
         elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         if log_scale and clim[0] <= 0:
             clim = [sys.float_info.min, clim[1]]
-
-        # data must be between [0, 255], but not necessarily UINT8
-        # Preserve backwards compatibility and have same behavior as VTK.
-        if scalars.dtype != np.uint8 and clim != [0, 255]:
-            # must copy to avoid modifying inplace and remove any VTK weakref
-            scalars = np.array(scalars)
-            clim = np.asarray(clim, dtype=scalars.dtype)
-            scalars.clip(clim[0], clim[1], out=scalars)
-            if log_scale:
-                out = mpl.colors.LogNorm(clim[0], clim[1])(scalars)
-                scalars = out.data * 255
-            else:
-                if min_ is None:
-                    min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
 
         volume[title] = scalars
         volume.active_scalars_name = title
@@ -4475,7 +4458,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.volume.prop.independent_components = False
             show_scalar_bar = False
 
-        actor, prop = self.add_actor(
+        actor, _ = self.add_actor(
             self.volume,  # type: ignore[arg-type]
             reset_camera=reset_camera,
             name=name,
@@ -4773,7 +4756,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
-        title = args[0] if len(args) else kwargs.get('title', '')
+        title = args[0] if args else kwargs.get('title', '')
         if title is None:
             title = ''
         kwargs['title'] = title
@@ -6358,8 +6341,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper = actor.GetMapper()
 
                 # ignore any mappers whose inputs are not datasets
-                if hasattr(mapper, 'GetInputAsDataSet'):
-                    datasets.append(wrap(mapper.GetInputAsDataSet()))
+                if _mapper_has_data_set_input(mapper):
+                    datasets.append(wrap(_mapper_get_data_set_input(mapper)))
 
         return datasets
 

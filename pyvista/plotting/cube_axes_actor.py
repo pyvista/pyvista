@@ -47,7 +47,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     return labels
 
 
-class CubeAxesActor(_vtk.vtkCubeAxesActor):
+class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     """Wrap vtkCubeAxesActor.
 
     This class is created to wrap vtkCubeAxesActor, which is used to draw axes
@@ -252,6 +252,18 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.x_axis_range = bnds.x_min, bnds.x_max
         self.y_axis_range = bnds.y_min, bnds.y_max
         self.z_axis_range = bnds.z_min, bnds.z_max
+
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of axes actor.
+
+        """
+        return self.GetCenter()
 
     @property
     def x_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
@@ -572,19 +584,19 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @property
     def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x-axis labels."""
-        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(0))
+        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(0))
         return convert_string_array(labels_vtk).tolist()
 
     @property
     def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y-axis labels."""
-        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(1))
+        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(1))
         return convert_string_array(labels_vtk).tolist()
 
     @property
     def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z-axis labels."""
-        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(2))
+        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(2))
         return convert_string_array(labels_vtk).tolist()
 
     def update_bounds(self, bounds):

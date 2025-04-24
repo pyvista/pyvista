@@ -266,7 +266,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkOpenGLRenderer):
+class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -886,7 +886,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if self.has_charts:
-            cast(Charts, self._charts).remove_chart(chart_or_index)
+            cast('Charts', self._charts).remove_chart(chart_or_index)
 
     @property
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
@@ -1072,6 +1072,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
+    def _delete_axes_widget(self):
+        """Remove and delete the current axes widget."""
+        if hasattr(self, 'axes_widget'):
+            self.axes_actor = None
+            # HACK: set the viewport to a tiny value to hide the widget first
+            # This is due to an issue with a blue box appearing after removal
+            # Tracked in https://gitlab.kitware.com/vtk/vtk/-/issues/19592
+            self.axes_widget.SetViewport(0.0, 0.0, 0.0001, 0.0001)
+            if self.axes_widget.GetEnabled():
+                self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
+
     def add_orientation_widget(
         self,
         actor,
@@ -1135,11 +1148,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        if hasattr(self, 'axes_widget'):
-            # Delete the old one
-            self.axes_widget.EnabledOff()  # type: ignore[has-type]
-            self.Modified()
-            del self.axes_widget  # type: ignore[has-type]
+        self._delete_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -1266,10 +1275,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self._delete_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1488,10 +1494,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self._delete_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -3512,7 +3515,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture, is_srgb=False) -> None:
+    def set_environment_texture(
+        self, texture, is_srgb=False, resample: bool | float | None = None
+    ) -> None:
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
@@ -3530,6 +3535,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the texture is in sRGB color space, set the color flag on the
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
+
+        resample : bool | float, optional
+            Resample the environment texture. Set this to a float to set the
+            sampling rate explicitly or set to ``True`` to downsample the
+            texture to 1/16th of its original resolution. By default, the
+            theme value for ``resample_environment_texture`` is used, which
+            is ``False`` for the standard theme.
+
+            Downsampling the texture can substantially improve performance for
+            some environments, e.g. headless setups or if GPU support is limited.
+
+            .. note::
+
+                This will resample the texture used for image-based lighting only,
+                e.g. the texture used for rendering reflective surfaces. It
+                does `not` resample the background texture.
+
+            .. versionadded:: 0.45
 
         Examples
         --------
@@ -3556,7 +3579,30 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture, is_srgb)
+
+        if resample is None:
+            resample = pyvista.global_theme.resample_environment_texture
+
+        if resample:
+            resample = 1 / 16 if resample is True else resample
+
+            # Copy the texture
+            # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
+            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy.cube_map = texture.cube_map
+            texture_copy.SetMipmap(texture.GetMipmap())
+            texture_copy.SetInterpolate(texture.GetInterpolate())
+
+            # Resample the texture's images
+            for i in range(6 if texture_copy.cube_map else 1):
+                texture_copy.SetInputDataObject(
+                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
+                )
+            self.SetEnvironmentTexture(texture_copy, is_srgb)
+        else:
+            self.SetEnvironmentTexture(texture, is_srgb)
+
+        self.SetBackgroundTexture(texture)
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3577,15 +3623,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.UseImageBasedLightingOff()
         self.SetEnvironmentTexture(None)
+        self.SetBackgroundTexture(None)  # type: ignore[arg-type]
         self.Modified()
 
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        if hasattr(self, 'axes_widget'):
-            self.hide_axes()  # Necessary to avoid segfault
-            self.axes_actor = None
-            del self.axes_widget
+        self._delete_axes_widget()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -4266,7 +4310,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
         if xy_label_mode:
-            legend_scale.SetLabelModeToXYCoordinates()
+            if pyvista.vtk_version_info >= (9, 4):
+                legend_scale.SetLabelModeToCoordinates()
+            else:
+                legend_scale.SetLabelModeToXYCoordinates()
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)

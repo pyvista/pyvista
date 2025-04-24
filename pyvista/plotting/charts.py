@@ -57,6 +57,8 @@ class _vtkWrapper(metaclass=_vtkWrapperMeta):
         if item in unwrapped_attrs or wrapped is None:
             return super().__getattribute__(item)
         else:
+            if item[0].islower():
+                return super().__getattribute__(item)
             try:
                 return wrapped.__getattribute__(item)
             except AttributeError:
@@ -459,14 +461,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     grid : bool, default: True
         Flag to toggle grid lines visibility for this axis.
 
-    Attributes
-    ----------
-    pen : Pen
-        Pen used to draw the axis.
-
-    grid_pen : Pen
-        Pen used to draw the grid lines.
-
     """
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
@@ -479,17 +473,27 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # SetPen and SetGridPen methods are not available for older VTK versions,
             # so fallback to using wrapper objects.
-            self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
+            self._pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
+            self._grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
         else:
-            self.pen = Pen(color=(0, 0, 0))
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95))
-            self.SetPen(self.pen)
-            self.SetGridPen(self.grid_pen)
+            self._pen = Pen(color=(0, 0, 0))
+            self._grid_pen = Pen(color=(0.95, 0.95, 0.95))
+            self.SetPen(self._pen)
+            self.SetGridPen(self._grid_pen)
         self.label = label
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
         self.grid = grid
+
+    @property
+    def pen(self) -> Pen:  # numpydoc ignore=RT01
+        """Pen used to draw the axis."""
+        return self._pen
+
+    @property
+    def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
+        """Pen used to draw the grid lines."""
+        return self._grid_pen
 
     @property
     def label(self):  # numpydoc ignore=RT01
@@ -1122,7 +1126,7 @@ class _ChartBackground(_CustomContextItem):
         return True
 
 
-class _Chart(DocSubs):
+class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
@@ -1141,7 +1145,7 @@ class _Chart(DocSubs):
     @property
     def _scene(self):
         """Get a reference to the vtkScene in which this chart is drawn."""
-        return self.GetScene()  # type: ignore[attr-defined]
+        return self.GetScene()
 
     @property
     def _renderer(self):
@@ -1185,12 +1189,12 @@ class _Chart(DocSubs):
     @property
     def _geometry(self):
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
-        return tuple(self.GetSize())  # type: ignore[attr-defined]
+        return tuple(self.GetSize())
 
     @_geometry.setter
     def _geometry(self, val) -> None:
         """Set the chart geometry."""
-        self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
+        self.SetSize(_vtk.vtkRectf(*val))
 
     @property
     def _interactive(self):
@@ -1202,11 +1206,11 @@ class _Chart(DocSubs):
         :func:`Renderer.set_chart_interaction` method instead.
 
         """
-        return self.GetInteractive()  # type: ignore[attr-defined]
+        return self.GetInteractive()
 
     @_interactive.setter
     def _interactive(self, val) -> None:
-        self.SetInteractive(val)  # type: ignore[attr-defined]
+        self.SetInteractive(val)
 
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
@@ -1487,11 +1491,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()  # type: ignore[attr-defined]
+        return self.GetVisible()
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)  # type: ignore[attr-defined]
+        self.SetVisible(val)
 
     @doc_subs
     def toggle(self) -> None:
@@ -1534,11 +1538,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetTitle()  # type: ignore[attr-defined]
+        return self.GetTitle()
 
     @title.setter
     def title(self, val) -> None:
-        self.SetTitle(val)  # type: ignore[attr-defined]
+        self.SetTitle(val)
 
     @property
     @doc_subs
@@ -1563,11 +1567,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetShowLegend()  # type: ignore[attr-defined]
+        return self.GetShowLegend()
 
     @legend_visible.setter
     def legend_visible(self, val) -> None:
-        self.SetShowLegend(val)  # type: ignore[attr-defined]
+        self.SetShowLegend(val)
 
     @doc_subs
     def show(

@@ -501,11 +501,13 @@ def validate_axes(
 def validate_rotation(
     rotation: RotationLike,
     must_have_handedness: Literal['right', 'left'] | None = None,
+    *,
+    tolerance: float = 1e-6,
     name: str = 'Rotation',
 ):
     """Validate a rotation as a 3x3 matrix.
 
-    The rotation is valid if its transpose equals its inverse and has a determinant
+    The rotation is valid if it is orthogonal and has a determinant
     of ``1`` (right-handed or "proper" rotation) or ``-1`` (left-handed or "improper"
     rotation). By default, right- and left-handed rotations are allowed.
     Use ``must_have_handedness`` to restrict the handedness.
@@ -519,6 +521,9 @@ def validate_rotation(
         Check if the rotation has a specific handedness. If ``right``, the
         determinant must be ``1``. If ``left``, the determinant must be ``-1``.
         By default, either handedness is allowed.
+
+    tolerance : float, default: 1e-6
+        Tolerance used for checking orthogonality.
 
     name : str, default: "Rotation"
         Variable name to use in the error messages if any of the
@@ -553,9 +558,13 @@ def validate_rotation(
     check_contains(
         ['right', 'left', None], must_contain=must_have_handedness, name='must_have_handedness'
     )
+
     rotation_matrix = validate_transform3x3(rotation, name=name)
-    if not np.allclose(np.linalg.inv(rotation_matrix), rotation_matrix.T):
-        msg = f'{name} is not valid. Its inverse must equal its transpose.'
+    # Check orthogonality
+    # A matrix M is orthogonal if the product of M with its transpose is the identity
+    norm_diff = np.linalg.norm(rotation_matrix @ rotation_matrix.T - np.eye(3), ord='fro')
+    if not norm_diff < tolerance:
+        msg = f'{name} is not valid. Rotation must be orthogonal.'
         raise ValueError(msg)
 
     if must_have_handedness is not None:
