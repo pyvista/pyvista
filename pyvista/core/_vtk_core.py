@@ -484,6 +484,7 @@ from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
+from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
 from vtkmodules.vtkIOLegacy import vtkDataWriter as vtkDataWriter
 from vtkmodules.vtkIOLegacy import vtkSimplePointsWriter as vtkSimplePointsWriter
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
