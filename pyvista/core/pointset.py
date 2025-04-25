@@ -68,10 +68,6 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
-        '.xyz': _vtk.vtkSimplePointsWriter,
-    }
-
     def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
         """Return the coordinates for the center of mass of the mesh.
 
@@ -295,6 +291,10 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     >>> pset.plot(point_size=10)
 
     """
+
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
+        '.xyz': _vtk.vtkSimplePointsWriter,
+    }
 
     def __new__(cls, *args, **kwargs):
         """Construct a new PointSet object.
