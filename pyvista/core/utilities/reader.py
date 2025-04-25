@@ -217,7 +217,7 @@ def get_reader(filename, force_ext=None):
         try:
             ET.parse(filename)
             # Valid xml file, use XML reader
-            Reader: type[BaseReader] = _XMLDataSetReader
+            Reader: type[BaseReader] = XMLDataObjectReader
         except ET.ParseError:
             Reader = VTKDataSetReader
     else:
@@ -1385,8 +1385,11 @@ class VTKDataSetReader(BaseReader):
         self.reader.ReadAllTensorsOn()
 
 
-class _XMLDataSetReader(BaseReader):
-    """VTK Data Set Reader for xml .vtk files."""
+class XMLDataObjectReader(BaseReader):
+    """VTK reader for the xml version of .vtk files.
+
+    .. versionadded:: 0.46
+    """
 
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLGenericDataObjectReader'
