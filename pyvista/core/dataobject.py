@@ -127,6 +127,12 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
             Support saving pickled meshes
 
+        .. versionchanged:: 0.46
+
+            All ``.vtk`` files are now saved using the modern XML
+            format. Previously, the legacy format was used when
+            saving some mesh types.
+
         See Also
         --------
         pyvista.read
