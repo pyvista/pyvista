@@ -1083,18 +1083,17 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vti'])
-def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    ogrid = examples.load_uniform()
-    ogrid.direction_matrix = np.diag((-1, 1, -1))
-    ogrid.save(filename, binary)
+def test_save_uniform(extension, binary, tmpdir, uniform):
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
+    uniform.direction_matrix = np.diag((-1, 1, -1))
+    uniform.save(filename, binary)
 
     grid = pv.ImageData(filename)
-    assert grid == ogrid
+    assert grid == uniform
 
     grid = pv.read(filename)
     assert isinstance(grid, pv.ImageData)
-    assert grid == ogrid
+    assert grid == uniform
 
 
 def test_grid_points():
