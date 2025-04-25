@@ -1495,6 +1495,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
+        See Also
+        --------
+        :ref:`element_picking_example`
+
         """
         mode = ElementType.from_any(mode)
         self_ = weakref.ref(self)

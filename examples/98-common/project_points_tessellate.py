@@ -1,4 +1,6 @@
 """
+.. _project_points_tessellate_example:
+
 Project points to a plane and Tessellate
 ----------------------------------------
 

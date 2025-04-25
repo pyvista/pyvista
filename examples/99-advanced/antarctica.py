@@ -30,7 +30,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 from pyvista import examples
 
-# Load the sample data
+# Load the sample data :func:`~pyvista.examples.downloads.download_antarctica_velocity`
 mesh = examples.download_antarctica_velocity()
 mesh['magnitude'] = np.linalg.norm(mesh['ssavelocity'], axis=1)
 mesh
