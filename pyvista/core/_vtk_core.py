@@ -497,7 +497,6 @@ from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredG
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
-from vtkmodules.vtkIOXML import vtkXMLDataSetWriter as vtkXMLDataSetWriter
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader as vtkXMLGenericDataObjectReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataWriter as vtkXMLImageDataWriter
