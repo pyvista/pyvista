@@ -1086,18 +1086,15 @@ def test_save_rectilinear(extension, binary, tmpdir):
 def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
+    ogrid.direction_matrix = np.diag((-1, 1, -1))
     ogrid.save(filename, binary)
+
     grid = pv.ImageData(filename)
-    assert grid.n_cells == ogrid.n_cells
-    assert grid.origin == ogrid.origin
-    assert grid.spacing == ogrid.spacing
-    assert grid.dimensions == ogrid.dimensions
+    assert grid == ogrid
+
     grid = pv.read(filename)
     assert isinstance(grid, pv.ImageData)
-    assert grid.n_cells == ogrid.n_cells
-    assert grid.origin == ogrid.origin
-    assert grid.spacing == ogrid.spacing
-    assert grid.dimensions == ogrid.dimensions
+    assert grid == ogrid
 
 
 def test_grid_points():
