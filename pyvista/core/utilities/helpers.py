@@ -125,6 +125,10 @@ def wrap(
     pyvista.DataSet
         The PyVista wrapped dataset.
 
+    See Also
+    --------
+    :ref:`wrap_trimesh_example`
+
     Examples
     --------
     Wrap a numpy array representing a random point cloud.

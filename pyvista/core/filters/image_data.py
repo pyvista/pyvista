@@ -707,7 +707,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        See :ref:`image_fft_perlin_example` for a full example using this filter.
+        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()
@@ -787,7 +787,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        See :ref:`image_fft_perlin_example` for a full example using this filter.
+        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()

@@ -233,7 +233,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         >>> mapper.interpolate_before_map = True
         >>> pl.show()
 
-        See :ref:`interpolate_before_mapping_example` for additional
+        See :ref:`interpolate_before_map_example` for additional
         explanation regarding this attribute.
 
         """

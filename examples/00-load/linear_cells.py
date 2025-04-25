@@ -4,7 +4,7 @@
 Linear Cells
 ~~~~~~~~~~~~
 
-This example extends the :ref:`create_unstructured_example` example by
+This example extends the :ref:`create_unstructured_surface_example` example by
 including an explanation of linear VTK cell types and how you can create them in
 PyVista.
 
@@ -68,7 +68,7 @@ grid.cells
 # .. note::
 #    This is an inefficient way of creating :class:`pyvista.UnstructuredGrid`
 #    objects. To see a more efficient implementation see
-#    :ref:`create_unstructured_example`.
+#    :ref:`create_unstructured_surface_example`.
 
 grid_a = example_cells.Hexahedron()
 grid_a.points += [0, 2.5, 0]

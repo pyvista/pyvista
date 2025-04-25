@@ -133,6 +133,10 @@ class _PointSet(DataSet):
             Same type as the input, but with the specified cells
             removed.
 
+        See Also
+        --------
+        :ref:`ghost_cells_example`
+
         Examples
         --------
         Remove 20 cells from an unstructured grid.
@@ -722,7 +726,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     ... )
     >>> plotter.show()
 
-    See :ref:`create_poly` for more examples.
+    See :ref:`create_poly_example` for more examples.
 
     """
 
@@ -1798,7 +1802,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
 
-    See the :ref:`create_unstructured_example` example for more details
+    See the :ref:`create_unstructured_surface_example` example for more details
     on creating unstructured grids within PyVista.
 
     """
@@ -2474,6 +2478,10 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
 
+    See Also
+    --------
+    :ref:`create_structured_surface_example`
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2883,6 +2891,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         See examples below.
     deep : bool, default: False
         Whether to deep copy a ``vtk.vtkUnstructuredGrid`` object.
+
+    See Also
+    --------
+    :ref:`create_explicit_structured_grid_example`
 
     Examples
     --------

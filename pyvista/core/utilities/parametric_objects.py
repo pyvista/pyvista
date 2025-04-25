@@ -40,6 +40,10 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     pyvista.PolyData
         Line mesh of spline.
 
+    See Also
+    --------
+    :ref:`distance_along_spline_example`
+
     Examples
     --------
     Construct a spline.
