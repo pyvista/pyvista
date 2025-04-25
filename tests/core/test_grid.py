@@ -1083,16 +1083,30 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vti'])
-def test_save_uniform(extension, binary, tmpdir, uniform):
+@pytest.mark.parametrize('reader', [pv.ImageData, pv.read])
+def test_save_uniform(extension, binary, tmpdir, uniform, reader):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     uniform.direction_matrix = np.diag((-1, 1, -1))
-    uniform.save(filename, binary)
 
-    grid = pv.ImageData(filename)
-    assert grid == uniform
+    if extension == '.vtk':
+        match = re.escape(
+            'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.\n'
+            'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
+            'Use the `.vti` extension instead (XML format).'
+        )
+        with pytest.warns(UserWarning, match=match):
+            uniform.save(filename, binary)
+    else:
+        uniform.save(filename, binary)
 
-    grid = pv.read(filename)
-    assert isinstance(grid, pv.ImageData)
+    grid = reader(filename)
+
+    if extension == '.vtk':
+        # Direction matrix is lost
+        assert not np.allclose(grid.direction_matrix, uniform.direction_matrix)
+        # Add it back manually for equality check
+        grid.direction_matrix = uniform.direction_matrix
+
     assert grid == uniform
 
 

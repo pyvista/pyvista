@@ -212,29 +212,20 @@ def get_reader(filename, force_ext=None):
     """
     ext = _get_ext_force(filename, force_ext)
 
-    if ext == '.vtk':
-        # Need to determine if using legacy format or XML format
-        try:
-            ET.parse(filename)
-            # Valid xml file, use XML reader
-            Reader: type[BaseReader] = XMLDataObjectReader
-        except ET.ParseError:
-            Reader = VTKDataSetReader
-    else:
-        try:
-            Reader = CLASS_READERS[ext]
-        except KeyError:
-            if Path(filename).is_dir():
-                if len(files := os.listdir(filename)) > 0 and all(  # noqa: PTH208
-                    Path(f).suffix == '.dcm' for f in files
-                ):
-                    Reader = DICOMReader
-                else:
-                    msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
-                    raise ValueError(msg)
+    try:
+        Reader = CLASS_READERS[ext]
+    except KeyError:
+        if Path(filename).is_dir():
+            if len(files := os.listdir(filename)) > 0 and all(  # noqa: PTH208
+                Path(f).suffix == '.dcm' for f in files
+            ):
+                Reader = DICOMReader
             else:
-                msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+                msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
                 raise ValueError(msg)
+        else:
+            msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+            raise ValueError(msg)
 
     return Reader(filename)
 
@@ -1383,16 +1374,6 @@ class VTKDataSetReader(BaseReader):
         self.reader.ReadAllVectorsOn()
         self.reader.ReadAllFieldsOn()
         self.reader.ReadAllTensorsOn()
-
-
-class XMLDataObjectReader(BaseReader):
-    """VTK reader for the xml version of .vtk files.
-
-    .. versionadded:: 0.46
-    """
-
-    _vtk_module_name = 'vtkIOXML'
-    _vtk_class_name = 'vtkXMLGenericDataObjectReader'
 
 
 class VTKPDataSetReader(BaseReader):

@@ -7,6 +7,7 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import ClassVar
 from typing import cast
 import warnings
 
@@ -167,7 +168,15 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     """
 
-    _WRITERS = dict.fromkeys(['.vtr', '.vtk'], _vtk.vtkXMLRectilinearGridWriter)
+    _WRITERS: ClassVar[
+        dict[
+            str,
+            type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
+        ]
+    ] = {  # type: ignore[assignment]
+        '.vtk': _vtk.vtkRectilinearGridWriter,
+        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
+    }
 
     def __init__(
         self: Self,
@@ -595,7 +604,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS = dict.fromkeys(['.vti', '.vtk'], _vtk.vtkXMLImageDataWriter)
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {  # type: ignore[assignment]
+        '.vtk': _vtk.vtkDataSetWriter,
+        '.vti': _vtk.vtkXMLImageDataWriter,
+    }
 
     def __init__(
         self: Self,

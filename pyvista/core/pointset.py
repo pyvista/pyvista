@@ -68,6 +68,10 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
+        '.xyz': _vtk.vtkSimplePointsWriter,
+    }
+
     def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
         """Return the coordinates for the center of mass of the mesh.
 
@@ -295,10 +299,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     >>> pset.plot(point_size=10)
 
     """
-
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
-        '.xyz': _vtk.vtkSimplePointsWriter,
-    }
 
     def __new__(cls, *args, **kwargs):
         """Construct a new PointSet object.
@@ -741,6 +741,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     _vtk.vtkPLYWriter
                     | _vtk.vtkXMLPolyDataWriter
                     | _vtk.vtkSTLWriter
+                    | _vtk.vtkPolyDataWriter
                     | _vtk.vtkHoudiniPolyDataWriter
                     | _vtk.vtkOBJWriter
                     | _vtk.vtkIVWriter
@@ -751,7 +752,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.ply': _vtk.vtkPLYWriter,
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
-        '.vtk': _vtk.vtkXMLPolyDataWriter,
+        '.vtk': _vtk.vtkPolyDataWriter,
         '.geo': _vtk.vtkHoudiniPolyDataWriter,
         '.obj': _vtk.vtkOBJWriter,
         '.iv': _vtk.vtkIVWriter,
@@ -1807,7 +1808,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     """
 
-    _WRITERS = dict.fromkeys(['.vtu', '.vtk'], _vtk.vtkXMLUnstructuredGridWriter)
+    _WRITERS: ClassVar[
+        dict[
+            str,
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+        ]
+    ] = {  # type: ignore[assignment]
+        '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
+        '.vtk': _vtk.vtkUnstructuredGridWriter,
+    }
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -2516,7 +2525,9 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     """
 
-    _WRITERS = dict.fromkeys(['.vts', '.vtk'], _vtk.vtkXMLStructuredGridWriter)
+    _WRITERS: ClassVar[
+        dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
+    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}  # type: ignore[assignment]
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the structured grid."""
@@ -2929,7 +2940,12 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
     """
 
-    _WRITERS = UnstructuredGrid._WRITERS
+    _WRITERS: ClassVar[
+        dict[
+            str,
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+        ]
+    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}  # type: ignore[assignment]
 
     def __init__(self, *args, deep: bool = False, **kwargs):
         """Initialize the explicit structured grid."""
