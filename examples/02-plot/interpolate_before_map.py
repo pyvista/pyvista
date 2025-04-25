@@ -1,5 +1,5 @@
 """
-.. _interpolate_before_mapping_example:
+.. _interpolate_before_map_example:
 
 Interpolate Before Mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

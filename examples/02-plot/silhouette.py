@@ -6,6 +6,10 @@ Silhouette Highlight
 
 Extract a subset of the edges of a polygonal mesh to generate an outline
 (silhouette) of a mesh.
+The silhouette may be created using the `silhouette` keyword with
+:meth:`~pyvista.Plotter.add_mesh`, or by using
+`~pyvista.Plotter.add_silhouette` directly.
+
 """
 
 from __future__ import annotations

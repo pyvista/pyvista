@@ -2049,6 +2049,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         pyvista.CubeAxesActor
             Bounds actor.
 
+        See Also
+        --------
+        :ref:`bounds_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2499,7 +2503,13 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.Modified()
 
     def clear(self) -> None:
-        """Remove all actors and properties."""
+        """Remove all actors and properties.
+
+        See Also
+        --------
+        :ref:`clear_example`
+
+        """
         self.clear_actors()
         if self._charts is not None:
             self._charts.deep_clean()
@@ -3214,7 +3224,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blur_example` for a full example using this method.
+        See :ref:`blurring_example` for a full example using this method.
 
         """
         self._render_passes.add_blur_pass()
@@ -3391,6 +3401,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         blur : bool, default: True
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
+
+        See Also
+        --------
+        :ref:`ssao_example`
 
         Examples
         --------
@@ -3861,6 +3875,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkLegendBoxActor
             Actor for the legend.
+
+        See Also
+        --------
+        :ref:`legend_example`
 
         Examples
         --------

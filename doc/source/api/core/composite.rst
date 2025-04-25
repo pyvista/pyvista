@@ -137,7 +137,7 @@ correspond to human understandable portions of the dataset.
 Examples using this class:
 
 * :ref:`slice_example`
-* :ref:`volumetric_example`
+* :ref:`volumetric_analysis_example`
 * :ref:`depth_peeling_example`
 
 

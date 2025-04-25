@@ -557,7 +557,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
 
     Parameters
     ----------
-    mapping : list(float) or str
+    mapping : list[float] | str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
         ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
