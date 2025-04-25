@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 
@@ -28,6 +29,6 @@ def collect_example_files():
 @pytest.mark.parametrize('test_file', collect_example_files())
 def test_serve(test_file):
     returncode = subprocess.run(
-        ['python', EXAMPLES_DIR / test_file, '--serve', '--timeout', '1', '--port', '0'],
+        [sys.executable, EXAMPLES_DIR / test_file, '--serve', '--timeout', '1', '--port', '0'],
     ).returncode
     assert returncode == 0
