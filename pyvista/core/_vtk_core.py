@@ -484,17 +484,8 @@ from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
-from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
 from vtkmodules.vtkIOLegacy import vtkDataWriter as vtkDataWriter
-from vtkmodules.vtkIOLegacy import vtkPolyDataReader as vtkPolyDataReader
-from vtkmodules.vtkIOLegacy import vtkPolyDataWriter as vtkPolyDataWriter
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridReader as vtkRectilinearGridReader
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridWriter as vtkRectilinearGridWriter
 from vtkmodules.vtkIOLegacy import vtkSimplePointsWriter as vtkSimplePointsWriter
-from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridReader
-from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
-from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
 from vtkmodules.vtkIOXML import vtkXMLGenericDataObjectReader as vtkXMLGenericDataObjectReader
