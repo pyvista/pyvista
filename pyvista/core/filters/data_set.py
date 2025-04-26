@@ -2926,7 +2926,7 @@ class DataSetFilters(DataObjectFilters):
         """Generate streamlines of vectors from the points of a source mesh.
 
         The integration is performed using a specified integrator, by default
-        Runge-Kutta2. This supports integration through any type of dataset.
+        Runge-Kutta45. This supports integration through any type of dataset.
         If the dataset contains 2D cells like polygons or triangles and the
         ``surface_streamlines`` parameter is used, the integration is constrained
         to lie on the surface defined by 2D cells.
