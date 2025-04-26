@@ -45,7 +45,7 @@ running:
 
 .. note::
 
-   Use ``python -m pip install -e --group dev`` to also install all of the
+   Use ``python -m pip install -e . --group dev`` to also install all of the
    packages required for development.
 
 Quick Start Development with Codespaces
@@ -495,11 +495,11 @@ request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install PyVista with all
-developer dependencies:
+test dependencies:
 
 .. code-block:: bash
 
-   pip install -e --group dev
+   pip install -e . --group test
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -792,7 +792,7 @@ Install documentation dependencies with:
 
 .. code-block:: shell
 
-   python -m pip install -e --group docs
+   python -m pip install -e . --group docs
 
 Build the documentation on Linux or Mac OS with:
 
