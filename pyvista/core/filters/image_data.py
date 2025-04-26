@@ -3124,7 +3124,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
 
         Define a custom plotter to show the image. Although the image data is defined
-        as point data, we use uses :meth:`points_to_cells` to display the image as
+        as point data, we use :meth:`points_to_cells` to display the image as
         :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
         instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
@@ -3262,7 +3262,7 @@ class ImageDataFilters(DataSetFilters):
 
         This time the input and output bounds match without any further processing.
         Like before, the dimensions have doubled; unlike before, however, the spacing is
-        not halved, but is instead smaller than half which is necessaru to ensure the
+        not halved, but is instead smaller than half which is necessary to ensure the
         bounds remain the same. Also unlike before, the origin is unaffected:
 
         >>> image.origin
