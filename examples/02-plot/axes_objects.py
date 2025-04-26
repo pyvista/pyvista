@@ -10,6 +10,8 @@ to use them with related plotting methods.
 
 """
 
+# sphinx_gallery_thumbnail_number = 7
+
 from __future__ import annotations
 
 import pyvista as pv
