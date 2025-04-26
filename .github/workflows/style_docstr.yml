@@ -37,7 +37,7 @@ jobs:
       - name: Install pyvista and doctest requirements
         run: |
           pip install --upgrade pip
-          pip install -e --group test
+          pip install . --group test
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v3
@@ -70,7 +70,7 @@ jobs:
       - name: Install test dependencies
         run: |
           pip install --upgrade pip
-          pip install --group docs
+          pip install . --group docs
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
