@@ -120,47 +120,45 @@ pl.show()
 # Axes Widgets
 # ~~~~~~~~~~~~
 # Any actor can also be used as an axes orientation widget.
-# Here, we demonstrate using four separate axes widgets.
+# Here, we demonstrate using four separate axes widgets:
 #
-# First, load a dataset and create a plotter with four linked views.
+# #. Use :meth:`~pyvista.Plotter.add_axes` to add an arrow-style
+#    orientation widget. The widget uses :class:`~pyvista.AxesActor`
+#    by default.
+# #. Use :meth:`~pyvista.Plotter.add_box_axes` to add a box-style
+#    orientation widget.
+# #. Use :meth:`~pyvista.Plotter.add_north_arrow_widget` to add a
+#    north arrow orientation widget.
+# #. Add :class:`~pyvista.AxesAssemblySymmetric` as a custom
+#    orientation widget using :meth:`~pyvista.Plotter.add_orientation_widget`.
 
+# Load a dataset
 mesh = examples.load_airplane()
-viewport = (0, 0, 0.5, 0.5)
 
+# Create a plotter with four linked views.
+viewport = (0, 0, 0.5, 0.5)
 pl = pv.Plotter(shape=(2, 2))
 pl.link_views()
 
-# %%
-# Use :meth:`~pyvista.Plotter.add_axes` to add an arrow-style
-# orientation widget. The widget uses :class:`~pyvista.AxesActor`
-# by default.
-
+# Add arrow-style axes
 pl.subplot(0, 0)
 pl.add_mesh(mesh)
 pl.add_axes(viewport=viewport)
 
-# %%
-# Use :meth:`~pyvista.Plotter.add_box_axes` to add a box-style
-# orientation widget.
-
+# Add box-style axes
 pl.subplot(0, 1)
 pl.add_mesh(mesh)
 pl.add_box_axes(viewport=viewport)
 
-# %%
-# Use :meth:`~pyvista.Plotter.add_north_arrow_widget` to add a
-# north arrow orientation widget.
-
+# Add north arrow
 pl.subplot(1, 0)
 pl.add_mesh(mesh)
 pl.add_north_arrow_widget(viewport=viewport)
 
-# %%
-# Add :class:`~pyvista.AxesAssemblySymmetric` as a custom
-# orientation widget using :meth:`~pyvista.Plotter.add_orientation_widget`.
-
+# Add symmetric arrow-style axes
 pl.subplot(1, 1)
 pl.add_mesh(mesh)
 axes = pv.AxesAssemblySymmetric(label_size=25)
 pl.add_orientation_widget(axes, viewport=viewport)
+
 pl.show()
