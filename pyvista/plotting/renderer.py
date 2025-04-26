@@ -1169,7 +1169,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(actor)
-        if hasattr(self.parent, 'iren'):
+        if hasattr(self.parent, 'iren') and self.parent.iren is not None:
             self.axes_widget.SetInteractor(self.parent.iren.interactor)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
