@@ -10,14 +10,15 @@ to use them with related plotting methods.
 
 """
 
-# %%
-# Cube Axes
-# ~~~~~~~~~
-# Show axes bounds as a cube with :class:`~pyvista.CubeAxesActor`.
 from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples
+
+# %%
+# Cube Axes
+# ~~~~~~~~~
+# Show axes bounds as a cube with :class:`~pyvista.CubeAxesActor`.
 
 mesh = examples.download_bunny_coarse()
 
@@ -26,6 +27,7 @@ pl.add_mesh(mesh)
 axes = pv.CubeAxesActor(camera=pl.camera)
 axes.bounds = mesh.bounds
 pl.add_actor(axes)
+pl.background_color = pv.Color('paraview')
 pl.show()
 
 # %%
