@@ -144,7 +144,7 @@ jobs:
       - name: Install PyVista
         run: |
           pip install --upgrade pip
-          pip install -ve --group test
+          pip install -ve . --group test
 
       - name: Install requirements
         run: |
