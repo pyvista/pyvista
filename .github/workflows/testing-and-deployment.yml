@@ -63,7 +63,7 @@ jobs:
           cache: "pip"
 
       - name: Install PyVista test dependencies
-        run: pip install .[test]
+        run: pip install --group test
 
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
@@ -147,7 +147,7 @@ jobs:
         run: python -c "import pyvista; print(pyvista.Report());"
 
       - name: Install Testing Requirements
-        run: pip install .[test]
+        run: pip install --group test
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
@@ -239,7 +239,7 @@ jobs:
         uses: pyvista/setup-headless-display-action@v3
 
       - name: Install PyVista test dependencies
-        run: pip install .[test]
+        run: pip install --group test
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
