@@ -1177,9 +1177,9 @@ class ImageDataFilters(DataSetFilters):
 
             .. warning::
 
-                Enabling this option is likely to generate surfaces with normals
+                Enabling this option is `likely` to generate surfaces with normals
                 pointing outward when ``pad_background`` is ``True`` and
-                ``boundary_style`` is ``True`` (the default). However, this is
+                ``boundary_style`` is ``'external'`` (the default). However, this is
                 not guaranteed if the generated surface is not closed or if internal
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
