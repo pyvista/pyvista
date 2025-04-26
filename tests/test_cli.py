@@ -33,13 +33,15 @@ def test_report(tmp_path, include_args):
         capture_output=True,
         encoding='utf-8',
         cwd=tmp_path,
-        check=True,
     )
     actual = result.stdout.strip()
 
-    if result.returncode != 0:
-        print('STDOUT:\n', actual)
-        print('STDERR:\n', result.stderr)
+    # Helpful error if subprocess failed
+    assert result.returncode == 0, (
+        f'Subprocess failed with exit code {result.returncode}\n'
+        f'STDOUT:\n{result.stdout}\n'
+        f'STDERR:\n{result.stderr}'
+    )
 
     # Remove Date field (time may be off by 1 second)
     expected_no_date = remove_date_field(expected)

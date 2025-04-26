@@ -5,6 +5,11 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from types import ModuleType
 
 import scooby
 
@@ -158,7 +163,14 @@ class Report(scooby.Report):
 
     """
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
+    def __init__(
+        self,
+        additional: Sequence[ModuleType] | Sequence[str] | None = None,
+        ncol: int = 3,
+        text_width: int = 80,
+        sort: bool = False,
+        gpu: bool = True,
+    ):
         """Generate a :class:`scooby.Report` instance."""
         from vtkmodules.vtkRenderingCore import vtkRenderWindow
 
