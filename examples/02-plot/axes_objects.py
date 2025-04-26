@@ -52,6 +52,7 @@ pl.show()
 #
 #   :meth:`~pyvista.Plotter.remove_bounds_axes`
 #   :meth:`~pyvista.Plotter.update_bounds_axes`
+#   :ref:`bounds_example`
 
 # %%
 # Arrow Axes
