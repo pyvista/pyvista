@@ -41,7 +41,7 @@ jobs:
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v3.2
         with:
-        wm: false
+          wm: false
 
       - name: Software Report
         run: |
