@@ -366,7 +366,7 @@ class AxesAssembly(_XYZAssembly):
 
     See Also
     --------
-    AxesAssembly
+    AxesAssemblySymmetric
 
     :ref:`axes_objects_example`
         Example showing different axes objects.
