@@ -34,75 +34,36 @@ permissions:
   id-token: none
 
 jobs:
-  # For now this is just MNE-Python, but others could be added
-  mne:
-    name: MNE-Python
+  Integration:
+    name: ${{matrix.project}}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ["mne", "trame", "pyvistaqt", "geovista"]
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
     env:
       DISPLAY: ":99.0"
       MNE_LOGGING_LEVEL: "info"
+
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install tox-uv
-        run: uv pip install tox-uv
-
-      - name: Run MNE-Python tests
-        run: tox r -e integration-mne
-
-      - uses: actions/cache@v4
-        if: env.USE_CACHE == 'true'
-        with:
-          key: ${{ env.TESTING_VERSION }}
-          path: ~/mne_data
-
-  pyvistaqt:
-    name: PyVistaQt
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install tox-uv
-        run: uv pip install tox-uv
 
       - uses: pyvista/setup-headless-display-action@main
+        if: ${{matrix.project == 'pyvistaqt'}}
         with:
           qt: true
           pyvista: false
 
-      - name: Run pyvistaqt tests
-        run: tox r -e integration-pyvistaqt
-
-  geovista:
-    name: GeoVista
-    runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
-        if: env.USE_CACHE == 'true'
+        if: ${{env.USE_CACHE == 'true' && matrix.project == 'geovista'}}
         with:
           packages: xvfb
           version: 3.0
-
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -112,27 +73,11 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - name: Run geovista tests
-        run: tox r -e integration-geovista
+      - name: Run tests
+        run: tox r -e integration-${{matrix.project}}
 
-  trame:
-    name: Trame
-    runs-on: ubuntu-22.04
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
         with:
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install tox-uv
-        run: uv pip install tox-uv
-
-      - name: Run trame examples
-        run: tox r -e integration-trame
+          key: ${{ env.TESTING_VERSION }}
+          path: ~/mne_data
