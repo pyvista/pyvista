@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import re
 
+from hypothesis import given
+from hypothesis.strategies import integers
+from hypothesis.strategies import lists
 import numpy as np
 import pytest
 import vtk
@@ -11,28 +14,28 @@ from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_geometry_source():
     return pv.AxesGeometrySource()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_faces_source():
     return pv.CubeFacesSource()
 
 
+@pytest.mark.needs_vtk_version(less_than=(9, 3))
 def test_capsule_source():
-    if pv.vtk_version_info < (9, 3):
-        algo = pv.CapsuleSource()
-        assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-        assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
-        assert algo.radius == 0.5
-        assert algo.cylinder_length == 1.0
-        assert algo.theta_resolution == 30
-        assert algo.phi_resolution == 30
-        direction = np.random.default_rng().random(3)
-        algo.direction = direction
-        assert np.array_equal(algo.direction, direction)
+    algo = pv.CapsuleSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+    assert algo.radius == 0.5
+    assert algo.cylinder_length == 1.0
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    direction = np.random.default_rng().random(3)
+    algo.direction = direction
+    assert np.array_equal(algo.direction, direction)
 
 
 def test_cone_source():
@@ -49,6 +52,25 @@ def test_cone_source():
     assert algo.angle == 0.0
     algo = pv.ConeSource(radius=0.0)
     assert algo.radius == 0.0
+
+
+def test_text_3d_raises():
+    match = re.escape(
+        f'Attribute "foo" does not exist and cannot be added to type {pv.Text3DSource.__name__}'
+    )
+    with pytest.raises(AttributeError, match=match):
+        pv.Text3DSource().foo = 1
+
+
+@given(bounds=lists(integers()).filter(lambda x: len(x) != 6))
+def test_box_source_bounds_raises(bounds):
+    b = pv.BoxSource()
+    match = re.escape(
+        'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+    )
+
+    with pytest.raises(TypeError, match=match):
+        b.bounds = bounds
 
 
 def test_cylinder_source():
@@ -85,13 +107,13 @@ def test_multiple_lines_source():
         algo.points = points[0, :]
 
 
-@pytest.fixture()
+@pytest.fixture
 def bunny():
     return examples.download_bunny_coarse()
 
 
-@pytest.mark.parametrize("is_negative", [True, False])
-@pytest.mark.parametrize("delta", [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
+@pytest.mark.parametrize('is_negative', [True, False])
+@pytest.mark.parametrize('delta', [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
 def test_translate_direction_collinear(is_negative, delta, bunny):
     mesh_in = bunny
     direction = np.array([0.0, 1.0, 0.0]) + delta
@@ -113,8 +135,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
 
 
 def test_translate_precision():
-    """
-    Test that specifying a 64bit float as an arg, will not
+    """Test that specifying a 64bit float as an arg, will not
     introduce precision error for 32bit meshes.
     """
     val = np.float64(29380 / 18)
@@ -160,11 +181,11 @@ def test_text3d_source():
     assert len(out.split_bodies()) == 4
 
 
-@pytest.mark.parametrize('string', [" ", 'TEXT'])
+@pytest.mark.parametrize('string', [' ', 'TEXT'])
 @pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
-@pytest.mark.parametrize('height', [None, 0, 1, 2])
-@pytest.mark.parametrize('width', [None, 0, 1, 2])
-@pytest.mark.parametrize('depth', [None, 0, 1, 2])
+@pytest.mark.parametrize('height', [None, 0, 2.1])
+@pytest.mark.parametrize('width', [None, 0, 2.2])
+@pytest.mark.parametrize('depth', [None, 0, 2.3])
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
@@ -210,7 +231,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
     assert np.allclose(actual_width, expected_width)
     assert np.allclose(actual_height, expected_height)
     assert np.allclose(actual_depth, expected_depth)
-    assert np.array_equal(out.center, center)
+    assert np.allclose(out.center, center)
 
     if not empty_string and width and height and depth == 0:
         # Test normal direction for planar 2D meshes
@@ -233,9 +254,9 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture()
+@pytest.fixture
 def text3d_source_with_text():
-    return pv.Text3DSource("TEXT")
+    return pv.Text3DSource('TEXT')
 
 
 def test_text3d_source_update(text3d_source_with_text):

@@ -30,13 +30,6 @@ papers as well as a supporting module for other mesh 3D rendering dependent
 Python modules; see Connections for a list of projects that leverage
 PyVista.
 
-
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on X: |tweet|
-
-
 PyVista is a NumFOCUS affiliated project
 
 .. image:: https://raw.githubusercontent.com/numfocus/templates/master/images/numfocus-logo.png
@@ -87,7 +80,7 @@ Status badges
   :target: https://github.com/prettier/prettier
   :alt: prettier
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
@@ -112,8 +105,12 @@ Status badges
 .. |GitHub Repo stars| image:: https://img.shields.io/github/stars/pyvista/pyvista
    :target: https://github.com/pyvista/pyvista/stargazers
 
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/pyvista.svg?color=orange&logo=python&label=python&logoColor=white
+    :target: https://pypi.org/project/pyvista
+    :alt: Python versions
+
 +----------------------+------------------------------------------------+
-| Deployment           | |pypi| |conda| |Packaging status|              |
+| Deployment           | |pypi| |pyversions| |conda| |Packaging status| |
 +----------------------+------------------------------------------------+
 | Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
 +----------------------+------------------------------------------------+
@@ -191,7 +188,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.8::
+using ``pip`` on Python >= 3.9::
 
     pip install pyvista
 
@@ -284,7 +281,7 @@ visibility by citing our work.
 
 BibTex:
 
-.. code::
+.. code:: latex
 
     @article{sullivan2019pyvista,
       doi = {10.21105/joss.01450},

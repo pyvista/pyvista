@@ -1,5 +1,5 @@
 """
-.. _voxelize_surface_mesh_example:
+.. _voxelize_example:
 
 Voxelize a Surface Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,7 +40,7 @@ voxels = pv.voxelize(surface, density=surface.length / 200)
 
 p = pv.Plotter()
 p.add_mesh(voxels, color=True, show_edges=True, opacity=0.5)
-p.add_mesh(surface, color="lightblue", opacity=0.5)
+p.add_mesh(surface, color='lightblue', opacity=0.5)
 p.show(cpos=cpos)
 
 
@@ -48,11 +48,11 @@ p.show(cpos=cpos)
 # We could even add a scalar field to that new voxel model in case we
 # wanted to create grids for modelling. In this case, let's add a scalar field
 # for bone density noting:
-voxels["density"] = np.full(voxels.n_cells, 3.65)  # g/cc
+voxels['density'] = np.full(voxels.n_cells, 3.65)  # g/cc
 voxels
 
 # %%
-voxels.plot(scalars="density", cpos=cpos)
+voxels.plot(scalars='density', cpos=cpos)
 
 
 # %%
@@ -62,11 +62,11 @@ voxels.compute_implicit_distance(surface, inplace=True)
 voxels
 
 # %%
-contours = voxels.contour(6, scalars="implicit_distance")
+contours = voxels.contour(6, scalars='implicit_distance')
 
 p = pv.Plotter()
-p.add_mesh(voxels, opacity=0.25, scalars="implicit_distance")
-p.add_mesh(contours, opacity=0.5, scalars="implicit_distance")
+p.add_mesh(voxels, opacity=0.25, scalars='implicit_distance')
+p.add_mesh(contours, opacity=0.5, scalars='implicit_distance')
 p.show(cpos=cpos)
 # %%
 # .. tags:: filter

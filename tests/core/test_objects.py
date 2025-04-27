@@ -1,8 +1,8 @@
-"""
-Tests for non-spatially referenced objects
-"""
+"""Tests for non-spatially referenced objects"""
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -10,6 +10,9 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 try:
     import pandas as pd
@@ -19,7 +22,7 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
 
@@ -99,7 +102,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(TypeError):
-        pv.Table("foo")
+        pv.Table('foo')
 
 
 def test_table_row_arrays():
@@ -185,7 +188,7 @@ def test_table_repr():
     assert isinstance(text, str)
 
 
-@pytest.mark.skipif(pd is None, reason="Requires Pandas")
+@pytest.mark.skipif(pd is None, reason='Requires Pandas')
 def test_table_pandas():
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
@@ -208,10 +211,22 @@ def test_table_iter():
         assert np.allclose(array, arrays[:, i])
 
 
-def test_get_data_range():
+@pytest.mark.parametrize('preference', ['row', None])
+def test_get_data_range_table(preference):
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table(arrays)
-    nanmin, nanmax = table.get_data_range()
+    nanmin, nanmax = (
+        table.get_data_range(preference=preference) if preference else table.get_data_range()
+    )
     assert nanmin == np.nanmin(arrays[:, 0])
     assert nanmax == np.nanmax(arrays[:, 0])
+
+
+def test_from_dict_raises(mocker: MockerFixture):
+    m = mocker.MagicMock()
+    m.ndim = 1
+    with pytest.raises(
+        ValueError, match='Dictionary must contain only NumPy arrays with maximum of 2D.'
+    ):
+        pv.Table(dict(a=m))

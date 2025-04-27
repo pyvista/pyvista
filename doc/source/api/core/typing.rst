@@ -15,7 +15,7 @@ pyvista.NumberType
 .. autotypevar:: NumberType
 
 pyvista.ArrayLike
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
@@ -62,7 +62,7 @@ pyvista.CellArrayLike
 .. autodata:: CellArrayLike
 
 pyvista.RotationLike
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
@@ -74,3 +74,57 @@ pyvista.TransformLike
 .. currentmodule:: pyvista
 
 .. autodata:: TransformLike
+
+pyvista.InteractionEventType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autodata:: InteractionEventType
+
+
+Data Object Types
+-----------------
+
+pyvista._GridType
+~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _GridType
+
+pyvista._PointGridType
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _PointGridType
+
+pyvista._PointSetType
+~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _PointSetType
+
+
+pyvista._DataSetType
+~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _DataSetType
+
+pyvista._DataSetOrMultiBlockType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _DataSetOrMultiBlockType
+
+pyvista._DataObjectType
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: _DataObjectType

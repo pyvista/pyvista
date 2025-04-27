@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from itertools import product
-from typing import Sequence
 from weakref import proxy
 
 import numpy as np
@@ -45,6 +45,7 @@ class Renderers:
 
     border_width : float, optional
         The width of the border around each subplot.
+
     """
 
     def __init__(
@@ -80,8 +81,8 @@ class Renderers:
             else:
                 m = int(shape.split('/')[0])
                 n = int(shape.split('/')[1])
-                rangen = range(n)
-                rangem = range(m)
+                rangen = range(n)  # type: ignore[assignment]
+                rangem = range(m)  # type: ignore[assignment]
 
             if splitting_position is None:
                 splitting_position = pyvista.global_theme.multi_rendering_splitting_position
@@ -111,12 +112,15 @@ class Renderers:
 
         else:
             if not isinstance(shape, (np.ndarray, Sequence)):
-                raise TypeError('"shape" should be a list, tuple or string descriptor')
+                msg = '"shape" should be a list, tuple or string descriptor'
+                raise TypeError(msg)
             if len(shape) != 2:
-                raise ValueError('"shape" must have length 2.')
+                msg = '"shape" must have length 2.'
+                raise ValueError(msg)
             shape = np.asarray(shape)
             if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
-                raise ValueError('"shape" must contain only positive integers.')
+                msg = '"shape" must contain only positive integers.'
+                raise ValueError(msg)
             # always assign shape as a tuple of native ints
             self._shape = tuple(size.item() for size in shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
@@ -133,17 +137,19 @@ class Renderers:
             row_weights = np.abs(np.asanyarray(row_weights).ravel())
             col_weights = np.abs(np.asanyarray(col_weights).ravel())
             if row_weights.size != shape[0]:
-                raise ValueError(
+                msg = (
                     f'"row_weights" must have {shape[0]} items '
                     f'for {shape[0]} rows of subplots, not '
-                    f'{row_weights.size}.',
+                    f'{row_weights.size}.'
                 )
+                raise ValueError(msg)
             if col_weights.size != shape[1]:
-                raise ValueError(
+                msg = (
                     f'"col_weights" must have {shape[1]} items '
                     f'for {shape[1]} columns of subplots, not '
-                    f'{col_weights.size}.',
+                    f'{col_weights.size}.'
                 )
+                raise ValueError(msg)
             row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
             col_off = np.cumsum(col_weights) / np.sum(col_weights)
@@ -155,24 +161,25 @@ class Renderers:
 
             if groups is not None:
                 if not isinstance(groups, Sequence):
-                    raise TypeError(
-                        f'"groups" should be a list or tuple, not {type(groups).__name__}.',
-                    )
+                    msg = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+                    raise TypeError(msg)
                 for group in groups:
                     if not isinstance(group, Sequence):
-                        raise TypeError(
+                        msg = (
                             'Each group entry should be a list or '
-                            f'tuple, not {type(group).__name__}.',
+                            f'tuple, not {type(group).__name__}.'
                         )
+                        raise TypeError(msg)
                     if len(group) != 2:
-                        raise ValueError('Each group entry must have length 2.')
+                        msg = 'Each group entry must have length 2.'
+                        raise ValueError(msg)
 
                     rows = group[0]
                     if isinstance(rows, slice):
                         rows = np.arange(self.shape[0], dtype=int)[rows]
                     cols = group[1]
                     if isinstance(cols, slice):
-                        cols = np.arange(self.shape[1], dtype=int)[cols]
+                        cols = np.arange(self.shape[1], dtype=int)[cols]  # type: ignore[misc]
                     # Get the normalized group, i.e. extract top left corner
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
@@ -182,9 +189,8 @@ class Renderers:
                         range(norm_group[1], norm_group[3] + 1),
                     ):
                         if self.loc_to_group((i, j)) is not None:
-                            raise ValueError(
-                                f'Groups cannot overlap. Overlap found at position {(i, j)}.',
-                            )
+                            msg = f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                            raise ValueError(msg)
                     self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)),
                         axis=0,
@@ -206,7 +212,7 @@ class Renderers:
                     renderer = Renderer(self._plotter, border, border_color, border_width)
                     x0 = col_off[col]
                     y0 = row_off[row + nb_rows]
-                    x1 = col_off[col + nb_cols]
+                    x1 = col_off[col + nb_cols]  # type: ignore[operator]
                     y1 = row_off[row]
                     renderer.viewport = (x0, y0, x1, y1)
                     self._render_idxs[row, col] = len(self)
@@ -218,7 +224,9 @@ class Renderers:
                     ]
 
         # each render will also have an associated background renderer
-        self._background_renderers = [None for _ in range(len(self))]
+        self._background_renderers: list[None | BackgroundRenderer] = [
+            None for _ in range(len(self))
+        ]
 
         # create a shadow renderer that lives on top of all others
         self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
@@ -238,6 +246,7 @@ class Renderers:
         -------
         int
             Index of the render window.
+
         """
         group_idxs = np.arange(self.groups.shape[0])
         index = (
@@ -267,17 +276,21 @@ class Renderers:
         if isinstance(loc, (int, np.integer)):
             return loc
         elif isinstance(loc, (np.ndarray, Sequence)):
-            if not len(loc) == 2:
-                raise ValueError('"loc" must contain two items')
+            if len(loc) != 2:
+                msg = '"loc" must contain two items'
+                raise ValueError(msg)
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
-                raise IndexError(f'Row index is out of range ({self.shape[0]})')
-            if index_column < 0 or index_column >= self.shape[1]:
-                raise IndexError(f'Column index is out of range ({self.shape[1]})')
+                msg = f'Row index is out of range ({self.shape[0]})'
+                raise IndexError(msg)
+            if index_column < 0 or index_column >= self.shape[1]:  # type: ignore[misc]
+                msg = f'Column index is out of range ({self.shape[1]})'  # type: ignore[misc]
+                raise IndexError(msg)
             return self._render_idxs[index_row, index_column]
         else:
-            raise TypeError('"loc" must be an integer or a sequence.')
+            msg = '"loc" must be an integer or a sequence.'
+            raise TypeError(msg)
 
     def __getitem__(self, index):
         """Return a renderer based on an index."""
@@ -299,6 +312,7 @@ class Renderers:
         -------
         int
             Active index.
+
         """
         return self._active_index
 
@@ -314,14 +328,17 @@ class Renderers:
         -------
         numpy.ndarray or numpy.int64
             2D location on the plotting grid.
+
         """
         if not isinstance(index, (int, np.integer)):
-            raise TypeError('"index" must be a scalar integer.')
+            msg = '"index" must be a scalar integer.'
+            raise TypeError(msg)
         if len(self.shape) == 1:
             return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
-            raise IndexError(f'Index ({index}) is out of range.')
+            msg = f'Index ({index}) is out of range.'
+            raise IndexError(msg)
         return args[0]
 
     @property
@@ -332,6 +349,7 @@ class Renderers:
         -------
         Renderer
             Active renderer.
+
         """
         return self._renderers[self._active_index]
 
@@ -343,6 +361,7 @@ class Renderers:
         -------
         tuple[int] | tuple[int, int]
             Shape of the renderers.
+
         """
         return self._shape
 
@@ -363,14 +382,15 @@ class Renderers:
             return
 
         if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError(f'Row index is out of range ({self.shape[0]})')
+            msg = f'Row index is out of range ({self.shape[0]})'
+            raise IndexError(msg)
         if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError(f'Column index is out of range ({self.shape[1]})')
+            msg = f'Column index is out of range ({self.shape[1]})'
+            raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
-    def set_chart_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for the active renderer.
+    def set_chart_interaction(self, interactive, toggle: bool = False):
+        """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
         Interaction with other charts in the active renderer is only disabled
@@ -394,7 +414,7 @@ class Renderers:
 
         Returns
         -------
-        list of Chart
+        list[Chart]
             The list of all interactive charts for the active renderer.
 
         """
@@ -467,7 +487,7 @@ class Renderers:
         return renderer
 
     @property
-    def has_active_background_renderer(self):  # numpydoc ignore=RT01
+    def has_active_background_renderer(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when Renderer has an active background renderer.
 
         Returns
@@ -493,7 +513,7 @@ class Renderers:
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
-        self._shadow_renderer.clear()
+        self._shadow_renderer.clear()  # type: ignore[union-attr]
         self.clear_background_renderers()
 
     def close(self):
@@ -501,7 +521,7 @@ class Renderers:
         for renderer in self:
             renderer.close()
 
-        self._shadow_renderer.close()
+        self._shadow_renderer.close()  # type: ignore[union-attr]
 
         for renderer in self._background_renderers:
             if renderer is not None:
@@ -520,6 +540,7 @@ class Renderers:
         -------
         pyvista.plotting.renderer.Renderer
             Shadow renderer.
+
         """
         return self._shadow_renderer
 
@@ -530,7 +551,7 @@ class Renderers:
         right=None,
         side=None,
         corner=None,
-        all_renderers=True,
+        all_renderers: bool = True,
     ):
         """Set the background color.
 
@@ -593,7 +614,7 @@ class Renderers:
         if all_renderers:
             for renderer in self:
                 renderer.set_background(color, top=top, right=right, side=side, corner=corner)
-            self._shadow_renderer.set_background(color)
+            self._shadow_renderer.set_background(color)  # type: ignore[union-attr]
         else:
             self.active_renderer.set_background(
                 color,
@@ -603,7 +624,7 @@ class Renderers:
                 corner=corner,
             )
 
-    def set_color_cycler(self, color_cycler, all_renderers=True):
+    def set_color_cycler(self, color_cycler, all_renderers: bool = True):
         """Set or reset the color cycler.
 
         This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
@@ -620,6 +641,11 @@ class Renderers:
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
 
+        .. note::
+            If a mesh has scalar data, set ``color=True`` in the call to :meth:`add_mesh`
+            to color the mesh with the next color in the cycler. Otherwise the mesh's
+            scalars are used to color the mesh by default.
+
         Parameters
         ----------
         color_cycler : str | cycler.Cycler | sequence[ColorLike]
@@ -628,6 +654,10 @@ class Renderers:
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
+
+        See Also
+        --------
+        :ref:`color_cycler_example`
 
         Examples
         --------
@@ -669,7 +699,8 @@ class Renderers:
         """
         renderer = self._background_renderers[self.active_index]
         if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
+            msg = 'No background image to remove at this subplot'
+            raise RuntimeError(msg)
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 

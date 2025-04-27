@@ -8,8 +8,8 @@ The problem is that pytest doctests (following the standard-library
 doctest module) see the module-global namespace. So when a doctest looks
 like this:
 
-    Examples
-    --------
+Examples
+--------
     >>> import numpy
     >>> import pyvista
     >>> from pyvista import CellType
@@ -17,9 +17,7 @@ like this:
     >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
     >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
     >>> cells = np.hstack((cell0_ids, cell1_ids))
-    >>> cell_type = np.array(
-    ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
-    ... )
+    >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
 there will be a ``NameError`` when the code block is copied into Python
 because the ``np`` name is undefined. However, pytest and sphinx test
@@ -40,6 +38,7 @@ done to find the rare name mistake in our examples.
 
 If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
 environmental variable to ``True`` before running the script.
+
 """
 
 from __future__ import annotations
@@ -191,7 +190,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     return failures
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = ArgumentParser(description='Look for name errors in doctests.')
     parser.add_argument(
         '-v',

@@ -1,6 +1,4 @@
-"""
-Tests for text objects
-"""
+"""Tests for text objects"""
 
 from __future__ import annotations
 
@@ -12,7 +10,7 @@ import pytest
 import pyvista as pv
 
 
-@pytest.fixture()
+@pytest.fixture
 def corner_annotation():
     return pv.CornerAnnotation(0, 'text')
 
@@ -27,7 +25,12 @@ def test_corner_annotation_prop(corner_annotation):
     assert isinstance(prop, pv.TextProperty)
 
 
-@pytest.fixture()
+def test_corner_annotation_name():
+    corner = pv.CornerAnnotation('top', 'abc', name='corner')
+    assert corner.name == 'corner'
+
+
+@pytest.fixture
 def text():
     return pv.Text()
 
@@ -48,6 +51,11 @@ def test_text_position(text):
     assert np.all(text.position == position)
 
 
+def test_text_name():
+    text = pv.Text('abc', name='text')
+    assert text.name == 'text'
+
+
 def test_label():
     label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
 
@@ -62,6 +70,11 @@ def test_label():
     assert label.size == 42
     label.size = 99
     assert label.size == 99
+
+
+def test_label_name():
+    label = pv.Label('abc', name='label')
+    assert label.name == 'label'
 
 
 def test_label_prop3d():
@@ -105,7 +118,7 @@ def test_label_relative_position():
     assert label._label_position == tuple((position + relative_position).tolist())
 
 
-@pytest.fixture()
+@pytest.fixture
 def prop():
     return pv.TextProperty()
 
@@ -119,8 +132,8 @@ def test_property_init():
 
 
 def test_property_color(prop):
-    prop.color = "b"
-    assert prop.color == "b"
+    prop.color = 'b'
+    assert prop.color == 'b'
 
 
 def test_property_opacity(prop):
@@ -185,10 +198,10 @@ def test_property_orientation(prop):
 
 
 def test_property_set_font_file(prop):
-    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
+    font_file = str(Path(__file__).parent / 'fonts/Mplus2-Regular.ttf')
     prop.set_font_file(font_file)
     with pytest.raises(FileNotFoundError):
-        prop.set_font_file("foo.ttf")
+        prop.set_font_file('foo.ttf')
 
 
 @pytest.mark.parametrize(
@@ -219,9 +232,9 @@ def test_property_justification_vertical(prop, justification):
 
 def test_property_justification_invalid(prop):
     with pytest.raises(ValueError):  # noqa: PT011
-        prop.justification_horizontal = "invalid"
+        prop.justification_horizontal = 'invalid'
     with pytest.raises(ValueError):  # noqa: PT011
-        prop.justification_vertical = "invalid"
+        prop.justification_vertical = 'invalid'
 
 
 @pytest.mark.parametrize('italic', [True, False])
@@ -236,3 +249,13 @@ def test_property_bold(prop, bold):
     prop.bold = bold
     assert prop.GetBold() == bold
     assert prop.bold == bold
+
+
+@pytest.mark.parametrize('italic', [True, False])
+@pytest.mark.parametrize('bold', [True, False])
+def test_property_shallow_copy(prop, italic, bold):
+    prop.italic = italic
+    prop.bold = bold
+    text_prop = pv.TextProperty()
+    text_prop.shallow_copy(prop)
+    assert text_prop.bold == prop.bold

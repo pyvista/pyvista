@@ -16,6 +16,6 @@ with namespace_data.open() as f:
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
 
 
-@pytest.mark.parametrize("name", namespace)
+@pytest.mark.parametrize('name', namespace)
 def test_public_namespace(name):
     assert hasattr(pv, name)

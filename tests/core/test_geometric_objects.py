@@ -3,10 +3,36 @@ from __future__ import annotations
 from itertools import permutations
 import re
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 
 import pyvista as pv
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
+def test_pyramid_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 5 np.ndarray or list.')
+    ):
+        pv.Pyramid(points=points)
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 3))
+def test_triangle_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 3 np.ndarray or list')
+    ):
+        pv.Triangle(points=points)
+
+
+@given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 4))
+def test_quadrilateral_raises(points):
+    with pytest.raises(
+        TypeError, match=re.escape('Points must be given as length 4 np.ndarray or list')
+    ):
+        pv.Quadrilateral(points=points)
 
 
 def test_cylinder():
@@ -194,36 +220,36 @@ def test_solid_sphere_resolution_edge_cases():
 
 
 def test_solid_sphere_resolution_errors():
-    with pytest.raises(ValueError, match="minimum radius cannot be negative"):
+    with pytest.raises(ValueError, match='minimum radius cannot be negative'):
         pv.SolidSphere(inner_radius=-1)
-    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
+    with pytest.raises(ValueError, match='max theta and min theta must be within 360 degrees'):
         pv.SolidSphere(start_theta=-1)
-    with pytest.raises(ValueError, match="minimum phi cannot be negative"):
+    with pytest.raises(ValueError, match='minimum phi cannot be negative'):
         pv.SolidSphere(start_phi=-1)
-    with pytest.raises(ValueError, match="max theta and min theta must be within 360 degrees"):
+    with pytest.raises(ValueError, match='max theta and min theta must be within 360 degrees'):
         pv.SolidSphere(end_theta=370)
-    with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
+    with pytest.raises(ValueError, match='maximum phi cannot be > 180'):
         pv.SolidSphere(end_phi=190)
     with pytest.raises(
         ValueError,
-        match=re.escape("max theta and min theta must be within 2 * np.pi"),
+        match=re.escape('max theta and min theta must be within 2 * np.pi'),
     ):
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
-    with pytest.raises(ValueError, match="maximum phi cannot be > np.pi"):
+    with pytest.raises(ValueError, match='maximum phi cannot be > np.pi'):
         pv.SolidSphere(end_phi=1.1 * np.pi, radians=True)
 
-    with pytest.raises(ValueError, match="radius is not monotonically increasing"):
+    with pytest.raises(ValueError, match='radius is not monotonically increasing'):
         pv.SolidSphereGeneric(radius=(0, 10, 1))
-    with pytest.raises(ValueError, match="theta is not monotonically increasing"):
+    with pytest.raises(ValueError, match='theta is not monotonically increasing'):
         pv.SolidSphereGeneric(theta=(0, 180, 90))
-    with pytest.raises(ValueError, match="phi is not monotonically increasing"):
+    with pytest.raises(ValueError, match='phi is not monotonically increasing'):
         pv.SolidSphereGeneric(phi=(0, 180, 90))
 
-    with pytest.raises(ValueError, match="radius resolution must be 2 or more"):
+    with pytest.raises(ValueError, match='radius resolution must be 2 or more'):
         pv.SolidSphere(radius_resolution=1)
-    with pytest.raises(ValueError, match="theta resolution must be 2 or more"):
+    with pytest.raises(ValueError, match='theta resolution must be 2 or more'):
         pv.SolidSphere(theta_resolution=1)
-    with pytest.raises(ValueError, match="phi resolution must be 2 or more"):
+    with pytest.raises(ValueError, match='phi resolution must be 2 or more'):
         pv.SolidSphere(phi_resolution=1)
 
 
@@ -302,7 +328,7 @@ def test_solid_sphere_tol_radius():
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
 
 
-@pytest.mark.parametrize("radians", [True, False])
+@pytest.mark.parametrize('radians', [True, False])
 def test_solid_sphere_tol_angle(radians):
     max_phi = np.pi if radians else 180.0
 
@@ -429,6 +455,13 @@ def test_tube():
         pv.Tube(pointa, (10, 1.0))
 
 
+@pytest.mark.parametrize('capping', [True, False])
+def test_tube_capping(capping: bool):
+    # Clean due to duplicated points at the cylinder end borders.
+    tube: pv.PolyData = pv.Tube(capping=capping).clean().triangulate()
+    assert tube.is_manifold is capping
+
+
 def test_capsule():
     capsule = pv.Capsule()
     assert np.any(capsule.points)
@@ -453,6 +486,11 @@ def test_cube():
     assert np.any(cube.points)
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
+
+    assert 'Normals' in cube.point_data.keys()
+    normals = cube.point_data['Normals']
+    expected = 0.57735026
+    assert np.allclose(np.abs(normals), expected)
 
 
 @pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
@@ -530,7 +568,7 @@ def test_superquadric():
 
 
 def test_text_3d():
-    mesh = pv.Text3D("foo", 0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
+    mesh = pv.Text3D('foo', 0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
     assert mesh.n_points
     assert mesh.n_cells
 
@@ -546,7 +584,7 @@ def test_text_3d():
     assert np.allclose(mesh.center, [1.0, 2.0, 3.0])
 
     # Test setting empty string returns empty mesh with zeros as bounds
-    mesh = pv.Text3D(string="")
+    mesh = pv.Text3D(string='')
     assert mesh.n_points == 1
     assert mesh.bounds == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
@@ -632,7 +670,7 @@ def test_quadrilateral():
 
 
 @pytest.mark.parametrize(
-    "points",
+    'points',
     [
         ([3.0, 1.0, 1.0], [3.0, 2.0, 1.0], [1.0, 2.0, 1.0], [1.0, 1.0, 1.0]),
         (
@@ -673,7 +711,7 @@ def test_rectangle_not_orthognal_entries():
         np.array([pointa, pointb, pointc]),
     )
 
-    with pytest.raises(ValueError, match="The three points should defined orthogonal vectors"):
+    with pytest.raises(ValueError, match='The three points should defined orthogonal vectors'):
         pv.Rectangle(rotated)
 
 
@@ -691,7 +729,7 @@ def test_rectangle_two_identical_points():
 
     with pytest.raises(
         ValueError,
-        match="Unable to build a rectangle with less than three different points",
+        match='Unable to build a rectangle with less than three different points',
     ):
         pv.Rectangle(rotated)
 

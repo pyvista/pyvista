@@ -1,6 +1,6 @@
 """Plot directive module.
 
-A directive for including a PyVista plot in a Sphinx document
+A directive for including a PyVista plot in a Sphinx document.
 
 The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.
@@ -43,7 +43,7 @@ The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
         Whether to display the source code. The default can be changed
-        using the `plot_include_source` variable in :file:`conf.py`.
+        using the ``pyvista_plot_include_source`` variable in :file:`conf.py`.
 
     encoding : str
         If this source file is in a non-UTF8 or non-ASCII encoding, the
@@ -55,8 +55,8 @@ The ``pyvista-plot`` directive supports the following options:
         directives for which the ``:context:`` option was specified.  This only
         applies to inline code plot directives, not those run from files.
 
-    nofigs : bool
-        If specified, the code block will be run, but no figures will be
+    nofigs : None
+        When setting this flag, the code block will be run but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
     caption : str
@@ -64,36 +64,61 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
-    force_static : bool
-        If specified, static images will be used instead of an interactive scene.
+    force_static : None
+        When setting this flag, static images will be used instead of an
+        interactive scene.
 
-Additionally, this directive supports all of the options of the `image`
+    skip : bool, default: True
+        Whether to skip execution of this directive. If no argument is provided
+        i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
+        behaviour is controlled by the ``plot_skip`` boolean variable in
+        :file:`conf.py`.  Note that, if specified, this option overrides the
+        ``plot_skip`` configuration.
+
+    optional : None
+        This flag marks the directive for *conditional* execution. Whether the
+        directive is executed is controlled by the ``plot_skip_optional``
+        boolean variable in :file:`conf.py`.
+
+Additionally, this directive supports all the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
 
 **Configuration options**
+
+.. versionchanged:: 0.45
+   Prior to v0.45, these directives conflicted with ``matplotlib``. All
+   directives have been prepended with ``pyvista_``.
+
 The plot directive has the following configuration options:
 
-    plot_include_source : bool
-        Default value for the include-source option. Default is ``True``.
+    pyvista_plot_include_source : bool, default: True
+        Default value for the ``include-source`` directive option.
+        Default is ``True``.
 
-    plot_basedir : str
+    pyvista_plot_basedir : str
         Base directory, to which ``plot::`` file names are relative
         to.  If ``None`` or unset, file names are relative to the
         directory where the file containing the directive is.
 
-    plot_html_show_formats : bool
+    pyvista_plot_html_show_formats : bool, default: True
         Whether to show links to the files in HTML. Default ``True``.
 
-    plot_template : str
+    pyvista_plot_template : str
         Provide a customized Jinja2 template for preparing restructured text.
 
-    plot_setup : str
+    pyvista_plot_setup : str
         Python code to be run before every plot directive block.
 
-    plot_cleanup : str
+    pyvista_plot_cleanup : str
         Python code to be run after every plot directive block.
+
+    pyvista_plot_skip : bool, default: False
+        Default value for the ``skip`` directive option.
+
+    pyvista_plot_skip_optional : bool, default: False
+        Whether to skip execution of ``optional`` directives.
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
@@ -122,7 +147,7 @@ import jinja2  # Sphinx dependency.
 # enable offscreen to hide figures when generating them.
 import pyvista
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 pyvista.BUILDING_GALLERY = True
@@ -133,7 +158,7 @@ pyvista.OFF_SCREEN = True
 # -----------------------------------------------------------------------------
 
 
-def _option_boolean(arg):
+def _option_boolean(arg) -> bool:
     if not arg or not arg.strip():
         # no argument given, assume used as a flag
         return True
@@ -142,12 +167,14 @@ def _option_boolean(arg):
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
     else:  # pragma: no cover
-        raise ValueError(f'"{arg}" unknown boolean')
+        msg = f'"{arg}" unknown boolean'
+        raise ValueError(msg)
 
 
 def _option_context(arg):
     if arg is not None:  # pragma: no cover
-        raise ValueError("No arguments allowed for ``:context:``")
+        msg = 'No arguments allowed for ``:context:``'
+        raise ValueError(msg)
 
 
 def _option_format(arg):
@@ -174,6 +201,8 @@ class PlotDirective(Directive):
         'encoding': directives.encoding,
         'caption': directives.unchanged,
         'force_static': directives.flag,
+        'skip': _option_boolean,
+        'optional': directives.flag,
     }
 
     def run(self):
@@ -197,12 +226,45 @@ def setup(app):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
-    app.add_config_value('plot_include_source', True, False)
-    app.add_config_value('plot_basedir', None, True)
-    app.add_config_value('plot_html_show_formats', True, True)
-    app.add_config_value('plot_template', None, True)
-    app.add_config_value('plot_setup', None, True)
-    app.add_config_value('plot_cleanup', None, True)
+
+    legacy_keys = [
+        'plot_include_source',
+        'plot_basedir',
+        'plot_html_show_formats',
+        'plot_template',
+        'plot_setup',
+        'plot_cleanup',
+        'plot_skip',
+        'plot_skip_optional',
+    ]
+
+    def raise_on_legacy_config(app, config):
+        """Raise a RuntimeError when using legacy configuration parameters.
+
+        These parameters conflict with matplotlib's ``plot_directive``.
+
+        """
+        uses_matplotlib = 'matplotlib.sphinxext.plot_directive' in app.extensions
+
+        if not uses_matplotlib:  # pragma: no cover
+            for key in legacy_keys:
+                if getattr(config, key, None) is not None:
+                    msg = (
+                        f"Sphinx config uses deprecated '{key}' without 'pyvista_' prefix. "
+                        f"Rename it to 'pyvista_{key}"
+                    )
+                    raise RuntimeError(msg)
+
+    app.connect('config-inited', raise_on_legacy_config)
+
+    app.add_config_value('pyvista_plot_include_source', True, False)
+    app.add_config_value('pyvista_plot_basedir', None, True)
+    app.add_config_value('pyvista_plot_html_show_formats', True, True)
+    app.add_config_value('pyvista_plot_template', None, True)
+    app.add_config_value('pyvista_plot_setup', None, True)
+    app.add_config_value('pyvista_plot_cleanup', None, True)
+    app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
     return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
@@ -222,7 +284,7 @@ def _contains_doctest(text):
     return bool(m)
 
 
-def _contains_pyvista_plot(text):
+def _contains_pyvista_plot(text) -> bool:
     return '.. pyvista-plot::' in text
 
 
@@ -247,26 +309,26 @@ def _split_code_at_show(text):
     part = []
 
     within_plot = False
-    for line in text.split("\n"):
+    for line in text.split('\n'):
         part.append(line)
 
         # check if show(...) or plot(...) is within the line
         line = _strip_comments(line)
         if within_plot:  # allow for multi-line plot(...
             if _strip_comments(line).endswith(')'):
-                parts.append("\n".join(part))
+                parts.append('\n'.join(part))
                 part = []
                 within_plot = False
 
         elif '.show(' in line or '.plot(' in line:
             if _strip_comments(line).endswith(')'):
-                parts.append("\n".join(part))
+                parts.append('\n'.join(part))
                 part = []
             else:  # allow for multi-line plot(...
                 within_plot = True
 
-    if "\n".join(part).strip():
-        parts.append("\n".join(part))
+    if '\n'.join(part).strip():
+        parts.append('\n'.join(part))
     return is_doctest, parts
 
 
@@ -351,7 +413,9 @@ class PlotError(RuntimeError):
 
 
 def _run_code(code, code_path, ns=None, function_name=None):
-    """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
+    """Run a docstring example.
+
+    Run the example if it does not contain ``'doctest:+SKIP'``, or a
     ```pyvista-plot::`` directive.  In the later case, the doctest parser will
     present the code-block again with the ```pyvista-plot::`` directive
     and its options removed.
@@ -392,7 +456,6 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
     """
-
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
     # and its options properly parsed.
@@ -408,8 +471,8 @@ def render_figures(
     ns = plot_context if context else {}
 
     # Check for setup and teardown code for plots
-    code_setup = config.plot_setup
-    code_cleanup = config.plot_cleanup
+    code_setup = config.pyvista_plot_setup
+    code_cleanup = config.pyvista_plot_cleanup
 
     if code_setup:
         _run_code(code_setup, code_path, ns, function_name)
@@ -429,10 +492,10 @@ def render_figures(
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
-                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
-                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
                     try:
                         plotter.screenshot(image_file.filename)
                     except RuntimeError:  # pragma no cover
@@ -442,8 +505,8 @@ def render_figures(
                         images.append(image_file)
                         continue
                     else:
-                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
-                        with Path(image_file.filename).open("wb") as f:
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
+                        with Path(image_file.filename).open('wb') as f:
                             f.write(plotter.last_vtksz)
                 images.append(image_file)
 
@@ -462,11 +525,16 @@ def run(arguments, content, options, state_machine, state, lineno):
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
+    optional = 'optional' in options
     force_static = 'force_static' in options
 
     default_fmt = 'png'
 
-    options.setdefault('include-source', config.plot_include_source)
+    options.setdefault('include-source', config.pyvista_plot_include_source)
+    options.setdefault('skip', config.pyvista_plot_skip)
+
+    skip = options['skip'] or (optional and config.pyvista_plot_skip_optional)
+
     keep_context = 'context' in options
     _ = None if not keep_context else options['context']
 
@@ -474,24 +542,23 @@ def run(arguments, content, options, state_machine, state, lineno):
     rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
-        if not config.plot_basedir:
+        if not config.pyvista_plot_basedir:
             source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
             source_file_name = str(
-                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0]),
+                Path(setup.confdir) / config.pyvista_plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
         caption = '\n'.join(content)
 
         # Enforce unambiguous use of captions.
-        if "caption" in options:
+        if 'caption' in options:
             if caption:  # pragma: no cover
-                raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.',
-                )
+                msg = 'Caption specified in both content and options. Please remove ambiguity.'
+                raise ValueError(msg)
             # Use caption option
-            caption = options["caption"]
+            caption = options['caption']
 
         # If the optional function name is provided, use it
         function_name = arguments[1] if len(arguments) == 2 else None
@@ -500,11 +567,13 @@ def run(arguments, content, options, state_machine, state, lineno):
         output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
-        code = textwrap.dedent("\n".join(map(str, content)))
+        code = textwrap.dedent('\n'.join(map(str, content)))
+
+        # note: this reuses the existing matplotlib plot counter if available
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
         base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
-        output_base = '%s-%d.py' % (base, counter)
+        output_base = f'{base}-{counter}.py'
         function_name = None
         caption = options.get('caption', '')
 
@@ -552,30 +621,33 @@ def run(arguments, content, options, state_machine, state, lineno):
     _ = dest_dir_link + '/' + output_base + source_ext
 
     # make figures
-    try:
-        results = render_figures(
-            code,
-            source_file_name,
-            build_dir,
-            output_base,
-            keep_context,
-            function_name,
-            config,
-            force_static,
-        )
-        errors = []
-    except PlotError as err:  # pragma: no cover
-        reporter = state.memo.reporter
-        sm = reporter.system_message(
-            2,
-            f"Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}",
-            line=lineno,
-        )
+    errors = []
+    if skip:
         results = [(code, [])]
-        errors = [sm]
+    else:
+        try:
+            results = render_figures(
+                code,
+                source_file_name,
+                build_dir,
+                output_base,
+                keep_context,
+                function_name,
+                config,
+                force_static,
+            )
+        except PlotError as err:  # pragma: no cover
+            reporter = state.memo.reporter
+            sm = reporter.system_message(
+                2,
+                f'Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}',
+                line=lineno,
+            )
+            results = [(code, [])]
+            errors.append([sm])
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    caption = '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
 
     # generate output restructuredtext
     total_lines = []
@@ -589,7 +661,7 @@ def run(arguments, content, options, state_machine, state, lineno):
                     '',
                     *textwrap.indent(code_piece, '    ').splitlines(),
                 ]
-            source_code = "\n".join(lines)
+            source_code = '\n'.join(lines)
         else:
             source_code = ''
 
@@ -602,7 +674,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             if key in ('alt', 'height', 'width', 'scale', 'align')
         ]
 
-        result = jinja2.Template(config.plot_template or TEMPLATE).render(
+        result = jinja2.Template(config.pyvista_plot_template or TEMPLATE).render(
             default_fmt=default_fmt,
             dest_dir=dest_dir_link,
             build_dir=build_dir_link,
@@ -611,12 +683,12 @@ def run(arguments, content, options, state_machine, state, lineno):
             options=opts,
             images=images,
             source_code=source_code,
-            html_show_formats=config.plot_html_show_formats and len(images),
+            html_show_formats=config.pyvista_plot_html_show_formats and len(images),
             caption=caption,
         )
 
-        total_lines.extend(result.split("\n"))
-        total_lines.extend("\n")
+        total_lines.extend(result.split('\n'))
+        total_lines.extend('\n')
 
     if total_lines:
         state_machine.insert_input(total_lines, source=source_file_name)

@@ -1,4 +1,4 @@
-"""This module contains some convenience helper functions."""
+"""Convenience helper functions."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import numpy as np
 import pyvista
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -73,7 +73,7 @@ def plot_compare_four(
     outline=None,
     outline_color='k',
     labels=('A', 'B', 'C', 'D'),
-    link=True,
+    link: bool = True,
     notebook=None,
 ):
     """Plot a 2 by 2 comparison of data objects.
@@ -114,6 +114,7 @@ def plot_compare_four(
     -------
     pyvista.Plotter
         The plotter object.
+
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]
@@ -143,7 +144,7 @@ def plot_compare_four(
         pl.link_views()
         # when linked, camera must be reset such that the view range
         # of all subrender windows matches
-        pl.reset_camera()
+        pl.reset_camera()  # type: ignore[call-arg]
 
     return pl.show(screenshot=screenshot, **show_kwargs)
 
@@ -187,10 +188,11 @@ def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], Nu
         vec = np.array([-1, 0, 0])
         viewup = np.array([0, 1, 0])
     else:
-        raise ValueError(
-            f"Unexpected value for direction {view}\n"
-            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'",
+        msg = (
+            f'Unexpected value for direction {view}\n'
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
         )
+        raise ValueError(msg)
 
     if negative:
         vec *= -1

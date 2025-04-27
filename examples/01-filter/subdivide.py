@@ -18,9 +18,9 @@ from pyvista import examples
 
 # %%
 # First, let's load a **triangulated** mesh to subdivide. We can use the
-# :func:`pyvista.DataSetFilters.triangulate` filter to ensure the mesh we are
+# :func:`pyvista.DataObjectFilters.triangulate` filter to ensure the mesh we are
 # using is purely triangles.
-mesh = examples.download_bunny_coarse().triangulate()
+mesh = examples.download_bunny_coarse().triangulate().clean()
 
 cpos = [
     (-0.02788175062966399, 0.19293295656233056, 0.4334449972621349),
@@ -41,18 +41,18 @@ def plot_subdivisions(mesh, a, b):
     for i in range(3):
         p.subplot(i, 0)
         p.add_mesh(mesh, **display_args)
-        p.add_text("Original Mesh")
+        p.add_text('Original Mesh')
 
     def row_plot(row, subfilter):
         subs = [a, b]
         for i in range(2):
             p.subplot(row, i + 1)
             p.add_mesh(mesh.subdivide(subs[i], subfilter=subfilter), **display_args)
-            p.add_text(f"{subfilter} subdivision of {subs[i]}")
+            p.add_text(f'{subfilter} subdivision of {subs[i]}')
 
-    row_plot(0, "linear")
-    row_plot(1, "butterfly")
-    row_plot(2, "loop")
+    row_plot(0, 'linear')
+    row_plot(1, 'butterfly')
+    row_plot(2, 'loop')
 
     p.link_views()
     p.view_isometric()

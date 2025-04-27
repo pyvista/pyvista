@@ -143,17 +143,17 @@ cell_ids = list(map(repr, types))
 
 
 def test_bad_init():
-    with pytest.raises(TypeError, match="must be a vtkCell"):
+    with pytest.raises(TypeError, match='must be a vtkCell'):
         _ = Cell(1)
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize('grid', grids, ids=ids)
 def test_cell_attribute(grid):
     assert isinstance(grid.cell, GeneratorType)
     assert all(issubclass(type(cell), Cell) for cell in grid.cell)
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize('grid', grids, ids=ids)
 def test_cell_point_ids(grid):
     # Test that the point_ids for all cells in the grid are unique,
     # which is not the case when using the GetCell(i) method of DataSet.
@@ -169,42 +169,42 @@ def test_cell_get_cell():
     assert isinstance(hexbeam.get_cell(0), pv.Cell)
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
 def test_cell_type(cell, type_):
     assert cell.type == type_
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize(("cell", "dim"), zip(cells, dims), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize(("cell", "np"), zip(cells, npoints), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize(("cell", "nf"), zip(cells, nfaces), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces), ids=cell_ids)
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize(("cell", "ne"), zip(cells, nedges), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges), ids=cell_ids)
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_get_edges(cell):
     assert all(cell.get_edge(i).type == CellType.LINE for i in range(cell.n_edges))
 
@@ -212,7 +212,7 @@ def test_cell_get_edges(cell):
         cell.get_edge(cell.n_edges)
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_edges(cell):
     assert all(edge.type == CellType.LINE for edge in cell.edges)
 
@@ -225,7 +225,7 @@ def test_cell_no_field_data():
         cells[0].clear_field_data()
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_copy_generic(cell):
     cell = cell.copy()
     cell_copy = cell.copy(deep=True)
@@ -253,19 +253,19 @@ def test_cell_copy():
     assert cell_copy == cell
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_edges_point_ids(cell):
     point_ids = {frozenset(cell.get_edge(i).point_ids) for i in range(cell.n_edges)}
     assert len(point_ids) == cell.n_edges
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_faces_point_ids(cell):
     point_ids = {frozenset(cell.get_face(i).point_ids) for i in range(cell.n_faces)}
     assert len(point_ids) == cell.n_faces
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_faces(cell):
     if cell.n_faces:
         assert cell.get_face(0) == cell.faces[0]
@@ -275,14 +275,14 @@ def test_cell_faces(cell):
             cell.get_face(0)
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize('grid', grids, ids=ids)
 def test_cell_bounds(grid):
     assert isinstance(grid.get_cell(0).bounds, tuple)
     assert all(bc >= bg for bc, bg in zip(grid.get_cell(0).bounds[::2], grid.bounds[::2]))
     assert all(bc <= bg for bc, bg in zip(grid.get_cell(0).bounds[1::2], grid.bounds[1::2]))
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
+@pytest.mark.parametrize('grid', grids, ids=ids)
 def test_cell_center(grid):
     center = grid.get_cell(0).center
     bounds = grid.get_cell(0).bounds
@@ -300,17 +300,17 @@ def test_cell_center_value():
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
-@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types), ids=cell_ids)
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 
 
-@pytest.mark.parametrize("cell", cells, ids=cell_ids)
+@pytest.mark.parametrize('cell', cells, ids=cell_ids)
 def test_cell_points(cell):
     points = cell.points
     assert isinstance(points, np.ndarray)
@@ -319,7 +319,7 @@ def test_cell_points(cell):
     assert points.shape[1] == 3
 
 
-@pytest.mark.parametrize("cell", cells)
+@pytest.mark.parametrize('cell', cells)
 def test_cell_cast_to_unstructured_grid(cell):
     grid = cell.cast_to_unstructured_grid()
     assert grid.n_cells == 1
@@ -327,12 +327,12 @@ def test_cell_cast_to_unstructured_grid(cell):
     assert grid.get_cell(0).type == cell.type
 
 
-@pytest.mark.parametrize("cell", cells)
+@pytest.mark.parametrize('cell', cells)
 def test_cell_cast_to_polydata(cell):
     if cell.dimension == 3:
         with pytest.raises(
             ValueError,
-            match=f"3D cells cannot be cast to PolyData: got cell type {cell.type}",
+            match=f'3D cells cannot be cast to PolyData: got cell type {cell.type}',
         ):
             cell.cast_to_polydata()
     else:
@@ -430,90 +430,94 @@ def test_numpy_to_idarr_bool():
 
 def test_cell_types():
     cell_types = [
-        "EMPTY_CELL",
-        "VERTEX",
-        "POLY_VERTEX",
-        "LINE",
-        "POLY_LINE",
-        "TRIANGLE",
-        "TRIANGLE_STRIP",
-        "POLYGON",
-        "PIXEL",
-        "QUAD",
-        "TETRA",
-        "VOXEL",
-        "HEXAHEDRON",
-        "WEDGE",
-        "PYRAMID",
-        "PENTAGONAL_PRISM",
-        "HEXAGONAL_PRISM",
-        "QUADRATIC_EDGE",
-        "QUADRATIC_TRIANGLE",
-        "QUADRATIC_QUAD",
-        "QUADRATIC_POLYGON",
-        "QUADRATIC_TETRA",
-        "QUADRATIC_HEXAHEDRON",
-        "QUADRATIC_WEDGE",
-        "QUADRATIC_PYRAMID",
-        "BIQUADRATIC_QUAD",
-        "TRIQUADRATIC_HEXAHEDRON",
-        "TRIQUADRATIC_PYRAMID",
-        "QUADRATIC_LINEAR_QUAD",
-        "QUADRATIC_LINEAR_WEDGE",
-        "BIQUADRATIC_QUADRATIC_WEDGE",
-        "BIQUADRATIC_QUADRATIC_HEXAHEDRON",
-        "BIQUADRATIC_TRIANGLE",
-        "CUBIC_LINE",
-        "CONVEX_POINT_SET",
-        "POLYHEDRON",
-        "PARAMETRIC_CURVE",
-        "PARAMETRIC_SURFACE",
-        "PARAMETRIC_TRI_SURFACE",
-        "PARAMETRIC_QUAD_SURFACE",
-        "PARAMETRIC_TETRA_REGION",
-        "PARAMETRIC_HEX_REGION",
-        "HIGHER_ORDER_EDGE",
-        "HIGHER_ORDER_TRIANGLE",
-        "HIGHER_ORDER_QUAD",
-        "HIGHER_ORDER_POLYGON",
-        "HIGHER_ORDER_TETRAHEDRON",
-        "HIGHER_ORDER_WEDGE",
-        "HIGHER_ORDER_PYRAMID",
-        "HIGHER_ORDER_HEXAHEDRON",
-        "LAGRANGE_CURVE",
-        "LAGRANGE_TRIANGLE",
-        "LAGRANGE_QUADRILATERAL",
-        "LAGRANGE_TETRAHEDRON",
-        "LAGRANGE_HEXAHEDRON",
-        "LAGRANGE_WEDGE",
-        "LAGRANGE_PYRAMID",
-        "BEZIER_CURVE",
-        "BEZIER_TRIANGLE",
-        "BEZIER_QUADRILATERAL",
-        "BEZIER_TETRAHEDRON",
-        "BEZIER_HEXAHEDRON",
-        "BEZIER_WEDGE",
-        "BEZIER_PYRAMID",
+        'EMPTY_CELL',
+        'VERTEX',
+        'POLY_VERTEX',
+        'LINE',
+        'POLY_LINE',
+        'TRIANGLE',
+        'TRIANGLE_STRIP',
+        'POLYGON',
+        'PIXEL',
+        'QUAD',
+        'TETRA',
+        'VOXEL',
+        'HEXAHEDRON',
+        'WEDGE',
+        'PYRAMID',
+        'PENTAGONAL_PRISM',
+        'HEXAGONAL_PRISM',
+        'QUADRATIC_EDGE',
+        'QUADRATIC_TRIANGLE',
+        'QUADRATIC_QUAD',
+        'QUADRATIC_POLYGON',
+        'QUADRATIC_TETRA',
+        'QUADRATIC_HEXAHEDRON',
+        'QUADRATIC_WEDGE',
+        'QUADRATIC_PYRAMID',
+        'BIQUADRATIC_QUAD',
+        'TRIQUADRATIC_HEXAHEDRON',
+        'TRIQUADRATIC_PYRAMID',
+        'QUADRATIC_LINEAR_QUAD',
+        'QUADRATIC_LINEAR_WEDGE',
+        'BIQUADRATIC_QUADRATIC_WEDGE',
+        'BIQUADRATIC_QUADRATIC_HEXAHEDRON',
+        'BIQUADRATIC_TRIANGLE',
+        'CUBIC_LINE',
+        'CONVEX_POINT_SET',
+        'POLYHEDRON',
+        'PARAMETRIC_CURVE',
+        'PARAMETRIC_SURFACE',
+        'PARAMETRIC_TRI_SURFACE',
+        'PARAMETRIC_QUAD_SURFACE',
+        'PARAMETRIC_TETRA_REGION',
+        'PARAMETRIC_HEX_REGION',
+        'HIGHER_ORDER_EDGE',
+        'HIGHER_ORDER_TRIANGLE',
+        'HIGHER_ORDER_QUAD',
+        'HIGHER_ORDER_POLYGON',
+        'HIGHER_ORDER_TETRAHEDRON',
+        'HIGHER_ORDER_WEDGE',
+        'HIGHER_ORDER_PYRAMID',
+        'HIGHER_ORDER_HEXAHEDRON',
+        'LAGRANGE_CURVE',
+        'LAGRANGE_TRIANGLE',
+        'LAGRANGE_QUADRILATERAL',
+        'LAGRANGE_TETRAHEDRON',
+        'LAGRANGE_HEXAHEDRON',
+        'LAGRANGE_WEDGE',
+        'LAGRANGE_PYRAMID',
+        'BEZIER_CURVE',
+        'BEZIER_TRIANGLE',
+        'BEZIER_QUADRILATERAL',
+        'BEZIER_TETRAHEDRON',
+        'BEZIER_HEXAHEDRON',
+        'BEZIER_WEDGE',
+        'BEZIER_PYRAMID',
     ]
     for cell_type in cell_types:
-        if hasattr(vtk, "VTK_" + cell_type):
+        if hasattr(vtk, 'VTK_' + cell_type):
             assert getattr(pv.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
 
 
 def test_n_cells_deprecated():
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], n_cells=1)
-        if pv._version.version_info >= (0, 47):
-            raise RuntimeError("Convert `n_cells` deprecation warning to error")
-        if pv._version.version_info >= (0, 48):
-            raise RuntimeError("Remove `n_cells` constructor kwarg")
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert `n_cells` deprecation warning to error'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove `n_cells` constructor kwarg'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('deep', [True, False])
 def test_deep_deprecated(deep: bool):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
-        if pv._version.version_info >= (0, 47):
-            raise RuntimeError("Convert `deep` deprecation warning to error")
-        if pv._version.version_info >= (0, 48):
-            raise RuntimeError("Remove `deep` constructor kwarg")
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert `deep` deprecation warning to error'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove `deep` constructor kwarg'
+            raise RuntimeError(msg)

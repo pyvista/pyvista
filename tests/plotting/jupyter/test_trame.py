@@ -35,12 +35,14 @@ try:
 except:
     has_trame = False
 
-# skip all tests if VTK<9.1.0
-if pv.vtk_version_info < (9, 1):
-    pytestmark = pytest.mark.skip
-else:
-    skip_no_trame = pytest.mark.skipif(not has_trame, reason="Requires trame")
-    pytestmark = [skip_no_trame, pytest.mark.skip_plotting]
+pytestmark = [
+    pytest.mark.needs_vtk_version(9, 1),
+    pytest.mark.skipif(not has_trame, reason='Requires trame'),
+    pytest.mark.skip_plotting,
+    pytest.mark.filterwarnings(
+        r'ignore:It is recommended to use web\.AppKey instances for keys:aiohttp.web_exceptions.NotAppKeyWarning'
+    ),
+]
 
 
 def test_set_jupyter_backend_trame():
@@ -71,6 +73,7 @@ def test_base_viewer_ui():
 
 
 @pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
+@pytest.mark.filterwarnings('ignore:Suppress rendering on the plotter is changed to .*:UserWarning')
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
@@ -87,7 +90,7 @@ def test_trame_plotter_ui(client_type):
 
     # Test invalid mode
     mode = 'invalid'
-    with pytest.raises(ValueError, match=f"`{mode}` is not a valid mode choice. Use one of: (.*)"):
+    with pytest.raises(ValueError, match=f'`{mode}` is not a valid mode choice. Use one of: (.*)'):
         ui = plotter_ui(pl, mode=mode, server=server)
 
     # Test when mode and server are None
@@ -149,7 +152,6 @@ def test_trame(client_type):
     assert hasattr(pl.renderer, 'axes_actor')
     server.state[viewer.AXIS] = False
     viewer.on_axis_visibility_change(**server.state.to_dict())
-    assert not pl.renderer.axes_widget.GetEnabled()
 
     server.state[viewer.SERVER_RENDERING] = False
     viewer.on_rendering_mode_change(**server.state.to_dict())
@@ -185,32 +187,32 @@ def test_trame_custom_menu_items(client_type):
     viewer = get_viewer(pl, server=server)
 
     # setup vuetify items
-    slider = vue2_slider if client_type == "vue2" else vue3_slider
-    text_field = vue2_text_field if client_type == "vue2" else vue3_text_field
-    select = vue2_select if client_type == "vue2" else vue3_select
-    divider = vue2_divider if client_type == "vue2" else vue3_divider
+    slider = vue2_slider if client_type == 'vue2' else vue3_slider
+    text_field = vue2_text_field if client_type == 'vue2' else vue3_text_field
+    select = vue2_select if client_type == 'vue2' else vue3_select
+    divider = vue2_divider if client_type == 'vue2' else vue3_divider
 
     # vuetify items to pass as argument
     def custom_tools():
         divider(vertical=True, classes='mx-1')
         slider(
-            ("resolution", 3),
-            "Resolution slider",
+            ('resolution', 3),
+            'Resolution slider',
             min=3,
             max=20,
             step=1,
         )
-        text_field(("resolution", 3), "Resolution value", type="number")
+        text_field(('resolution', 3), 'Resolution value', type='number')
         divider(vertical=True, classes='mx-1')
         select(
-            model=("visibility", "Show"),
-            tooltip="Toggle visibility",
-            items=['Visibility', ["Hide", "Show"]],
+            model=('visibility', 'Show'),
+            tooltip='Toggle visibility',
+            items=['Visibility', ['Hide', 'Show']],
         )
 
     with viewer.make_layout(server, template_name=pl._id_name):
         viewer.ui(
-            mode="trame",
+            mode='trame',
             default_server_rendering=True,
             collapse_menu=False,
             add_menu_items=custom_tools,
@@ -222,19 +224,19 @@ def test_trame_custom_menu_items(client_type):
     state, ctrl = server.state, server.controller
     ctrl.view_update = widget.viewer.update
 
-    @state.change("resolution")
+    @state.change('resolution')
     def update_resolution(resolution, **kwargs):
         algo.resolution = resolution
         ctrl.view_update()
 
-    @state.change("visibility")
+    @state.change('visibility')
     def set_visibility(visibility, **kwargs):
-        toggle = {"Hide": 0, "Show": 1}
+        toggle = {'Hide': 0, 'Show': 1}
         mesh_actor.visibility = toggle[visibility]
         ctrl.view_update()
 
-    assert server.state["resolution"] == 3
-    server.state.update({"resolution": 5, "visibility": "Hide"})
+    assert server.state['resolution'] == 3
+    server.state.update({'resolution': 5, 'visibility': 'Hide'})
     server.state.flush()
     assert algo.resolution == 5
     assert not mesh_actor.visibility
@@ -273,7 +275,7 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
-@pytest.mark.skipif(True, reason="#5262")
+@pytest.mark.skipif(True, reason='#5262')
 def test_trame_views():
     server = get_server('foo')
 
@@ -344,7 +346,7 @@ def test_trame_int64():
     assert isinstance(widget, Widget)
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_trame_export_html(tmpdir):
     filename = str(tmpdir.join('tmp.html'))
     plotter = pv.Plotter()
@@ -354,7 +356,7 @@ def test_trame_export_html(tmpdir):
 
 
 def test_export_single(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
+    filename = str(tmpdir.mkdir('tmpdir').join('scene-single'))
     data = examples.load_airplane()
     # Create the scene
     plotter = pv.Plotter()
@@ -365,7 +367,7 @@ def test_export_single(tmpdir, skip_check_gc):
 
 
 def test_export_multi(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
+    filename = str(tmpdir.mkdir('tmpdir').join('scene-multi'))
     multi = pv.MultiBlock()
     # Add examples
     multi.append(examples.load_ant())
@@ -382,7 +384,7 @@ def test_export_multi(tmpdir, skip_check_gc):
 
 
 def test_export_texture(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
+    filename = str(tmpdir.mkdir('tmpdir').join('scene-texture'))
     data = examples.load_globe()
     texture = examples.load_globe_texture()
     # Create the scene
@@ -394,7 +396,7 @@ def test_export_texture(tmpdir, skip_check_gc):
 
 
 def test_export_verts(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
+    filename = str(tmpdir.mkdir('tmpdir').join('scene-verts'))
     data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
     plotter = pv.Plotter()
@@ -405,7 +407,7 @@ def test_export_verts(tmpdir, skip_check_gc):
 
 
 def test_export_color(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
+    filename = str(tmpdir.mkdir('tmpdir').join('scene-color'))
     data = examples.load_airplane()
     # Create the scene
     plotter = pv.Plotter()
@@ -421,3 +423,14 @@ def test_embeddable_widget(skip_check_gc):
     widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)
+
+
+def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
+    from pyvista.trame import jupyter
+
+    monkeypatch.setattr(jupyter, 'HTML', object)
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.Widget(viewer=None, src=None)
+
+    with pytest.raises(ImportError, match='Please install `ipywidgets`.'):
+        jupyter.EmbeddableWidget(plotter=None, width=None, height=None)

@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
 
-python -m pip install -r requirements.txt
-python -m pip install -r requirements_test.txt
-
-python -m pip install pre-commit
+python -m pip install -e .[dev] --no-cache-dir
 pre-commit install --install-hooks
-
-python -m pip install -e .

@@ -1,8 +1,11 @@
 """
+.. _clear_example:
+
 Clearing a Mesh or the Entire Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example demonstrates how to remove elements from a scene.
+This example demonstrates how to remove elements from a scene using
+:meth:`~pyvista.Plotter.clear`.
 
 """
 
@@ -34,8 +37,8 @@ plotter.show()
 # with that same name at a later time, it will replace the previous actor:
 
 plotter = pv.Plotter()
-plotter.add_mesh(pv.Sphere(), name="mymesh")
-plotter.add_mesh(pv.Plane(), name="mymesh")
+plotter.add_mesh(pv.Sphere(), name='mymesh')
+plotter.add_mesh(pv.Plane(), name='mymesh')
 # Only the Plane is shown.
 plotter.show()
 # %%

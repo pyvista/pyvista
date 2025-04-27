@@ -1,5 +1,5 @@
 """
-.. _edl:
+.. _edl_example:
 
 Eye Dome Lighting
 ~~~~~~~~~~~~~~~~~
@@ -45,13 +45,13 @@ p = pv.Plotter(shape=(1, 2), border=False)
 p.subplot(0, 0)
 p.add_mesh(nefertiti, color=True)
 p.enable_eye_dome_lighting()
-p.add_text("Eye-Dome Lighting", font_size=24)
+p.add_text('Eye-Dome Lighting', font_size=24)
 p.camera_position = [-1, -1, 0.2]
 
 # No eye-dome lighting
 p.subplot(0, 1)
 p.add_mesh(nefertiti, color=True)
-p.add_text("No Eye-Dome Lighting", font_size=24)
+p.add_text('No Eye-Dome Lighting', font_size=24)
 p.camera_position = [-1, -1, 0.2]
 
 p.show()
@@ -91,7 +91,7 @@ p.show()
 
 # Plot with EDL and scalar data
 p = pv.Plotter()
-p.add_mesh(point_cloud, scalars="Elevation", point_size=5)
+p.add_mesh(point_cloud, scalars='Elevation', point_size=5)
 p.enable_eye_dome_lighting()
 p.show()
 # %%

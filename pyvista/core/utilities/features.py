@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 import sys
-from typing import Sequence
 
 import numpy as np
 
@@ -14,7 +14,40 @@ from pyvista.core import _vtk_core as _vtk
 from .helpers import wrap
 
 
-def voxelize(mesh, density=None, check_surface=True):
+def _padded_bins(mesh, density):
+    """Construct bin edges for voxelization.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Mesh to voxelize.
+
+    density : array_like[float]
+        A list of densities along x,y,z directions.
+
+    Returns
+    -------
+    list[np.ndarray]
+        List of bin edges for each axis.
+
+    Notes
+    -----
+    Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
+
+    """
+    bounds = np.array(mesh.bounds).reshape(3, 2)
+    bin_count = np.ceil(1e-10 + (bounds[:, 1] - bounds[:, 0]) / density)
+    pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
+
+    return [
+        np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
+        for i in range(3)
+    ]
+
+
+def voxelize(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -33,6 +66,15 @@ def voxelize(mesh, density=None, check_surface=True):
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
 
+    enclosed : bool, default: False
+        If True, the voxel bounds will be outside the mesh.
+        If False, the voxel bounds will be at or inside the mesh bounds.
+
+    fit_bounds : bool, default: False
+        If enabled, the end bound of the input mesh is used as the end bound of the
+        voxel grid and the density is updated to the closest compatible one. Otherwise,
+        the end bound is excluded. Has no effect if `enclosed` is enabled.
+
     Returns
     -------
     pyvista.UnstructuredGrid
@@ -42,6 +84,14 @@ def voxelize(mesh, density=None, check_surface=True):
     -----
     Prior to version 0.39.0, this method improperly handled the order of
     structured coordinates.
+
+    See Also
+    --------
+    pyvista.voxelize_volume
+        Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+
+    pyvista.DataSetFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
 
     Examples
     --------
@@ -58,6 +108,38 @@ def voxelize(mesh, density=None, check_surface=True):
     >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
     >>> vox.plot(show_edges=True)
 
+    Create an equal density voxel volume without enclosing input mesh.
+
+    >>> vox = pv.voxelize(mesh, density=0.01)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+
+    Create an equal density voxel volume enclosing input mesh.
+
+    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+
+    Create a voxelized mesh that does not fit the input mesh's bounds. Notice the
+    cropped rectangular box.
+
+    >>> mesh = pv.Cube(x_length=0.25)
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> pl.show()
+
+    Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
+    now complete. Notice that the voxel size was updated to fit the bounds in the first
+    direction.
+
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> pl.show()
+
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
@@ -68,21 +150,40 @@ def voxelize(mesh, density=None, check_surface=True):
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        msg = f'Invalid density {density!r}, expected number or array-like.'
+        raise TypeError(msg)
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density_x)
-    y = np.arange(y_min, y_max, density_y)
-    z = np.arange(z_min, z_max, density_z)
+    if enclosed:
+        # Get x, y, z bin edges
+        x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
+    else:
+        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+        if fit_bounds:
+            # Calculate an integer number of voxels, floor to ensure that the voxels
+            # don't exceed the input mesh
+            nof_voxels_x = int(np.round((x_max - x_min) / density_x))
+            nof_voxels_y = int(np.round((y_max - y_min) / density_y))
+            nof_voxels_z = int(np.round((z_max - z_min) / density_z))
+
+            # One additional point is required to ensure the proper number of voxels
+            x = np.linspace(x_min, x_max, nof_voxels_x + 1)
+            y = np.linspace(y_min, y_max, nof_voxels_y + 1)
+            z = np.linspace(z_min, z_max, nof_voxels_z + 1)
+        else:
+            x = np.arange(x_min, x_max, density_x)
+            y = np.arange(y_min, y_max, density_y)
+            z = np.arange(z_min, z_max, density_z)
+
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
@@ -91,15 +192,31 @@ def voxelize(mesh, density=None, check_surface=True):
     grid = pyvista.StructuredGrid(x, y, z)
     ugrid = pyvista.UnstructuredGrid(grid)
 
-    # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask = selection.point_data['SelectedPoints'].view(np.bool_)
+    if enclosed:
+        # Normalise cells to unit size
+        ugrid_norm = ugrid.copy()
+        surface_norm = surface.copy()
+        ugrid_norm.points /= np.array(density)
+        surface_norm.points /= np.array(density)
+        # Select cells if they're within one unit of the surface
+        ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
+        mask = ugrid_norm['implicit_distance'] < 1
+        del ugrid_norm, surface_norm
+    else:
+        # get part of the mesh within the mesh's bounding surface.
+        selection = ugrid.select_enclosed_points(
+            surface, tolerance=0.0, check_surface=check_surface
+        )
+        mask = selection.point_data['SelectedPoints'].view(np.bool_)
+        del selection
 
     # extract cells from point indices
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True):
+def voxelize_volume(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -122,6 +239,15 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
 
+    enclosed : bool, default: False
+        If True, the voxel bounds will be outside the mesh.
+        If False, the voxel bounds will be at or inside the mesh bounds.
+
+    fit_bounds : bool, default: False
+        If enabled, the end bound of the input mesh is used as the end bound of the
+        voxel grid and the density is updated to the closest compatible one. Otherwise,
+        the end bound is excluded. Has no effect if `enclosed` is enabled.
+
     Returns
     -------
     pyvista.RectilinearGrid
@@ -130,6 +256,12 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     See Also
     --------
     pyvista.voxelize
+        Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+        :attr:`~pyvista.CellType.VOXEL` cells.
+
+    pyvista.DataSetFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     pyvista.DataSetFilters.select_enclosed_points
 
     Examples
@@ -165,6 +297,35 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     >>> slices = vox.slice_orthogonal()
     >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
+    Create an equal density voxel volume without enclosing input mesh.
+
+    >>> vox = pv.voxelize_volume(mesh, density=0.15)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+
+    Create an equal density voxel volume enclosing input mesh.
+
+    >>> vox = pv.voxelize_volume(mesh, density=0.15, enclosed=True)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+
+    Create an equal density voxel volume that does not fit the input mesh's bounds.
+
+    >>> mesh = pv.examples.load_nut()
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> pl.show()
+
+    Create an equal density voxel volume that fits the input mesh's bounds.
+
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5, fit_bounds=True)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> pl.show()
+
     """
     mesh = wrap(mesh)
     if density is None:
@@ -174,21 +335,39 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        msg = f'Invalid density {density!r}, expected number or array-like.'
+        raise TypeError(msg)
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density_x)
-    y = np.arange(y_min, y_max, density_y)
-    z = np.arange(z_min, z_max, density_z)
+    if enclosed:
+        # Get x, y, z bin edges
+        x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
+    else:
+        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+        if fit_bounds:
+            # Calculate an integer number of voxels, floor to ensure that the voxels
+            # don't exceed the input mesh
+            nof_voxels_x = int(np.round((x_max - x_min) / density_x))
+            nof_voxels_y = int(np.round((y_max - y_min) / density_y))
+            nof_voxels_z = int(np.round((z_max - z_min) / density_z))
+
+            # One additional point is required to ensure the proper number of voxels
+            x = np.linspace(x_min, x_max, nof_voxels_x + 1)
+            y = np.linspace(y_min, y_max, nof_voxels_y + 1)
+            z = np.linspace(z_min, z_max, nof_voxels_z + 1)
+        else:
+            x = np.arange(x_min, x_max, density_x)
+            y = np.arange(y_min, y_max, density_y)
+            z = np.arange(z_min, z_max, density_z)
 
     # Create a RectilinearGrid
     voi = pyvista.RectilinearGrid(x, y, z)
@@ -198,7 +377,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # Get voxels that fall within input mesh boundaries
-    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
+    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))['vtkOriginalCellIds'])
 
     # Create new element of grid where all cells _within_ mesh boundary are
     # given new name 'MeshCells' and a discrete value of 1
@@ -218,7 +397,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple of int, default: (101, 101, 101)
+    dimensions : tuple[int, int, int], default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 
@@ -242,14 +421,15 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError('Please specify dimensions.')
+        msg = 'Please specify dimensions.'
+        raise NotImplementedError(msg)
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
-    image.origin = bounds[::2]
+    image.origin = bounds[::2]  # type: ignore[assignment]
     return image
 
 
@@ -269,6 +449,10 @@ def grid_from_sph_coords(theta, phi, r):
     -------
     pyvista.StructuredGrid
         Structured grid.
+
+    See Also
+    --------
+    :ref:`spherical_example`
 
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
@@ -306,7 +490,7 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT
         Arrays of transformed x-, y-, z-components, respectively.
 
     """
-    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing="ij")
+    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing='ij')
     th, ph = xx.squeeze(), yy.squeeze()
 
     # Transform wind components from spherical to cartesian coordinates
@@ -376,6 +560,7 @@ def spherical_to_cartesian(r, phi, theta):
     -------
     numpy.ndarray, numpy.ndarray, numpy.ndarray
         Cartesian coordinates.
+
     """
     s = np.sin(phi)
     x = r * s * np.cos(theta)
@@ -386,9 +571,9 @@ def spherical_to_cartesian(r, phi, theta):
 
 def merge(
     datasets,
-    merge_points=True,
-    main_has_priority=True,
-    progress_bar=False,
+    merge_points: bool = True,
+    main_has_priority: bool = True,
+    progress_bar: bool = False,
 ):
     """Merge several datasets.
 
@@ -400,8 +585,8 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
+    datasets : sequence[:class:`pyvista.DataSet`]
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
@@ -432,14 +617,17 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
+        msg = f'Expected a sequence, got {type(datasets).__name__}'
+        raise TypeError(msg)
 
     if len(datasets) < 1:
-        raise ValueError("Expected at least one dataset.")
+        msg = 'Expected at least one dataset.'
+        raise ValueError(msg)
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
+        msg = f'Expected pyvista.DataSet, not {type(first).__name__}'
+        raise TypeError(msg)
 
     return datasets[0].merge(
         datasets[1:],
@@ -493,6 +681,11 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
         implicit function. Use with :func:`pyvista.sample_function()
         <pyvista.core.utilities.features.sample_function>`.
 
+    See Also
+    --------
+    :ref:`perlin_noise_2d_example`
+    :ref:`perlin_noise_3d_example`
+
     Examples
     --------
     Create a Perlin noise function with an amplitude of 0.1, frequency
@@ -522,8 +715,8 @@ def sample_function(
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
-    scalar_arr_name: str = "scalars",
-    normal_arr_name: str = "normals",
+    scalar_arr_name: str = 'scalars',
+    normal_arr_name: str = 'normals',
     progress_bar: bool = False,
 ):
     """Sample an implicit function over a structured point set.
@@ -601,9 +794,7 @@ def sample_function(
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
-    >>> grid.plot(
-    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
-    ... )
+    >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
     Sample Perlin noise in 2D and plot it.
 
@@ -611,7 +802,8 @@ def sample_function(
     >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
-    See :ref:`perlin_noise_2d_example` for a full example using this function.
+    See :ref:`perlin_noise_2d_example` and :ref:`perlin_noise_3d_example`
+    for a full example using this function.
 
     """
     # internal import to avoide circular dependency
@@ -619,7 +811,7 @@ def sample_function(
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
-    samp.SetSampleDimensions(dim)
+    samp.SetSampleDimensions(dim)  # type: ignore[call-overload]
     samp.SetModelBounds(bounds)
     samp.SetComputeNormals(compute_normals)
     samp.SetCapping(capping)
@@ -633,11 +825,13 @@ def sample_function(
         samp.SetOutputScalarTypeToFloat()
     elif output_type == np.int64:
         if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+            msg = 'This function on Windows only supports int32 or smaller'
+            raise ValueError(msg)
         samp.SetOutputScalarTypeToLong()
     elif output_type == np.uint64:
         if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+            msg = 'This function on Windows only supports int32 or smaller'
+            raise ValueError(msg)
         samp.SetOutputScalarTypeToUnsignedLong()
     elif output_type == np.int32:
         samp.SetOutputScalarTypeToInt()
@@ -652,7 +846,8 @@ def sample_function(
     elif output_type == np.uint8:
         samp.SetOutputScalarTypeToUnsignedChar()
     else:
-        raise ValueError(f'Invalid output_type {output_type}')
+        msg = f'Invalid output_type {output_type}'
+        raise ValueError(msg)
 
     _update_alg(samp, progress_bar=progress_bar, message='Sampling')
     return wrap(samp.GetOutput())

@@ -4,8 +4,12 @@
 Rotations
 ~~~~~~~~~
 
-Rotations of a mesh about its axes. In this model, the x axis is from the left
-to right; the y axis is from bottom to top; and the z axis emerges from the
+Rotations of a mesh about its axes using
+:meth:`~pyvista.DataObjectFilters.rotate_x`,
+:meth:`~pyvista.DataObjectFilters.rotate_y`, and
+:meth:`~pyvista.DataObjectFilters.rotate_z`.
+In this model, the x axis is from the left to right;
+the y axis is from bottom to top; and the z axis emerges from the
 image. The camera location is the same in all four images.
 
 """
@@ -40,7 +44,7 @@ axes.origin = (3.0, 3.0, 3.0)
 
 p = pv.Plotter()
 
-p.add_text("Mesh", font_size=24)
+p.add_text('Mesh', font_size=24)
 p.add_actor(axes.actor)
 p.camera = camera
 p.add_mesh(mesh)
@@ -56,7 +60,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("X-Axis Rotation", font_size=24)
+p.add_text('X-Axis Rotation', font_size=24)
 p.add_actor(axes.actor)
 p.camera = camera
 
@@ -75,7 +79,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Y-Axis Rotation", font_size=24)
+p.add_text('Y-Axis Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
@@ -94,7 +98,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Z-Axis Rotation", font_size=24)
+p.add_text('Z-Axis Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
@@ -113,7 +117,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Custom Vector Rotation", font_size=24)
+p.add_text('Custom Vector Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 for i in range(6):

@@ -20,7 +20,7 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
 
 
@@ -102,6 +102,7 @@ class Viewer(BaseViewer):
         -------
         VAppLayout (vue2)
             A layout this viewer can be embedded in.
+
         """
         return VAppLayout(*args, **kwargs)
 
@@ -273,9 +274,8 @@ class Viewer(BaseViewer):
         if mode is None:
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
-            raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
-            )
+            msg = f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+            raise ValueError(msg)
         if mode != 'trame':
             default_server_rendering = mode == 'server'
 

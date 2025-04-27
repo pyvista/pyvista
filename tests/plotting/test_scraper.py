@@ -44,7 +44,7 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
     ]
 
-    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    gallery_conf = {'src_dir': src_dir, 'builder_name': 'html'}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
@@ -86,7 +86,8 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
         scraper = DynamicScraper()
         assert repr(scraper) == '<DynamicScraper object>'
     else:
-        raise ValueError(f'Invalid scraper type: {scraper}')
+        msg = f'Invalid scraper type: {scraper}'
+        raise ValueError(msg)
 
     src_dir = str(tmpdir)
     out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
@@ -100,9 +101,9 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     plotter_gif.write_frame()
     plotter_gif.close()
 
-    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    gallery_conf = {'src_dir': src_dir, 'builder_name': 'html'}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
-    block = ("empty_block", "", 0)
+    block = ('empty_block', '', 0)
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
         example_globals=dict(a=1, PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT=True),
@@ -131,7 +132,7 @@ def test_scraper_raise(tmpdir):
     src_dir = str(tmpdir)
     out_dir = str(Path(tmpdir) / '_build' / 'html')
     img_fname = str(Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png')
-    gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
+    gallery_conf = {'src_dir': src_dir, 'builder_name': 'html'}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
@@ -143,7 +144,7 @@ def test_scraper_raise(tmpdir):
     assert not Path(img_fname).is_file()
     Path(out_dir).mkdir(parents=True)
 
-    with pytest.raises(RuntimeError, match="pyvista.BUILDING_GALLERY"):
+    with pytest.raises(RuntimeError, match='pyvista.BUILDING_GALLERY'):
         scraper(block, block_vars, gallery_conf)
 
     plotter.close()

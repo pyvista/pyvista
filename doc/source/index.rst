@@ -32,12 +32,6 @@ This module can be used for scientific plotting for presentations and
 research papers as well as a supporting module for other mesh
 dependent Python modules.
 
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on X: |tweet|
-
-
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
@@ -174,8 +168,7 @@ Subtract a sphere from a cube mesh.
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
         grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
-        surf = grid.extract_surface().triangulate()
-        surf.flip_normals()
+        surf = grid.extract_surface().triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations
@@ -273,7 +266,7 @@ Status
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :target: https://www.python.org/downloads/
 
 +----------------------+----------------+-------------+

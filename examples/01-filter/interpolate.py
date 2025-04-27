@@ -1,24 +1,12 @@
 """
 .. _interpolate_example:
 
-Interpolating
-~~~~~~~~~~~~~
-
-There are two main methods of interpolating or sampling data from a target mesh
-in PyVista. :func:`pyvista.DataSetFilters.interpolate` uses a distance weighting
-kernel to interpolate point data from nearby points of the target mesh onto
-the desired points.
-:func:`pyvista.DataSetFilters.sample` interpolates data using the
-interpolation scheme of the enclosing cell from the target mesh.
-
-If the target mesh is a point cloud, i.e. there is no connectivity in the cell
-structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
-preferred.  If interpolation is desired within the cells of the target mesh, then
-:func:`pyvista.DataSetFilters.sample` is typically desired.
-
+Detailed Interpolating Points
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example uses :func:`pyvista.DataSetFilters.interpolate`.
-For :func:`pyvista.DataSetFilters.sample`, see :ref:`resampling_example`.
+:func:`pyvista.DataObjectFilters.sample` is similar, and the two
+methods are compared in :ref:`interpolate_sample_example`.
 
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
@@ -40,7 +28,7 @@ surface = examples.download_saddle_surface()
 points = examples.download_sparse_points()
 
 p = pv.Plotter()
-p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True)
+p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
 p.add_mesh(surface)
 p.show()
 
@@ -51,8 +39,8 @@ interpolated = surface.interpolate(points, radius=12.0)
 
 
 p = pv.Plotter()
-p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True)
-p.add_mesh(interpolated, scalars="val")
+p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+p.add_mesh(interpolated, scalars='val')
 p.show()
 
 
@@ -78,7 +66,7 @@ grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)
 
 # %%
-dargs = dict(cmap="coolwarm", clim=[0, 300], scalars="temperature (C)")
+dargs = dict(cmap='coolwarm', clim=[0, 300], scalars='temperature (C)')
 cpos = [
     (364280.5723737897, 4285326.164400684, 14093.431895014139),
     (337748.7217949739, 4261154.45054595, -637.1092549935128),

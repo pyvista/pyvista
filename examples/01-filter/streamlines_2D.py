@@ -1,5 +1,5 @@
 """
-.. _2d_streamlines_example:
+.. _streamlines_2D_example:
 
 2D Streamlines
 ~~~~~~~~~~~~~~
@@ -35,7 +35,7 @@ print(fluid_mesh)
 
 one_streamline = fluid_mesh.streamlines(
     start_position=(0.0, 0.4, 0.0),
-    max_time=100.0,
+    max_length=100.0,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
@@ -45,7 +45,7 @@ camera_position = [(7, 0, 20.0), (7, 0.0, 0.0), (0.0, 1.0, 0.0)]
 p = pv.Plotter()
 for i in range(1, len(mesh)):
     p.add_mesh(mesh[i], color='k')
-p.add_mesh(one_streamline.tube(radius=0.05), scalars="vorticity_mag", clim=clim)
+p.add_mesh(one_streamline.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
 p.view_xy()
 p.show(cpos=camera_position)
 
@@ -57,14 +57,14 @@ line_streamlines = fluid_mesh.streamlines(
     pointa=(0, -5, 0),
     pointb=(0, 5, 0),
     n_points=25,
-    max_time=100.0,
+    max_length=100.0,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
 p = pv.Plotter()
 for i in range(1, len(mesh)):
     p.add_mesh(mesh[i], color='k')
-p.add_mesh(line_streamlines.tube(radius=0.05), scalars="vorticity_mag", clim=clim)
+p.add_mesh(line_streamlines.tube(radius=0.05), scalars='vorticity_mag', clim=clim)
 p.view_xy()
 p.show(cpos=camera_position)
 
@@ -88,7 +88,7 @@ line_streamlines = fluid_mesh.streamlines_evenly_spaced_2D(
 p = pv.Plotter()
 for i in range(1, len(mesh)):
     p.add_mesh(mesh[i], color='k')
-p.add_mesh(line_streamlines.tube(radius=0.02), scalars="vorticity_mag", clim=clim)
+p.add_mesh(line_streamlines.tube(radius=0.02), scalars='vorticity_mag', clim=clim)
 p.view_xy()
 p.show(cpos=camera_position)
 

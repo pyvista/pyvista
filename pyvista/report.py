@@ -36,31 +36,34 @@ class GPUInfo:
     @property
     def renderer(self):  # numpydoc ignore=RT01
         """GPU renderer name."""
-        regex = re.compile("OpenGL renderer string:(.+)\n")
+        regex = re.compile('OpenGL renderer string:(.+)\n')
         try:
             renderer = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the renderer.") from None
+            msg = 'Unable to parse GPU information for the renderer.'
+            raise RuntimeError(msg) from None
         return renderer.strip()
 
     @property
     def version(self):  # numpydoc ignore=RT01
         """GPU renderer version."""
-        regex = re.compile("OpenGL version string:(.+)\n")
+        regex = re.compile('OpenGL version string:(.+)\n')
         try:
             version = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the version.") from None
+            msg = 'Unable to parse GPU information for the version.'
+            raise RuntimeError(msg) from None
         return version.strip()
 
     @property
     def vendor(self):  # numpydoc ignore=RT01
         """GPU renderer vendor."""
-        regex = re.compile("OpenGL vendor string:(.+)\n")
+        regex = re.compile('OpenGL vendor string:(.+)\n')
         try:
             vendor = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the vendor.") from None
+            msg = 'Unable to parse GPU information for the vendor.'
+            raise RuntimeError(msg) from None
         return vendor.strip()
 
     def get_info(self):
@@ -73,26 +76,26 @@ class GPUInfo:
 
         """
         return [
-            ("GPU Vendor", self.vendor),
-            ("GPU Renderer", self.renderer),
-            ("GPU Version", self.version),
+            ('GPU Vendor', self.vendor),
+            ('GPU Renderer', self.renderer),
+            ('GPU Version', self.version),
         ]
 
     def _repr_html_(self):
         """HTML table representation."""
-        fmt = "<table>"
-        row = "<tr><th>{}</th><td>{}</td></tr>\n"
+        fmt = '<table>'
+        row = '<tr><th>{}</th><td>{}</td></tr>\n'
         for meta in self.get_info():
             fmt += row.format(*meta)
-        fmt += "</table>"
+        fmt += '</table>'
         return fmt
 
     def __repr__(self):
         """Representation method."""
-        content = "\n"
+        content = '\n'
         for k, v in self.get_info():
-            content += f"{k:>18} : {v}\n"
-        content += "\n"
+            content += f'{k:>18} : {v}\n'
+        content += '\n'
         return content
 
 
@@ -157,6 +160,8 @@ class Report(scooby.Report):
 
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance."""
+        from vtkmodules.vtkRenderingCore import vtkRenderWindow
+
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
@@ -192,20 +197,21 @@ class Report(scooby.Report):
                 extra_meta = GPUInfo().get_info()
             except:
                 extra_meta = [
-                    ("GPU Details", "error"),
+                    ('GPU Details', 'error'),
                 ]
         else:
             extra_meta = [
-                ("GPU Details", "None"),
+                ('GPU Details', 'None'),
             ]
 
+        extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
         extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
             self,
             additional=additional,
-            core=core,
-            optional=optional,
+            core=core,  # type: ignore[arg-type]
+            optional=optional,  # type: ignore[arg-type]
             ncol=ncol,
             text_width=text_width,
             sort=sort,

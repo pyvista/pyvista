@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.8+.
+PyVista is supported on Python versions 3.9+.
 
 For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
@@ -135,14 +135,14 @@ Test Installation
 
 You can test your installation by running an example:
 
-.. code:: python
+.. code-block:: python
 
     >>> from pyvista import demos
     >>> demos.plot_wave()
 
 See other examples and demos:
 
-.. code:: python
+.. code-block:: python
 
     >>> from pyvista import examples
     >>> from pyvista import demos
@@ -318,6 +318,7 @@ should be displayed in JupyterLab.
 .. code-block:: python
 
     import pyvista
+
     pl = pyvista.Plotter(shape=(1, 2))
     actor = pl.add_mesh(pyvista.Cube())
     pl.subplot(0, 1)
@@ -335,6 +336,7 @@ In your ``conf.py``, add the following:
 .. code-block:: python
 
     import pyvista
+
     # necessary when building the sphinx gallery
     pyvista.BUILDING_GALLERY = True
     pyvista.OFF_SCREEN = True
@@ -344,15 +346,15 @@ In your ``conf.py``, add the following:
     pyvista.global_theme.window_size = np.array([1024, 768]) * 2
 
     extensions = [
-        ...
+        ...,
         "sphinx_gallery.gen_gallery",
     ]
 
     # Add the PyVista image scraper to SG
     sphinx_gallery_conf = {
-        ...
-        "image_scrapers": ('pyvista', ..., ),
-        ...
+        ...: ...,
+        "image_scrapers": ('pyvista', ...),
+        ...: ...,
     }
 
 We also have a Sphinx-Gallery scraper for embedding dynamic 3D scenes
@@ -375,14 +377,14 @@ the string ``'pyvista'`` above and by registering the
     pyvista.global_theme.window_size = np.array([1024, 768]) * 2
 
     extensions = [
-        ...
+        ...,
         "sphinx_gallery.gen_gallery",
         "pyvista.ext.viewer_directive",
     ]
 
     # Add the PyVista image scraper to SG
     sphinx_gallery_conf = {
-        ...
-        "image_scrapers": (DynamicScraper(), ..., ),
-        ...
+        ...: ...,
+        "image_scrapers": (DynamicScraper(), ...),
+        ...: ...,
     }

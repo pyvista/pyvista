@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 
@@ -11,7 +12,13 @@ from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from typing import Any
+
+    import numpy.typing as npt
+
+    from pyvista import DataSet
+
     from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
 
@@ -23,7 +30,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     Parameters
     ----------
-    array : Array or vtk.vtkAbstractArray
+    array : ArrayLike or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet
@@ -50,12 +57,12 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     """
 
-    def __new__(
-        cls,
+    def __new__(  # noqa: PYI034
+        cls: type[pyvista_ndarray],
         array: ArrayLike[float] | _vtk.vtkAbstractArray,
-        dataset=None,
-        association=FieldAssociation.NONE,
-    ):
+        dataset: DataSet | _vtk.vtkDataSet | _vtk.VTKObjectWrapper | None = None,
+        association: FieldAssociation = FieldAssociation.NONE,
+    ) -> pyvista_ndarray:
         """Allocate the array."""
         if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
@@ -63,20 +70,21 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         else:
-            raise TypeError(
+            msg = (
                 f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray',
+                'Expected an Iterable or vtk.vtkAbstractArray'
             )
+            raise TypeError(msg)
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()
         if isinstance(dataset, _vtk.VTKObjectWrapper):
             obj.dataset.Set(dataset.VTKObject)
         else:
-            obj.dataset.Set(dataset)
+            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
@@ -85,7 +93,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class
-        _vtk.VTKArray.__array_finalize__(self, obj)
+        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
         if np.shares_memory(self, obj):
             self.dataset = getattr(obj, 'dataset', None)
             self.association = getattr(obj, 'association', FieldAssociation.NONE)
@@ -95,7 +103,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: int | NumpyArray[int], value):
+    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -111,7 +119,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar=False):
+    def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819

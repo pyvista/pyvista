@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING
 from . import _vtk
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ._property import Property
     from .mapper import _BaseMapper
 
@@ -40,11 +42,12 @@ class Volume(Prop3D, _vtk.vtkVolume):
         >>> actor = pl.add_volume(vol)
         >>> actor.mapper.bounds
         BoundsTuple(x_min=0.0, x_max=9.0, y_min=0.0, y_max=9.0, z_min=0.0, z_max=9.0)
+
         """
-        return self.GetMapper()
+        return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):  # numpydoc ignore=GL08
+    def mapper(self, obj):
         self.SetMapper(obj)
 
     @property
@@ -67,5 +70,51 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):  # numpydoc ignore=GL08
-        self.SetProperty(obj)
+    def prop(self, obj: Property):
+        self.SetProperty(obj)  # type: ignore[arg-type]
+
+    def copy(self: Self, deep: bool = True) -> Self:
+        """Create a copy of this volume.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Create a shallow or deep copy of the volume. A deep copy will have a
+            new property and mapper, while a shallow copy will use the mapper
+            and property of this volume.
+
+        Returns
+        -------
+        Volume
+            Deep or shallow copy of this volume.
+
+        Examples
+        --------
+        Create a volume of by adding it to a :class:`~pyvista.Plotter`
+        and then copy the volume.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Wavelet()
+        >>> pl = pv.Plotter()
+        >>> volume = pl.add_volume(mesh, diffuse=0.5)
+        >>> new_volume = volume.copy()
+
+        Change the copy's properties. A deep copy is made by default, so the original
+        volume is not affected.
+
+        >>> new_volume.prop.diffuse = 1.0
+        >>> new_volume.prop.diffuse
+        1.0
+
+        >>> volume.prop.diffuse
+        0.5
+
+        """
+        new_actor = type(self)()
+        if deep:
+            if self.mapper is not None:
+                new_actor.mapper = self.mapper.copy()
+            new_actor.prop = self.prop.copy()
+        else:
+            new_actor.ShallowCopy(self)
+        return new_actor

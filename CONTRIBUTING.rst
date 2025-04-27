@@ -37,11 +37,16 @@ You can clone the source repository from
 `<https://github.com/pyvista/pyvista>`_ and install the latest version by
 running:
 
-.. code:: bash
+.. code-block:: bash
 
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
    python -m pip install -e .
+
+.. note::
+
+   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   packages required for development.
 
 Quick Start Development with Codespaces
 ---------------------------------------
@@ -214,9 +219,9 @@ Please also take a look at `Docstrings <#docstrings>`_.
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
-.. code:: python
+.. code-block:: python
 
-   import this
+    import this
 
 PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
@@ -238,14 +243,14 @@ and partially enforced for Python source files.
 These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
 GitHub Actions, and you can run Vale locally with:
 
-.. code::
+.. code-block:: bash
 
    pip install vale
    vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
 
 If you are on Linux or macOS, you can run:
 
-.. code::
+.. code-block:: bash
 
    make docstyle
 
@@ -271,7 +276,7 @@ PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
 
 Sample docstring follows:
 
-.. code:: python
+.. code-block:: python
 
     def slice_x(self, x=None, generate_triangles=False):
         """Create an orthogonal slice through the dataset in the X direction.
@@ -343,17 +348,15 @@ These standards will be enforced using ``pre-commit`` using
 If for whatever reason you feel that your function should have an exception to
 any of the rules, add an exception to the function either in the
 ``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
-comment to exclude a certain check. For example, we do not enforce
-documentation strings for setters and skip the GL08 check.
+comment to exclude a certain check. For example, we can omit the ``Return``
+section from docstrings and skip the RT01 check for magic methods like ``__init__``.
 
-.. code:: python
+.. code-block:: python
 
-    @strips.setter
-    def strips(self, strips):  # numpydoc ignore=GL08
-        if isinstance(strips, CellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
+    def __init__(self, foo):  # numpydoc ignore=RT01
+        """Initialize A Class."""
+        super().__init__()
+        self.foo = foo
 
 See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
@@ -379,10 +382,11 @@ Here's an example of a soft deprecation of a function. Note the usage of both
 the ``PyVistaDeprecationWarning`` warning and the ``.. deprecated`` Sphinx
 directive.
 
-.. code:: python
+.. code-block:: python
 
     import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
+
 
     def addition(a, b):
         """Add two numbers.
@@ -407,7 +411,7 @@ directive.
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
         warnings.warn(
             '`addition` has been deprecated. Use pyvista.add instead',
-            PyVistaDeprecationWarning
+            PyVistaDeprecationWarning,
         )
         add(a, b)
 
@@ -424,22 +428,30 @@ kept short.
 
 Here's an example of adding error test codes that raise deprecation warning messages.
 
-.. code:: python
+.. code-block:: python
 
     with pytest.warns(PyVistaDeprecationWarning):
         addition(a, b)
-        if pv._version.version_info >= (0, 40):
+        if pv._version.version_info[:2] > (0, 40):
             raise RuntimeError("Convert error this function")
-        if pv._version.version_info >= (0, 41):
+        if pv._version.version_info[:2] > (0, 41):
             raise RuntimeError("Remove this function")
 
 In the above code example, the old test code raises an error in v0.40 and v0.41.
 This will prevent us from forgetting to remove deprecations on version upgrades.
 
+.. note::
+
+    When releasing a new version, we need to update the version number to the next
+    development version. For example, if we are releasing version 0.37.0, the next
+    development version should be 0.38.0.dev0 which is greater than 0.37.0. This is
+    why we need to check if the version is greater than 0.40.0 and 0.41.0 in the
+    test code.
+
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
 
-.. code:: python
+.. code-block:: python
 
     def Cube(clean=True):
         """Create a cube.
@@ -482,13 +494,12 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
+To run our comprehensive suite of unit tests, install PyVista with all
+developer dependencies:
 
-.. code:: bash
+.. code-block:: bash
 
-   pip install -r requirements_test.txt
-   pip install -r requirements_docs.txt
+   pip install -e '.[dev]'
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -497,7 +508,7 @@ Unit Testing
 ~~~~~~~~~~~~
 Run the primary test suite and generate coverage report:
 
-.. code:: bash
+.. code-block:: bash
 
    python -m pytest -v --cov pyvista
 
@@ -505,15 +516,65 @@ Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
 leverage multiple processes. Example usage:
 
-.. code:: bash
+.. code-block:: bash
 
    python -m pytest -n <NUMCORE> --cov pyvista
 
-Documentation Testing
-~~~~~~~~~~~~~~~~~~~~~
+When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
+This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
+which has a 90% target, ie. it ensures that 90% of the code modified in the PR is tested.
+It should be mentioned that branch coverage is measured on the CI, meaning for examples that both
+values of an ``if`` clause must be tested to ensure full coverage. For more details on branch
+coverage, please refer to the `coverage documentation <https://coverage.readthedocs.io/en/latest/branch.html>`_.
+
+If needed, code coverage can be deactivated for specific lines by adding the ``# pragma: no cover`` or
+``# pragma: no branch`` comments. See the documentation `excluding code <https://coverage.readthedocs.io/en/latest/branch.html#excluding-code>`__
+for more details.
+However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
+if no simple alternative solution has been found.
+
+The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
+If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
+custom pytest marker ``needs_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
+
+.. code-block:: python
+
+    @pytest.mark.needs_vtk_version(9, 1)
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version((9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(at_least=(8, 2), less_than=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    @pytest.mark.needs_vtk_version(8, 2)
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(9, 1, reason='custom reason')
+    def test():
+        """Test is skipped with a custom message"""
+
+
+Docstring Testing
+~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:
 
-.. code:: bash
+.. code-block:: bash
 
    python -m pytest -v --doctest-modules pyvista
 
@@ -593,7 +654,7 @@ There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
 example:
 
-.. code:: bash
+.. code-block:: bash
 
        pytest tests/plotting --reset_image_cache
 
@@ -609,23 +670,22 @@ Images are currently only cached from tests in
 ``Plotter.show`` will cache images automatically. To skip image caching,
 the ``verify_image_cache`` fixture can be utilized:
 
-.. code:: python
+.. code-block:: python
 
-
-       def test_add_background_image_not_global(verify_image_cache):
-           verify_image_cache.skip = True  # Turn off caching
-           plotter = pyvista.Plotter()
-           plotter.add_mesh(sphere)
-           plotter.show()
-           # Turn on caching for further plotting
-           verify_image_cache.skip = False
-           ...
+    def test_add_background_image_not_global(verify_image_cache):
+        verify_image_cache.skip = True  # Turn off caching
+        plotter = pyvista.Plotter()
+        plotter.add_mesh(sphere)
+        plotter.show()
+        # Turn on caching for further plotting
+        verify_image_cache.skip = False
+        ...
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
 exists, be sure to add the resulting image with
 
-.. code:: bash
+.. code-block:: bash
 
     git add tests/plotting/image_cache/*
 
@@ -640,7 +700,7 @@ For example, the following writes all images generated by ``pytest`` to
 ``debug_images/`` for any tests in ``tests/plotting`` whose function name has
 ``volume`` in it.
 
-.. code:: bash
+.. code-block:: bash
 
    pytest tests/plotting/ -k volume --generated_image_dir debug_images
 
@@ -666,7 +726,7 @@ or related functions.
 
 Individual test cases are written as a single line of Python code with the format:
 
-.. code:: python
+.. code-block:: python
 
     reveal_type(arg)  # EXPECTED_TYPE: "<T>"
 
@@ -678,7 +738,7 @@ when a list of floats is provided at the input. The type hint should reflect thi
 To test this, we can write a test case for the function call ``validate_array([1.0])``
 as follows:
 
-.. code:: python
+.. code-block:: python
 
     reveal_type(validate_array([1.0]))  # EXPECTED_TYPE: "list[float]"
 
@@ -687,13 +747,13 @@ the following command. Note that ``grep`` is needed to only return the output
 from the input string. Otherwise, all ``Mypy`` errors for the ``pyvista`` package
 are reported.
 
-.. code:: bash
+.. code-block:: bash
 
     mypy -c "from pyvista.core._validation import validate_array; reveal_type(validate_array([1.0]))" | grep \<string\>
 
 For this test case, the revealed type by ``Mypy`` is:
 
-.. code:: python
+.. code-block:: python
 
     "builtins.list[builtins.float]"
 
@@ -710,7 +770,7 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code:: python
+.. code-block:: bash
 
     pytest tests/core/typing
 
@@ -730,13 +790,13 @@ Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Build the documentation on Linux or Mac OS with:
 
-.. code:: bash
+.. code-block:: bash
 
    make -C doc html
 
 Build the documentation on Windows with:
 
-.. code:: winbatch
+.. code-block:: winbatch
 
    cd doc
    python -msphinx -M html source _build
@@ -751,7 +811,7 @@ a fraction of the time.
 
 To test this locally you need to run a http server in the html directory with:
 
-.. code:: bash
+.. code-block:: bash
 
    make serve-html
 
@@ -760,14 +820,14 @@ Clearing the Local Build
 
 If you need to clear the locally built documentation, run:
 
-.. code:: bash
+.. code-block:: bash
 
    make -C doc clean
 
 This will clear out everything, including the examples gallery. If you only
 want to clear everything except the gallery examples, run:
 
-.. code:: bash
+.. code-block:: bash
 
    make -C doc clean-except-examples
 
@@ -778,7 +838,7 @@ Parallel Documentation Build
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 You can improve your documentation build time on Linux and Mac OS with:
 
-.. code:: bash
+.. code-block:: bash
 
    make -C doc phtml
 
@@ -800,9 +860,9 @@ The regression testing compares these generated images to those stored in
 
 To test all the images, run ``pytest`` with:
 
-.. code:: bash
+.. code-block:: bash
 
-   pytest tests/doc/tst_doc_images.py
+   pytest tests/doc/tst_doc_images.py::test_static_images
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -826,16 +886,19 @@ copies of the images are made as follows:
 
 #. If the comparison between the two images fails:
 
-    - The cache image is copied to ``./_doc_debug_images_failed/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/from_build``
+    - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
 
 #.  If an image is in the cache but missing from the build:
 
-    - The cache image is copied to  ``./_doc_debug_images_failed/from_cache``
+    - The cache image is copied to  ``./_doc_debug_images_failed/errors/from_cache``
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+
+If a warning is generated instead of an error, images are saved to the
+``warnings`` sub-directory instead of ``errors``.
 
 To resolve failed tests, any images in ``from_build`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
@@ -852,7 +915,9 @@ should be stored in this directory. The test will first compare the
 build image to the cached image in ``Doc Image Cache`` as normal. If that
 comparison fails, the build image is then compared to all images in the
 flaky test directory. The test is successful if one of the comparisons
-is successful.
+is successful, but a warning will still be issued. If a warning is
+emitted by a flaky test, images are saved to the ``flaky`` sub-directory
+instead of ``warnings``.
 
 .. note::
 
@@ -871,9 +936,67 @@ is successful.
 
    These tests are intended to provide *additional* test coverage to ensure the
    plots generated by ``pyvista`` are correct, and should not be used as the
-   primary source of testing. See `Documentation Testing`_ and
+   primary source of testing. See `Docstring Testing`_ and
    `Notes Regarding Image Regression Testing`_ for testing methods which should
    be considered first.
+
+Interactive Plot Testing
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+PyVista's documentation uses a custom ``pyvista-plot`` directive to generate
+static images as well as interactive plot files. The interactive files have a
+``.vtksz`` extension and can be relatively large when plotting high-resolution
+datasets.
+
+To ensure that the interactive plots do not unnecessarily inflate the size
+of the documentation build, a limit is placed on the size of ``.vtksz`` files.
+To test that interactive plots do not exceed this limit, run:
+
+.. code:: bash
+
+   pytest tests/doc/tst_doc_images.py::test_interactive_plot_file_size
+
+If any of these tests fail, the example(s) which generated the plot should be
+modified, e.g.:
+
+#. Simplify any dataset(s) used, e.g. crop, clip, down-sample, decimate, or
+   otherwise reduce the complexity of the plot.
+
+#. Force the plot to be static only.
+   In docstrings, use the plot directive with the ``force_static`` option, e.g.:
+
+    .. code:: rst
+
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> # Your example code here
+           >>> # ...
+           >>> mesh = pv.sphere()
+           >>> mesh.plot()
+
+   In sphinx gallery examples use:
+
+   .. code:: python
+
+       # sphinx_gallery_start_ignore
+       PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+       # sphinx_gallery_end_ignore
+
+   to disable all plots in the example or use ``PYVISTA_GALLERY_FORCE_STATIC``
+   before the call to ``plot()`` or ``show()`` to force static for a single
+   plot. See :ref:`add_example_example` for more information.
+
+.. note::
+
+    Reducing the complexity of the plot is preferred as this will also
+    also likely reduce the processing times.
+
+.. seealso::
+
+    See `Documentation Image Regression Testing`_. for testing performed on
+    the static images generated by the plot directive.
 
 Controlling Cache for CI Documentation Build
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -915,7 +1038,7 @@ When using NumPy's random number generator (RNG) you should create an RNG at
 the beginning of your script and use this RNG in the rest of the script. Be
 sure to include a seed value. For example:
 
-.. code:: python
+.. code-block:: python
 
     import numpy as np
 
@@ -953,13 +1076,16 @@ of a full gallery example, add it to `pyvista/vtk-data <https://github.com/pyvis
 and follow the directions there. You will then need to add a new function to
 download the dataset in ``pyvista/examples/downloads.py``. This might be as easy as:
 
-.. code:: python
+.. code-block:: python
 
-   def download_my_new_mesh(load=True):
-       """Download my new mesh."""
-       return _download_dataset(_dataset_my_new_mesh, load=load)
+    def download_my_new_mesh(load=True):
+        """Download my new mesh."""
+        return _download_dataset(_dataset_my_new_mesh, load=load)
 
-    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader('mydata/my_new_mesh.vtk')
+
+    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader(
+        'mydata/my_new_mesh.vtk'
+    )
 
 Note that a separate dataset loading object, ``_dataset_my_new_mesh``, should
 first be defined outside of the function (with module scope), and the new
@@ -969,7 +1095,7 @@ with ``_dataset_``.
 
 This will enable:
 
-.. code::
+.. code-block::
 
    >>> from pyvista import examples
    >>> dataset = examples.download_my_new_mesh()
@@ -992,23 +1118,23 @@ to also include:
 
 For example:
 
-.. code:: python
+.. code-block:: python
 
-   def download_my_new_mesh(load=True):
-      """Download my new mesh.
+    def download_my_new_mesh(load=True):
+        """Download my new mesh.
 
-      Examples
-      --------
-      >>> from pyvista import examples
-      >>> dataset = examples.download_my_new_mesh()
-      >>> dataset.plot()
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> dataset = examples.download_my_new_mesh()
+        >>> dataset.plot()
 
-      .. seealso::
+        .. seealso::
 
-         :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
-             See this dataset in the Dataset Gallery for more info.
+           :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
+               See this dataset in the Dataset Gallery for more info.
 
-      """
+        """
 
 .. note::
 
@@ -1026,14 +1152,14 @@ datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest
 For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
 featuring two datasets of musical instruments, e.g.
 
-#.  :func:`pyvista.examples.download_guitar`
-#.  :func:`pyvista.examples.download_trumpet`
+#.  :func:`pyvista.examples.downloads.download_guitar`
+#.  :func:`pyvista.examples.downloads.download_trumpet`
 
 complete the following steps:
 
 #. Define a new carousel in ``doc/source/make_tables.py``, e.g.:
 
-    .. code:: python
+    .. code-block:: python
 
         class InstrumentCarousel(DatasetGalleryCarousel):
             """Class to generate a carousel of instrument dataset cards."""
@@ -1075,7 +1201,7 @@ complete the following steps:
    include the new generated ``<name>_carousel.rst`` file. E.g. to add the
    carousel as a new drop-down item, add the following:
 
-   .. code:: rst
+   .. code-block:: rst
 
       .. dropdown:: Instrument Datasets
          :name: instrument_gallery
@@ -1112,6 +1238,15 @@ delete the PR branch.
 Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
+
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+For PRs of branches coming from the main pyvista repository, the documentation
+is automatically deployed using `Netifly GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
+However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
+that contains a non-interactive subset of the documentation build. It typically weights
+500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
+``Build Documentation`` CI job.
 
 Branching Model
 ~~~~~~~~~~~~~~~
@@ -1170,7 +1305,7 @@ created the following will occur:
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
-    .. code:: bash
+    .. code-block:: bash
 
        cd doc
        make clean  # deletes the sphinx-gallery cache
@@ -1191,13 +1326,13 @@ created the following will occur:
     will be tagged with a ``vMAJOR.MINOR.0`` release. The release branch
     will not be deleted. Tag the release with:
 
-    .. code:: bash
+    .. code-block:: bash
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
 #.  Please check again that the tag has been created correctly and push the branch and tag.
 
-    .. code:: bash
+    .. code-block:: bash
 
        git push origin HEAD
        git push origin v$(python -c "import pyvista as pv; print(pv.__version__)")

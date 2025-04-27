@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import platform
-
 import numpy as np
 import pytest
 import scipy
@@ -14,23 +12,23 @@ from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
 
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
 
-
-@pytest.fixture()
+@pytest.fixture
 def actor():
     return pv.Plotter().add_mesh(pv.Plane())
 
 
-@pytest.fixture()
+@pytest.fixture
+def volume():
+    return pv.Plotter().add_volume(pv.Wavelet())
+
+
+@pytest.fixture
 def actor_from_multi_block():
     return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
 
 
-@pytest.fixture()
+@pytest.fixture
 def dummy_actor(actor):
     # Define prop3d-like class
     class DummyActor(_Prop3DMixin):
@@ -53,7 +51,7 @@ def dummy_actor(actor):
     return dummy_actor
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
@@ -72,15 +70,15 @@ def test_actor_init_empty():
     with pytest.raises(AttributeError):
         actor.not_an_attribute = None
 
-    assert actor.memory_address == actor.GetAddressAsString("")
+    assert actor.memory_address == actor.GetAddressAsString('')
 
     actor.user_matrix = None
     repr_ = repr(actor)
-    assert "User matrix:                Identity" in repr_
+    assert 'User matrix:                Identity' in repr_
 
     actor.user_matrix = np.eye(4) * 2
     repr_ = repr(actor)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_actor_from_argument():
@@ -101,25 +99,39 @@ def test_actor_from_plotter():
     assert 'Mapper' in repr(actor)
 
 
-def test_actor_copy_deep(actor):
-    actor_copy = actor.copy()
-    assert actor_copy is not actor
+@pytest.mark.parametrize('include_mapper', [True, False])
+@pytest.mark.parametrize(('prop3d', 'prop_attr'), [(pv.Volume, 'shade'), (pv.Actor, 'lighting')])
+def test_actor_copy_deep(prop3d, prop_attr, actor, volume, include_mapper):
+    obj = actor if prop3d is pv.Actor else volume
+    if include_mapper:
+        assert obj.mapper is not None
+    else:
+        obj.mapper = None
+        assert obj.mapper is None
 
-    assert actor_copy.prop is not actor.prop
-    actor_copy.prop.lighting = not actor_copy.prop.lighting
-    assert actor_copy.prop.lighting is not actor.prop.lighting
+    copied = obj.copy()
+    assert copied is not obj
+    assert copied.prop is not obj.prop
 
-    assert actor_copy.mapper is not actor.mapper
-    assert actor_copy.mapper.dataset is actor.mapper.dataset
-    actor_copy.mapper.dataset = None
-    assert actor.mapper.dataset is not None
+    setattr(copied.prop, prop_attr, not getattr(copied.prop, prop_attr))
+    assert getattr(copied.prop, prop_attr) is not getattr(obj.prop, prop_attr)
+
+    if include_mapper:
+        assert copied.mapper is not obj.mapper
+        assert copied.mapper.dataset is obj.mapper.dataset
+        copied.mapper.dataset = None
+        assert obj.mapper.dataset is not None
+    else:
+        assert copied.mapper is None
 
 
-def test_actor_copy_shallow(actor):
-    actor_copy = actor.copy(deep=False)
-    assert actor_copy is not actor
-    assert actor_copy.prop is actor.prop
-    assert actor_copy.mapper is actor.mapper
+@pytest.mark.parametrize('prop3d', [pv.Volume, pv.Actor])
+def test_actor_copy_shallow(prop3d, actor, volume):
+    obj = actor if prop3d is pv.Actor else volume
+    copied = obj.copy(deep=False)
+    assert copied is not obj
+    assert copied.prop is obj.prop
+    assert copied.mapper is obj.mapper
 
 
 def test_actor_mblock_copy_shallow(actor_from_multi_block):
@@ -130,7 +142,7 @@ def test_actor_mblock_copy_shallow(actor_from_multi_block):
     assert actor_copy.mapper.dataset is actor_from_multi_block.mapper.dataset
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_actor_texture(actor):
     texture = examples.download_masonry_texture()
     actor.texture = texture
@@ -250,7 +262,7 @@ def test_actor_center(klass, actor, dummy_actor):
 
 def test_actor_name(actor):
     actor.name = 1
-    assert actor._name == 1
+    assert actor._name == '1'
 
     with pytest.raises(ValueError, match='Name must be truthy'):
         actor.name = None
@@ -331,3 +343,18 @@ def test_convert_orientation_to_rotation_matrix(order):
     assert isinstance(actual_orientation, tuple)
     assert len(actual_orientation) == 3
     assert np.allclose(actual_orientation, orientation)
+
+
+@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+def test_transform_actor(actor, multiply_mode):
+    translation = pv.Transform().translate((1, 2, 3))
+    scaling = pv.Transform().scale(2)
+
+    expected = pv.Transform([translation, scaling], multiply_mode=multiply_mode)
+
+    actor1 = actor.transform(translation, multiply_mode=multiply_mode, inplace=True)
+    assert actor1 is actor
+    actor2 = actor1.transform(scaling, multiply_mode=multiply_mode, inplace=False)
+    assert actor2 is not actor1
+
+    assert np.allclose(actor2.user_matrix, expected.matrix)

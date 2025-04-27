@@ -8,7 +8,7 @@ from pyvista import _vtk
 KEY = 'Data'
 
 
-@pytest.fixture()
+@pytest.fixture
 def scalar_bars(sphere):
     sphere[KEY] = sphere.points[:, 2]
 

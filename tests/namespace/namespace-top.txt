@@ -49,6 +49,7 @@ Disc, <function Disc at 0x1641c0790>
 Dodecahedron, <function Dodecahedron at 0x1641c1040>
 Ellipse, <function Ellipse at 0x1641c0d30>
 EnSightReader, <class 'pyvista.utilities.reader.EnSightReader'>
+ExodusIIReader, <class 'pyvista.utilities.reader.ExodusIIReader'>
 ExplicitStructuredGrid, <class 'pyvista.core.pointset.ExplicitStructuredGrid'>
 FIGURE_PATH, None
 FLOAT_FORMAT, {:.3e}

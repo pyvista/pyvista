@@ -58,7 +58,7 @@ def load_ant():
     return _dataset_ant.load()
 
 
-_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)
+_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_airplane():
@@ -84,7 +84,7 @@ def load_airplane():
     return _dataset_airplane.load()
 
 
-_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)
+_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_sphere():
@@ -110,7 +110,7 @@ def load_sphere():
     return _dataset_sphere.load()
 
 
-_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)
+_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_uniform():
@@ -136,7 +136,7 @@ def load_uniform():
     return _dataset_uniform.load()
 
 
-_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)
+_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)  # type: ignore[arg-type]
 
 
 def load_rectilinear():
@@ -164,7 +164,7 @@ def load_rectilinear():
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
     rectfile,
-    read_func=pyvista.RectilinearGrid,
+    read_func=pyvista.RectilinearGrid,  # type: ignore[arg-type]
 )
 
 
@@ -193,7 +193,7 @@ def load_hexbeam():
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
     hexbeamfile,
-    read_func=pyvista.UnstructuredGrid,
+    read_func=pyvista.UnstructuredGrid,  # type: ignore[arg-type]
 )
 
 
@@ -291,7 +291,7 @@ def load_globe():
     return _dataset_globe.load()
 
 
-_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)
+_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_globe_texture():
@@ -319,7 +319,7 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pyvista.read_texture,
+    read_func=pyvista.read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -354,7 +354,7 @@ def load_spline():
 
     This example data was created with:
 
-    .. code:: python
+    .. code-block:: python
 
        >>> import numpy as np
        >>> import pyvista as pv
@@ -407,7 +407,7 @@ def load_random_hills():
 
     This example dataset was created with:
 
-    .. code:: python
+    .. code-block:: python
 
        >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
        >>> mesh = mesh.elevation()  # doctest:+SKIP
@@ -485,8 +485,8 @@ def _sphere_vectors_load_func() -> pyvista.PolyData:
     ).T
 
     # add and scale
-    sphere["vectors"] = vectors * 0.3
-    sphere.set_active_vectors("vectors")
+    sphere['vectors'] = vectors * 0.3
+    sphere.set_active_vectors('vectors')
     return sphere
 
 
@@ -526,28 +526,13 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
 def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
+    xi = np.arange(0.0, (ni + 1) * si, si)
+    yi = np.arange(0.0, (nj + 1) * sj, sj)
+    zi = np.arange(0.0, (nk + 1) * sk, sk)
 
-    xcorn = np.arange(0, (ni + 1) * si, si)
-    xcorn = np.repeat(xcorn, 2)
-    xcorn = xcorn[1:-1]
-    xcorn = np.tile(xcorn, 4 * nj * nk)
-
-    ycorn = np.arange(0, (nj + 1) * sj, sj)
-    ycorn = np.repeat(ycorn, 2)
-    ycorn = ycorn[1:-1]
-    ycorn = np.tile(ycorn, (2 * ni, 2 * nk))
-    ycorn = np.transpose(ycorn)
-    ycorn = ycorn.flatten()
-
-    zcorn = np.arange(0, (nk + 1) * sk, sk)
-    zcorn = np.repeat(zcorn, 2)
-    zcorn = zcorn[1:-1]
-    zcorn = np.repeat(zcorn, (4 * ni * nj))
-
-    corners = np.stack((xcorn, ycorn, zcorn))
-    corners = corners.transpose()
-
-    return pyvista.ExplicitStructuredGrid(dimensions, corners)
+    return pyvista.StructuredGrid(
+        *np.meshgrid(xi, yi, zi, indexing='ij')
+    ).cast_to_explicit_structured_grid()
 
 
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)
@@ -631,7 +616,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
     >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
-    See :ref:`plot_atomic_orbitals_example` for additional examples using
+    See :ref:`atomic_orbitals_example` for additional examples using
     this function.
 
     .. seealso::
@@ -651,16 +636,18 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
         from sympy.abc import theta
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
-        raise ImportError(
-            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',
-        ) from None
+        msg = '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+        raise ImportError(msg) from None
 
     if n < 1:
-        raise ValueError('`n` must be at least 1')
+        msg = '`n` must be at least 1'
+        raise ValueError(msg)
     if l not in range(n):
-        raise ValueError(f'`l` must be one of: {list(range(n))}')
+        msg = f'`l` must be one of: {list(range(n))}'
+        raise ValueError(msg)
     if m not in range(-l, l + 1):
-        raise ValueError(f'`m` must be one of: {list(range(-l, l + 1))}')
+        msg = f'`m` must be one of: {list(range(-l, l + 1))}'
+        raise ValueError(msg)
 
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
 
@@ -690,6 +677,17 @@ _dataset_hydrogen_orbital = _DatasetLoader(_hydrogen_orbital_load_func)
 def load_logo():
     """Load the PyVista logo as a :class:`pyvista.ImageData`.
 
+    .. note::
+
+        Alternative versions of the logo file are also available from the ``logo``
+        directory at https://github.com/pyvista/pyvista/. This includes
+        higher-resolution ``.png`` files and a vectorized ``.svg`` version.
+
+    .. versionchanged:: 0.45
+
+        The dimensions of the image is now ``1389 x 592``.
+        Previously, it was ``1920 x 718``.
+
     Returns
     -------
     pyvista.ImageData
@@ -699,6 +697,9 @@ def load_logo():
     --------
     >>> from pyvista import examples
     >>> image = examples.load_logo()
+    >>> image.dimensions
+    (1389, 592, 1)
+
     >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
@@ -742,9 +743,7 @@ def load_frog_tissues():
     >>> clim = data.get_data_range()  # Set color bar limits to match data
     >>> cmap = 'glasbey'  # Use a categorical colormap
     >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
+    >>> opacity = 'foreground'  # Make foreground opaque, background transparent
     >>> opacity_unit_distance = 1
 
     Set plotting resolution to half the image's spacing
