@@ -119,6 +119,7 @@ pl.add_mesh(mesh)
 pl.add_actor(axes)
 pl.show()
 
+# %%
 # Axes Widgets
 # ~~~~~~~~~~~~
 # Any actor can also be used as an axes orientation widget.
