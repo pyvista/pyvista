@@ -114,7 +114,7 @@ docs = [
   'jupyterlab==4.3.6',
   'lxml==5.3.2',
   'meshio==5.3.5',
-  'mypy-extensions==1.0.0',
+  'mypy-extensions==1.1.0',
   'mypy==1.15.0',
   'numpydoc==1.8.0',
   'osmnx==2.0.2',
