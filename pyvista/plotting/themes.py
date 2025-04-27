@@ -1902,7 +1902,7 @@ class Theme(_ThemeConfig):
         will be interpolated across the topology of the dataset which is
         more accurate.
 
-        See also :ref:`interpolate_before_mapping_example`.
+        See also :ref:`interpolate_before_map_example`.
 
         Examples
         --------

@@ -5,6 +5,8 @@ Create a GIF Movie of a Static Object with a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generate a gif movie of a Hopf torus with a moving colormap,
 by updating the scalars.
+This example uses :meth:`~pyvista.Plotter.open_gif` and
+:meth:`~pyvista.Plotter.write_frame` to create the gif.
 
 """
 

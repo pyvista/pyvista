@@ -863,6 +863,11 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
 
+        See Also
+        --------
+        :ref:`create_truss_example`
+            Example that uses ``render_lines_as_tubes``.
+
         Examples
         --------
         Get the default line rendering and visualize it.

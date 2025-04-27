@@ -5,6 +5,10 @@ Moving Isovalue
 ~~~~~~~~~~~~~~~
 
 Make an animation of an isovalue through a volumetric dataset
+such as :func:`~pyvista.examples.downloads.download_brain`.
+This example uses :meth:`~pyvista.Plotter.open_gif` and
+:meth:`~pyvista.Plotter.write_frame` to create the animation.
+
 """
 
 from __future__ import annotations
