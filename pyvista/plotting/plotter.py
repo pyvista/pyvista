@@ -5759,11 +5759,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         label_actor = _vtk.vtkActor2D()
         label_actor.SetMapper(label_mapper)
         self.add_actor(
-            label_actor,
+            label_actor,  # type: ignore[arg-type]
             reset_camera=False,
             name=f'{name}-labels',
             pickable=False,
-            render=render,  # type: ignore[arg-type]
+            render=render,
         )
         return label_actor
 
