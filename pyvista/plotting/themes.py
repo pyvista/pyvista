@@ -53,7 +53,6 @@ from .tools import parse_font_family
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Literal
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.jupyter import JupyterBackendOptions

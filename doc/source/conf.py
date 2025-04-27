@@ -300,6 +300,12 @@ nitpick_ignore_regex = [
     (r'py:.*', 'ScalarBarArgs'),
     (r'py:.*', 'Silhouette'),
     (r'py:.*', 'BackfaceParams'),
+    (r'py:.*', 'CullingOptions'),
+    (r'py:.*', 'OpacityOptions'),
+    (r'py:.*', 'FontFamilyOptions'),
+    (r'py:.*', 'HorizontalOptions'),
+    (r'py:.*', 'VerticalOptions'),
+    (r'py:.*', 'JupyterBackendOptions'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
