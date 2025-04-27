@@ -236,7 +236,7 @@ jobs:
           cache: "pip"
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@v4
 
       - name: Install PyVista test dependencies
         run: pip install .[test]
