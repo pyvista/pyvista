@@ -283,110 +283,110 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 
-exclude = [  # don't report on objects that match any of these regex
-    '\.BasePlotter$',  # Issue with class parameter documentation
-    '\.Plotter$',  # Issue with class parameter documentation
-    '\.WidgetHelper$',
-    '\.PickingHelper$',
-    '\.from_dict$',
-    '\.to_dict$',
-    '\.__init__$',
-    '\.__new__$',
-    '\.__getattr__$',
-    '\.keys$',
-    '\.values$',
-    '\.items$',
-    '\._.*$',  # Ignore anything that's private (e.g., starts with _)
-    # parm of abstract classes
-    '\._BaseMapper$',
-    '\.CompositeFilters$',
-    '\.DataObject$',
-    '\.DataSet$',
-    '\.DataSetFilters$',
-    '\.ExplicitStructuredGrid$',
-    '\.Grid$',
-    '\.MultiBlock$',
-    '\.PartitionedDataSet$',
-    '\.PartitionedDataSetCollection$',
-    '\.PointGrid$',
-    '\.PointSet$',
-    '\.PolyDataFilters$',
-    '\.RectilinearGrid$',
-    '\.StructuredGrid$',
-    '\.Table$',
-    '\.Table\.save$',
-    '\.ImageData$',
-    '\.ImageDataFilters$',
-    '\.UnstructuredGrid$',
-    '\.UnstructuredGridFilters$',
-    # classes inherit from BaseReader
-    '\.*Reader(\.|$)',
-    # internal
-    '\.Renderer$',
-    # deprecated
-    '\.boolean_add$',
-    '\.boolean_cut$',
-    '\.add_field_array$',
-    '\.DataSetAttributes\.append$',
-    # will be removed or refactored
-    '^pv_pythreejs\..*$',
-    '^pv_ipygany\..*$',
-    '^notebook\..*$',
-    # Documentation extensions or utilities
-    '^viewer_directive\..*$',
-    '^plot_directive\..*$',
-    '^coverage\..*$',
-    '\.pv_html_page_context$',
-    # Internal
-    '^observers\..*$',
-    # methods we probably should make private
-    '\.store_click_position$',
-    '\.store_mouse_position$',
-    '\.fly_to_mouse_position$',
-    '\.key_press_event$',
-    '\.left_button_down$',
-    # MISC
-    '\.ActiveArrayInfo$',
-    '\.CellType$',
-    '\.DataObject\.copy_meta_from$',
-    '\.FieldAssociation$',
-    '\.InterpolationType$',
-    '\.RepresentationType$',
-    '\.ElementType$',
-    '\.MultiBlock\.copy_meta_from$',
-    # wraps
-    '\.Plotter\.enable_depth_peeling$',
-    '\.add_scalar_bar$',
-    # called from inherited
-    '\.Table\.copy_meta_from$',
-    # Type alias
-    '\.ColorLike$',
-    '\.Chart$',
-    '\.ArrayLike$',
-    '\.MatrixLike$',
-    '\.VectorLike$',
-    '\.TransformLike$',
-    '\.BoundsLike$',
-    '\.CellsLike$',
-    '\.CellsArrayLike$',
-    '\.RotationLike$',
-    # PointSet *args and **kwargs for wrapped parameters
-    '\.PointSet(\.|$)',
-    # Mixin methods from collections.abc
-    '\.MultiBlock\.clear$',
-    '\.MultiBlock\.count$',
-    '\.MultiBlock\.index$',
-    '\.MultiBlock\.remove$',
-    # Enumerations
-    '\.Plot3DFunctionEnum$',
-    # VTK methods
-    '\.override$',
-    # trame
-    '\.Viewer(\.|$)',
-    '\.PyVistaRemoteView(\.|$)',
-    '\.PyVistaLocalView(\.|$)',
-    '\.PyVistaRemoteLocalView(\.|$)',
-    '\.Texture(\.|$)',  # awaiting Texture refactor
+exclude = [ # don't report on objects that match any of these regex
+  '\.BasePlotter$',   # Issue with class parameter documentation
+  '\.PickingHelper$',
+  '\.Plotter$',       # Issue with class parameter documentation
+  '\.WidgetHelper$',
+  '\._.*$',           # Ignore anything that's private (e.g., starts with _)
+  '\.__getattr__$',
+  '\.__init__$',
+  '\.__new__$',
+  '\.from_dict$',
+  '\.items$',
+  '\.keys$',
+  '\.to_dict$',
+  '\.values$',
+  # parm of abstract classes
+  '\.CompositeFilters$',
+  '\.DataObject$',
+  '\.DataSet$',
+  '\.DataSetFilters$',
+  '\.ExplicitStructuredGrid$',
+  '\.Grid$',
+  '\.ImageData$',
+  '\.ImageDataFilters$',
+  '\.MultiBlock$',
+  '\.PartitionedDataSet$',
+  '\.PartitionedDataSetCollection$',
+  '\.PointGrid$',
+  '\.PointSet$',
+  '\.PolyDataFilters$',
+  '\.RectilinearGrid$',
+  '\.StructuredGrid$',
+  '\.Table$',
+  '\.Table\.save$',
+  '\.UnstructuredGrid$',
+  '\.UnstructuredGridFilters$',
+  '\._BaseMapper$',
+  # classes inherit from BaseReader
+  '\.*Reader(\.|$)',
+  # internal
+  '\.Renderer$',
+  # deprecated
+  '\.DataSetAttributes\.append$',
+  '\.add_field_array$',
+  '\.boolean_add$',
+  '\.boolean_cut$',
+  # will be removed or refactored
+  '^notebook\..*$',
+  '^pv_ipygany\..*$',
+  '^pv_pythreejs\..*$',
+  # Documentation extensions or utilities
+  '\.pv_html_page_context$',
+  '^coverage\..*$',
+  '^plot_directive\..*$',
+  '^viewer_directive\..*$',
+  # Internal
+  '^observers\..*$',
+  # methods we probably should make private
+  '\.fly_to_mouse_position$',
+  '\.key_press_event$',
+  '\.left_button_down$',
+  '\.store_click_position$',
+  '\.store_mouse_position$',
+  # MISC
+  '\.ActiveArrayInfo$',
+  '\.CellType$',
+  '\.DataObject\.copy_meta_from$',
+  '\.ElementType$',
+  '\.FieldAssociation$',
+  '\.InterpolationType$',
+  '\.MultiBlock\.copy_meta_from$',
+  '\.RepresentationType$',
+  # wraps
+  '\.Plotter\.enable_depth_peeling$',
+  '\.add_scalar_bar$',
+  # called from inherited
+  '\.Table\.copy_meta_from$',
+  # Type alias
+  '\.ArrayLike$',
+  '\.BoundsLike$',
+  '\.CellsArrayLike$',
+  '\.CellsLike$',
+  '\.Chart$',
+  '\.ColorLike$',
+  '\.MatrixLike$',
+  '\.RotationLike$',
+  '\.TransformLike$',
+  '\.VectorLike$',
+  # PointSet *args and **kwargs for wrapped parameters
+  '\.PointSet(\.|$)',
+  # Mixin methods from collections.abc
+  '\.MultiBlock\.clear$',
+  '\.MultiBlock\.count$',
+  '\.MultiBlock\.index$',
+  '\.MultiBlock\.remove$',
+  # Enumerations
+  '\.Plot3DFunctionEnum$',
+  # VTK methods
+  '\.override$',
+  # trame
+  '\.PyVistaLocalView(\.|$)',
+  '\.PyVistaRemoteLocalView(\.|$)',
+  '\.PyVistaRemoteView(\.|$)',
+  '\.Texture(\.|$)',                # awaiting Texture refactor
+  '\.Viewer(\.|$)',
 ]
 
 [tool.ruff]

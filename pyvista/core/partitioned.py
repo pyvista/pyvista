@@ -261,7 +261,7 @@ class PartitionedDataSetCollection(
     """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""
 
     if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {".vtpc": _vtk.vtkXMLPartitionedDataSetCollectionWriter}
+        _WRITERS = {'.vtpc': _vtk.vtkXMLPartitionedDataSetCollectionWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSetCollection."""
@@ -290,12 +290,10 @@ class PartitionedDataSetCollection(
                 self.SetPartitionedDataSet(i, wrap(partition))
 
     @overload
-    def __getitem__(self, index: int) -> Optional[PartitionedDataSet]:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: int) -> Optional[PartitionedDataSet]: ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> PartitionedDataSetCollection:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: slice) -> PartitionedDataSetCollection: ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a partition by its index."""
@@ -303,18 +301,19 @@ class PartitionedDataSetCollection(
             return PartitionedDataSetCollection([self[i] for i in range(self.n_pdatasets)[index]])
         else:
             if index < -self.n_pdatasets or index >= self.n_pdatasets:
-                raise IndexError(f'index ({index}) out of range for this dataset.')
+                msg = f'index ({index}) out of range for this dataset.'
+                raise IndexError(msg)
             if index < 0:
                 index = self.n_pdatasets + index
             return wrap(self.GetPartitionedDataSet(index))
 
     @overload
-    def __setitem__(self, index: int, data: Optional[PartitionedDataSet]):  # noqa: D105
-        ...  # pragma: no cover
+    def __setitem__(self, index: int, data: Optional[PartitionedDataSet]): ...  # pragma: no cover
 
     @overload
-    def __setitem__(self, index: slice, data: Iterable[Optional[PartitionedDataSet]]):  # noqa: D105
-        ...  # pragma: no cover
+    def __setitem__(
+        self, index: slice, data: Iterable[Optional[PartitionedDataSet]]
+    ): ...  # pragma: no cover
 
     def __setitem__(
         self,
@@ -327,7 +326,8 @@ class PartitionedDataSetCollection(
                 self.SetPartitionedDataSet(i, d)
         else:
             if index < -self.n_pdatasets or index >= self.n_pdatasets:
-                raise IndexError(f'index ({index}) out of range for this dataset.')
+                msg = f'index ({index}) out of range for this dataset.'
+                raise IndexError(msg)
             if index < 0:
                 index = self.n_pdatasets + index
             self.SetPartitionedDataSet(index, data)
@@ -344,6 +344,7 @@ class PartitionedDataSetCollection(
         -------
         int
             The number of partitioned datasets.
+
         """
         return self.GetNumberOfPartitionedDataSets()
 
@@ -359,6 +360,7 @@ class PartitionedDataSetCollection(
         ----------
         dataset : pyvista.PartitionedDataSet
             PartitionedDataSet to append to this dataset collection.
+
         """
         index = self.n_pdatasets
         self.n_pdatasets += 1
