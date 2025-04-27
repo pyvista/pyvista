@@ -1177,9 +1177,9 @@ class ImageDataFilters(DataSetFilters):
 
             .. warning::
 
-                Enabling this option is likely to generate surfaces with normals
+                Enabling this option is `likely` to generate surfaces with normals
                 pointing outward when ``pad_background`` is ``True`` and
-                ``boundary_style`` is ``True`` (the default). However, this is
+                ``boundary_style`` is ``'external'`` (the default). However, this is
                 not guaranteed if the generated surface is not closed or if internal
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
@@ -3124,7 +3124,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
 
         Define a custom plotter to show the image. Although the image data is defined
-        as point data, we use uses :meth:`points_to_cells` to display the image as
+        as point data, we use :meth:`points_to_cells` to display the image as
         :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
         instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
@@ -3262,7 +3262,7 @@ class ImageDataFilters(DataSetFilters):
 
         This time the input and output bounds match without any further processing.
         Like before, the dimensions have doubled; unlike before, however, the spacing is
-        not halved, but is instead smaller than half which is necessaru to ensure the
+        not halved, but is instead smaller than half which is necessary to ensure the
         bounds remain the same. Also unlike before, the origin is unaffected:
 
         >>> image.origin

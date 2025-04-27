@@ -96,9 +96,15 @@ class Grid(DataSet):
 
         Examples
         --------
-        Get the dimensionality of a uniform grid with dimensions ``(1, 2, 3)``.
+        Get the dimensionality of a 2D uniform grid.
 
         >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(1, 2, 3))
+        >>> grid.dimensionality
+        2
+
+        Get the dimensionality of a 3D uniform grid.
+
         >>> grid = pv.ImageData(dimensions=(2, 3, 4))
         >>> grid.dimensionality
         3
@@ -963,6 +969,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         (0, 0, 0)
 
         The offset defines the minimum extent.
+
         >>> grid.extent
         (0, 9, 0, 9, 0, 9)
 
