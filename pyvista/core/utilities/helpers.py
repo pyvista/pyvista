@@ -10,7 +10,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
-from typing_extensions import TypeGuard
+from typing_extensions import TypeIs
 
 import pyvista
 from pyvista.core import _validation
@@ -253,7 +253,7 @@ def wrap(
     raise NotImplementedError(msg)
 
 
-def is_pyvista_dataset(obj: Any) -> TypeGuard[pyvista.DataSet | pyvista.MultiBlock]:
+def is_pyvista_dataset(obj: Any) -> TypeIs[pyvista.DataSet | pyvista.MultiBlock]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters

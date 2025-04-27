@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
+    from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 def handle_plotter(
     plotter: Plotter,
-    backend: Literal['static', 'client', 'server', 'trame', 'html', 'none'] | None = None,
+    backend: JupyterBackendOptions | None = None,
     screenshot: str | Path | io.BytesIO | bool | None = None,
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:

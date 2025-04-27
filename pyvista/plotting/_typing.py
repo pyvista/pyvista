@@ -40,6 +40,28 @@ ColorLike = Union[
 # when it is put beneath the definition somehow?
 ColorLike.__doc__ = 'Any object convertible to a :class:`Color`.'
 Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
+FontFamilyOptions = Literal['courier', 'times', 'arial']
+OpacityOptions = Literal[
+    'linear',
+    'linear_r',
+    'geom',
+    'geom_r',
+    'sigmoid',
+    'sigmoid_1',
+    'sigmoid_2',
+    'sigmoid_3',
+    'sigmoid_4',
+    'sigmoid_5',
+    'sigmoid_6',
+    'sigmoid_7',
+    'sigmoid_8',
+    'sigmoid_9',
+    'sigmoid_10',
+    'sigmoid_15',
+    'sigmoid_20',
+    'foreground',
+]
+CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 
 
 class BackfaceParams(TypedDict, total=False):

@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
     from IPython.display import IFrame
 
+    from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
     from pyvista.trame.ui.vuetify2 import Viewer
 
@@ -274,7 +275,7 @@ def initialize(
 
 def show_trame(
     plotter: Plotter,
-    mode: Literal['static', 'client', 'server', 'trame', 'html', 'none'] | None = None,
+    mode: JupyterBackendOptions | None = None,
     name: str | None = None,
     server_proxy_enabled: bool | None = None,
     server_proxy_prefix: str | None = None,

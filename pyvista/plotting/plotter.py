@@ -24,7 +24,6 @@ from threading import Thread
 import time
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import Union
 from typing import cast
 import uuid
 import warnings
@@ -34,6 +33,7 @@ import numpy as np
 import scooby
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -101,13 +101,19 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting import Light
     from pyvista.plotting._typing import BackfaceParams
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import CullingOptions
+    from pyvista.plotting._typing import FontFamilyOptions
+    from pyvista.plotting._typing import OpacityOptions
     from pyvista.plotting._typing import ScalarBarArgs
     from pyvista.plotting._typing import Silhouette
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
+    from pyvista.plotting.text import HorizontalOptions
+    from pyvista.plotting.text import VerticalOptions
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
 
@@ -1432,7 +1438,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.add_actor)
     def add_actor(
         self, *args, **kwargs
-    ) -> tuple[Actor | _vtk.vtkActor, _vtk.vtkProperty]:  # numpydoc ignore=PR01,RT01
+    ) -> tuple[Actor, _vtk.vtkProperty]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
@@ -2525,7 +2531,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power: float | None = None,
         nan_color: ColorLike | None = None,
         nan_opacity: float = 1.0,
-        culling: bool | Literal['b', 'back', 'backface', 'f', 'front', 'frontface'] | None = None,
+        culling: bool | CullingOptions | None = None,
         rgb: bool | None = None,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
@@ -2543,7 +2549,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_vertices: bool | None = None,
         edge_opacity: float | None = None,
         **kwargs,
-    ) -> tuple[Actor | _vtk.vtkActor, CompositePolyDataMapper]:
+    ) -> tuple[Actor, CompositePolyDataMapper]:
         """Add a composite dataset to the plotter.
 
         Parameters
@@ -3022,23 +3028,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_mesh(
         self,
-        mesh: NumpyArray[float]
-        | pyvista.DataSet
-        | pyvista.MultiBlock
-        | pyvista.PointSet
-        | _vtk.vtkAlgorithm,
+        mesh: NumpyArray[float] | pyvista.DataSet | pyvista.MultiBlock | _vtk.vtkAlgorithm,
         color: ColorLike | None = None,
         style: Literal['surface', 'wireframe', 'points', 'points_gaussian'] | None = None,
-        scalars: str | pyvista.pyvista_ndarray | None = None,
+        scalars: str | NumpyArray[float] | None = None,
         clim: Sequence[float] | None = None,
         show_edges: bool | None = None,
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
-        opacity: float
-        | Literal['linear', 'linear_r', 'geom', 'geom_r']
-        | Sequence[float]
-        | None = None,
+        opacity: float | OpacityOptions | Sequence[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
@@ -3084,7 +3083,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_vertices: bool | None = None,
         edge_opacity: float | None = None,
         **kwargs,
-    ) -> Actor | _vtk.vtkActor:
+    ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -3553,7 +3552,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
-            mesh = wrap(mesh)
+            mesh = wrap(mesh)  # type: ignore[unreachable]
             if not is_pyvista_dataset(mesh):
                 msg = f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
                 raise TypeError(msg)
@@ -3564,16 +3563,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mesh, algo = algorithm_to_mesh_handler(algo)
             else:
                 mesh = mesh.cast_to_polydata(deep=False)
-        elif isinstance(mesh, pyvista.MultiBlock):
-            if algo is not None:
+        elif isinstance(mesh, pyvista.MultiBlock):  # type: ignore[unreachable]
+            if algo is not None:  # type: ignore[unreachable]
                 msg = 'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
                 raise TypeError(msg)
-            if not isinstance(opacity, (float, int, type(None))):
-                msg = f'`opacity` must be a float, int or None type, not ({type(opacity)})'
-                raise TypeError(msg)
-            if not isinstance(scalars, (str, type(None))):
-                msg = f'`scalars` must be a string or None type for MultiBlock mesh, not ({type(scalars)})'
-                raise TypeError(msg)
+            _validation.check_instance(opacity, (float, int, type(None)), name='opacity')
+            _validation.check_instance(scalars, (str, type(None)), name='scalars')
             actor, _ = self.add_composite(
                 mesh,
                 color=color,
@@ -3627,7 +3622,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # active, it doesn't modify the original input mesh.
             # We ignore `copy_mesh` if the input is an algorithm
             mesh = mesh.copy(deep=False)
-        assert isinstance(mesh, (pyvista.DataSet, pyvista.PointSet))
+        mesh = cast('pyvista.DataSet', mesh)
 
         # Parse arguments
         (
@@ -3684,9 +3679,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
                 silhouette_actor = self.add_silhouette(algo or mesh)
-            silhouette_actor.user_matrix = user_matrix
+            silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
 
-        assert isinstance(scalar_bar_args, dict)
+        scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Make sure scalars components are not vectors/tuples
@@ -3751,12 +3746,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if rgb:
             show_scalar_bar = False
-            assert isinstance(scalars, np.ndarray)
+            scalars = cast('NumpyArray[float]', scalars)
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                 msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
                 raise ValueError(msg)
 
-        assert isinstance(mesh, (pyvista.DataSet, pyvista.PointSet, pyvista.PolyData))
+        mesh = cast('pyvista.DataSet | pyvista.PolyData', mesh)
         if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
             msg = 'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
@@ -3938,9 +3933,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _add_legend_label(
         self,
-        actor: Actor | _vtk.vtkActor,
+        actor: Actor,
         label: str,
-        scalars: str | pyvista.pyvista_ndarray | None,
+        scalars: str | NumpyArray[float] | None,
         color: Color,
     ) -> None:
         """Add a legend label based on an actor and its scalars."""
@@ -3971,27 +3966,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalars: str | NumpyArray[float] | None = None,
         clim: float | tuple[float, float] | None = None,
         resolution: VectorLike[float] | None = None,
-        opacity: Literal[
-            'linear',
-            'linear_r',
-            'geom',
-            'geom_r',
-            'sigmoid',
-            'sigmoid_1',
-            'sigmoid_2',
-            'sigmoid_3',
-            'sigmoid_4',
-            'sigmoid_5',
-            'sigmoid_6',
-            'sigmoid_7',
-            'sigmoid_8',
-            'sigmoid_9',
-            'sigmoid_10',
-            'sigmoid_15',
-            'sigmoid_20',
-            'foreground',
-        ]
-        | NumpyArray[float] = 'linear',
+        opacity: OpacityOptions | NumpyArray[float] = 'linear',
         n_colors: int = 256,
         cmap: str | list[str] | pyvista.LookupTable | None = None,
         flip_scalars: bool = False,
@@ -3999,7 +3974,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         name: str | None = None,
         ambient: float | None = None,
         categories: bool | int = False,
-        culling: Literal['front', 'back'] | bool = False,
+        culling: CullingOptions | bool = False,
         multi_colors: bool = False,
         blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = 'composite',
         mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart'] | None = None,
@@ -4017,7 +3992,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         user_matrix: NumpyArray[float] | _vtk.vtkMatrix4x4 | None = None,
         log_scale: bool = False,
         **kwargs,
-    ) -> Actor | _vtk.vtkActor | list[Actor]:
+    ) -> Actor | list[Actor]:
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4317,7 +4292,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()
 
         if culling is True:
-            culling = 'backface'  # type: ignore[assignment]
+            culling = 'backface'
 
         if mapper is None:
             # Default mapper choice. Overridden later if UnstructuredGrid
@@ -4337,13 +4312,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     msg = 'Invalid resolution dimensions.'
                     raise ValueError(msg)
                 volume.spacing = resolution  # type: ignore[assignment]
-            else:
-                # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
-                #   to remove the need to cast the type here
-                volume = cast('Union[pyvista.MultiBlock, pyvista.DataSet]', wrap(volume))
-                if not is_pyvista_dataset(volume):
-                    msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'
-                    raise TypeError(msg)
+            _validation.check_instance(volume, (pyvista.DataSet, pyvista.MultiBlock), name='volume')
         else:
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
@@ -4582,7 +4551,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity: float | None = None,
         feature_angle: float | None = None,
         decimate: float | None = None,
-    ) -> Actor | _vtk.vtkActor:
+    ) -> Actor:
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
@@ -5094,7 +5063,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         | None = 'upper_left',
         font_size: float | None = 18,
         color: ColorLike | None = None,
-        font: Literal['courier', 'times', 'arial'] | None = None,
+        font: FontFamilyOptions | None = None,
         shadow: bool = False,
         name: str | None = None,
         viewport: bool = False,
@@ -5575,13 +5544,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_point_labels(
         self,
-        points: Sequence[float] | NumpyArray[float] | pyvista.DataSet | _vtk.vtkAlgorithm,
+        points: MatrixLike[float] | pyvista.DataSet | _vtk.vtkAlgorithm,
         labels: list[str | int] | str,
         italic: bool = False,
         bold: bool = True,
         font_size: float | None = None,
         text_color: ColorLike | None = None,
-        font_family: Literal['courier', 'times', 'arial'] | None = None,
+        font_family: FontFamilyOptions | None = None,
         font_file: str | None = None,
         shadow: bool = False,
         show_points: bool = True,
@@ -5599,8 +5568,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera: bool | None = None,
         always_visible: bool = False,
         render: bool = True,
-        justification_horizontal: Literal['left', 'center', 'right'] | None = None,
-        justification_vertical: Literal['bottom', 'center', 'top'] | None = None,
+        justification_horizontal: HorizontalOptions | None = None,
+        justification_vertical: VerticalOptions | None = None,
         background_color: Color | None = None,
         background_opacity: Color | None = None,
     ) -> _vtk.vtkActor2D:
@@ -5919,7 +5888,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not is_pyvista_dataset(points):
-            points, _ = _coerce_pointslike_arg(points, copy=False)  # type: ignore[arg-type]
+            points, _ = _coerce_pointslike_arg(points, copy=False)
         if not isinstance(labels, (str, list)):
             msg = 'labels must be a string name of the scalars array to use or list of scalars'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -5940,7 +5909,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points: NumpyArray[float] | pyvista.DataSet,
         style: Literal['points', 'points_gaussian'] = 'points',
         **kwargs,
-    ) -> Actor | _vtk.vtkActor:
+    ) -> Actor:
         """Add points to a mesh.
 
         Parameters
@@ -5999,7 +5968,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_arrows(
         self, cent: NumpyArray[float], direction: NumpyArray[float], mag: float = 1, **kwargs
-    ) -> Actor | _vtk.vtkActor:
+    ) -> Actor:
         """Add arrows to the plotter.
 
         Parameters
@@ -6428,7 +6397,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
-            path = pyvista.PolyData(path)
+            path = pyvista.PolyData(path)  # type: ignore[unreachable]
         points = path.points
 
         # Make sure the whole scene is visible
@@ -6940,8 +6909,7 @@ class Plotter(BasePlotter):
         screenshot: str | Path | io.BytesIO | bool = False,
         return_img: bool = False,
         cpos: CameraPosition | None = None,
-        jupyter_backend: Literal['static', 'client', 'server', 'trame', 'html', 'none']
-        | None = None,
+        jupyter_backend: JupyterBackendOptions | None = None,
         return_viewer: bool = False,
         return_cpos: bool | None = None,
         before_close_callback: Callable[[Plotter], None] | None = None,
@@ -7268,7 +7236,7 @@ class Plotter(BasePlotter):
         title: str,
         font_size: float = 18,
         color: ColorLike | None = None,
-        font: Literal['courier', 'times', 'arial'] | None = None,
+        font: FontFamilyOptions | None = None,
         shadow: bool = False,
     ) -> pyvista.CornerAnnotation | pyvista.Text:
         """Add text to the top center of the plot.

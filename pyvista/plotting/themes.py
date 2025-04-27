@@ -56,6 +56,7 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from pyvista.core._typing_core import VectorLike
+    from pyvista.jupyter import JupyterBackendOptions
 
     from ._typing import ColorLike
 
@@ -1839,7 +1840,7 @@ class Theme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend: Literal['static', 'client', 'server', 'trame', 'html', 'none'] = (
+        self._jupyter_backend: JupyterBackendOptions = (
             os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')  # type: ignore[assignment]
         )
         self._trame = _TrameConfig()
@@ -2065,7 +2066,7 @@ class Theme(_ThemeConfig):
     @property
     def jupyter_backend(
         self,
-    ) -> Literal['static', 'client', 'server', 'trame', 'html', 'none']:  # numpydoc ignore=RT01
+    ) -> JupyterBackendOptions:  # numpydoc ignore=RT01
         """Return or set the jupyter notebook plotting backend.
 
         Jupyter backend to use when plotting.  Must be one of the
