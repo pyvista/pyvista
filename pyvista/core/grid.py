@@ -96,9 +96,15 @@ class Grid(DataSet):
 
         Examples
         --------
-        Get the dimensionality of a uniform grid with dimensions ``(1, 2, 3)``.
+        Get the dimensionality of a 2D uniform grid.
 
         >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(1, 2, 3))
+        >>> grid.dimensionality
+        2
+
+        Get the dimensionality of a 3D uniform grid.
+
         >>> grid = pv.ImageData(dimensions=(2, 3, 4))
         >>> grid.dimensionality
         3
@@ -311,7 +317,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
         if TYPE_CHECKING:
-            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+            out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
     @property  # type: ignore[explicit-override, override]
@@ -553,6 +559,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         to the image's :attr:`origin`.
 
         .. versionadded:: 0.45
+
+    See Also
+    --------
+    :ref:`create_uniform_grid_example`
 
     Examples
     --------
@@ -963,6 +973,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         (0, 0, 0)
 
         The offset defines the minimum extent.
+
         >>> grid.extent
         (0, 9, 0, 9, 0, 9)
 

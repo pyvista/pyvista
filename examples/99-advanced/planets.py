@@ -4,7 +4,8 @@
 3D Earth and Celestial Bodies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Plot the solar system in PyVista.
+Plot the solar system in PyVista using datasets from the
+:mod:`~pyvista.examples.planets` module.
 
 This example is inspired by `planet3D-MATLAB
 <https://github.com/tamaskis/planet3D-MATLAB>`_.
@@ -80,9 +81,9 @@ neptune.translate((-700000.0, 0.0, 0.0), inplace=True)
 
 # Add planets to Plotter.
 pl = pyvista.Plotter(lighting='none')
-cubemap = examples.download_cubemap_space_16k()
+cubemap = examples.download_cubemap_space_4k()
 _ = pl.add_actor(cubemap.to_skybox())
-pl.set_environment_texture(cubemap, True)
+pl.set_environment_texture(cubemap, True, resample=1 / 64)
 pl.add_light(light)
 pl.add_mesh(mercury, texture=mercury_texture, smooth_shading=True)
 pl.add_mesh(venus, texture=venus_texture, smooth_shading=True)

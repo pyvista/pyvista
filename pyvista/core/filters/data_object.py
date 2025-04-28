@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import functools
 import itertools
+import re
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -26,6 +28,8 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import RectilinearGrid
@@ -33,12 +37,16 @@ if TYPE_CHECKING:
     from pyvista import StructuredGrid
     from pyvista import TransformLike
     from pyvista import VectorLike
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
+
+    points: pyvista_ndarray
 
     @overload
     def transform(  # type: ignore[misc]
@@ -85,7 +93,7 @@ class DataObjectFilters:
             this conversion always applies to the input mesh.
 
         .. warning::
-            Shear transformations are not supported for ':class:`~pyvista.ImageData`.
+            Shear transformations are not supported for :class:`~pyvista.ImageData`.
             If present, any shear component is removed by the filter.
 
         .. note::
@@ -195,7 +203,7 @@ class DataObjectFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+            self.points = self.points.astype(np.float32)  # type: ignore[assignment]
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
@@ -1352,37 +1360,49 @@ class DataObjectFilters:
             # Add Cell IDs to all blocks and keep track of scalars to restore later
             active_scalars_info = []
             if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[arg-type]
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
             else:
-                blocks = [self]  # type: ignore[assignment]
+                blocks = [self]
             for block in blocks:
-                active_scalars_info.append(block.active_scalars_info)  # type: ignore[union-attr]
-                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)  # type: ignore[union-attr]
+                active_scalars_info.append(block.active_scalars_info)
+                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
 
-        if isinstance(self, pyvista.PolyData):
+        # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
+        # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
+        apply_vtk_94x_patch = (
+            isinstance(self, pyvista.PointSet)
+            and pyvista.vtk_version_info >= (9, 4)
+            and pyvista.vtk_version_info < (9, 5)
+        )
+        mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
+
+        if isinstance(mesh_in, pyvista.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
+        alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar, 'Clipping with Function')
 
+        def _maybe_cast_to_point_set(in_):
+            return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
+
         if return_clipped:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
                 a, b = extract_crinkle_cells(self, a, b, active_scalars_info)
-            return a, b
+            return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
             clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
-        return clipped
+        return _maybe_cast_to_point_set(clipped)
 
     def clip(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -1921,7 +1941,7 @@ class DataObjectFilters:
         elif isinstance(axis, str):
             ax_str = axis.lower()
             if ax_str in labels:
-                ax_label = cast(XYZLiteral, ax_str)
+                ax_label = cast('XYZLiteral', ax_str)
                 ax_index = label_to_index[ax_label]
             else:
                 msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
@@ -2193,7 +2213,7 @@ class DataObjectFilters:
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
         array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         # Fix the projection line:
@@ -2713,7 +2733,8 @@ class DataObjectFilters:
         >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
-        See :ref:`resampling_example` for more examples using this filter.
+        See :ref:`resampling_example` and :ref:`interpolate_sample_example`
+        for more examples using this filter.
 
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
@@ -2753,3 +2774,203 @@ class DataObjectFilters:
                 raise VTKVersionError(msg)
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
+
+    def cell_quality(  # type: ignore[misc]
+        self: _DataSetOrMultiBlockType,
+        quality_measure: Literal['all', 'all_valid']
+        | _CellQualityLiteral
+        | Sequence[_CellQualityLiteral] = 'scaled_jacobian',
+        *,
+        null_value: float = -1.0,
+        progress_bar: bool = False,
+    ) -> _DataSetOrMultiBlockType:
+        r"""Compute a function of (geometric) quality for each cell of a mesh.
+
+        The per-cell quality is added to the mesh's cell data, in an array with
+        the same name as the quality measure. Cell types not supported by this
+        filter or undefined quality of supported cell types will have an
+        entry of ``-1``.
+
+        See the :ref:`cell_quality_measures_table` below for all measures and the
+        :class:`~pyvista.CellType` supported by each one.
+        Defaults to computing the ``scaled_jacobian`` quality measure.
+
+        .. _cell_quality_measures_table:
+
+        .. include:: /api/core/cell_quality/cell_quality_measures_table.rst
+
+        .. note::
+
+            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            for low-level technical information about how each metric is computed.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        quality_measure : str | sequence[str], default: 'scaled_jacobian'
+            The cell quality measure(s) to use. May be either:
+
+            - A single measure or a sequence of measures listed in
+              :ref:`cell_quality_measures_table`.
+            - ``'all'`` to compute all measures.
+            - ``'all_valid'`` to only keep quality measures that are valid for the mesh's
+              cell type(s).
+
+            A separate array is created for each measure.
+
+        null_value : float, default: -1.0
+            Float value for undefined quality. Undefined quality are qualities
+            that could be addressed by this filter but is not well defined for
+            the particular geometry of cell in question, e.g. a volume query
+            for a triangle. Undefined quality will always be undefined.
+            The default value is -1.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Dataset with the computed mesh quality. Return type matches input.
+            Cell data array(s) with the computed quality measure(s) are included.
+
+        See Also
+        --------
+        :func:`~pyvista.cell_quality_info`
+            Return information about a cell's quality measure, e.g. acceptable range.
+
+        Examples
+        --------
+        Compute and plot the minimum angle of a sample sphere mesh.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
+        >>> cqual = sphere.cell_quality('min_angle')
+        >>> cqual.plot(show_edges=True)
+
+        Quality measures like ``'volume'`` do not apply to 2D cells, and a null value
+        of ``-1`` is returned.
+
+        >>> qual = sphere.cell_quality('volume')
+        >>> qual.get_data_range('volume')
+        (np.float64(-1.0), np.float64(-1.0))
+
+        Compute all valid quality measures for the sphere. These measures all return
+        non-null values for :attr:`~pyvista.CellType.TRIANGLE` cells.
+
+        >>> cqual = sphere.cell_quality('all_valid')
+        >>> valid_measures = cqual.cell_data.keys()
+        >>> valid_measures  # doctest: +NORMALIZE_WHITESPACE
+        ['area',
+         'aspect_frobenius',
+         'aspect_ratio',
+         'condition',
+         'distortion',
+         'max_angle',
+         'min_angle',
+         'radius_ratio',
+         'relative_size_squared',
+         'scaled_jacobian',
+         'shape',
+         'shape_and_size']
+
+        See :ref:`mesh_quality_example` for more examples using this filter.
+
+        """
+        # Validate measures
+        _validation.check_instance(quality_measure, (str, list, tuple), name='quality_measure')
+        keep_valid_only = quality_measure == 'all_valid'
+        measures_available = _get_cell_quality_measures()
+        measures_available_names = cast(
+            'list[_CellQualityLiteral]', list(measures_available.keys())
+        )
+        if quality_measure in ['all', 'all_valid']:
+            measures_requested = measures_available_names
+        else:
+            measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
+            for quality_measure in measures:
+                _validation.check_contains(
+                    measures_available_names, must_contain=quality_measure, name='quality_measure'
+                )
+            measures_requested = cast('list[_CellQualityLiteral]', measures)
+
+        cell_quality = functools.partial(
+            DataObjectFilters._dataset_cell_quality,
+            measures_requested=measures_requested,
+            measures_available=measures_available,
+            keep_valid_only=keep_valid_only,
+            null_value=null_value,
+            progress_bar=progress_bar,
+        )
+        return (
+            self.generic_filter(cell_quality)  # type: ignore[return-value]
+            if isinstance(self, pyvista.MultiBlock)
+            else cell_quality(self)
+        )
+
+    def _dataset_cell_quality(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        measures_requested,
+        measures_available,
+        keep_valid_only,
+        null_value,
+        progress_bar,
+    ) -> _DataSetType:
+        """Compute cell quality of a DataSet (internal method)."""
+        CELL_QUALITY = 'CellQuality'
+
+        alg = _vtk.vtkCellQuality()
+        alg.SetUndefinedQuality(null_value)
+
+        if 'size' in ''.join(measures_requested):
+            # Need to compute mesh quality statistics to get average cell size.
+            # We only need to do this once. This will create field data arrays:
+            # 'TriArea', 'QuadArea', 'TetVolume', 'PyrVolume', 'WedgeVolume', 'HexVolume'
+            # which are used later by vtkCellQuality
+            mesh_quality = _vtk.vtkMeshQuality()
+            mesh_quality.SaveCellQualityOff()
+            mesh_quality.SetInputData(self)
+            # Setting any 'Size' measure for any cell (tri, quad, etc.) is sufficient to
+            # ensure all necessary base stats are computed for all cell types and for
+            # all 'Size' measures
+            mesh_quality.SetTriangleQualityMeasureToShapeAndSize()
+            mesh_quality.Update()
+
+            alg.SetInputDataObject(mesh_quality.GetOutput())
+        else:
+            alg.SetInputDataObject(self)
+
+        output = self.copy()
+
+        # Compute all measures
+        for measure in measures_requested:
+            # Set measure and update
+            getattr(alg, measures_available[measure])()
+            _update_alg(alg, progress_bar, f"Computing Cell Quality '{measure}'")
+
+            # Store the cell quality array with the output
+            cell_quality_array = _get_output(alg).cell_data[CELL_QUALITY]
+            if keep_valid_only and (
+                np.max(cell_quality_array) == np.min(cell_quality_array) == null_value
+            ):
+                continue
+            output.cell_data[measure] = cell_quality_array
+        return output
+
+
+def _get_cell_quality_measures() -> dict[str, str]:
+    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    # Get possible quality measures dynamically
+    str_start = 'SetQualityMeasureTo'
+    measures = {}
+    for attr in dir(_vtk.vtkCellQuality):
+        if attr.startswith(str_start):
+            # Get the part after 'SetQualityMeasureTo'
+            measure_name = attr[len(str_start) :]
+            # Convert to snake case
+            # Add underscore before uppercase letters, except the first one
+            measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
+            measures[measure_name] = attr
+    return measures

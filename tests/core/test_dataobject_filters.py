@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -21,6 +22,8 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
+from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -500,10 +503,83 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.compute_cell_quality(progress_bar=True)
-    assert 'CellQuality' in qual.array_names
-    with pytest.raises(KeyError):
-        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        qual = mesh.compute_cell_quality(progress_bar=True)
+        assert 'CellQuality' in qual.array_names
+        with pytest.raises(KeyError):
+            qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+
+
+SHAPE = 'shape'
+CELL_QUALITY = 'CellQuality'
+AREA = 'area'
+VOLUME = 'volume'
+
+
+def test_cell_quality():
+    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
+    qual = mesh.cell_quality(SHAPE, progress_bar=True)
+    assert SHAPE in qual.array_names
+
+    expected_names = [SHAPE, AREA]
+    qual = mesh.cell_quality(expected_names, progress_bar=True)
+    assert qual.array_names == expected_names
+
+    with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
+        mesh.cell_quality(quality_measure='foo', progress_bar=True)
+
+
+def test_cell_quality_measures(ant):
+    # Get quality measures from type hints
+    hinted_measures = list(get_args(_CellQualityLiteral))
+    if pv.vtk_version_info < (9, 2):
+        # This measure was removed from VTK's API
+        hinted_measures.insert(1, 'aspect_beta')
+
+    # Get quality measures from the VTK class
+    actual_measures = list(_get_cell_quality_measures().keys())
+    msg = 'VTK API has changed. Update type hints and docstring for `cell_quality`.'
+    assert actual_measures == hinted_measures, msg
+
+    # Test 'all' measure keys
+    qual = ant.cell_quality('all')
+    assert qual.array_names == actual_measures
+
+
+@pytest.mark.parametrize(
+    'cell_mesh',
+    [
+        examples.cells.Triangle(),
+        examples.cells.Quadrilateral(),
+        examples.cells.Hexahedron(),
+        examples.cells.Tetrahedron(),
+    ],
+)
+@pytest.mark.parametrize('measure', ['relative_size_squared', 'shape_and_size'])
+def test_cell_quality_size_measures(cell_mesh, measure):
+    quality = cell_mesh.cell_quality(measure)
+    assert np.isclose(quality[measure][0], 1.0)
+
+
+def test_cell_quality_all_valid(ant):
+    qual = ant.cell_quality('all_valid')
+    assert AREA in qual.array_names
+    assert SHAPE in qual.array_names
+    assert VOLUME not in qual.array_names
+
+
+def test_cell_quality_composite(multiblock_all_with_nested_and_none):
+    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+    for block in qual.recursive_iterator(skip_none=True):
+        assert SHAPE in block.array_names
+
+
+def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
+    iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
+    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+    iter_out = qual.recursive_iterator()
+    for block_in, block_out in zip(iter_in, iter_out):
+        assert type(block_in) is type(block_out)
 
 
 @pytest.mark.parametrize(

@@ -7,13 +7,14 @@ from enum import Enum
 import warnings
 
 import pyvista
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk
 from .actor_properties import ActorProperties
 
 
-class AxesActor(_vtk.vtkAxesActor):
+class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     """Axes actor wrapper for vtkAxesActor.
 
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user
@@ -96,6 +97,31 @@ class AxesActor(_vtk.vtkAxesActor):
         self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
+
+    @property
+    def bounds(self) -> BoundsTuple:
+        """Return the bounding box of this.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounding box.
+            The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        """
+        return BoundsTuple(*self.GetBounds())
+
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of axes actor.
+
+        """
+        return self.GetCenter()
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01

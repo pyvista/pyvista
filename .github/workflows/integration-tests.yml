@@ -47,7 +47,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
@@ -104,7 +104,7 @@ jobs:
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: env.USE_CACHE == 'true'
         with:
           packages: xvfb
@@ -140,7 +140,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Install PyVista
         run: pip install -ve .[test]
       - name: Install requirements

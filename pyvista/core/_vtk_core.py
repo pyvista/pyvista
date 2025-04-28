@@ -10,10 +10,10 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
+from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource as vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource as vtkImageGaussianSource
@@ -418,7 +418,11 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
-from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+
+with contextlib.suppress(ImportError):
+    # Deprecated in 9.3
+    from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
@@ -443,6 +447,7 @@ from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane as vtkTextureMapTo
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere as vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality as vtkCellQuality
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
+from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
@@ -563,6 +568,9 @@ class VersionInfo(NamedTuple):
     minor: int
     micro: int
 
+    def __str__(self):
+        return str((self.major, self.minor, self.micro))
+
 
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple.
@@ -587,147 +595,73 @@ def VTKVersionInfo():
 
 vtk_version_info = VTKVersionInfo()
 
-if TYPE_CHECKING:
-    from typing import Literal
 
-    _VerbosityOptions = (
-        Literal[
-            'off',
-            'error',
-            'warning',
-            'info',
-            'max',
-        ]
-        | int
-        | vtkLogger.Verbosity
-    )
+class vtkPyVistaOverride:
+    """Base class to automatically override VTK classes with PyVista classes."""
+
+    def __init_subclass__(cls, **kwargs):
+        if vtk_version_info >= (9, 4):
+            # Check for VTK base classes and call the override method
+            for base in cls.__bases__:
+                if (
+                    hasattr(base, '__module__')
+                    and base.__module__.startswith('vtkmodules.')
+                    and hasattr(base, 'override')
+                ):
+                    # For now, just remove any overrides for these classes
+                    # There are clear issues with the current implementation
+                    # of overriding these classes upstream and until they are
+                    # resolved, we will entirely remove the overrides.
+                    # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
+                    # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
+                    base.override(None)
+                    break
+
+        return cls
 
 
-class _VTKVerbosity(contextlib.AbstractContextManager[None]):
-    """Context manager to set VTK verbosity level.
+class DisableVtkSnakeCase:
+    """Base class to raise error if using VTK's `snake_case` API."""
 
-    .. versionadded:: 0.45
+    def __getattribute__(self, attr):
+        if vtk_version_info >= (9, 4):
+            # Raise error if accessing attributes from VTK's pythonic snake_case API
+            import pyvista as pv
+
+            state = pv._VTK_SNAKE_CASE_STATE
+            if state != 'allow':
+                if (
+                    attr not in ['__class__', '__init__']
+                    and attr[0].islower()
+                    and is_vtk_attribute(self, attr)
+                ):
+                    msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
+                    if state == 'error':
+                        raise pv.PyVistaAttributeError(msg)
+                    else:
+                        warnings.warn(msg, RuntimeWarning)
+        return super().__getattribute__(attr)
+
+
+def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
+    """Return True if the attribute is defined by a vtk class.
 
     Parameters
     ----------
-    verbosity : int | str | vtkLogger.Verbosity
-        Verbosity of the ``vtkLogger`` to set.
+    obj : object
+        Class or instance to check.
 
-        - ``'off'``: No output.
-        - ``'error'``: Only error messages.
-        - ``'warning'``: Errors and warnings.
-        - ``'info'``: Errors, warnings, and info messages.
-        - ``'max'``: All messages, including debug info.
-
-        Integers between ``[-9, 9]`` or their string representation
-        are also accepted.
-
-    Examples
-    --------
-    Get the current vtk verbosity.
-
-    >>> import pyvista as pv
-    >>> pv.vtk_verbosity()
-    'info'
-
-    Set verbosity to max.
-
-    >>> _ = pv.vtk_verbosity('max')
-    >>> pv.vtk_verbosity()
-    'max'
-
-    Use it as a context manager to temporarily turn it off.
-
-    >>> mesh = pv.Sphere()
-    >>> with pv.vtk_verbosity('off'):
-    ...     mesh = mesh.compute_cell_quality('volume')
-
-    The state is restored to its previous value outside the context.
-
-    >>> pv.vtk_verbosity()
-    'max'
+    attr : str
+        Name of the attribute to check.
 
     """
 
-    @staticmethod
-    def _validate_verbosity(
-        verbosity: _VerbosityOptions,
-    ) -> vtkLogger.Verbosity:
-        if isinstance(verbosity, vtkLogger.Verbosity):
-            return verbosity
-        else:
-            try:
-                logger_verbosity = getattr(vtkLogger, f'VERBOSITY_{str(verbosity).upper()}')
-                if logger_verbosity == vtkLogger.VERBOSITY_INVALID:
-                    raise AttributeError
-                else:
-                    return logger_verbosity
-            except AttributeError:
-                msg = (
-                    f"Invalid verbosity name '{verbosity}', must be one of:\n"
-                    f"'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
-                )
-                raise ValueError(msg)
+    def _find_defining_class(cls, attr):
+        """Find the class that defines a given attribute."""
+        for base in cls.__mro__:
+            if attr in base.__dict__:
+                return base
+        return None
 
-    @property
-    def _verbosity(self):
-        return vtkLogger.GetCurrentVerbosityCutoff()
-
-    @_verbosity.setter
-    def _verbosity(self, verbosity: _VerbosityOptions):
-        vtkLogger.SetStderrVerbosity(vtk_verbosity._validate_verbosity(verbosity))
-
-    @property
-    def _verbosity_string(self):
-        to_string = {
-            -10: 'invalid',
-            -9: 'off',
-            -2: 'error',
-            -1: 'warning',
-            0: 'info',
-            1: '1',
-            2: '2',
-            3: '3',
-            4: '4',
-            5: '5',
-            6: '6',
-            7: '7',
-            8: '8',
-            9: 'max',
-        }
-        return to_string[self._verbosity]
-
-    def __init__(self):
-        """Initialize context manager."""
-        self._original_verbosity = None
-
-    def __enter__(self):
-        """Enter context manager."""
-        if self._original_verbosity is None:
-            msg = (
-                'Verbosity must be set to a value to use it as a context manager.\n'
-                'Call `vtk_verbosity()` with an argument to set its value.'
-            )
-            raise ValueError(msg)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit context manager."""
-        # Restore the original verbosity level
-        self._verbosity = self._original_verbosity
-        self._original_verbosity = None  # Reset
-
-    def __call__(self, verbosity: _VerbosityOptions | None = None):
-        """Call the context manager."""
-        if verbosity is None:
-            # Get the verbosity
-            return self._verbosity_string
-
-        # Create new instance and store the local state
-        # to be restored when exiting context
-        output = _VTKVerbosity()
-        output._original_verbosity = output._verbosity
-        output._verbosity = verbosity
-        return output
-
-
-vtk_verbosity = _VTKVerbosity()
+    cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
+    return cls is not None and cls.__module__.startswith('vtkmodules')

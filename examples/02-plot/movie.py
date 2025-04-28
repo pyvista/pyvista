@@ -5,6 +5,8 @@ Create a MP4 Movie
 ~~~~~~~~~~~~~~~~~~
 
 Create an animated MP4 movie of a rendering scene.
+This example uses :meth:`~pyvista.Plotter.open_movie` and
+:meth:`~pyvista.Plotter.write_frame` to create the movie.
 
 .. Note::
     This movie will appear static since MP4 movies will not be
