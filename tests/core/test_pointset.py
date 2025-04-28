@@ -13,9 +13,8 @@ from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
 
 # skip all tests if concrete pointset unavailable
-pytestmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
+pytestmark = pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class'
 )
 
 
@@ -419,16 +418,12 @@ def test_pointgrid_dimensionality(grid_class, dimensionality, dimensions):
     ],
 )
 def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
-    if pv.vtk_version_info < (9, 4):
-        match = f'`{attr}` requires vtk>=9.4.0'
-        with pytest.raises(pv.VTKVersionError, match=match):
-            getattr(mesh, attr)
-    else:
-        actual = getattr(mesh, attr)
-        assert isinstance(actual, np.ndarray)
-        assert actual.dtype == int
-        assert np.array_equal(actual, expected)
+    actual = getattr(mesh, attr)
+    assert isinstance(actual, np.ndarray)
+    assert actual.dtype == int
+    assert np.array_equal(actual, expected)
 
+    if pv.vtk_version_info >= (9, 4):
         with pytest.warns(DeprecationWarning):
             # Test deprecation warning is emitted by VTK
             getattr(mesh, attr.split('polyhedron_')[1])

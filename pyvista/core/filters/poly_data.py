@@ -186,7 +186,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         return self._boolean('union', other_mesh, tolerance, progress_bar=progress_bar)
@@ -258,7 +258,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         bool_inter = self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
@@ -331,7 +331,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.camera_position = 'xz'
         >>> pl.show()
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
@@ -1919,7 +1919,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_with_norm.cell_data['Normals'].shape
         (1680, 3)
 
-        See :ref:`surface_normal_example` for more examples using this filter.
+        See :ref:`compute_normals_example` for more examples using this filter.
 
         """
         # track original point indices
@@ -2413,6 +2413,11 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells : numpy.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
+
+        See Also
+        --------
+        :ref:`ray_trace_moeller_example`
+            Example of ray-tracing using the Moeller-Trumbore intersection algorithm.
 
         Examples
         --------
@@ -2971,7 +2976,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_flipped.point_data['Normals'][0]
         pyvista_ndarray([0., 0., 1.], dtype=float32)
 
-        See :ref:`boolean_example` for more examples using this filter.
+        See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
         return self._reverse_sense(
@@ -3137,7 +3142,7 @@ class PolyDataFilters(DataSetFilters):
         >>> tess = comb.delaunay_2d(edge_source=comb)
         >>> tess.plot(cpos='xy', show_edges=True)
 
-        See :ref:`triangulated_surface` for more examples using this filter.
+        See :ref:`create_tri_surface_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkDelaunay2D()
@@ -3223,6 +3228,11 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             The points of this mesh projected onto a plane.
+
+        See Also
+        --------
+        :ref:`project_plane_example`
+        :ref:`project_points_tessellate_example`
 
         Examples
         --------
@@ -3535,6 +3545,10 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Rotationally extruded mesh.
 
+        See Also
+        --------
+        :ref:`extrude_rotate_example`
+
         Examples
         --------
         Create a "spring" using the rotational extrusion filter.
@@ -3668,6 +3682,10 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Extruded mesh trimmed by a surface.
+
+        See Also
+        --------
+        :ref:`extrude_trim_example`
 
         Examples
         --------

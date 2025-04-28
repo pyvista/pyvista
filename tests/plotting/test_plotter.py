@@ -713,7 +713,7 @@ def test_plotter_add_volume_clim(uniform: pv.ImageData):
     arr = uniform.x.astype(np.uint8)
     pl = pv.Plotter()
     vol = pl.add_volume(uniform, scalars=arr)
-    assert vol.mapper.scalar_range == (0, 255)
+    assert vol.mapper.scalar_range == (arr.min(), arr.max())
 
     clim = [-10, 20]
     pl = pv.Plotter()
@@ -847,7 +847,7 @@ def test_legend_font(sphere):
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
 
 
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Functions not implemented before 9.3.X')
+@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter(sphere)
