@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
+from typing import Literal
 from typing import Protocol
 from typing import TypeVar
 from typing import Union
@@ -686,6 +687,56 @@ def _download_dataset(
         path = path[0] if len(path) == 1 else path
 
     return dataset_loader.load() if load else path
+
+
+def _dataset_from_plotter(plotter: pv.Plotter) -> pv.DataSet | pv.MultiBlock:
+    """Extract dataset(s) from a PyVista Plotter instance."""
+    datasets = []
+    actors = plotter.renderer.GetActors()
+    actors.InitTraversal()
+    for i in range(actors.GetNumberOfItems()):
+        try:
+            dataset = actors.GetItemAsObject(i).GetMapper().GetInputAsDataSet()
+        except AttributeError:
+            continue
+        else:
+            datasets.append(pv.wrap(dataset).copy())
+    if len(datasets) == 0:
+        raise RuntimeError('Unable to identify datasets in the plotter.')
+    elif len(datasets) == 1:
+        return datasets[0]
+    return pv.MultiBlock(datasets)
+
+
+def _plotter_from_scene_file(file: str, file_type: Literal['vrml', '3ds', 'gltf']) -> pv.Plotter:
+    plotter = pv.Plotter()
+    importer = getattr(plotter, f'import_{file_type}')
+    importer(file)
+    return plotter
+
+
+def _download_dataset_scene(
+    file: _DownloadableFile,
+    load_as: Literal['plotter', 'dataset'] | None,
+    file_type: Literal['vrml', '3ds', 'gltf'],
+):
+    """Download a file and load it as a plotter or dataset."""
+    filepath = _download_dataset(file, load=False)
+    if load_as:
+        plotter = _plotter_from_scene_file(filepath, file_type)
+        if load_as == 'plotter':
+            return plotter
+        return _dataset_from_plotter(plotter)
+    return filepath
+
+
+def _read_scene_as_dataset(file: str, file_type: Literal['vrml', '3ds', 'gltf']):
+    plotter = _plotter_from_scene_file(file, file_type)
+    return _dataset_from_plotter(plotter)
+
+
+def _read_vrml_as_dataset(file):
+    return _read_scene_as_dataset(file, file_type='vrml')
 
 
 def _load_as_multiblock(
