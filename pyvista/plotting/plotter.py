@@ -588,10 +588,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
         importer.SetFileName(filename)
-        filename_mtl = filename.with_suffix('.mtl')
-        if filename_mtl.is_file():
-            importer.SetFileNameMTL(filename_mtl)
-            importer.SetTexturePath(filename_mtl.parents[0])
+
+        mtl_path = None
+        if filename_mtl is not None:
+            mtl_path = Path(filename_mtl).expanduser().resolve()
+            if not mtl_path.is_file():
+                raise FileNotFoundError(f"Cannot locate .mtl file at: {mtl_path}")
+            if mtl_path.suffix.lower() != ".mtl":
+                raise ValueError(f"MTL file must have a .mtl extension, got: {mtl_path.suffix}")
+        else:
+            default_mtl = obj_path.with_suffix(".mtl")
+            if default_mtl.is_file():
+                mtl_path = default_mtl
+    
+        if mtl_path is not None:
+            importer.SetFileNameMTL(str(mtl_path))
+            importer.SetTexturePath(str(mtl_path.parent))
+            
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
