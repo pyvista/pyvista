@@ -54,7 +54,7 @@ jupyter = [
 pinned = [ # Pinned versions of core dependencies
   'matplotlib<3.10.2',
   'numpy<2.2.0',
-  'pillow<11.2.0',
+  'pillow<11.3.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
   'typing-extensions<4.14.0',
@@ -107,7 +107,7 @@ test = [
 docs = [
   'cmocean==4.0.3',
   'colorcet==3.1.0',
-  'enum-tools==0.12.0',
+  'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
