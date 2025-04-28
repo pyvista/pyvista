@@ -878,3 +878,11 @@ def test_plotter_shape():
     assert isinstance(pl.shape, tuple)
     assert pl.shape == (1, 2)
     assert isinstance(pl.shape[0], int)
+
+
+def test_subplot_with_one_index():
+    pl = pv.Plotter(shape='2|1')
+    pl.subplot(0)
+    pl = pv.Plotter(shape=(1, 2))
+    with pytest.raises(IndexError, match='Only one index is given'):
+        pl.subplot(0)
