@@ -6746,7 +6746,8 @@ class DataSetFilters(DataObjectFilters):
         .. note::
             The package ``colorcet`` is required to use the default colors from the
             ``'glasbey_category10'`` colormap. For a similar, but very limited,
-            alternative that does not require ``colorcet``, set ``colors='tab10'``.
+            alternative that does not require ``colorcet``, set ``colors='tab10'``
+            and consider setting the coloring mode explicitly.
 
         .. versionadded:: 0.45
 
