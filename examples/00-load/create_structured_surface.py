@@ -1,5 +1,5 @@
 """
-.. _create_structured:
+.. _create_structured_surface_example:
 
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

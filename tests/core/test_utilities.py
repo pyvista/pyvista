@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,8 @@ import re
 import shutil
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeVar
+from typing import get_args
 from unittest import mock
 import warnings
 
@@ -61,6 +64,7 @@ from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
@@ -148,7 +152,6 @@ def test_raise_not_matching_raises():
 
 
 def test_version():
-    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -158,6 +161,7 @@ def test_version():
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
+    assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= (0, 0, 0)
 
@@ -466,6 +470,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():
@@ -1645,9 +1650,30 @@ def test_transform_apply_to_dataset(scale_transform, mode, method):
     assert np.allclose(transformed['vector'], expected)
 
 
+@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
+def test_transform_apply_to_actor(scale_transform, translate_transform, mode, method):
+    expected_matrix = scale_transform.matrix
+    actor = pv.Actor()
+
+    transformed = method(scale_transform, actor, mode)
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+    # Transform again
+    transformed = method(translate_transform, transformed, mode)
+    if mode == 'replace':
+        expected_matrix = translate_transform.matrix
+    else:
+        expected_matrix = scale_transform.compose(
+            translate_transform, multiply_mode=mode.split('-')[0]
+        ).matrix
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+
 def test_transform_apply_invalid_mode():
     mesh = pv.PolyData()
     array = np.ndarray(())
+    actor = pv.Actor()
     trans = pv.Transform()
 
     match = (
@@ -1663,6 +1689,13 @@ def test_transform_apply_invalid_mode():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         trans.apply(array, 'all_vectors')
+
+    match = (
+        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
+        "['replace', 'pre-multiply', 'post-multiply', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -2106,20 +2139,15 @@ def modifies_verbosity():
 @pytest.mark.parametrize(
     'verbosity',
     [
-        'OFF',
         'off',
         'error',
         'warning',
         'info',
-        'trace',
         'max',
-        *range(10),
-        '0',
-        _vtk.vtkLogger.VERBOSITY_OFF,
     ],
 )
 def test_vtk_verbosity_context(verbosity):
-    initial_verbosity = vtk.vtkLogger.VERBOSITY_4
+    initial_verbosity = vtk.vtkLogger.VERBOSITY_OFF
     _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
     with pv.vtk_verbosity(verbosity):
         ...
@@ -2141,10 +2169,7 @@ def test_vtk_verbosity_nested_context():
 
 @pytest.mark.usefixtures('modifies_verbosity')
 def test_vtk_verbosity_no_context():
-    match = re.escape(
-        'Verbosity must be set to a value to use it as a context manager.\n'
-        'Call `vtk_verbosity()` with an argument to set its value.'
-    )
+    match = re.escape('State must be set before using it as a context manager.')
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity:
             ...
@@ -2160,22 +2185,90 @@ def test_vtk_verbosity_no_context():
 
 
 @pytest.mark.usefixtures('modifies_verbosity')
-@pytest.mark.parametrize('verbosity', ['off', _vtk.vtkLogger.VERBOSITY_OFF])
-def test_vtk_verbosity_set_get(verbosity):
+def test_vtk_verbosity_set_get():
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
-    pv.vtk_verbosity(verbosity)
+    pv.vtk_verbosity('off')
     assert pv.vtk_verbosity() == 'off'
     assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
+
+    # Set this to an invalid state with vtk methods
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_1)
+    with pytest.raises(ValueError, match="state '1' is not valid"):
+        pv.vtk_verbosity()
 
 
 @pytest.mark.parametrize('value', ['str', 'invalid'])
 def test_vtk_verbosity_invalid_input(value):
-    match = re.escape(
-        "must be one of:\n'off', 'error', 'warning', 'info', 'max', or an integer between [-9, 9]."
-    )
+    match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_vtk_snake_case():
+    assert pv.vtk_snake_case() == 'error'
+    match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
+
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        _ = pv.PolyData().information
+
+    pv.vtk_snake_case('allow')
+    assert pv.vtk_snake_case() == 'allow'
+    _ = pv.PolyData().information
+
+    with pv.vtk_snake_case('warning'):
+        with pytest.warns(RuntimeWarning, match=match):
+            _ = pv.PolyData().information
+
+
+T = TypeVar('T')
+
+
+def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
+    if arg2 is not None:
+
+        class MyState(_StateManager[arg1, arg2]):
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+    else:
+
+        class MyState(_StateManager[arg1]):
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+
+    if sub_subclass:
+
+        class MyState2(MyState): ...
+
+        return MyState2
+    return MyState
+
+
+@pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int], [float]]])
+def test_state_manager_invalid_type_arg(arg):
+    if isinstance(arg, Iterable):
+        cls = _create_state_manager_subclass(*arg)
+    else:
+        cls = _create_state_manager_subclass(arg)
+
+    match = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+    with pytest.raises(TypeError, match=match):
+        cls()
+
+
+def test_state_manager_sub_subclass():
+    options = Literal['on', 'off']
+    cls = _create_state_manager_subclass(options, sub_subclass=True)
+    manager = cls()
+    manager('on')
+    assert manager._valid_states == get_args(options)
 
 
 @pytest.mark.parametrize(
@@ -2325,3 +2418,20 @@ def test_cell_quality_info_raises():
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute():
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+
+    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+
+
+@pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute_input_type(obj):
+    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')

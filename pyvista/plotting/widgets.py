@@ -911,6 +911,10 @@ class WidgetHelper:
         vtk.vtkPlaneWidget or vtk.vtkImplicitPlaneWidget
             The VTK plane widget depending on the value of ``implicit``.
 
+        See Also
+        --------
+        :ref:`clip_volume_widget_example`
+
         """
         if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)  # type: ignore[attr-defined]
@@ -1519,6 +1523,10 @@ class WidgetHelper:
         vtk.vtkSliderWidget
             Slider widget.
 
+        See Also
+        --------
+        :ref:`multi_slider_widget_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2023,6 +2031,10 @@ class WidgetHelper:
         vtk.vtkSplineWidget
             The newly created spline widget.
 
+        See Also
+        --------
+        :ref:`spline_widget_example`
+
         Notes
         -----
         This widget has trouble displaying certain colors. Use only simple
@@ -2243,6 +2255,10 @@ class WidgetHelper:
         vtk.vtkDistanceWidget
             The newly created distance widget.
 
+        See Also
+        --------
+        :ref:`distance_measurement_example`
+
         """
         if self.iren is None:  # type: ignore[attr-defined]
             msg = 'Cannot add a widget to a closed plotter.'
@@ -2378,6 +2394,10 @@ class WidgetHelper:
         -------
         vtk.vtkSphereWidget
             The sphere widget.
+
+        See Also
+        --------
+        :ref:`sphere_widget_example`
 
         """
         if color is None:

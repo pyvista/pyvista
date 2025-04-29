@@ -1,8 +1,11 @@
 """
+.. _spherical_example:
+
 Plot data in spherical coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Generate and visualize meshes from data in longitude-latitude coordinates.
+Generate and visualize meshes from data in longitude-latitude coordinates
+using :func:`~pyvista.grid_from_sph_coords`.
 """
 
 from __future__ import annotations

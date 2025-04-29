@@ -19,6 +19,7 @@ except ImportError:  # pragma: no cover
 from typing import TYPE_CHECKING
 
 from pyvista.core import _validation
+from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
@@ -40,7 +41,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(vtkLight):
+class Light(DisableVtkSnakeCase, vtkLight):
     """Light class.
 
     Parameters
@@ -669,6 +670,10 @@ class Light(vtkLight):
         If the light's cone angle is increased to 90 degrees or above,
         its actor (if previously shown) is automatically hidden.
 
+        See Also
+        --------
+        :ref:`beam_shape_example`
+
         Examples
         --------
         Plot three planes lit by three spotlights with varying cone
@@ -710,6 +715,10 @@ class Light(vtkLight):
         describe three different profiles for dampening with
         distance. A larger attenuation constant corresponds to more
         rapid decay with distance.
+
+        See Also
+        --------
+        :ref:`attenuation_example`
 
         Examples
         --------

@@ -45,7 +45,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject:
+class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -175,13 +175,21 @@ class DataObject:
                         'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
                     )
 
+        def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
+            if not np.allclose(mesh.direction_matrix, np.eye(3)):
+                warnings.warn(
+                    'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.\n'
+                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
+                    'Use the `.vti` extension instead (XML format).'
+                )
+
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
-                mesh_ = cast(pyvista.DataSet, mesh_)  # type: ignore[unreachable]
+                mesh_ = cast('pyvista.DataSet', mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
                     writer.SetArrayName(texture)
                     array_name = texture
@@ -213,6 +221,8 @@ class DataObject:
         # warn if data will be lost
         if isinstance(self, pyvista.MultiBlock):
             _warn_multiblock_nested_field_data(self)
+        if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
+            _warn_imagedata_direction_matrix(self)
 
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
@@ -404,17 +414,16 @@ class DataObject:
         if isinstance(self, pyvista.ImageData):
             equal_attrs = ['extent', 'index_to_physical_matrix']
         else:
-            equal_attrs = [
-                'verts',  # DataObject
-                'points',  # DataObject
-                'lines',  # DataObject
-                'faces',  # DataObject
-                'cells',  # UnstructuredGrid
-                'celltypes',  # UnstructuredGrid
-                'strips',  # PolyData
-            ]
+            equal_attrs = ['points', 'cells']
+            if isinstance(self, pyvista.PolyData):
+                equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
+            elif isinstance(self, pyvista.UnstructuredGrid):
+                equal_attrs.append('celltypes')
+
         for attr in equal_attrs:
-            if hasattr(self, attr):
+            # Only check equality for attributes defined by PyVista
+            # (i.e. ignore any default vtk snake_case attributes)
+            if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
                     return False
 

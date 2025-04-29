@@ -405,10 +405,7 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info >= (9, 3, 0),
-    reason='Requires VTK<9.3.0',
-)
+@pytest.mark.needs_vtk_version(less_than=(9, 3, 0))
 def test_contour_labels_raises_vtkversionerror():
     match = 'Surface nets 3D require VTK 9.3.0 or newer.'
     with pytest.raises(pv.VTKVersionError, match=match):

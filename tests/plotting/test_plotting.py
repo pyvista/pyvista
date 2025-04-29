@@ -94,14 +94,15 @@ skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason='Flaky on 9.0.X')
-skip_lesser_9_0_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1),
-    reason='Functions not implemented before 9.0.X',
+skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')
+skip_lesser_9_0_X = pytest.mark.needs_vtk_version(
+    9, 1, reason='Functions not implemented before 9.0.X'
 )
-skip_lesser_9_3_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3),
-    reason='Functions not implemented before 9.3.X',
+skip_lesser_9_3_X = pytest.mark.needs_vtk_version(
+    9, 3, reason='Functions not implemented before 9.3.X'
+)
+skip_lesser_9_4_X = pytest.mark.needs_vtk_version(
+    9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
@@ -299,14 +300,16 @@ def test_pbr(sphere, verify_image_cache):
 
 @pytest.mark.skip_windows
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-def test_set_environment_texture_cubemap(sphere, verify_image_cache):
+@pytest.mark.parametrize('resample', [True, False])
+@pytest.mark.needs_vtk_version(9, 1)  # GC issue
+def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
     """Test set_environment_texture with a cubemap."""
     verify_image_cache.high_variance_test = True
 
     texture = examples.download_sky_box_cube_map()
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
+    pl.set_environment_texture(texture, resample=resample)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
 
     # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
@@ -1561,6 +1564,7 @@ def test_vector_array_with_points(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pv.Plotter()
@@ -1594,6 +1598,7 @@ def test_vector_array(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
     copy_vector_values_points = multicomp_poly['vector_values_points'].copy()
@@ -2060,6 +2065,7 @@ def test_opacity_by_array_direct(plane, verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2069,6 +2075,7 @@ def test_opacity_by_array(uniform):
     p.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2101,6 +2108,7 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+@skip_windows_mesa
 def test_opacity_by_array_preference():
     tetra = pv.Tetrahedron()  # 4 points, 4 cells
     opacities = np.linspace(0.2, 0.8, tetra.n_points)
@@ -3072,6 +3080,7 @@ def test_add_text_font_file():
     plotter.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pv.Plotter()
@@ -3079,6 +3088,7 @@ def test_plot_categories_int(sphere):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_true(sphere):
     sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
     pl = pv.Plotter()
@@ -3192,6 +3202,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 
 
 @pytest.mark.skip_windows('Test fails on Windows because of opacity')
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
 
@@ -3215,6 +3226,7 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
     pl.show()
 
 
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
@@ -3251,6 +3263,7 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_composite_poly_component_norm(multiblock_poly):
     for ii, block in enumerate(multiblock_poly):
         data = block.compute_normals().point_data['Normals']
@@ -3389,6 +3402,7 @@ def test_multi_plot_scalars(verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_bool_scalars(sphere):
     sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
     sphere['scalars'][::2] = 1
@@ -3567,6 +3581,7 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.plot()
 
 
+@skip_windows_mesa
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
@@ -3617,10 +3632,54 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 @skip_windows_mesa  # due to opacity
 def test_plotter_volume_lookup_table(uniform):
+    uniform.set_active_scalars('Spatial Point Data')
+
     lut = pv.LookupTable()
-    lut.alpha_range = (0, 1)
+    lut.apply_cmap('coolwarm', 255)
+    lut.apply_opacity('linear')
+    lut.scalar_range = uniform.get_data_range()
+
     pl = pv.Plotter()
-    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.add_volume(uniform, cmap=lut)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+@pytest.mark.usefixtures('skip_check_gc')
+def test_plotter_volume_lookup_table_reactive(uniform):
+    """Ensure that changes to the underlying lookup table are reflected by the volume property."""
+    uniform.set_active_scalars('Spatial Point Data')
+
+    pl = pv.Plotter()
+    actor = pl.add_volume(uniform, cmap='viridis', clim=[0, uniform.n_points // 2])
+    actor.mapper.lookup_table.apply_cmap('coolwarm', 255)
+    actor.mapper.lookup_table.apply_opacity('sigmoid')
+    actor.mapper.lookup_table.scalar_range = [0, uniform.n_points]
+    pl.render()
+    pl.show()
+
+    # Test switching out the lookup table
+    pl = pv.Plotter()
+    actor = pl.add_volume(
+        uniform, cmap='viridis', clim=[0, uniform.n_points // 2], show_scalar_bar=False
+    )
+
+    lut = pv.LookupTable()
+    lut.apply_cmap('coolwarm', 255)
+    actor.prop.apply_lookup_table(lut)
+    lut.apply_opacity('sigmoid')
+    lut.scalar_range = [0, uniform.n_points]
+    pl.render()
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_log_scale(uniform):
+    uniform.clear_data()
+    uniform['data'] = np.logspace(1, 5, uniform.n_points)
+
+    pl = pv.Plotter()
+    pl.add_volume(uniform, scalars='data', log_scale=True)
     pl.show()
 
 
@@ -3642,6 +3701,57 @@ def test_plotter_volume_add_scalars_log_scale(uniform):
     assert any(scalars < 0), 'need negative values to test log_scale entrirely'
     pl.add_volume(uniform, scalars=scalars, show_scalar_bar=True, log_scale=True)
     pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_opacity_n_colors():
+    # See https://github.com/pyvista/pyvista/issues/5505
+    grid = pv.ImageData(dimensions=(9, 9, 9))
+    grid['scalars'] = -grid.x
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, opacity='linear', n_colors=128)
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, opacity='linear', n_colors=5)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_clim():
+    # Validate that we can use clim with volume rendering
+    grid = pv.ImageData(dimensions=(9, 9, 9))
+    grid['scalars'] = np.arange(grid.n_points)
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, clim=[0, grid.n_points], show_scalar_bar=True)
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, clim=[grid.n_points * 0.25, grid.n_points * 0.75], show_scalar_bar=True)
+    pl.show()
+
+    # Validate that we can change clim on the mapper
+    pl = pv.Plotter()
+    actor = pl.add_volume(grid, clim=[0, grid.n_points], show_scalar_bar=True)
+    actor.mapper.scalar_range = [grid.n_points * 0.25, grid.n_points * 0.75]
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_clim_uint():
+    # Validate that add_volume does not set 0-255 as the default clim for uint8 data
+    # for example the `load_frog_tissues` dataset is uint8 with values 0-29 and we want
+    # add_volume to automatically set the clim to 0-29 as that is the valid range
+    # Let's validate this with a toy dataset:
+    volume = pv.ImageData(dimensions=(3, 3, 3))
+    volume['data'] = np.arange(volume.n_points).astype(np.uint8)
+
+    pl = pv.Plotter()
+    actor = pl.add_volume(volume, show_scalar_bar=True)
+    pl.show()
+    assert actor.mapper.scalar_range == (0, np.prod(volume.dimensions) - 1)
 
 
 def test_plot_actor(sphere):
@@ -4024,7 +4134,7 @@ def test_plot_texture_flip_y(texture):
 
 @pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
-@pytest.mark.skipif(pv.vtk_version_info >= (9, 3), reason='This is broken on VTK 9.3')
+@pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
     """Test plotting directly from the Texture class."""
     verify_image_cache.high_variance_test = True

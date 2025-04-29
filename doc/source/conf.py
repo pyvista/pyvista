@@ -40,12 +40,7 @@ pyvista.set_error_output_file('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
 pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
-pyvista.set_plot_theme('document')
-pyvista.global_theme.window_size = [1024, 768]
-pyvista.global_theme.font.size = 22
-pyvista.global_theme.font.label_size = 22
-pyvista.global_theme.font.title_size = 22
-pyvista.global_theme.return_cpos = False
+pyvista.set_plot_theme('document_build')
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = str(Path('./images/').resolve() / 'auto-generated/')
@@ -452,7 +447,7 @@ class ResetPyVista:
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-        pyvista.set_plot_theme('document')
+        pyvista.set_plot_theme('document_build')
 
     def __repr__(self):
         return 'ResetPyVista'
@@ -466,6 +461,7 @@ has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmn
 
 
 sphinx_gallery_conf = {
+    'abort_on_example_error': True,  # Fail early
     # convert rst to md for ipynb
     'pypandoc': True,
     # path to your examples scripts
@@ -502,7 +498,7 @@ IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
 from pyvista import set_plot_theme as __s_p_t
-__s_p_t('document')
+__s_p_t('document_build')
 del __s_p_t
 """
 pyvista_plot_cleanup = pyvista_plot_setup
