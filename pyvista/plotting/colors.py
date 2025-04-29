@@ -1739,7 +1739,7 @@ def get_cmap_safe(cmap):
                 return colorcet.cm[cmap]
             except KeyError:
                 pass
-        elif cmap in _COLORCET_CMAPS:   # pragma: no cover
+        elif cmap in _COLORCET_CMAPS:  # pragma: no cover
             msg = f'Package `colorcet` is required to use colormap {cmap!r}.'
             raise ModuleNotFoundError(msg)
 
