@@ -587,9 +587,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            filename = str(filename)
-        importer.SetFileName(filename)
         if filename_mtl is None:
             filename_mtl = filename.with_suffix('.mtl')
         else:
@@ -600,6 +597,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 texture_path = str(filename_mtl.parents[0])
             importer.SetFileNameMTL(filename_mtl)
             importer.SetTexturePath(texture_path)
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            filename = str(filename)
+        importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
