@@ -5758,7 +5758,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label_actor = _vtk.vtkActor2D()
         label_actor.SetMapper(label_mapper)
-        self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)  # type: ignore[arg-type]
+        self.add_actor(
+            label_actor,  # type: ignore[arg-type]
+            reset_camera=False,
+            name=f'{name}-labels',
+            pickable=False,
+            render=render,
+        )
         return label_actor
 
     def add_point_scalar_labels(
