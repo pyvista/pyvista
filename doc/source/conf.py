@@ -297,6 +297,15 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'ScalarBarArgs'),
+    (r'py:.*', 'Silhouette'),
+    (r'py:.*', 'BackfaceParams'),
+    (r'py:.*', 'CullingOptions'),
+    (r'py:.*', 'OpacityOptions'),
+    (r'py:.*', 'FontFamilyOptions'),
+    (r'py:.*', 'HorizontalOptions'),
+    (r'py:.*', 'VerticalOptions'),
+    (r'py:.*', 'JupyterBackendOptions'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -316,6 +325,10 @@ nitpick_ignore_regex = [
     #
     # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
+    (r'py:.*', 'EmbeddableWidget'),
+    (r'py:.*', 'Widget'),
+    (r'py:.*', 'IFrame'),
+    (r'py:.*', 'Image'),
     (r'py:.*', 'meshio.*'),
     (r'py:.*', '.*Mesh'),
     (r'py:.*', '.*Trimesh'),

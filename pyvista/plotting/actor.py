@@ -10,6 +10,7 @@ import numpy as np
 import pyvista
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk
 from ._property import Property
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
+@promote_type(_vtk.vtkActor)
 @no_new_attr
 class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     """Wrap vtkActor.
