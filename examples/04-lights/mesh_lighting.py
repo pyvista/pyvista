@@ -1,5 +1,5 @@
 """
-.. _disabling_mesh_lighting_example:
+.. _mesh_lighting_example:
 
 Disabling Mesh Lighting
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,6 +41,6 @@ shifted.plot(color='brown', lighting=False)
 
 # %%
 # For further examples about fine-tuning mesh properties that affect
-# light rendering, see the :ref:`lighting_properties_example` example.
+# light rendering, see the :ref:`lighting_mesh_example` example.
 #
 # .. tags:: lights

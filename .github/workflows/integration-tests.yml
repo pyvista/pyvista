@@ -142,7 +142,10 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install PyVista
-        run: pip install -ve .[test]
+        run: |
+          pip install --upgrade pip
+          pip install -ve . --group test
+
       - name: Install requirements
         run: |
           pip install -r examples_trame/requirements.txt

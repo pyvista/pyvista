@@ -1,5 +1,5 @@
 """
-.. _surface_normal_example:
+.. _compute_normals_example:
 
 Computing Surface Normals
 ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1733,6 +1733,10 @@ class DataSet(DataSetFilters, DataObject):
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
+        See Also
+        --------
+        :ref:`create_pointset_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1925,6 +1929,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        :ref:`distance_between_surfaces_example`
 
         Examples
         --------

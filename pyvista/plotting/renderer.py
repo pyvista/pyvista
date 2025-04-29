@@ -1047,6 +1047,13 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         vtk.vtkAxesActor
             Actor of the axes.
 
+        See Also
+        --------
+        add_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1126,7 +1133,16 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         See Also
         --------
         add_axes
-            Add an axes orientation widget.
+            Add arrow-style axes as an orientation widget.
+
+        add_box_axes
+            Add an axes box as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1238,7 +1254,6 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         AxesActor
             Axes actor of the added widget.
 
-
         See Also
         --------
         show_axes
@@ -1246,6 +1261,18 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         add_axes_at_origin
             Add an :class:`pyvista.AxesActor` to the origin of a scene.
+
+        add_box_axes
+            Add an axes box as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        add_orientation_widget
+            Add any actor as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1362,6 +1389,20 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkOrientationMarkerWidget
             Orientation marker widget.
+
+        See Also
+        --------
+        add_axes
+            Add arrow-style axes as an orientation widget.
+
+        add_box_axes
+            Add an axes box as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1480,6 +1521,20 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkAnnotatedCubeActor
             Axes actor.
+
+        See Also
+        --------
+        add_axes
+            Add arrow-style axes as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        add_orientation_widget
+            Add any actor as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1778,6 +1833,17 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         pyvista.CubeAxesActor
             Bounds actor.
 
+        See Also
+        --------
+        show_grid
+        remove_bounds_axes
+        update_bounds_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+        :ref:`bounds_example`
+            Additional examples using this method.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2048,6 +2114,17 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         -------
         pyvista.CubeAxesActor
             Bounds actor.
+
+        See Also
+        --------
+        show_bounds
+        remove_bounds_axes
+        update_bounds_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+        :ref:`bounds_example`
+            Additional examples using this method.
 
         Examples
         --------
@@ -2499,7 +2576,13 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.Modified()
 
     def clear(self) -> None:
-        """Remove all actors and properties."""
+        """Remove all actors and properties.
+
+        See Also
+        --------
+        :ref:`clear_example`
+
+        """
         self.clear_actors()
         if self._charts is not None:
             self._charts.deep_clean()
@@ -3214,7 +3297,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blur_example` for a full example using this method.
+        See :ref:`blurring_example` for a full example using this method.
 
         """
         self._render_passes.add_blur_pass()
@@ -3391,6 +3474,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         blur : bool, default: True
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
+
+        See Also
+        --------
+        :ref:`ssao_example`
 
         Examples
         --------
@@ -3861,6 +3948,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkLegendBoxActor
             Actor for the legend.
+
+        See Also
+        --------
+        :ref:`legend_example`
 
         Examples
         --------

@@ -1,5 +1,5 @@
 """
-.. _create_unstructured_example:
+.. _create_unstructured_surface_example:
 
 Creating an Unstructured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,11 +7,11 @@ This example demonstrates how to add a new PyVista `Sphinx Gallery
 <https://sphinx-gallery.github.io/>`_ example as well as being a template that
 can be used in their creation.
 
-Each example should have a reference tag/key in the form:
+Each example should have a reference anchor in the form:
 
 ``.. _<example_name>_example:``
 
-The ``.. _`` is necessary. Everything that follows is your reference tag, which
+The ``.. _`` is necessary. Everything that follows is your reference anchor, which
 can potentially be used within a docstring. As convention, we keep all
 references all in ``snake_case``.
 
