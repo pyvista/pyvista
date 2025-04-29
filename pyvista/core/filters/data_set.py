@@ -7027,18 +7027,7 @@ class DataSetFilters(DataObjectFilters):
                 try:
                     cmap = get_cmap_safe(colors)
                 except ValueError:
-                    pass  # Not a cmap, but continue with validation
-                except ModuleNotFoundError as e:  # pragma: no cover
-                    if colors == 'glasbey_category10':
-                        # Provide custom message for default case
-                        msg = (
-                            "`colorcet` is required to use the default colors from the 'glasbey_category10' colormap.\n"
-                            "Install `colorcet`, or specify different colors. E.g. use 'tab10' to use the 10 default\n"
-                            'categorical colors used by matplotlib.'
-                        )
-                        raise ModuleNotFoundError(msg) from e
-                    else:
-                        raise
+                    pass
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
                         msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
