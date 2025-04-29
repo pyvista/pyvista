@@ -587,11 +587,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(filename)
-        filename_mtl = filename.with_suffix('.mtl')
+        importer.SetFileName(str(filename) if pyvista.vtk_version_info < (9, 2, 2) else filename)
+        if filename_mtl is None:
+            filename_mtl = filename.with_suffix('.mtl')
+        else:
+            filename_mtl = Path(filename_mtl).expanduser().resolve()
         if filename_mtl.is_file():
-            importer.SetFileNameMTL(filename_mtl)
-            importer.SetTexturePath(filename_mtl.parents[0])
+            importer.SetFileNameMTL(
+                str(filename_mtl) if pyvista.vtk_version_info < (9, 2, 2) else filename_mtl
+            )
+            importer.SetTexturePath(
+                str(filename_mtl.parents[0])
+                if pyvista.vtk_version_info < (9, 2, 2)
+                else filename_mtl.parents[0]
+            )
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -5758,7 +5767,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label_actor = _vtk.vtkActor2D()
         label_actor.SetMapper(label_mapper)
-        self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)  # type: ignore[arg-type]
+        self.add_actor(
+            label_actor,  # type: ignore[arg-type]
+            reset_camera=False,
+            name=f'{name}-labels',
+            pickable=False,
+            render=render,
+        )
         return label_actor
 
     def add_point_scalar_labels(
