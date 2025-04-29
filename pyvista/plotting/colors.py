@@ -1732,26 +1732,26 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if has_module('colorcet'):
+        if has_module('colorcet'):  # pragma: no branch
             import colorcet
 
             try:
                 return colorcet.cm[cmap]
             except KeyError:
                 pass
-        elif cmap in _COLORCET_CMAPS:
+        elif cmap in _COLORCET_CMAPS:   # pragma: no cover
             msg = f'Package `colorcet` is required to use colormap {cmap!r}.'
             raise ModuleNotFoundError(msg)
 
         # Try cmocean second
-        if has_module('cmocean'):
+        if has_module('cmocean'):  # pragma: no branch
             import cmocean
 
             try:
                 return cmocean.cm.cmap_d[cmap]
             except KeyError:
                 pass
-        elif cmap in _CMOCEAN_CMAPS:
+        elif cmap in _CMOCEAN_CMAPS:  # pragma: no cover
             msg = f'Package `cmocean` is required to use colormap {cmap!r}.'
             raise ModuleNotFoundError(msg)
 
