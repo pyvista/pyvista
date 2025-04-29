@@ -395,8 +395,8 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                 # Re-define read function to read all files in a directory as a multiblock
                 read_func = lambda path: _load_as_multiblock(  # type: ignore[assignment]
                     [
-                        _SingleFileDatasetLoader(str(Path(path) / fname))
-                        for fname in sorted(Path(path).iterdir())
+                        _SingleFileDatasetLoader(str(Path(path, fname)))
+                        for fname in sorted(os.listdir(path))  # noqa: PTH208
                     ],
                 )
                 return read_func(path) if load_func is None else load_func(read_func(path))
