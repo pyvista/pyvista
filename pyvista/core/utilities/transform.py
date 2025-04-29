@@ -25,6 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista import Prop3D
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -33,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
-class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
+class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTransform):
     """Describes linear transformations via a 4x4 matrix.
 
     A :class:`Transform` can be used to describe the full range of linear (also known
@@ -1482,22 +1483,35 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         inverse: bool = ...,
         copy: bool = ...,
     ) -> _DataSetOrMultiBlockType: ...
+    @overload
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        obj: Prop3D,
+        /,
+        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+    ) -> Prop3D: ...
+    def apply(
+        self: Transform,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
         /,
         mode: Literal[
             'points',
             'vectors',
             'active_vectors',
             'all_vectors',
+            'replace',
+            'pre-multiply',
+            'post-multiply',
         ]
         | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
     ):
-        """Apply the current transformation :attr:`matrix` to points, vectors, or a dataset.
+        """Apply the current transformation :attr:`matrix` to points, vectors, a dataset, or actor.
 
         .. note::
 
@@ -1508,7 +1522,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock
+        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
 
         mode : str, optional
@@ -1536,6 +1550,17 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
 
                 By default, only ``'active_vectors'`` are transformed.
 
+            #.  For actor inputs:
+
+                - ``'pre-multiply'`` pre-multiplies this transform with the actor's
+                  :attr:`~pyvista.Prop3D.user_matrix`.
+                - ``'post-multiply'`` post-multiplies this transform with the actor's
+                  user-matrix.
+                - ``'replace'`` replaces the actor's user-matrix with this transform's
+                  :attr:`matrix`.
+
+                By default, ``'post-multiply'`` mode is used for actors.
+
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
             :attr:`matrix`.
@@ -1543,13 +1568,13 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
             ``False`` to transform the input directly and return it. Setting this to
-            ``False`` only applies to NumPy float arrays and datasets; a copy
+            ``False`` only applies to NumPy float arrays, datasets, and actors; a copy
             is always returned for tuple and list inputs or arrays with integers.
 
         Returns
         -------
-        np.ndarray | DataSet | MultiBlock
-            Transformed array or dataset.
+        np.ndarray | DataSet | MultiBlock | Prop3D
+            Transformed array, dataset, or actor.
 
         See Also
         --------
@@ -1560,8 +1585,13 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         apply_to_dataset
             Equivalent to ``apply(obj, mode)`` for dataset inputs where ``mode`` may be
             ``'active_vectors'`` or ``'all_vectors'``.
+        apply_to_actor
+            Equivalent to ``apply(obj, mode)`` for actor inputs where ``mode`` may be
+            ``'pre-multiply'``, ``'post-multiply'``, or ``'replace'``.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
+        pyvista.Prop3D.transform
+            Transform an actor.
 
         Examples
         --------
@@ -1607,13 +1637,23 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         pyvista_ndarray([[0.5, 1. , 1. ],
                          [2. , 2.5, 2.5]])
 
+        Apply a transformation to an actor.
+
+        >>> actor = pv.Actor()
+        >>> transformed_actor = transform.apply(actor)
+        >>> transformed_actor.user_matrix
+        array([[2., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 2., 0.],
+               [0., 0., 0., 1.]])
+
         """
 
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
                 msg = (
                     f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
-                    f'\n{allowed}'
+                    f'\n{allowed_modes}'
                 )
                 raise ValueError(msg)
 
@@ -1623,6 +1663,9 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 'vectors',
                 'active_vectors',
                 'all_vectors',
+                'replace',
+                'pre-multiply',
+                'post-multiply',
                 None,
             ],
             must_contain=mode,
@@ -1635,6 +1678,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
                 Sequence,
                 pyvista.DataSet,
                 pyvista.MultiBlock,
+                pyvista.Prop3D,
             ),
         )
 
@@ -1653,6 +1697,19 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
             )
 
         matrix = self.inverse_matrix if inverse else self.matrix
+
+        # Transform actor
+        if isinstance(obj, pyvista.Prop3D):
+            allowed = ['replace', 'pre-multiply', 'post-multiply', None]
+            _check_mode('actors', mode, allowed)
+            if mode in ['post-multiply', None]:
+                return obj.transform(matrix, 'post', inplace=inplace)
+            elif mode == 'pre-multiply':
+                return obj.transform(matrix, 'pre', inplace=inplace)
+            else:
+                actor = obj.copy() if copy else obj
+                actor.user_matrix = matrix
+                return actor
 
         # Transform array
         allowed = ['points', 'vectors', None]
@@ -1686,6 +1743,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         points: VectorLike[float] | MatrixLike[float],
         /,
+        *,
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
@@ -1722,6 +1780,8 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
             Apply this transformation to vectors.
         apply_to_dataset
             Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
 
         """
         return self.apply(points, 'points', inverse=inverse, copy=copy)
@@ -1730,6 +1790,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         self,
         vectors: VectorLike[float] | MatrixLike[float],
         /,
+        *,
         inverse: bool = False,
         copy: bool = True,
     ) -> NumpyArray[float]:
@@ -1766,6 +1827,8 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_dataset
             Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
 
         """
         return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
@@ -1775,6 +1838,7 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
         dataset: _DataSetOrMultiBlockType,
         /,
         mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
+        *,
         copy: bool = True,
         inverse: bool = False,
     ) -> _DataSetOrMultiBlockType:
@@ -1818,11 +1882,73 @@ class Transform(_vtk.vtkPyVistaOverride, _vtk.vtkTransform):
             Apply this transformation to points.
         apply_to_vectors
             Apply this transformation to vectors.
+        apply_to_actor
+            Apply this transformation to an actor.
         pyvista.DataObjectFilters.transform
             Transform a dataset.
 
         """
         return self.apply(dataset, mode, inverse=inverse, copy=copy)
+
+    def apply_to_actor(
+        self,
+        actor: Prop3D,
+        /,
+        mode: Literal['pre-multiply', 'post-multiply', 'replace'] = 'post-multiply',
+        *,
+        copy: bool = True,
+        inverse: bool = False,
+    ) -> Prop3D:
+        """Apply the current transformation :attr:`matrix` to an actor.
+
+        This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and
+        examples.
+
+        Parameters
+        ----------
+        actor : Prop3D
+            Actor to apply the transformation to.
+
+        mode : 'pre-multiply', 'post-multiply', 'replace', default: 'post-multiply'
+            Mode for transforming the actor:
+
+            - ``'pre-multiply'`` pre-multiplies this transform with the actor's
+              :attr:`~pyvista.Prop3D.user_matrix`.
+            - ``'post-multiply'``  post-multiplies this transform with the actor's
+              user-matrix.
+            - ``'replace'`` replaces the actor's user-matrix with this transform's
+              :attr:`matrix`.
+
+            By default, ``'post-multiply'`` mode is used.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it.
+
+        Returns
+        -------
+        Prop3D
+            Transformed actor.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+        pyvista.Prop3D.transform
+            Transform an actor.
+
+        """
+        return self.apply(actor, mode, inverse=inverse, copy=copy)
 
     def decompose(
         self: Transform,

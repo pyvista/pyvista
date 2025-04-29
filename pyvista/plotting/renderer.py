@@ -266,7 +266,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkOpenGLRenderer):
+class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -1072,7 +1072,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
-    def delete_axes_widget(self):
+    def _delete_axes_widget(self):
         """Remove and delete the current axes widget."""
         if hasattr(self, 'axes_widget'):
             self.axes_actor = None
@@ -1148,8 +1148,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        if hasattr(self, 'axes_widget'):
-            self.delete_axes_widget()
+        self._delete_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -1276,7 +1275,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self.delete_axes_widget()
+        self._delete_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1495,7 +1494,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self.delete_axes_widget()
+        self._delete_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -1541,7 +1540,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        self.delete_axes_widget()
+        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
+            self.axes_widget.EnabledOff()
+            self.Modified()
 
     def show_axes(self) -> None:
         """Show the axes orientation widget.
@@ -2048,6 +2049,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pyvista.CubeAxesActor
             Bounds actor.
 
+        See Also
+        --------
+        :ref:`bounds_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2498,7 +2503,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.Modified()
 
     def clear(self) -> None:
-        """Remove all actors and properties."""
+        """Remove all actors and properties.
+
+        See Also
+        --------
+        :ref:`clear_example`
+
+        """
         self.clear_actors()
         if self._charts is not None:
             self._charts.deep_clean()
@@ -3213,7 +3224,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blur_example` for a full example using this method.
+        See :ref:`blurring_example` for a full example using this method.
 
         """
         self._render_passes.add_blur_pass()
@@ -3391,6 +3402,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
 
+        See Also
+        --------
+        :ref:`ssao_example`
+
         Examples
         --------
         Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
@@ -3514,7 +3529,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture, is_srgb=False) -> None:
+    def set_environment_texture(
+        self, texture, is_srgb=False, resample: bool | float | None = None
+    ) -> None:
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
@@ -3532,6 +3549,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the texture is in sRGB color space, set the color flag on the
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
+
+        resample : bool | float, optional
+            Resample the environment texture. Set this to a float to set the
+            sampling rate explicitly or set to ``True`` to downsample the
+            texture to 1/16th of its original resolution. By default, the
+            theme value for ``resample_environment_texture`` is used, which
+            is ``False`` for the standard theme.
+
+            Downsampling the texture can substantially improve performance for
+            some environments, e.g. headless setups or if GPU support is limited.
+
+            .. note::
+
+                This will resample the texture used for image-based lighting only,
+                e.g. the texture used for rendering reflective surfaces. It
+                does `not` resample the background texture.
+
+            .. versionadded:: 0.45
 
         Examples
         --------
@@ -3558,7 +3593,30 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture, is_srgb)
+
+        if resample is None:
+            resample = pyvista.global_theme.resample_environment_texture
+
+        if resample:
+            resample = 1 / 16 if resample is True else resample
+
+            # Copy the texture
+            # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
+            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy.cube_map = texture.cube_map
+            texture_copy.SetMipmap(texture.GetMipmap())
+            texture_copy.SetInterpolate(texture.GetInterpolate())
+
+            # Resample the texture's images
+            for i in range(6 if texture_copy.cube_map else 1):
+                texture_copy.SetInputDataObject(
+                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
+                )
+            self.SetEnvironmentTexture(texture_copy, is_srgb)
+        else:
+            self.SetEnvironmentTexture(texture, is_srgb)
+
+        self.SetBackgroundTexture(texture)
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3579,12 +3637,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.UseImageBasedLightingOff()
         self.SetEnvironmentTexture(None)
+        self.SetBackgroundTexture(None)  # type: ignore[arg-type]
         self.Modified()
 
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self.delete_axes_widget()
+        self._delete_axes_widget()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -3816,6 +3875,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         -------
         vtk.vtkLegendBoxActor
             Actor for the legend.
+
+        See Also
+        --------
+        :ref:`legend_example`
 
         Examples
         --------

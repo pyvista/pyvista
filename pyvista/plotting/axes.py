@@ -7,7 +7,7 @@ from .actor import Actor
 from .axes_actor import AxesActor
 
 
-class Axes(_vtk.vtkAxes):
+class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
     """PyVista wrapper for the VTK Axes class.
 
     Parameters

@@ -152,7 +152,6 @@ def test_raise_not_matching_raises():
 
 
 def test_version():
-    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -162,6 +161,7 @@ def test_version():
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
+    assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= (0, 0, 0)
 
@@ -470,6 +470,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():
@@ -1649,9 +1650,30 @@ def test_transform_apply_to_dataset(scale_transform, mode, method):
     assert np.allclose(transformed['vector'], expected)
 
 
+@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
+def test_transform_apply_to_actor(scale_transform, translate_transform, mode, method):
+    expected_matrix = scale_transform.matrix
+    actor = pv.Actor()
+
+    transformed = method(scale_transform, actor, mode)
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+    # Transform again
+    transformed = method(translate_transform, transformed, mode)
+    if mode == 'replace':
+        expected_matrix = translate_transform.matrix
+    else:
+        expected_matrix = scale_transform.compose(
+            translate_transform, multiply_mode=mode.split('-')[0]
+        ).matrix
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+
 def test_transform_apply_invalid_mode():
     mesh = pv.PolyData()
     array = np.ndarray(())
+    actor = pv.Actor()
     trans = pv.Transform()
 
     match = (
@@ -1667,6 +1689,13 @@ def test_transform_apply_invalid_mode():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         trans.apply(array, 'all_vectors')
+
+    match = (
+        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
+        "['replace', 'pre-multiply', 'post-multiply', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -2174,6 +2203,23 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_vtk_snake_case():
+    assert pv.vtk_snake_case() == 'error'
+    match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
+
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        _ = pv.PolyData().information
+
+    pv.vtk_snake_case('allow')
+    assert pv.vtk_snake_case() == 'allow'
+    _ = pv.PolyData().information
+
+    with pv.vtk_snake_case('warning'):
+        with pytest.warns(RuntimeWarning, match=match):
+            _ = pv.PolyData().information
 
 
 T = TypeVar('T')
