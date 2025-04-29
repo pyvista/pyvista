@@ -364,6 +364,13 @@ class AxesAssembly(_XYZAssembly):
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
+    See Also
+    --------
+    AxesAssemblySymmetric
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
+
     Examples
     --------
     Add axes to a plot.
@@ -990,6 +997,13 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    See Also
+    --------
+    AxesAssembly
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------
