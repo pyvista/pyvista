@@ -7025,12 +7025,8 @@ class DataSetFilters(DataObjectFilters):
             if isinstance(colors, str):
                 try:
                     cmap = get_cmap_safe(colors)
-                except ValueError as e:
-                    if (  # pragma: no cover
-                        'colorcet' in (cmap_repr := repr(e)) or 'cmocean' in cmap_repr
-                    ):
-                        # Valid cmap but package is not installed.
-                        raise
+                except ValueError:
+                    pass
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
                         msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."

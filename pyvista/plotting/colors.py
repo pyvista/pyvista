@@ -1233,7 +1233,7 @@ def get_cmap_safe(cmap):
                         )
                     else:
                         msg = f"Invalid colormap '{cmap}'"
-                    raise ValueError(msg) from None
+                    raise ModuleNotFoundError(msg) from None
 
     elif isinstance(cmap, list):
         for item in cmap:
