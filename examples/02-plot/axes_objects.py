@@ -165,3 +165,6 @@ axes = pv.AxesAssemblySymmetric(label_size=25)
 pl.add_orientation_widget(axes, viewport=viewport)
 
 pl.show()
+#
+# %%
+# .. tags:: plot
