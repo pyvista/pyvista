@@ -1731,8 +1731,12 @@ def get_cmap_safe(cmap):
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]
 
+        msg_template = (
+            'Package `{}` is required to use colormap {!r}.\n'
+            'Install PyVista with `pyvista[colormaps]` to install it by default.'
+        )
         # Try colorcet first
-        if has_module('colorcet'):  # pragma: no branch
+        if has_module(module := 'colorcet'):  # pragma: no branch
             import colorcet
 
             try:
@@ -1740,11 +1744,11 @@ def get_cmap_safe(cmap):
             except KeyError:
                 pass
         elif cmap in _COLORCET_CMAPS:  # pragma: no cover
-            msg = f'Package `colorcet` is required to use colormap {cmap!r}.'
+            msg = msg_template.format(module, cmap)
             raise ModuleNotFoundError(msg)
 
         # Try cmocean second
-        if has_module('cmocean'):  # pragma: no branch
+        if has_module(module := 'cmocean'):  # pragma: no branch
             import cmocean
 
             try:
@@ -1752,7 +1756,7 @@ def get_cmap_safe(cmap):
             except KeyError:
                 pass
         elif cmap in _CMOCEAN_CMAPS:  # pragma: no cover
-            msg = f'Package `cmocean` is required to use colormap {cmap!r}.'
+            msg = msg_template.format(module, cmap)
             raise ModuleNotFoundError(msg)
 
         if not isinstance(cmap, colors.Colormap):
