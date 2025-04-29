@@ -7021,7 +7021,9 @@ class DataSetFilters(DataObjectFilters):
                 try:
                     cmap = get_cmap_safe(colors)
                 except ValueError as e:
-                    if 'colorcet' in (cmap_repr := repr(e)) or 'cmocean' in cmap_repr:
+                    if (  # pragma: no cover
+                        'colorcet' in (cmap_repr := repr(e)) or 'cmocean' in cmap_repr
+                    ):
                         # Valid cmap but package is not installed.
                         raise
                 else:
