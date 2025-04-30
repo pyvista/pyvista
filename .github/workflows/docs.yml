@@ -33,9 +33,6 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  PYDEVD_DISABLE_FILE_VALIDATION: "1"
-  PYTEST_ADDOPTS: "--color=yes"
-  FORCE_COLOR: "True"
   VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
 
 permissions:
@@ -46,34 +43,27 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-22.04
     env:
-      PYVISTA_OFF_SCREEN: "True"
-      ALLOW_PLOTTING: true
-      SHELLOPTS: "errexit:pipefail"
+      PYVISTA_USERDATA_PATH: ${{ github.workspace }}/.pyvista_examples
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - name: Install uv and
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+
+      - name: Install tox-uv
+        run: uv pip install tox-uv
+
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
-
-      - name: Install PyVista and dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
-
-      - name: PyVista Report
-        run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
-          pip list
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
@@ -86,7 +76,7 @@ jobs:
         uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
         with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache Sphinx build directory
@@ -97,18 +87,7 @@ jobs:
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: make -C doc html
-
-      - name: Dump Sphinx Warnings and Errors
-        if: always()
-        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
-
-      - name: Dump VTK Warnings and Errors
-        if: always()
-        run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
-
-      - name: Test Documentation
-        run: pytest tests/doc/tst_doc_build.py
+        run: tox run -e docs-build
 
       - name: Upload Images for Failed Tests
         if: always()
