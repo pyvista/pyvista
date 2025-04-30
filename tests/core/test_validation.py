@@ -1117,12 +1117,7 @@ def test_validate_dimensionality_errors(dimensionality, message):
         validate_dimensionality(dimensionality)
 
 
-def test_validate_color_sequence_raises():
-    match = 'Input must be a single ColorLike color or a sequence of ColorLike colors.'
-    with pytest.raises(ValueError, match=match):
-        _validate_color_sequence('foo', n_colors=None)
-
-    n_colors = 42
-    match = f'Input must be a single ColorLike color or a sequence of {n_colors} ColorLike colors.'
+@pytest.mark.parametrize(["n_colors", "match"], [(None, 'Input must be a single ColorLike color or a sequence of ColorLike colors.'), (42, 'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.')])
+def test_validate_color_sequence_raises(n_colors, match):
     with pytest.raises(ValueError, match=match):
         _validate_color_sequence('foo', n_colors=n_colors)
