@@ -198,12 +198,6 @@ skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doct
 [tool.coverage]
 html.show_contexts = true
 html.skip_covered = false
-paths.source = [
-  "pyvista/",
-
-  ".tox*/*/lib/python*/site-packages/pyvista",
-  ".tox*\\*\\Lib\\site-packages\\pyvista",
-]
 report.exclude_also = [
   '^\s*@overload.*\n\s*def .*\(.*$',
   '^\s*if TYPE_CHECKING:',
