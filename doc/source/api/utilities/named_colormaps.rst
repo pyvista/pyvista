@@ -9,7 +9,7 @@ and other plotting-related methods.
 The colormaps on this page are from multiple packages:
 
 - :bdg-secondary:`matplotlib` -
-  `Matplotlib colormaps <https://matplotlib.org/stable/gallery/color/colormap_reference.html>`_.
+  `matplotlib colormaps <https://matplotlib.org/stable/gallery/color/colormap_reference.html>`_.
 - :bdg-success:`colorcet` -
   `Continuous <https://colorcet.holoviz.org/user_guide/Continuous.html#named-colormaps>`_
   and `categorical <https://colorcet.holoviz.org/user_guide/Categorical.html#categorical>`_
