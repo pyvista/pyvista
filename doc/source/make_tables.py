@@ -36,6 +36,10 @@ from typing import Literal
 from typing import final
 from typing import get_args
 
+import cmocean
+import colorcet
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -58,6 +62,8 @@ from pyvista.plotting.colors import _TABLEAU_COLORS
 from pyvista.plotting.colors import _VTK_COLORS
 from pyvista.plotting.colors import _format_color_dict
 
+mpl.use('TkAgg')
+
 if TYPE_CHECKING:
     from types import FunctionType
     from types import ModuleType
@@ -70,6 +76,7 @@ CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
 COLORMAP_TABLE_DIR = 'api/utilities/colormap_table'
+COLORMAP_IMAGE_DIR = 'images/colormaps'
 
 # Directory where auto-generated gallery rst files are saved
 DATASET_GALLERY_DIR = 'api/examples/dataset-gallery'
@@ -1006,7 +1013,7 @@ class ColormapTable(DocTable):
         """
         |   * - {}
         |     - {}
-        |     - {}
+        |     - .. image:: /{}
         """,
     )
 
@@ -1030,9 +1037,50 @@ class ColormapTable(DocTable):
             'colorcet': ':bdg-success:`colorcet`',
             'matplotlib': ':bdg-secondary:`matplotlib`',
         }
-        name = f'`{colormap_info.name!r}`'
+        name = f'``{colormap_info.name!r}``'
         source_badge = _colormap_source_badge[colormap_info.package]
-        return cls.row_template.format(source_badge, name, '')
+        img_path = f'{COLORMAP_IMAGE_DIR}/{colormap_info.package}_{colormap_info.name}.png'
+        cls.generate_img(colormap_info.name, colormap_info.package, img_path)
+        return cls.row_template.format(source_badge, name, img_path)
+
+    @staticmethod
+    def generate_img(cmap, package, img_path):
+        """Generate and save an image of the given colormap."""
+
+        def plot_colorbar(
+            cmap,
+            package: Literal['matplotlib', 'colorcet', 'cmocean'] | None = None,
+            filename: str | None = None,
+            width: int = 256,
+            height: int = 10,
+        ):
+            if isinstance(cmap, str):
+                if package == 'matplotlib':
+                    cmap = mpl.colormaps[cmap]
+                elif package == 'colorcet':
+                    cmap = colorcet.cm[cmap]
+                elif package == 'cmocean':
+                    cmap = cmocean.cm.cmap_d[cmap]
+                else:
+                    cmap = pv.get_cmap_safe(cmap)
+
+            # Create a smooth gradient across the colormap resolution
+            gradient = np.linspace(0, 1, width)
+            gradient = np.vstack((gradient,) * height)
+
+            fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+            ax.imshow(gradient, aspect='auto', cmap=cmap)
+            ax.set_axis_off()
+
+            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+            if filename:
+                fig.savefig(filename, bbox_inches='tight', pad_inches=0)
+                plt.close(fig)
+            else:
+                plt.show()
+
+        plot_colorbar(cmap, package=package, filename=img_path, width=512, height=32)
 
 
 class ColormapTableSEQUENTIAL(ColormapTable):
@@ -2834,6 +2882,8 @@ def make_all_tables():  # noqa: D103
     CellQualityInfoTableWEDGE.generate()
     CellQualityInfoTablePYRAMID.generate()
 
+    # Make colormap tables
+    os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
     ColormapTableSEQUENTIAL.generate()
     ColormapTableDIVERGING.generate()

@@ -66,6 +66,7 @@ doc/source/examples/
 doc/source/errors.txt
 doc/source/images/auto-generated
 doc/source/images/charts
+doc/source/images/colormaps
 **/myscreenshot.png
 api-autogen/
 _autosummary/
