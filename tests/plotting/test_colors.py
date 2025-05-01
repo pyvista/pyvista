@@ -254,13 +254,13 @@ def test_unique_colors():
 
 def test_cmaps_colorcet_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(colorcet.cm.keys()) - set(mpl.colormaps)
+    actual = set(colorcet.cm.keys()) - set(mpl.colormaps._builtin_cmaps)
     expected = set(_COLORCET_CMAPS)
     assert actual == expected
 
 
 def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
+    actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps._builtin_cmaps)
     expected = set(_CMOCEAN_CMAPS)
     assert actual == expected
