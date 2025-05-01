@@ -17,8 +17,14 @@ The colormaps on this page come from various sources, and include:
 
 .. note::
 
-    Some colormap names are duplicated between packages (e.g. ``'rainbow'``).
-    If installed, colormaps from ``colorcet`` have priority.
+    Some colormaps such as ``gray`` and ``rainbow`` are duplicated across
+    packages. If installed, colormaps from ``colorcet`` have priority, followed
+    by ``cmocean``, followed by ``matplotlib``.
+
+.. note::
+
+    Install PyVista with ``pyvista[colormaps]`` or ``pyvista[all]`` to also
+    install the ``colorcet`` and ``cmocean`` packages.
 
 .. dropdown:: Sequential
     :open:
