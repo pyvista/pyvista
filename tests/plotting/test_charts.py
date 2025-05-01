@@ -21,8 +21,7 @@ def skip_check_gc(skip_check_gc):
 
 
 # skip all tests if VTK<9.2.0
-if pv.vtk_version_info < (9, 2):
-    pytestmark = pytest.mark.skip
+pytestmark = pytest.mark.needs_vtk_version(9, 2)
 
 
 def vtk_array_to_tuple(arr):
@@ -220,6 +219,8 @@ def test_axis_init():
     assert np.allclose(axis.range, r_fix)
     assert axis.behavior == 'fixed'
     assert axis.grid
+    assert isinstance(axis.pen, charts.Pen)
+    assert isinstance(axis.grid_pen, charts.Pen)
 
 
 def test_axis_label(axis):

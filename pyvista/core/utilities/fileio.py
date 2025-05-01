@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     import imageio
     import meshio
 
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
@@ -77,7 +77,7 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
 
     """
     supported = {'vtk', 'xml', 'legacy'}
-    format_ = cast(Literal['vtk', 'xml', 'legacy'], format.lower())
+    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
     if format_ not in supported:
         msg = (
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
@@ -463,7 +463,7 @@ def read_exodus(
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast(pyvista.DataSet, wrap(reader.GetOutput()))
+    return cast('pyvista.DataSet', wrap(reader.GetOutput()))
 
 
 def read_grdecl(
@@ -1072,26 +1072,25 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+    def split(arr: VectorLike[int]) -> list[VectorLike[int]]:
+        i = 0
+        offsets: list[int] = [0]
 
-    if polyhedral_cells is not None:
-        locations = pyvista.convert_array(mesh.GetFaceLocations())
-        polyhedral_cell_faces = []
+        while i < len(arr):
+            offsets.append(int(arr[i]) + 1)
+            i += offsets[-1]
 
-        for location in locations:
-            if location == -1:
-                continue
+        offsets_ = np.cumsum(offsets)
 
-            n_faces = polyhedral_cells[location]
-            i = location + 1
-            faces: list[MatrixLike[int]] = []
+        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:])]
 
-            while len(faces) < n_faces:
-                n_vertices = polyhedral_cells[i]
-                faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
-                i += n_vertices + 1
+    polyhedron_faces = split(mesh.polyhedron_faces)
 
-            polyhedral_cell_faces.append(faces)
+    if polyhedron_faces:
+        polyhedron_locations = split(mesh.polyhedron_face_locations)
+        polyhedral_cell_faces: list[list[VectorLike[int]]] = [
+            [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
+        ]
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
@@ -1118,15 +1117,13 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     else:
         cells = []
         offset = mesh.offset
-        polyhedron_count = 0
 
-        for i1, i2, vtk_celltype in zip(offset[:-1], offset[1:], vtk_celltypes):
+        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
             cell = connectivity[i1:i2]
 
             if vtk_celltype == pyvista.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
-                cell = polyhedral_cell_faces[polyhedron_count]
-                polyhedron_count += 1
+                cell = polyhedral_cell_faces[i]
 
             # Handle the missing voxel key (11) in vtk_to_meshio_type
             elif vtk_celltype == pyvista.CellType.VOXEL:

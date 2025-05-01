@@ -1,4 +1,6 @@
 """
+.. _create_uniform_grid_example:
+
 Creating a Uniform Grid
 ~~~~~~~~~~~~~~~~~~~~~~~
 

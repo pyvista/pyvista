@@ -76,6 +76,10 @@ def text_3d(string, depth=0.5):
     pyvista.DataSet
         The 3D text in the form of a PyVista DataSet.
 
+    See Also
+    --------
+    :ref:`create_pixel_art_example`
+
     """
     from vtkmodules.vtkRenderingFreeType import vtkVectorText
 

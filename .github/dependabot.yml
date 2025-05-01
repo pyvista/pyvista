@@ -4,8 +4,8 @@ updates:
     directory: "/" # Location of package manifests
     insecure-external-code-execution: allow
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 100
+      interval: "weekly"
+    open-pull-requests-limit: 2
     groups:
       trame:
         patterns:
@@ -25,8 +25,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 100
+      interval: "weekly"
+    open-pull-requests-limit: 2
     groups:
       artifacts:
         patterns:
@@ -38,8 +38,8 @@ updates:
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 100
+      interval: "weekly"
+    open-pull-requests-limit: 2
     labels:
       - "maintenance"
       - "dependencies"

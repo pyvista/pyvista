@@ -1,4 +1,6 @@
 """
+.. _legend_example:
+
 Legends and glyphs
 ~~~~~~~~~~~~~~~~~~
 
