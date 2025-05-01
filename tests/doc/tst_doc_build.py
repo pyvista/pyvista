@@ -9,6 +9,7 @@ import shutil
 from typing import Literal
 from typing import NamedTuple
 import warnings
+from xml.etree.ElementTree import parse
 
 from PIL import Image
 import pytest
@@ -17,7 +18,8 @@ import pyvista as pv
 
 ROOT_DIR = str(Path(__file__).parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
-BUILD_IMAGE_DIR = str(Path(BUILD_DIR) / 'html' / '_images')
+HTML_DIR = str(Path(BUILD_DIR) / 'html')
+BUILD_IMAGE_DIR = str(Path(HTML_DIR) / '_images')
 DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
 DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
 BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
@@ -25,6 +27,12 @@ FLAKY_IMAGE_DIR = str(Path(__file__).parent / 'flaky_tests')
 FLAKY_TEST_CASES = [path.name for path in Path(FLAKY_IMAGE_DIR).iterdir() if path.is_dir()]
 
 MAX_VTKSZ_FILE_SIZE_MB = 50
+
+# Same value as `sphinx_gallery_conf['junit']` in `conf.py`
+SPHINX_GALLERY_CONF_JUNIT = Path('sphinx-gallery') / 'junit-results.xml'
+SPHINX_GALLERY_EXAMPLE_MAX_TIME = 150.0  # Measured in seconds
+XML_FILE = HTML_DIR / SPHINX_GALLERY_CONF_JUNIT
+assert XML_FILE.is_file()
 
 pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
@@ -276,3 +284,17 @@ def test_interactive_plot_file_size(vtksz_file: str):
             f'Consider reducing the complexity of the plot or forcing it to be static.'
         )
         pytest.fail(msg)
+
+
+xml_root = parse(XML_FILE).getroot()
+test_cases = [dict(case.attrib) for case in xml_root.iterfind('testcase')]
+test_ids = [case['classname'] for case in test_cases]
+
+
+@pytest.mark.parametrize('testcase', test_cases, ids=test_ids)
+def test_sphinx_gallery_execution_times(testcase):
+    if float(testcase['time']) > SPHINX_GALLERY_EXAMPLE_MAX_TIME:
+        pytest.fail(
+            f'Gallery example {testcase["name"]!r} from {testcase["file"]!r}\n'
+            f'Took too long to run: Duration {testcase["time"]}s > {SPHINX_GALLERY_EXAMPLE_MAX_TIME}s',
+        )
