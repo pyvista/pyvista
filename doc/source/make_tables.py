@@ -1005,7 +1005,7 @@ class ColormapTable(DocTable):
         |
         |   * - Source
         |     - Name
-        |     - Colormap
+        |     - Swatch
         """,
     )
     row_template = _aligned_dedent(
@@ -1038,48 +1038,38 @@ class ColormapTable(DocTable):
         }
         name = f'``{colormap_info.name!r}``'
         source_badge = _colormap_source_badge[colormap_info.package]
-        img_path = f'{COLORMAP_IMAGE_DIR}/{colormap_info.package}_{colormap_info.name}.png'
+        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
         cls.generate_img(colormap_info.name, colormap_info.package, img_path)
         return cls.row_template.format(source_badge, name, img_path)
 
     @staticmethod
     def generate_img(cmap, package, img_path):
         """Generate and save an image of the given colormap."""
+        width = 512  # Should be a multiple of 256 to avoid aliasing
+        height = 32
 
-        def plot_colorbar(
-            cmap,
-            package: Literal['matplotlib', 'colorcet', 'cmocean'] | None = None,
-            filename: str | None = None,
-            width: int = 256,
-            height: int = 10,
-        ):
-            if isinstance(cmap, str):
-                if package == 'matplotlib':
-                    cmap = mpl.colormaps[cmap]
-                elif package == 'colorcet':
-                    cmap = colorcet.cm[cmap]
-                elif package == 'cmocean':
-                    cmap = cmocean.cm.cmap_d[cmap]
-                else:
-                    cmap = pv.get_cmap_safe(cmap)
-
-            # Create a smooth gradient across the colormap resolution
-            gradient = np.linspace(0, 1, width)
-            gradient = np.vstack((gradient,) * height)
-
-            fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
-            ax.imshow(gradient, aspect='auto', cmap=cmap)
-            ax.set_axis_off()
-
-            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-
-            if filename:
-                fig.savefig(filename, bbox_inches='tight', pad_inches=0)
-                plt.close(fig)
+        if isinstance(cmap, str):
+            if package == 'matplotlib':
+                cmap = mpl.colormaps[cmap]
+            elif package == 'colorcet':
+                cmap = colorcet.cm[cmap]
+            elif package == 'cmocean':
+                cmap = cmocean.cm.cmap_d[cmap]
             else:
-                plt.show()
+                cmap = pv.get_cmap_safe(cmap)
 
-        plot_colorbar(cmap, package=package, filename=img_path, width=512, height=32)
+        # Create a smooth gradient across the colormap resolution
+        gradient = np.linspace(0, 1, width)
+        gradient = np.vstack((gradient,) * height)
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.imshow(gradient, aspect='auto', cmap=cmap)
+        ax.set_axis_off()
+
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
 
 
 class ColormapTableSEQUENTIAL(ColormapTable):
