@@ -840,6 +840,7 @@ class _ColormapInfo(NamedTuple):
 
 
 _COLORMAP_INFO: list[_ColormapInfo] = [
+    _ColormapInfo('cyclic_isoluminant', ColormapKind.CYCLIC, 'colorcet'),
     _ColormapInfo('colorwheel', ColormapKind.CYCLIC, 'colorcet'),
     _ColormapInfo('bkr', ColormapKind.DIVERGING, 'colorcet'),
     _ColormapInfo('bky', ColormapKind.DIVERGING, 'colorcet'),
