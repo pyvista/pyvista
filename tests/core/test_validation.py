@@ -52,6 +52,7 @@ from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
 from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._validation.validate import _set_default_kwarg_mandatory
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -1114,3 +1115,15 @@ def test_validate_dimensionality(dimensionality, reshape, expected_dimensionalit
 def test_validate_dimensionality_errors(dimensionality, message):
     with pytest.raises(ValueError, match=escape(message)):
         validate_dimensionality(dimensionality)
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (None, 'Input must be a single ColorLike color or a sequence of ColorLike colors.'),
+        (42, 'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.'),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)

@@ -1,11 +1,11 @@
 """
-.. _plot_opacity_example:
+.. _opacity_example:
 
 Plot with Opacity
 ~~~~~~~~~~~~~~~~~
 
-Plot a mesh's scalar array with an opacity transfer function or opacity mapping
-based on a scalar array.
+Plot a mesh's scalar array with an :class:`~pyvista.opacity_transfer_function`
+or opacity mapping based on a scalar array.
 """
 
 # sphinx_gallery_thumbnail_number = 2

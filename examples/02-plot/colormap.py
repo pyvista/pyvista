@@ -5,7 +5,7 @@ Colormap Choices
 ~~~~~~~~~~~~~~~~
 
 Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
-values.
+values with :func:`pyvista.plot` and :class:`~pyvista.Plotter` methods.
 """
 
 from __future__ import annotations

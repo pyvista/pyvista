@@ -4,8 +4,8 @@
 Sharing Scalar Bars
 ~~~~~~~~~~~~~~~~~~~~~
 
-Show how to share scalar bars among plotted arrays or use a unique scalar bar for
-each plotted array.
+Use :meth:`~pyvista.Plotter.subplot` and show to share scalar bars
+among plotted arrays or use a unique scalar bar for each plotted array.
 
 """
 

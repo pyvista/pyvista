@@ -1,4 +1,6 @@
 """
+.. _distance_between_surfaces_example:
+
 Distance Between Two Surfaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
