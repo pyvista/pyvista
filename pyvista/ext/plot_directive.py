@@ -608,7 +608,10 @@ def run(arguments, content, options, state_machine, state, lineno):
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.relpath(setup.confdir, rst_dir).replace(os.path.sep, '/')
+    dest_dir_link = os.path.join(  # noqa: PTH118
+        relpath(setup.confdir, rst_dir),
+        source_rel_dir,
+    ).replace(os.path.sep, '/')
     try:
         build_dir_link = os.path.relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
