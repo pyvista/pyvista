@@ -3,21 +3,18 @@
 Named Colormaps
 ===============
 
-Named colormaps supported by plotting-related classes such as
-:class:`~pyvista.Plotter`.
+Named colormaps supported by :class:`~pyvista.LookupTable`, :class:`~pyvista.Plotter`,
+and other plotting-related methods.
 
 The colormaps on this page are from multiple packages:
 
 - :bdg-secondary:`matplotlib` -
-  `Named colormaps <https://matplotlib.org/stable/gallery/color/colormap_reference.html>`_
-  from ``matplotlib``.
+  `Matplotlib colormaps <https://matplotlib.org/stable/gallery/color/colormap_reference.html>`_.
 - :bdg-success:`colorcet` -
-  Named `continuous <https://colorcet.holoviz.org/user_guide/Continuous.html#named-colormaps>`_
+  `Continuous <https://colorcet.holoviz.org/user_guide/Continuous.html#named-colormaps>`_
   and `categorical <https://colorcet.holoviz.org/user_guide/Categorical.html#categorical>`_
   colormaps from ``colorcet``.
-- :bdg-primary:`cmocean` -
-  `Named colormaps <https://matplotlib.org/cmocean/>`_
-  from ``cmocean``.
+- :bdg-primary:`cmocean` - `cmocean colormaps <https://matplotlib.org/cmocean/>`_.
 
 .. note::
 
