@@ -119,6 +119,14 @@ Named colors supported by the :class:`~pyvista.Color` class:
 
    /api/utilities/named_colors
 
+
+Named colormaps supported by the :class:`~pyvista.Plotter` class:
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/utilities/named_colormaps
+
 Miscellaneous
 ~~~~~~~~~~~~~
 
