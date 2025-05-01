@@ -1371,29 +1371,3 @@ def get_cycler(color_cycler):
     else:
         msg = f'color cycler of type {type(color_cycler)} not supported.'
         raise TypeError(msg)
-
-
-#
-#
-# from colorcet.plotting import all_original_names, get_aliases
-#
-# all_continuous_cmaps = all_original_names(only_aliased=True, not_group='glasbey')
-# named_colormaps = []
-# for original_name in all_continuous_cmaps:
-#     name = get_aliases(original_name).split(',')[0]
-#     category = original_name.split('_')[0]
-#     category = category.replace('linear', 'sequential')
-#     category = category.replace('circle', 'cyclic')
-#     named_colormaps.append((name, category, 'colorcet'))
-#
-# categorical_cmaps = all_original_names(group='glasbey')
-# for original_name in categorical_cmaps:
-#     if 'minc' in original_name:
-#         name = get_aliases(original_name).split(',')[0]
-#         if name == original_name:
-#             # No aliases, skip
-#             continue
-#     else:
-#         name = original_name
-#         print(name)
-#     named_colormaps.append((name, 'categorical', 'colorcet'))
