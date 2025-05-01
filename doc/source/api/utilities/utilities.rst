@@ -113,7 +113,7 @@ Colors
    ColorLike
 
 Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
-and other plotting-related methods :
+and other plotting-related methods:
 
 .. toctree::
    :maxdepth: 3
@@ -122,7 +122,7 @@ and other plotting-related methods :
 
 
 Named colormaps supported by :class:`~pyvista.LookupTable`, :class:`~pyvista.Plotter`,
-and other plotting-related methods :
+and other plotting-related methods:
 
 .. toctree::
    :maxdepth: 3
