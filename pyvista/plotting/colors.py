@@ -1371,3 +1371,183 @@ def get_cycler(color_cycler):
     else:
         msg = f'color cycler of type {type(color_cycler)} not supported.'
         raise TypeError(msg)
+
+
+#
+#
+# from colorcet.plotting import all_original_names, get_aliases
+#
+# all_continuous_cmaps = all_original_names(only_aliased=True, not_group='glasbey')
+# named_colormaps = []
+# for original_name in all_continuous_cmaps:
+#     name = get_aliases(original_name).split(',')[0]
+#     category = original_name.split('_')[0]
+#     category = category.replace('linear', 'sequential')
+#     category = category.replace('circle', 'cyclic')
+#     named_colormaps.append((name, category, 'colorcet'))
+#
+# categorical_cmaps = all_original_names(group='glasbey')
+# for original_name in categorical_cmaps:
+#     if 'minc' in original_name:
+#         name = get_aliases(original_name).split(',')[0]
+#         if name == original_name:
+#             # No aliases, skip
+#             continue
+#     else:
+#         name = original_name
+#         print(name)
+#     named_colormaps.append((name, 'categorical', 'colorcet'))
+
+# Sequential (aka linear)
+# Categorical (aka qualitative)
+# Cyclic (aka circular)
+
+
+_ALL_NAMED_COLORMAPS = [
+    ('colorwheel', 'cyclic', 'colorcet'),
+    ('bkr', 'diverging', 'colorcet'),
+    ('bky', 'diverging', 'colorcet'),
+    ('coolwarm', 'diverging', 'colorcet'),
+    ('gwv', 'diverging', 'colorcet'),
+    ('bjy', 'diverging', 'colorcet'),
+    ('bwy', 'diverging', 'colorcet'),
+    ('cwr', 'diverging', 'colorcet'),
+    ('isolum', 'misc', 'colorcet'),
+    ('bgy', 'sequential', 'colorcet'),
+    ('bgyw', 'sequential', 'colorcet'),
+    ('blues', 'sequential', 'colorcet'),
+    ('bmw', 'sequential', 'colorcet'),
+    ('bmy', 'sequential', 'colorcet'),
+    ('gray', 'sequential', 'colorcet'),
+    ('dimgray', 'sequential', 'colorcet'),
+    ('kbc', 'sequential', 'colorcet'),
+    ('gouldian', 'sequential', 'colorcet'),
+    ('kbgyw', 'sequential', 'colorcet'),
+    ('kgy', 'sequential', 'colorcet'),
+    ('fire', 'sequential', 'colorcet'),
+    ('kb', 'sequential', 'colorcet'),
+    ('kg', 'sequential', 'colorcet'),
+    ('kr', 'sequential', 'colorcet'),
+    ('rainbow4', 'misc', 'colorcet'),
+    ('rainbow', 'misc', 'colorcet'),
+    ('glasbey_bw', 'categorical', 'colorcet'),
+    ('glasbey', 'categorical', 'colorcet'),
+    ('glasbey_cool', 'categorical', 'colorcet'),
+    ('glasbey_warm', 'categorical', 'colorcet'),
+    ('glasbey_dark', 'categorical', 'colorcet'),
+    ('glasbey_light', 'categorical', 'colorcet'),
+    ('glasbey_category10', 'categorical', 'colorcet'),
+    ('glasbey_hv', 'categorical', 'colorcet'),
+    ('thermal', 'sequential', 'cmocean'),
+    ('haline', 'sequential', 'cmocean'),
+    ('solar', 'sequential', 'cmocean'),
+    ('ice', 'sequential', 'cmocean'),
+    ('gray', 'sequential', 'cmocean'),
+    ('oxy', 'sequential', 'cmocean'),
+    ('deep', 'sequential', 'cmocean'),
+    ('dense', 'sequential', 'cmocean'),
+    ('algae', 'sequential', 'cmocean'),
+    ('matter', 'sequential', 'cmocean'),
+    ('turbid', 'sequential', 'cmocean'),
+    ('speed', 'sequential', 'cmocean'),
+    ('amp', 'sequential', 'cmocean'),
+    ('tempo', 'sequential', 'cmocean'),
+    ('rain', 'sequential', 'cmocean'),
+    ('phase', 'cyclic', 'cmocean'),
+    ('topo', 'diverging', 'cmocean'),
+    ('balance', 'diverging', 'cmocean'),
+    ('delta', 'diverging', 'cmocean'),
+    ('curl', 'diverging', 'cmocean'),
+    ('diff', 'diverging', 'cmocean'),
+    ('tarn', 'diverging', 'cmocean'),
+    ('magma', 'sequential', 'matplotlib'),
+    ('inferno', 'sequential', 'matplotlib'),
+    ('plasma', 'sequential', 'matplotlib'),
+    ('viridis', 'sequential', 'matplotlib'),
+    ('cividis', 'sequential', 'matplotlib'),
+    ('twilight', 'sequential', 'matplotlib'),
+    ('twilight_shifted', 'sequential', 'matplotlib'),
+    ('turbo', 'sequential', 'matplotlib'),
+    ('berlin', 'misc', 'matplotlib'),
+    ('managua', 'misc', 'matplotlib'),
+    ('vanimo', 'misc', 'matplotlib'),
+    ('Blues', 'sequential', 'matplotlib'),
+    ('BrBG', 'diverging', 'matplotlib'),
+    ('BuGn', 'sequential', 'matplotlib'),
+    ('BuPu', 'sequential', 'matplotlib'),
+    ('CMRmap', 'sequential', 'matplotlib'),
+    ('GnBu', 'sequential', 'matplotlib'),
+    ('Greens', 'sequential', 'matplotlib'),
+    ('Greys', 'sequential', 'matplotlib'),
+    ('OrRd', 'sequential', 'matplotlib'),
+    ('Oranges', 'sequential', 'matplotlib'),
+    ('PRGn', 'diverging', 'matplotlib'),
+    ('PiYG', 'diverging', 'matplotlib'),
+    ('PuBu', 'sequential', 'matplotlib'),
+    ('PuBuGn', 'sequential', 'matplotlib'),
+    ('PuOr', 'diverging', 'matplotlib'),
+    ('PuRd', 'sequential', 'matplotlib'),
+    ('Purples', 'sequential', 'matplotlib'),
+    ('RdBu', 'diverging', 'matplotlib'),
+    ('RdGy', 'diverging', 'matplotlib'),
+    ('RdPu', 'sequential', 'matplotlib'),
+    ('RdYlBu', 'diverging', 'matplotlib'),
+    ('RdYlGn', 'diverging', 'matplotlib'),
+    ('Reds', 'sequential', 'matplotlib'),
+    ('Spectral', 'diverging', 'matplotlib'),
+    ('Wistia', 'sequential', 'matplotlib'),
+    ('YlGn', 'sequential', 'matplotlib'),
+    ('YlGnBu', 'sequential', 'matplotlib'),
+    ('YlOrBr', 'sequential', 'matplotlib'),
+    ('YlOrRd', 'sequential', 'matplotlib'),
+    ('afmhot', 'sequential', 'matplotlib'),
+    ('autumn', 'sequential', 'matplotlib'),
+    ('binary', 'sequential', 'matplotlib'),
+    ('bone', 'sequential', 'matplotlib'),
+    ('brg', 'misc', 'matplotlib'),
+    ('bwr', 'diverging', 'matplotlib'),
+    ('cool', 'sequential', 'matplotlib'),
+    ('coolwarm', 'diverging', 'matplotlib'),
+    ('copper', 'sequential', 'matplotlib'),
+    ('cubehelix', 'sequential', 'matplotlib'),
+    ('flag', 'misc', 'matplotlib'),
+    ('gist_earth', 'misc', 'matplotlib'),
+    ('gist_gray', 'sequential', 'matplotlib'),
+    ('gist_heat', 'sequential', 'matplotlib'),
+    ('gist_ncar', 'misc', 'matplotlib'),
+    ('gist_rainbow', 'misc', 'matplotlib'),
+    ('gist_stern', 'misc', 'matplotlib'),
+    ('gist_yarg', 'misc', 'matplotlib'),
+    ('gnuplot', 'misc', 'matplotlib'),
+    ('gnuplot2', 'misc', 'matplotlib'),
+    ('gray', 'sequential', 'matplotlib'),
+    ('hot', 'sequential', 'matplotlib'),
+    ('hsv', 'misc', 'matplotlib'),
+    ('jet', 'misc', 'matplotlib'),
+    ('nipy_spectral', 'misc', 'matplotlib'),
+    ('ocean', 'misc', 'matplotlib'),
+    ('pink', 'sequential', 'matplotlib'),
+    ('prism', 'misc', 'matplotlib'),
+    ('rainbow', 'misc', 'matplotlib'),
+    ('seismic', 'diverging', 'matplotlib'),
+    ('spring', 'sequential', 'matplotlib'),
+    ('summer', 'sequential', 'matplotlib'),
+    ('terrain', 'sequential', 'matplotlib'),
+    ('winter', 'sequential', 'matplotlib'),
+    ('Accent', 'qualitative', 'matplotlib'),
+    ('Dark2', 'qualitative', 'matplotlib'),
+    ('Paired', 'qualitative', 'matplotlib'),
+    ('Pastel1', 'qualitative', 'matplotlib'),
+    ('Pastel2', 'qualitative', 'matplotlib'),
+    ('Set1', 'qualitative', 'matplotlib'),
+    ('Set2', 'qualitative', 'matplotlib'),
+    ('Set3', 'qualitative', 'matplotlib'),
+    ('tab10', 'qualitative', 'matplotlib'),
+    ('tab20', 'qualitative', 'matplotlib'),
+    ('tab20b', 'qualitative', 'matplotlib'),
+    ('tab20c', 'qualitative', 'matplotlib'),
+    ('grey', 'sequential', 'matplotlib'),
+    ('gist_grey', 'sequential', 'matplotlib'),
+    ('gist_yerg', 'misc', 'matplotlib'),
+    ('Grays', 'sequential', 'matplotlib'),
+]
