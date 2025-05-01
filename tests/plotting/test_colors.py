@@ -5,6 +5,8 @@ import importlib.util
 import itertools
 import re
 
+import cmocean
+import colorcet
 import matplotlib as mpl
 from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
@@ -13,6 +15,8 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import _CMOCEAN_CMAPS
+from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
@@ -246,3 +250,17 @@ def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hexcolors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
+
+
+def test_colorcet_cmaps_allowed():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(colorcet.cm.keys())
+    expected = set(_COLORCET_CMAPS)
+    assert actual == expected
+
+
+def test_cmocean_cmaps_allowed():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(cmocean.cm.cmap_d.keys())
+    expected = set(_CMOCEAN_CMAPS)
+    assert actual == expected
