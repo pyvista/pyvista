@@ -62,8 +62,6 @@ pinned = [ # Pinned versions of core dependencies
 ]
 
 typing_core = [
-  'pyvista[pinned]',
-
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
@@ -71,11 +69,9 @@ typing_core = [
   { include-group = 'pinned' },
 ]
 
-typing = ['numpy>=2.0.0', 'pyvista[typing_core]']
+typing = ['numpy>=2.0.0', { include-group = 'typing_core' }]
 
 test = [
-  'pyvista[typing_core]',
-
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
@@ -107,12 +103,10 @@ test = [
   'trame>=2.5.2,<3.7.1',
   'trimesh<4.6.0',
   'typing-extensions<4.14.0',
-  { include-group = 'pinned' },
+  { include-group = 'typing_core' },
 ]
 
 docs = [
-  'pyvista[pinned]',
-
   'cmocean==4.0.3',
   'colorcet==3.1.0',
   'enum-tools==0.13.0',
