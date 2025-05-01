@@ -10,6 +10,7 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from dataclasses import dataclass
 import sys
+from typing import NamedTuple
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -68,6 +69,7 @@ CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
+COLORMAP_TABLE_DIR = 'api/utilities/colormap_table'
 
 # Directory where auto-generated gallery rst files are saved
 DATASET_GALLERY_DIR = 'api/examples/dataset-gallery'
@@ -816,6 +818,251 @@ class ColorTableMAGENTA(ColorClassificationTable):
     """Class to generate MAGENTA colors table."""
 
     classification = ColorClassification.MAGENTA
+
+
+class ColormapKind(StrEnum):
+    SEQUENTIAL = auto()
+    DIVERGING = auto()
+    CYCLIC = auto()
+    CATEGORICAL = auto()
+    MISC = auto()
+
+
+class _ColormapInfo(NamedTuple):
+    name: str
+    kind: ColormapKind
+    package: str
+
+
+_COLORMAP_INFO: list[_ColormapInfo] = [
+    _ColormapInfo('colorwheel', ColormapKind.CYCLIC, 'colorcet'),
+    _ColormapInfo('bkr', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('bky', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('coolwarm', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('gwv', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('bjy', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('bwy', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('cwr', ColormapKind.DIVERGING, 'colorcet'),
+    _ColormapInfo('isolum', ColormapKind.MISC, 'colorcet'),
+    _ColormapInfo('bgy', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('bgyw', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('blues', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('bmw', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('bmy', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('gray', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('dimgray', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('kbc', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('gouldian', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('kbgyw', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('kgy', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('fire', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('kb', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('kg', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('kr', ColormapKind.SEQUENTIAL, 'colorcet'),
+    _ColormapInfo('rainbow4', ColormapKind.MISC, 'colorcet'),
+    _ColormapInfo('rainbow', ColormapKind.MISC, 'colorcet'),
+    _ColormapInfo('glasbey_bw', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey_cool', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey_warm', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey_dark', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey_light', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey_category10', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('glasbey_hv', ColormapKind.CATEGORICAL, 'colorcet'),
+    _ColormapInfo('thermal', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('haline', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('solar', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('ice', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('gray', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('oxy', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('deep', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('dense', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('algae', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('matter', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('turbid', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('speed', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('amp', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('tempo', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('rain', ColormapKind.SEQUENTIAL, 'cmocean'),
+    _ColormapInfo('phase', ColormapKind.CYCLIC, 'cmocean'),
+    _ColormapInfo('topo', ColormapKind.DIVERGING, 'cmocean'),
+    _ColormapInfo('balance', ColormapKind.DIVERGING, 'cmocean'),
+    _ColormapInfo('delta', ColormapKind.DIVERGING, 'cmocean'),
+    _ColormapInfo('curl', ColormapKind.DIVERGING, 'cmocean'),
+    _ColormapInfo('diff', ColormapKind.DIVERGING, 'cmocean'),
+    _ColormapInfo('tarn', ColormapKind.DIVERGING, 'cmocean'),
+    _ColormapInfo('magma', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('inferno', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('plasma', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('viridis', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('cividis', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('twilight', ColormapKind.CYCLIC, 'matplotlib'),
+    _ColormapInfo('twilight_shifted', ColormapKind.CYCLIC, 'matplotlib'),
+    _ColormapInfo('turbo', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('berlin', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('managua', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('vanimo', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('Blues', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('BrBG', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('BuGn', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('BuPu', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('CMRmap', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('GnBu', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('Greens', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('Greys', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('OrRd', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('Oranges', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('PRGn', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('PiYG', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('PuBu', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('PuBuGn', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('PuOr', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('PuRd', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('Purples', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('RdBu', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('RdGy', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('RdPu', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('RdYlBu', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('RdYlGn', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('Reds', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('Spectral', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('Wistia', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('YlGn', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('YlGnBu', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('YlOrBr', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('YlOrRd', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('afmhot', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('autumn', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('binary', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('bone', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('brg', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('bwr', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('cool', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('coolwarm', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('copper', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('cubehelix', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('flag', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gist_earth', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gist_gray', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('gist_heat', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('gist_ncar', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gist_rainbow', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gist_stern', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gist_yarg', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gnuplot', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gnuplot2', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('gray', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('hot', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('hsv', ColormapKind.CYCLIC, 'matplotlib'),
+    _ColormapInfo('jet', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('nipy_spectral', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('ocean', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('pink', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('prism', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('rainbow', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('seismic', ColormapKind.DIVERGING, 'matplotlib'),
+    _ColormapInfo('spring', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('summer', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('terrain', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('winter', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('Accent', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Dark2', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Paired', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Pastel1', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Pastel2', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Set1', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Set2', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('Set3', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('tab10', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('tab20', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('tab20b', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('tab20c', ColormapKind.CATEGORICAL, 'matplotlib'),
+    _ColormapInfo('grey', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('gist_grey', ColormapKind.SEQUENTIAL, 'matplotlib'),
+    _ColormapInfo('gist_yerg', ColormapKind.MISC, 'matplotlib'),
+    _ColormapInfo('Grays', ColormapKind.SEQUENTIAL, 'matplotlib'),
+]
+
+
+class ColormapTable(DocTable):
+    """Class to generate a colormap table."""
+
+    kind: ColormapKind
+
+    title = ''
+    header = _aligned_dedent(
+        """
+        |.. list-table:: {}
+        |   :widths: 15 25 60
+        |   :header-rows: 1
+        |   :stub-columns: 1
+        |
+        |   * - Source
+        |     - Name
+        |     - Colormap
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - {}
+        """,
+    )
+
+    @property
+    @final
+    def path(cls):
+        return f'{COLORMAP_TABLE_DIR}/colormap_table_{cls.kind.name}.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        return [info for info in _COLORMAP_INFO if info.kind == cls.kind]
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(cls.title)
+
+    @classmethod
+    def get_row(cls, i, colormap_info):
+        _colormap_source_badge = {
+            'cmocean': ':bdg-primary:`cmocean`',
+            'colorcet': ':bdg-success:`colorcet`',
+            'matplotlib': ':bdg-secondary:`matplotlib`',
+        }
+        name = f'`{colormap_info.name!r}`'
+        source_badge = _colormap_source_badge[colormap_info.package]
+        return cls.row_template.format(source_badge, name, '')
+
+
+class ColormapTableSEQUENTIAL(ColormapTable):
+    """Class to generate sequential colormap table."""
+
+    kind = ColormapKind.SEQUENTIAL
+
+
+class ColormapTableDIVERGING(ColormapTable):
+    """Class to generate diverging colormap table."""
+
+    kind = ColormapKind.DIVERGING
+
+
+class ColormapTableCYCLIC(ColormapTable):
+    """Class to generate cyclic colormap table."""
+
+    kind = ColormapKind.CYCLIC
+
+
+class ColormapTableCATEGORICAL(ColormapTable):
+    """Class to generate categorical colormap table."""
+
+    kind = ColormapKind.CATEGORICAL
+
+
+class ColormapTableMISC(ColormapTable):
+    """Class to generate misc colormap table."""
+
+    kind = ColormapKind.MISC
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -2482,7 +2729,7 @@ class MiscCarousel(DatasetGalleryCarousel):
 
     name = 'misc_carousel'
     doc = 'Datasets which have a non-standard representation.'
-    badge = DataTypeBadge('Misc', ref='misc_dataset_gallery')
+    badge = DataTypeBadge(ColormapKind.MISC, ref='misc_dataset_gallery')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -2586,6 +2833,13 @@ def make_all_tables():  # noqa: D103
     CellQualityInfoTableTETRA.generate()
     CellQualityInfoTableWEDGE.generate()
     CellQualityInfoTablePYRAMID.generate()
+
+    os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
+    ColormapTableSEQUENTIAL.generate()
+    ColormapTableDIVERGING.generate()
+    ColormapTableCYCLIC.generate()
+    ColormapTableCATEGORICAL.generate()
+    ColormapTableMISC.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
