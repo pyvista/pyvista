@@ -61,7 +61,7 @@ pinned = [ # Pinned versions of core dependencies
   'typing-extensions<4.14.0',
 ]
 
-typing_core = [
+typingcore = [
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
@@ -69,7 +69,7 @@ typing_core = [
   { include-group = 'pinned' },
 ]
 
-typing = ['numpy>=2.0.0', { include-group = 'typing_core' }]
+typing = ['numpy>=2.0.0', { include-group = 'typingcore' }]
 
 test = [
   'cmocean<4.0.4',
@@ -103,7 +103,7 @@ test = [
   'trame>=2.5.2,<3.7.1',
   'trimesh<4.6.0',
   'typing-extensions<4.14.0',
-  { include-group = 'typing_core' },
+  { include-group = 'typingcore' },
 ]
 
 docs = [
