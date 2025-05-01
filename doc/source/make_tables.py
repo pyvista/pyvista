@@ -62,8 +62,6 @@ from pyvista.plotting.colors import _TABLEAU_COLORS
 from pyvista.plotting.colors import _VTK_COLORS
 from pyvista.plotting.colors import _format_color_dict
 
-mpl.use('TkAgg')
-
 if TYPE_CHECKING:
     from types import FunctionType
     from types import ModuleType
