@@ -109,6 +109,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     cmap : str | colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
+        See :ref:`named_colormaps` for examples of accepted colormaps.
 
     n_values : int, default: 256
         Number of colors in the color map.
