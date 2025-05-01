@@ -252,14 +252,14 @@ def test_unique_colors():
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
 
-def test_colorcet_cmaps_allowed():
+def test_cmaps_colorcet_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
     actual = set(colorcet.cm.keys()) - set(mpl.colormaps)
     expected = set(_COLORCET_CMAPS)
     assert actual == expected
 
 
-def test_cmocean_cmaps_allowed():
+def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
     actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
     expected = set(_CMOCEAN_CMAPS)
