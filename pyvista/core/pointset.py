@@ -1578,7 +1578,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                          ...,
                          [ 0.31232402, -0.06638652, -0.9476532 ],
                          [ 0.21027282, -0.04469487, -0.97662055],
-                         [ 0.10575636, -0.02247921, -0.99413794]]...)
+                         [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
 
         """
         if self.point_data.active_normals is not None:
@@ -1611,7 +1611,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                          ...,
                          [ 0.26742265, -0.02810723, -0.96316934],
                          [ 0.1617585 , -0.01700151, -0.9866839 ],
-                         [ 0.1617585 , -0.01700151, -0.9866839 ]]...)
+                         [ 0.1617585 , -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         if self.cell_data.active_normals is not None:
@@ -1642,7 +1642,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                          ...,
                          [ 0.26742265, -0.02810723, -0.96316934],
                          [ 0.1617585 , -0.01700151, -0.9866839 ],
-                         [ 0.1617585 , -0.01700151, -0.9866839 ]]...)
+                         [ 0.1617585 , -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         return self.cell_normals

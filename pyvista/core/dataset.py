@@ -2915,7 +2915,7 @@ class DataSet(DataSetFilters, DataObject):
                          ...,
                          [1.        , 0.85714286],
                          [1.        , 0.92857143],
-                         [1.        , 1.        ]]...)
+                         [1.        , 1.        ]])
 
         """
         return self.point_data.active_texture_coordinates
