@@ -609,7 +609,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # how to link to files from the RST file
     dest_dir_link = os.path.join(  # noqa: PTH118
-        relpath(setup.confdir, rst_dir),
+        os.path.relpath(setup.confdir, rst_dir),
         source_rel_dir,
     ).replace(os.path.sep, '/')
     try:
