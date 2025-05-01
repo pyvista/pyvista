@@ -6,14 +6,18 @@ Named Colormaps
 Named colormaps supported by plotting-related classes such as
 :class:`~pyvista.Plotter`.
 
-The colormaps on this page come from various sources, and include:
+The colormaps on this page are from multiple packages:
 
-- :bdg-secondary:`matplotlib` - colormaps from
-  `matplotlib <https://matplotlib.org/stable/users/explain/colors/colormaps.html>`_.
-- :bdg-success:`colorcet` - colormaps from
-  `colorcet <https://colorcet.holoviz.org>`_.
-- :bdg-primary:`cmocean` - colormaps from
-  `cmocean <https://matplotlib.org/cmocean/>`_.
+- :bdg-secondary:`matplotlib` -
+  `Named colormaps <https://matplotlib.org/stable/gallery/color/colormap_reference.html>`_
+  from ``matplotlib``.
+- :bdg-success:`colorcet` -
+  Named `continuous <https://colorcet.holoviz.org/user_guide/Continuous.html#named-colormaps>`_
+  and `categorical <https://colorcet.holoviz.org/user_guide/Categorical.html#categorical>`_
+  colormaps from ``colorcet``.
+- :bdg-primary:`cmocean` -
+  `Named colormaps <https://matplotlib.org/cmocean/>`_
+  from ``cmocean``.
 
 .. note::
 
@@ -25,6 +29,11 @@ The colormaps on this page come from various sources, and include:
 
     Install PyVista with ``pyvista[colormaps]`` or ``pyvista[all]`` to also
     install the ``colorcet`` and ``cmocean`` packages.
+
+.. seealso::
+
+    :ref:`colormap_example`
+        Example using colormaps from different sources.
 
 .. dropdown:: Sequential
     :open:
