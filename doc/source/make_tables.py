@@ -2729,7 +2729,7 @@ class MiscCarousel(DatasetGalleryCarousel):
 
     name = 'misc_carousel'
     doc = 'Datasets which have a non-standard representation.'
-    badge = DataTypeBadge(ColormapKind.MISC, ref='misc_dataset_gallery')
+    badge = DataTypeBadge('Misc', ref='misc_dataset_gallery')
 
     @classmethod
     def fetch_dataset_names(cls):
