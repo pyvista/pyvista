@@ -28,11 +28,11 @@ import pyanalyze
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-assert 'tests' in os.listdir(PROJECT_ROOT)
 TYPING_CASES_REL_PATH = 'tests/typing/test_typing_cases'
 TYPING_CASES_PACKAGE = TYPING_CASES_REL_PATH.replace('/', '.')
 TYPING_CASES_ABS_PATH = PROJECT_ROOT / TYPING_CASES_REL_PATH
-TEST_FILE_NAMES = [f for f in os.listdir(TYPING_CASES_ABS_PATH) if f.endswith('.py')]
+assert TYPING_CASES_ABS_PATH.is_dir()
+TEST_FILE_NAMES = [p.name for p in Path(TYPING_CASES_ABS_PATH).rglob('*.py')]
 
 # Define types to simplify in the "revealed type" output string from Mypy.
 # The key will be replaced by the value.
