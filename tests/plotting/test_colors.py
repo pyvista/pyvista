@@ -265,7 +265,7 @@ def test_cmaps_colorcet_required():
     assert actual == expected
 
 
-@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6))
+@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6), reason='Colormaps API changed.')
 def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
     actual = set(cmocean.cm.cmap_d.keys()) - set(MPL_BUILTIN_CMAPS)
