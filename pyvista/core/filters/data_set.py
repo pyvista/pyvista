@@ -6743,6 +6743,12 @@ class DataSetFilters(DataObjectFilters):
         By default, a new ``'int_rgb'`` array is added with the same name as the
         specified ``scalars`` but with ``_rgb`` appended.
 
+        .. note::
+            The package ``colorcet`` is required to use the default colors from the
+            ``'glasbey_category10'`` colormap. For a similar, but very limited,
+            alternative that does not require ``colorcet``, set ``colors='tab10'``
+            and consider setting the coloring mode explicitly.
+
         .. versionadded:: 0.45
 
         See Also

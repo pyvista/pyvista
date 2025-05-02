@@ -90,6 +90,7 @@ test = [
   'pytest<8.4.0',
   'pytest_cases<3.8.7',
   'pytest_mock<3.15.0',
+  'retry-requests<2.1.0',
   'scipy<1.14.2',
   'sphinx-book-theme<1.2.0',
   'sphinx-gallery<0.19.0',
