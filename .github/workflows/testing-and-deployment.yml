@@ -65,7 +65,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Run tests
-        run: tox run -e py${{ matrix.config.python-version }}
+        run: tox run -e py${{ matrix.config.python-version }} --colored=yes
 
       - name: Upload Generated Images
         if: always()
@@ -134,7 +134,7 @@ jobs:
 
       - name: Run tests
         run: |
-          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}-cov
+          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}-cov --colored=yes
 
       - name: Upload Generated Images
         if: always()
@@ -152,11 +152,11 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check package
-        run: tox run -e check_package
+        run: tox run -e check_package --colored=yes
 
       - name: Upload to PyPi
         if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
-        run: tox run -e publish_package
+        run: tox run -e publish_package --colored=yes
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
@@ -200,7 +200,7 @@ jobs:
             Examples-1-
 
       - name: Run tests
-        run: tox run -e py${{ matrix.python-version }}
+        run: tox run -e py${{ matrix.python-version }} --colored=yes
 
       - name: Upload Generated Images
         if: always()

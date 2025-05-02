@@ -32,4 +32,4 @@ jobs:
         run: uv pip install tox-uv
 
       - name: Run Mypy
-        run: tox r -e mypy
+        run: tox run -e mypy --colored=yes
