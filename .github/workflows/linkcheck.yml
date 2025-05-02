@@ -36,7 +36,8 @@ jobs:
 
       - name: Install PyVista and dependencies
         run: |
-          pip install -e .[docs]
+          pip install --upgrade pip
+          pip install . --group docs
 
       - name: LinkCheck
         run: make -C doc linkcheck SPHINXOPTS="--color"
