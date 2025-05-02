@@ -11,16 +11,17 @@ The colormaps on this page are from multiple packages:
 - :bdg-secondary:`matplotlib` -
   `matplotlib colormaps <https://matplotlib.org/stable/gallery/color/colormap_reference.html>`_.
 - :bdg-success:`colorcet` -
-  `Continuous <https://colorcet.holoviz.org/user_guide/Continuous.html#named-colormaps>`_
+  `continuous <https://colorcet.holoviz.org/user_guide/Continuous.html#named-colormaps>`_
   and `categorical <https://colorcet.holoviz.org/user_guide/Categorical.html#categorical>`_
   colormaps from ``colorcet``.
 - :bdg-primary:`cmocean` - `cmocean colormaps <https://matplotlib.org/cmocean/>`_.
 
 .. note::
 
-    Some colormaps such as ``gray`` and ``rainbow`` are duplicated across
-    packages. If installed, colormaps from ``colorcet`` have priority, followed
-    by ``cmocean``, followed by ``matplotlib``.
+    Some colormap names such as ``gray`` and ``rainbow`` are duplicated across
+    packages, but have slight variations in the mapped colors. Colormaps from
+    ``colorcet`` have priority and are used first if available, followed
+    by ``cmocean``, followed by the stock colormaps from ``matplotlib``.
 
 .. note::
 
@@ -31,6 +32,9 @@ The colormaps on this page are from multiple packages:
 
     :ref:`colormap_example`
         Example using colormaps from different sources.
+
+    :ref:`named_colors`
+        Similar reference for named colors.
 
 .. dropdown:: Sequential
     :open:
