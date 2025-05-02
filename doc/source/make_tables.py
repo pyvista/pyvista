@@ -1040,31 +1040,32 @@ class ColormapTable(DocTable):
             'matplotlib': ':bdg-secondary:`matplotlib`',
         }
         type_mapping = {
-            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LS`',
-            mpl.colors.ListedColormap: ':bdg-muted:`L`',
+            type[mpl.colors.LinearSegmentedColormap]: ':bdg-muted:`LS`',
+            type[mpl.colors.ListedColormap]: ':bdg-muted:`L`',
         }
         name_rst = f'``{colormap_info.name}``'
-        type_rst = type_mapping[type(pv.get_cmap_safe(colormap_info.name))]
         source_rst = source_badge_mapping[colormap_info.package]
         img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
-        cls.generate_img(colormap_info.name, colormap_info.package, img_path)
+        cmap_type = cls.generate_img(colormap_info.name, colormap_info.package, img_path)
+        type_rst = type_mapping[cmap_type]
         return cls.row_template.format(source_rst, type_rst, name_rst, img_path)
 
     @staticmethod
-    def generate_img(cmap, package, img_path):
+    def generate_img(
+        cmap, package, img_path
+    ) -> type[mpl.colors.ListedColormap | mpl.colors.LinearSegmentedColormap]:
         """Generate and save an image of the given colormap."""
         width = 512  # Should be a multiple of 256 to avoid aliasing
         height = 32
 
-        if isinstance(cmap, str):
-            if package == 'matplotlib':
-                cmap = mpl.colormaps[cmap]
-            elif package == 'colorcet':
-                cmap = colorcet.cm[cmap]
-            elif package == 'cmocean':
-                cmap = cmocean.cm.cmap_d[cmap]
-            else:
-                cmap = pv.get_cmap_safe(cmap)
+        if package == 'matplotlib':
+            cmap = mpl.colormaps[cmap]
+        elif package == 'colorcet':
+            cmap = colorcet.cm[cmap]
+        elif package == 'cmocean':
+            cmap = cmocean.cm.cmap_d[cmap]
+        else:
+            cmap = pv.get_cmap_safe(cmap)
 
         # Create a smooth gradient across the colormap resolution
         gradient = np.linspace(0, 1, width)
@@ -1078,6 +1079,8 @@ class ColormapTable(DocTable):
 
         fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
+
+        return type(cmap)
 
 
 class ColormapTableSEQUENTIAL(ColormapTable):
