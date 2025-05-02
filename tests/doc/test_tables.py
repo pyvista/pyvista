@@ -68,7 +68,7 @@ def test_colormap_table_colorcet_continuous(colorcet_continuous_cmaps):
     documented_cmaps = [
         info.name
         for info in _COLORMAP_INFO
-        if info.package == 'colorcet' and info.kind != 'categorical'
+        if (info.package == 'colorcet') and (info.kind.name != 'CATEGORICAL')
     ]
     assert_cmaps_equal(documented_cmaps, colorcet_continuous_cmaps)
 
@@ -77,6 +77,6 @@ def test_colormap_table_colorcet_categorical(colorcet_categorical_cmaps):
     documented_cmaps = [
         info.name
         for info in _COLORMAP_INFO
-        if info.package == 'colorcet' and info.kind == 'categorical'
+        if info.package == 'colorcet' and info.kind.name == 'CATEGORICAL'
     ]
     assert_cmaps_equal(documented_cmaps, colorcet_categorical_cmaps)
