@@ -35,4 +35,4 @@ jobs:
           version: 3.0
 
       - name: LinkCheck
-        run: tox r -e docs-linkcheck
+        run: tox run -e docs-linkcheck --colored=yes

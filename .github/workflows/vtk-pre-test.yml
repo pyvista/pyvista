@@ -60,7 +60,7 @@ jobs:
 
       - name: Run tests
         run: |
-          xvfb-run -a tox run -e py${{matrix.python-version}}-vtk_main
+          xvfb-run -a tox run -e py${{matrix.python-version}}-vtk_main --colored=yes
 
       - name: Upload Generated Images
         if: always()

@@ -87,7 +87,7 @@ jobs:
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: tox run -e docs-build
+        run: tox run -e docs-build --colored=yes
 
       - name: Upload Images for Failed Tests
         if: always()
