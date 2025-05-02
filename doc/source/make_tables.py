@@ -1040,8 +1040,8 @@ class ColormapTable(DocTable):
             'matplotlib': ':bdg-secondary:`matplotlib`',
         }
         type_mapping = {
-            type[mpl.colors.LinearSegmentedColormap]: ':bdg-muted:`LS`',
-            type[mpl.colors.ListedColormap]: ':bdg-muted:`L`',
+            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LS`',
+            mpl.colors.ListedColormap: ':bdg-muted:`L`',
         }
         name_rst = f'``{colormap_info.name}``'
         source_rst = source_badge_mapping[colormap_info.package]
