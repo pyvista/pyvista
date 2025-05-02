@@ -11,6 +11,7 @@ import re
 from typing import Optional
 from typing import Union
 
+import matplotlib as mpl
 import numpy as np
 from numpy.random import default_rng
 import pytest
@@ -26,6 +27,12 @@ NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
+)
+
+MATPLOTLIB_VERSION_INFO = VersionInfo(
+    major=int(mpl.__version__.split('.')[0]),
+    minor=int(mpl.__version__.split('.')[1]),
+    micro=int(mpl.__version__.split('.')[2]),
 )
 
 

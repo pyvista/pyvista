@@ -7,13 +7,17 @@ import matplotlib as mpl
 import pytest
 
 from doc.source.make_tables import _COLORMAP_INFO
+from tests.conftest import MATPLOTLIB_VERSION_INFO
 
 MISSING_COLORMAPS_MSG = (
     'Documentation is missing named colormaps. The colormap table should be updated.'
 )
 
 
+@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6))
 def test_colormap_table_matplotlib():
+    # Need to access private var here because non-default cmaps are added
+    # to the public `mpl.colormaps` registry
     matplotlib_cmaps = [cmap for cmap in mpl.colormaps._builtin_cmaps if not cmap.endswith('_r')]
     documented_colormaps = [info.name for info in _COLORMAP_INFO if info.package == 'matplotlib']
     assert documented_colormaps == matplotlib_cmaps, MISSING_COLORMAPS_MSG
