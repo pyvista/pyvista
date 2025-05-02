@@ -14,7 +14,7 @@ MISSING_COLORMAPS_MSG = (
 )
 
 
-@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6))
+@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6), reason='Colormaps API changed.')
 def test_colormap_table_matplotlib():
     # Need to access private var here because non-default cmaps are added
     # to the public `mpl.colormaps` registry
