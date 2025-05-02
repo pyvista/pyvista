@@ -18,7 +18,7 @@ def assert_cmaps_equal(actual, expected):
 
 
 @pytest.fixture
-def matplotlib_default_cmaps():
+def matplotlib_named_cmaps():
     # Need to unregister all 3rd-party cmaps
     for cmap in list(mpl.colormaps):
         try:
@@ -28,9 +28,9 @@ def matplotlib_default_cmaps():
     return [cmap for cmap in mpl.colormaps if not cmap.endswith('_r')]
 
 
-def test_colormap_table_matplotlib(matplotlib_default_cmaps):
+def test_colormap_table_matplotlib(matplotlib_named_cmaps):
     documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'matplotlib']
-    assert_cmaps_equal(documented_cmaps, matplotlib_default_cmaps)
+    assert_cmaps_equal(documented_cmaps, matplotlib_named_cmaps)
 
 
 def test_colormap_table_cmocean():
