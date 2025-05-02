@@ -19,6 +19,11 @@ from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
+from tests.conftest import MATPLOTLIB_VERSION_INFO
+
+# Need to access private var here because non-default cmaps are added
+# to the public `mpl.colormaps` registry
+MPL_BUILTIN_CMAPS = mpl.colormaps._builtin_cmaps
 
 COLORMAPS = ['Greys']
 
@@ -252,15 +257,17 @@ def test_unique_colors():
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
 
+@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6))
 def test_cmaps_colorcet_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(colorcet.cm.keys()) - set(mpl.colormaps._builtin_cmaps)
+    actual = set(colorcet.cm.keys()) - set(MPL_BUILTIN_CMAPS)
     expected = set(_COLORCET_CMAPS)
     assert actual == expected
 
 
+@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6))
 def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps._builtin_cmaps)
+    actual = set(cmocean.cm.cmap_d.keys()) - set(MPL_BUILTIN_CMAPS)
     expected = set(_CMOCEAN_CMAPS)
     assert actual == expected
