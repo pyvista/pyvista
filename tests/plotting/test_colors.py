@@ -258,7 +258,7 @@ def reset_matplotlib_cmaps():
     for cmap in list(mpl.colormaps):
         try:
             mpl.colormaps.unregister(cmap)
-        except ValueError:
+        except (ValueError, AttributeError):
             continue
 
 
