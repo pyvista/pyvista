@@ -7,20 +7,26 @@ import matplotlib as mpl
 import pytest
 
 from doc.source.make_tables import _COLORMAP_INFO
-from tests.conftest import MATPLOTLIB_VERSION_INFO
 
 MISSING_COLORMAPS_MSG = (
     'Documentation is missing named colormaps. The colormap table should be updated.'
 )
 
 
-@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6), reason='Colormaps API changed.')
-def test_colormap_table_matplotlib():
-    # Need to access private var here because non-default cmaps are added
-    # to the public `mpl.colormaps` registry
-    matplotlib_cmaps = [cmap for cmap in mpl.colormaps._builtin_cmaps if not cmap.endswith('_r')]
+@pytest.fixture
+def matplotlib_default_cmaps():
+    # Need to unregister all 3rd-party cmaps
+    for cmap in list(mpl.colormaps):
+        try:
+            mpl.colormaps.unregister(cmap)
+        except ValueError:
+            continue
+    return [cmap for cmap in mpl.colormaps if not cmap.endswith('_r')]
+
+
+def test_colormap_table_matplotlib(matplotlib_default_cmaps):
     documented_colormaps = [info.name for info in _COLORMAP_INFO if info.package == 'matplotlib']
-    assert documented_colormaps == matplotlib_cmaps, MISSING_COLORMAPS_MSG
+    assert documented_colormaps == matplotlib_default_cmaps, MISSING_COLORMAPS_MSG
 
 
 def test_colormap_table_cmocean():
