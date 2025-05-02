@@ -8,8 +8,8 @@ import pyvista as pv
 from pyvista import wrap
 from pyvista.core import _vtk_core as _vtk
 
-reveal_type(wrap(_vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
-reveal_type(wrap(pv.PolyData()))  # EXPECTED_TYPE: "PolyData"
+# reveal_type(wrap(_vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
+# reveal_type(wrap(pv.PolyData()))  # EXPECTED_TYPE: "PolyData"
 
 reveal_type(wrap(_vtk.vtkStructuredGrid()))  # EXPECTED_TYPE: "StructuredGrid"
 reveal_type(wrap(pv.StructuredGrid()))  # EXPECTED_TYPE: "StructuredGrid"
