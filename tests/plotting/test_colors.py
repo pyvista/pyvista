@@ -20,10 +20,6 @@ from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
-# Need to access private var here because non-default cmaps are added
-# to the public `mpl.colormaps` registry
-MPL_BUILTIN_CMAPS = mpl.colormaps._builtin_cmaps
-
 COLORMAPS = ['Greys']
 
 if importlib.util.find_spec('cmocean'):
