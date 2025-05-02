@@ -485,6 +485,7 @@ sphinx_gallery_conf = {
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
+    'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
 }
 
 suppress_warnings = ['config.cache']
