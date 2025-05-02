@@ -16,6 +16,11 @@ The colormaps on this page are from multiple packages:
   colormaps from ``colorcet``.
 - :bdg-primary:`cmocean` - `cmocean colormaps <https://matplotlib.org/cmocean/>`_.
 
+The type of the colormap is indicated as:
+
+- :bdg-muted:`LS` if it is a :class:`mpl.colors.LinearSegmentedColormap`
+- :bdg-muted:`L` if it is a :class:`mpl.colors.ListedColormap`
+
 .. note::
 
     Some colormap names such as ``gray`` and ``rainbow`` are duplicated across

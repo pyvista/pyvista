@@ -1000,11 +1000,12 @@ class ColormapTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: {}
-        |   :widths: 15 25 60
+        |   :widths: 10 5 30 55
         |   :header-rows: 1
         |   :stub-columns: 1
         |
         |   * - Source
+        |     - Type
         |     - Name
         |     - Swatch
         """,
@@ -1012,6 +1013,7 @@ class ColormapTable(DocTable):
     row_template = _aligned_dedent(
         """
         |   * - {}
+        |     - {}
         |     - {}
         |     - .. image:: /{}
         """,
@@ -1032,16 +1034,21 @@ class ColormapTable(DocTable):
 
     @classmethod
     def get_row(cls, i, colormap_info):
-        _colormap_source_badge = {
+        source_badge_mapping = {
             'cmocean': ':bdg-primary:`cmocean`',
             'colorcet': ':bdg-success:`colorcet`',
             'matplotlib': ':bdg-secondary:`matplotlib`',
         }
-        name = f'``{colormap_info.name!r}``'
-        source_badge = _colormap_source_badge[colormap_info.package]
+        type_mapping = {
+            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LS`',
+            mpl.colors.ListedColormap: ':bdg-muted:`L`',
+        }
+        name_rst = f'``{colormap_info.name}``'
+        type_rst = type_mapping[type(pv.get_cmap_safe(colormap_info.name))]
+        source_rst = source_badge_mapping[colormap_info.package]
         img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
         cls.generate_img(colormap_info.name, colormap_info.package, img_path)
-        return cls.row_template.format(source_badge, name, img_path)
+        return cls.row_template.format(source_rst, type_rst, name_rst, img_path)
 
     @staticmethod
     def generate_img(cmap, package, img_path):
