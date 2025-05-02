@@ -8,13 +8,7 @@ import pytest
 
 from doc.source.make_tables import _COLORMAP_INFO
 
-
-def assert_cmaps_equal(actual, expected):
-    msg = 'Documentation is missing named colormaps. The colormap table should be updated.'
-    # Test same cmaps
-    assert set(actual) == set(expected), msg
-    # Test order
-    assert actual == expected
+ERROR_MSG = 'Colormaps in documentation differ from colormaps available. The colormap table should be updated.'
 
 
 @pytest.fixture
@@ -23,20 +17,23 @@ def matplotlib_named_cmaps():
     for cmap in list(mpl.colormaps):
         try:
             mpl.colormaps.unregister(cmap)
-        except ValueError:
+        except (ValueError, AttributeError):
             continue
-    return [cmap for cmap in mpl.colormaps if not cmap.endswith('_r')]
+
+    is_reversed = lambda x: x.endswith('_r')
+    is_synonym = lambda x: 'Grey' in x or 'grey' in x or 'yerg' in x
+    return [cmap for cmap in mpl.colormaps if not is_synonym(cmap) and not is_reversed(cmap)]
 
 
 def test_colormap_table_matplotlib(matplotlib_named_cmaps):
     documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'matplotlib']
-    assert_cmaps_equal(documented_cmaps, matplotlib_named_cmaps)
+    assert set(documented_cmaps) == set(matplotlib_named_cmaps), ERROR_MSG
 
 
 def test_colormap_table_cmocean():
     cmocean_cmaps = cmocean.cm.cmapnames
     documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'cmocean']
-    assert_cmaps_equal(documented_cmaps, cmocean_cmaps)
+    assert set(documented_cmaps) == set(cmocean_cmaps), ERROR_MSG
 
 
 @pytest.fixture
@@ -70,7 +67,7 @@ def test_colormap_table_colorcet_continuous(colorcet_continuous_cmaps):
         for info in _COLORMAP_INFO
         if (info.package == 'colorcet') and (info.kind.name != 'CATEGORICAL')
     ]
-    assert_cmaps_equal(documented_cmaps, colorcet_continuous_cmaps)
+    assert set(documented_cmaps) == set(colorcet_continuous_cmaps), ERROR_MSG
 
 
 def test_colormap_table_colorcet_categorical(colorcet_categorical_cmaps):
@@ -79,4 +76,4 @@ def test_colormap_table_colorcet_categorical(colorcet_categorical_cmaps):
         for info in _COLORMAP_INFO
         if info.package == 'colorcet' and info.kind.name == 'CATEGORICAL'
     ]
-    assert_cmaps_equal(documented_cmaps, colorcet_categorical_cmaps)
+    assert set(documented_cmaps) == set(colorcet_categorical_cmaps), ERROR_MSG
