@@ -8,9 +8,13 @@ import pytest
 
 from doc.source.make_tables import _COLORMAP_INFO
 
-MISSING_COLORMAPS_MSG = (
-    'Documentation is missing named colormaps. The colormap table should be updated.'
-)
+
+def assert_cmaps_equal(actual, expected):
+    msg = 'Documentation is missing named colormaps. The colormap table should be updated.'
+    # Test same cmaps
+    assert set(actual) == set(expected), msg
+    # Test order
+    assert actual == expected
 
 
 @pytest.fixture
@@ -25,25 +29,25 @@ def matplotlib_default_cmaps():
 
 
 def test_colormap_table_matplotlib(matplotlib_default_cmaps):
-    documented_colormaps = [info.name for info in _COLORMAP_INFO if info.package == 'matplotlib']
-    assert documented_colormaps == matplotlib_default_cmaps, MISSING_COLORMAPS_MSG
+    documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'matplotlib']
+    assert_cmaps_equal(documented_cmaps, matplotlib_default_cmaps)
 
 
 def test_colormap_table_cmocean():
     cmocean_cmaps = cmocean.cm.cmapnames
-    documented_colormaps = [info.name for info in _COLORMAP_INFO if info.package == 'cmocean']
-    assert documented_colormaps == cmocean_cmaps, MISSING_COLORMAPS_MSG
+    documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'cmocean']
+    assert_cmaps_equal(documented_cmaps, cmocean_cmaps)
 
 
 @pytest.fixture
-def colorcet_named_continuous_cmaps():
+def colorcet_continuous_cmaps():
     # Get cmaps with alias and return the first alias
     cmaps = all_original_names(only_aliased=True, not_group='glasbey')
     return [get_aliases(name).split(',')[0] for name in cmaps]
 
 
 @pytest.fixture
-def colorcet_named_categorical_cmaps():
+def colorcet_categorical_cmaps():
     # Get all glasbey cmaps and only keep ones with aliases or with
     # non-technical names
     cmaps = []
@@ -60,19 +64,19 @@ def colorcet_named_categorical_cmaps():
     return cmaps
 
 
-def test_colormap_table_colorcet_continuous(colorcet_named_continuous_cmaps):
-    documented_colormaps = [
+def test_colormap_table_colorcet_continuous(colorcet_continuous_cmaps):
+    documented_cmaps = [
         info.name
         for info in _COLORMAP_INFO
         if info.package == 'colorcet' and info.kind != 'categorical'
     ]
-    assert documented_colormaps == colorcet_named_continuous_cmaps, MISSING_COLORMAPS_MSG
+    assert_cmaps_equal(documented_cmaps, colorcet_continuous_cmaps)
 
 
-def test_colormap_table_colorcet_categorical(colorcet_named_categorical_cmaps):
-    documented_colormaps = [
+def test_colormap_table_colorcet_categorical(colorcet_categorical_cmaps):
+    documented_cmaps = [
         info.name
         for info in _COLORMAP_INFO
         if info.package == 'colorcet' and info.kind == 'categorical'
     ]
-    assert documented_colormaps == colorcet_named_categorical_cmaps, MISSING_COLORMAPS_MSG
+    assert_cmaps_equal(documented_cmaps, colorcet_categorical_cmaps)
