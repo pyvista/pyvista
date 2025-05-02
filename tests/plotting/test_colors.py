@@ -257,7 +257,7 @@ def test_unique_colors():
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
 
-@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6))
+@pytest.mark.skipif(MATPLOTLIB_VERSION_INFO < (3, 6), reason='Colormaps API changed.')
 def test_cmaps_colorcet_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
     actual = set(colorcet.cm.keys()) - set(MPL_BUILTIN_CMAPS)
