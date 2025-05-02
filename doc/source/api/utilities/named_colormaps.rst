@@ -18,8 +18,8 @@ The colormaps on this page are from multiple packages:
 
 The type of the colormap is indicated as:
 
-- :bdg-muted:`LS` if it is a :class:`mpl.colors.LinearSegmentedColormap`
-- :bdg-muted:`L` if it is a :class:`mpl.colors.ListedColormap`
+- :bdg-muted:`LS` if it is a :class:`matplotlib.colors.LinearSegmentedColormap`
+- :bdg-muted:`L` if it is a :class:`matplotlib.colors.ListedColormap`
 
 .. note::
 
