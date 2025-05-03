@@ -49,35 +49,47 @@ The type of the colormap is indicated as:
     :ref:`named_colors`
         Similar reference for named colors.
 
-.. dropdown:: Linear (Sequential)
+Linear (Sequential)
+-------------------
+.. dropdown::
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_SEQUENTIAL.rst
 
-.. dropdown:: Diverging
+Diverging
+---------
+.. dropdown::
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_DIVERGING.rst
 
-.. dropdown:: Cyclic
+Cyclic
+------
+.. dropdown::
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_CYCLIC.rst
 
-.. dropdown:: Categorical (Qualitative)
+Categorical (Qualitative)
+-------------------------
+.. dropdown::
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_CATEGORICAL.rst
 
-.. dropdown:: Misc
+Miscellaneous
+-------------
+.. dropdown::
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_MISC.rst
 
-.. dropdown:: CET Colormaps
+CET Colormaps
+=============
+This table includes all ``colorcet`` colormaps which have a named ``CET``
+alias. Most of the ``colorcet`` colormaps presented above are duplicated
+here (using their ``CET`` alias).
 
-    This table includes all ``colorcet`` colormaps which have a named ``CET``
-    alias. Most of the ``colorcet`` colormaps presented above are duplicated
-    here (using their ``CET`` alias).
+.. dropdown::
 
     .. include:: /api/utilities/colormap_table/colormap_table_CET.rst
