@@ -856,6 +856,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'haline', True),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'viridis', True),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cividis', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cubehelix', True),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmw', True),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmy', True),
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal', True),
@@ -950,7 +951,51 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     # CYCLIC
     _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant', True),
     _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase', True),
-    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel', True),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel', False),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv', False),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight', True),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight_shifted', True),
+    # CATEGORICAL
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_warm', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_dark', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_light', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_category10', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_hv', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set1', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set2', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set3', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab10', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c', False),
+    # MISC
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum', True),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4', False),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'rainbow', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_rainbow', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'jet', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'turbo', True),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'nipy_spectral', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_ncar', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'CMRmap', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'brg', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_stern', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot2', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'ocean', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_earth', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'terrain', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'prism', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'flag', False),
 ]
 
 
@@ -988,7 +1033,10 @@ def _create_cet_colormap_info():
         kind = colormap_types[letters[-1]]
 
         # Store as colormap info
-        info = _ColormapInfo(package='colorcet', name=name, kind=kind, perceptually_uniform=True)
+        perceptually_uniform = kind not in ['I', 'R']
+        info = _ColormapInfo(
+            package='colorcet', name=name, kind=kind, perceptually_uniform=perceptually_uniform
+        )
         colormap_infos.append(info)
 
     # Sanity check - make sure we didn't mangle anything
