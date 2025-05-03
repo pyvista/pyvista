@@ -21,13 +21,19 @@ The type of the colormap is indicated as:
 - :bdg-muted:`LSCm` if it is a :class:`~matplotlib.colors.LinearSegmentedColormap`
 - :bdg-muted:`LCm` if it is a :class:`~matplotlib.colors.ListedColormap`
 
+Each colormap is also labeled as:
+
+- :bdg-muted:`PU` if it is perceptually-uniform
+- :bdg-danger:`NPU` if it is not perceptually-uniform
+
 .. warning::
 
     Many of the ``matplotlib`` colormaps such as ``jet`` are not perceptually
     uniform and should be avoided where possible, since these colormaps
     can generate misleading visualizations. Colormaps from ``colorcet`` and
     ``cmocean`` are therefore generally recommended over those from ``matplotlib``.
-    See `testing-perceptual-uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
+    See `the misuse of colour in science communication <https://doi.org/10.1038/s41467-020-19160-7>`_
+    and `testing-perceptual-uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
     for more information.
 
 .. note::
