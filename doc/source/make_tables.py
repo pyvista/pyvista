@@ -839,6 +839,8 @@ class _ColormapInfo(NamedTuple):
     name: str
 
 
+# Define colormap info based on manual review of documentation from each package.
+# NOTE: The order of the cmaps here will be reflected in the docs.
 _COLORMAP_INFO: list[_ColormapInfo] = [
     # LINEAR
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian'),
@@ -1000,7 +1002,7 @@ class ColormapTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: {}
-        |   :widths: 10 5 30 55
+        |   :widths: 10 5 25 60
         |   :header-rows: 1
         |   :stub-columns: 1
         |
