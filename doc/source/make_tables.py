@@ -1030,10 +1030,11 @@ def _create_cet_colormap_info():
     }
     for prefix, letters, number, suffix in parsed:
         name = f'{prefix}{letters}{number}{suffix}'
-        kind = colormap_types[letters[-1]]
+        type_letter = letters[-1]
+        kind = colormap_types[type_letter]
 
         # Store as colormap info
-        perceptually_uniform = kind not in ['I', 'R']
+        perceptually_uniform = type_letter not in ['I', 'R']
         info = _ColormapInfo(
             package='colorcet', name=name, kind=kind, perceptually_uniform=perceptually_uniform
         )
