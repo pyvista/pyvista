@@ -580,7 +580,8 @@ SCHEME_NAMES = {
     for scheme_name, scheme_info in COLOR_SCHEMES.items()
 }
 
-# matches colorcet.cm.keys()
+# Define colormaps that require colorcet
+# matches set(colorcet.cm.keys()) - set(mpl.colormaps)
 _COLORCET_CMAPS = [
     'CET_C1',
     'CET_C10',
@@ -760,8 +761,6 @@ _COLORCET_CMAPS = [
     'circle_mgbm_67_c31_s25_r',
     'colorwheel',
     'colorwheel_r',
-    'coolwarm',
-    'coolwarm_r',
     'cwr',
     'cwr_r',
     'cyclic_bgrmb_35_70_c75',
@@ -884,8 +883,6 @@ _COLORCET_CMAPS = [
     'glasbey_warm_r',
     'gouldian',
     'gouldian_r',
-    'gray',
-    'gray_r',
     'gwv',
     'gwv_r',
     'isolum',
@@ -988,7 +985,6 @@ _COLORCET_CMAPS = [
     'linear_worb_100_25_c53_r',
     'linear_wyor_100_45_c55',
     'linear_wyor_100_45_c55_r',
-    'rainbow',
     'rainbow4',
     'rainbow4_r',
     'rainbow_bgyr_10_90_c83',
@@ -1001,10 +997,10 @@ _COLORCET_CMAPS = [
     'rainbow_bgyrm_35_85_c69_r',
     'rainbow_bgyrm_35_85_c71',
     'rainbow_bgyrm_35_85_c71_r',
-    'rainbow_r',
 ]
 
-# matches cmocean.cm.cmap_d.keys()
+# Define colormaps that require cmocean
+# matches set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
 _CMOCEAN_CMAPS = [
     'algae',
     'algae_i',
@@ -1046,10 +1042,8 @@ _CMOCEAN_CMAPS = [
     'diff_i_r',
     'diff_r',
     'diff_r_i',
-    'gray',
     'gray_i',
     'gray_i_r',
-    'gray_r',
     'gray_r_i',
     'haline',
     'haline_i',
