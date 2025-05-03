@@ -104,6 +104,7 @@ Where the prefix and suffix are optional (``[]``) and the type and number are
 required (``{}``).
 
 Prefix :
+
     - ``CB``: Colorblind-safe for red–green color vision deficiency (protanopia/deuteranopia)
     - ``CBT``: Colorblind-safe for blue–yellow color vision deficiency (tritanopia)
 
