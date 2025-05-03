@@ -49,7 +49,7 @@ The type of the colormap is indicated as:
     :ref:`named_colors`
         Similar reference for named colors.
 
-.. dropdown:: Sequential
+.. dropdown:: Linear (Sequential)
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_SEQUENTIAL.rst
@@ -64,7 +64,7 @@ The type of the colormap is indicated as:
 
     .. include:: /api/utilities/colormap_table/colormap_table_CYCLIC.rst
 
-.. dropdown:: Categorical
+.. dropdown:: Categorical (Qualitative)
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_CATEGORICAL.rst
