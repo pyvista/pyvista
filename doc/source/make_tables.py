@@ -977,7 +977,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b', False),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c', False),
     # MISC
-    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum', True),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum', False),
     _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4', False),
     _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow', False),
     _ColormapInfo('matplotlib', ColormapKind.MISC, 'rainbow', False),
@@ -1107,31 +1107,34 @@ class ColormapTable(DocTable):
             False: ':bdg-danger:`NPU`',
         }
 
-        name_rst = f'``{colormap_info.name}``'
+        if colormap_info.package == 'matplotlib':
+            cmap_source = mpl.colormaps
+        elif colormap_info.package == 'colorcet':
+            cmap_source = colorcet.cm
+        elif colormap_info.package == 'cmocean':
+            cmap_source = cmocean.cm.cmap_d
+        else:
+            raise RuntimeError
+        cmap = cmap_source[colormap_info.name]
+
+        # Generate tags
         source_rst = source_badge_mapping[colormap_info.package]
-        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
-        cmap_type = cls.generate_img(colormap_info.name, colormap_info.package, img_path)
-        type_rst = type_mapping[cmap_type]
+        type_rst = type_mapping[type(cmap)]
         perceptually_uniform_rst = perceptually_uniform_mapping[colormap_info.perceptually_uniform]
         tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
+
+        # Generate image
+        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        cls.generate_img(cmap, img_path)
+
+        name_rst = f'``{colormap_info.name}``'
         return cls.row_template.format(tags, name_rst, img_path)
 
     @staticmethod
-    def generate_img(
-        cmap, package, img_path
-    ) -> type[mpl.colors.ListedColormap | mpl.colors.LinearSegmentedColormap]:
+    def generate_img(cmap, img_path):
         """Generate and save an image of the given colormap."""
         width = 512  # Should be a multiple of 256 to avoid aliasing
         height = 32
-
-        if package == 'matplotlib':
-            cmap = mpl.colormaps[cmap]
-        elif package == 'colorcet':
-            cmap = colorcet.cm[cmap]
-        elif package == 'cmocean':
-            cmap = cmocean.cm.cmap_d[cmap]
-        else:
-            cmap = pv.get_cmap_safe(cmap)
 
         # Create a smooth gradient across the colormap resolution
         gradient = np.linspace(0, 1, width)
@@ -1145,8 +1148,6 @@ class ColormapTable(DocTable):
 
         fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
-
-        return type(cmap)
 
 
 class ColormapTableLINEAR(ColormapTable):
