@@ -88,8 +88,10 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
+    from pyvista import LookupTable
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting._typing import ColormapOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -3004,7 +3006,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting=None,
         n_colors=256,
         interpolate_before_map=None,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable = None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,

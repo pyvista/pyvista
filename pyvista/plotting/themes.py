@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -2334,7 +2335,7 @@ class Theme(_ThemeConfig):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, cmap):
+    def cmap(self, cmap: ColormapOptions):
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
             msg = f'Invalid color map {cmap}'

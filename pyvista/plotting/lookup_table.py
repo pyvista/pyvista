@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from matplotlib import colors
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
@@ -357,7 +358,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, value):
+    def cmap(self, value: ColormapOptions):
         self.apply_cmap(value, self.n_values)
 
     @property
@@ -744,7 +745,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
-    def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
+    def apply_cmap(self, cmap: ColormapOptions, n_values: int = 256, flip: bool = False):
         """Assign a colormap to this lookup table.
 
         This can be used instead of :attr:`LookupTable.cmap` when you need to
