@@ -1085,7 +1085,7 @@ class ColormapTable(DocTable):
         return type(cmap)
 
 
-class ColormapTableSEQUENTIAL(ColormapTable):
+class ColormapTableLINEAR(ColormapTable):
     """Class to generate sequential colormap table."""
 
     kind = ColormapKind.LINEAR
@@ -2933,7 +2933,7 @@ def make_all_tables():  # noqa: D103
     # Make colormap tables
     os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
-    ColormapTableSEQUENTIAL.generate()
+    ColormapTableLINEAR.generate()
     ColormapTableDIVERGING.generate()
     ColormapTableCYCLIC.generate()
     ColormapTableCATEGORICAL.generate()

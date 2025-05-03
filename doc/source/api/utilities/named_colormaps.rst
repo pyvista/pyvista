@@ -28,6 +28,7 @@ The type of the colormap is indicated as:
     can generate misleading visualizations. Colormaps from ``colorcet`` and
     ``cmocean`` are therefore generally recommended over those from ``matplotlib``.
     See `testing-perceptual-uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
+    for more information.
 
 .. note::
 
@@ -55,7 +56,7 @@ Linear (Sequential)
 .. dropdown::
     :open:
 
-    .. include:: /api/utilities/colormap_table/colormap_table_SEQUENTIAL.rst
+    .. include:: /api/utilities/colormap_table/colormap_table_LINEAR.rst
 
 Diverging
 ---------
