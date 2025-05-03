@@ -766,7 +766,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.obj': _vtk.vtkOBJWriter,
         '.iv': _vtk.vtkIVWriter,
     }
-    if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
+    if _vtk.vtk_version_info >= (9, 4):
         _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
     def __init__(
@@ -1828,7 +1828,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
-    if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
+    if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
