@@ -93,9 +93,40 @@ Miscellaneous
 CET Colormaps
 =============
 
-This table includes all ``colorcet`` colormaps which have a named ``CET``
-alias. Most of the ``colorcet`` colormaps presented above are duplicated
-here (using their ``CET`` alias).
+This table includes all ``colorcet`` colormaps that have a named ``CET``
+alias (originally from the Center for Exploration Targeting).
+
+Colormap names follow the form::
+
+    CET_[prefix]{type}{number}[suffix]
+
+Where the prefix and suffix are optional (``[]``) and the type and number are
+required (``{}``).
+
+Prefix :
+    CB : Colorblind-safe for red–green color vision deficiency (protanopia/deuteranopia)
+    CBT : Colorblind-safe for blue–yellow color vision deficiency (tritanopia)
+
+Colormap type :
+    C : Cyclic
+    D : Diverging
+    L : Linear
+    R : Rainbow
+    I : Isoluminant
+
+Number :
+    A version number (starting at ``1``) for each unique ``[prefix]{type}`` combination.
+
+Suffix :
+    Indicates a minor variation of the base colormap.
+
+    A : Alternate version (such as adjusted contrast or hue emphasis)
+    s : Shifted version (phase-shifted)
+
+.. note::
+
+    Most of the ``colorcet`` colormaps presented above are duplicated
+    here (using their ``CET`` alias).
 
 .. dropdown::
 
