@@ -51,6 +51,7 @@ The type of the colormap is indicated as:
 
 Linear (Sequential)
 -------------------
+
 .. dropdown::
     :open:
 
@@ -58,6 +59,7 @@ Linear (Sequential)
 
 Diverging
 ---------
+
 .. dropdown::
     :open:
 
@@ -65,6 +67,7 @@ Diverging
 
 Cyclic
 ------
+
 .. dropdown::
     :open:
 
@@ -72,6 +75,7 @@ Cyclic
 
 Categorical (Qualitative)
 -------------------------
+
 .. dropdown::
     :open:
 
@@ -79,6 +83,7 @@ Categorical (Qualitative)
 
 Miscellaneous
 -------------
+
 .. dropdown::
     :open:
 
@@ -86,6 +91,7 @@ Miscellaneous
 
 CET Colormaps
 =============
+
 This table includes all ``colorcet`` colormaps which have a named ``CET``
 alias. Most of the ``colorcet`` colormaps presented above are duplicated
 here (using their ``CET`` alias).
