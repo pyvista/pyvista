@@ -144,7 +144,7 @@ Suffix :
     Indicates a minor variation of the base colormap.
 
     - ``A``: Alternate version (such as adjusted contrast or hue emphasis)
-    - ``s`: Shifted version (phase-shifted)
+    - ``s``: Shifted version (phase-shifted)
 
 .. note::
 
