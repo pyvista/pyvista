@@ -23,8 +23,8 @@ The type of the colormap is indicated as:
 
 Each colormap is also labeled as:
 
-- :bdg-muted:`PU` if it is perceptually-uniform
-- :bdg-danger:`NPU` if it is not perceptually-uniform
+- :bdg-muted:`PU` if it is perceptually uniform
+- :bdg-danger:`NPU` if it is not perceptually uniform
 
 .. warning::
 

@@ -101,6 +101,7 @@ docstrings
 doctest
 dotfiles
 dunder
+e.g.
 ele
 flem
 framebuffer
