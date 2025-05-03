@@ -59,6 +59,9 @@ Each colormap is also labeled as:
 Linear (Sequential)
 -------------------
 
+Colormaps that progress in a single direction, ideal for representing ordered
+data such as intensities or magnitudes.
+
 .. dropdown::
     :open:
 
@@ -66,6 +69,9 @@ Linear (Sequential)
 
 Diverging
 ---------
+
+Colormaps with two contrasting colors diverging from a central midpoint, useful
+for highlighting deviation from a reference value.
 
 .. dropdown::
     :open:
@@ -75,6 +81,9 @@ Diverging
 Cyclic
 ------
 
+Colormaps designed to wrap around smoothly, best for data that is inherently
+circular (e.g., angles, phase).
+
 .. dropdown::
     :open:
 
@@ -83,6 +92,9 @@ Cyclic
 Categorical (Qualitative)
 -------------------------
 
+Colormaps using distinct colors for individual categories, suitable for labeling
+discrete classes or groups.
+
 .. dropdown::
     :open:
 
@@ -90,6 +102,9 @@ Categorical (Qualitative)
 
 Miscellaneous
 -------------
+
+Colormaps that don’t fit neatly into other categories, often used for artistic
+or specialized purposes.
 
 .. dropdown::
     :open:
@@ -139,6 +154,9 @@ Suffix :
 Linear (Sequential)
 -------------------
 
+Colormaps that progress in a single direction, ideal for representing ordered
+data such as intensities or magnitudes.
+
 .. dropdown::
     :open:
 
@@ -146,6 +164,9 @@ Linear (Sequential)
 
 Diverging
 ---------
+
+Colormaps with two contrasting colors diverging from a central midpoint, useful
+for highlighting deviation from a reference value.
 
 .. dropdown::
     :open:
@@ -155,6 +176,9 @@ Diverging
 Cyclic
 ------
 
+Colormaps designed to wrap around smoothly, best for data that is inherently
+circular (e.g., angles, phase).
+
 .. dropdown::
     :open:
 
@@ -163,6 +187,13 @@ Cyclic
 Rainbow
 -------
 
+Multi-hue colormaps that span the full visible spectrum, useful for highlighting
+local differences in sequential data.
+
+.. warning::
+
+    Some of the “rainbow” colormaps have a perceptual discontinuity around the colors red and yellow.
+
 .. dropdown::
     :open:
 
@@ -170,6 +201,9 @@ Rainbow
 
 Isoluminant
 -----------
+
+Colormaps with constant perceived brightness, useful for emphasizing shape and
+structure without introducing false intensity cues.
 
 .. dropdown::
     :open:
