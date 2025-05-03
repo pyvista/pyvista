@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import cmocean
-from colorcet.plotting import all_original_names
-from colorcet.plotting import get_aliases
+from colorcet import all_original_names
+from colorcet import get_aliases
 import matplotlib as mpl
 import pytest
 
