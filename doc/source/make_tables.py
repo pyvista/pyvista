@@ -1086,7 +1086,7 @@ class ColormapTable(DocTable):
 
 
 class ColormapTableLINEAR(ColormapTable):
-    """Class to generate sequential colormap table."""
+    """Class to generate linear colormap table."""
 
     kind = ColormapKind.LINEAR
 
