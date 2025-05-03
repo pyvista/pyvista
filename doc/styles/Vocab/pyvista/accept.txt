@@ -9,6 +9,7 @@ CLI
 CMake
 Codespell
 Colab
+Colormap
 Colormaps
 Comms
 Cookiecutter
@@ -35,6 +36,7 @@ Gmsh
 HTML
 Helens
 Hotfixes
+Isoluminant
 Isort
 Jupyter
 Kaszynski

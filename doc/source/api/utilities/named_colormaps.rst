@@ -96,7 +96,7 @@ CET Colormaps
 This section includes all ``colorcet`` colormaps that have a named ``CET``
 alias (originally from the Center for Exploration Targeting).
 
-Colormap names follow the form::
+Colormap names have the form::
 
     CET_[prefix]{type}{number}[suffix]
 
@@ -105,8 +105,8 @@ required (``{}``).
 
 Prefix :
 
-    - ``CB``: Colorblind-safe for red–green color vision deficiency (protanopia/deuteranopia)
-    - ``CBT``: Colorblind-safe for blue–yellow color vision deficiency (tritanopia)
+    - ``CB``: Colorblind—safe for red–green color vision deficiency (protanopia/deuteranopia)
+    - ``CBT``: Colorblind—safe for blue–yellow color vision deficiency (tritanopia)
 
 Colormap type :
 
