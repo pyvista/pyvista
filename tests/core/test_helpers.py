@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import re
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import trimesh
@@ -13,6 +16,9 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 
 def test_wrap_none():
     # check against the "None" edge case
@@ -22,6 +28,34 @@ def test_wrap_none():
 def test_wrap_pyvista_ndarray(sphere):
     pd = pv.wrap(sphere.points)
     assert isinstance(pd, pv.PolyData)
+
+
+def test_wrap_raises():
+    with pytest.raises(
+        NotImplementedError,
+        match='NumPy array could not be wrapped pyvista.',
+    ):
+        pv.wrap(np.zeros((42, 42, 42, 42)))
+
+
+def test_wrap_vtk_not_supported_raises(mocker: MockerFixture):
+    m = mocker.patch.object(pv, '_wrappers')
+    m.__getitem__.side_effect = KeyError
+    m2 = mocker.MagicMock()
+    m2.GetClassName.return_value = (f := 'foo')
+
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'VTK data type ({f}) is not currently supported by pyvista.'),
+    ):
+        pv.wrap(m2)
+
+
+def test_wrap_raises_unable():
+    with pytest.raises(
+        NotImplementedError, match=re.escape("Unable to wrap (<class 'int'>) into a pyvista type.")
+    ):
+        pv.wrap(1)
 
 
 # NOTE: It's not necessary to test all data types here, several of the
@@ -354,3 +388,10 @@ def test_vtk_points_force_float(force_float, expected_data_type):
     as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
 
     assert as_numpy.dtype == expected_data_type
+
+
+def test_vtk_points_allow_empty():
+    pv.vtk_points([], allow_empty=True)
+    match = 'points has shape (0,) which is not allowed. Shape must be one of [3, (-1, 3)].'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.vtk_points([], allow_empty=False)

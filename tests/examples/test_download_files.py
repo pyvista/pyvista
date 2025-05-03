@@ -924,8 +924,8 @@ def test_download_gltf_damaged_helmet():
     pl.import_gltf(filename)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info > (9, 1),
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 1),
     reason='Skip until glTF extension KHR_texture_transform is supported.',
 )
 def test_download_gltf_sheen_chair():
@@ -1064,3 +1064,26 @@ def test_load_neptune():
 def test_load_pluto():
     mesh = examples.planets.load_pluto()
     assert mesh.n_cells
+
+
+def test_download_nek5000():
+    filename = examples.download_nek5000(load=False)
+    assert Path(filename).is_file()
+    assert filename.endswith('nek5000')
+
+    # nek5000 reader can only be used with vtk >= 9.3
+    if pv.vtk_version_info >= (9, 3):
+        nek_reader = pv.get_reader(filename)
+        assert nek_reader.number_time_points == 11
+
+        nek_data = examples.download_nek5000(load=True)
+        assert isinstance(nek_data, pv.UnstructuredGrid)
+
+
+def test_download_biplane():
+    filename = examples.download_biplane(load=False)
+    assert Path(filename).is_file()
+    assert filename.endswith('exo')
+
+    biplane = examples.download_biplane()
+    assert isinstance(biplane, pv.MultiBlock)

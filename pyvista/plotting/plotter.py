@@ -20,11 +20,12 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import Union
+from typing import cast
 import uuid
 import warnings
 import weakref
 
-import matplotlib as mpl
 import numpy as np
 import scooby
 
@@ -48,6 +49,7 @@ from ._plotting import prepare_smooth_shading
 from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
+from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
@@ -59,10 +61,11 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .opts import StereoType
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
-from .renderer import Camera
 from .renderer import Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
@@ -71,9 +74,6 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize  # noqa: F401
-from .tools import opacity_transfer_function  # noqa: F401
-from .tools import parse_font_family  # noqa: F401
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -88,8 +88,9 @@ from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -141,9 +142,9 @@ def _warn_xserver():  # pragma: no cover
         return
 
     if not hasattr(_warn_xserver, 'has_support'):
-        _warn_xserver.has_support = pyvista.system_supports_plotting()
+        _warn_xserver.has_support = pyvista.system_supports_plotting()  # type: ignore[attr-defined]
 
-    if not _warn_xserver.has_support:
+    if not _warn_xserver.has_support:  # type: ignore[attr-defined]
         # check if a display has been set
         if 'DISPLAY' in os.environ:
             return
@@ -275,10 +276,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._theme.load_theme(pyvista.global_theme)
         else:
             if not isinstance(theme, pyvista.plotting.themes.Theme):
-                raise TypeError(
+                msg = (
                     'Expected ``pyvista.plotting.themes.Theme`` for '
-                    f'``theme``, not {type(theme).__name__}.',
+                    f'``theme``, not {type(theme).__name__}.'
                 )
+                raise TypeError(msg)
             self._theme.load_theme(theme)
 
         self.image_transparent_background = self._theme.transparent_background
@@ -326,7 +328,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif lighting_normalized == 'three lights':
             self.enable_3_lights()
         elif lighting_normalized != 'none':
-            raise ValueError(f'Invalid lighting option "{lighting}".')
+            msg = f'Invalid lighting option "{lighting}".'
+            raise ValueError(msg)
 
         # Track all active plotters. This has the side effect of ensuring that plotters are not
         # collected until `close()`. See https://github.com//pull/3216
@@ -367,7 +370,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._suppress_rendering
 
     @suppress_rendering.setter
-    def suppress_rendering(self, value) -> None:  # numpydoc ignore=GL08
+    def suppress_rendering(self, value) -> None:
         self._suppress_rendering = bool(value)
 
     @property
@@ -414,13 +417,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._theme
 
     @theme.setter
-    def theme(self, theme) -> None:  # numpydoc ignore=GL08
+    def theme(self, theme) -> None:
         if not isinstance(theme, pyvista.plotting.themes.Theme):
-            raise TypeError(
+            msg = (
                 'Expected a pyvista theme like '
                 '``pyvista.plotting.themes.Theme``, '
-                f'not {type(theme).__name__}.',
+                f'not {type(theme).__name__}.'
             )
+            raise TypeError(msg)
         self._theme.load_theme(theme)
 
     def import_gltf(self, filename, set_camera=True):
@@ -441,24 +445,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> helmet_file = (
-        ...     examples.gltf.download_damaged_helmet()
-        ... )  # doctest:+SKIP
-        >>> texture = (
-        ...     examples.hdr.download_dikhololo_night()
-        ... )  # doctest:+SKIP
+        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
         >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
         >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_gltf` for a full example using this method.
+        See :ref:`load_gltf_example` for a full example using this method.
 
         """
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
-            raise FileNotFoundError(f'Unable to locate {filename}')
+            msg = f'Unable to locate {filename}'
+            raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
         from vtkmodules.vtkIOImport import vtkGLTFImporter
@@ -470,11 +471,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
-
-        # register last actor in actors
-        actor = self.renderer.GetActors().GetLastItem()
-        name = actor.GetAddressAsString('')
-        self.renderer._actors[name] = actor
 
         # set camera position to a three.js viewing perspective
         if set_camera:
@@ -492,9 +488,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> sextant_file = (
-        ...     examples.vrml.download_sextant()
-        ... )  # doctest:+SKIP
+        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
@@ -506,7 +500,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
-            raise FileNotFoundError(f'Unable to locate {filename}')
+            msg = f'Unable to locate {filename}'
+            raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
         importer = vtkVRMLImporter()
@@ -541,7 +536,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
-            raise FileNotFoundError(f'Unable to locate {filename}')
+            msg = f'Unable to locate {filename}'
+            raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
         importer = vtk3DSImporter()
@@ -569,9 +565,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> download_obj_file = examples.download_room_surface_mesh(
-        ...     load=False
-        ... )
+        >>> download_obj_file = examples.download_room_surface_mesh(load=False)
         >>> pl = pv.Plotter()
         >>> pl.import_obj(download_obj_file)
         >>> pl.show()
@@ -582,22 +576,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> filename = examples.download_doorman(load=False)
         >>> pl = pv.Plotter()
         >>> pl.import_obj(filename)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos='xy')
 
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
-            raise FileNotFoundError(f'Unable to locate {filename}')
+            msg = f'Unable to locate {filename}'
+            raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(filename)
-        filename_mtl = filename.with_suffix('.mtl')
+        importer.SetFileName(str(filename) if pyvista.vtk_version_info < (9, 2, 2) else filename)
+        if filename_mtl is None:
+            filename_mtl = filename.with_suffix('.mtl')
+        else:
+            filename_mtl = Path(filename_mtl).expanduser().resolve()
         if filename_mtl.is_file():
-            importer.SetFileNameMTL(filename_mtl)
-            importer.SetTexturePath(filename_mtl.parents[0])
+            importer.SetFileNameMTL(
+                str(filename_mtl) if pyvista.vtk_version_info < (9, 2, 2) else filename_mtl
+            )
+            importer.SetTexturePath(
+                str(filename_mtl.parents[0])
+                if pyvista.vtk_version_info < (9, 2, 2)
+                else filename_mtl.parents[0]
+            )
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -624,20 +628,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
         >>> pl = pv.Plotter(shape=(1, 2))
-        >>> _ = pl.add_mesh(
-        ...     mesh, scalars='Spatial Point Data', show_edges=True
-        ... )
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_mesh(
-        ...     mesh, scalars='Spatial Cell Data', show_edges=True
-        ... )
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pv.html')  # doctest:+SKIP
 
         """
         try:
             from trame_vtk.tools.vtksz2html import write_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
+            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+            raise ImportError(msg)
 
         data = self.export_vtksz(filename=None)
         buffer = io.StringIO()
@@ -682,7 +683,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             from pyvista.trame.jupyter import elegantly_launch
             from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
+            msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+            raise ImportError(msg)
 
         # Ensure trame server is launched
         server = get_server(pyvista.global_theme.trame.jupyter_server_name)
@@ -766,7 +768,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if self.render_window is None:
-            raise RuntimeError('This plotter has been closed and is unable to export the scene.')
+            msg = 'This plotter has been closed and is unable to export the scene.'
+            raise RuntimeError(msg)
 
         from vtkmodules.vtkIOExport import vtkGLTFExporter
 
@@ -849,13 +852,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(examples.load_hexbeam())
-        >>> pl.export_vrml("sample")  # doctest:+SKIP
+        >>> pl.export_vrml('sample')  # doctest:+SKIP
 
         """
         from vtkmodules.vtkIOExport import vtkVRMLExporter
 
         if self.render_window is None:
-            raise RuntimeError('This plotter has been closed and cannot be shown.')
+            msg = 'This plotter has been closed and cannot be shown.'
+            raise RuntimeError(msg)
 
         exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
@@ -887,12 +891,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
-        >>> _ = pl.add_text("With hidden line removal")
+        >>> _ = pl.add_text('With hidden line removal')
         >>> pl.enable_hidden_line_removal(all_renderers=False)
         >>> pl.subplot(0, 1)
         >>> pl.disable_hidden_line_removal(all_renderers=False)
         >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
-        >>> _ = pl.add_text("Without hidden line removal")
+        >>> _ = pl.add_text('Without hidden line removal')
         >>> pl.show()
 
         """
@@ -1036,6 +1040,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         index_column : int, optional
             Index of the subplot to activate along the columns.
 
+        See Also
+        --------
+        link_views
+        :ref:`multi_window_example`
+        :ref:`sharing_scalar_bars_example`
+
         Examples
         --------
         Create a 2 wide plot and set the background of right-hand plot
@@ -1151,7 +1161,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Please use ``enable_lightkit``, this method has been deprecated."""
         from pyvista.core.errors import DeprecationError
 
-        raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')
+        msg = 'DEPRECATED: Please use ``enable_lightkit``'
+        raise DeprecationError(msg)
 
     def enable_lightkit(self, only_active=False) -> None:
         """Enable the default light-kit lighting.
@@ -1263,18 +1274,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # apply MSAA to entire render window
         if aa_type == 'msaa':
             if self.render_window is None:
-                raise AttributeError('The render window has been closed.')
+                msg = 'The render window has been closed.'
+                raise AttributeError(msg)
             if multi_samples is None:
                 multi_samples = self._theme.multi_samples
             self.render_window.SetMultiSamples(multi_samples)
             return
         elif aa_type not in ['ssaa', 'fxaa']:
-            raise ValueError(
-                f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"',
-            )
+            msg = f'Invalid `aa_type` "{aa_type}". Should be either "fxaa", "ssaa", or "msaa"'
+            raise ValueError(msg)
         else:
             # disable MSAA as SSAA or FXAA is being enabled
-            self.render_window.SetMultiSamples(0)
+            self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
 
         if all_renderers:
             for renderer in self.renderers:
@@ -1303,7 +1314,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         VTK's anti-aliasing approaches.
 
         """
-        self.render_window.SetMultiSamples(0)
+        self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
 
         if all_renderers:
             for renderer in self.renderers:
@@ -1434,7 +1445,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state: bool) -> None:  # numpydoc ignore=GL08
+    def parallel_projection(self, state: bool) -> None:
         self.renderer.parallel_projection = state
 
     @property
@@ -1443,7 +1454,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value: float) -> None:  # numpydoc ignore=GL08
+    def parallel_scale(self, value: float) -> None:
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
@@ -1615,8 +1626,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
-    def actors(self) -> dict[str, _vtk.vtkActor]:  # numpydoc ignore=RT01
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
+
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
 
         Returns
         -------
@@ -1637,13 +1654,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not self.renderer.camera.is_set:
-            self.camera_position = self.get_default_cam_pos()
-            self.reset_camera()
+            self.camera_position = self.get_default_cam_pos()  # type: ignore[call-arg]
+            self.reset_camera()  # type: ignore[call-arg]
             self.renderer.camera.is_set = True
         return self.renderer.camera
 
     @camera.setter
-    def camera(self, camera) -> None:  # numpydoc ignore=GL08
+    def camera(self, camera) -> None:
         self.renderer.camera = camera
 
     @property
@@ -1652,17 +1669,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set: bool) -> None:  # numpydoc ignore=GL08
+    def camera_set(self, is_set: bool) -> None:
         self.renderer.camera.is_set = is_set
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of the active renderer.
+        """Return the bounds of all VISIBLE actors present in the active rendering window.
+
+        Actors with ``visibility`` disabled or with ``use_bounds`` disabled are `not`
+        included in the bounds.
+
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
 
         Returns
         -------
-        tuple[numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64, numpy.float64]
-            Bounds of the active renderer.
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
 
         Examples
         --------
@@ -1674,6 +1704,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         return self.renderer.bounds
+
+    @wraps(Renderer.compute_bounds)
+    def compute_bounds(self, *args, **kwargs) -> BoundsTuple:  # numpydoc ignore=PR01,RT01
+        """Return the bounds of actors present in the renderer."""
+        return self.renderer.compute_bounds(*args, **kwargs)
 
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
@@ -1725,7 +1760,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.scale
 
     @scale.setter
-    def scale(self, scale) -> None:  # numpydoc ignore=GL08
+    def scale(self, scale) -> None:
         self.renderer.set_scale(*scale)
 
     @property
@@ -1772,7 +1807,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location) -> None:  # numpydoc ignore=GL08
+    def camera_position(self, camera_location) -> None:
         self.renderer.camera_position = camera_location
 
     @property
@@ -1786,7 +1821,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
-        >>> pl.background_color = "pink"
+        >>> pl.background_color = 'pink'
         >>> pl.background_color
         Color(name='pink', hex='#ffc0cbff', opacity=255)
         >>> pl.show()
@@ -1795,7 +1830,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
-    def background_color(self, color) -> None:  # numpydoc ignore=GL08
+    def background_color(self, color) -> None:
         self.set_background(color)
 
     @property
@@ -1815,11 +1850,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         [400, 400]
 
         """
-        return list(self.render_window.GetSize())
+        return list(self.render_window.GetSize())  # type: ignore[union-attr]
 
     @window_size.setter
-    def window_size(self, window_size):  # numpydoc ignore=GL08
-        self.render_window.SetSize(window_size[0], window_size[1])
+    def window_size(self, window_size):
+        self.render_window.SetSize(window_size[0], window_size[1])  # type: ignore[union-attr]
         self._window_size_unset = False
         self.render()
 
@@ -1841,10 +1876,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube())
         >>> with pl.window_size_context((400, 400)):
         ...     pl.screenshot('/tmp/small_screenshot.png')  # doctest:+SKIP
-        ...
         >>> with pl.window_size_context((1000, 1000)):
         ...     pl.screenshot('/tmp/big_screenshot.png')  # doctest:+SKIP
-        ...
 
         """
         # No op if not set
@@ -1879,23 +1912,27 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _check_rendered(self) -> None:
         """Check if the render window has been shown and raise an exception if not."""
         if not self._rendered:
-            raise AttributeError(
+            msg = (
                 '\nThis plotter has not yet been set up and rendered '
                 'with ``show()``.\n'
                 'Consider setting ``off_screen=True`` '
-                'for off screen rendering.\n',
+                'for off screen rendering.\n'
             )
+            raise AttributeError(msg)
 
     def _check_has_ren_win(self) -> None:
         """Check if render window attribute exists and raise an exception if not."""
         if self.render_window is None:
-            raise RenderWindowUnavailable('Render window is not available.')
+            msg = 'Render window is not available.'
+            raise RenderWindowUnavailable(msg)
         if not self.render_window.IsCurrent():
-            raise RenderWindowUnavailable('Render window is not current.')
+            msg = 'Render window is not current.'
+            raise RenderWindowUnavailable(msg)
 
     def _make_render_window_current(self) -> None:
         if self.render_window is None:
-            raise RenderWindowUnavailable('Render window is not available.')
+            msg = 'Render window is not available.'
+            raise RenderWindowUnavailable(msg)
         self.render_window.MakeCurrent()  # pragma: no cover
 
     def _enable_stereo_rendering(self, stereo_type: StereoType = StereoType.ANAGLYPH) -> None:
@@ -1978,10 +2015,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._image_scale
 
     @image_scale.setter
-    def image_scale(self, value: int) -> None:  # numpydoc ignore=GL08
+    def image_scale(self, value: int) -> None:
         value = int(value)
         if value < 1:
-            raise ValueError('Scale factor must be a positive integer.')
+            msg = 'Scale factor must be a positive integer.'
+            raise ValueError(msg)
         self._image_scale = value
 
     @contextmanager
@@ -2050,32 +2088,34 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_key_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_key_event."""
         if hasattr(self, 'iren'):
-            self.iren.add_key_event(*args, **kwargs)
+            self.iren.add_key_event(*args, **kwargs)  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.add_timer_event)
     def add_timer_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_timer_event."""
         if hasattr(self, 'iren'):
-            self.iren.add_timer_event(*args, **kwargs)
+            self.iren.add_timer_event(*args, **kwargs)  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.clear_events_for_key)
     def clear_events_for_key(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
         if hasattr(self, 'iren'):
-            self.iren.clear_events_for_key(*args, **kwargs)
+            self.iren.clear_events_for_key(*args, **kwargs)  # type: ignore[has-type]
 
     def store_mouse_position(self, *args):
         """Store mouse position."""
         if not hasattr(self, 'iren'):
-            raise AttributeError('This plotting window is not interactive.')
-        self.mouse_position = self.iren.get_event_position()
+            msg = 'This plotting window is not interactive.'
+            raise AttributeError(msg)
+        self.mouse_position = self.iren.get_event_position()  # type: ignore[has-type]
 
     def store_click_position(self, *args):
         """Store click position in viewport coordinates."""
         if not hasattr(self, 'iren'):
-            raise AttributeError('This plotting window is not interactive.')
-        self.click_position = self.iren.get_event_position()
-        self.mouse_position = self.click_position
+            msg = 'This plotting window is not interactive.'
+            raise AttributeError(msg)
+        self.click_position = self.iren.get_event_position()  # type: ignore[has-type]
+        self.mouse_position = self.click_position  # type: ignore[has-type]
 
     def track_mouse_position(self) -> None:
         """Keep track of the mouse position.
@@ -2085,21 +2125,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         :func:`pyvista.Plotter.track_click_position` instead.
 
         """
-        self.iren.track_mouse_position(self.store_mouse_position)
+        self.iren.track_mouse_position(self.store_mouse_position)  # type: ignore[has-type]
 
     def untrack_mouse_position(self) -> None:
         """Stop tracking the mouse position."""
-        self.iren.untrack_mouse_position()
+        self.iren.untrack_mouse_position()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.track_click_position)
     def track_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.track_click_position."""
-        self.iren.track_click_position(*args, **kwargs)
+        self.iren.track_click_position(*args, **kwargs)  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.untrack_click_position)
     def untrack_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Stop tracking the click position."""
-        self.iren.untrack_click_position(*args, **kwargs)
+        self.iren.untrack_click_position(*args, **kwargs)  # type: ignore[has-type]
 
     @property
     def pickable_actors(self) -> list[_vtk.vtkActor]:  # numpydoc ignore=RT01
@@ -2122,9 +2162,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> sphere_actor = pl.add_mesh(pv.Sphere())
-        >>> cube_actor = pl.add_mesh(
-        ...     pv.Cube(), pickable=False, style='wireframe'
-        ... )
+        >>> cube_actor = pl.add_mesh(pv.Cube(), pickable=False, style='wireframe')
         >>> len(pl.pickable_actors)
         1
 
@@ -2149,16 +2187,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ]
 
     @pickable_actors.setter
-    def pickable_actors(self, actors=None) -> None:  # numpydoc ignore=GL08
+    def pickable_actors(self, actors=None) -> None:
         actors = [] if actors is None else actors
         if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
 
         if not all(isinstance(actor, _vtk.vtkActor) for actor in actors):
-            raise TypeError(
+            msg = (
                 f'Expected a vtkActor instance or a list of vtkActors, got '
-                f'{[type(actor) for actor in actors]} instead.',
+                f'{[type(actor) for actor in actors]} instead.'
             )
+            raise TypeError(msg)
 
         for renderer in self.renderers:
             for actor in renderer.actors.values():
@@ -2187,7 +2226,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         for renderer in self.renderers:
-            for actor in renderer._actors.values():
+            for actor in renderer._actors:
                 if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
                     if hasattr(prop, 'SetPointSize'):
@@ -2215,36 +2254,43 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, 'iren'):
             return
 
-        self.iren.clear_key_event_callbacks()
+        self.iren.clear_key_event_callbacks()  # type: ignore[has-type]
 
-        self.add_key_event('q', self._prep_for_close)  # Add no matter what
-        b_left_down_callback = lambda: self.iren.add_observer(
+        self.add_key_event('q', self._prep_for_close)  # type: ignore[arg-type] # Add no matter what
+        b_left_down_callback = lambda: self.iren.add_observer(  # type: ignore[has-type]
             'LeftButtonPressEvent',
             self.left_button_down,
         )
-        self.add_key_event('b', b_left_down_callback)
-        self.add_key_event('v', lambda: self.isometric_view_interactive())
-        self.add_key_event('C', lambda: self.enable_cell_picking())
-        self.add_key_event('Up', lambda: self.zoom_camera(1.05))
-        self.add_key_event('Down', lambda: self.zoom_camera(0.95))
-        self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
-        self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
+        self.add_key_event('b', b_left_down_callback)  # type: ignore[arg-type]
+        self.add_key_event('v', lambda: self.isometric_view_interactive())  # type: ignore[arg-type]
+        self.add_key_event('C', lambda: self.enable_cell_picking())  # type: ignore[arg-type]
+        self.add_key_event('Up', lambda: self.zoom_camera(1.05))  # type: ignore[arg-type]
+        self.add_key_event('Down', lambda: self.zoom_camera(0.95))  # type: ignore[arg-type]
+        self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))  # type: ignore[arg-type]
+        self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))  # type: ignore[arg-type]
 
     @wraps(RenderWindowInteractor.key_press_event)
     def key_press_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.key_press_event."""
-        self.iren.key_press_event(*args, **kwargs)
+        self.iren.key_press_event(*args, **kwargs)  # type: ignore[has-type]
 
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
+        attr = (
+            'GetOffScreenFramebuffer'
+            if pyvista.vtk_version_info < (9, 1)
+            else 'GetRenderFramebuffer'
+        )
         if (
-            hasattr(self.render_window, 'GetOffScreenFramebuffer')
-            and not self.render_window.GetOffScreenFramebuffer().GetFBOIndex()
+            hasattr(renwin := self.render_window, attr)
+            and not getattr(renwin, attr)().GetFBOIndex()
         ):
             # must raise a runtime error as this causes a segfault on VTK9
-            raise ValueError('Invoking helper with no framebuffer')
+            msg = 'Invoking helper with no framebuffer'
+            raise ValueError(msg)
+
         # Get 2D click location on window
-        click_pos = self.iren.get_event_position()
+        click_pos = self.iren.get_event_position()  # type: ignore[has-type]
 
         # Get corresponding click location in the 3D plot
         picker = _vtk.vtkWorldPointPicker()
@@ -2256,57 +2302,57 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.enable_trackball_style)
     def enable_trackball_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_style."""
-        self.iren.enable_trackball_style()
+        self.iren.enable_trackball_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_custom_trackball_style)
     def enable_custom_trackball_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
-        self.iren.enable_custom_trackball_style(*args, **kwargs)
+        self.iren.enable_custom_trackball_style(*args, **kwargs)  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
-        self.iren.enable_trackball_actor_style()
+        self.iren.enable_trackball_actor_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_image_style)
     def enable_image_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_image_style."""
-        self.iren.enable_image_style()
+        self.iren.enable_image_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_joystick_style)
     def enable_joystick_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_style."""
-        self.iren.enable_joystick_style()
+        self.iren.enable_joystick_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_joystick_actor_style)
     def enable_joystick_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
-        self.iren.enable_joystick_actor_style()
+        self.iren.enable_joystick_actor_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_zoom_style."""
-        self.iren.enable_zoom_style()
+        self.iren.enable_zoom_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
     def enable_terrain_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_terrain_style."""
-        self.iren.enable_terrain_style(*args, **kwargs)
+        self.iren.enable_terrain_style(*args, **kwargs)  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_style."""
-        self.iren.enable_rubber_band_style()
+        self.iren.enable_rubber_band_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
     def enable_rubber_band_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
-        self.iren.enable_rubber_band_2d_style()
+        self.iren.enable_rubber_band_2d_style()  # type: ignore[has-type]
 
     @wraps(RenderWindowInteractor.enable_2d_style)
     def enable_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_2d_style."""
-        self.iren.enable_2d_style()
+        self.iren.enable_2d_style()  # type: ignore[has-type]
 
     def enable_stereo_render(self) -> None:
         """Enable anaglyph stereo rendering.
@@ -2389,7 +2435,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def isometric_view_interactive(self) -> None:
         """Set the current interactive render window to isometric view."""
-        interactor = self.iren.get_interactor_style()
+        interactor = self.iren.get_interactor_style()  # type: ignore[has-type]
         renderer = interactor.GetCurrentRenderer()
         if renderer is None:
             renderer = self.renderer
@@ -2412,15 +2458,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             stime = 1
 
         curr_time = time.time()
-        if Plotter.last_update_time > curr_time:
-            Plotter.last_update_time = curr_time
+        Plotter.last_update_time = min(Plotter.last_update_time, curr_time)
 
-        if self.iren is not None:
-            update_rate = self.iren.get_desired_update_rate()
+        if self.iren is not None:  # type: ignore[has-type]
+            update_rate = self.iren.get_desired_update_rate()  # type: ignore[has-type]
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
                 # Allow interaction for a brief moment during interactive updating
                 # Use the non-blocking ProcessEvents method.
-                self.iren.process_events()
+                self.iren.process_events()  # type: ignore[has-type]
                 # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
@@ -2776,9 +2821,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         case of multiple nested composite datasets.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'b'
@@ -2788,7 +2831,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
-            raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
+            msg = f'Invalid type ({type(dataset)}). Must be a composite dataset.'
+            raise TypeError(msg)
         # always convert
         dataset = dataset.as_polydata_blocks(copy_mesh)  # type: ignore[attr-defined]
         self.mesh = dataset  # for legacy behavior
@@ -2806,7 +2850,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling,
             name,
             nan_color,
-            color,
             texture,
             rgb,
             interpolation,
@@ -2830,7 +2873,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             name,
             nan_color,
             nan_opacity,
-            color,
             None,
             rgb,
             style,
@@ -2867,7 +2909,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=self.renderer.next_color if color is None else color,
+            color=self.renderer.next_color if color is None or color is True else color,
             style=style,
             edge_color=edge_color,
             render_points_as_spheres=render_points_as_spheres,
@@ -2897,9 +2939,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     scalars = point_name if point_name is not None else cell_name
 
             elif not isinstance(scalars, str):
-                raise TypeError(
-                    f'`scalars` must be a string for `add_composite`, not ({type(scalars)})',
-                )
+                msg = f'`scalars` must be a string for `add_composite`, not ({type(scalars)})'
+                raise TypeError(msg)
 
             if scalars is not None:
                 # enable rgb if the scalars name ends with rgb or rgba
@@ -3037,7 +3078,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             objects (``vtk.vtkAlgorithm`` and ``vtk.vtkAlgorithmOutput``).
             When passing an algorithm, the rendering pipeline will be
             connected to the passed algorithm to dynamically update
-            the scene.
+            the scene (see :ref:`plotting_algorithms_example` for examples).
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
@@ -3313,7 +3354,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
-            the vector is plotted.
+            the vector is plotted. See :ref:`vector_component_example`
+            for examples.
 
         emissive : bool, optional
             Treat the points/splats as emissive light sources. Only valid for
@@ -3350,6 +3392,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
 
+            See :ref:`vertices_example` for examples.
+
         edge_opacity : float, optional
             Edge opacity of the mesh. A single float value that will be applied globally
             edge opacity of the mesh and uniformly applied everywhere - should be
@@ -3377,9 +3421,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, scalar_bar_args={'title': 'Z Position'}
-        ... )
+        >>> _ = plotter.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()
 
         Plot using RGB on a single cell.  Note that since the number of
@@ -3396,9 +3438,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...         [0.5, 0.33, 0.667],
         ...     ]
         ... )
-        >>> faces = np.hstack(
-        ...     [[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]]
-        ... )
+        >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
         >>> mesh = pv.PolyData(vertices, faces)
         >>> mesh.cell_data['colors'] = [
         ...     [255, 255, 255],
@@ -3490,9 +3530,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
             if not is_pyvista_dataset(mesh):
-                raise TypeError(
-                    f'Object type ({type(mesh)}) not supported for plotting in PyVista.',
-                )
+                msg = f'Object type ({type(mesh)}) not supported for plotting in PyVista.'
+                raise TypeError(msg)
         if isinstance(mesh, pyvista.PointSet):
             # cast to PointSet to PolyData
             if algo is not None:
@@ -3502,9 +3541,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
             if algo is not None:
-                raise TypeError(
-                    'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.',
-                )
+                msg = 'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
+                raise TypeError(msg)
             actor, _ = self.add_composite(
                 mesh,
                 color=color,
@@ -3572,7 +3610,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             culling,
             name,
             nan_color,
-            color,
             texture,
             rgb,
             interpolation,
@@ -3596,7 +3633,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             name,
             nan_color,
             nan_opacity,
-            color,
             texture,
             rgb,
             style,
@@ -3613,9 +3649,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             silhouette = self._theme.silhouette.enabled
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(algo or mesh, **silhouette)
+                silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
-                self.add_silhouette(algo or mesh)
+                silhouette_actor = self.add_silhouette(algo or mesh)
+            silhouette_actor.user_matrix = user_matrix
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -3659,19 +3696,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # each pipeline request
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
-            else:
-                # Otherwise, make sure the mesh object's scalars are set
-                if field == FieldAssociation.POINT:
-                    mesh.point_data.active_scalars_name = original_scalar_name
-                elif field == FieldAssociation.CELL:
-                    mesh.cell_data.active_scalars_name = original_scalar_name
+            # Otherwise, make sure the mesh object's scalars are set
+            elif field == FieldAssociation.POINT:
+                mesh.point_data.active_scalars_name = original_scalar_name
+            elif field == FieldAssociation.CELL:
+                mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
             if algo is not None:
-                raise TypeError(
-                    'Smooth shading is not currently supported when a vtkAlgorithm is passed.',
-                )
+                msg = 'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
+                raise TypeError(msg)
             mesh, scalars = prepare_smooth_shading(
                 mesh,
                 scalars,
@@ -3684,13 +3719,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if rgb:
             show_scalar_bar = False
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
-                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+                msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
+                raise ValueError(msg)
 
         if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
-            raise ValueError(
-                'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`',
-            )
+            msg = 'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
+            raise ValueError(msg)
 
         # set main values
         self.mesh = mesh
@@ -3706,11 +3741,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
-                raise TypeError(f'Invalid texture type ({type(texture)})')
+                msg = f'Invalid texture type ({type(texture)})'
+                raise TypeError(msg)
             if mesh.GetPointData().GetTCoords() is None:
-                raise ValueError(
-                    'Input mesh does not have texture coordinates to support the texture.',
-                )
+                msg = 'Input mesh does not have texture coordinates to support the texture.'
+                raise ValueError(msg)
             actor.texture = texture
             # Set color to white by default when using a texture
             if color is None:
@@ -3778,7 +3813,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             specular=specular,
             specular_power=specular_power,
             show_edges=show_edges,
-            color=self.renderer.next_color if color is None else color,
+            color=self.renderer.next_color if color is None or color is True else color,
             style=style if style != 'points_gaussian' else 'points',
             edge_color=edge_color,
             render_lines_as_tubes=render_lines_as_tubes,
@@ -3814,10 +3849,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 backface_kwargs.update(backface_params)
                 backface_prop = Property(**backface_kwargs)
             else:
-                raise TypeError(
+                msg = (
                     'Backface params must be a pyvista.Property or a dict, '
-                    f'not {type(backface_params).__name__}.',
+                    f'not {type(backface_params).__name__}.'
                 )
+                raise TypeError(msg)
             actor.backface_prop = backface_prop
 
         # legend label
@@ -3865,31 +3901,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color):
+    def _add_legend_label(self, actor, label, scalars, color: Color):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
-            raise TypeError('Label must be a string')
+            msg = 'Label must be a string'
+            raise TypeError(msg)
 
         if (
             hasattr(self.mesh, '_glyph_geom')
-            and self.mesh._glyph_geom is not None
-            and self.mesh._glyph_geom[0] is not None
+            and self.mesh._glyph_geom is not None  # type: ignore[union-attr]
+            and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
         ):
             # Using only the first geometry
-            geom = pyvista.PolyData(self.mesh._glyph_geom[0])
+            geom = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
         else:
             geom = pyvista.Triangle()
             if scalars is not None:
                 geom = pyvista.Box()
 
-        geom.points -= geom.center
+        geom.points -= geom.center  # type: ignore[misc]
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = [geom, label, color]
+        self.renderer._labels[addr] = (geom, label, color)
 
     def add_volume(
         self,
-        volume,
+        volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
         scalars=None,
         clim=None,
         resolution=None,
@@ -3941,12 +3978,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             array that is present on the mesh or an array with length equal
             to the number of cells or the number of points in the
             mesh. If ``scalars`` is ``None``, then the active scalars are used.
-
-            Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
-            the scalars will be mapped to the lookup table. If 2 dimensional
-            the scalars will be directly mapped to RGBA values, array should be
-            shaped ``(N, 4)`` where ``N`` is the number of points, and of
-            datatype ``np.uint8``.
 
             Scalars may be 1 dimensional or 2 dimensional. If 1 dimensional,
             the scalars will be mapped to the lookup table. If 2 dimensional
@@ -4164,7 +4195,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> bolt_nut = examples.download_bolt_nut()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
+        >>> _ = pl.add_volume(bolt_nut, cmap='coolwarm')
         >>> pl.show()
 
         Create a volume from scratch and plot it using single vector of
@@ -4184,9 +4215,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> grid = pv.ImageData(dimensions=(5, 20, 20))
         >>> scalars = grid.points - (grid.origin)
         >>> scalars /= scalars.max()
-        >>> opacity = np.linalg.norm(
-        ...     grid.points - grid.center, axis=1
-        ... ).reshape(-1, 1)
+        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
         >>> opacity /= opacity.max()
         >>> scalars = np.hstack((scalars, opacity**3))
         >>> scalars *= 255
@@ -4216,9 +4245,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling = kwargs.pop('backface_culling', culling)
 
         if 'scalar' in kwargs:
-            raise TypeError(
-                '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?',
-            )
+            msg = '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
+            raise TypeError(msg)
         assert_empty_kwargs(**kwargs)
 
         if show_scalar_bar is None:
@@ -4241,23 +4269,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = wrap(volume)
+                volume = cast('pyvista.ImageData', wrap(cast('NumpyArray[float]', volume)))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
-                    raise ValueError('Invalid resolution dimensions.')
+                    msg = 'Invalid resolution dimensions.'
+                    raise ValueError(msg)
                 volume.spacing = resolution
             else:
-                volume = wrap(volume)
+                # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
+                #   to remove the need to cast the type here
+                volume = cast('Union[pyvista.MultiBlock, pyvista.DataSet]', wrap(volume))
                 if not is_pyvista_dataset(volume):
-                    raise TypeError(
-                        f'Object type ({type(volume)}) not supported for plotting in PyVista.',
-                    )
+                    msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
+                    raise TypeError(msg)
         else:
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
-            volume = volume.cell_data_to_point_data()
+            volume = volume.cell_data_to_point_data()  # type: ignore[unreachable]
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
@@ -4268,13 +4298,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
-            for idx in range(volume.GetNumberOfBlocks()):
-                if volume[idx] is None:
+            for idx, block in enumerate(volume):
+                if block is None:
                     continue
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(volume.GetBlock(idx))
+                block = wrap(block)
                 if resolution is None:
                     try:
                         block_resolution = block.GetSpacing()
@@ -4314,12 +4344,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Make sure structured grids are not less than 3D
         # ImageData and RectilinearGrid should be olay as <3D
         if isinstance(volume, pyvista.StructuredGrid) and any(d < 2 for d in volume.dimensions):
-            raise ValueError('StructuredGrids must be 3D dimensional.')
+            msg = 'StructuredGrids must be 3D dimensional.'
+            raise ValueError(msg)
 
         if isinstance(volume, pyvista.PolyData):
-            raise TypeError(
-                f'Type {type(volume)} not supported for volume rendering as it is not 3D.',
-            )
+            msg = f'Type {type(volume)} not supported for volume rendering as it is not 3D.'
+            raise TypeError(msg)
         elif not isinstance(
             volume,
             (pyvista.ImageData, pyvista.RectilinearGrid, pyvista.UnstructuredGrid),
@@ -4334,14 +4364,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapper = 'ugrid'
 
         if mapper == 'fixed_point' and not isinstance(volume, pyvista.ImageData):
-            raise TypeError(
-                f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.ImageData`.',
-            )
+            msg = f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.ImageData`.'
+            raise TypeError(msg)
         elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
-            raise TypeError(
-                f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.',
-            )
+            msg = f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
+            raise TypeError(msg)
 
+        volume = cast('pyvista.DataSet', volume)
         if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -4352,7 +4381,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                 scalar_bar_args.setdefault('title', volume.active_scalars_info[1])
             else:
-                raise MissingDataError('No scalars to use for volume rendering.')
+                msg = 'No scalars to use for volume rendering.'
+                raise MissingDataError(msg)
 
         title = 'Data'
         if isinstance(scalars, str):
@@ -4362,24 +4392,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
-        if scalars.ndim != 1:
-            if scalars.ndim != 2:
-                raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
-            if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
-                raise ValueError(
-                    '`add_volume` only supports scalars with 2 dimensions that have 4 components of datatype np.uint8.\n\n'
-                    f'Scalars have shape {scalars.shape} and dtype {scalars.dtype.name!r}.',
-                )
-
         if not np.issubdtype(scalars.dtype, np.number):
-            raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
+            msg = 'Non-numeric scalars are currently not supported for volume rendering.'
+            raise TypeError(msg)
+
         if scalars.ndim != 1:
             if scalars.ndim != 2:
-                raise ValueError('`add_volume` only supports scalars with 1 or 2 dimensions')
+                msg = '`add_volume` only supports scalars with 1 or 2 dimensions'
+                raise ValueError(msg)
             if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
-                raise ValueError(
-                    f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape {scalars.shape} and datatype {scalars.dtype}',
-                )
+                msg = f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape {scalars.shape} and datatype {scalars.dtype}'
+                raise ValueError(msg)
             if opacity != 'linear':
                 opacity = 'linear'
                 warnings.warn('Ignoring custom opacity due to RGBA scalars.')
@@ -4393,39 +4416,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'ugrid': UnstructuredGridVolumeRayCastMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
-            raise TypeError(
-                f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}",
-            )
-        self.mapper = mappers_lookup[mapper](theme=self._theme)
+            msg = f'Mapper ({mapper}) unknown. Available volume mappers include: {", ".join(mappers_lookup.keys())}'
+            raise TypeError(msg)
+        self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
 
         # Set scalars range
         min_, max_ = None, None
         if clim is None:
-            if scalars.dtype == np.uint8:
-                clim = [0, 255]
-            else:
-                min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                clim = [min_, max_]
+            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
+            clim = [min_, max_]
         elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         if log_scale and clim[0] <= 0:
             clim = [sys.float_info.min, clim[1]]
-
-        # data must be between [0, 255], but not necessarily UINT8
-        # Preserve backwards compatibility and have same behavior as VTK.
-        if scalars.dtype != np.uint8 and clim != [0, 255]:
-            # must copy to avoid modifying inplace and remove any VTK weakref
-            scalars = np.array(scalars)
-            clim = np.asarray(clim, dtype=scalars.dtype)
-            scalars.clip(clim[0], clim[1], out=scalars)
-            if log_scale:
-                out = mpl.colors.LogNorm(clim[0], clim[1])(scalars)
-                scalars = out.data * 255
-            else:
-                if min_ is None:
-                    min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
 
         volume[title] = scalars
         volume.active_scalars_name = title
@@ -4464,7 +4468,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
-        self.mapper.dataset = volume
+        self.mapper.dataset = volume  # type: ignore[assignment]
         self.mapper.blend_mode = blending
         self.mapper.update()
 
@@ -4486,8 +4490,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.volume.prop.independent_components = False
             show_scalar_bar = False
 
-        actor, prop = self.add_actor(
-            self.volume,
+        actor, _ = self.add_actor(
+            self.volume,  # type: ignore[arg-type]
             reset_camera=reset_camera,
             name=name,
             culling=culling,
@@ -4594,7 +4598,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             alg.SetEnableFeatureAngle(False)
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
-        actor, prop = self.add_actor(mapper)
+        actor, prop = self.add_actor(mapper)  # type: ignore[arg-type]
         prop.SetColor(Color(color).float_rgb)
         prop.SetOpacity(opacity)
         prop.SetLineWidth(line_width)
@@ -4616,10 +4620,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(clim, (float, int)):
             clim = [-clim, clim]
         if len(clim) != 2:
-            raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
+            msg = 'clim argument must be a length 2 iterable of values: (min, max).'
+            raise TypeError(msg)
         if name is None:
             if not hasattr(self, 'mapper'):
-                raise AttributeError('This plotter does not have an active mapper.')
+                msg = 'This plotter does not have an active mapper.'
+                raise AttributeError(msg)
             self.mapper.scalar_range = clim
             return
 
@@ -4628,7 +4634,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for mh in self.scalar_bars._scalar_bar_mappers[name]:
                 mh.scalar_range = clim
         except KeyError:
-            raise ValueError(f'Name ({name!r}) not valid/not found in this plotter.') from None
+            msg = f'Name ({name!r}) not valid/not found in this plotter.'
+            raise ValueError(msg) from None
 
     def clear_actors(self) -> None:
         """Clear actors from all renderers."""
@@ -4650,7 +4657,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None
+        self.mapper = None  # type: ignore[assignment]
 
     def link_views(self, views=0) -> None:
         """Link the views' cameras.
@@ -4661,6 +4668,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
+
+        See Also
+        --------
+        subplot
 
         Examples
         --------
@@ -4730,7 +4741,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.renderers[view_index].camera = camera
                 self.renderers[view_index].camera.is_set = camera_status
         else:
-            raise TypeError(f'Expected type is int, list or tuple: {type(views)} is given')
+            msg = f'Expected type is int, list or tuple: {type(views)} is given'
+            raise TypeError(msg)
 
     def unlink_views(self, views=None) -> None:
         """Unlink the views' cameras.
@@ -4758,7 +4770,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.renderers[view_index].reset_camera()
                 self.renderers[view_index].cemera_set = False
         else:
-            raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
+            msg = f'Expected type is None, int, list or tuple: {type(views)} is given'
+            raise TypeError(msg)
 
     @wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(
@@ -4774,11 +4787,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = kwargs.get('mapper')
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise AttributeError('Mapper does not exist.  Add a mesh with scalars first.')
+                msg = 'Mapper does not exist.  Add a mesh with scalars first.'
+                raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
-        title = args[0] if len(args) else kwargs.get('title', '')
+        title = args[0] if args else kwargs.get('title', '')
         if title is None:
             title = ''
         kwargs['title'] = title
@@ -4789,7 +4803,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
-            raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
+            msg = 'Interactive scalar bars disabled for multi-renderer plots'
+            raise ValueError(msg)
         # by default, use the plotter local theme
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(**kwargs)
@@ -4802,10 +4817,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVista. It is functionally equivalent to directly modifying the
             scalars of a mesh in-place.
 
-            .. code:: python
+            .. code-block:: python
 
                 # Modify the points in place
-                mesh["my scalars"] = values
+                mesh['my scalars'] = values
                 # Explicitly call render if needed
                 plotter.render()
 
@@ -4858,7 +4873,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         vtk_scalars = data.GetScalars()
         if vtk_scalars is None:
-            raise ValueError('No active scalars')
+            msg = 'No active scalars'
+            raise ValueError(msg)
         s = convert_array(vtk_scalars)
         s[:] = scalars
         vtk_scalars.Modified()
@@ -4879,7 +4895,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVista. It is functionally equivalent to directly modifying the
             points of a mesh in-place.
 
-            .. code:: python
+            .. code-block:: python
 
                 # Modify the points in place
                 mesh.points = points
@@ -4944,7 +4960,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bars
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None
+        self.mapper = None  # type: ignore[assignment]
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -4954,8 +4970,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
 
-        if self.iren is not None:
-            self.iren.close()
+        if self.iren is not None:  # type: ignore[has-type]
+            self.iren.close()  # type: ignore[has-type]
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -4978,12 +4994,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
-        self.disable_picking()
+        self.disable_picking()  # type: ignore[call-arg]
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        self.mapper = None
-        self.volume = None
+        self.mapper = None  # type: ignore[assignment]
+        self.volume = None  # type: ignore[assignment]
         self.text = None
 
     def add_text(
@@ -5116,8 +5132,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
                 self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             text_prop.font_size = int(font_size * 2)
-        self.text.prop = text_prop
-        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)
+        self.text.prop = text_prop  # type: ignore[attr-defined]
+        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return self.text
 
     def open_movie(self, filename, framerate=24, quality=5, **kwargs) -> None:
@@ -5159,9 +5175,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         try:
             from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
-            raise ModuleNotFoundError(
-                'Install imageio to use `open_movie` with:\n\n   pip install imageio',
-            ) from None
+            msg = 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
+            raise ModuleNotFoundError(msg) from None
 
         if (
             isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
@@ -5216,6 +5231,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         size of the gif. See `Optimizing a GIF using pygifsicle
         <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_.
 
+        See Also
+        --------
+        :ref:`gif_example`
+        :ref:`moving_cmap_example`
+        :ref:`moving_isovalue_example`
+
         Examples
         --------
         Open a gif file, setting the framerate to 8 frames per second and
@@ -5223,24 +5244,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.open_gif(
-        ...     'movie.gif', fps=8, palettesize=64
-        ... )  # doctest:+SKIP
+        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
-        See :ref:`gif_movie_example` for a full example using this method.
+        See :ref:`gif_example` for a full example using this method.
 
         """
         try:
             from imageio import __version__
             from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
-            raise ModuleNotFoundError(
-                'Install imageio to use `open_gif` with:\n\n   pip install imageio',
-            ) from None
+            msg = 'Install imageio to use `open_gif` with:\n\n   pip install imageio'
+            raise ModuleNotFoundError(msg) from None
 
         filename = Path(filename)
-        if not filename.suffix == '.gif':
-            raise ValueError('Unsupported filetype.  Must end in .gif')
+        if filename.suffix != '.gif':
+            msg = 'Unsupported filetype.  Must end in .gif'
+            raise ValueError(msg)
         if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         self._gif_filename = filename.resolve()
@@ -5249,7 +5268,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs['loop'] = loop
         kwargs['palettesize'] = palettesize
         kwargs['subrectangles'] = subrectangles
-        if scooby.meets_version(__version__, '2.28.1'):
+        if scooby.knowledge.meets_version(__version__, '2.28.1'):
             kwargs['duration'] = 1000 * 1 / fps
         else:  # pragma: no cover
             kwargs['fps'] = fps
@@ -5277,7 +5296,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.render()
 
         if not hasattr(self, 'mwriter'):
-            raise RuntimeError('This plotter has not opened a movie or GIF file.')
+            msg = 'This plotter has not opened a movie or GIF file.'
+            raise RuntimeError(msg)
         self.update()
         self.mwriter.append_data(self.image)
 
@@ -5305,6 +5325,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -----
         Values in image_depth are negative to adhere to a
         right-handed coordinate system.
+
+        See Also
+        --------
+        :ref:`image_depth_example`
 
         Examples
         --------
@@ -5414,15 +5438,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> pl = pv.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-        >>> actor = pl.add_lines(
-        ...     points, color='purple', width=3, connected=True
-        ... )
+        >>> actor = pl.add_lines(points, color='purple', width=3, connected=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
         """
         if not isinstance(lines, np.ndarray):
-            raise TypeError('Input should be an array of point segments')
+            msg = 'Input should be an array of point segments'
+            raise TypeError(msg)
 
         lines = (
             pyvista.lines_from_points(lines)
@@ -5440,9 +5463,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # legend label
         if label:
             if not isinstance(label, str):
-                raise TypeError('Label must be a string')
+                msg = 'Label must be a string'
+                raise TypeError(msg)
             addr = actor.GetAddressAsString('')
-            self.renderer._labels[addr] = [lines, label, Color(color)]
+            self.renderer._labels[addr] = (lines, label, Color(color))
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)  # type: ignore[arg-type]
@@ -5616,14 +5640,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vtk.vtkActor2D
             VTK label actor.  Can be used to change properties of the labels.
 
+        See Also
+        --------
+        :ref:`point_labels_example`
+
         Examples
         --------
         >>> import numpy as np
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> points = np.array(
-        ...     [[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]]
-        ... )
+        >>> points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]])
         >>> labels = ['Point A', 'Point B', 'Point C']
         >>> actor = pl.add_point_labels(
         ...     points,
@@ -5652,15 +5678,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(points, np.ndarray):
             points = pyvista.PolyData(points)  # Cast to poly data
         elif not is_pyvista_dataset(points) and not isinstance(points, _vtk.vtkAlgorithm):
-            raise TypeError(f'Points type not usable: {type(points)}')
+            msg = f'Points type not usable: {type(points)}'
+            raise TypeError(msg)
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
             if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
                 from pyvista.core.errors import VTKVersionError
 
-                raise VTKVersionError(
-                    'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.',
-                )
+                msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
+                raise VTKVersionError(msg)
             # Extract points filter
             pc_algo = _vtk.vtkConvertToPointCloud()
             set_algorithm_input(pc_algo, algo)
@@ -5672,12 +5698,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         hier = _vtk.vtkPointSetToLabelHierarchy()
         if not isinstance(labels, str):
             if algo is not None:
-                raise TypeError(
-                    'If using a vtkAlgorithm input, the labels must be a named array on the dataset.',
-                )
+                msg = 'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
+                raise TypeError(msg)
             points = pyvista.PolyData(points.points)
             if len(points.points) != len(labels):
-                raise ValueError('There must be one label for each point')
+                msg = 'There must be one label for each point'
+                raise ValueError(msg)
             vtklabels = _vtk.vtkStringArray()
             vtklabels.SetName('labels')
             for item in labels:
@@ -5687,7 +5713,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             # Make sure PointData
             if labels not in points.point_data:
-                raise ValueError(f'Array {labels!r} not found in point data.')
+                msg = f'Array {labels!r} not found in point data.'
+                raise ValueError(msg)
             hier.SetLabelArrayName(labels)
 
         if always_visible:
@@ -5711,7 +5738,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif shape.lower() in 'rounded_rect':
             label_mapper.SetShapeToRoundedRect()
         else:
-            raise ValueError(f'Shape ({shape}) not understood')
+            msg = f'Shape ({shape}) not understood'
+            raise ValueError(msg)
         if fill_shape:
             label_mapper.SetStyleToFilled()
         else:
@@ -5735,8 +5763,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
         hier.SetTextProperty(text_property)
 
-        self.remove_actor(f'{name}-points', reset_camera=False)
-        self.remove_actor(f'{name}-labels', reset_camera=False)
+        self.remove_actor(f'{name}-points', reset_camera=False)  # type: ignore[arg-type]
+        self.remove_actor(f'{name}-labels', reset_camera=False)  # type: ignore[arg-type]
 
         # add points
         if show_points:
@@ -5753,7 +5781,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label_actor = _vtk.vtkActor2D()
         label_actor.SetMapper(label_mapper)
-        self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)
+        self.add_actor(
+            label_actor,  # type: ignore[arg-type]
+            reset_camera=False,
+            name=f'{name}-labels',
+            pickable=False,
+            render=render,
+        )
         return label_actor
 
     def add_point_scalar_labels(
@@ -5792,9 +5826,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not is_pyvista_dataset(points):
             points, _ = _coerce_pointslike_arg(points, copy=False)
         if not isinstance(labels, (str, list)):
-            raise TypeError(
-                'labels must be a string name of the scalars array to use or list of scalars',
-            )
+            msg = 'labels must be a string name of the scalars array to use or list of scalars'
+            raise TypeError(msg)
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
@@ -5825,6 +5858,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
 
+        See Also
+        --------
+        :ref:`points_gaussian_scale_example`
+
         Returns
         -------
         pyvista.Actor
@@ -5853,10 +5890,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if style not in ['points', 'points_gaussian']:
-            raise ValueError(
+            msg = (
                 f'Invalid style {style} for add_points. Should be either "points" or '
-                '"points_gaussian".',
+                '"points_gaussian".'
             )
+            raise ValueError(msg)
         return self.add_mesh(points, style=style, **kwargs)
 
     def add_arrows(self, cent, direction, mag=1, **kwargs) -> Actor:
@@ -5897,7 +5935,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if cent.shape != direction.shape:  # pragma: no cover
-            raise ValueError('center and direction arrays must have the same shape')
+            msg = 'center and direction arrays must have the same shape'
+            raise ValueError(msg)
 
         direction = direction.copy()
         if cent.ndim != 2:
@@ -5930,7 +5969,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not image.size:
-            raise ValueError('Empty image. Have you run plot() first?')
+            msg = 'Empty image. Have you run plot() first?'
+            raise ValueError(msg)
         # write screenshot to file if requested
         if isinstance(filename, (str, Path, io.BytesIO)):
             from PIL import Image
@@ -5942,10 +5982,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if not filename.suffix:
                     filename = filename.with_suffix('.png')
                 elif filename.suffix not in SUPPORTED_FORMATS:
-                    raise ValueError(
+                    msg = (
                         f'Unsupported extension {filename.suffix}\n'
-                        f'Must be one of the following: {SUPPORTED_FORMATS}',
+                        f'Must be one of the following: {SUPPORTED_FORMATS}'
                     )
+                    raise ValueError(msg)
                 filename = filename.expanduser().resolve()
                 Image.fromarray(image).save(filename)
             else:
@@ -5989,13 +6030,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
         >>> _ = pl.add_background_image(examples.mapfile)
-        >>> pl.save_graphic("img.svg")  # doctest:+SKIP
+        >>> pl.save_graphic('img.svg')  # doctest:+SKIP
 
         """
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
 
         if self.render_window is None:
-            raise AttributeError('This plotter is closed and unable to save a screenshot.')
+            msg = 'This plotter is closed and unable to save a screenshot.'
+            raise AttributeError(msg)
         if self._first_time:
             self._on_first_render_request()
             self.render()
@@ -6014,10 +6056,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             '.tex': writer.SetFileFormatToTeX,
         }
         if extension not in modes:
-            raise ValueError(
-                f"Extension ({extension}) is an invalid choice.\n\n"
-                f"Valid options include: {', '.join(modes.keys())}",
+            msg = (
+                f'Extension ({extension}) is an invalid choice.\n\n'
+                f'Valid options include: {", ".join(modes.keys())}'
             )
+            raise ValueError(msg)
         writer.CompressOff()
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
             writer.SetFilePrefix(str(filename.with_suffix('')))
@@ -6073,6 +6116,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * [Window height x Window width x 4] if
               ``transparent_background`` is set to ``True``.
 
+        See Also
+        --------
+        :ref:`screenshot_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -6101,14 +6148,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         )
                     return self._save_image(self.last_image, filename, return_img)
                 # Plotter hasn't been rendered or was improperly closed
-                raise RuntimeError('This plotter is closed and unable to save a screenshot.')
+                msg = 'This plotter is closed and unable to save a screenshot.'
+                raise RuntimeError(msg)
 
             if self._first_time and (
                 hasattr(self, 'off_screen') and not self.off_screen
             ):  # 'off_screen' attribute is specific to Plotter objects.
-                raise RuntimeError(
-                    'Nothing to screenshot - call .show first or use the off_screen argument',
-                )
+                msg = 'Nothing to screenshot - call .show first or use the off_screen argument'
+                raise RuntimeError(msg)
 
             # if off screen, show has not been called and we must render
             # before extracting an image
@@ -6167,7 +6214,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
         ... )
 
-        See :ref:`orbiting_example` for a full example using this method.
+        See :ref:`orbit_example` for a full example using this method.
 
         """
         if viewup is None:
@@ -6176,8 +6223,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         bnds = self.bounds
         radius = (bnds.x_max - bnds.x_min) * factor
         y = (bnds.y_max - bnds.y_min) * factor
-        if y > radius:
-            radius = y
+        radius = max(y, radius)
         center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
@@ -6193,7 +6239,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Point to fly to in the form of ``(x, y, z)``.
 
         """
-        self.iren.fly_to(self.renderer, point)
+        self.iren.fly_to(self.renderer, point)  # type: ignore[union-attr]
 
     def orbit_on_path(
         self,
@@ -6248,19 +6294,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> texture = examples.load_globe_texture()
         >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> plotter = pv.Plotter(window_size=[300, 300])
-        >>> _ = plotter.add_mesh(
-        ...     mesh, texture=texture, smooth_shading=True
-        ... )
+        >>> _ = plotter.add_mesh(mesh, texture=texture, smooth_shading=True)
         >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(
         ...     factor=2.0, n_points=24, shift=0.0, viewup=viewup
         ... )
-        >>> plotter.orbit_on_path(
-        ...     orbit, write_frames=True, viewup=viewup, step=0.02
-        ... )
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
-        See :ref:`orbiting_example` for a full example using this method.
+        See :ref:`orbit_example` for a full example using this method.
 
         """
         if focus is None:
@@ -6280,7 +6322,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try:
                 from tqdm import tqdm
             except ImportError:  # pragma: no cover
-                raise ImportError('Please install `tqdm` to use ``progress_bar=True``')
+                msg = 'Please install `tqdm` to use ``progress_bar=True``'
+                raise ImportError(msg)
 
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
@@ -6331,7 +6374,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOExport import vtkOBJExporter
 
         if self.render_window is None:
-            raise RuntimeError('This plotter must still have a render window open.')
+            msg = 'This plotter must still have a render window open.'
+            raise RuntimeError(msg)
         if (
             isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
         ):  # pragma: no cover
@@ -6339,8 +6383,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             filename = Path(filename).expanduser().resolve()
 
-        if not filename.suffix == '.obj':
-            raise ValueError('`filename` must end with ".obj"')
+        if filename.suffix != '.obj':
+            msg = '`filename` must end with ".obj"'
+            raise ValueError(msg)
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
@@ -6360,8 +6405,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper = actor.GetMapper()
 
                 # ignore any mappers whose inputs are not datasets
-                if hasattr(mapper, 'GetInputAsDataSet'):
-                    datasets.append(wrap(mapper.GetInputAsDataSet()))
+                if _mapper_has_data_set_input(mapper):
+                    datasets.append(wrap(_mapper_get_data_set_input(mapper)))
 
         return datasets
 
@@ -6407,22 +6452,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if self.renderers.has_active_background_renderer:
-            raise RuntimeError(
+            msg = (
                 'A background image already exists.  '
                 'Remove it with ``remove_background_image`` '
-                'before adding one',
+                'before adding one'
             )
+            raise RuntimeError(msg)
 
         # Need to change the number of layers to support an additional
         # background layer
         if not self._has_background_layer:
-            self.render_window.SetNumberOfLayers(3)
+            self.render_window.SetNumberOfLayers(3)  # type: ignore[union-attr]
         renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
-        self.render_window.AddRenderer(renderer)
+        self.render_window.AddRenderer(renderer)  # type: ignore[union-attr]
 
         # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
-            self.iren.add_observer('ModifiedEvent', renderer.resize)
+            self.iren.add_observer('ModifiedEvent', renderer.resize)  # type: ignore[union-attr]
 
     @wraps(Renderers.remove_background_image)
     def remove_background_image(self) -> None:  # numpydoc ignore=PR01,RT01
@@ -6547,7 +6593,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return [
             tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
-            if name in self.renderers[index]._actors
+            if name in self.renderers[index]._actors.keys()
         ]
 
 
@@ -6622,9 +6668,7 @@ class Plotter(BasePlotter):
     >>> mesh = pv.Cube()
     >>> another_mesh = pv.Sphere()
     >>> pl = pv.Plotter()
-    >>> actor = pl.add_mesh(
-    ...     mesh, color='red', style='wireframe', line_width=4
-    ... )
+    >>> actor = pl.add_mesh(mesh, color='red', style='wireframe', line_width=4)
     >>> actor = pl.add_mesh(another_mesh, color='blue')
     >>> pl.show()
 
@@ -6693,30 +6737,30 @@ class Plotter(BasePlotter):
 
         # initialize render window
         self.ren_win = _vtk.vtkRenderWindow()
-        self.render_window.SetMultiSamples(0)
-        self.render_window.SetBorders(True)
+        self.render_window.SetMultiSamples(0)  # type: ignore[union-attr]
+        self.render_window.SetBorders(True)  # type: ignore[union-attr]
         if line_smoothing:
-            self.render_window.LineSmoothingOn()
+            self.render_window.LineSmoothingOn()  # type: ignore[union-attr]
         if point_smoothing:
-            self.render_window.PointSmoothingOn()
+            self.render_window.PointSmoothingOn()  # type: ignore[union-attr]
         if polygon_smoothing:
-            self.render_window.PolygonSmoothingOn()
+            self.render_window.PolygonSmoothingOn()  # type: ignore[union-attr]
 
         for renderer in self.renderers:
-            self.render_window.AddRenderer(renderer)
+            self.render_window.AddRenderer(renderer)  # type: ignore[union-attr]
 
         # Add the shadow renderer to allow us to capture interactions within
         # a given viewport
         # https://vtk.org/pipermail/vtkusers/2018-June/102030.html
-        number_or_layers = self.render_window.GetNumberOfLayers()
+        number_or_layers = self.render_window.GetNumberOfLayers()  # type: ignore[union-attr]
         current_layer = self.renderer.GetLayer()
-        self.render_window.SetNumberOfLayers(number_or_layers + 1)
-        self.render_window.AddRenderer(self.renderers.shadow_renderer)
+        self.render_window.SetNumberOfLayers(number_or_layers + 1)  # type: ignore[union-attr]
+        self.render_window.AddRenderer(self.renderers.shadow_renderer)  # type: ignore[union-attr]
         self.renderers.shadow_renderer.SetLayer(current_layer + 1)
         self.renderers.shadow_renderer.SetInteractive(False)  # never needs to capture
 
         if self.off_screen:
-            self.render_window.SetOffScreenRendering(1)
+            self.render_window.SetOffScreenRendering(1)  # type: ignore[union-attr]
             # vtkGenericRenderWindowInteractor has no event loop and
             # allows the display client to close on Linux when
             # off_screen.  We still want an interactor for off screen
@@ -6730,7 +6774,7 @@ class Plotter(BasePlotter):
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.render_window)
         self.reset_key_events()
-        self.enable_trackball_style()  # internally calls update_style()
+        self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
         self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an
@@ -6739,7 +6783,7 @@ class Plotter(BasePlotter):
             self.add_camera_orientation_widget()
 
         # Set background
-        self.set_background(self._theme.background)
+        self.set_background(self._theme.background)  # type: ignore[arg-type]
 
         # Set window size
         self._window_size_unset = False
@@ -6750,7 +6794,7 @@ class Plotter(BasePlotter):
         else:
             self.window_size = window_size
 
-        if self._theme.depth_peeling.enabled and self.enable_depth_peeling():
+        if self._theme.depth_peeling.enabled and self.enable_depth_peeling():  # type: ignore[call-arg]
             for renderer in self.renderers:
                 renderer.enable_depth_peeling()
 
@@ -6759,7 +6803,7 @@ class Plotter(BasePlotter):
             self.enable_anti_aliasing(self.theme.anti_aliasing)
 
         if self.theme.camera.parallel_projection:
-            self.enable_parallel_projection()
+            self.enable_parallel_projection()  # type: ignore[call-arg]
 
         self.parallel_scale = self.theme.camera.parallel_scale
 
@@ -6954,7 +6998,8 @@ class Plotter(BasePlotter):
             auto_close = self._theme.auto_close
 
         if self.render_window is None:
-            raise RuntimeError('This plotter has been closed and cannot be shown.')
+            msg = 'This plotter has been closed and cannot be shown.'
+            raise RuntimeError(msg)
 
         if full_screen is None:
             full_screen = self._theme.full_screen
@@ -7014,15 +7059,15 @@ class Plotter(BasePlotter):
         if interactive and not self.off_screen:
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
-                self.iren.update_style()
+                self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
                     # Resolves #1260
                     if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()
-                    self.iren.start()
+                        self.iren.process_events()  # type: ignore[union-attr]
+                    self.iren.start()  # type: ignore[union-attr]
 
                 if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
-                    self.iren.initialize()
+                    self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
@@ -7074,7 +7119,8 @@ class Plotter(BasePlotter):
             try:
                 from IPython import display
             except ImportError:  # pragma: no cover
-                raise ImportError('Install IPython to display an image in a notebook')
+                msg = 'Install IPython to display an image in a notebook'
+                raise ImportError(msg)
             display.display(jupyter_disp)
 
         # Three possible return values: (cpos, image, widget)
@@ -7133,9 +7179,7 @@ class Plotter(BasePlotter):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title(
-        ...     'Plot Title', font='courier', color='k', font_size=40
-        ... )
+        >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
         >>> pl.show()
 
         """
@@ -7200,7 +7244,7 @@ class Plotter(BasePlotter):
         alg.AllOn()
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
-        actor, prop = self.add_actor(mapper)
+        actor, prop = self.add_actor(mapper)  # type: ignore[arg-type]
         prop.SetColor(Color(color).float_rgb)
 
         return actor
@@ -7215,7 +7259,11 @@ class Plotter(BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]
+        return [
+            actor.mapper.dataset
+            for actor in self.actors.values()
+            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
+        ]
 
 
 # Tracks created plotters.  This is the end of the module as we need to
@@ -7241,7 +7289,8 @@ def _kill_display(disp_id) -> None:  # pragma: no cover
 
     """
     if platform.system() != 'Linux':
-        raise OSError('This method only works on Linux')
+        msg = 'This method only works on Linux'
+        raise OSError(msg)
 
     if disp_id:
         cdisp_id = int(disp_id[1:].split('_')[0], 16)

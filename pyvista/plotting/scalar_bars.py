@@ -53,8 +53,8 @@ class ScalarBars:
     def _remove_mapper_from_plotter(
         self,
         actor,
-        reset_camera=False,
-        render=False,
+        reset_camera: bool = False,
+        render: bool = False,
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -85,7 +85,7 @@ class ScalarBars:
                     self._plotter._scalar_bar_slots.add(slot)
             return
 
-    def remove_scalar_bar(self, title=None, render=True):
+    def remove_scalar_bar(self, title=None, render: bool = True):
         """Remove a scalar bar.
 
         Parameters
@@ -115,10 +115,11 @@ class ScalarBars:
         if title is None:
             if len(self) > 1:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError(
+                msg = (
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}',
+                    f'scalar bar from one of the following:\n{titles}'
                 )
+                raise ValueError(msg)
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))
 
@@ -156,7 +157,7 @@ class ScalarBars:
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
@@ -165,13 +166,13 @@ class ScalarBars:
         title='',
         mapper=None,
         n_labels=5,
-        italic=False,
-        bold=False,
+        italic: bool = False,
+        bold: bool = False,
         title_font_size=None,
         label_font_size=None,
         color=None,
         font_family=None,
-        shadow=False,
+        shadow: bool = False,
         width=None,
         height=None,
         position_x=None,
@@ -179,17 +180,17 @@ class ScalarBars:
         vertical=None,
         interactive=None,
         fmt=None,
-        use_opacity=True,
-        outline=False,
-        nan_annotation=False,
+        use_opacity: bool = True,
+        outline: bool = False,
+        nan_annotation: bool = False,
         below_label=None,
         above_label=None,
         background_color=None,
         n_colors=None,
-        fill=False,
-        render=False,
+        fill: bool = False,
+        render: bool = False,
         theme=None,
-        unconstrained_font_size=False,
+        unconstrained_font_size: bool = False,
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -330,6 +331,10 @@ class ScalarBars:
         Setting ``title_font_size``, or ``label_font_size`` disables
         automatic font sizing for both the title and label.
 
+        See Also
+        --------
+        :ref:`scalar_bar_example`
+
         Examples
         --------
         Add a custom interactive scalar bar that is horizontal, has an
@@ -353,7 +358,8 @@ class ScalarBars:
 
         """
         if mapper is None:
-            raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
+            msg = 'Mapper cannot be ``None`` when creating a scalar bar'
+            raise ValueError(msg)
 
         if theme is None:
             theme = pyvista.global_theme
@@ -386,10 +392,8 @@ class ScalarBars:
             newrng = mapper.scalar_range
             oldmappers = self._scalar_bar_mappers[title]
             # get max for range and reset everything
-            if newrng[0] < clim[0]:
-                clim[0] = newrng[0]
-            if newrng[1] > clim[1]:
-                clim[1] = newrng[1]
+            clim[0] = min(newrng[0], clim[0])
+            clim[1] = max(newrng[1], clim[1])
             for mh in oldmappers:
                 mh.scalar_range = clim[0], clim[1]
             mapper.scalar_range = clim[0], clim[1]
@@ -402,7 +406,8 @@ class ScalarBars:
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
             if not self._plotter._scalar_bar_slots:
-                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+                msg = f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.'
+                raise RuntimeError(msg)
 
             slot = min(self._plotter._scalar_bar_slots)
             self._plotter._scalar_bar_slots.remove(slot)
@@ -545,13 +550,13 @@ class ScalarBars:
 
             scalar_widget.On()
             if vertical is True or vertical is None:
-                rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
+                rep.SetOrientation(1)  # type: ignore[attr-defined] # 0 = Horizontal, 1 = Vertical
             else:
                 # y position determined empirically
                 y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
-                rep.GetPositionCoordinate().SetValue(width, y)
-                rep.GetPosition2Coordinate().SetValue(height, width)
-                rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
+                rep.GetPositionCoordinate().SetValue(width, y)  # type: ignore[attr-defined]
+                rep.GetPosition2Coordinate().SetValue(height, width)  # type: ignore[attr-defined]
+                rep.SetOrientation(0)  # type: ignore[attr-defined] # 0 = Horizontal, 1 = Vertical
             self._scalar_bar_widgets[title] = scalar_widget
 
         if use_opacity:

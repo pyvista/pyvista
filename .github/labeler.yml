@@ -17,7 +17,6 @@ dependencies:
   - any:
       - changed-files:
           - any-glob-to-any-file: "requirements*"
-          - any-glob-to-any-file: "environment.yml"
           - any-glob-to-any-file: ".pre-commit-config.yaml"
 docker:
   - any:

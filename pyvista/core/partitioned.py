@@ -7,17 +7,18 @@ from typing import TYPE_CHECKING
 from typing import overload
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
-from .dataset import DataSet
+from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from .dataset import DataSet
 
-class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
+
+class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
     """Wrapper for the ``vtkPartitionedDataSet`` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
@@ -54,7 +55,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                     self.append(partition)
         self.wrap_nested()
 
-    def wrap_nested(self):
+    def wrap_nested(self) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
         This is performed in place.
@@ -74,19 +75,22 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     def __getitem__(self, index):
         """Get a partition by its index."""
         if isinstance(index, slice):
-            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
+            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])  # type: ignore[abstract]
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
-                raise IndexError(f'index ({index}) out of range for this dataset.')
+                msg = f'index ({index}) out of range for this dataset.'
+                raise IndexError(msg)
             if index < 0:
                 index = self.n_partitions + index
             return wrap(self.GetPartition(index))
 
     @overload
-    def __setitem__(self, index: int, data: DataSet | None): ...  # pragma: no cover
+    def __setitem__(self, index: int, data: DataSet | None) -> None: ...  # pragma: no cover
 
     @overload
-    def __setitem__(self, index: slice, data: Iterable[DataSet | None]): ...  # pragma: no cover
+    def __setitem__(
+        self, index: slice, data: Iterable[DataSet | None]
+    ) -> None: ...  # pragma: no cover
 
     def __setitem__(
         self,
@@ -99,7 +103,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                 self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
-                raise IndexError(f'index ({index}) out of range for this dataset.')
+                msg = f'index ({index}) out of range for this dataset.'
+                raise IndexError(msg)
             if index < 0:
                 index = self.n_partitions + index
             self.SetPartition(index, data)
@@ -160,7 +165,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         """Define an adequate representation."""
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
@@ -176,10 +181,10 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         """Return the number of partitions."""
         return self.n_partitions
 
-    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
+    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the PartitionedDataSet.
 
         Parameters
@@ -229,11 +234,11 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         return self.GetNumberOfPartitions()
 
     @n_partitions.setter
-    def n_partitions(self, n):  # numpydoc ignore=GL08
+    def n_partitions(self, n) -> None:
         self.SetNumberOfPartitions(n)
         self.Modified()
 
-    def append(self, dataset):
+    def append(self, dataset) -> None:
         """Add a data set to the next partition index.
 
         Parameters

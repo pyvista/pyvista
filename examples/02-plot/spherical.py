@@ -1,8 +1,11 @@
 """
+.. _spherical_example:
+
 Plot data in spherical coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Generate and visualize meshes from data in longitude-latitude coordinates.
+Generate and visualize meshes from data in longitude-latitude coordinates
+using :func:`~pyvista.grid_from_sph_coords`.
 """
 
 from __future__ import annotations
@@ -40,7 +43,8 @@ def _cell_bounds(points, bound_position=0.5):
 
     """
     if points.ndim != 1:
-        raise ValueError('Only 1D points are allowed.')
+        msg = 'Only 1D points are allowed.'
+        raise ValueError(msg)
     diffs = np.diff(points)
     delta = diffs[0] * bound_position
     return np.concatenate([[points[0] - delta], points + delta])

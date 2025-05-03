@@ -76,6 +76,10 @@ def text_3d(string, depth=0.5):
     pyvista.DataSet
         The 3D text in the form of a PyVista DataSet.
 
+    See Also
+    --------
+    :ref:`create_pixel_art_example`
+
     """
     from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
@@ -114,7 +118,7 @@ def logo_letters(merge=False, depth=0.3):
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pyvista.PolyData() if merge else {}
+    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
 
     # spacing between letters
     space_factor = 0.9
@@ -229,12 +233,10 @@ def plot_logo(
 
     # letter 'P'
     p_mesh = mesh_letters['P'].compute_normals(split_vertices=True)
-    p_mesh.flip_normals()
     plotter.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
 
     # letter 'y'
     y_mesh = mesh_letters['y'].compute_normals(split_vertices=True)
-    y_mesh.flip_normals()
     plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'

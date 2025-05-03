@@ -13,7 +13,7 @@ class NotAllTrianglesError(ValueError):
 
     """
 
-    def __init__(self, message='Mesh must consist of only triangles'):
+    def __init__(self, message='Mesh must consist of only triangles') -> None:
         """Empty init."""
         ValueError.__init__(self, message)
 
@@ -28,7 +28,7 @@ class DeprecationError(RuntimeError):
 
     """
 
-    def __init__(self, message='This feature has been deprecated'):
+    def __init__(self, message='This feature has been deprecated') -> None:
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -46,7 +46,7 @@ class VTKVersionError(RuntimeError):
     def __init__(
         self,
         message='The requested feature is not supported by the installed VTK version.',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -64,7 +64,7 @@ class PointSetNotSupported(TypeError):
     def __init__(
         self,
         message='The requested operation is not supported for PointSets.',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
 
@@ -82,7 +82,7 @@ class PointSetCellOperationError(PointSetNotSupported):
     def __init__(
         self,
         message='Cell operations are not supported. PointSets contain no cells.',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
 
@@ -100,7 +100,7 @@ class PointSetDimensionReductionError(PointSetNotSupported):
     def __init__(
         self,
         message='Slice and other dimension reducing filters are not supported on PointSets.',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
 
@@ -118,7 +118,7 @@ class PartitionedDataSetsNotSupported(TypeError):
     def __init__(
         self,
         message='The requested operation is not supported for PartitionedDataSetss.',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
 
@@ -133,7 +133,7 @@ class MissingDataError(ValueError):
 
     """
 
-    def __init__(self, message='No data available.'):
+    def __init__(self, message='No data available.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -148,7 +148,7 @@ class AmbiguousDataError(ValueError):
 
     """
 
-    def __init__(self, message='Multiple data available.'):
+    def __init__(self, message='Multiple data available.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -163,7 +163,7 @@ class CellSizeError(ValueError):
 
     """
 
-    def __init__(self, message='Cell array size is invalid.'):
+    def __init__(self, message='Cell array size is invalid.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -181,8 +181,25 @@ class PyVistaPipelineError(RuntimeError):
     def __init__(
         self,
         message='VTK pipeline issue detected by PyVista.',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
+class PyVistaAttributeError(AttributeError):
+    """Exception when accessing an attribute that is not part of the PyVista API.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self,
+        message='The attribute is not part of the PyVista API',
+    ) -> None:  # numpydoc ignore=PR01,RT01
         super().__init__(message)
 
 

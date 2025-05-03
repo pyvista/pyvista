@@ -6,18 +6,18 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Union
 
-from pyvista.core._typing_core import BoundsTuple  # noqa: F401
-from pyvista.core._typing_core import Number  # noqa: F401
+from pyvista.core._typing_core import BoundsTuple as BoundsTuple
+from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
-    from .plotting.charts import Chart2D
-    from .plotting.charts import ChartBox
-    from .plotting.charts import ChartMPL
-    from .plotting.charts import ChartPie
-    from .plotting.colors import Color
+if TYPE_CHECKING:
+    from .charts import Chart2D as Chart2D
+    from .charts import ChartBox as ChartBox
+    from .charts import ChartMPL as ChartMPL
+    from .charts import ChartPie as ChartPie
+    from .colors import Color as Color
 
 ColorLike = Union[
     tuple[int, int, int],

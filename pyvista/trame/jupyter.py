@@ -69,13 +69,14 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(HTML):  # numpydoc ignore=PR01
+class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width=None, height=None, iframe_attrs=None, **kwargs):
         """Initialize."""
         if HTML is object:
-            raise ImportError('Please install `ipywidgets`.')
+            msg = 'Please install `ipywidgets`.'
+            raise ImportError(msg)
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
 
@@ -110,13 +111,14 @@ class Widget(HTML):  # numpydoc ignore=PR01
         return self._src
 
 
-class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
+class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     """Custom HTML iframe widget for embedding the trame viewer."""
 
     def __init__(self, plotter, width, height, **kwargs):
         """Initialize."""
         if HTML is object:
-            raise ImportError('Please install `ipywidgets`.')
+            msg = 'Please install `ipywidgets`.'
+            raise ImportError(msg)
         scene = plotter.export_html(filename=None)
         src = scene.getvalue().replace('"', '&quot;')
         # eventually we could maybe expose this, but for now make sure we're at least
@@ -185,7 +187,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     else:
         vuetify3_widgets.initialize(server)
 
-    def on_ready(**_):  # numpydoc ignore=GL08
+    def on_ready(**_):
         logger.debug(f'Server ready: {server}')
 
     if server._running_stage == 0:
@@ -221,7 +223,7 @@ def build_url(
             server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
         src = (
-            f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
+            f'{server_proxy_prefix if server_proxy_prefix else ""}{_server.port}/index.html{params}'
         )
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'
@@ -323,7 +325,7 @@ def show_trame(
         Pass a callable that accptes the viewer instance, the string URL,
         and ``**kwargs`` to create custom HTML representations of the output.
 
-        .. code:: python
+        .. code-block:: python
 
             import pyvista as pv
             from IPython.display import IFrame
@@ -448,15 +450,14 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     try:
         import nest_asyncio
     except ImportError:
-        raise ImportError(
-            """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
+        msg = """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-""",
-        )
+"""
+        raise ImportError(msg)
 
-    async def launch_it():  # numpydoc ignore=GL08
+    async def launch_it():
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this

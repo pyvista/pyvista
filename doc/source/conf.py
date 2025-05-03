@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import importlib.util
 import locale
 import os
 from pathlib import Path
@@ -13,6 +14,12 @@ import sys
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
+
+# This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
+# import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
+# during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
+# Note that `import make_tables` below imports pyvista.
+os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
@@ -33,12 +40,7 @@ pyvista.set_error_output_file('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
 pyvista.OFF_SCREEN = True  # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
-pyvista.set_plot_theme('document')
-pyvista.global_theme.window_size = [1024, 768]
-pyvista.global_theme.font.size = 22
-pyvista.global_theme.font.label_size = 22
-pyvista.global_theme.font.title_size = 22
-pyvista.global_theme.return_cpos = False
+pyvista.set_plot_theme('document_build')
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
 pyvista.FIGURE_PATH = str(Path('./images/').resolve() / 'auto-generated/')
@@ -66,7 +68,8 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_logo = './_static/pyvista_logo_sm.png'
+html_logo = './_static/pyvista_logo.svg'
+html_favicon = './_static/pyvista_logo.svg'
 
 sys.path.append(str(Path('./_ext').resolve()))
 
@@ -86,6 +89,7 @@ extensions = [
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -194,7 +198,11 @@ autodoc_type_aliases = {
     'CellArrayLike': 'pyvista.CellArrayLike',
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
+    'InteractionEventType': 'pyvista.InteractionEventType',
 }
+
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']
@@ -208,26 +216,117 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
-# linkcheck ignore entries
+# Warn if target links or references cannot be found
+nitpicky = True
+# Except ignore these entries
 nitpick_ignore_regex = [
+    # NOTE: We need to ignore any/all pyvista objects which are used as type hints
+    # in function signatures since these are not linked by sphinx (bug).
+    # See https://github.com/pyvista/pyvista/pull/6206#issuecomment-2149138086
+    #
+    # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
-    (r'py:.*', '.*lookup_table_ndarray'),
+    (r'py:.*', '.*ArrayLike'),
+    (r'py:.*', '.*MatrixLike'),
+    (r'py:.*', '.*VectorLike'),
+    (r'py:.*', '.*TransformLike'),
+    (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*BoundsLike'),
+    (r'py:.*', '.*RotationLike'),
+    (r'py:.*', '.*CellsLike'),
+    (r'py:.*', '.*ShapeLike'),
+    (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*_ArrayLikeOrScalar'),
+    (r'py:.*', '.*NumberType'),
+    (r'py:.*', '.*_GridType'),
+    (r'py:.*', '.*_PointGridType'),
+    (r'py:.*', '.*_PointSetType'),
+    (r'py:.*', '.*_DataSetType'),
+    (r'py:.*', '.*_DataSetOrMultiBlockType'),
+    (r'py:.*', '.*_DataObjectType'),
+    (r'py:.*', '.*_WrappableVTKDataObjectType'),
+    (r'py:.*', '.*_VTKWriterType'),
+    (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*_CellQualityLiteral'),
+    (r'py:.*', '.*T'),
+    #
+    # Dataset-related types
+    (r'py:.*', '.*DataSet'),
+    (r'py:.*', '.*DataObject'),
+    (r'py:.*', '.*PolyData'),
+    (r'py:.*', '.*UnstructuredGrid'),
+    (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*Grid'),
+    (r'py:.*', '.*PointGrid'),
+    (r'py:.*', '.*_PointSet'),
+    #
+    # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
     (r'py:.*', 'FieldAssociation'),
-    (r'py:.*', 'VTK'),
+    (r'py:.*', '.*CellLiteral'),
+    (r'py:.*', '.*PointLiteral'),
+    (r'py:.*', '.*FieldLiteral'),
+    (r'py:.*', '.*RowLiteral'),
+    (r'py:.*', '.*_SerializedDictArray'),
+    #
+    # PyVista AxesAssembly-related types
+    (r'py:.*', '.*GeometryTypes'),
+    (r'py:.*', '.*ShaftType'),
+    (r'py:.*', '.*TipType'),
+    (r'py:.*', '.*_AxesGeometryKwargs'),
+    (r'py:.*', '.*_OrthogonalPlanesKwargs'),
+    #
+    # PyVista Widget enums
+    (r'py:.*', '.*PickerType'),
+    (r'py:.*', '.*ElementType'),
+    #
+    # PyVista Texture enum
+    (r'py:.*', '.*WrapType'),
+    #
+    # PyVista plotting-related classes
+    (r'py:.*', '.*BasePlotter'),
+    (r'py:.*', '.*ScalarBars'),
+    (r'py:.*', '.*Theme'),
+    #
+    # Misc pyvista ignores
+    (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
+    (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
+    (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'colors.ListedColormap'),
+    (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
+    (r'py:.*', 'pyvista.PVDDataSet'),
+    #
+    # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*StringIO'),
+    (r'py:.*', '.*Path'),
+    (r'py:.*', '.*UserDict'),
+    (r'py:.*', 'sys.float_info.max'),
+    (r'py:.*', '.*NoneType'),
+    (r'py:.*', 'collections.*'),
+    (r'py:.*', '.*PathStrSeq'),
+    #
+    # NumPy types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*DTypeLike'),
+    (r'py:.*', 'np.*'),
+    (r'py:.*', 'npt.*'),
+    (r'py:.*', 'numpy.*'),
+    (r'py:.*', '.*NDArray'),
+    #
+    # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
     (r'py:.*', 'meshio.*'),
+    (r'py:.*', '.*Mesh'),
+    (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
-    (r'py:.*', 'of'),
-    (r'py:.*', 'optional'),
-    (r'py:.*', 'or'),
-    (r'py:.*', 'pyvista.LookupTable.n_values'),
-    (r'py:.*', 'pyvista.PVDDataSet'),
-    (r'py:.*', 'sys.float_info.max'),
-    (r'py:.*', 'various'),
+    (r'py:.*', 'Rotation'),
     (r'py:.*', 'vtk.*'),
+    (r'py:.*', '_vtk.*'),
+    (r'py:.*', 'VTK'),
+    #
+    # Misc general ignores
+    (r'py:.*', 'optional'),
 ]
 
 
@@ -348,7 +447,7 @@ class ResetPyVista:
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-        pyvista.set_plot_theme('document')
+        pyvista.set_plot_theme('document_build')
 
     def __repr__(self):
         return 'ResetPyVista'
@@ -358,17 +457,11 @@ reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
-has_osmnx = False
-try:
-    import fiona  # noqa: F401
-    import osmnx  # noqa: F401
-
-    has_osmnx = True
-except:
-    pass
+has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
 
 
 sphinx_gallery_conf = {
+    'abort_on_example_error': True,  # Fail early
     # convert rst to md for ipynb
     'pypandoc': True,
     # path to your examples scripts
@@ -387,10 +480,12 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
+    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
     'image_scrapers': (DynamicScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
+    'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
 }
 
 suppress_warnings = ['config.cache']
@@ -403,12 +498,12 @@ from numpydoc.docscrape_sphinx import SphinxDocString
 IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
-plot_setup = """
+pyvista_plot_setup = """
 from pyvista import set_plot_theme as __s_p_t
-__s_p_t('document')
+__s_p_t('document_build')
 del __s_p_t
 """
-plot_cleanup = plot_setup
+pyvista_plot_cleanup = pyvista_plot_setup
 
 
 def _str_examples(self):

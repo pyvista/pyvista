@@ -18,7 +18,9 @@ from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from matplotlib import colors
+
     from ._typing import ColorLike
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
@@ -49,7 +51,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
 
     def __array_finalize__(self, obj):
         """Finalize array (associate with parent metadata)."""
-        _vtk.VTKArray.__array_finalize__(self, obj)
+        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
         if np.shares_memory(self, obj):
             self.table = getattr(obj, 'table', None)
             self.VTKObject = getattr(obj, 'VTKObject', None)
@@ -74,14 +76,14 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None):
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
         """
         if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
+            return np.ndarray.__array_wrap__(self, out_arr, context, return_scalar)
 
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
@@ -90,7 +92,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
 
 
 @no_new_attr
-class LookupTable(_vtk.vtkLookupTable):
+class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -159,6 +161,10 @@ class LookupTable(_vtk.vtkLookupTable):
         range to annotate on the scalar bar and the values are the string
         annotations.
 
+    See Also
+    --------
+    :ref:`lookup_table_example`
+
     Examples
     --------
     Plot the lookup table with the default VTK color map.
@@ -199,7 +205,7 @@ class LookupTable(_vtk.vtkLookupTable):
     """
 
     _nan_color_set = False
-    _cmap = None
+    _cmap: colors.Colormap | colors.ListedColormap | None = None
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
@@ -207,7 +213,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self,
         cmap=None,
         n_values=256,
-        flip=False,
+        flip: bool = False,
         values=None,
         value_range=None,
         hue_range=None,
@@ -222,7 +228,8 @@ class LookupTable(_vtk.vtkLookupTable):
     ):
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
-            raise ValueError('Cannot set both `cmap` and `values`.')
+            msg = 'Cannot set both `cmap` and `values`.'
+            raise ValueError(msg)
 
         if cmap is not None:
             self.apply_cmap(cmap, n_values=n_values, flip=flip)
@@ -285,7 +292,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetValueRange()
 
     @value_range.setter
-    def value_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
+    def value_range(self, value: tuple[float, float]):
         self.SetValueRange(value)
         self.rebuild()
 
@@ -322,12 +329,12 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetHueRange()
 
     @hue_range.setter
-    def hue_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
+    def hue_range(self, value: tuple[float, float]):
         self.SetHueRange(value)
         self.rebuild()
 
     @property
-    def cmap(self) -> str | None:  # numpydoc ignore=RT01
+    def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
         Examples
@@ -350,7 +357,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, value):  # numpydoc ignore=GL08
+    def cmap(self, value):
         self.apply_cmap(value, self.n_values)
 
     @property
@@ -374,7 +381,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return bool(self.GetScale())
 
     @log_scale.setter
-    def log_scale(self, value: bool):  # numpydoc ignore=GL08
+    def log_scale(self, value: bool):
         self.SetScale(value)
 
     def __repr__(self):
@@ -418,7 +425,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetTableRange()
 
     @scalar_range.setter
-    def scalar_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
+    def scalar_range(self, value: tuple[float, float]):
         self.SetTableRange(value)
 
     @property
@@ -447,7 +454,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetAlphaRange()
 
     @alpha_range.setter
-    def alpha_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
+    def alpha_range(self, value: tuple[float, float]):
         self.SetAlphaRange(value)
         self.rebuild()
 
@@ -477,7 +484,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetSaturationRange()
 
     @saturation_range.setter
-    def saturation_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
+    def saturation_range(self, value: tuple[float, float]):
         self.SetSaturationRange(value)
         self.rebuild()
 
@@ -516,7 +523,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return Color(self.GetNanColor())
 
     @nan_color.setter
-    def nan_color(self, value):  # numpydoc ignore=GL08
+    def nan_color(self, value):
         # NAN value is always set, but make it explicit for example plotting
         self._nan_color_set = True
         self.SetNanColor(*Color(value).float_rgba)
@@ -539,10 +546,10 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         color = self.nan_color
-        return color.opacity
+        return color.opacity  # type: ignore[union-attr]
 
     @nan_opacity.setter
-    def nan_opacity(self, value):  # numpydoc ignore=GL08
+    def nan_opacity(self, value):
         # Hacky check to prevent auto activation
         if not self._nan_color_set and (value in (1.0, 255)):
             return
@@ -565,7 +572,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.
@@ -601,11 +608,12 @@ class LookupTable(_vtk.vtkLookupTable):
         return RAMP_MAP[self.GetRamp()]
 
     @ramp.setter
-    def ramp(self, value: str):  # numpydoc ignore=GL08
+    def ramp(self, value: str):
         try:
             self.SetRamp(RAMP_MAP_INV[value])
         except KeyError:
-            raise ValueError(f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}')
+            msg = f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}'
+            raise ValueError(msg)
         self.rebuild()
 
     @property
@@ -637,8 +645,8 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: bool | ColorLike):  # numpydoc ignore=GL08
-        if value in (None, False):
+    def above_range_color(self, value: bool | ColorLike | None):
+        if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
             self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
@@ -663,10 +671,10 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         color = self.above_range_color
-        return color.opacity
+        return color.opacity  # type: ignore[union-attr]
 
     @above_range_opacity.setter
-    def above_range_opacity(self, value):  # numpydoc ignore=GL08
+    def above_range_opacity(self, value):
         color = self.above_range_color
         if color is None:
             color = Color(pyvista.global_theme.above_range_color)
@@ -701,8 +709,8 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: bool | ColorLike):  # numpydoc ignore=GL08
-        if value in (None, False):
+    def below_range_color(self, value: bool | ColorLike | None):
+        if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
             self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
@@ -727,10 +735,10 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         color = self.below_range_color
-        return color.opacity
+        return color.opacity  # type: ignore[union-attr]
 
     @below_range_opacity.setter
-    def below_range_opacity(self, value):  # numpydoc ignore=GL08
+    def below_range_opacity(self, value):
         color = self.below_range_color
         if color is None:
             color = Color(pyvista.global_theme.below_range_color)
@@ -831,7 +839,8 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         if isinstance(opacity, (float, int)):
             if not 0 <= opacity <= 1:
-                raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
+                msg = f'Opacity must be between 0 and 1, got {opacity}'
+                raise ValueError(msg)
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
@@ -875,7 +884,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return lookup_table_ndarray(self.GetTable(), table=self)
 
     @values.setter
-    def values(self, new_values):  # numpydoc ignore=GL08
+    def values(self, new_values):
         self._values_manual = True
         self._cmap = None
         new_values = np.asarray(new_values).astype(np.uint8, copy=False)
@@ -905,14 +914,13 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetNumberOfColors()
 
     @n_values.setter
-    def n_values(self, value: int):  # numpydoc ignore=GL08
+    def n_values(self, value: int):
         if self._cmap is not None:
             self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            raise RuntimeError(
-                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.',
-            )
+            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
             self.ForceBuild()
@@ -937,7 +945,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
-            return {}
+            return {}  # type: ignore[unreachable]
         n_items = vtk_values.GetSize()
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
@@ -946,7 +954,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return dict(zip(keys, values))
 
     @annotations.setter
-    def annotations(self, values: dict[float, str] | None):  # numpydoc ignore=GL08
+    def annotations(self, values: dict[float, str] | None):
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
@@ -1016,7 +1024,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         label_level += self._nan_color_set
 
-        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)
+        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)  # type: ignore[arg-type]
         scalar_bar.SetLookupTable(self)
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
@@ -1047,11 +1055,14 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         color_tf = _vtk.vtkColorTransferFunction()
         mn, mx = self.scalar_range
-        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
-            color_tf.AddRGBPoint(ii, *self.map_value(value, False))
+        for value in np.linspace(mn, mx, self.n_values):
+            # Be sure to index the point by the value to map the scalar range
+            color_tf.AddRGBPoint(value, *self.map_value(value, False))
         return color_tf
 
-    def to_opacity_tf(self, clamping: bool = True) -> _vtk.vtkPiecewiseFunction:
+    def to_opacity_tf(
+        self, clamping: bool = True, max_clip: float = 0.998
+    ) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
 
         Parameters
@@ -1060,6 +1071,12 @@ class LookupTable(_vtk.vtkLookupTable):
             When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
 
             .. versionadded:: 0.44
+
+        max_clip : float, default: 0.998
+            The maximum value to clip the opacity to. This is useful for volume rendering
+            to avoid the jarring effect of completely opaque values.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -1077,8 +1094,14 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()
         opacity_tf.SetClamping(clamping)
-        for ii, value in enumerate(self.values[:, 3]):
-            opacity_tf.AddPoint(ii, value / self.n_values)
+        mn, mx = self.scalar_range
+        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
+            alpha = self.values[ii, 3]
+            # vtkPiecewiseFunction expects alphas between 0 and 1
+            # our lookup table is between 0 and 255
+            alpha = alpha / 255
+            alpha = min(alpha, max_clip)
+            opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
     def map_value(
@@ -1115,7 +1138,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[tuple[float, float, float], tuple[float, float, float, float]],
+            'Union[tuple[float, float, float], tuple[float, float, float, float]]',
             tuple(color),
         )
 
@@ -1127,4 +1150,5 @@ class LookupTable(_vtk.vtkLookupTable):
             try:
                 return np.array([self.map_value(item) for item in value])
             except:
-                raise TypeError('LookupTable __call__ expects a single value or an iterable.')
+                msg = 'LookupTable __call__ expects a single value or an iterable.'
+                raise TypeError(msg)

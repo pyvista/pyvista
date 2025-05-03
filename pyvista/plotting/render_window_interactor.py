@@ -11,6 +11,8 @@ import time
 import warnings
 import weakref
 
+import numpy as np
+
 from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
@@ -96,7 +98,7 @@ class RenderWindowInteractor:
         # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = defaultdict(list)
-        self._click_event_callbacks = {
+        self._click_event_callbacks = {  # type: ignore[var-annotated]
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ('LeftButtonPressEvent', 'RightButtonPressEvent')
         }
@@ -144,10 +146,12 @@ class RenderWindowInteractor:
 
         """
         if not callable(callback):
-            raise TypeError('callback must be callable.')
+            msg = 'callback must be callable.'
+            raise TypeError(msg)
         for param in signature(callback).parameters.values():
             if param.default is param.empty:
-                raise TypeError('`callback` must not have any arguments without default values.')
+                msg = '`callback` must not have any arguments without default values.'
+                raise TypeError(msg)
         self._key_press_event_callbacks[key].append(callback)
 
     def add_timer_event(self, max_steps, duration, callback):
@@ -166,6 +170,10 @@ class RenderWindowInteractor:
             A callable that takes one argument. It will be passed
             `step`, which is the number of times the timer event has occurred.
 
+        See Also
+        --------
+        :ref:`animation_example`
+
         Examples
         --------
         Add a timer to a Plotter to move a sphere across a scene.
@@ -176,10 +184,7 @@ class RenderWindowInteractor:
         >>> actor = pl.add_mesh(sphere)
         >>> def callback(step):
         ...     actor.position = [step / 100.0, step / 100.0, 0]
-        ...
-        >>> pl.add_timer_event(
-        ...     max_steps=200, duration=500, callback=callback
-        ... )
+        >>> pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
         """
         self._timer = Timer(max_steps, callback)
@@ -221,9 +226,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
         call = partial(try_callback, call)
@@ -255,9 +258,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -280,12 +281,8 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
-        >>> obs_leave = pl.iren.add_observer(
-        ...     "LeaveEvent", lambda *_: print('Leave!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer('LeaveEvent', lambda *_: print('Leave!'))
         >>> pl.iren.remove_observers()
 
         """
@@ -314,7 +311,8 @@ class RenderWindowInteractor:
             self._key_press_event_callbacks.pop(key)
         except KeyError:
             if raise_on_missing:
-                raise ValueError(f'No events found for key {key!r}.') from None
+                msg = f'No events found for key {key!r}.'
+                raise ValueError(msg) from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
@@ -336,14 +334,15 @@ class RenderWindowInteractor:
         self.remove_observers(_vtk.vtkCommand.MouseMoveEvent)
 
     @staticmethod
-    def _get_click_event(side):
+    def _get_click_event(side) -> str:
         side = str(side).lower()
         if side in ['right', 'r']:
             return 'RightButtonPressEvent'
         elif side in ['left', 'l']:
             return 'LeftButtonPressEvent'
         else:
-            raise TypeError(f'Side ({side}) not supported. Try `left` or `right`.')
+            msg = f'Side ({side}) not supported. Try `left` or `right`.'
+            raise TypeError(msg)
 
     def _click_event(self, _obj, event):
         t = time.time()
@@ -356,7 +355,7 @@ class RenderWindowInteractor:
         double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
         # Reset click time in case of a double click, otherwise a subsequent third click
         # is considered to be a double click as well.
-        self._click_time = 0 if double else t
+        self._click_time = 0 if double else t  # type: ignore[assignment]
 
         for callback in self._click_event_callbacks[event][double, False]:
             callback(self._plotter.pick_click_position())
@@ -396,9 +395,8 @@ class RenderWindowInteractor:
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
-            raise ValueError(
-                'Invalid callback provided, it should be either ``None`` or a callable.',
-            )
+            msg = 'Invalid callback provided, it should be either ``None`` or a callable.'
+            raise ValueError(msg)
 
         if add_observer:
             self.add_observer(event, self._click_event)
@@ -467,7 +465,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -516,8 +514,8 @@ class RenderWindowInteractor:
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
-            self._style = self._prev_style
-            self._style_class = self._prev_style_class
+            self._style = self._prev_style  # type: ignore[has-type]
+            self._style_class = self._prev_style_class  # type: ignore[has-type]
             self._prev_style = None
             self._prev_style_class = None
         elif scene is not None and self._style != 'Context':
@@ -635,7 +633,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_custom_trackball_style(left="dolly")
+        >>> plotter.enable_custom_trackball_style(left='dolly')
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -644,19 +642,19 @@ class RenderWindowInteractor:
         self.update_style()
 
         start_action_map = {
-            'environment_rotate': self._style_class.StartEnvRotate,
-            'rotate': self._style_class.StartRotate,
-            'pan': self._style_class.StartPan,
-            'spin': self._style_class.StartSpin,
-            'dolly': self._style_class.StartDolly,
+            'environment_rotate': self._style_class.StartEnvRotate,  # type: ignore[attr-defined]
+            'rotate': self._style_class.StartRotate,  # type: ignore[attr-defined]
+            'pan': self._style_class.StartPan,  # type: ignore[attr-defined]
+            'spin': self._style_class.StartSpin,  # type: ignore[attr-defined]
+            'dolly': self._style_class.StartDolly,  # type: ignore[attr-defined]
         }
 
         end_action_map = {
-            'environment_rotate': self._style_class.EndEnvRotate,
-            'rotate': self._style_class.EndRotate,
-            'pan': self._style_class.EndPan,
-            'spin': self._style_class.EndSpin,
-            'dolly': self._style_class.EndDolly,
+            'environment_rotate': self._style_class.EndEnvRotate,  # type: ignore[attr-defined]
+            'rotate': self._style_class.EndRotate,  # type: ignore[attr-defined]
+            'pan': self._style_class.EndPan,  # type: ignore[attr-defined]
+            'spin': self._style_class.EndSpin,  # type: ignore[attr-defined]
+            'dolly': self._style_class.EndDolly,  # type: ignore[attr-defined]
         }
 
         for p in [
@@ -671,17 +669,18 @@ class RenderWindowInteractor:
             control_right,
         ]:
             if p not in start_action_map:
-                raise ValueError(f"Action '{p}' not in the allowed {list(start_action_map.keys())}")
+                msg = f"Action '{p}' not in the allowed {list(start_action_map.keys())}"
+                raise ValueError(msg)
 
         button_press_map = {
-            'left': self._style_class.OnLeftButtonDown,
-            'middle': self._style_class.OnMiddleButtonDown,
-            'right': self._style_class.OnRightButtonDown,
+            'left': self._style_class.OnLeftButtonDown,  # type: ignore[attr-defined]
+            'middle': self._style_class.OnMiddleButtonDown,  # type: ignore[attr-defined]
+            'right': self._style_class.OnRightButtonDown,  # type: ignore[attr-defined]
         }
         button_release_map = {
-            'left': self._style_class.OnLeftButtonUp,
-            'middle': self._style_class.OnMiddleButtonUp,
-            'right': self._style_class.OnRightButtonUp,
+            'left': self._style_class.OnLeftButtonUp,  # type: ignore[attr-defined]
+            'middle': self._style_class.OnMiddleButtonUp,  # type: ignore[attr-defined]
+            'right': self._style_class.OnRightButtonUp,  # type: ignore[attr-defined]
         }
 
         def _setup_callbacks(button, click, control, shift):
@@ -725,8 +724,8 @@ class RenderWindowInteractor:
             control_left,
             shift_left,
         )
-        self._style_class.add_observer('LeftButtonPressEvent', _left_button_press_callback)
-        self._style_class.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
+        self._style_class.add_observer('LeftButtonPressEvent', _left_button_press_callback)  # type: ignore[attr-defined]
+        self._style_class.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)  # type: ignore[attr-defined]
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
             'middle',
@@ -734,8 +733,8 @@ class RenderWindowInteractor:
             control_middle,
             shift_middle,
         )
-        self._style_class.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
-        self._style_class.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
+        self._style_class.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)  # type: ignore[attr-defined]
+        self._style_class.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)  # type: ignore[attr-defined]
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
             'right',
@@ -743,8 +742,8 @@ class RenderWindowInteractor:
             control_right,
             shift_right,
         )
-        self._style_class.add_observer('RightButtonPressEvent', _right_button_press_callback)
-        self._style_class.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
+        self._style_class.add_observer('RightButtonPressEvent', _right_button_press_callback)  # type: ignore[attr-defined]
+        self._style_class.add_observer('RightButtonReleaseEvent', _right_button_release_callback)  # type: ignore[attr-defined]
 
     def enable_2d_style(self):
         """Set the interactive style to 2D.
@@ -949,7 +948,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
+    def enable_terrain_style(self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
@@ -984,17 +983,23 @@ class RenderWindowInteractor:
         latitude/longitude markers that can be used to estimate/control
         position.
 
+        .. versionchanged:: 0.45
+            mouse_wheel_zooms and shift_pans parameters are not True by
+            default to be more intuitive. We also improved the scroll
+            zooming factor to be less jumpy.
+
         Parameters
         ----------
-        mouse_wheel_zooms : bool, default: False
-            Whether to use the mouse wheel for zooming. By default
-            zooming can be performed with right click and drag.
+        mouse_wheel_zooms : bool | float, default: True
+            Whether to use the mouse wheel for zooming. If ``False``,
+            you can still zoom with right click and drag. Pass a float
+            value for to control the zoom factor, default is ``1.05``.
 
-        shift_pans : bool, default: False
-            Whether shift + left mouse button pans the scene. By default
-            shift + left mouse button rotates the view restricted to
-            only horizontal or vertical movements, and panning is done
-            holding down the middle mouse button.
+        shift_pans : bool, default: True
+            Whether shift + left mouse button pans the scene. If
+            ``False``, shift + left mouse button rotates the view
+            restricted to only horizontal or vertical movements, and
+            panning is done holding down the middle mouse button.
 
         Examples
         --------
@@ -1015,9 +1020,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(
-        ...     mouse_wheel_zooms=True, shift_pans=True
-        ... )
+        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -1026,22 +1029,35 @@ class RenderWindowInteractor:
         self.update_style()
 
         if mouse_wheel_zooms:
+            factor = 1.05 if isinstance(mouse_wheel_zooms, bool) else mouse_wheel_zooms
 
             def wheel_zoom_callback(_obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
-                    zoom_factor = 1.1
+                    zoom_factor = 1.0 / factor
                 elif event == 'MouseWheelBackwardEvent':
                     # zoom out
-                    zoom_factor = 1 / 1.1
-                self._plotter.camera.zoom(zoom_factor)
+                    zoom_factor = factor
+
+                with self.poked_subplot():
+                    if self._plotter.camera.parallel_projection:
+                        self._plotter.camera.parallel_scale *= zoom_factor
+                    else:
+                        camera_position = np.array(self._plotter.camera.position)
+                        camera_focal_point = np.array(self._plotter.camera.focal_point)
+                        camera_vector = camera_position - camera_focal_point
+                        self._plotter.camera.position = (
+                            camera_focal_point + zoom_factor * camera_vector
+                        )
+
+                    self._plotter.reset_camera_clipping_range()
                 self._plotter.render()
 
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                self._style_class.add_observer(event, callback)
+                self._style_class.add_observer(event, callback)  # type: ignore[attr-defined]
 
         if shift_pans:
 
@@ -1049,17 +1065,17 @@ class RenderWindowInteractor:
                 """Trigger left mouse panning if shift is pressed."""
                 if event == 'LeftButtonPressEvent':
                     if self.interactor.GetShiftKey():
-                        self._style_class.StartPan()
-                    self._style_class.OnLeftButtonDown()
+                        self._style_class.StartPan()  # type: ignore[union-attr]
+                    self._style_class.OnLeftButtonDown()  # type: ignore[union-attr]
                 elif event == 'LeftButtonReleaseEvent':
                     # always stop panning on release
-                    self._style_class.EndPan()
-                    self._style_class.OnLeftButtonUp()
+                    self._style_class.EndPan()  # type: ignore[union-attr]
+                    self._style_class.OnLeftButtonUp()  # type: ignore[union-attr]
 
             callback = partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
-                self._style_class.add_observer(event, callback)
+                self._style_class.add_observer(event, callback)  # type: ignore[attr-defined]
 
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
@@ -1127,10 +1143,11 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def _simulate_keypress(self, key):  # pragma:
+    def _simulate_keypress(self, key):
         """Simulate a keypress."""
         if len(key) > 1:
-            raise ValueError('Only accepts a single key')
+            msg = 'Only accepts a single key'
+            raise ValueError(msg)
         self.interactor.SetKeyCode(key)
         self.interactor.SetKeySym(key)
         self.interactor.CharEvent()
@@ -1297,7 +1314,8 @@ class RenderWindowInteractor:
             renderer = self._plotter.renderers[index]
             if renderer is poked_renderer:
                 return self._plotter.renderers.index_to_loc(index)
-        raise RuntimeError('Poked renderer not found in Plotter.')
+        msg = 'Poked renderer not found in Plotter.'
+        raise RuntimeError(msg)
 
     @contextmanager
     def poked_subplot(self):
@@ -1393,9 +1411,8 @@ class RenderWindowInteractor:
     def process_events(self):
         """Process events."""
         if not self.initialized:
-            raise RuntimeError(
-                'Render window interactor must be initialized before processing events.',
-            )
+            msg = 'Render window interactor must be initialized before processing events.'
+            raise RuntimeError(msg)
         self.interactor.ProcessEvents()
 
     @property
@@ -1416,7 +1433,7 @@ class RenderWindowInteractor:
         return self.interactor.GetPicker()
 
     @picker.setter
-    def picker(self, picker):  # numpydoc ignore=GL08
+    def picker(self, picker):
         pickers = {
             PickerType.AREA: _vtk.vtkAreaPicker,
             PickerType.CELL: _vtk.vtkCellPicker,
@@ -1436,7 +1453,8 @@ class RenderWindowInteractor:
             try:
                 picker = pickers[picker]()
             except KeyError:
-                raise KeyError(f'Picker class `{picker}` is unknown.')
+                msg = f'Picker class `{picker}` is unknown.'
+                raise KeyError(msg)
             # Set default tolerance for internal configurations
             if hasattr(picker, 'SetTolerance'):
                 picker.SetTolerance(0.025)
@@ -1446,7 +1464,7 @@ class RenderWindowInteractor:
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use :func:`pyvista.plotting.RenderWindowInteractor.add_pick_observer` instead.
+            This function is deprecated. Use :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
         ----------
@@ -1518,7 +1536,7 @@ class RenderWindowInteractor:
 
         self.terminate_app()
         self.interactor = None
-        self._click_event_callbacks = None
+        self._click_event_callbacks = None  # type: ignore[assignment]
         self._timer_event = None
 
 
@@ -1533,9 +1551,9 @@ def _style_factory(klass):
         try:
             from vtkmodules import vtkInteractionStyle
         except ImportError:  # pragma: no cover
-            import vtk as vtkInteractionStyle
+            import vtk as vtkInteractionStyle  # type: ignore[no-redef]
 
-        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):
+        class CustomStyle(getattr(vtkInteractionStyle, 'vtkInteractorStyle' + klass)):  # type: ignore[misc]
             def __init__(self, parent):
                 super().__init__()
                 self._parent = weakref.ref(parent)
@@ -1556,17 +1574,17 @@ def _style_factory(klass):
                 # others
                 super().OnLeftButtonDown()
                 parent = self._parent()
-                if len(parent._plotter.renderers) > 1:
-                    click_pos = parent.get_event_position()
-                    for renderer in parent._plotter.renderers:
+                if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
+                    click_pos = parent.get_event_position()  # type: ignore[union-attr]
+                    for renderer in parent._plotter.renderers:  # type: ignore[union-attr]
                         interact = renderer.IsInViewport(*click_pos)
                         renderer.SetInteractive(interact)
 
             def _release(self, *args):
                 super().OnLeftButtonUp()
                 parent = self._parent()
-                if len(parent._plotter.renderers) > 1:
-                    for renderer in parent._plotter.renderers:
+                if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
+                    for renderer in parent._plotter.renderers:  # type: ignore[union-attr]
                         renderer.SetInteractive(True)
 
             def add_observer(self, event, callback):

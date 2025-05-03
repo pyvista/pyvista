@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pyvista
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
 
 BUILDING_GALLERY_ERROR_MSG = (
@@ -149,7 +149,7 @@ class Scraper:
 
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
 
@@ -191,7 +191,7 @@ class DynamicScraper:  # pragma: no cover
 
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
 

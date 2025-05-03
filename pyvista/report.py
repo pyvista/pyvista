@@ -40,7 +40,8 @@ class GPUInfo:
         try:
             renderer = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError('Unable to parse GPU information for the renderer.') from None
+            msg = 'Unable to parse GPU information for the renderer.'
+            raise RuntimeError(msg) from None
         return renderer.strip()
 
     @property
@@ -50,7 +51,8 @@ class GPUInfo:
         try:
             version = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError('Unable to parse GPU information for the version.') from None
+            msg = 'Unable to parse GPU information for the version.'
+            raise RuntimeError(msg) from None
         return version.strip()
 
     @property
@@ -60,7 +62,8 @@ class GPUInfo:
         try:
             vendor = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError('Unable to parse GPU information for the vendor.') from None
+            msg = 'Unable to parse GPU information for the vendor.'
+            raise RuntimeError(msg) from None
         return vendor.strip()
 
     def get_info(self):
@@ -157,6 +160,8 @@ class Report(scooby.Report):
 
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
         """Generate a :class:`scooby.Report` instance."""
+        from vtkmodules.vtkRenderingCore import vtkRenderWindow
+
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
@@ -199,13 +204,14 @@ class Report(scooby.Report):
                 ('GPU Details', 'None'),
             ]
 
+        extra_meta.append(('Render Window', vtkRenderWindow().GetClassName()))
         extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
             self,
             additional=additional,
-            core=core,
-            optional=optional,
+            core=core,  # type: ignore[arg-type]
+            optional=optional,  # type: ignore[arg-type]
             ncol=ncol,
             text_width=text_width,
             sort=sort,

@@ -110,13 +110,13 @@ class RenderPasses:
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
-        return None
+        return None  # type: ignore[unreachable]
 
     def deep_clean(self):
         """Delete all render passes."""
         if self._renderer is not None:
             self._renderer.SetPass(None)
-        self._renderer_ref = None
+        self._renderer_ref = None  # type: ignore[assignment]
         if self.__seq_pass is not None:
             self.__seq_pass.SetPasses(None)
         self.__seq_pass = None
@@ -200,7 +200,7 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance=True):
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):
         """Enable the depth of field pass.
 
         Parameters
@@ -219,7 +219,8 @@ class RenderPasses:
             return None
 
         if self._ssao_pass is not None:
-            raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
+            msg = 'Depth of field pass is incompatible with the SSAO pass.'
+            raise RuntimeError(msg)
 
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
@@ -254,7 +255,8 @@ class RenderPasses:
 
         """
         if self._dof_pass is not None:
-            raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
+            msg = 'SSAO pass is incompatible with the depth of field pass.'
+            raise RuntimeError(msg)
 
         if self._ssao_pass is not None:
             return None
@@ -298,7 +300,8 @@ class RenderPasses:
     def _update_passes(self):
         """Reassemble pass delegation."""
         if self._renderer is None:  # pragma: no cover
-            raise RuntimeError('The renderer has been closed.')
+            msg = 'The renderer has been closed.'
+            raise RuntimeError(msg)
 
         current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:

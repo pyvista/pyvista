@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+import weakref
+
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -9,7 +12,7 @@ from . import _vtk
 
 
 @no_new_attr
-class VolumeProperty(_vtk.vtkVolumeProperty):
+class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     """Wrap the VTK class vtkVolumeProperty.
 
     This class is used to represent common properties associated with volume
@@ -69,17 +72,16 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
     ... )
-    >>> grid['scalars'] -= grid['scalars'].min()
-    >>> grid['scalars'] *= 255 / grid['scalars'].max()
     >>> pl = pv.Plotter()
     >>> actor = pl.add_volume(grid, show_scalar_bar=False)
-    >>> lut = pv.LookupTable(cmap='bwr')
+    >>> lut = actor.mapper.lookup_table
+    >>> lut.cmap = 'bwr'
     >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
-    >>> actor.prop.apply_lookup_table(lut)
     >>> pl.show()
 
-
     """
+
+    _new_attr_exceptions: ClassVar[list[str]] = ['_lookup_table_', '_lookup_table_observer_id']
 
     def __init__(
         self,
@@ -94,6 +96,8 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     ):
         """Initialize the vtkVolumeProperty class."""
         super().__init__()
+        self._lookup_table_ = None
+        self._lookup_table_observer_id = None
         if lookup_table is not None:
             self.apply_lookup_table(lookup_table)
         if interpolation_type is not None:
@@ -110,6 +114,42 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
             self.shade = shade
         if opacity_unit_distance is not None:
             self.opacity_unit_distance = opacity_unit_distance
+
+    @property
+    def _lookup_table(self) -> pyvista.LookupTable | None:
+        """Get the lookup table if applied via apply_lookup_table."""
+        if self._lookup_table_ is not None:
+            return self._lookup_table_()
+        return None
+
+    @_lookup_table.setter
+    def _lookup_table(self, lookup_table: pyvista.LookupTable):
+        """Set the lookup table if applied via apply_lookup_table."""
+        if self._lookup_table is not None and self._lookup_table_observer_id is not None:
+            # Clean up the old lookup table observer
+            self._lookup_table.RemoveObserver(self._lookup_table_observer_id)
+            self._lookup_table_observer_id = None
+        self._lookup_table_ = weakref.ref(lookup_table)
+        self._lookup_table_observer_id = lookup_table.AddObserver(
+            _vtk.vtkCommand.ModifiedEvent,
+            lambda *_: self.reapply_lookup_table(),
+        )
+
+    def reapply_lookup_table(self):
+        """Reapply the lookup table previously applied.
+
+        The VolumeProperty is unable to keep a dynamic link to the colors
+        and mapping laid out in the lookup table. This method allows you to
+        reapply the lookup table to the VolumeProperty. This is useful if
+        you modify the lookup table after it is applied to the
+        VolumeProperty.
+
+        We have our own modified event observer to reapply this automatically
+        when the lookup table is modified.
+
+        """
+        if self._lookup_table is not None:
+            self.apply_lookup_table(self._lookup_table)
 
     def apply_lookup_table(self, lookup_table: pyvista.LookupTable):
         """Apply a lookup table to the volume property.
@@ -131,21 +171,28 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> grid = pv.sample_function(
         ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
         ... )
-        >>> grid['scalars'] -= grid['scalars'].min()
-        >>> grid['scalars'] *= 255 / grid['scalars'].max()
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(grid, show_scalar_bar=False)
-        >>> lut = pv.LookupTable(cmap='bwr')
+        >>> lut = actor.mapper.lookup_table
+        >>> lut.cmap = 'bwr'
         >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
-        >>> actor.prop.apply_lookup_table(lut)
         >>> pl.show()
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            raise TypeError('`lookup_table` must be a `pyvista.LookupTable`')
-
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
+            raise TypeError(msg)
+        if self._lookup_table != lookup_table:
+            self._lookup_table = lookup_table
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
+
+    def __del__(self):
+        """Clean up the lookup table observer when the object is deleted."""
+        if self._lookup_table_observer_id is not None and self._lookup_table is not None:
+            self._lookup_table.RemoveObserver(self._lookup_table_observer_id)
+            self._lookup_table_observer_id = None
+        self._lookup_table_ = None
 
     @property
     def interpolation_type(self) -> str:  # numpydoc ignore=RT01
@@ -194,13 +241,14 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetInterpolationTypeAsString().split()[0].lower()
 
     @interpolation_type.setter
-    def interpolation_type(self, value: str):  # numpydoc ignore=GL08
+    def interpolation_type(self, value: str):
         if value == 'linear':
             self.SetInterpolationTypeToLinear()
         elif value == 'nearest':
             self.SetInterpolationTypeToNearest()
         else:
-            raise ValueError('`interpolation_type` must be either "linear" or "nearest"')
+            msg = '`interpolation_type` must be either "linear" or "nearest"'
+            raise ValueError(msg)
 
     @property
     def opacity_unit_distance(self) -> float:  # numpydoc ignore=RT01
@@ -216,7 +264,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetScalarOpacityUnitDistance()
 
     @opacity_unit_distance.setter
-    def opacity_unit_distance(self, value: float):  # numpydoc ignore=GL08
+    def opacity_unit_distance(self, value: float):
         self.SetScalarOpacityUnitDistance(value)
 
     @property
@@ -236,7 +284,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetShade())
 
     @shade.setter
-    def shade(self, value: bool):  # numpydoc ignore=GL08
+    def shade(self, value: bool):
         self.SetShade(value)
 
     @property
@@ -262,7 +310,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetIndependentComponents())
 
     @independent_components.setter
-    def independent_components(self, value: bool):  # numpydoc ignore=GL08
+    def independent_components(self, value: bool):
         self.SetIndependentComponents(value)
 
     @property
@@ -280,7 +328,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):  # numpydoc ignore=GL08
+    def ambient(self, value: float):
         self.SetAmbient(value)
 
     @property
@@ -298,7 +346,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):  # numpydoc ignore=GL08
+    def diffuse(self, value: float):
         self.SetDiffuse(value)
 
     @property
@@ -317,7 +365,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):  # numpydoc ignore=GL08
+    def specular(self, value: float):
         self.SetSpecular(value)
 
     @property
@@ -330,7 +378,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):  # numpydoc ignore=GL08
+    def specular_power(self, value: float):
         self.SetSpecularPower(value)
 
     def copy(self) -> VolumeProperty:

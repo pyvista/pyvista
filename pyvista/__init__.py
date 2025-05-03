@@ -1,35 +1,45 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import os
 import sys
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import cast
 import warnings
 
-from pyvista._plot import plot
-from pyvista._version import __version__
-from pyvista._version import version_info
+from pyvista._plot import plot as plot
+from pyvista._version import __version__ as __version__
+from pyvista._version import version_info as version_info
 from pyvista.core import *
-from pyvista.core import _validation
-from pyvista.core._vtk_core import vtk_version_info
+from pyvista.core import _validation as _validation
+from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
+from pyvista.core._typing_core._dataset_types import (
+    _DataSetOrMultiBlockType as _DataSetOrMultiBlockType,
+)
+from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetType
+from pyvista.core._typing_core._dataset_types import _GridType as _GridType
+from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
+from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
-from pyvista.core.wrappers import _wrappers
-from pyvista.jupyter import set_jupyter_backend
-from pyvista.report import GPUInfo
-from pyvista.report import Report
-from pyvista.report import get_gpu_info
+from pyvista.core.wrappers import _wrappers as _wrappers
+from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
+from pyvista.report import GPUInfo as GPUInfo
+from pyvista.report import Report as Report
+from pyvista.report import get_gpu_info as get_gpu_info
 
 # get the int type from vtk
-ID_TYPE = _get_vtk_id_type()
+ID_TYPE = cast('int', _get_vtk_id_type())
 
 # determine if using at least vtk 9.0.0
 if vtk_version_info.major < 9:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    raise VTKVersionError('VTK version must be 9.0.0 or greater.')
+    msg = 'VTK version must be 9.0.0 or greater.'
+    raise VTKVersionError(msg)
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -59,21 +69,23 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
+PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
 
+_VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
+
 
 # Import all modules for type checkers and linters
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import demos
-    from pyvista import examples
-    from pyvista import ext
-    from pyvista import trame
-    from pyvista import utilities
+if TYPE_CHECKING:
+    from pyvista import demos as demos
+    from pyvista import examples as examples
+    from pyvista import ext as ext
+    from pyvista import trame as trame
+    from pyvista import utilities as utilities
     from pyvista.plotting import *
 
 
@@ -105,11 +117,12 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting
+        import pyvista.plotting  # noqa: F401
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError:
-        raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
+        msg = f"module 'pyvista' has no attribute '{name}'"
+        raise AttributeError(msg) from None
 
     return feature
