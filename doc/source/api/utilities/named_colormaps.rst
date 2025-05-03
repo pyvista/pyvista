@@ -18,8 +18,16 @@ The colormaps on this page are from multiple packages:
 
 The type of the colormap is indicated as:
 
-- :bdg-muted:`LS` if it is a :class:`matplotlib.colors.LinearSegmentedColormap`
-- :bdg-muted:`L` if it is a :class:`matplotlib.colors.ListedColormap`
+- :bdg-muted:`LS` if it is a :class:`~matplotlib.colors.LinearSegmentedColormap`
+- :bdg-muted:`L` if it is a :class:`~matplotlib.colors.ListedColormap`
+
+.. warning::
+
+    Many of the ``matplotlib`` colormaps such as ``jet`` are not perceptually
+    uniform and should be avoided where possible, since these colormaps
+    can generate misleading visualizations. Colormaps from ``colorcet`` and
+    ``cmocean`` are therefore generally recommended over those from ``matplotlib``.
+    See `testing-perceptual-uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
 
 .. note::
 
@@ -65,3 +73,11 @@ The type of the colormap is indicated as:
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_MISC.rst
+
+.. dropdown:: CET Colormaps
+
+    This table includes all ``colorcet`` colormaps which have a named ``CET``
+    alias. Most of the ``colorcet`` colormaps presented above are duplicated
+    here (using their ``CET`` alias).
+
+    .. include:: /api/utilities/colormap_table/colormap_table_CET.rst

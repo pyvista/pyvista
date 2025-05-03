@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from dataclasses import dataclass
+import re
 import sys
 from typing import NamedTuple
 
@@ -27,7 +28,6 @@ import inspect
 import io
 import os
 from pathlib import Path
-import re
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
@@ -835,7 +835,7 @@ class ColormapKind(StrEnum):
 
 class _ColormapInfo(NamedTuple):
     package: str
-    kind: ColormapKind
+    kind: ColormapKind | None
     name: str
 
 
@@ -994,7 +994,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
 class ColormapTable(DocTable):
     """Class to generate a colormap table."""
 
-    kind: ColormapKind
+    kind: ColormapKind | str
 
     title = ''
     header = _aligned_dedent(
@@ -1022,7 +1022,9 @@ class ColormapTable(DocTable):
     @property
     @final
     def path(cls):
-        return f'{COLORMAP_TABLE_DIR}/colormap_table_{cls.kind.name}.rst'
+        kind = cls.kind
+        name = kind.name if isinstance(kind, ColormapKind) else kind
+        return f'{COLORMAP_TABLE_DIR}/colormap_table_{name}.rst'
 
     @classmethod
     def fetch_data(cls):
@@ -1111,6 +1113,52 @@ class ColormapTableMISC(ColormapTable):
     """Class to generate misc colormap table."""
 
     kind = ColormapKind.MISC
+
+
+class ColormapTableCET(ColormapTable):
+    """Class to generate all colorcet CET colormap table."""
+
+    kind = 'CET'
+
+    @classmethod
+    def fetch_data(cls):
+        def sort_cmaps(unsorted_cmaps):
+            # The cmaps are string-sorted and therefore `C10` precedes `C2`
+            # The following code fixes the sorting
+
+            # Separate prefix, letters, number, and suffix
+            pattern = re.compile(r'(CET_)([A-Z]+)(\d+)([A-Za-z]*)')
+            parsed = [
+                (m.group(1), m.group(2), int(m.group(3)), m.group(4))
+                for cmap in unsorted_cmaps
+                for m in [pattern.match(cmap)]
+            ]
+
+            # Sort by letter code and numeric value
+            parsed.sort(key=lambda x: (x[1], x[2]))
+
+            # Reconstruct the original strings in sorted order
+            sorted_cmaps = [
+                f'{prefix}{letters}{number}{suffix}' for prefix, letters, number, suffix in parsed
+            ]
+
+            # Sanity check - make sure we didn't mangle anything
+            for cmap in sorted_cmaps:
+                assert cmap in unsorted_cmaps
+            return sorted_cmaps
+
+        # Get all 'CET' named cmaps
+        cmaps = sorted(
+            [
+                cmap
+                for cmap in colorcet.cm.keys()
+                if cmap.startswith('CET') and not cmap.endswith('_r')
+            ]
+        )
+        # Sort and return as ColormapInfo tuples
+        return [
+            _ColormapInfo(package='colorcet', kind=None, name=name) for name in sort_cmaps(cmaps)
+        ]
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -2890,6 +2938,7 @@ def make_all_tables():  # noqa: D103
     ColormapTableCYCLIC.generate()
     ColormapTableCATEGORICAL.generate()
     ColormapTableMISC.generate()
+    ColormapTableCET.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
