@@ -128,6 +128,42 @@ Suffix :
     Most of the ``colorcet`` colormaps presented above are duplicated
     here (using their ``CET`` alias).
 
-.. dropdown::
+Linear (Sequential)
+-------------------
 
-    .. include:: /api/utilities/colormap_table/colormap_table_CET.rst
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_CET_LINEAR.rst
+
+Diverging
+---------
+
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_CET_DIVERGING.rst
+
+Cyclic
+------
+
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_CET_CYCLIC.rst
+
+Rainbow
+-------
+
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_CET_RAINBOW.rst
+
+Isoluminant
+-----------
+
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_CET_ISOLUMINANT.rst

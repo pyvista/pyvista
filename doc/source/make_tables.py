@@ -831,6 +831,11 @@ class ColormapKind(StrEnum):
     CYCLIC = auto()
     CATEGORICAL = auto()
     MISC = auto()
+    CET_LINEAR = auto()
+    CET_DIVERGING = auto()
+    CET_CYCLIC = auto()
+    CET_RAINBOW = auto()
+    CET_ISOLUMINANT = auto()
 
 
 class _ColormapInfo(NamedTuple):
@@ -992,9 +997,57 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
 ]
 
 
+def _create_cet_colormap_info():
+    # Get all 'CET' named cmaps
+    cmaps = sorted(
+        [cmap for cmap in colorcet.cm.keys() if cmap.startswith('CET') and not cmap.endswith('_r')]
+    )
+
+    # The cmaps are string-sorted and therefore `C10` precedes `C2`
+    # The following code fixes the sorting
+
+    # Separate prefix, letters, number, and suffix
+    pattern = re.compile(r'(CET_)([A-Z]+)(\d+)([A-Za-z]*)')
+    parsed = [
+        (m.group(1), m.group(2), int(m.group(3)), m.group(4))
+        for cmap in cmaps
+        for m in [pattern.match(cmap)]
+    ]
+
+    # Sort by letter code and numeric value
+    parsed.sort(key=lambda x: (x[1], x[2]))
+
+    # Reconstruct the original strings in sorted order and classify the colormap
+    colormap_infos = []
+    colormap_types = {
+        'C': ColormapKind.CET_CYCLIC,
+        'D': ColormapKind.CET_DIVERGING,
+        'L': ColormapKind.CET_LINEAR,
+        'R': ColormapKind.CET_RAINBOW,
+        'I': ColormapKind.CET_ISOLUMINANT,
+    }
+    for prefix, letters, number, suffix in parsed:
+        name = f'{prefix}{letters}{number}{suffix}'
+        kind = colormap_types[letters[-1]]
+
+        # Store as colormap info
+        info = _ColormapInfo(package='colorcet', name=name, kind=kind)
+        colormap_infos.append(info)
+
+    # Sanity check - make sure we didn't mangle anything
+    for info in colormap_infos:
+        assert info.name in cmaps
+
+    return colormap_infos
+
+
+_CET_COLORMAP_INFO = _create_cet_colormap_info()
+
+
 class ColormapTable(DocTable):
     """Class to generate a colormap table."""
 
+    info_source = _COLORMAP_INFO
     kind: ColormapKind | str
 
     title = ''
@@ -1029,7 +1082,7 @@ class ColormapTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return [info for info in _COLORMAP_INFO if info.kind == cls.kind]
+        return [info for info in cls.info_source if info.kind == cls.kind]
 
     @classmethod
     def get_header(cls, data):
@@ -1116,50 +1169,40 @@ class ColormapTableMISC(ColormapTable):
     kind = ColormapKind.MISC
 
 
-class ColormapTableCET(ColormapTable):
+class CETColormapTable(ColormapTable):
     """Class to generate all colorcet CET colormap table."""
 
-    kind = 'CET'
+    info_source = _CET_COLORMAP_INFO
 
-    @classmethod
-    def fetch_data(cls):
-        def sort_cmaps(unsorted_cmaps):
-            # The cmaps are string-sorted and therefore `C10` precedes `C2`
-            # The following code fixes the sorting
 
-            # Separate prefix, letters, number, and suffix
-            pattern = re.compile(r'(CET_)([A-Z]+)(\d+)([A-Za-z]*)')
-            parsed = [
-                (m.group(1), m.group(2), int(m.group(3)), m.group(4))
-                for cmap in unsorted_cmaps
-                for m in [pattern.match(cmap)]
-            ]
+class CETColormapTableLINEAR(CETColormapTable):
+    """Class to generate linear colormap table."""
 
-            # Sort by letter code and numeric value
-            parsed.sort(key=lambda x: (x[1], x[2]))
+    kind = ColormapKind.CET_LINEAR
 
-            # Reconstruct the original strings in sorted order
-            sorted_cmaps = [
-                f'{prefix}{letters}{number}{suffix}' for prefix, letters, number, suffix in parsed
-            ]
 
-            # Sanity check - make sure we didn't mangle anything
-            for cmap in sorted_cmaps:
-                assert cmap in unsorted_cmaps
-            return sorted_cmaps
+class CETColormapTableDIVERGING(CETColormapTable):
+    """Class to generate diverging colormap table."""
 
-        # Get all 'CET' named cmaps
-        cmaps = sorted(
-            [
-                cmap
-                for cmap in colorcet.cm.keys()
-                if cmap.startswith('CET') and not cmap.endswith('_r')
-            ]
-        )
-        # Sort and return as ColormapInfo tuples
-        return [
-            _ColormapInfo(package='colorcet', kind=None, name=name) for name in sort_cmaps(cmaps)
-        ]
+    kind = ColormapKind.CET_DIVERGING
+
+
+class CETColormapTableCYCLIC(CETColormapTable):
+    """Class to generate cyclic colormap table."""
+
+    kind = ColormapKind.CET_CYCLIC
+
+
+class CETColormapTableRAINBOW(CETColormapTable):
+    """Class to generate rainbow colormap table."""
+
+    kind = ColormapKind.CET_RAINBOW
+
+
+class CETColormapTableISOLUMINANT(CETColormapTable):
+    """Class to generate isoluminant colormap table."""
+
+    kind = ColormapKind.CET_ISOLUMINANT
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -2939,7 +2982,11 @@ def make_all_tables():  # noqa: D103
     ColormapTableCYCLIC.generate()
     ColormapTableCATEGORICAL.generate()
     ColormapTableMISC.generate()
-    ColormapTableCET.generate()
+    CETColormapTableLINEAR.generate()
+    CETColormapTableDIVERGING.generate()
+    CETColormapTableCYCLIC.generate()
+    CETColormapTableRAINBOW.generate()
+    CETColormapTableISOLUMINANT.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
