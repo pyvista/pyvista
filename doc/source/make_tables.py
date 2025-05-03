@@ -916,6 +916,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_yarg'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'binary'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Grays'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'oxy'),
     # DIVERGING
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
@@ -1054,12 +1055,11 @@ class ColormapTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: {}
-        |   :widths: 10 5 25 60
+        |   :widths: 15 25 60
         |   :header-rows: 1
         |   :stub-columns: 1
         |
-        |   * - Source
-        |     - Type
+        |   * - Tags
         |     - Name
         |     - Swatch
         """,
@@ -1067,7 +1067,6 @@ class ColormapTable(DocTable):
     row_template = _aligned_dedent(
         """
         |   * - {}
-        |     - {}
         |     - {}
         |     - .. image:: /{}
         """,
@@ -1091,20 +1090,21 @@ class ColormapTable(DocTable):
     @classmethod
     def get_row(cls, i, colormap_info):
         source_badge_mapping = {
-            'cmocean': ':bdg-primary:`cmocean`',
-            'colorcet': ':bdg-success:`colorcet`',
-            'matplotlib': ':bdg-secondary:`matplotlib`',
+            'cmocean': ':bdg-primary:`cmo`',
+            'colorcet': ':bdg-success:`cc`',
+            'matplotlib': ':bdg-secondary:`mpl`',
         }
         type_mapping = {
-            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LS`',
-            mpl.colors.ListedColormap: ':bdg-muted:`L`',
+            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LSCm`',
+            mpl.colors.ListedColormap: ':bdg-muted:`LCm`',
         }
         name_rst = f'``{colormap_info.name}``'
         source_rst = source_badge_mapping[colormap_info.package]
         img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
         cmap_type = cls.generate_img(colormap_info.name, colormap_info.package, img_path)
         type_rst = type_mapping[cmap_type]
-        return cls.row_template.format(source_rst, type_rst, name_rst, img_path)
+        tags = f'{source_rst} {type_rst}'
+        return cls.row_template.format(tags, name_rst, img_path)
 
     @staticmethod
     def generate_img(
