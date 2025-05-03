@@ -33,7 +33,7 @@ Each colormap is also labeled as:
     can generate misleading visualizations. Colormaps from ``colorcet`` and
     ``cmocean`` are therefore generally recommended over those from ``matplotlib``.
     See `the misuse of colour in science communication <https://doi.org/10.1038/s41467-020-19160-7>`_
-    and `testing-perceptual-uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
+    and `testing perceptual uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
     for more information.
 
 .. note::
