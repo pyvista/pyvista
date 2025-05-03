@@ -1915,7 +1915,7 @@ def get_cmap_safe(
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
-            cmap = IPYGANY_MAP[cmap]
+            cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
 
         msg_template = (
             'Package `{}` is required to use colormap {!r}.\n'
@@ -1954,7 +1954,7 @@ def get_cmap_safe(
                 cmap = getattr(colormaps, cmap)
             else:
                 try:
-                    cmap = colormaps[cmap]
+                    cmap = colormaps[cmap]  # type: ignore[assignment]
                 except KeyError:
                     msg = f"Invalid colormap '{cmap}'"
                     raise ValueError(msg) from None
@@ -1962,10 +1962,10 @@ def get_cmap_safe(
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
-                msg = 'When inputting a list as a cmap, each item should be a string.'
+                msg = 'When inputting a list as a cmap, each item should be a string.'  # type: ignore[unreachable]
                 raise TypeError(msg)
 
-        cmap = ListedColormap(cmap)
+        cmap = ListedColormap(cmap)  # type: ignore[assignment]
 
     return cmap
 

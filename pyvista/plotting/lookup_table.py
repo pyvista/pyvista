@@ -745,7 +745,12 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
-    def apply_cmap(self, cmap: ColormapOptions, n_values: int = 256, flip: bool = False):
+    def apply_cmap(
+        self,
+        cmap: ColormapOptions | list[str] | LookupTable,
+        n_values: int = 256,
+        flip: bool = False,
+    ):
         """Assign a colormap to this lookup table.
 
         This can be used instead of :attr:`LookupTable.cmap` when you need to
@@ -776,8 +781,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if isinstance(cmap, list):
             n_values = len(cmap)
 
-        cmap = get_cmap_safe(cmap)
-        values = cmap(np.linspace(0, 1, n_values)) * 255
+        cmap = get_cmap_safe(cmap)  # type: ignore[arg-type]
+        values = cmap(np.linspace(0, 1, n_values)) * 255  # type: ignore[misc, operator]
 
         if flip:
             values = values[::-1]
@@ -789,7 +794,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if self._opacity_parm[0] is not None:
             self.apply_opacity(*self._opacity_parm)
 
-        self._cmap = cmap
+        self._cmap = cmap  # type: ignore[assignment]
 
     def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
         """Assign custom opacity to this lookup table.
@@ -917,7 +922,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self.apply_cmap(self._cmap, value)
+            self.apply_cmap(self._cmap, value)  # type: ignore[arg-type]
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
