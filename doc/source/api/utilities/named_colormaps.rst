@@ -130,7 +130,7 @@ Prefix :
     - ``CB``: Colorblind—safe for red—green color vision deficiency (protanopia/deuteranopia)
     - ``CBT``: Colorblind—safe for blue—yellow color vision deficiency (tritanopia)
 
-Colormap type :
+Type :
     The type of colormap.
 
     - ``C``: Cyclic
