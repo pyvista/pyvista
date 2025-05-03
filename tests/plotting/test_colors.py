@@ -265,8 +265,15 @@ def reset_matplotlib_cmaps():
 
 @pytest.mark.usefixtures('reset_matplotlib_cmaps')
 def test_cmaps_matplotlib_allowed():
+    mpl_colormaps = mpl.colormaps
+    if (
+        'berlin' not in mpl_colormaps
+        and 'vanimo' not in mpl_colormaps
+        and 'managua' not in mpl_colormaps
+    ):
+        pytest.xfail('Older Matplotlib is missing a few colormaps.')
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(mpl.colormaps)
+    actual = set(mpl_colormaps)
     expected = set(_MATPLOTLIB_CMAPS)
     assert actual == expected
 
