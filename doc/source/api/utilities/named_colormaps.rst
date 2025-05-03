@@ -125,10 +125,14 @@ Where the prefix and suffix are optional (``[]``) and the type and number are
 required (``{}``).
 
 Prefix :
+    Indicates additional information about color perception.
+
     - ``CB``: Colorblind—safe for red—green color vision deficiency (protanopia/deuteranopia)
     - ``CBT``: Colorblind—safe for blue—yellow color vision deficiency (tritanopia)
 
 Colormap type :
+    The type of colormap.
+
     - ``C``: Cyclic
     - ``D``: Diverging
     - ``L``: Linear
