@@ -152,11 +152,11 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check package
-        run: tox run -e check_package --colored=yes
+        run: tox run -e package-check --colored=yes
 
       - name: Upload to PyPi
         if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
-        run: tox run -e publish_package --colored=yes
+        run: tox run -e package-publish --colored=yes
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
