@@ -82,7 +82,7 @@ Cyclic
 ------
 
 Colormaps designed to wrap around smoothly, best for data that is inherently
-circular (e.g., angles, phase).
+circular such as angles and phase.
 
 .. dropdown::
     :open:
@@ -177,7 +177,7 @@ Cyclic
 ------
 
 Colormaps designed to wrap around smoothly, best for data that is inherently
-circular (e.g., angles, phase).
+circular such as angles and phase.
 
 .. dropdown::
     :open:
