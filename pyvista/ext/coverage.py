@@ -12,7 +12,6 @@ Modified slightly for ``pyvista``.
 
 from __future__ import annotations
 
-# Removed unused import: glob
 from importlib import import_module
 import inspect
 from os import path
