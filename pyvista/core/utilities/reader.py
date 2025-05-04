@@ -3074,7 +3074,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_fsm(load=False)
+    >>> filename = examples.download_mug(load=False)
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
