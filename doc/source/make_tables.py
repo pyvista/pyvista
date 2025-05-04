@@ -1060,7 +1060,7 @@ class ColormapTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: {}
-        |   :widths: 15 25 60
+        |   :widths: 20 25 55
         |   :header-rows: 1
         |   :stub-columns: 1
         |
@@ -1100,8 +1100,8 @@ class ColormapTable(DocTable):
             'matplotlib': ':bdg-secondary:`mpl`',
         }
         type_mapping = {
-            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LSCm`',
-            mpl.colors.ListedColormap: ':bdg-muted:`LCm`',
+            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LSC`',
+            mpl.colors.ListedColormap: ':bdg-muted:`LC`',
         }
         perceptually_uniform_mapping = {
             True: ':bdg-muted:`PU`',
