@@ -593,7 +593,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
+    source_rel_name = relpath(source_file_name, setup.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
@@ -610,11 +610,11 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # how to link to files from the RST file
     dest_dir_link = os.path.join(  # noqa: PTH118
-        os.path.relpath(setup.confdir, rst_dir),
+        relpath(setup.confdir, rst_dir),
         source_rel_dir,
     ).replace(os.path.sep, '/')
     try:
-        build_dir_link = os.path.relpath(build_dir, rst_dir).replace(os.path.sep, '/')
+        build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
