@@ -134,13 +134,13 @@ def test_distance(camera):
 
 
 def test_thickness(camera):
-    thickness = np.random.default_rng().random(1)
+    thickness = np.random.default_rng().random()
     camera.thickness = thickness
     assert camera.thickness == thickness
 
 
 def test_parallel_scale(camera):
-    parallel_scale = np.random.default_rng().random(1)
+    parallel_scale = np.random.default_rng().random()
     camera.parallel_scale = parallel_scale
     assert camera.parallel_scale == parallel_scale
 
@@ -148,7 +148,7 @@ def test_parallel_scale(camera):
 def test_zoom(camera):
     camera.enable_parallel_projection()
     orig_scale = camera.parallel_scale
-    zoom = np.random.default_rng().random(1)
+    zoom = np.random.default_rng().random()
     camera.zoom(zoom)
     assert camera.parallel_scale == orig_scale / zoom
 
@@ -172,14 +172,14 @@ def test_disable_parallel_projection(camera):
 
 
 def test_clipping_range(camera):
-    near_point = np.random.default_rng().random(1)
-    far_point = near_point + np.random.default_rng().random(1)
+    near_point = np.random.default_rng().random()
+    far_point = near_point + np.random.default_rng().random()
     points = (near_point, far_point)
     camera.clipping_range = points
     assert camera.GetClippingRange() == points
     assert camera.clipping_range == points
 
-    far_point = near_point - np.random.default_rng().random(1)
+    far_point = near_point - np.random.default_rng().random()
     points = (near_point, far_point)
     with pytest.raises(ValueError):  # noqa: PT011
         camera.clipping_range = points

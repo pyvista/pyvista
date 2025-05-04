@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import logging
 from pathlib import Path
 import re
@@ -61,7 +62,6 @@ class VtkErrorCatcher:
     >>> import pyvista as pv
     >>> with pv.VtkErrorCatcher() as error_catcher:
     ...     sphere = pv.Sphere()
-    ...
 
     """
 
@@ -132,9 +132,9 @@ class Observer:
     def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
         if kind == 'ERROR':
-            logging.error(alert)
+            logging.error(alert)  # noqa: LOG015
         else:
-            logging.warning(alert)
+            logging.warning(alert)  # noqa: LOG015
 
     def __call__(self, _obj, _event, message) -> None:
         """Declare standard call function for the observer.
@@ -191,7 +191,8 @@ class Observer:
     def observe(self, algorithm):
         """Make this an observer of an algorithm."""
         if self.__observing:
-            raise RuntimeError('This error observer is already observing an algorithm.')
+            msg = 'This error observer is already observing an algorithm.'
+            raise RuntimeError(msg)
         if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
@@ -226,10 +227,9 @@ class ProgressMonitor:
 
     def __init__(self, algorithm, message=''):
         """Initialize observer."""
-        try:
-            from tqdm import tqdm  # noqa: F401
-        except ImportError:
-            raise ImportError('Please install `tqdm` to monitor algorithms.')
+        if not importlib.util.find_spec('tqdm'):
+            msg = 'Please install `tqdm` to monitor algorithms.'
+            raise ImportError(msg)
         self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
@@ -243,7 +243,7 @@ class ProgressMonitor:
     def handler(self, sig, frame) -> None:
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
-        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
     def __call__(self, obj, *args) -> None:
         """Call progress update callback.

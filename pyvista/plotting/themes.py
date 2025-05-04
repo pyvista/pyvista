@@ -42,7 +42,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 import warnings
 
-import pyvista  # noqa: TCH001
+import pyvista  # noqa: TC001
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -51,10 +51,9 @@ from .colors import get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pyvista.core._typing_core import Number
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -137,14 +136,14 @@ def set_plot_theme(theme):
         try:
             new_theme_type = _NATIVE_THEMES[theme].value
         except KeyError:
-            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
+            msg = f"Theme {theme} not found in PyVista's native themes."
+            raise ValueError(msg)
         pyvista.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
-        raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}',
-        )
+        msg = f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        raise TypeError(msg)
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
@@ -203,10 +202,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if (
-                isinstance(attr, (tuple, list))
-                and tuple(attr) != tuple(other_attr)
-                or not attr == other_attr
-            ):
+                isinstance(attr, (tuple, list)) and tuple(attr) != tuple(other_attr)
+            ) or not attr == other_attr:
                 return False
 
         return True
@@ -250,14 +247,14 @@ class _LightingConfig(_ThemeConfig):
     """
 
     __slots__ = [
+        '_ambient',
+        '_diffuse',
+        '_emissive',
         '_interpolation',
         '_metallic',
         '_roughness',
-        '_ambient',
-        '_diffuse',
         '_specular',
         '_specular_power',
-        '_emissive',
     ]
 
     def __init__(self):
@@ -487,7 +484,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
+    __slots__ = ['_enabled', '_number_of_peels', '_occlusion_ratio']
 
     def __init__(self):
         self._number_of_peels = 4
@@ -570,7 +567,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
+    __slots__ = ['_color', '_decimate', '_enabled', '_feature_angle', '_line_width', '_opacity']
 
     def __init__(self):
         self._color = Color('black')
@@ -669,7 +666,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._decimate  # type: ignore[return-value]
 
     @decimate.setter
-    def decimate(self, decimate: float):
+    def decimate(self, decimate: float | None):
         if decimate is None:
             self._decimate = None
         else:
@@ -703,7 +700,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_width', '_height', '_position_x', '_position_y']
+    __slots__ = ['_height', '_position_x', '_position_y', '_width']
 
     def __init__(self):
         self._width = None
@@ -827,7 +824,7 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
+    __slots__ = ['_box', '_show', '_x_color', '_y_color', '_z_color']
 
     def __init__(self):
         self._x_color = Color('tomato')
@@ -991,7 +988,7 @@ class _Font(_ThemeConfig):
 
     """
 
-    __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
+    __slots__ = ['_color', '_family', '_fmt', '_label_size', '_size', '_title_size']
 
     def __init__(self):
         self._family = 'arial'
@@ -1073,7 +1070,7 @@ class _Font(_ThemeConfig):
         return self._title_size  # type: ignore[return-value]
 
     @title_size.setter
-    def title_size(self, title_size: int):
+    def title_size(self, title_size: int | None):
         if title_size is None:
             self._title_size = None
         else:
@@ -1094,7 +1091,7 @@ class _Font(_ThemeConfig):
         return self._label_size  # type: ignore[return-value]
 
     @label_size.setter
-    def label_size(self, label_size: int):
+    def label_size(self, label_size: int | None):
         if label_size is None:
             self._label_size = None
         else:
@@ -1139,15 +1136,15 @@ class _SliderStyleConfig(_ThemeConfig):
     """PyVista configuration for a single slider style."""
 
     __slots__ = [
+        '_cap_length',
+        '_cap_opacity',
+        '_cap_width',
         '_name',
+        '_slider_color',
         '_slider_length',
         '_slider_width',
-        '_slider_color',
-        '_tube_width',
         '_tube_color',
-        '_cap_opacity',
-        '_cap_length',
-        '_cap_width',
+        '_tube_width',
     ]
 
     def __init__(self):
@@ -1383,7 +1380,8 @@ class _SliderConfig(_ThemeConfig):
     @classic.setter
     def classic(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+            msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._classic = config
 
     @property
@@ -1394,7 +1392,8 @@ class _SliderConfig(_ThemeConfig):
     @modern.setter
     def modern(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+            msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._modern = config
 
     def __repr__(self):
@@ -1427,15 +1426,15 @@ class _TrameConfig(_ThemeConfig):
     """
 
     __slots__ = [
+        '_default_mode',
         '_interactive_ratio',
-        '_still_ratio',
+        '_jupyter_extension_available',
+        '_jupyter_extension_enabled',
         '_jupyter_server_name',
         '_jupyter_server_port',
         '_server_proxy_enabled',
         '_server_proxy_prefix',
-        '_default_mode',
-        '_jupyter_extension_available',
-        '_jupyter_extension_enabled',
+        '_still_ratio',
     ]
 
     def __init__(self):
@@ -1469,7 +1468,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = 'trame'
 
     @property
-    def interactive_ratio(self) -> Number:  # numpydoc ignore=RT01
+    def interactive_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the interactive ratio for PyVista Trame views.
 
         Examples
@@ -1481,11 +1480,11 @@ class _TrameConfig(_ThemeConfig):
         return self._interactive_ratio
 
     @interactive_ratio.setter
-    def interactive_ratio(self, interactive_ratio: Number):
+    def interactive_ratio(self, interactive_ratio: float):
         self._interactive_ratio = interactive_ratio  # type: ignore[assignment]
 
     @property
-    def still_ratio(self) -> Number:  # numpydoc ignore=RT01
+    def still_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the still ratio for PyVista Trame views.
 
         Examples
@@ -1497,7 +1496,7 @@ class _TrameConfig(_ThemeConfig):
         return self._still_ratio
 
     @still_ratio.setter
-    def still_ratio(self, still_ratio: Number):
+    def still_ratio(self, still_ratio: float):
         self._still_ratio = still_ratio  # type: ignore[assignment]
 
     @property
@@ -1568,7 +1567,8 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_enabled.setter
     def jupyter_extension_enabled(self, enabled: bool):
         if enabled and not self.jupyter_extension_available:
-            raise ValueError('The trame_jupyter_extension is not available')
+            msg = 'The trame_jupyter_extension is not available'
+            raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
             warnings.warn('Enabling jupyter_extension will disable server_proxy')
@@ -1608,10 +1608,10 @@ class _CameraConfig(_ThemeConfig):
     """
 
     __slots__ = [
-        '_position',
-        '_viewup',
         '_parallel_projection',
         '_parallel_scale',
+        '_position',
+        '_viewup',
     ]
 
     def __init__(self):
@@ -1718,62 +1718,63 @@ class Theme(_ThemeConfig):
     """
 
     __slots__ = [
-        '_name',
-        '_background',
-        '_jupyter_backend',
-        '_trame',
-        '_full_screen',
-        '_window_size',
-        '_image_scale',
-        '_camera',
-        '_notebook',
-        '_font',
+        '_above_range_color',
+        '_allow_empty_mesh',
+        '_anti_aliasing',
         '_auto_close',
+        '_axes',
+        '_background',
+        '_before_close_callback',
+        '_before_close_callback',
+        '_below_range_color',
+        '_camera',
         '_cmap',
         '_color',
         '_color_cycler',
-        '_above_range_color',
-        '_below_range_color',
-        '_nan_color',
-        '_edge_color',
-        '_line_width',
-        '_point_size',
-        '_outline_color',
-        '_floor_color',
-        '_colorbar_orientation',
         '_colorbar_horizontal',
+        '_colorbar_orientation',
         '_colorbar_vertical',
-        '_show_scalar_bar',
-        '_show_edges',
-        '_show_vertices',
-        '_lighting',
-        '_interactive',
-        '_render_points_as_spheres',
-        '_render_lines_as_tubes',
-        '_transparent_background',
-        '_title',
-        '_axes',
-        '_multi_samples',
-        '_multi_rendering_splitting_position',
-        '_volume_mapper',
-        '_smooth_shading',
         '_depth_peeling',
+        '_edge_color',
+        '_edge_opacity',
+        '_enable_camera_orientation_widget',
+        '_floor_color',
+        '_font',
+        '_full_screen',
+        '_hidden_line_removal',
+        '_image_scale',
+        '_interactive',
+        '_interpolate_before_map',
+        '_jupyter_backend',
+        '_lighting',
+        '_lighting_params',
+        '_line_width',
+        '_logo_file',
+        '_multi_rendering_splitting_position',
+        '_multi_samples',
+        '_name',
+        '_nan_color',
+        '_notebook',
+        '_opacity',
+        '_outline_color',
+        '_point_size',
+        '_render_lines_as_tubes',
+        '_render_points_as_spheres',
+        '_resample_environment_texture',
+        '_return_cpos',
+        '_sharp_edges_feature_angle',
+        '_show_edges',
+        '_show_scalar_bar',
+        '_show_vertices',
         '_silhouette',
         '_slider_styles',
-        '_return_cpos',
-        '_hidden_line_removal',
-        '_anti_aliasing',
-        '_enable_camera_orientation_widget',
+        '_smooth_shading',
         '_split_sharp_edges',
-        '_sharp_edges_feature_angle',
-        '_before_close_callback',
-        '_allow_empty_mesh',
-        '_lighting_params',
-        '_interpolate_before_map',
-        '_opacity',
-        '_before_close_callback',
-        '_logo_file',
-        '_edge_opacity',
+        '_title',
+        '_trame',
+        '_transparent_background',
+        '_volume_mapper',
+        '_window_size',
     ]
 
     def __init__(self):
@@ -1858,6 +1859,8 @@ class Theme(_ThemeConfig):
 
         self._logo_file = None
 
+        self._resample_environment_texture: bool | float = False
+
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
         """Return or set hidden line removal.
@@ -1896,7 +1899,7 @@ class Theme(_ThemeConfig):
         will be interpolated across the topology of the dataset which is
         more accurate.
 
-        See also :ref:`interpolate_before_mapping_example`.
+        See also :ref:`interpolate_before_map_example`.
 
         Examples
         --------
@@ -1910,23 +1913,21 @@ class Theme(_ThemeConfig):
 
         Common display argument to make sure all else is constant
 
-        >>> dargs = dict(
-        ...     scalars='Elevation', cmap='rainbow', show_edges=True
-        ... )
+        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.subplot(0, 1)
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.link_views()
         >>> p.camera_position = [
@@ -2122,7 +2123,8 @@ class Theme(_ThemeConfig):
     @trame.setter
     def trame(self, config: _TrameConfig):
         if not isinstance(config, _TrameConfig):
-            raise TypeError('Configuration type must be `_TrameConfig`.')
+            msg = 'Configuration type must be `_TrameConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._trame = config
 
     @property
@@ -2202,9 +2204,8 @@ class Theme(_ThemeConfig):
         elif isinstance(camera, _CameraConfig):
             self._camera = camera
         else:
-            raise TypeError(
-                f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}',
-            )
+            msg = f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}'
+            raise TypeError(msg)
 
     @property
     def notebook(self) -> bool | None:  # numpydoc ignore=RT01
@@ -2245,11 +2246,13 @@ class Theme(_ThemeConfig):
     @window_size.setter
     def window_size(self, window_size: list[int]):
         if len(window_size) != 2:
-            raise ValueError('Expected a length 2 iterable for ``window_size``.')
+            msg = 'Expected a length 2 iterable for ``window_size``.'
+            raise ValueError(msg)
 
         # ensure positive size
         if window_size[0] < 0 or window_size[1] < 0:
-            raise ValueError('Window size must be a positive value.')
+            msg = 'Window size must be a positive value.'
+            raise ValueError(msg)
 
         self._window_size = window_size
 
@@ -2262,7 +2265,8 @@ class Theme(_ThemeConfig):
     def image_scale(self, value: int):
         value = int(value)
         if value < 1:
-            raise ValueError('Scale factor must be a positive integer.')
+            msg = 'Scale factor must be a positive integer.'
+            raise ValueError(msg)
         self._image_scale = int(value)
 
     @property
@@ -2303,7 +2307,8 @@ class Theme(_ThemeConfig):
     @font.setter
     def font(self, config: _Font):
         if not isinstance(config, _Font):
-            raise TypeError('Configuration type must be `_Font`.')
+            msg = 'Configuration type must be `_Font`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._font = config
 
     @property
@@ -2332,7 +2337,8 @@ class Theme(_ThemeConfig):
     def cmap(self, cmap):
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
-            raise ValueError(f'Invalid color map {cmap}')
+            msg = f'Invalid color map {cmap}'
+            raise ValueError(msg)
         self._cmap = cmap
 
     @property
@@ -2518,7 +2524,8 @@ class Theme(_ThemeConfig):
     @colorbar_orientation.setter
     def colorbar_orientation(self, colorbar_orientation: str):
         if colorbar_orientation not in ['vertical', 'horizontal']:
-            raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
+            msg = 'Colorbar orientation must be either "vertical" or "horizontal"'
+            raise ValueError(msg)
         self._colorbar_orientation = colorbar_orientation
 
     @property
@@ -2542,7 +2549,8 @@ class Theme(_ThemeConfig):
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`.')
+            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._colorbar_horizontal = config
 
     @property
@@ -2567,7 +2575,8 @@ class Theme(_ThemeConfig):
     @colorbar_vertical.setter
     def colorbar_vertical(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`.')
+            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._colorbar_vertical = config
 
     @property
@@ -2764,9 +2773,11 @@ class Theme(_ThemeConfig):
     def anti_aliasing(self, anti_aliasing: str | None):
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
-                raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
+                msg = 'anti_aliasing must be either "ssaa", "msaa", or "fxaa"'
+                raise ValueError(msg)
         elif anti_aliasing is not None:
-            raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
+            msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
         self._anti_aliasing = anti_aliasing  # type: ignore[assignment]
 
@@ -2841,10 +2852,11 @@ class Theme(_ThemeConfig):
     def volume_mapper(self, mapper: str):
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
-            raise ValueError(
-                f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}",
+            msg = (
+                f'Mapper ({mapper}) unknown. Available volume mappers '
+                f'include:\n {", ".join(mappers)}'
             )
+            raise ValueError(msg)
 
         self._volume_mapper = mapper
 
@@ -2886,7 +2898,8 @@ class Theme(_ThemeConfig):
     @depth_peeling.setter
     def depth_peeling(self, config: _DepthPeelingConfig):
         if not isinstance(config, _DepthPeelingConfig):
-            raise TypeError('Configuration type must be `_DepthPeelingConfig`.')
+            msg = 'Configuration type must be `_DepthPeelingConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._depth_peeling = config
 
     @property
@@ -2908,7 +2921,8 @@ class Theme(_ThemeConfig):
     @silhouette.setter
     def silhouette(self, config: _SilhouetteConfig):
         if not isinstance(config, _SilhouetteConfig):
-            raise TypeError('Configuration type must be `_SilhouetteConfig`')
+            msg = 'Configuration type must be `_SilhouetteConfig`'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._silhouette = config
 
     @property
@@ -2919,7 +2933,8 @@ class Theme(_ThemeConfig):
     @slider_styles.setter
     def slider_styles(self, config: _SliderConfig):
         if not isinstance(config, _SliderConfig):
-            raise TypeError('Configuration type must be `_SliderConfig`.')
+            msg = 'Configuration type must be `_SliderConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._slider_styles = config
 
     @property
@@ -2947,7 +2962,8 @@ class Theme(_ThemeConfig):
     @axes.setter
     def axes(self, config: _AxesConfig):
         if not isinstance(config, _AxesConfig):
-            raise TypeError('Configuration type must be `_AxesConfig`.')
+            msg = 'Configuration type must be `_AxesConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._axes = config
 
     @property
@@ -3095,9 +3111,8 @@ class Theme(_ThemeConfig):
             theme = load_theme(theme)
 
         if not isinstance(theme, Theme):
-            raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.',
-            )
+            msg = '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+            raise TypeError(msg)
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
@@ -3188,8 +3203,46 @@ class Theme(_ThemeConfig):
     @lighting_params.setter
     def lighting_params(self, config: _LightingConfig):
         if not isinstance(config, _LightingConfig):
-            raise TypeError('Configuration type must be `_LightingConfig`.')
+            msg = 'Configuration type must be `_LightingConfig`.'  # type: ignore[unreachable]
+            raise TypeError(msg)
         self._lighting_params = config
+
+    @property
+    def resample_environment_texture(self) -> bool | float:  # numpydoc ignore=RT01
+        """Set or return resampling environment texture.
+
+        Resample the environment texture when using :meth:`~pyvista.Plotter.set_environment_texture`.
+        Set this to a float to set the sampling rate explicitly or set
+        to ``True`` to downsample the texture to 1/16th of its original
+        resolution.
+
+        Downsampling the texture can substantially improve performance for
+        some environments, e.g. headless setups or if GPU support is limited.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        Enable resampling the environment texture globally.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.resample_environment_texture = True
+        >>> pv.global_theme.resample_environment_texture
+        True
+
+        Disable the resampling the environment texture.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.resample_environment_texture = False
+        >>> pv.global_theme.resample_environment_texture
+        False
+
+        """
+        return self._resample_environment_texture
+
+    @resample_environment_texture.setter
+    def resample_environment_texture(self, value: bool | float):
+        self._resample_environment_texture = value
 
     @property
     def logo_file(self) -> str | None:  # numpydoc ignore=RT01
@@ -3225,7 +3278,8 @@ class Theme(_ThemeConfig):
             path = None
         else:
             if not pathlib.Path(logo_file).exists():
-                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+                msg = f'Logo file ({logo_file}) not found.'
+                raise FileNotFoundError(msg)
             path = str(logo_file)
         self._logo_file = path
 
@@ -3361,6 +3415,7 @@ class DocumentProTheme(DocumentTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        self.name = 'document_pro'
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
@@ -3368,6 +3423,21 @@ class DocumentProTheme(DocumentTheme):
         self.depth_peeling.number_of_peels = 4
         self.depth_peeling.occlusion_ratio = 0.0
         self.depth_peeling.enabled = True
+
+
+class _DocumentBuildTheme(DocumentTheme):
+    """Theme used for building the documentation."""
+
+    def __init__(self):
+        """Initialize the theme."""
+        super().__init__()
+        self.name = 'document_build'
+        self.window_size = [1024, 768]
+        self.font.size = 22
+        self.font.label_size = 22
+        self.font.title_size = 22
+        self.return_cpos = False
+        self.resample_environment_texture = True
 
 
 class _TestingTheme(Theme):
@@ -3380,6 +3450,9 @@ class _TestingTheme(Theme):
     Also disables ``return_cpos`` to make it easier for us to write
     examples without returning camera positions.
 
+    Resampling is also enabled for environment textures since this
+    can be very slow without a GPU.
+
     """
 
     def __init__(self):
@@ -3389,6 +3462,7 @@ class _TestingTheme(Theme):
         self.window_size = [400, 400]
         self.axes.show = False
         self.return_cpos = False
+        self.resample_environment_texture = True
 
 
 class _NATIVE_THEMES(Enum):
@@ -3397,6 +3471,7 @@ class _NATIVE_THEMES(Enum):
     paraview = ParaViewTheme
     document = DocumentTheme
     document_pro = DocumentProTheme
+    document_build = _DocumentBuildTheme
     dark = DarkTheme
     default = document
     testing = _TestingTheme

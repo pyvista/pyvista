@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import functools
 from importlib import metadata
+from inspect import BoundArguments
+from inspect import Parameter
+from inspect import Signature
+import os
+import platform
 import re
+from typing import Optional
+from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
@@ -11,6 +18,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.core._vtk_core import VersionInfo
+from pyvista.plotting.utilities.gl_checks import uses_egl
 
 pyvista.OFF_SCREEN = True
 
@@ -68,7 +76,7 @@ def flaky_test(
 
 
 @pytest.fixture
-def global_variables_reset():  # noqa: PT004
+def global_variables_reset():
     tmp_screenshots = pyvista.ON_SCREENSHOT
     tmp_figurepath = pyvista.FIGURE_PATH
     yield
@@ -77,7 +85,7 @@ def global_variables_reset():  # noqa: PT004
 
 
 @pytest.fixture(scope='session', autouse=True)
-def set_mpl():  # noqa: PT004
+def set_mpl():
     """Avoid matplotlib windows popping up."""
     try:
         import matplotlib as mpl
@@ -86,6 +94,19 @@ def set_mpl():  # noqa: PT004
     else:
         mpl.rcdefaults()
         mpl.use('agg', force=True)
+
+
+@pytest.fixture(autouse=True)
+def reset_global_state():
+    yield
+
+    pyvista.vtk_snake_case('error')
+    assert pyvista.vtk_snake_case() == 'error'
+
+    pyvista.vtk_verbosity('info')
+    assert pyvista.vtk_verbosity() == 'info'
+
+    pyvista.PICKLE_FORMAT = 'vtk'
 
 
 @pytest.fixture
@@ -260,35 +281,214 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
-def marker_names(item):
+def pytest_configure(config: pytest.Config):
+    """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
+    warnings = config.getini('filterwarnings')
+
+    if pyvista.vtk_version_info < (9, 1):
+        warnings.append(
+            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
+        )
+
+
+def marker_names(item: pytest.Item):
     return [marker.name for marker in item.iter_markers()]
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     test_downloads = config.getoption('--test_downloads')
 
-    # skip all tests that need downloads
-    if not test_downloads:
-        skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
-        for item in items:
+    for item in items:
+        # skip all tests that need downloads
+        if not test_downloads:
             if 'needs_download' in marker_names(item):
+                skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
                 item.add_marker(skip_downloads)
 
 
-def pytest_runtest_setup(item):
+def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
+    """Test for a given args and kwargs for a mark using its signature"""
+
+    try:
+        bounds = sig.bind(*item_mark.args, **item_mark.kwargs)
+    except TypeError as e:
+        msg = f'Marker `{item_mark.name}` called with incorrect arguments.\nSignature should be: @pytest.mark.{item_mark.name}{sig}'
+        raise ValueError(msg) from e
+    else:
+        bounds.apply_defaults()
+        return bounds
+
+
+def _get_min_max_vtk_version(
+    item_mark: pytest.Mark,
+    sig: Signature,
+) -> tuple[tuple[int] | None, tuple[int] | None, BoundArguments]:
+    bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+
+    def _pad_version(val: tuple[int] | None):
+        if val is None:
+            return val
+
+        if (l := len(val)) == (expected := 3):
+            return val
+
+        if l > expected:
+            msg = f'Version tuple incorrect length (needs <= {expected})'
+            raise ValueError(msg)
+
+        return val + (0,) * (expected - l)
+
+    # Distinguish scenarios from positional arguments
+    if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['at_least'] is not None):
+        msg = f'Cannot specify both *args and `at_least` keyword argument to `{item_mark.name}` marker.'
+        raise ValueError(msg)
+
+    if len(args) > 0:
+        min_version = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
+        return _pad_version(min_version), _pad_version(bounds.arguments['less_than']), bounds
+
+    _min = bounds.arguments['at_least']
+    _max = bounds.arguments['less_than']
+
+    if _max is None and _min is None:
+        msg = f'Need to specify either `at_least` or `less_than` keyword arguments to `{item_mark.name}` marker.'
+        raise ValueError(msg)
+
+    return _pad_version(_min), _pad_version(_max), bounds
+
+
+def pytest_runtest_setup(item: pytest.Item):
     """Custom setup to handle skips based on VTK version.
 
-    See pytest.mark.needs_vtk_version in pyproject.toml.
-
+    See custom marks in pyproject.toml.
     """
+
+    # this test needs a given VTK version
     for item_mark in item.iter_markers('needs_vtk_version'):
-        # this test needs the given VTK version
-        # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
-        args = item_mark.args
-        version_needed = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
-        if pyvista.vtk_version_info < version_needed:
-            version_str = '.'.join(map(str, version_needed))
-            pytest.skip(f'Test needs VTK {version_str} or newer.')
+        sig = Signature(
+            [
+                Parameter(
+                    'args',
+                    kind=Parameter.VAR_POSITIONAL,
+                    annotation=Union[int, tuple[int]],
+                ),
+                Parameter(
+                    'at_least',
+                    kind=Parameter.KEYWORD_ONLY,
+                    annotation=Optional[tuple[int]],
+                    default=None,
+                ),
+                Parameter(
+                    'less_than',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Optional[tuple[int]],
+                ),
+                Parameter(
+                    'reason',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Optional[str],
+                ),
+            ]
+        )
+        _min, _max, bounds = _get_min_max_vtk_version(item_mark=item_mark, sig=sig)
+        _min = (_min,) if isinstance(_min, int) else _min
+        _max = (_max,) if isinstance(_max, int) else _max
+
+        curr_version = pyvista.vtk_version_info
+
+        if _max is None and curr_version < _min:
+            reason = item_mark.kwargs.get(
+                'reason', f'Test needs VTK version >= {_min}, current is {curr_version}.'
+            )
+            pytest.skip(reason=reason)
+
+        if _min is None and curr_version >= _max:
+            reason = item_mark.kwargs.get(
+                'reason', f'Test needs VTK version < {_max}, current is {curr_version}.'
+            )
+            pytest.skip(reason=reason)
+
+        if _min is not None and _max is not None:
+            if _min > _max:
+                msg = 'Cannot specify a minimum version greater than the maximum one.'
+                raise ValueError(msg)
+
+            if curr_version < _min or curr_version >= _max:
+                reason = item_mark.kwargs.get(
+                    'reason',
+                    f'Test needs {_min} <= VTK version < {_max}, current is {curr_version}.',
+                )
+                pytest.skip(reason=reason)
+
+    if item_mark := item.get_closest_marker('skip_egl'):
+        sig = Signature(
+            [
+                Parameter(
+                    r := 'reason',
+                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    default='Test fails when using OSMesa/EGL VTK build',
+                    annotation=str,
+                )
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        if uses_egl():
+            pytest.skip(bounds.arguments[r])
+
+    if item_mark := item.get_closest_marker('skip_windows'):
+        sig = Signature(
+            [
+                Parameter(
+                    r := 'reason',
+                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    default='Test fails on Windows',
+                    annotation=str,
+                )
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        if os.name == 'nt':
+            pytest.skip(bounds.arguments[r])
+
+    if item_mark := item.get_closest_marker('skip_mac'):
+        sig = Signature(
+            [
+                Parameter(
+                    r := 'reason',
+                    kind=Parameter.POSITIONAL_OR_KEYWORD,
+                    default='Test fails on MacOS',
+                    annotation=str,
+                ),
+                Parameter(
+                    p := 'processor',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Union[str, None],
+                ),
+                Parameter(
+                    m := 'machine',
+                    kind=Parameter.KEYWORD_ONLY,
+                    default=None,
+                    annotation=Union[str, None],
+                ),
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+
+        should_skip = platform.system() == 'Darwin'
+        if (proc := bounds.arguments[p]) is not None:
+            should_skip &= proc == platform.processor()
+
+        if (machine := bounds.arguments[m]) is not None:
+            should_skip &= machine == platform.machine()
+
+        if should_skip:
+            pytest.skip(bounds.arguments[r])
 
 
 def pytest_report_header(config):
@@ -319,7 +519,7 @@ def pytest_report_header(config):
     lines.append('required packages: ' + ', '.join(items))
 
     not_found = []
-    for pkg_extra in extra.keys():
+    for pkg_extra in extra.keys():  # noqa: PLC0206
         installed = []
         for name in extra[pkg_extra]:
             try:

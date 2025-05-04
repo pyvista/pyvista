@@ -12,7 +12,7 @@ from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
@@ -60,7 +60,8 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
             #     see workaround in PreserveTypeAlgorithmBase.
             #     This check remains as a fail-safe.
-            raise PyVistaPipelineError('The passed algorithm is failing to produce an output.')
+            msg = 'The passed algorithm is failing to produce an output.'  # type: ignore[unreachable]
+            raise PyVistaPipelineError(msg)
         # NOTE: Return the vtkAlgorithmOutput only if port is non-zero. Segfaults can sometimes
         #       happen with vtkAlgorithmOutput. This logic will mostly avoid those issues.
         #       See https://gitlab.kitware.com/vtk/vtk/-/issues/18776
@@ -219,9 +220,9 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
-            output = inp.copy()  # type: ignore[union-attr]
-            if output.n_arrays:  # type: ignore[union-attr]
-                output.set_active_scalars(self.scalars_name, preference=self.preference)  # type: ignore[union-attr]
+            output = inp.copy()
+            if output.n_arrays:
+                output.set_active_scalars(self.scalars_name, preference=self.preference)
             out.ShallowCopy(output)
         except Exception:  # pragma: no cover
             traceback.print_exc()
@@ -267,7 +268,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
-            output = inp.cast_to_polydata(deep=False)  # type: ignore[union-attr]
+            output = inp.cast_to_polydata(deep=False)
             out.ShallowCopy(output)
         except Exception:  # pragma: no cover
             traceback.print_exc()
@@ -300,7 +301,8 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
-            raise ValueError('IDs must be set for points or cells or both.')
+            msg = 'IDs must be set for points or cells or both.'
+            raise ValueError(msg)
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 
@@ -330,13 +332,13 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
             out = self.GetOutputData(outInfo, 0)
-            output = inp.copy()  # type: ignore[union-attr]
+            output = inp.copy()
             if self.point_ids:
-                output.point_data['point_ids'] = np.arange(0, output.n_points, dtype=int)  # type: ignore[union-attr]
+                output.point_data['point_ids'] = np.arange(0, output.n_points, dtype=int)
             if self.cell_ids:
-                output.cell_data['cell_ids'] = np.arange(0, output.n_cells, dtype=int)  # type: ignore[union-attr]
-            if output.active_scalars_name in ['point_ids', 'cell_ids']:  # type: ignore[union-attr]
-                output.active_scalars_name = inp.active_scalars_name  # type: ignore[union-attr]
+                output.cell_data['cell_ids'] = np.arange(0, output.n_cells, dtype=int)
+            if output.active_scalars_name in ['point_ids', 'cell_ids']:
+                output.active_scalars_name = inp.active_scalars_name
             out.ShallowCopy(output)
         except Exception:  # pragma: no cover
             traceback.print_exc()
@@ -376,7 +378,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             clipped = wrap(self.GetInputData(inInfo, 0, 0))
             source = wrap(self.GetInputData(inInfo, 1, 0))
             out = self.GetOutputData(outInfo, 0)
-            output = source.extract_cells(np.unique(clipped.cell_data['cell_ids']))  # type: ignore[union-attr]
+            output = source.extract_cells(np.unique(clipped.cell_data['cell_ids']))
             out.ShallowCopy(output)
         except Exception:  # pragma: no cover
             traceback.print_exc()

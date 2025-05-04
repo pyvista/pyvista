@@ -90,7 +90,7 @@ def voxelize(
     pyvista.voxelize_volume
         Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
-    pyvista.PolyDataFilters.voxelize_binary_mask
+    pyvista.DataSetFilters.voxelize_binary_mask
         Similar function that returns a :class:`pyvista.ImageData` with point data.
 
     Examples
@@ -126,10 +126,8 @@ def voxelize(
     >>> mesh = pv.Cube(x_length=0.25)
     >>> vox = pv.voxelize(mesh=mesh, density=0.2)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
@@ -138,10 +136,8 @@ def voxelize(
 
     >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     """
@@ -154,13 +150,15 @@ def voxelize(
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        msg = f'Invalid density {density!r}, expected number or array-like.'
+        raise TypeError(msg)
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -261,7 +259,7 @@ def voxelize_volume(
         Similar function that returns a :class:`pyvista.UnstructuredGrid` of
         :attr:`~pyvista.CellType.VOXEL` cells.
 
-    pyvista.PolyDataFilters.voxelize_binary_mask
+    pyvista.DataSetFilters.voxelize_binary_mask
         Similar function that returns a :class:`pyvista.ImageData` with point data.
 
     pyvista.DataSetFilters.select_enclosed_points
@@ -337,13 +335,15 @@ def voxelize_volume(
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        msg = f'Invalid density {density!r}, expected number or array-like.'
+        raise TypeError(msg)
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -397,7 +397,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple of int, default: (101, 101, 101)
+    dimensions : tuple[int, int, int], default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 
@@ -421,7 +421,8 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError('Please specify dimensions.')
+        msg = 'Please specify dimensions.'
+        raise NotImplementedError(msg)
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.ImageData()
     image.dimensions = dimensions
@@ -448,6 +449,10 @@ def grid_from_sph_coords(theta, phi, r):
     -------
     pyvista.StructuredGrid
         Structured grid.
+
+    See Also
+    --------
+    :ref:`spherical_example`
 
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
@@ -580,8 +585,8 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
+    datasets : sequence[:class:`pyvista.DataSet`]
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
@@ -612,14 +617,17 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        raise TypeError(f'Expected a sequence, got {type(datasets).__name__}')
+        msg = f'Expected a sequence, got {type(datasets).__name__}'
+        raise TypeError(msg)
 
     if len(datasets) < 1:
-        raise ValueError('Expected at least one dataset.')
+        msg = 'Expected at least one dataset.'
+        raise ValueError(msg)
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f'Expected pyvista.DataSet, not {type(first).__name__}')
+        msg = f'Expected pyvista.DataSet, not {type(first).__name__}'
+        raise TypeError(msg)
 
     return datasets[0].merge(
         datasets[1:],
@@ -672,6 +680,11 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
         Instance of ``vtk.vtkPerlinNoise`` to a Perlin noise field as an
         implicit function. Use with :func:`pyvista.sample_function()
         <pyvista.core.utilities.features.sample_function>`.
+
+    See Also
+    --------
+    :ref:`perlin_noise_2d_example`
+    :ref:`perlin_noise_3d_example`
 
     Examples
     --------
@@ -781,9 +794,7 @@ def sample_function(
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
-    >>> grid.plot(
-    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
-    ... )
+    >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
     Sample Perlin noise in 2D and plot it.
 
@@ -791,7 +802,8 @@ def sample_function(
     >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
-    See :ref:`perlin_noise_2d_example` for a full example using this function.
+    See :ref:`perlin_noise_2d_example` and :ref:`perlin_noise_3d_example`
+    for a full example using this function.
 
     """
     # internal import to avoide circular dependency
@@ -813,11 +825,13 @@ def sample_function(
         samp.SetOutputScalarTypeToFloat()
     elif output_type == np.int64:
         if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+            msg = 'This function on Windows only supports int32 or smaller'
+            raise ValueError(msg)
         samp.SetOutputScalarTypeToLong()
     elif output_type == np.uint64:
         if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+            msg = 'This function on Windows only supports int32 or smaller'
+            raise ValueError(msg)
         samp.SetOutputScalarTypeToUnsignedLong()
     elif output_type == np.int32:
         samp.SetOutputScalarTypeToInt()
@@ -832,7 +846,8 @@ def sample_function(
     elif output_type == np.uint8:
         samp.SetOutputScalarTypeToUnsignedChar()
     else:
-        raise ValueError(f'Invalid output_type {output_type}')
+        msg = f'Invalid output_type {output_type}'
+        raise ValueError(msg)
 
     _update_alg(samp, progress_bar=progress_bar, message='Sampling')
     return wrap(samp.GetOutput())

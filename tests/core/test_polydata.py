@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
@@ -549,8 +550,11 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_main_has_priority(input_):
+@pytest.mark.parametrize(
+    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
+)
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
@@ -570,12 +574,9 @@ def test_merge_main_has_priority(input_):
             for j in (this.points == point).all(-1).nonzero()
         )
 
-    merged = mesh.merge(other, main_has_priority=True)
-    assert matching_point_data(merged, mesh, 'present_in_both')
-    assert merged.active_scalars_name == 'present_in_both'
-
-    merged = mesh.merge(other, main_has_priority=False)
-    assert matching_point_data(merged, other, 'present_in_both')
+    merged = mesh.merge(other, main_has_priority=main_has_priority)
+    expected_to_match = mesh if main_has_priority else other
+    assert matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
 
@@ -679,6 +680,24 @@ def test_triangulate_filter(plane):
     assert not pv.PolyData(plane.points).is_all_triangles
     # Extract lines and make sure false
     assert not plane.extract_all_edges().is_all_triangles
+
+
+@pytest.mark.parametrize('pass_lines', [True, False])
+def test_triangulate_filter_pass_lines(sphere: pv.PolyData, plane: pv.PolyData, pass_lines: bool):
+    merge: pv.PolyData = plane + (lines := sphere.extract_all_edges())
+    tri: pv.PolyData = merge.triangulate(pass_lines=pass_lines, inplace=False)
+
+    assert tri.n_lines == (lines.n_cells if pass_lines else 0)
+    assert tri.is_all_triangles if not pass_lines else (not tri.is_all_triangles)
+
+
+@pytest.mark.parametrize('pass_verts', [True, False])
+def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
+    merge: pv.PolyData = plane + (verts := pv.PolyData([0.0, 1.0, 2.0]))
+    tri: pv.PolyData = merge.triangulate(pass_verts=pass_verts, inplace=False)
+
+    assert tri.n_verts == (verts.n_cells if pass_verts else 0)
+    assert tri.is_all_triangles if not pass_verts else (not tri.is_all_triangles)
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
@@ -1140,17 +1159,39 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
-def test_flip_normals(sphere, plane):
-    sphere_flipped = sphere.copy()
-    sphere_flipped.flip_normals()
+def test_flip_normals(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        sphere.flip_normals()
 
-    sphere.compute_normals(inplace=True)
-    sphere_flipped.compute_normals(inplace=True)
-    assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
 
-    # invalid case
-    with pytest.raises(NotAllTrianglesError):
-        plane.flip_normals()
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_normal_vectors(mesh):
+    mesh = mesh.compute_normals()
+    flipped = mesh.flip_normal_vectors(inplace=True, progress_bar=True)
+    assert flipped is mesh
+
+    flipped = mesh.flip_normal_vectors()
+    assert flipped is not mesh
+
+    assert np.allclose(flipped.point_data['Normals'], -mesh.point_data['Normals'])
+    assert np.allclose(flipped.cell_data['Normals'], -mesh.cell_data['Normals'])
+
+    # Test ordering is unaffected
+    assert np.allclose(flipped.faces, mesh.faces)
+
+
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_faces(mesh):
+    flipped = mesh.flip_faces(inplace=True, progress_bar=True)
+    assert flipped is mesh
+
+    flipped = mesh.flip_faces()
+    assert flipped is not mesh
+
+    assert np.allclose(flipped.regular_faces[0], mesh.regular_faces[0][::-1])
+
+    # Test normals are unaffected
+    assert np.allclose(flipped.point_data['Normals'], mesh.point_data['Normals'])
 
 
 def test_n_verts():
@@ -1175,7 +1216,7 @@ def test_n_faces_strict():
 
 
 @pytest.fixture
-def default_n_faces():  # noqa: PT004
+def default_n_faces():
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
     yield
@@ -1185,10 +1226,12 @@ def default_n_faces():  # noqa: PT004
 
 def test_n_faces(default_n_faces):
     if pv._version.version_info[:2] > (0, 46):
-        raise RuntimeError('Convert non-strict n_faces use to error')
+        msg = 'Convert non-strict n_faces use to error'
+        raise RuntimeError(msg)
 
     if pv._version.version_info[:2] > (0, 49):
-        raise RuntimeError('Convert default n_faces behavior to strict')
+        msg = 'Convert default n_faces behavior to strict'
+        raise RuntimeError(msg)
 
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1312,9 +1355,11 @@ def test_n_faces_etc_deprecated(cells: str):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
+            msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
+            msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

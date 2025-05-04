@@ -11,6 +11,8 @@ import time
 import warnings
 import weakref
 
+import numpy as np
+
 from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
@@ -144,10 +146,12 @@ class RenderWindowInteractor:
 
         """
         if not callable(callback):
-            raise TypeError('callback must be callable.')
+            msg = 'callback must be callable.'
+            raise TypeError(msg)
         for param in signature(callback).parameters.values():
             if param.default is param.empty:
-                raise TypeError('`callback` must not have any arguments without default values.')
+                msg = '`callback` must not have any arguments without default values.'
+                raise TypeError(msg)
         self._key_press_event_callbacks[key].append(callback)
 
     def add_timer_event(self, max_steps, duration, callback):
@@ -166,6 +170,10 @@ class RenderWindowInteractor:
             A callable that takes one argument. It will be passed
             `step`, which is the number of times the timer event has occurred.
 
+        See Also
+        --------
+        :ref:`animation_example`
+
         Examples
         --------
         Add a timer to a Plotter to move a sphere across a scene.
@@ -176,10 +184,7 @@ class RenderWindowInteractor:
         >>> actor = pl.add_mesh(sphere)
         >>> def callback(step):
         ...     actor.position = [step / 100.0, step / 100.0, 0]
-        ...
-        >>> pl.add_timer_event(
-        ...     max_steps=200, duration=500, callback=callback
-        ... )
+        >>> pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
         """
         self._timer = Timer(max_steps, callback)
@@ -221,9 +226,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
         call = partial(try_callback, call)
@@ -255,9 +258,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -280,12 +281,8 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
-        >>> obs_leave = pl.iren.add_observer(
-        ...     "LeaveEvent", lambda *_: print('Leave!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer('LeaveEvent', lambda *_: print('Leave!'))
         >>> pl.iren.remove_observers()
 
         """
@@ -314,7 +311,8 @@ class RenderWindowInteractor:
             self._key_press_event_callbacks.pop(key)
         except KeyError:
             if raise_on_missing:
-                raise ValueError(f'No events found for key {key!r}.') from None
+                msg = f'No events found for key {key!r}.'
+                raise ValueError(msg) from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
@@ -343,7 +341,8 @@ class RenderWindowInteractor:
         elif side in ['left', 'l']:
             return 'LeftButtonPressEvent'
         else:
-            raise TypeError(f'Side ({side}) not supported. Try `left` or `right`.')
+            msg = f'Side ({side}) not supported. Try `left` or `right`.'
+            raise TypeError(msg)
 
     def _click_event(self, _obj, event):
         t = time.time()
@@ -396,9 +395,8 @@ class RenderWindowInteractor:
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
-            raise ValueError(
-                'Invalid callback provided, it should be either ``None`` or a callable.',
-            )
+            msg = 'Invalid callback provided, it should be either ``None`` or a callable.'
+            raise ValueError(msg)
 
         if add_observer:
             self.add_observer(event, self._click_event)
@@ -467,7 +465,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -635,7 +633,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_custom_trackball_style(left="dolly")
+        >>> plotter.enable_custom_trackball_style(left='dolly')
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -671,7 +669,8 @@ class RenderWindowInteractor:
             control_right,
         ]:
             if p not in start_action_map:
-                raise ValueError(f"Action '{p}' not in the allowed {list(start_action_map.keys())}")
+                msg = f"Action '{p}' not in the allowed {list(start_action_map.keys())}"
+                raise ValueError(msg)
 
         button_press_map = {
             'left': self._style_class.OnLeftButtonDown,  # type: ignore[attr-defined]
@@ -949,7 +948,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
+    def enable_terrain_style(self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
@@ -984,17 +983,23 @@ class RenderWindowInteractor:
         latitude/longitude markers that can be used to estimate/control
         position.
 
+        .. versionchanged:: 0.45
+            mouse_wheel_zooms and shift_pans parameters are not True by
+            default to be more intuitive. We also improved the scroll
+            zooming factor to be less jumpy.
+
         Parameters
         ----------
-        mouse_wheel_zooms : bool, default: False
-            Whether to use the mouse wheel for zooming. By default
-            zooming can be performed with right click and drag.
+        mouse_wheel_zooms : bool | float, default: True
+            Whether to use the mouse wheel for zooming. If ``False``,
+            you can still zoom with right click and drag. Pass a float
+            value for to control the zoom factor, default is ``1.05``.
 
-        shift_pans : bool, default: False
-            Whether shift + left mouse button pans the scene. By default
-            shift + left mouse button rotates the view restricted to
-            only horizontal or vertical movements, and panning is done
-            holding down the middle mouse button.
+        shift_pans : bool, default: True
+            Whether shift + left mouse button pans the scene. If
+            ``False``, shift + left mouse button rotates the view
+            restricted to only horizontal or vertical movements, and
+            panning is done holding down the middle mouse button.
 
         Examples
         --------
@@ -1015,9 +1020,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(
-        ...     mouse_wheel_zooms=True, shift_pans=True
-        ... )
+        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -1026,16 +1029,29 @@ class RenderWindowInteractor:
         self.update_style()
 
         if mouse_wheel_zooms:
+            factor = 1.05 if isinstance(mouse_wheel_zooms, bool) else mouse_wheel_zooms
 
             def wheel_zoom_callback(_obj, event):  # pragma: no cover
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
-                    zoom_factor = 1.1
+                    zoom_factor = 1.0 / factor
                 elif event == 'MouseWheelBackwardEvent':
                     # zoom out
-                    zoom_factor = 1 / 1.1
-                self._plotter.camera.zoom(zoom_factor)
+                    zoom_factor = factor
+
+                with self.poked_subplot():
+                    if self._plotter.camera.parallel_projection:
+                        self._plotter.camera.parallel_scale *= zoom_factor
+                    else:
+                        camera_position = np.array(self._plotter.camera.position)
+                        camera_focal_point = np.array(self._plotter.camera.focal_point)
+                        camera_vector = camera_position - camera_focal_point
+                        self._plotter.camera.position = (
+                            camera_focal_point + zoom_factor * camera_vector
+                        )
+
+                    self._plotter.reset_camera_clipping_range()
                 self._plotter.render()
 
             callback = partial(try_callback, wheel_zoom_callback)
@@ -1127,10 +1143,11 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def _simulate_keypress(self, key):  # pragma:
+    def _simulate_keypress(self, key):
         """Simulate a keypress."""
         if len(key) > 1:
-            raise ValueError('Only accepts a single key')
+            msg = 'Only accepts a single key'
+            raise ValueError(msg)
         self.interactor.SetKeyCode(key)
         self.interactor.SetKeySym(key)
         self.interactor.CharEvent()
@@ -1297,7 +1314,8 @@ class RenderWindowInteractor:
             renderer = self._plotter.renderers[index]
             if renderer is poked_renderer:
                 return self._plotter.renderers.index_to_loc(index)
-        raise RuntimeError('Poked renderer not found in Plotter.')
+        msg = 'Poked renderer not found in Plotter.'
+        raise RuntimeError(msg)
 
     @contextmanager
     def poked_subplot(self):
@@ -1393,9 +1411,8 @@ class RenderWindowInteractor:
     def process_events(self):
         """Process events."""
         if not self.initialized:
-            raise RuntimeError(
-                'Render window interactor must be initialized before processing events.',
-            )
+            msg = 'Render window interactor must be initialized before processing events.'
+            raise RuntimeError(msg)
         self.interactor.ProcessEvents()
 
     @property
@@ -1436,7 +1453,8 @@ class RenderWindowInteractor:
             try:
                 picker = pickers[picker]()
             except KeyError:
-                raise KeyError(f'Picker class `{picker}` is unknown.')
+                msg = f'Picker class `{picker}` is unknown.'
+                raise KeyError(msg)
             # Set default tolerance for internal configurations
             if hasattr(picker, 'SetTolerance'):
                 picker.SetTolerance(0.025)
@@ -1446,7 +1464,7 @@ class RenderWindowInteractor:
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use :func:`pyvista.plotting.RenderWindowInteractor.add_pick_observer` instead.
+            This function is deprecated. Use :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
         ----------

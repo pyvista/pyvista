@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
-from typing import cast
 import warnings
 import weakref
 
@@ -17,6 +16,8 @@ from pyvista.core.utilities.misc import try_callback
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .opts import ElementType
 from .opts import PickerType
 
@@ -76,7 +77,7 @@ class RectangleSelection:
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
         frustum_source.Update()
-        return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
+        return pyvista.wrap(frustum_source.GetOutput())
 
     @property
     def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
@@ -174,7 +175,8 @@ class PointPickingElementHandler:
                     break
             if contains < 0:
                 # this shouldn't happen
-                raise RuntimeError('Trouble aligning point with face.')
+                msg = 'Trouble aligning point with face.'
+                raise RuntimeError(msg)
             face = face.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
@@ -367,9 +369,8 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            raise PyVistaPickingError(
-                'Picking is already enabled, please disable previous picking with `disable_picking()`.',
-            )
+            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            raise PyVistaPickingError(msg)
 
     def enable_point_picking(
         self,
@@ -858,9 +859,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker = PickerType.from_any(picker)
         valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
-            raise ValueError(
-                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}',
-            )
+            msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
+            raise ValueError(msg)
 
         self_ = weakref.ref(self)
 
@@ -1144,14 +1144,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
-                if actor.GetMapper() and actor.GetPickable():
-                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)  # type: ignore[union-attr]
+                if (
+                    (mapper := actor.GetMapper())
+                    and _mapper_has_data_set_input(mapper)
+                    and actor.GetPickable()
+                ):
+                    input_mesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
+                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
                     extract.Update()
-                    picked.append(cast(pyvista.UnstructuredGrid, pyvista.wrap(extract.GetOutput())))
+                    picked.append(pyvista.wrap(extract.GetOutput()))
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None  # type: ignore[union-attr]
@@ -1284,12 +1288,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         warnings.warn(
                             'Display representations other than `surface` will result in incorrect results.',
                         )
-                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    smesh = smesh.copy()  # type: ignore[union-attr]
-                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)  # type: ignore[index, union-attr, call-overload]
-                    tri_smesh = smesh.extract_surface().triangulate()  # type: ignore[union-attr]
+                    smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
+                    smesh = smesh.copy()
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)
+                    tri_smesh = smesh.extract_surface().triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
-                    picked.append(smesh.extract_cells(cids_to_get))  # type: ignore[union-attr]
+                    picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
@@ -1491,6 +1495,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
 
+        See Also
+        --------
+        :ref:`element_picking_example`
+
         """
         mode = ElementType.from_any(mode)
         self_ = weakref.ref(self)
@@ -1569,18 +1577,14 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         color.
 
         >>> import pyvista as pv
-        >>> multiblock = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> multiblock = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(multiblock)
         >>> def turn_blue(index, dataset):
         ...     mapper.block_attr[index].color = 'blue'
-        ...
         >>> pl.enable_block_picking(callback=turn_blue, side='left')
         >>> def clear_color(index, dataset):
         ...     mapper.block_attr[index].color = None
-        ...
         >>> pl.enable_block_picking(callback=clear_color, side='right')
         >>> pl.show()
 
@@ -1849,14 +1853,14 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx = None
+        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:
                 return
             mesh = pyvista.wrap(picker.GetDataSet())
-            idx = mesh.find_closest_point(picked_point)  # type: ignore[union-attr]
-            point = mesh.points[idx]  # type: ignore[union-attr]
+            idx = mesh.find_closest_point(picked_point)
+            point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
                 self.picked_geodesic['vtkOriginalPointIds'] = [idx]

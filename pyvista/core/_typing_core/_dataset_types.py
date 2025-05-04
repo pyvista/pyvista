@@ -3,25 +3,31 @@
 from __future__ import annotations
 
 from typing import TypeVar
+from typing import Union
 
-from pyvista.core.grid import ImageData
-from pyvista.core.grid import RectilinearGrid
-from pyvista.core.pointset import ExplicitStructuredGrid
-from pyvista.core.pointset import PointSet
-from pyvista.core.pointset import PolyData
-from pyvista.core.pointset import StructuredGrid
-from pyvista.core.pointset import UnstructuredGrid
+from pyvista.core.composite import MultiBlock
+from pyvista.core.dataobject import DataObject
+from pyvista.core.dataset import DataSet
+from pyvista.core.grid import Grid
+from pyvista.core.pointset import PointGrid
+from pyvista.core.pointset import _PointSet
 
-# Use this typevar wherever a `DataSet` type hint may be used
-# Unlike `DataSet`, the concrete classes here also inherit from `vtkDataSet`
-ConcreteDataSetType = TypeVar(
-    'ConcreteDataSetType',
-    ImageData,
-    RectilinearGrid,
-    ExplicitStructuredGrid,
-    PointSet,
-    PolyData,
-    StructuredGrid,
-    UnstructuredGrid,
+_GridType = TypeVar('_GridType', bound=Grid)
+_GridType.__doc__ = """Type variable for PyVista ``Grid`` classes."""
+
+_PointGridType = TypeVar('_PointGridType', bound=PointGrid)
+_PointGridType.__doc__ = """Type variable for PyVista ``PointGrid`` classes."""
+
+_PointSetType = TypeVar('_PointSetType', bound=_PointSet)
+_PointSetType.__doc__ = """Type variable for PyVista ``PointSet`` classes."""
+
+_DataSetType = TypeVar('_DataSetType', bound=DataSet)
+_DataSetType.__doc__ = """Type variable for :class:`~pyvista.DataSet` classes."""
+
+_DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=Union[DataSet, MultiBlock])
+_DataSetOrMultiBlockType.__doc__ = (
+    """Type variable for :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` classes."""
 )
-ConcreteDataSetType.__doc__ = """Type variable of all concrete :class:`~pyvista.DataSet` classes."""
+
+_DataObjectType = TypeVar('_DataObjectType', bound=DataObject)
+_DataObjectType.__doc__ = """Type variable for :class:`~pyvista.DataObject` classes."""

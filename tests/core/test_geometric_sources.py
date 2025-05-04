@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import re
 
+from hypothesis import given
+from hypothesis.strategies import integers
+from hypothesis.strategies import lists
 import numpy as np
 import pytest
 import vtk
@@ -21,18 +24,18 @@ def cube_faces_source():
     return pv.CubeFacesSource()
 
 
+@pytest.mark.needs_vtk_version(less_than=(9, 3))
 def test_capsule_source():
-    if pv.vtk_version_info < (9, 3):
-        algo = pv.CapsuleSource()
-        assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-        assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
-        assert algo.radius == 0.5
-        assert algo.cylinder_length == 1.0
-        assert algo.theta_resolution == 30
-        assert algo.phi_resolution == 30
-        direction = np.random.default_rng().random(3)
-        algo.direction = direction
-        assert np.array_equal(algo.direction, direction)
+    algo = pv.CapsuleSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+    assert algo.radius == 0.5
+    assert algo.cylinder_length == 1.0
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    direction = np.random.default_rng().random(3)
+    algo.direction = direction
+    assert np.array_equal(algo.direction, direction)
 
 
 def test_cone_source():
@@ -49,6 +52,25 @@ def test_cone_source():
     assert algo.angle == 0.0
     algo = pv.ConeSource(radius=0.0)
     assert algo.radius == 0.0
+
+
+def test_text_3d_raises():
+    match = re.escape(
+        f'Attribute "foo" does not exist and cannot be added to type {pv.Text3DSource.__name__}'
+    )
+    with pytest.raises(AttributeError, match=match):
+        pv.Text3DSource().foo = 1
+
+
+@given(bounds=lists(integers()).filter(lambda x: len(x) != 6))
+def test_box_source_bounds_raises(bounds):
+    b = pv.BoxSource()
+    match = re.escape(
+        'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+    )
+
+    with pytest.raises(TypeError, match=match):
+        b.bounds = bounds
 
 
 def test_cylinder_source():

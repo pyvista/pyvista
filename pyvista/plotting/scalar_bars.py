@@ -115,10 +115,11 @@ class ScalarBars:
         if title is None:
             if len(self) > 1:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError(
+                msg = (
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}',
+                    f'scalar bar from one of the following:\n{titles}'
                 )
+                raise ValueError(msg)
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))
 
@@ -330,6 +331,10 @@ class ScalarBars:
         Setting ``title_font_size``, or ``label_font_size`` disables
         automatic font sizing for both the title and label.
 
+        See Also
+        --------
+        :ref:`scalar_bar_example`
+
         Examples
         --------
         Add a custom interactive scalar bar that is horizontal, has an
@@ -353,7 +358,8 @@ class ScalarBars:
 
         """
         if mapper is None:
-            raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
+            msg = 'Mapper cannot be ``None`` when creating a scalar bar'
+            raise ValueError(msg)
 
         if theme is None:
             theme = pyvista.global_theme
@@ -386,10 +392,8 @@ class ScalarBars:
             newrng = mapper.scalar_range
             oldmappers = self._scalar_bar_mappers[title]
             # get max for range and reset everything
-            if newrng[0] < clim[0]:
-                clim[0] = newrng[0]
-            if newrng[1] > clim[1]:
-                clim[1] = newrng[1]
+            clim[0] = min(newrng[0], clim[0])
+            clim[1] = max(newrng[1], clim[1])
             for mh in oldmappers:
                 mh.scalar_range = clim[0], clim[1]
             mapper.scalar_range = clim[0], clim[1]
@@ -402,7 +406,8 @@ class ScalarBars:
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
             if not self._plotter._scalar_bar_slots:
-                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+                msg = f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.'
+                raise RuntimeError(msg)
 
             slot = min(self._plotter._scalar_bar_slots)
             self._plotter._scalar_bar_slots.remove(slot)
