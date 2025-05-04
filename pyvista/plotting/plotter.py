@@ -2586,7 +2586,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -4029,7 +4030,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their

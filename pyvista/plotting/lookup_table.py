@@ -338,6 +338,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
+        Only applicable when displaying ``scalars``.
+
         Examples
         --------
         Apply the single Matplotlib color map ``"Oranges"``.
