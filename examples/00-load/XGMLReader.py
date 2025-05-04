@@ -40,10 +40,9 @@ def main():
     if not fp.is_file():
         print(f'Missing geometry file: {fp}.')
         file_check = False
-    else:
-        if fp.suffix.lower() != '.gml':
-            print(f'The geometry file : {fp} must have a .wrl suffix.')
-            file_check = False
+    elif fp.suffix.lower() != '.gml':
+        print(f'The geometry file : {fp} must have a .wrl suffix.')
+        file_check = False
     if not file_check:
         return
 

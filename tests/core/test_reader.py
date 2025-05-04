@@ -1603,4 +1603,3 @@ def test_xgmml_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
-
