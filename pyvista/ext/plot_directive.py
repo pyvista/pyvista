@@ -578,8 +578,9 @@ def run(arguments, content, options, state_machine, state, lineno):
         function_name = None
         caption = options.get('caption', '')
 
-    base, source_ext = Path(output_base).name.split('.', 1)
-    if source_ext in ('py', 'rst', 'txt'):
+    base = Path(output_base).stem
+    source_ext = Path(output_base).suffix
+    if source_ext in ('.py', '.rst', '.txt'):
         output_base = base
     else:
         source_ext = ''
