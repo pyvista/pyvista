@@ -331,6 +331,10 @@ class ScalarBars:
         Setting ``title_font_size``, or ``label_font_size`` disables
         automatic font sizing for both the title and label.
 
+        See Also
+        --------
+        :ref:`scalar_bar_example`
+
         Examples
         --------
         Add a custom interactive scalar bar that is horizontal, has an

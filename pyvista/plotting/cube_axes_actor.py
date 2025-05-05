@@ -118,6 +118,13 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     n_zlabels : int, default: 5
         Number of labels along the z-axis.
 
+    See Also
+    --------
+    :meth:`~pyvista.Plotter.show_bounds`
+    :meth:`~pyvista.Plotter.show_grid`
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
+
     Examples
     --------
     Create a 3D plotter and add a CubeAxesActor to it.

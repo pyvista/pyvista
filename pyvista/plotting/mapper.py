@@ -233,7 +233,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         >>> mapper.interpolate_before_map = True
         >>> pl.show()
 
-        See :ref:`interpolate_before_mapping_example` for additional
+        See :ref:`interpolate_before_map_example` for additional
         explanation regarding this attribute.
 
         """
@@ -394,7 +394,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast('Optional[pyvista.DataSet]', wrap(self.GetInputAsDataSet()))
+        return cast('Optional[pyvista.DataSet]', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
     def dataset(
@@ -1074,8 +1074,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        # GetInputAsDataSet unavailable on volume mappers
-        return wrap(self.GetDataSetInput())
+        return wrap(_mapper_get_data_set_input(self))
 
     @dataset.setter
     def dataset(
@@ -1205,3 +1204,25 @@ class UnstructuredGridVolumeRayCastMapper(
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
+
+
+def _mapper_has_data_set_input(mapper):
+    """Check if mapper has a data set input using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
+    return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
+
+
+def _mapper_get_data_set_input(mapper):
+    """Get data set input from mapper using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
+    return (
+        mapper.GetDataSetInput()
+        if hasattr(mapper, 'GetDataSetInput')
+        else mapper.GetInputAsDataSet()
+    )

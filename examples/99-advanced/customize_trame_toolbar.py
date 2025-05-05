@@ -5,6 +5,8 @@ Customize Trame toolbar
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Bring more of the power of trame to the jupyter view.
+This example shows how to add custom tools using the
+`jupyter_kwargs` option with :meth:`~pyvista.Plotter.show`.
 """
 
 from __future__ import annotations

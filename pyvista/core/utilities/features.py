@@ -450,6 +450,10 @@ def grid_from_sph_coords(theta, phi, r):
     pyvista.StructuredGrid
         Structured grid.
 
+    See Also
+    --------
+    :ref:`spherical_example`
+
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
     # Transform grid to cartesian coordinates
@@ -677,6 +681,11 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
         implicit function. Use with :func:`pyvista.sample_function()
         <pyvista.core.utilities.features.sample_function>`.
 
+    See Also
+    --------
+    :ref:`perlin_noise_2d_example`
+    :ref:`perlin_noise_3d_example`
+
     Examples
     --------
     Create a Perlin noise function with an amplitude of 0.1, frequency
@@ -793,7 +802,8 @@ def sample_function(
     >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
-    See :ref:`perlin_noise_2d_example` for a full example using this function.
+    See :ref:`perlin_noise_2d_example` and :ref:`perlin_noise_3d_example`
+    for a full example using this function.
 
     """
     # internal import to avoide circular dependency

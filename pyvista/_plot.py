@@ -131,6 +131,8 @@ def plot(
 
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
+        See :ref:`customize_trame_toolbar_example` for an example
+        using this keyword.
 
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.

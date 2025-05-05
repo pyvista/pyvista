@@ -572,12 +572,14 @@ def run(arguments, content, options, state_machine, state, lineno):
         # note: this reuses the existing matplotlib plot counter if available
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
-        output_base = f'{base}-{counter}.py'
+        base = Path(source_file_name).stem
+        ext = Path(source_file_name).suffix
+        output_base = f'{base}-{counter}{ext}'
         function_name = None
         caption = options.get('caption', '')
 
-    base, source_ext = os.path.splitext(output_base)  # noqa: PTH122
+    base = Path(output_base).stem
+    source_ext = Path(output_base).suffix
     if source_ext in ('.py', '.rst', '.txt'):
         output_base = base
     else:

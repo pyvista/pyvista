@@ -452,7 +452,7 @@ class MultiBlock(
         Returns
         -------
         Iterator
-            Iterator of names, blocks, or name-block pairs depending on ``contents``.
+            Iterator of ids, names, blocks, or name-block pairs depending on ``contents``.
 
         See Also
         --------
@@ -488,7 +488,7 @@ class MultiBlock(
         >>> len(list(iterator))
         59
 
-        Check if all blocks are class:`~pyvista.DataSet` objects. Note that ``None``
+        Check if all blocks are :class:`~pyvista.DataSet` objects. Note that ``None``
         blocks are included by default, so this may not be ``True`` in all cases.
 
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
