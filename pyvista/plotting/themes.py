@@ -2316,9 +2316,8 @@ class Theme(_ThemeConfig):
     def cmap(self):  # numpydoc ignore=RT01
         """Return or set the default colormap of pyvista.
 
-        See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``.  If ``colorcet`` or ``cmocean`` are
-        installed, their colormaps can be specified by name.
+        See :ref:`named_colormaps` for supported colormaps.
+        Only applicable when displaying ``scalars``.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three

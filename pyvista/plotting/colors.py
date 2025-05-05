@@ -1893,6 +1893,8 @@ def get_cmap_safe(
 ):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
 
+    See :ref:`named_colormaps` for supported colormaps.
+
     Parameters
     ----------
     cmap : str or list of str
