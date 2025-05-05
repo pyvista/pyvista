@@ -1701,6 +1701,8 @@ PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 def get_cmap_safe(cmap):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
 
+    See :ref:`named_colormaps` for supported colormaps.
+
     Parameters
     ----------
     cmap : str or list of str
