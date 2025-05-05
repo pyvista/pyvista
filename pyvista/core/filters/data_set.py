@@ -1093,6 +1093,112 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
+    def gaussian_splatter(  # type: ignore[misc]
+        self: _DataSetType,
+        radius: float = 0.1,
+        exponent: float = 2.0,
+        dimensions: VectorLike[int] | None = None,
+        bounds: VectorLike[float] | None = None,
+        null_value: float = 0.0,
+        progress_bar: bool = False,
+    ):
+        """Splat points into a volume using a Gaussian distribution.
+
+        This filter uses the ``vtkGaussianSplatter`` to splat points into a volume
+        dataset. Each point is surrounded with a Gaussian distribution function
+        weighted by input scalar data. The distribution function is volumetrically
+        sampled to create a structured dataset.
+
+        Parameters
+        ----------
+        radius : float, default: 0.1
+            Standard deviation of the Gaussian distribution in
+            world coordinates. This determines the "width" of the
+            splatter in terms of the distribution.
+
+        exponent : float, default: 2.0
+            Controls the falloff of the Gaussian distribution. The
+            exponent is the power of the radius in the Gaussian
+            distribution function. Increasing the exponent narrows
+            the resulting distribution.
+
+        dimensions : sequence[int], optional
+            Dimensions of the output structured dataset. Higher
+            values increase resolution and may impact performance.
+            If not specified, a heuristic is used.
+
+        bounds : sequence[float], optional
+            Bounds of the output structured dataset in the form
+            (xmin, xmax, ymin, ymax, zmin, zmax). If not specified,
+            the bounds of the input dataset are used with a padding.
+
+        null_value : float, default: 0.0
+            Value used to initialize the output volume. Generally,
+            you want to set this to a small positive value if using
+            logarithmic scaling.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image data with scalar values representing the splatting
+            of the points.
+
+        Examples
+        --------
+        Create an image data volume from a point cloud using gaussian splatter.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(seed=42)
+        >>> # Create random points
+        >>> points = rng.random((100, 3))
+        >>> point_cloud = pv.PolyData(points)
+        >>> # Add random scalars
+        >>> point_cloud['values'] = rng.random(100)
+        >>> # Apply gaussian splatter
+        >>> volume = point_cloud.gaussian_splatter(radius=0.1)
+        >>> # Visualize the result using a threshold
+        >>> threshed = volume.threshold(0.2)
+        >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
+
+        """
+        alg = _vtk.vtkGaussianSplatter()
+        alg.SetInputDataObject(self)
+        alg.SetRadius(radius)
+        alg.SetExponentFactor(exponent)
+        alg.SetNullValue(null_value)
+
+        if bounds is not None:
+            if len(bounds) != 6:
+                msg = 'Bounds must be a sequence of length 6: [xmin, xmax, ymin, ymax, zmin, zmax]'
+                raise ValueError(msg)
+            alg.SetModelBounds(bounds)
+        else:
+            # Add padding to the bounds
+            dataset_bounds = self.bounds
+            padding = radius * 3  # Use 3*radius as padding
+            new_bounds = [
+                dataset_bounds[0] - padding,
+                dataset_bounds[1] + padding,
+                dataset_bounds[2] - padding,
+                dataset_bounds[3] + padding,
+                dataset_bounds[4] - padding,
+                dataset_bounds[5] + padding,
+            ]
+            alg.SetModelBounds(new_bounds)
+
+        if dimensions is not None:
+            if len(dimensions) != 3:
+                msg = 'Dimensions must be a sequence of length 3: [nx, ny, nz]'
+                raise ValueError(msg)
+            alg.SetSampleDimensions(dimensions)
+
+        _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
+        return _get_output(alg)
+
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
         extent: VectorLike[float] | None = None,
