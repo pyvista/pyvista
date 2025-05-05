@@ -2506,13 +2506,12 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     >>> vtkgrid = vtk.vtkStructuredGrid()
     >>> grid = pv.StructuredGrid(vtkgrid)
 
-    Create from NumPy arrays using :func:`numpy.meshgrid`. Note the usage of
-    ``ij`` indexing.
+    Create from NumPy arrays using :func:`numpy.meshgrid`.
 
     >>> xrng = np.linspace(-5, 5, 10)
     >>> yrng = np.linspace(-8, 8, 4)
     >>> zrng = np.linspace(-7, 4, 20)
-    >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
+    >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
     >>> grid = pv.StructuredGrid(x, y, z)
     >>> grid
     StructuredGrid (...)
