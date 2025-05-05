@@ -9,7 +9,9 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from dataclasses import dataclass
+import re
 import sys
+from typing import NamedTuple
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -26,7 +28,6 @@ import inspect
 import io
 import os
 from pathlib import Path
-import re
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
@@ -35,6 +36,10 @@ from typing import Literal
 from typing import final
 from typing import get_args
 
+import cmocean
+import colorcet
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -68,6 +73,8 @@ CELL_QUALITY_DIR = 'api/core/cell_quality'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
+COLORMAP_TABLE_DIR = 'api/utilities/colormap_table'
+COLORMAP_IMAGE_DIR = 'images/colormaps'
 
 # Directory where auto-generated gallery rst files are saved
 DATASET_GALLERY_DIR = 'api/examples/dataset-gallery'
@@ -816,6 +823,398 @@ class ColorTableMAGENTA(ColorClassificationTable):
     """Class to generate MAGENTA colors table."""
 
     classification = ColorClassification.MAGENTA
+
+
+class ColormapKind(StrEnum):
+    LINEAR = auto()
+    DIVERGING = auto()
+    CYCLIC = auto()
+    CATEGORICAL = auto()
+    MISC = auto()
+    CET_LINEAR = auto()
+    CET_DIVERGING = auto()
+    CET_CYCLIC = auto()
+    CET_RAINBOW = auto()
+    CET_ISOLUMINANT = auto()
+
+
+class _ColormapInfo(NamedTuple):
+    package: str
+    kind: ColormapKind | None
+    name: str
+    perceptually_uniform: bool
+
+
+# Define colormap info based on manual review of documentation from each package.
+# NOTE: The order of the cmaps here will be reflected in the docs.
+_COLORMAP_INFO: list[_ColormapInfo] = [
+    # LINEAR
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgy', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgyw', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbgyw', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'haline', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'viridis', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cividis', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cubehelix', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmw', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmy', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbc', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kb', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kgy', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kg', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kr', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'fire', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'hot', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'afmhot', False),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'solar', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_heat', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'magma', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'inferno', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'plasma', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'copper', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'pink', False),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'ice', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'dense', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'matter', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'amp', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'turbid', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'speed', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'algae', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'deep', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'tempo', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'rain', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'blues', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Blues', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuGn', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuPu', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'GnBu', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Greens', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'OrRd', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Oranges', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBu', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBuGn', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuRd', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Purples', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'RdPu', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Reds', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGn', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGnBu', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrBr', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrRd', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Wistia', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'autumn', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'spring', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'summer', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'winter', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cool', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'bone', False),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gray', True),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'gray', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gray', False),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'dimgray', True),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_gray', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_yarg', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'binary', False),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Grays', False),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'oxy', True),
+    # DIVERGING
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr', True),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin', True),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo', True),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky', True),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua', True),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bjy', True),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bwy', True),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'cwr', True),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'gwv', True),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'topo', True),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'delta', True),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'curl', True),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'diff', True),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'tarn', True),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'BrBG', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PuOr', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PRGn', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PiYG', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdGy', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdBu', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlBu', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlGn', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'Spectral', False),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'coolwarm', True),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'coolwarm', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'bwr', False),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'seismic', False),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'balance', True),
+    # CYCLIC
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant', True),
+    _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase', True),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel', False),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv', False),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight', True),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight_shifted', True),
+    # CATEGORICAL
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_warm', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_dark', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_light', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_category10', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_hv', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set1', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set2', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set3', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab10', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b', False),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c', False),
+    # MISC
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum', False),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4', False),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'rainbow', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_rainbow', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'jet', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'turbo', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'nipy_spectral', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_ncar', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'CMRmap', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'brg', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_stern', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot2', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'ocean', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_earth', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'terrain', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'prism', False),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'flag', False),
+]
+
+
+def _create_cet_colormap_info():
+    # Get all 'CET' named cmaps
+    cmaps = sorted(
+        [cmap for cmap in colorcet.cm.keys() if cmap.startswith('CET') and not cmap.endswith('_r')]
+    )
+
+    # The cmaps are string-sorted and therefore `C10` precedes `C2`
+    # The following code fixes the sorting
+
+    # Separate prefix, letters, number, and suffix
+    pattern = re.compile(r'(CET_)([A-Z]+)(\d+)([A-Za-z]*)')
+    parsed = [
+        (m.group(1), m.group(2), int(m.group(3)), m.group(4))
+        for cmap in cmaps
+        for m in [pattern.match(cmap)]
+    ]
+
+    # Sort by letter code and numeric value
+    parsed.sort(key=lambda x: (x[1], x[2]))
+
+    # Reconstruct the original strings in sorted order and classify the colormap
+    colormap_infos = []
+    colormap_types = {
+        'C': ColormapKind.CET_CYCLIC,
+        'D': ColormapKind.CET_DIVERGING,
+        'L': ColormapKind.CET_LINEAR,
+        'R': ColormapKind.CET_RAINBOW,
+        'I': ColormapKind.CET_ISOLUMINANT,
+    }
+    for prefix, letters, number, suffix in parsed:
+        name = f'{prefix}{letters}{number}{suffix}'
+        type_letter = letters[-1]
+        kind = colormap_types[type_letter]
+
+        # Store as colormap info
+        perceptually_uniform = type_letter not in ['I', 'R']
+        info = _ColormapInfo(
+            package='colorcet', name=name, kind=kind, perceptually_uniform=perceptually_uniform
+        )
+        colormap_infos.append(info)
+
+    # Sanity check - make sure we didn't mangle anything
+    for info in colormap_infos:
+        assert info.name in cmaps
+
+    return colormap_infos
+
+
+_CET_COLORMAP_INFO = _create_cet_colormap_info()
+
+
+class ColormapTable(DocTable):
+    """Class to generate a colormap table."""
+
+    info_source = _COLORMAP_INFO
+    kind: ColormapKind | str
+
+    title = ''
+    header = _aligned_dedent(
+        """
+        |.. list-table:: {}
+        |   :widths: 20 25 55
+        |   :header-rows: 1
+        |   :stub-columns: 1
+        |
+        |   * - Tags
+        |     - Name
+        |     - Swatch
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - {}
+        |     - {}
+        |     - .. image:: /{}
+        """,
+    )
+
+    @property
+    @final
+    def path(cls):
+        kind = cls.kind
+        name = kind.name if isinstance(kind, ColormapKind) else kind
+        return f'{COLORMAP_TABLE_DIR}/colormap_table_{name}.rst'
+
+    @classmethod
+    def fetch_data(cls):
+        return [info for info in cls.info_source if info.kind == cls.kind]
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(cls.title)
+
+    @classmethod
+    def get_row(cls, i, colormap_info):
+        source_badge_mapping = {
+            'cmocean': ':bdg-primary:`cmo`',
+            'colorcet': ':bdg-success:`cc`',
+            'matplotlib': ':bdg-secondary:`mpl`',
+        }
+        type_mapping = {
+            mpl.colors.LinearSegmentedColormap: ':bdg-muted:`LSC`',
+            mpl.colors.ListedColormap: ':bdg-muted:`LC`',
+        }
+        perceptually_uniform_mapping = {
+            True: ':bdg-muted:`PU`',
+            False: ':bdg-danger:`NPU`',
+        }
+
+        if colormap_info.package == 'matplotlib':
+            cmap_source = mpl.colormaps
+        elif colormap_info.package == 'colorcet':
+            cmap_source = colorcet.cm
+        elif colormap_info.package == 'cmocean':
+            cmap_source = cmocean.cm.cmap_d
+        else:
+            raise RuntimeError
+        cmap = cmap_source[colormap_info.name]
+
+        # Generate tags
+        source_rst = source_badge_mapping[colormap_info.package]
+        type_rst = type_mapping[type(cmap)]
+        perceptually_uniform_rst = perceptually_uniform_mapping[colormap_info.perceptually_uniform]
+        tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
+
+        # Generate image
+        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        cls.generate_img(cmap, img_path)
+
+        name_rst = f'``{colormap_info.name}``'
+        return cls.row_template.format(tags, name_rst, img_path)
+
+    @staticmethod
+    def generate_img(cmap, img_path):
+        """Generate and save an image of the given colormap."""
+        width = 512  # Should be a multiple of 256 to avoid aliasing
+        height = 32
+
+        # Create a smooth gradient across the colormap resolution
+        gradient = np.linspace(0, 1, width)
+        gradient = np.vstack((gradient,) * height)
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.imshow(gradient, aspect='auto', cmap=cmap)
+        ax.set_axis_off()
+
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+
+
+class ColormapTableLINEAR(ColormapTable):
+    """Class to generate linear colormap table."""
+
+    kind = ColormapKind.LINEAR
+
+
+class ColormapTableDIVERGING(ColormapTable):
+    """Class to generate diverging colormap table."""
+
+    kind = ColormapKind.DIVERGING
+
+
+class ColormapTableCYCLIC(ColormapTable):
+    """Class to generate cyclic colormap table."""
+
+    kind = ColormapKind.CYCLIC
+
+
+class ColormapTableCATEGORICAL(ColormapTable):
+    """Class to generate categorical colormap table."""
+
+    kind = ColormapKind.CATEGORICAL
+
+
+class ColormapTableMISC(ColormapTable):
+    """Class to generate misc colormap table."""
+
+    kind = ColormapKind.MISC
+
+
+class CETColormapTable(ColormapTable):
+    """Class to generate all colorcet CET colormap table."""
+
+    info_source = _CET_COLORMAP_INFO
+
+
+class CETColormapTableLINEAR(CETColormapTable):
+    """Class to generate linear colormap table."""
+
+    kind = ColormapKind.CET_LINEAR
+
+
+class CETColormapTableDIVERGING(CETColormapTable):
+    """Class to generate diverging colormap table."""
+
+    kind = ColormapKind.CET_DIVERGING
+
+
+class CETColormapTableCYCLIC(CETColormapTable):
+    """Class to generate cyclic colormap table."""
+
+    kind = ColormapKind.CET_CYCLIC
+
+
+class CETColormapTableRAINBOW(CETColormapTable):
+    """Class to generate rainbow colormap table."""
+
+    kind = ColormapKind.CET_RAINBOW
+
+
+class CETColormapTableISOLUMINANT(CETColormapTable):
+    """Class to generate isoluminant colormap table."""
+
+    kind = ColormapKind.CET_ISOLUMINANT
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -2586,6 +2985,20 @@ def make_all_tables():  # noqa: D103
     CellQualityInfoTableTETRA.generate()
     CellQualityInfoTableWEDGE.generate()
     CellQualityInfoTablePYRAMID.generate()
+
+    # Make colormap tables
+    os.makedirs(COLORMAP_IMAGE_DIR, exist_ok=True)
+    os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
+    ColormapTableLINEAR.generate()
+    ColormapTableDIVERGING.generate()
+    ColormapTableCYCLIC.generate()
+    ColormapTableCATEGORICAL.generate()
+    ColormapTableMISC.generate()
+    CETColormapTableLINEAR.generate()
+    CETColormapTableDIVERGING.generate()
+    CETColormapTableCYCLIC.generate()
+    CETColormapTableRAINBOW.generate()
+    CETColormapTableISOLUMINANT.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
