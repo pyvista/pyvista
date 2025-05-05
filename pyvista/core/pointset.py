@@ -2523,7 +2523,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
       Dimensions:   10, 4, 20
       N Arrays:     0
 
-    Also note how the grid dimensions match the shape of the input arrays.
+    Note how the grid dimensions match the shape of the input arrays.
 
     >>> (xrng.size, yrng.size, zrng.size)
     (10, 4, 20)
