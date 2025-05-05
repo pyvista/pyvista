@@ -458,6 +458,7 @@ def Sphere(
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
 
     Examples
     --------
@@ -2255,7 +2256,7 @@ def PlatonicSolid(
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')
@@ -2300,7 +2301,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Tetrahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
@@ -2334,7 +2335,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     >>> tetra = pv.Octahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
@@ -2367,7 +2368,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     >>> tetra = pv.Dodecahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
@@ -2401,7 +2402,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Icosahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

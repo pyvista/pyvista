@@ -21,8 +21,7 @@ def skip_check_gc(skip_check_gc):
 
 
 # skip all tests if VTK<9.2.0
-if pv.vtk_version_info < (9, 2):
-    pytestmark = pytest.mark.skip
+pytestmark = pytest.mark.needs_vtk_version(9, 2)
 
 
 def vtk_array_to_tuple(arr):

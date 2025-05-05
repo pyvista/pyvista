@@ -1,4 +1,6 @@
 """
+.. _read_image_example:
+
 Read Image Files
 ~~~~~~~~~~~~~~~~
 

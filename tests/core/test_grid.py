@@ -29,9 +29,8 @@ HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
 STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
-pointsetmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
+pointsetmark = pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class'
 )
 
 
@@ -1084,21 +1083,33 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vti'])
-def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    ogrid = examples.load_uniform()
-    ogrid.save(filename, binary)
-    grid = pv.ImageData(filename)
-    assert grid.n_cells == ogrid.n_cells
-    assert grid.origin == ogrid.origin
-    assert grid.spacing == ogrid.spacing
-    assert grid.dimensions == ogrid.dimensions
-    grid = pv.read(filename)
-    assert isinstance(grid, pv.ImageData)
-    assert grid.n_cells == ogrid.n_cells
-    assert grid.origin == ogrid.origin
-    assert grid.spacing == ogrid.spacing
-    assert grid.dimensions == ogrid.dimensions
+@pytest.mark.parametrize('reader', [pv.ImageData, pv.read])
+@pytest.mark.parametrize('direction_matrix', [np.eye(3), np.diag((-1, 1, -1))])
+def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matrix):
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
+    is_identity_matrix = np.allclose(direction_matrix, np.eye(3))
+    uniform.direction_matrix = direction_matrix
+
+    if extension == '.vtk' and not is_identity_matrix:
+        match = re.escape(
+            'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.\n'
+            'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
+            'Use the `.vti` extension instead (XML format).'
+        )
+        with pytest.warns(UserWarning, match=match):
+            uniform.save(filename, binary)
+    else:
+        uniform.save(filename, binary)
+
+    grid = reader(filename)
+
+    if extension == '.vtk' and not is_identity_matrix:
+        # Direction matrix is lost
+        assert not np.allclose(grid.direction_matrix, uniform.direction_matrix)
+        # Add it back manually for equality check
+        grid.direction_matrix = uniform.direction_matrix
+
+    assert grid == uniform
 
 
 def test_grid_points():
@@ -1629,9 +1640,8 @@ def test_ExplicitStructuredGrid_raise_init():
         )
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 2, 2),
-    reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean',
+@pytest.mark.needs_vtk_version(
+    9, 2, 2, reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean'
 )
 def test_ExplicitStructuredGrid_clean():
     grid = examples.load_explicit_structured()

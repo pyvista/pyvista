@@ -1,5 +1,5 @@
 """
-.. _create_draped_surf_example:
+.. _create_draped_surface_example:
 
 Drape 2D Surface From Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,9 +18,12 @@ Originally posted in `this support issue <https://github.com/pyvista/pyvista-sup
 Suppose you have some GPR data (or anything that produces a line of data with
 values at depth). With these data, you'll have a 2D image/array of your data
 values and 3D coordinates of where that line/profile is in 3D space (often
-where you collected the data on the surface of topography). Attached below are
-some example data for this: 1) XYZ coordinates of a GPR path and 2) a 2D array
-of data values produced from the GPR.
+where you collected the data on the surface of topography). This example uses:
+
+#. :func:`~pyvista.examples.downloads.download_gpr_path`
+   with XYZ coordinates of a GPR path, and
+#. :func:`~pyvista.examples.downloads.download_gpr_data_array`
+   with a 2D array of data values produced from the GPR.
 
 The data here are wacky (it's difficult to get shareable data of decent
 quality), so ignore them but pay attention to the structure. The coordinates we
