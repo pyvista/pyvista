@@ -1152,16 +1152,31 @@ class DataSetFilters(DataObjectFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> rng = np.random.default_rng(seed=42)
-        >>> # Create random points
-        >>> points = rng.random((100, 3))
+
+        Load the Stanford Bunny mesh
+
+        >>> bunny = pv.examples.download_bunny()
+
+        Extract point coordinates to create a point cloud
+
+        >>> points = bunny.points
         >>> point_cloud = pv.PolyData(points)
-        >>> # Add random scalars
-        >>> point_cloud['values'] = rng.random(100)
-        >>> # Apply gaussian splatter
-        >>> volume = point_cloud.gaussian_splatter(radius=0.1)
-        >>> # Visualize the result using a threshold
-        >>> threshed = volume.threshold(0.2)
+
+        Add random scalar values to the points
+
+        >>> rng = np.random.default_rng(seed=42)
+        >>> point_cloud['values'] = rng.random(points.shape[0])
+
+        Apply Gaussian splatter to generate a volumetric representation
+
+        >>> volume = point_cloud.gaussian_splatter(radius=0.01)
+
+        Threshold the volume to filter out low-density regions
+
+        >>> threshed = volume.threshold(0.05)
+
+        Visualize the thresholded volume with semi-transparency and no scalar bar
+
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
