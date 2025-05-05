@@ -7,16 +7,24 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTEST_ADDOPTS: "--color=yes"
+
+permissions:
+  id-token: none
+
 jobs:
   docstringcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: 3.13
           cache: "pip"
 
       - uses: actions/cache@v4
@@ -28,10 +36,11 @@ jobs:
 
       - name: Install pyvista and doctest requirements
         run: |
-          pip install -e .[test]
+          pip install --upgrade pip
+          pip install -e . --group test
 
       - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@v2
+        uses: pyvista/setup-headless-display-action@v4.1
 
       - name: Software Report
         run: |
@@ -50,14 +59,18 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: 3.13
 
       - name: Install test dependencies
-        run: pip install .[docs]
+        run: |
+          pip install --upgrade pip
+          pip install . --group docs
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples

@@ -10,6 +10,7 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -18,7 +19,7 @@ from .prop3d import _Prop3DMixin
 from .themes import Theme
 from .tools import FONTS
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import ClassVar
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 @no_new_attr
-class CornerAnnotation(_vtk.vtkCornerAnnotation):
+class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
@@ -47,6 +48,11 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     linear_font_scale_factor : float, optional
         Linear font scale factor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     Examples
     --------
     Create text annotation in four corners.
@@ -57,7 +63,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
+    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -65,6 +71,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
             self.prop = TextProperty()
         if linear_font_scale_factor is not None:
             self.linear_font_scale_factor = linear_font_scale_factor
+        self._name = name
 
     def get_text(self, position):
         """Get the text to be displayed for each corner.
@@ -154,7 +161,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(_vtk.vtkTextActor):
+class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -170,6 +177,11 @@ class Text(_vtk.vtkTextActor):
     prop : pyvista.TextProperty, optional
         The property of this actor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     Examples
     --------
     Create a text with text's property.
@@ -180,7 +192,7 @@ class Text(_vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None):
+    def __init__(self, text=None, position=None, prop=None, name=None):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -189,6 +201,7 @@ class Text(_vtk.vtkTextActor):
             self.position = position
         if prop is None:
             self.prop = TextProperty()
+        self._name = name
 
     @property
     def input(self):
@@ -250,10 +263,10 @@ class Label(_Prop3DMixin, Text):
     :class:`~pyvista.Actor`.
 
     In addition, this class supports an additional :attr:`relative_position` attribute.
-    In general, it is recommended to simply use :attr:`position` when positioning a
+    In general, it is recommended to simply use :attr:`~pyvista.Prop3D.position` when positioning a
     :class:`Label` by itself. However, if the position of the label depends on the
-    positioning of another actor, both :attr:`position` and :attr:`relative_position`
-    may be used together. In these cases, the :attr:`position` of the label and actor
+    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and :attr:`relative_position`
+    may be used together. In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
     should be kept in-sync. See the examples below.
 
     Parameters
@@ -265,13 +278,18 @@ class Label(_Prop3DMixin, Text):
         Position of the text in XYZ coordinates.
 
     relative_position : VectorLike[float]
-        Position of the text in XYZ coordinates relative to its :attr:`position`.
+        Position of the text in XYZ coordinates relative to its :attr:`~pyvista.Prop3D.position`.
 
     size : int
         Size of the text label.
 
     prop : pyvista.TextProperty, optional
         The property of this actor.
+
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
 
     See Also
     --------
@@ -371,10 +389,12 @@ class Label(_Prop3DMixin, Text):
         *,
         size: int = 50,
         prop: pyvista.Property | None = None,
+        name: str | None = None,
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
+        self._name = name  # type: ignore[assignment]
 
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]
@@ -386,7 +406,7 @@ class Label(_Prop3DMixin, Text):
         """Position of the label in xyz space.
 
         This is the "true" position of the label. Internally this is loosely
-        equal to :attr:`position` + :attr:`relative_position`.
+        equal to :attr:`~pyvista.Prop3D.position` + :attr:`relative_position`.
         """
         return self.GetPositionCoordinate().GetValue()
 
@@ -412,7 +432,7 @@ class Label(_Prop3DMixin, Text):
 
     @property
     def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the label relative to its :attr:`position`."""
+        """Position of the label relative to its :attr:`~pyvista.Prop3D.position`."""
         return tuple(self._relative_position.tolist())
 
     @relative_position.setter
@@ -434,7 +454,7 @@ class Label(_Prop3DMixin, Text):
 
 
 @no_new_attr
-class TextProperty(_vtk.vtkTextProperty):
+class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters
@@ -490,10 +510,10 @@ class TextProperty(_vtk.vtkTextProperty):
     >>> from pyvista import TextProperty
     >>> prop = TextProperty()
     >>> prop.opacity = 0.5
-    >>> prop.background_color = "b"
+    >>> prop.background_color = 'b'
     >>> prop.background_opacity = 0.5
     >>> prop.show_frame = True
-    >>> prop.frame_color = "b"
+    >>> prop.frame_color = 'b'
     >>> prop.frame_width = 10
     >>> prop.frame_color
     Color(name='blue', hex='#0000ffff', opacity=255)
@@ -738,7 +758,8 @@ class TextProperty(_vtk.vtkTextProperty):
         path = pathlib.Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
-            raise FileNotFoundError(f'Unable to locate {path}')
+            msg = f'Unable to locate {path}'
+            raise FileNotFoundError(msg)
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
 
@@ -767,10 +788,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'right':
             self.SetJustificationToRight()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".',
+                'Should be either "left", "center" or "right".'
             )
+            raise ValueError(msg)
 
     @property
     def justification_vertical(self) -> str:
@@ -797,10 +819,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".',
+                'Should be either "bottom", "center" or "top".'
             )
+            raise ValueError(msg)
 
     @property
     def italic(self) -> bool:

@@ -13,13 +13,14 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
 from .fileio import from_meshio
 from .fileio import is_meshio_mesh
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from meshio import Mesh
     from trimesh import Trimesh
 
@@ -37,6 +38,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
     from ..wrappers import _WrappableVTKDataObjectType
 
@@ -68,13 +70,11 @@ def wrap(dataset: _vtk.vtkTable) -> Table: ...
 def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
 
 
-# General catch-all cases for pyvista datasets
-# Do not include a catch-all for vtkDataSet or vtkDataObject since
-# only specific subclasses are supported
+# General catch-all cases
 @overload
-def wrap(dataset: DataSet) -> DataSet: ...
+def wrap(dataset: _vtk.vtkDataSet) -> DataSet: ...
 @overload
-def wrap(dataset: DataObject) -> DataObject: ...
+def wrap(dataset: _vtk.vtkDataObject) -> DataObject: ...
 
 
 # Misc overloads
@@ -124,6 +124,10 @@ def wrap(
     -------
     pyvista.DataSet
         The PyVista wrapped dataset.
+
+    See Also
+    --------
+    :ref:`wrap_trimesh_example`
 
     Examples
     --------
@@ -191,9 +195,7 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        from pyvista import DataObject  # avoid circular import
-
-        return cast(DataObject, dataset)
+        return cast('DataObject', dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -212,7 +214,8 @@ def wrap(
             mesh.active_scalars_name = 'values'
             return mesh
         else:
-            raise NotImplementedError('NumPy array could not be wrapped pyvista.')
+            msg = 'NumPy array could not be wrapped pyvista.'
+            raise NotImplementedError(msg)
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
@@ -224,7 +227,8 @@ def wrap(
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
+            msg = f'VTK data type ({key}) is not currently supported by pyvista.'
+            raise TypeError(msg)
         return None  # pragma: no cover
 
     # wrap meshio
@@ -245,7 +249,8 @@ def wrap(
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
-    raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
+    msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'
+    raise NotImplementedError(msg)
 
 
 @overload
@@ -273,7 +278,7 @@ def is_pyvista_dataset(obj: Any) -> bool:
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
-def generate_plane(normal, origin):
+def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """Return a _vtk.vtkPlane.
 
     Parameters
@@ -292,9 +297,10 @@ def generate_plane(normal, origin):
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal = normal / np.linalg.norm(normal)
-    plane.SetNormal(normal)
-    plane.SetOrigin(origin)
+    normal_ = _validation.validate_array3(normal, dtype_out=float)
+    normal_ = normal_ / np.linalg.norm(normal_)
+    plane.SetNormal(*normal_)
+    plane.SetOrigin(*origin)
     return plane
 
 
@@ -346,7 +352,8 @@ def axis_rotation(
     axis_to_vec = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
 
     if axis not in axis_to_vec:
-        raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
+        msg = 'Invalid axis. Must be either "x", "y", or "z"'
+        raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
@@ -378,12 +385,14 @@ def is_inside_bounds(point, bounds):
         deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise ValueError('Bounds mismatch point dimensionality')
+            msg = 'Bounds mismatch point dimensionality'
+            raise ValueError(msg)
         point = deque(point)
         bounds = deque(bounds)
         return is_inside_bounds(point, bounds)
     if not isinstance(point, deque):
-        raise TypeError(f'Unknown input data type ({type(point)}).')
+        msg = f'Unknown input data type ({type(point)}).'
+        raise TypeError(msg)
     if len(point) < 1:
         return True
     p = point.popleft()

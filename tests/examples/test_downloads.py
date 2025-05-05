@@ -6,6 +6,7 @@ from pathlib import PureWindowsPath
 
 import pytest
 import requests
+from retry_requests import retry
 
 import pyvista as pv
 from pyvista import examples
@@ -19,7 +20,15 @@ def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
         # Generate a separate test case for each downloadable dataset
-        test_cases = _generate_dataset_loader_test_cases_from_module(pv.examples.downloads)
+        test_cases_downloads = _generate_dataset_loader_test_cases_from_module(
+            pv.examples.downloads
+        )
+        test_cases_planets = _generate_dataset_loader_test_cases_from_module(pv.examples.planets)
+        # Exclude `load` functions
+        test_cases_planets = [
+            case for case in test_cases_planets if case.dataset_function[0].startswith('download')
+        ]
+        test_cases = [*test_cases_downloads, *test_cases_planets]
         ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
@@ -30,8 +39,9 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
 
 
 def _is_valid_url(url):
+    session = retry()
     try:
-        requests.get(url)
+        session.get(url)
     except requests.RequestException:
         return False
     else:
@@ -50,7 +60,7 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
         if not _is_valid_url(url):
-            pytest.fail(f'Invalid blob URL for {DatasetLoaderTestCase.dataset_name}:\n{url}')
+            pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
 
 def test_delete_downloads(tmpdir):

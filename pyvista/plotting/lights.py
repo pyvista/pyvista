@@ -18,11 +18,14 @@ except ImportError:  # pragma: no cover
 
 from typing import TYPE_CHECKING
 
+from pyvista.core import _validation
+from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from ..core._typing_core import TransformLike
     from ._typing import ColorLike
 
 
@@ -38,7 +41,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(vtkLight):
+class Light(DisableVtkSnakeCase, vtkLight):
     """Light class.
 
     Parameters
@@ -188,9 +191,8 @@ class Light(vtkLight):
                 )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
-            raise TypeError(
-                f'Parameter light_type must be int or str, not {type(light_type).__name__}.',
-            )
+            msg = f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
+            raise TypeError(msg)
         # LightType is an int subclass
 
         self.light_type = light_type
@@ -505,17 +507,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
-        >>> light_bright = pv.Light(
-        ...     position=(3, 0, 0), light_type='scene light'
-        ... )
-        >>> light_dim = pv.Light(
-        ...     position=(0, 3, 0), light_type='scene light'
-        ... )
+        >>> light_bright = pv.Light(position=(3, 0, 0), light_type='scene light')
+        >>> light_dim = pv.Light(position=(0, 3, 0), light_type='scene light')
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
         ...     plotter.add_light(light)
-        ...
         >>> plotter.show()
 
         """
@@ -637,9 +634,7 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(
-        ...         pv.Plane((offset, 0, 0)), color='white'
-        ...     )
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -648,7 +643,6 @@ class Light(vtkLight):
         ...     light.positional = True
         ...     light.cone_angle = 80
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -676,6 +670,10 @@ class Light(vtkLight):
         If the light's cone angle is increased to 90 degrees or above,
         its actor (if previously shown) is automatically hidden.
 
+        See Also
+        --------
+        :ref:`beam_shape_example`
+
         Examples
         --------
         Plot three planes lit by three spotlights with varying cone
@@ -685,17 +683,12 @@ class Light(vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(
-        ...         pv.Plane((offset, 0, 0)), color='white'
-        ...     )
-        ...     light = pv.Light(
-        ...         position=(offset, 0, 1), focal_point=(offset, 0, 0)
-        ...     )
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -723,6 +716,10 @@ class Light(vtkLight):
         distance. A larger attenuation constant corresponds to more
         rapid decay with distance.
 
+        See Also
+        --------
+        :ref:`attenuation_example`
+
         Examples
         --------
         Plot three cubes lit by two lights with different attenuation
@@ -737,7 +734,6 @@ class Light(vtkLight):
         ...     _ = plotter.add_mesh(
         ...         pv.Cube(center=(offset, offset, 0)), color='white'
         ...     )
-        ...
         >>> colors = ['b', 'g']
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
@@ -804,17 +800,12 @@ class Light(vtkLight):
         return self.GetTransformMatrix()
 
     @transform_matrix.setter
-    def transform_matrix(self, matrix):
+    def transform_matrix(self, matrix: TransformLike):
         if matrix is None or isinstance(matrix, vtkMatrix4x4):
-            trans = matrix
+            self.SetTransformMatrix(matrix)
         else:
-            try:
-                trans = vtkmatrix_from_array(matrix)
-            except ValueError:
-                raise ValueError(
-                    'Transformation matrix must be a 4-by-4 matrix or array-like.',
-                ) from None
-        self.SetTransformMatrix(trans)
+            trans = _validation.validate_transform4x4(matrix)
+            self.SetTransformMatrix(vtkmatrix_from_array(trans))
 
     @property
     def light_type(self):  # numpydoc ignore=RT01
@@ -873,9 +864,8 @@ class Light(vtkLight):
     def light_type(self, ltype):
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
-            raise TypeError(
-                f'Light type must be an integer subclass instance, got {ltype} instead.',
-            )
+            msg = f'Light type must be an integer subclass instance, got {ltype} instead.'
+            raise TypeError(msg)
         self.SetLightType(ltype)
 
     @property
@@ -1147,9 +1137,8 @@ class Light(vtkLight):
 
         """
         if not isinstance(vtk_light, vtkLight):
-            raise TypeError(
-                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.',
-            )
+            msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
+            raise TypeError(msg)
 
         light = cls()
         light.light_type = vtk_light.GetLightType()  # resets transformation matrix
@@ -1189,7 +1178,6 @@ class Light(vtkLight):
         >>> _ = plotter.add_mesh(pv.Cube(), color='white')
         >>> for light in plotter.renderer.lights:
         ...     light.intensity /= 5
-        ...
         >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
         >>> spotlight.positional = True
         >>> spotlight.cone_angle = 20

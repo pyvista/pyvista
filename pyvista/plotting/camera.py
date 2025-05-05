@@ -15,7 +15,7 @@ from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_vtk.vtkCamera):
+class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
@@ -48,9 +48,8 @@ class Camera(_vtk.vtkCamera):
 
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
-                raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument',
-                )
+                msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
+                raise TypeError(msg)
             self._renderer = proxy(renderer)
         else:
             self._renderer = None
@@ -135,9 +134,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera = pv.Camera.from_paraview_pvcc(
-        ...     "camera.pvcc"
-        ... )  # doctest:+SKIP
+        >>> pl.camera = pv.Camera.from_paraview_pvcc('camera.pvcc')  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
 
@@ -190,7 +187,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
+        >>> pl.camera.to_paraview_pvcc('camera.pvcc')  # doctest:+SKIP
 
         """
         root = ET.Element('PVCameraConfiguration')
@@ -289,9 +286,8 @@ class Camera(_vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            raise AttributeError(
-                'Camera is must be associated with a renderer to reset its clipping range.',
-            )
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
+            raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
     @property
@@ -467,8 +463,9 @@ class Camera(_vtk.vtkCamera):
 
         """
         if isinstance(value, str):
-            if not value == 'tight':
-                raise ValueError('If a string, ``zoom`` can only be "tight"')
+            if value != 'tight':
+                msg = 'If a string, ``zoom`` can only be "tight"'
+                raise ValueError(msg)
             self.tight()
             return
 
@@ -579,7 +576,8 @@ class Camera(_vtk.vtkCamera):
     @clipping_range.setter
     def clipping_range(self, points):
         if points[0] > points[1]:
-            raise ValueError('Near point must be lower than the far point.')
+            msg = 'Near point must be lower than the far point.'
+            raise ValueError(msg)
         self.SetClippingRange(points[0], points[1])
 
     @property
@@ -853,7 +851,7 @@ class Camera(_vtk.vtkCamera):
 
         """
         # Inspired by vedo resetCamera. Thanks @marcomusy.
-        x0, x1, y0, y1, z0, z1 = self._renderer.ComputeVisiblePropBounds()
+        x0, x1, y0, y1, z0, z1 = self._renderer.bounds
 
         self.enable_parallel_projection()
 

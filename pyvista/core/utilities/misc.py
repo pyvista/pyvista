@@ -14,8 +14,14 @@ from typing import TypeVar
 import warnings
 
 import numpy as np
+from typing_extensions import Self
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from typing import Any
+    from typing import ClassVar
+
+    from .._typing_core import ArrayLike
+    from .._typing_core import NumpyArray
     from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
@@ -72,14 +78,16 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        raise TypeError(f'{name} must be a length three iterable of floats.')
+        msg = f'{name} must be a length three iterable of floats.'  # type: ignore[unreachable]
+        raise TypeError(msg)
     if len(point) != 3:
         if name == '':
             name = 'Vector'
-        raise ValueError(f'{name} must be a length three iterable of floats.')
+        msg = f'{name} must be a length three iterable of floats.'
+        raise ValueError(msg)
 
 
-def abstract_class(cls_):  # numpydoc ignore=RT01
+def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Decorate a class, overriding __new__.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
@@ -92,9 +100,10 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
 
     """
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202
         if cls is cls_:
-            raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
+            msg = f'{cls.__name__} is an abstract class and may not be instantiated.'
+            raise TypeError(msg)
         return super(cls_, cls).__new__(cls)
 
     cls_.__new__ = __new__
@@ -106,7 +115,7 @@ class AnnotatedIntEnum(int, enum.Enum):
 
     annotation: str
 
-    def __new__(cls, value, annotation: str):
+    def __new__(cls, value: int, annotation: str) -> Self:
         """Initialize."""
         obj = int.__new__(cls, value)
         obj._value_ = value
@@ -114,7 +123,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         return obj
 
     @classmethod
-    def from_str(cls, input_str):
+    def from_str(cls, input_str: str) -> Self:
         """Create an enum member from a string.
 
         Parameters
@@ -136,10 +145,11 @@ class AnnotatedIntEnum(int, enum.Enum):
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
-        raise ValueError(f'{cls.__name__} has no value matching {input_str}')
+        msg = f'{cls.__name__} has no value matching {input_str}'
+        raise ValueError(msg)
 
     @classmethod
-    def from_any(cls: type[T], value: T | int | str) -> T:
+    def from_any(cls, value: AnnotatedIntEnum | int | str) -> Self:
         """Create an enum member from a string, int, etc.
 
         Parameters
@@ -165,11 +175,12 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f'{cls.__name__} has no value matching {value}')
+            msg = f'{cls.__name__} has no value matching {value}'  # type: ignore[unreachable]
+            raise ValueError(msg)
 
 
 @cache
-def has_module(module_name) -> bool:
+def has_module(module_name: str) -> bool:
     """Return if a module can be imported.
 
     Parameters
@@ -183,11 +194,11 @@ def has_module(module_name) -> bool:
         ``True`` if the module can be imported, otherwise ``False``.
 
     """
-    module_spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
+    module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None
 
 
-def try_callback(func, *args) -> None:
+def try_callback(func, *args) -> None:  # noqa: ANN001
     """Wrap a given callback in a try statement.
 
     Parameters
@@ -210,7 +221,7 @@ def try_callback(func, *args) -> None:
         warnings.warn(formatted_exception)
 
 
-def threaded(fn):
+def threaded(fn):  # noqa: ANN001, ANN201
     """Call a function using a thread.
 
     Parameters
@@ -225,7 +236,7 @@ def threaded(fn):
 
     """
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):  # noqa: ANN202
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
@@ -246,12 +257,12 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition) -> None:
+    def __init__(self, dec, condition) -> None:  # noqa: ANN001
         """Initialize."""
         self.decorator = dec
         self.condition = condition
 
-    def __call__(self, func):
+    def __call__(self, func):  # noqa: ANN001, ANN204
         """Call the decorated function if condition is matched."""
         if not self.condition:
             # Return the function unchanged, not decorated.
@@ -259,20 +270,19 @@ class conditional_decorator:
         return self.decorator(func)
 
 
-def _check_range(value, rng, parm_name):
+def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
-        raise ValueError(
-            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
-        )
+        msg = f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        raise ValueError(msg)
 
 
-def no_new_attr(cls):  # numpydoc ignore=RT01
+def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     """Override __setattr__ to not permit new attributes."""
     if not hasattr(cls, '_new_attr_exceptions'):
         cls._new_attr_exceptions = []
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value):  # noqa: ANN001, ANN202
         """Do not allow setting attributes."""
         if (
             hasattr(self, name)
@@ -281,16 +291,17 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
         ):
             object.__setattr__(self, name, value)
         else:
-            raise AttributeError(
+            msg = (
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}',
+                f'{self.__class__.__name__}'
             )
+            raise AttributeError(msg)
 
     cls.__setattr__ = __setattr__
     return cls
 
 
-def _reciprocal(x, tol=1e-8):
+def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
     The reciprocal of elements with an absolute value less than a
@@ -310,7 +321,61 @@ def _reciprocal(x, tol=1e-8):
 
     """
     x = np.array(x)
+    x = x if np.issubdtype(x.dtype, np.floating) else x.astype(float)
     zero = np.abs(x) < tol
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
     return x
+
+
+class _classproperty(property):
+    """Read-only class property decorator.
+
+    Use this decaorator as an alternative to chaining `@classmethod`
+    and `@property` which is deprecated.
+
+    See:
+    - https://docs.python.org/library/functions.html#classmethod
+    - https://stackoverflow.com/a/13624858
+
+    Examples
+    --------
+    >>> from pyvista.core.utilities.misc import _classproperty
+    >>> class Foo:
+    ...     @_classproperty
+    ...     def bar(cls): ...
+
+    """
+
+    def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
+        return self.fget(owner_cls)  # type: ignore[misc]
+
+
+class _NameMixin:
+    """Add a 'name' property to a class.
+
+    .. versionadded:: 0.45
+
+    """
+
+    # In case subclasses use @no_new_attr mixin
+    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
+
+    @property
+    def name(self) -> str:  # numpydoc ignore=RT01
+        """Get or set the unique name identifier used by PyVista."""
+        if not hasattr(self, '_name') or self._name is None:
+            address = (
+                self.GetAddressAsString('')
+                if hasattr(self, 'GetAddressAsString')
+                else hex(id(self))
+            )
+            return f'{type(self).__name__}({address})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if not value:
+            msg = 'Name must be truthy.'
+            raise ValueError(msg)
+        self._name = str(value)

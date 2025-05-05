@@ -106,9 +106,11 @@ through a range of examples and tutorials.
    :include-source: False
    :context:
 
-   >>> bunny_cpos = [( 0.14826, 0.275729,  0.4215911),
-   ...               (-0.01684, 0.110154, -0.0015369),
-   ...               (-0.15446, 0.939031, -0.3071841)]
+   >>> bunny_cpos = [
+   ...     (0.14826, 0.275729, 0.4215911),
+   ...     (-0.01684, 0.110154, -0.0015369),
+   ...     (-0.15446, 0.939031, -0.3071841),
+   ... ]
 
 
 .. grid:: 2
@@ -121,11 +123,12 @@ through a range of examples and tutorials.
       Learn more about why we created PyVista as an interface to the
       Visualization Toolkit (VTK).
 
-      .. code:: python
+      .. code-block:: python
 
-         import pyvista
-         mesh = pyvista.read('bunny.stl')
-         mesh.plot()
+          import pyvista
+
+          mesh = pyvista.read('bunny.stl')
+          mesh.plot()
 
       .. pyvista-plot::
          :include-source: False

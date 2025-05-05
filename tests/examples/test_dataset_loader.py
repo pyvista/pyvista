@@ -27,8 +27,9 @@ from pyvista.examples._dataset_loader import _load_as_multiblock
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+from pyvista.examples.planets import _download_dataset_texture
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 
@@ -61,7 +62,8 @@ def _generate_dataset_loader_test_cases_from_module(
             dataset_name = func.split('load_')[1]
             key = 'dataset_function'
         else:
-            raise RuntimeError(f'Invalid case specified: {(func, dataset_function)}')
+            msg = f'Invalid case specified: {(func, dataset_function)}'
+            raise RuntimeError(msg)
         test_cases_dict.setdefault(dataset_name, {})
         test_cases_dict[dataset_name][key] = (func, dataset_function)
 
@@ -69,11 +71,7 @@ def _generate_dataset_loader_test_cases_from_module(
 
     # Collect all `download_<name> or `load_<name>` functions
     def _is_dataset_function(name, item):
-        return (
-            isinstance(item, FunctionType)
-            and name.startswith('download_')
-            or name.startswith('load_')
-        )
+        return isinstance(item, FunctionType) and name.startswith(('download_', 'load_'))
 
     dataset_functions = {
         name: item for name, item in module_members.items() if _is_dataset_function(name, item)
@@ -235,7 +233,7 @@ def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
 
     # Test all datasets loaded as multiblock
     filenames = sorted(
-        [Path(fname).stem for fname in os.listdir(examples_local_repository_tmp_dir)],
+        [Path(fname).stem for fname in Path(examples_local_repository_tmp_dir).iterdir()],
     )
     loader = _SingleFileDatasetLoader(examples_local_repository_tmp_dir)
     dataset = loader.load()
@@ -617,8 +615,8 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert loader._total_size_bytes == 69732
     assert loader.total_size == '69.7 KB'
     assert loader.unique_extension == '.exo'
-    assert loader._reader is None
-    assert loader.unique_reader_type is None
+    assert isinstance(loader._reader, pv.ExodusIIReader)
+    assert loader.unique_reader_type is pv.ExodusIIReader
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert len(loader.dataset_iterable) == 12
@@ -678,3 +676,17 @@ def test_format_file_size():
     assert _format_file_size(999949000000) == '999.9 GB'
     assert _format_file_size(999950000000) == '1000.0 GB'
     assert _format_file_size(1000000000000) == '1000.0 GB'
+
+
+def test_download_dataset_texture():
+    loader = _SingleFileDownloadableDatasetLoader(
+        'beach.nrrd',
+    )
+    loaded = _download_dataset_texture(loader, texture=True, load=True)
+    assert isinstance(loaded, pv.Texture)
+
+    loaded = _download_dataset_texture(loader, texture=False, load=True)
+    assert isinstance(loaded, pv.ImageData)
+
+    loaded = _download_dataset_texture(loader, texture=False, load=False)
+    assert isinstance(loaded, str)

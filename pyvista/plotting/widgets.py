@@ -27,16 +27,17 @@ from .utilities.algorithms import outline_algorithm
 from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
 
 
-def _parse_interaction_event(interaction_event):
+def _parse_interaction_event(interaction_event: InteractionEventType):
     """Parse the interaction event.
 
     Parameters
     ----------
-    interaction_event : vtk.vtkCommand.EventIds, str, optional
+    interaction_event : InteractionEventType
         The VTK interaction event to use for triggering the callback. Accepts
         either the strings ``'start'``, ``'end'``, ``'always'`` or a
         ``vtk.vtkCommand.EventIds``.
@@ -47,24 +48,30 @@ def _parse_interaction_event(interaction_event):
         VTK Event type.
 
     """
-    if interaction_event == 'start':
-        interaction_event = _vtk.vtkCommand.StartInteractionEvent
-    elif interaction_event == 'end':
-        interaction_event = _vtk.vtkCommand.EndInteractionEvent
-    elif interaction_event == 'always':
-        interaction_event = _vtk.vtkCommand.InteractionEvent
-    elif isinstance(interaction_event, str):
-        raise ValueError(
-            "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given.",
-        )
-    elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
-        raise TypeError(
+    if not isinstance(interaction_event, (_vtk.vtkCommand.EventIds, str)):
+        msg = (  # type: ignore[unreachable]
             'Expected type for `interaction_event` is either a str '
             'or an instance of `vtk.vtkCommand.EventIds`.'
-            f' ({type(interaction_event)}) was given.',
+            f' ({type(interaction_event)}) was given.'
         )
-    return interaction_event
+        raise TypeError(msg)
+
+    if isinstance(interaction_event, _vtk.vtkCommand.EventIds):
+        return interaction_event
+
+    event_map = {
+        'start': _vtk.vtkCommand.StartInteractionEvent,
+        'end': _vtk.vtkCommand.EndInteractionEvent,
+        'always': _vtk.vtkCommand.InteractionEvent,
+    }
+    if interaction_event not in event_map:
+        expected = ', '.join(f'`{e}`' for e in event_map)
+        msg = (
+            f'Expected value for `interaction_event` is {expected}. {interaction_event} was given.'
+        )
+        raise ValueError(msg)
+
+    return event_map[interaction_event]
 
 
 class WidgetHelper:
@@ -107,7 +114,7 @@ class WidgetHelper:
         use_planes: bool = False,
         outline_translation: bool = True,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add a box widget to the scene.
 
@@ -153,7 +160,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -191,14 +198,11 @@ class WidgetHelper:
         ...         - 0.3
         ...     )
         ...     sphere = pv.Sphere(new_radius, new_center)
-        ...     _ = plotter.add_mesh(sphere, name="Sphere")
-        ...
+        ...     _ = plotter.add_mesh(sphere, name='Sphere')
         >>> _ = plotter.add_box_widget(callback=simulate)
         >>> plotter.show()
 
         """
-        interaction_event = _parse_interaction_event(interaction_event)
-
         if bounds is None:
             bounds = self.bounds  # type: ignore[attr-defined]
 
@@ -224,7 +228,10 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(interaction_event, _the_callback)
+        box_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -245,7 +252,7 @@ class WidgetHelper:
         outline_translation: bool = True,
         merge_points: bool = True,
         crinkle: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -289,7 +296,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -300,7 +307,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -397,7 +404,7 @@ class WidgetHelper:
         pass_widget: bool = False,
         test_callback: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         outline_opacity=None,
     ):
         """Add a plane widget to the scene.
@@ -435,7 +442,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         outline_translation : bool, optional
@@ -466,7 +473,7 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -505,16 +512,11 @@ class WidgetHelper:
         ...         i_size=20,
         ...         j_size=20,
         ...     )
-        ...     _ = pl.add_mesh(
-        ...         peak_plane, name="Peak", color='red', opacity=0.4
-        ...     )
-        ...
+        ...     _ = pl.add_mesh(peak_plane, name='Peak', color='red', opacity=0.4)
         >>> _ = pl.add_plane_widget(callback, normal_rotation=False)
         >>> pl.show()
 
         """
-        interaction_event = _parse_interaction_event(interaction_event)
-
         if origin is None:
             origin = self.center  # type: ignore[attr-defined]
         if bounds is None:
@@ -611,7 +613,8 @@ class WidgetHelper:
                 plane_widget.NormalToZAxisOn()
                 plane_widget.SetNormal(NORMALS['z'])  # type: ignore[arg-type]
             else:
-                raise RuntimeError('assign_to_axis not understood')
+                msg = 'assign_to_axis not understood'
+                raise RuntimeError(msg)
         else:
             plane_widget.SetNormal(normal)
 
@@ -619,8 +622,7 @@ class WidgetHelper:
         plane_widget.UpdatePlacement()
         plane_widget.On()
         plane_widget.AddObserver(
-            interaction_event,
-            # _vtk.vtkCommand.InteractionEvent,
+            _parse_interaction_event(interaction_event),
             _the_callback,
         )
         if test_callback:
@@ -649,7 +651,7 @@ class WidgetHelper:
         implicit: bool = True,
         normal_rotation: bool = True,
         crinkle: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -687,7 +689,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -712,7 +714,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -731,7 +733,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -831,7 +833,7 @@ class WidgetHelper:
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -843,7 +845,7 @@ class WidgetHelper:
         volume : pyvista.plotting.volume.Volume or pyvista.ImageData or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.ImageData` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
+            :class:`pyvista.plotting.volume.Volume` from :func:`pyvista.Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -864,7 +866,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -900,7 +902,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_volume` to control how the volume is
+            :func:`pyvista.Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
             :class:`pyvista.ImageData` and :class:`pyvista.RectilinearGrid`.
 
@@ -909,15 +911,20 @@ class WidgetHelper:
         vtk.vtkPlaneWidget or vtk.vtkImplicitPlaneWidget
             The VTK plane widget depending on the value of ``implicit``.
 
+        See Also
+        --------
+        :ref:`clip_volume_widget_example`
+
         """
         if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)  # type: ignore[attr-defined]
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
-            raise TypeError(
+            msg = (
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
-                'from `Plotter.add_volume`.',
+                'from `Plotter.add_volume`.'
             )
+            raise TypeError(msg)
         else:
             assert_empty_kwargs(**kwargs)
 
@@ -962,7 +969,7 @@ class WidgetHelper:
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -997,7 +1004,7 @@ class WidgetHelper:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether or not
+            When using an implicit plane widget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -1018,8 +1025,10 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
@@ -1032,7 +1041,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1094,7 +1103,7 @@ class WidgetHelper:
             implicit=implicit,
             origin=origin,
             normal_rotation=normal_rotation,
-            interaction_event=interaction_event,
+            interaction_event=_parse_interaction_event(interaction_event),
             outline_opacity=outline_opacity,
         )
 
@@ -1106,7 +1115,7 @@ class WidgetHelper:
         generate_triangles: bool = False,
         widget_color=None,
         tubing: bool = False,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Slice a mesh with three interactive planes.
@@ -1134,15 +1143,17 @@ class WidgetHelper:
             * ``color='#FFFFFF'``
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether or not
+            When using an implicit plane widget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1176,7 +1187,7 @@ class WidgetHelper:
                 generate_triangles=generate_triangles,
                 widget_color=widget_color,
                 tubing=tubing,
-                interaction_event=interaction_event,
+                interaction_event=_parse_interaction_event(interaction_event),
                 **axkwargs,
             )
             actors.append(a)
@@ -1192,7 +1203,7 @@ class WidgetHelper:
         color=None,
         use_vertices: bool = False,
         pass_widget: bool = False,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add a line widget to the scene.
 
@@ -1230,8 +1241,10 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
@@ -1253,8 +1266,7 @@ class WidgetHelper:
         ...     normal = np.array(pointa) - np.array(pointb)
         ...     single_slc = model.slice(normal=normal, origin=center)
         ...
-        ...     _ = pl.add_mesh(single_slc, name="slc")
-        ...
+        ...     _ = pl.add_mesh(single_slc, name='slc')
         >>> _ = pl.add_line_widget(callback=move_center, use_vertices=True)
         >>> pl.show()
 
@@ -1286,7 +1298,10 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(interaction_event, _the_callback)
+        line_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
@@ -1306,7 +1321,7 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         style=None,
     ):
         """Add a text slider bar widget.
@@ -1340,7 +1355,7 @@ class WidgetHelper:
             to :attr:`pyvista.global_theme.font.color
             <pyvista.plotting.themes._Font.color>`.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1362,12 +1377,14 @@ class WidgetHelper:
 
         """
         if not isinstance(data, list):
-            raise TypeError(
-                f'The `data` parameter must be a list but {type(data).__name__} was passed instead',
+            msg = (
+                f'The `data` parameter must be a list but {type(data).__name__} was passed instead'
             )
+            raise TypeError(msg)
         n_states = len(data)
         if n_states == 0:
-            raise ValueError('The input list of values is empty')
+            msg = 'The input list of values is empty'
+            raise ValueError(msg)
         delta = (n_states - 1) / float(n_states)
         # avoid division by zero in case there is only one element
         delta = 1 if delta == 0 else delta
@@ -1416,7 +1433,7 @@ class WidgetHelper:
         pointb=(0.9, 0.9),
         color=None,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         style=None,
         title_height=0.03,
         title_opacity=1.0,
@@ -1466,7 +1483,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1506,31 +1523,33 @@ class WidgetHelper:
         vtk.vtkSliderWidget
             Slider widget.
 
+        See Also
+        --------
+        :ref:`multi_slider_widget_example`
+
         Examples
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
-        ...     sphere = pv.Sphere(
-        ...         phi_resolution=res, theta_resolution=res
-        ...     )
-        ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
-        ...
+        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
+        ...     pl.add_mesh(sphere, name='sphere', show_edges=True)
         >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
-        ...     title="Resolution",
+        ...     title='Resolution',
         ...     title_opacity=0.5,
-        ...     title_color="red",
-        ...     fmt="%0.9f",
+        ...     title_color='red',
+        ...     fmt='%0.9f',
         ...     title_height=0.08,
         ... )
         >>> pl.show()
 
         """
         if self.iren is None:  # type: ignore[attr-defined]
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
@@ -1568,9 +1587,8 @@ class WidgetHelper:
 
         if style is not None:
             if not isinstance(style, str):
-                raise TypeError(
-                    f'Expected type for ``style`` is str but {type(style).__name__} was given.',
-                )
+                msg = f'Expected type for ``style`` is str but {type(style).__name__} was given.'
+                raise TypeError(msg)
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
             slider_rep.SetSliderWidth(slider_style.slider_width)
@@ -1722,13 +1740,15 @@ class WidgetHelper:
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for threshold widget.')
+            msg = 'MultiBlock datasets are not supported for threshold widget.'
+            raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         arr = get_array(mesh, scalars, preference=preference)
         if arr is None:
-            raise ValueError('No arrays present to threshold.')
+            msg = 'No arrays present to threshold.'
+            raise ValueError(msg)
         field = get_array_association(mesh, scalars, preference=preference)
 
         rng = mesh.get_data_range(scalars)
@@ -1854,7 +1874,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1877,22 +1897,24 @@ class WidgetHelper:
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.PointSet):
-            raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
+            msg = 'PointSets are 0-dimensional and thus cannot produce contours.'
+            raise TypeError(msg)
         if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for this widget.')
+            msg = 'MultiBlock datasets are not supported for this widget.'
+            raise TypeError(msg)
         name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise ValueError('Input dataset for the contour filter must have data arrays.')
+            msg = 'Input dataset for the contour filter must have data arrays.'
+            raise ValueError(msg)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
-            )
+            msg = f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+            raise TypeError(msg)
 
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -1944,7 +1966,7 @@ class WidgetHelper:
         pass_widget: bool = False,
         closed: bool = False,
         initial_points=None,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
     ):
         """Create and add a spline widget to the scene.
 
@@ -1999,13 +2021,19 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
         vtk.vtkSplineWidget
             The newly created spline widget.
+
+        See Also
+        --------
+        :ref:`spline_widget_example`
 
         Notes
         -----
@@ -2014,7 +2042,8 @@ class WidgetHelper:
 
         """
         if initial_points is not None and len(initial_points) != n_handles:
-            raise ValueError('`initial_points` must be length `n_handles`.')
+            msg = '`initial_points` must be length `n_handles`.'
+            raise ValueError(msg)
 
         color = Color(color, default_color=pyvista.global_theme.color)
 
@@ -2049,7 +2078,10 @@ class WidgetHelper:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(interaction_event, _the_callback)
+        spline_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -2076,7 +2108,7 @@ class WidgetHelper:
         ribbon_opacity=0.5,
         initial_points=None,
         closed: bool = False,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Slice a mesh with a spline widget.
@@ -2132,12 +2164,14 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -2186,7 +2220,7 @@ class WidgetHelper:
             ribbon_opacity=ribbon_opacity,
             initial_points=initial_points,
             closed=closed,
-            interaction_event=interaction_event,
+            interaction_event=_parse_interaction_event(interaction_event),
         )
 
         return self.add_mesh(alg, **kwargs)  # type: ignore[attr-defined]
@@ -2221,9 +2255,14 @@ class WidgetHelper:
         vtk.vtkDistanceWidget
             The newly created distance widget.
 
+        See Also
+        --------
+        :ref:`distance_measurement_example`
+
         """
         if self.iren is None:  # type: ignore[attr-defined]
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         if color is None:
             color = pyvista.global_theme.font.color.float_rgb
@@ -2287,7 +2326,7 @@ class WidgetHelper:
         indices=None,
         pass_widget: bool = False,
         test_callback: bool = True,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add one or many sphere widgets to a scene.
 
@@ -2346,13 +2385,19 @@ class WidgetHelper:
             If ``True``, run the callback function after the widget is
             created.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
         vtk.vtkSphereWidget
             The sphere widget.
+
+        See Also
+        --------
+        :ref:`sphere_widget_example`
 
         """
         if color is None:
@@ -2402,7 +2447,10 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(interaction_event, _the_callback)
+            sphere_widget.AddObserver(
+                _parse_interaction_event(interaction_event),
+                _the_callback,
+            )
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
@@ -2469,15 +2517,15 @@ class WidgetHelper:
 
         Returns
         -------
-        pyvista.widgets.AffineWidget3D
+        pyvista.plotting.widgets.AffineWidget3D
             The affine widget.
 
         Notes
         -----
         After interacting with the actor, the transform will be stored within
-        :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+        :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
         dataset. Use this matrix in conjunction with
-        :func:`pyvista.DataSetFilters.transform` to transform the dataset.
+        :func:`pyvista.DataObjectFilters.transform` to transform the dataset.
 
         Examples
         --------
@@ -2571,7 +2619,6 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
-        ...
         >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
@@ -2579,7 +2626,8 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -2697,7 +2745,6 @@ class WidgetHelper:
         ...         p.background_color = color
         ...
         ...     return wrapped_callback
-        ...
         >>> _ = p.add_radio_button_widget(
         ...     set_bg('white'),
         ...     'bgcolor',
@@ -2721,7 +2768,8 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
-            raise RuntimeError('Cannot add a widget to a closed plotter.')
+            msg = 'Cannot add a widget to a closed plotter.'
+            raise RuntimeError(msg)
 
         if radio_button_group not in self.radio_button_widget_dict:
             self.radio_button_widget_dict[radio_button_group] = []
@@ -2845,9 +2893,7 @@ class WidgetHelper:
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     mesh, scalars=range(6), show_scalar_bar=False
-        ... )
+        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
         >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
 
@@ -2857,7 +2903,8 @@ class WidgetHelper:
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+            msg = 'vtkCameraOrientationWidget requires vtk>=9.1.0'
+            raise VTKVersionError(msg)
 
         widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)  # type: ignore[attr-defined]
@@ -2937,7 +2984,8 @@ class WidgetHelper:
         logo_maybe: pyvista.DataObject | str | pathlib.Path | None
         logo_maybe = pyvista.read(logo) if isinstance(logo, (str, pathlib.Path)) else logo
         if not isinstance(logo_maybe, pyvista.ImageData):
-            raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+            msg = 'Logo must be a pyvista.ImageData or a file path to an image.'
+            raise TypeError(msg)
         else:
             logo = logo_maybe
 
@@ -2990,7 +3038,8 @@ class WidgetHelper:
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
+            msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
+            raise VTKVersionError(msg)
         representation = vtkCamera3DRepresentation()
         representation.SetCamera(self.renderer.GetActiveCamera())  # type: ignore[attr-defined]
         widget = vtkCamera3DWidget()

@@ -13,7 +13,7 @@ from .opts import InterpolationType
 
 
 @no_new_attr
-class Property(_vtk.vtkProperty):
+class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     """Wrap vtkProperty and expose it pythonically.
 
     This class is used to set the property of actors.
@@ -303,12 +303,13 @@ class Property(_vtk.vtkProperty):
         elif new_style == 'surface':
             self.SetRepresentationToSurface()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
-                '\t"points"\n',
+                '\t"points"\n'
             )
+            raise ValueError(msg)
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
@@ -517,9 +518,9 @@ class Property(_vtk.vtkProperty):
         return self.GetLighting()
 
     @lighting.setter
-    def lighting(self, value: bool):
+    def lighting(self, value: bool | None):
         if value is None:
-            value = self._theme.lighting
+            value = self._theme.lighting  # type: ignore[union-attr]
         self.SetLighting(value)
 
     @property
@@ -862,6 +863,11 @@ class Property(_vtk.vtkProperty):
         Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
 
+        See Also
+        --------
+        :ref:`create_truss_example`
+            Example that uses ``render_lines_as_tubes``.
+
         Examples
         --------
         Get the default line rendering and visualize it.
@@ -1030,9 +1036,8 @@ class Property(_vtk.vtkProperty):
             self.FrontfaceCullingOff()
             self.BackfaceCullingOff()
         else:
-            raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"',
-            )
+            msg = f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"'
+            raise ValueError(msg)
 
     @property
     def ambient_color(self) -> Color:  # numpydoc ignore=RT01
@@ -1176,7 +1181,8 @@ class Property(_vtk.vtkProperty):
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         return self.GetAnisotropy()
 
     @anisotropy.setter
@@ -1184,7 +1190,8 @@ class Property(_vtk.vtkProperty):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,6 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import load_airplane
@@ -21,7 +23,9 @@ from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from pyvista.core.dataset import DataSet
 
 
@@ -64,7 +68,10 @@ def test_point_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_data['new_array'] = None
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = (
+        "Invalid array shape. Array 'new_array' has length (98) but a length of (99) was expected."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         grid.point_data['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -104,8 +111,58 @@ def test_cell_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_data['new_array'] = None
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = (
+        "Invalid array shape. Array 'new_array' has length (39) but a length of (40) was expected."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
+
+
+@pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1), (0, 0)])
+@pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
+@pytest.mark.parametrize('mesh_is_empty', [True, False])
+def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh_is_empty):
+    # Test that setting empty arrays is only allowed when the mesh is
+    # empty OR when setting field data.
+    # Empty arrays with non-zero shape values are never allowed.
+
+    mesh = pv.PolyData() if mesh_is_empty else uniform
+
+    # Define empty array with a shape that matches the dataset
+    if attribute == 'point_data':
+        mesh_data_length = mesh.n_points
+    elif attribute == 'cell_data':
+        mesh_data_length = mesh.n_cells
+    else:
+        # Use an arbitrary non-zero positive value for field data in the non-empty case
+        mesh_data_length = 0 if mesh_is_empty else 10
+    if mesh_is_empty:
+        assert mesh_data_length == 0
+    else:
+        assert mesh_data_length > 0
+
+    # Replace `-1` in empty shape with the actual length of the mesh data
+    empty_shape = np.array(empty_shape)
+    empty_shape[empty_shape == -1] = mesh_data_length
+    empty_shape = tuple(empty_shape.tolist())
+
+    empty_array = np.ones(empty_shape)
+    assert empty_array.size == 0
+    assert empty_array.shape == empty_shape
+
+    # Test setting the array
+    data = getattr(mesh, attribute)
+    if empty_shape in [(0,), (0, 0)] and (attribute == 'field_data' or mesh_is_empty):
+        # Special case, no error raised
+        data['new_array'] = empty_array
+        assert 'new_array' in data
+        assert data['new_array'].size == 0
+        # Note: the output shape is always (0,) and may not match the input shape (bug?)
+        assert data['new_array'].shape == (0,)
+    else:
+        # Expect error for all other cases
+        with pytest.raises(ValueError, match='Invalid array shape.'):
+            data['new_array'] = empty_array
 
 
 def test_point_cell_data_single_scalar_no_exception_raised():
@@ -381,10 +438,11 @@ def test_print_repr(grid, display, html):
     representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
+    assert isinstance(result, str)
     if display and html:
-        assert result is None
+        assert result == ''
     else:
-        assert result is not None
+        assert result != ''
 
 
 def test_invalid_vector(grid):
@@ -425,6 +483,61 @@ def test_arrows():
     assert isinstance(arrows, pv.PolyData)
     assert np.any(arrows.points)
     assert arrows.active_vectors_name == 'GlyphVector'
+
+
+def test_arrows_cell_data():
+    box = pv.Box().compute_normals(cell_normals=True, point_normals=False)
+    assert box.array_names == ['Normals']
+    assert box.cell_data.keys() == ['Normals']
+    assert box.arrows is None
+
+    box.set_active_vectors('Normals')
+    arrows = box.arrows
+    # Test that there are as many arrows as there are vectors
+    num_parts_per_arrow = pv.Arrow().split_bodies().n_blocks
+    num_parts = arrows.split_bodies().n_blocks
+    num_arrows = num_parts / num_parts_per_arrow
+
+    num_vectors = len(box['Normals'])
+    assert num_arrows == num_vectors
+
+
+def test_arrows_ndim_raises(mocker: MockerFixture):
+    m = mocker.patch.object(pv.DataSet, 'active_vectors')
+    mocker.patch.object(pv.DataSet, 'active_vectors_name')
+    m.ndim = 1
+
+    sphere = pv.Sphere(radius=3.14)
+    with pytest.raises(ValueError, match='Active vectors are not vectors.'):
+        sphere.arrows  # noqa: B018
+
+
+def test_set_active_scalars_raises(mocker: MockerFixture):
+    sphere = pv.Sphere(radius=3.14)
+    sphere.point_data[(f := 'foo')] = 1
+
+    m = mocker.patch.object(dataset, 'get_array_association')
+    m.return_value = 1
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Data field (foo) with type (1) not usable'),
+    ):
+        sphere.set_active_scalars(f)
+
+
+def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
+    sphere = pv.Sphere(radius=3.14)
+    sphere.point_data[(f := 'foo')] = 1
+
+    m = mocker.patch.object(sphere, 'GetPointData')
+    m().SetActiveScalars.return_value = -1
+
+    match = re.escape(
+        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the active scalars'
+    )
+    with pytest.raises(ValueError, match=match):
+        sphere.set_active_scalars(f)
 
 
 def active_component_consistency_check(grid, component_type, field_association='point'):
@@ -579,6 +692,20 @@ def test_rename_array_field(grid):
     assert np.array_equal(orig_vals, grid[new_name])
 
 
+def test_rename_array_raises(mocker: MockerFixture):
+    sphere = pv.Sphere(radius=3.14)
+
+    m = mocker.patch.object(dataset, 'get_array_association')
+    m.return_value = None
+    f = 'foo'
+
+    with pytest.raises(
+        KeyError,
+        match=re.escape(f'Array with name {f} not found.'),
+    ):
+        sphere.rename_array(f, 'bar')
+
+
 def test_rename_array_doesnt_delete():
     # Regression test for issue #5244
     def make_mesh():
@@ -655,17 +782,11 @@ def test_axis_rotation_not_inplace():
     assert not np.allclose(p, p_out)
 
 
-def test_bad_instantiation():
+@pytest.mark.parametrize('name', ['DataSet', 'Grid', 'DataSetFilters', 'PointGrid', 'DataObject'])
+def test_init_abstract_class(name):
+    klass = getattr(pv, name)
     with pytest.raises(TypeError):
-        pv.DataSet()
-    with pytest.raises(TypeError):
-        pv.Grid()
-    with pytest.raises(TypeError):
-        pv.DataSetFilters()
-    with pytest.raises(TypeError):
-        pv.PointGrid()
-    with pytest.raises(TypeError):
-        pv.DataObject()
+        klass()
 
 
 def test_string_arrays():
@@ -851,6 +972,15 @@ def test_find_cells_along_line():
     assert len(indices) == 2
 
 
+def test_find_cells_along_line_raises():
+    mesh = pv.Cube()
+    with pytest.raises(TypeError, match='Point A must be a length three tuple of floats.'):
+        mesh.find_cells_along_line([0, 0], [0, 0, 1])
+
+    with pytest.raises(TypeError, match='Point B must be a length three tuple of floats.'):
+        mesh.find_cells_along_line([0, 0, -1], [0, 0])
+
+
 def test_find_cells_intersecting_line():
     mesh = pv.Plane(center=(0.01, 0.5, 1), i_resolution=2, j_resolution=2)
     linea = [0, 0, 0.0]
@@ -901,6 +1031,15 @@ def test_find_cells_within_bounds():
     assert len(indices) == 0
 
 
+def test_find_cells_within_bounds_raises():
+    mesh = pv.Cube()
+    with pytest.raises(
+        TypeError,
+        match='Bounds must be a length six tuple of floats.',
+    ):
+        mesh.find_cells_within_bounds([0, 0])
+
+
 def test_setting_points_by_different_types(grid):
     grid_copy = grid.copy()
     grid.points = grid_copy.points
@@ -948,11 +1087,11 @@ def test_get_data_range(grid):
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
-    rng = grid.get_data_range('sample_point_scalars')
+    rng = grid.get_data_range('sample_point_scalars', preference='point')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 302))
 
-    rng = grid.get_data_range('sample_cell_scalars')
+    rng = grid.get_data_range('sample_cell_scalars', preference='cell')
     assert len(rng) == 2
     assert np.allclose(rng, (1, 40))
 
@@ -975,7 +1114,7 @@ def test_copy_structure(grid):
 
 
 def test_copy_structure_self(datasets):
-    for dataset in datasets:
+    for dataset in datasets:  # noqa: F402
         copied = dataset.copy()
         assert copied is not dataset
 
@@ -1024,6 +1163,18 @@ def test_point_is_inside_cell():
     assert np.array_equal(in_cell, np.array([True, False]))
 
 
+def test_point_is_inside_cell_raises(mocker: MockerFixture):
+    m = mocker.patch.object(pv.ImageData, 'GetCell')
+    m().EvaluatePosition.return_value = 2
+
+    grid = pv.ImageData(dimensions=(2, 2, 2))
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape('Computational difficulty encountered for point [0 0 0] in cell 0'),
+    ):
+        grid.point_is_inside_cell(0, [0, 0, 0])
+
+
 def test_active_normals(sphere):
     # both cell and point normals
     mesh = sphere.compute_normals()
@@ -1033,10 +1184,7 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
-)
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
@@ -1054,10 +1202,7 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
-)
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
@@ -1112,7 +1257,7 @@ def test_partition(hexbeam):
 
 
 def test_explode(datasets):
-    for dataset in datasets:
+    for dataset in datasets:  # noqa: F402
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
         assert out.n_points > dataset.n_points
@@ -1182,7 +1327,7 @@ ids_cells = list(map(type, grids_cells))
 
 
 def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
-    for dataset in datasets_vtk9:
+    for dataset in datasets_vtk9:  # noqa: F402
         with pytest.raises(TypeError):
             _ = dataset.cell_neighbors(0)
 
@@ -1388,8 +1533,19 @@ def test_active_t_coords_deprecated(mesh):
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.active_t_coords
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.active_t_coords = t_coords
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
+
+
+def test_active_array_info_deprecated(mesh):
+    match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this deprecated class'
+            raise RuntimeError(msg)

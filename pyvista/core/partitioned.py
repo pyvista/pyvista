@@ -7,17 +7,18 @@ from typing import TYPE_CHECKING
 from typing import overload
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
-from .dataset import DataSet
+from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from .dataset import DataSet
 
-class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
+
+class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
     """Wrapper for the ``vtkPartitionedDataSet`` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
@@ -63,7 +64,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         for i in range(self.n_partitions):
             partition = self.GetPartition(i)
             if not is_pyvista_dataset(partition):
-                self.SetPartition(i, wrap(partition))  # type: ignore[call-overload]
+                self.SetPartition(i, wrap(partition))
 
     @overload
     def __getitem__(self, index: int) -> DataSet | None: ...  # pragma: no cover
@@ -77,10 +78,11 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
             return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])  # type: ignore[abstract]
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
-                raise IndexError(f'index ({index}) out of range for this dataset.')
+                msg = f'index ({index}) out of range for this dataset.'
+                raise IndexError(msg)
             if index < 0:
                 index = self.n_partitions + index
-            return wrap(self.GetPartition(index))  # type: ignore[call-overload]
+            return wrap(self.GetPartition(index))
 
     @overload
     def __setitem__(self, index: int, data: DataSet | None) -> None: ...  # pragma: no cover
@@ -101,7 +103,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                 self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
-                raise IndexError(f'index ({index}) out of range for this dataset.')
+                msg = f'index ({index}) out of range for this dataset.'
+                raise IndexError(msg)
             if index < 0:
                 index = self.n_partitions + index
             self.SetPartition(index, data)
@@ -162,7 +165,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         """Define an adequate representation."""
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))

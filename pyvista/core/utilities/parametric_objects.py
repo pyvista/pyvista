@@ -13,10 +13,10 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-from .geometric_objects import translate
+from .geometric_sources import translate
 from .helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
@@ -39,6 +39,10 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     -------
     pyvista.PolyData
         Line mesh of spline.
+
+    See Also
+    --------
+    :ref:`distance_along_spline_example`
 
     Examples
     --------
@@ -98,8 +102,8 @@ def KochanekSpline(
     continuity : sequence[float], default: [0.0, 0.0, 0.0]
         Changes the sharpness in change between tangents.
 
-    n_points : int, default: points.shape[0]
-        Number of points on the spline.
+    n_points : int, optional
+        Number of points on the spline. Defaults to ``points.shape[0]``.
 
     Returns
     -------
@@ -119,7 +123,7 @@ def KochanekSpline(
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
-    >>> kochanek_spline.plot(line_width=4, color="k")
+    >>> kochanek_spline.plot(line_width=4, color='k')
 
     See :ref:`create_kochanek_spline_example` for an additional example.
 

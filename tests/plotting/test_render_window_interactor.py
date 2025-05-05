@@ -2,17 +2,68 @@
 
 from __future__ import annotations
 
+import re
 import time
+from typing import TYPE_CHECKING
 
 import pytest
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from tests.plotting.test_plotting import skip_windows_mesa
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def empty_callback():
     return
+
+
+@pytest.mark.parametrize('callback', ['foo', 1, object()])
+def test_track_click_position_raises(callback):
+    pl = pv.Plotter()
+    match = re.escape(
+        'Invalid callback provided, it should be either ``None`` or a callable.',
+    )
+    with pytest.raises(ValueError, match=match):
+        pl.track_click_position(callback=callback)
+
+
+def test_simulate_key_press_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Only accepts a single key'),
+    ):
+        pl.iren._simulate_keypress(key=['f', 't'])
+
+
+def test_process_events_raises(mocker: MockerFixture):
+    pl = pv.Plotter()
+    m = mocker.patch.object(pl.iren, 'interactor')
+    m.GetInitialized.return_value = False
+
+    with pytest.raises(
+        RuntimeError, match='Render window interactor must be initialized before processing events.'
+    ):
+        pl.iren.process_events()
+
+
+@pytest.mark.parametrize('picker', ['foo', 1000])
+def test_picker_raises(picker, mocker: MockerFixture):
+    pl = pv.Plotter()  # patching need to occur after init
+
+    from pyvista.plotting import render_window_interactor
+
+    m = mocker.patch.object(render_window_interactor.PickerType, 'from_any')
+    m.return_value = (v := len(list(render_window_interactor.PickerType)))
+
+    with pytest.raises(KeyError, match=re.escape(f'Picker class `{v}` is unknown.')):
+        pl.iren.picker = picker
+
+    m.assert_called_once_with(picker)
 
 
 @pytest.mark.needs_vtk_version(9, 1)
@@ -145,6 +196,7 @@ def test_track_click_position():
     assert events.pop(0) == 'single'
 
 
+@skip_windows_mesa
 @pytest.mark.skipif(
     type(_vtk.vtkRenderWindowInteractor()).__name__
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),

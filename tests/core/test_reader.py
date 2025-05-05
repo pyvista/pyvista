@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import pickle
 import re
+from typing import TYPE_CHECKING
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 
@@ -13,6 +17,9 @@ from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.examples.downloads import download_file
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 HAS_IMAGEIO = True
 try:
     import imageio
@@ -20,7 +27,35 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+def test_read_raises():
+    with pytest.raises(
+        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+    ):
+        pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(npoints=st.integers().filter(lambda x: x < 2))
+def test_read_texture_raises(mocker: MockerFixture, npoints):
+    from pyvista.core.utilities import fileio
+
+    m = mocker.patch.object(fileio, 'read')
+    m().n_points = npoints
+
+    m = mocker.patch.object(fileio, '_try_imageio_imread')
+    m.return_value = None
+
+    pv.read_texture(file := Path('foo.vtp'))
+    m.assert_called_once_with(file.expanduser().resolve())
+
+
+@pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+def test_read_exodus_raises(sideset):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
+    ):
+        pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
 
 
 def test_get_reader_fail(tmp_path):
@@ -529,7 +564,7 @@ def test_pvdreader_no_time_group():
         assert dataset.part == i
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
@@ -563,11 +598,8 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
-    # vtk < 9.1.0 does not support
-    if pv.vtk_version_info < (9, 1, 0):
-        pytest.xfail('OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
-
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
     reader.set_active_time_point(1)
@@ -638,8 +670,8 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info > (9, 3),
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 3),
     reason='polyhedra decomposition was removed after 9.3',
 )
 def test_openfoam_decompose_polyhedra():
@@ -993,9 +1025,8 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
 )
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
@@ -1011,9 +1042,8 @@ def test_xmlpartitioneddatasetreader(tmpdir):
         assert new_partitions[i].n_cells == partitions[i].n_cells
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3, 0),
-    reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 3, 0, reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.'
 )
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
@@ -1037,9 +1067,8 @@ def test_gambitreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
 )
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
@@ -1073,9 +1102,8 @@ def test_gesignareader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
 )
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
@@ -1184,11 +1212,149 @@ def test_grdecl_reader(tmp_path):
         _ = read(content, include_content_copy)
 
 
+def test_nek5000_reader():
+    # load nek5000 file
+    filename = examples.download_nek5000(load=False)
+
+    # this class only available for vtk versions >= 9.3
+    if pv.vtk_version_info < (9, 3):
+        with pytest.raises(pv.VTKVersionError):
+            _ = pv.get_reader(filename)
+        return
+
+    # test get_reader
+    nek_reader = pv.get_reader(filename)
+
+    # test time routines
+    ## Check correct number of time points
+    ntimes = 11
+    dt = 0.01
+    assert nek_reader.number_time_points == ntimes, 'Checks number of time points'
+    assert nek_reader.active_time_point == 0, 'Checks the first time set'
+
+    assert nek_reader.time_values == [dt * i for i in range(ntimes)]
+
+    ## check setting and getting of time points and times
+    for i in range(ntimes):
+        nek_reader.set_active_time_point(i)
+        assert nek_reader.active_time_point == i, 'check time point set'
+
+        t = i * dt
+        assert nek_reader.time_point_value(i) == t, 'Check correct times'
+
+        assert nek_reader.active_time_value == t, 'Check correct time set'
+
+    # check time setting based on time
+    for i in range(ntimes):
+        nek_reader.set_active_time_value(i * dt)
+        assert nek_reader.active_time_point == i, 'check time point set'
+
+    assert all(
+        array in nek_reader.point_array_names
+        for array in ['Pressure', 'Velocity', 'Velocity Magnitude']
+    )
+
+    match = re.escape('Time point (-1) out of range [0, 10]')
+    with pytest.raises(ValueError, match=match):
+        nek_reader.set_active_time_point(-1)
+
+    match = re.escape('Time point (11) out of range [0, 10]')
+    with pytest.raises(ValueError, match=match):
+        nek_reader.set_active_time_point(11)
+
+    # check deactivation of cell array routines
+    with pytest.raises(AttributeError):
+        _ = nek_reader.number_cell_arrays
+
+    with pytest.raises(AttributeError):
+        _ = nek_reader.cell_array_names
+
+    name = 'test'
+    with pytest.raises(AttributeError):
+        nek_reader.enable_cell_array(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.disable_cell_array(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.cell_array_status(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.enable_all_cell_arrays()
+
+    with pytest.raises(AttributeError):
+        nek_reader.disable_all_cell_arrays()
+
+    ## check enabling and disabling of point arrays
+    for name in nek_reader.point_array_names:
+        # Should be enabled by default
+        assert nek_reader.point_array_status(name)
+
+        nek_reader.disable_point_array(name)
+        assert not nek_reader.point_array_status(name)
+
+        nek_reader.enable_point_array(name)
+        assert nek_reader.point_array_status(name)
+
+    # check default clean grid option
+    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # check default spectral element IDs
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+
+    # check read() method produces the correct dataset
+    nek_reader.set_active_time_point(0)
+    nek_data = nek_reader.read()
+    assert isinstance(nek_data, pv.UnstructuredGrid), 'Check read type is valid'
+    assert all(
+        key in nek_data.point_data.keys() for key in ['Pressure', 'Velocity', 'Velocity Magnitude']
+    )
+
+    # test merge points routines
+    assert nek_data.n_points == 8 * 8 * 16 * 16, 'Check n_points without merging points'
+    assert 'spectral element id' not in nek_data.cell_data
+
+    # check that different arrays are returned when the time is changed
+    # after an initial read() call
+    nek_reader.set_active_time_point(1)
+    nek_data1 = nek_reader.read()
+    for scalar in nek_data.point_data.keys():
+        assert not np.array_equal(nek_data.point_data[scalar], nek_data1.point_data[scalar])
+
+    # Note that for some reason merging points after an initial read()
+    # has no effect so re-creating reader
+    nek_reader = pv.get_reader(filename)
+
+    # check enable merge points
+    nek_reader.enable_merge_points()
+    assert nek_reader.reader.GetCleanGrid() == 1
+
+    # positively check disable merge points
+    nek_reader.disable_merge_points()
+    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # re-enable
+    nek_reader.enable_merge_points()
+
+    # check enabling of spectral element IDs
+    nek_reader.enable_spectral_element_ids()
+    assert nek_reader.reader.GetSpectralElementIds() == 1
+
+    # positively check disable spectral element IDs
+    nek_reader.disable_spectral_element_ids()
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+    nek_reader.enable_spectral_element_ids()
+
+    nek_data = nek_reader.read()
+    assert nek_data.n_points == (7 * 16 + 1) * (7 * 16 + 1), 'Check n_points with merging points'
+    assert 'spectral element id' in nek_data.cell_data
+
+
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
 )
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='VTK version not supported.')
+@pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
 def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
@@ -1213,3 +1379,217 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
+
+
+def test_exodus_reader_ext():
+    # test against mug and exodus to check different valid file
+    # extensions: .e and .exo
+
+    fname_e = examples.download_mug(load=False)
+    fname_exo = examples.download_exodus(load=False)
+
+    e_reader = pv.get_reader(fname_e)
+    exo_reader = pv.get_reader(fname_exo)
+
+    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
+
+
+def test_exodus_reader_core():
+    # check internals
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    ## check enabling of displacements (To match functionality
+    # from read_exodus)
+    e_reader.enable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 1
+    assert e_reader.reader.GetDisplacementMagnitude() == 1.0
+
+    e_reader.disable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 0
+
+    ## check number of cell and point arrays and their names
+    assert e_reader.number_point_arrays == 2
+    assert e_reader.number_cell_arrays == 1
+
+    assert all(array in e_reader.point_array_names for array in ['convected', 'diffused'])
+
+    assert 'aux_elem' in e_reader.cell_array_names
+
+    ## check enabling and disabling of point arrays
+    for name in e_reader.point_array_names:
+        # Should be enabled by default
+        assert e_reader.point_array_status(name)
+
+        e_reader.disable_point_array(name)
+        assert not e_reader.point_array_status(name)
+
+        e_reader.enable_point_array(name)
+        assert e_reader.point_array_status(name)
+
+    ## check enabling and disabling of cell arrays
+    for name in e_reader.cell_array_names:
+        # Should be enabled by default
+        assert e_reader.cell_array_status(name)
+
+        e_reader.disable_cell_array(name)
+        assert not e_reader.cell_array_status(name)
+
+        e_reader.enable_cell_array(name)
+        assert e_reader.cell_array_status(name)
+
+    # check global arrays handling
+    assert e_reader.number_global_arrays == 1
+
+    for name in e_reader.global_array_names:
+        # Should not be enabled by default
+        assert not e_reader.global_array_status(name)
+
+        e_reader.enable_global_array(name)
+        assert e_reader.global_array_status(name)
+
+        e_reader.disable_global_array(name)
+        assert not e_reader.cell_array_status(name)
+
+    e_reader.enable_all_global_arrays()
+    e_reader.disable_all_global_arrays()
+    e_reader.enable_all_global_arrays()
+
+    table = e_reader.read_global()
+    assert table.keys() == ['func_pp', 'Time']
+    assert table.n_rows == 21
+
+    # test time routines
+    ntimes = 21
+    dt = 0.1
+
+    ## check correct number of time points
+    assert e_reader.number_time_points == ntimes, 'Checks number of time points'
+    assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
+
+    assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
+
+    ## check setting and getting of time points and times
+    for i in range(ntimes):
+        e_reader.set_active_time_point(i)
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
+
+        tp = e_reader.reader.GetTimeStep()
+        assert tp == i, 'Check underlying reader time step setting'
+
+        t = i * dt
+        assert np.isclose(e_reader.time_point_value(i), t, atol=1e-8, rtol=1e-8), (
+            'Check correct times'
+        )
+
+        assert np.isclose(e_reader.active_time_value, t, atol=1e-8, rtol=1e-8), (
+            'Check correct time set'
+        )
+
+    # check time setting based on time
+    for i, t in enumerate(e_reader.time_values):
+        e_reader.set_active_time_value(t)
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
+
+    # check for error if time not present
+    bad_time = 1.25
+    err_msg = re.escape(f'Time {bad_time} not present. Available times are {e_reader.time_values}')
+    with pytest.raises(ValueError, match=err_msg):
+        e_reader.set_active_time_value(1.25)
+
+    ## check read with point and cell arrays present
+    multiblock = e_reader.read()
+
+    unstruct = multiblock[0][0]
+
+    assert isinstance(unstruct, pv.UnstructuredGrid)
+    for key in e_reader.point_array_names:
+        assert key in unstruct.point_data.keys()
+
+    for key in e_reader.cell_array_names:
+        assert key in unstruct.cell_data.keys()
+
+
+def _test_block_names(block, names):
+    assert block.number == len(names)
+    assert block.names == names
+
+    block.enable_all()
+
+    for name in names:
+        assert block.status(name)
+
+    block.disable_all()
+
+    for name in names:
+        assert not block.status(name)
+
+    for name in names:
+        block.enable(name)
+        assert block.status(name)
+
+    for name in names:
+        block.disable(name)
+        assert not block.status(name)
+
+
+def _test_block_arrays(block, array_names):
+    assert block.number_arrays == len(array_names)
+    assert block.array_names == array_names
+    block.enable_all_arrays()
+
+    for array_name in array_names:
+        assert block.array_status(array_name)
+
+    block.disable_all_arrays()
+    for array_name in array_names:
+        assert not block.array_status(array_name)
+
+    for array_name in array_names:
+        block.enable_array(array_name)
+        assert block.array_status(array_name)
+
+    for array_name in array_names:
+        block.disable_array(array_name)
+        assert not block.array_status(array_name)
+
+
+def test_exodus_blocks():
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    # test instantiation with invalid object type
+    match = re.escape('object_type is invalid')
+    with pytest.raises(ValueError, match=match):
+        # 15 is not associated with ObjectType enum in the
+        # vtkExodusIIReader
+        pv.ExodusIIBlockSet(e_reader, 15)
+
+    # tests all core routines for each block and set that contains
+    # blocks and sets in the examples
+    _test_block_names(e_reader.element_blocks, ['Unnamed block ID: 1', 'Unnamed block ID: 76'])
+
+    _test_block_names(e_reader.side_sets, ['bottom', 'top'])
+
+    _test_block_names(e_reader.node_sets, ['Unnamed set ID: 1', 'Unnamed set ID: 2'])
+
+    _test_block_arrays(e_reader.element_blocks, ['aux_elem'])
+
+    # Test example with set arrays
+    fname_e = examples.download_biplane(load=False)
+    e_reader = pv.get_reader(fname_e)
+    _test_block_arrays(e_reader.side_sets, ['PressureRMS'])
+
+    # check construct_result_array for those that do not have blocks in the example
+    number_method = e_reader.face_blocks._construct_result_method('GetNumberOf', 's')
+    assert number_method == e_reader._reader.GetNumberOfFaceResultArrays
+
+    number_method = e_reader.edge_blocks._construct_result_method('GetNumberOf', 's')
+    assert number_method == e_reader._reader.GetNumberOfEdgeResultArrays
+
+    number_method = e_reader.element_sets._construct_result_method('GetNumberOf', 's')
+    assert number_method == e_reader._reader.GetNumberOfElementSetResultArrays
+
+    number_method = e_reader.face_sets._construct_result_method('GetNumberOf', 's')
+    assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays

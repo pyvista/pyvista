@@ -43,6 +43,7 @@ from pyvista.core._validation import validate_axes
 from pyvista.core._validation import validate_data_range
 from pyvista.core._validation import validate_dimensionality
 from pyvista.core._validation import validate_number
+from pyvista.core._validation import validate_rotation
 from pyvista.core._validation import validate_transform3x3
 from pyvista.core._validation import validate_transform4x4
 from pyvista.core._validation._cast_array import _cast_to_list
@@ -51,6 +52,7 @@ from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
 from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._validation.validate import _set_default_kwarg_mandatory
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -121,20 +123,6 @@ def test_check_subdtype():
     match = "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     with pytest.raises(TypeError, match=escape(match)):
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
-
-
-def test_check_subdtype_changes_type():
-    # test coercing some types (e.g. np.number) can lead to unexpected
-    # failed `np.issubtype` checks due to an implicit change of type
-    int_array = np.array([1, 2, 3])
-    dtype_expected = np.number
-    check_subdtype(int_array, dtype_expected)  # int is subtype of np.number
-
-    dtype_coerced = np.dtype(dtype_expected)
-    assert dtype_coerced.type is np.float64  # np.number is coerced (by NumPy) as a float
-    with pytest.raises(TypeError):
-        # this check will now fail since int is not subtype of float
-        check_subdtype(int_array, dtype_coerced)
 
 
 def test_validate_number():
@@ -585,31 +573,29 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
             with pytest.raises(TypeError, match=f'{name} must be an instance of'):
                 check_instance(obj, classinfo, name=name)
 
-    else:
-        if type(classinfo) is tuple:
-            if type(obj) in classinfo:
-                check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_type(obj, classinfo)
-        elif get_origin(classinfo) is Union:
-            if type(obj) in get_args(classinfo):
-                check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_type(obj, classinfo)
+    elif type(classinfo) is tuple:
+        if type(obj) in classinfo:
+            check_type(obj, classinfo)
         else:
-            if type(obj) is classinfo:
+            with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                check_type(obj, classinfo, name=name)
+            with pytest.raises(TypeError, match='Object must have one of the following types'):
                 check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have type'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have type'):
-                    check_type(obj, classinfo)
+    elif get_origin(classinfo) is Union:
+        if type(obj) in get_args(classinfo):
+            check_type(obj, classinfo)
+        else:
+            with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                check_type(obj, classinfo, name=name)
+            with pytest.raises(TypeError, match='Object must have one of the following types'):
+                check_type(obj, classinfo)
+    elif type(obj) is classinfo:
+        check_type(obj, classinfo)
+    else:
+        with pytest.raises(TypeError, match=f'{name} must have type'):
+            check_type(obj, classinfo, name=name)
+        with pytest.raises(TypeError, match='Object must have type'):
+            check_type(obj, classinfo)
 
     match = "Name must be a string, got <class 'int'> instead."
     with pytest.raises(TypeError, match=match):
@@ -877,13 +863,13 @@ def test_check_number():
 
 
 def test_check_contains():
-    check_contains(item='foo', container=['foo', 'bar'])
+    check_contains(['foo', 'bar'], must_contain='foo')
     match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item='foo', container=['cat', 'bar'])
+        check_contains(['cat', 'bar'], must_contain='foo')
     match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item=5, container=range(4), name='_input')
+        check_contains(range(4), must_contain=5, name='_input')
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])
@@ -972,6 +958,43 @@ def test_validate_axes_orthogonal(bias_index):
         validate_axes(axes_left, must_be_orthogonal=True)
 
 
+def test_validate_rotation():
+    I3 = np.eye(3)
+    validated = validate_rotation(I3)
+    assert np.array_equal(validated, I3)
+    validated = validate_rotation(I3, must_have_handedness='right')
+    assert np.array_equal(validated, I3)
+    match = 'Rotation has incorrect handedness. Expected a left-handed rotation, but got a right-handed rotation instead.'
+    with pytest.raises(ValueError, match=match):
+        validate_rotation(I3, must_have_handedness='left')
+
+    validated = validate_rotation(-I3)
+    assert np.array_equal(validated, -I3)
+    validated = validate_rotation(-I3, must_have_handedness='left')
+    assert np.array_equal(validated, -I3)
+    match = 'Rotation has incorrect handedness. Expected a right-handed rotation, but got a left-handed rotation instead.'
+    with pytest.raises(ValueError, match=match):
+        validate_rotation(-I3, must_have_handedness='right')
+
+    match = 'Rotation is not valid. Rotation must be orthogonal.'
+    with pytest.raises(ValueError, match=match):
+        validate_rotation(I3 * 2)
+
+
+def test_validate_rotation_tolerance():
+    # Define valid rotation matrix which fails the check if the tolerance is too low
+    # Matrix values come directly from a CI test failure
+    # See https://github.com/pyvista/pyvista/pull/7053#issuecomment-2571663768
+    rotation = np.array(
+        [
+            [6.1753786e-01, 4.8325321e-01, -6.2057501e-01],
+            [-2.1952267e-04, 7.8909826e-01, 6.1426693e-01],
+            [7.8654110e-01, -3.7919688e-01, 4.8740414e-01],
+        ]
+    )
+    validate_rotation(rotation)
+
+
 @pytest.mark.parametrize('as_any', [True, False])
 @pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize('dtype', [None, float])
@@ -993,6 +1016,7 @@ def test_cast_to_numpy(as_any, copy, dtype):
         assert array_out.dtype.type is np.dtype(dtype).type
 
 
+@pytest.mark.filterwarnings('ignore:Creating an ndarray from ragged nested sequences:UserWarning')
 def test_cast_to_numpy_raises():
     if NUMPY_VERSION_INFO < (1, 26) and sys.platform == 'linux':
         err = TypeError
@@ -1091,3 +1115,15 @@ def test_validate_dimensionality(dimensionality, reshape, expected_dimensionalit
 def test_validate_dimensionality_errors(dimensionality, message):
     with pytest.raises(ValueError, match=escape(message)):
         validate_dimensionality(dimensionality)
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (None, 'Input must be a single ColorLike color or a sequence of ColorLike colors.'),
+        (42, 'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.'),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import platform
+import re
+from typing import TYPE_CHECKING
+from typing import Literal
+from unittest.mock import ANY
+
 import numpy as np
 import pytest
 import vtk
@@ -7,10 +13,14 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
+from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
 from pyvista.plotting.affine_widget import ray_plane_intersection
 from tests.conftest import flaky_test
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -45,6 +55,66 @@ def r_mat_to_euler_angles(R):
         yaw = 0
 
     return roll, pitch, yaw
+
+
+def test_add_plane_widget_raises():
+    pl = pv.Plotter()
+    with pytest.raises(RuntimeError, match='assign_to_axis not understood'):
+        pl.add_plane_widget(lambda *x: True, assign_to_axis='foo')
+
+
+def test_add_slider_widget_raises():
+    pl = pv.Plotter()
+    pl.close()
+    with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
+        pl.add_slider_widget(lambda *x: True, rng=[0, 1])
+
+
+def test_add_mesh_threshold_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError, match='MultiBlock datasets are not supported for threshold widget.'
+    ):
+        pl.add_mesh_threshold(mesh=pv.MultiBlock())
+
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+        pl.add_mesh_threshold(mesh=pv.PolyData())
+
+
+def test_add_mesh_isovalue_raises():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='MultiBlock datasets are not supported for this widget.'):
+        pl.add_mesh_isovalue(mesh=pv.MultiBlock())
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError, match='Input dataset for the contour filter must have data arrays.'
+    ):
+        pl.add_mesh_isovalue(mesh=pv.PolyData())
+
+    pl = pv.Plotter()
+    sp = pv.Sphere()
+    sp.cell_data['foo'] = 1
+    match = re.escape('Contour filter only works on Point data. Array (foo) is in the Cell data.')
+    with pytest.raises(TypeError, match=match):
+        pl.add_mesh_isovalue(mesh=sp, scalars='foo')
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_add_mesh_isovalue_pointset_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError, match='PointSets are 0-dimensional and thus cannot produce contours.'
+    ):
+        pl.add_mesh_isovalue(mesh=pv.PointSet())
+
+
+def test_add_measurement_widget_raises():
+    pl = pv.Plotter()
+    pl.close()
+    with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
+        pl.add_measurement_widget()
 
 
 def test_widget_box(uniform):
@@ -585,14 +655,34 @@ def test_affine_widget(sphere):
     pl.iren._mouse_move(0, 0)
     assert not widget._selected_actor
 
+    def test_translation(
+        press_pos: tuple[float, float],
+        move_pos: tuple[float, float],
+        idx: int,
+        direction: Literal['neg', 'pos'],
+    ):
+        pl.iren._mouse_left_button_press(*press_pos)
+        assert widget._selected_actor is widget._arrows[idx]
+        assert widget._pressing_down
+
+        pl.iren._mouse_move(*move_pos)
+        trans_val = actor.user_matrix[idx, 3]
+        assert (trans_val < 0) if direction == 'neg' else (trans_val > 0)
+
+        pl.iren._mouse_left_button_release(*move_pos)
+        trans_val = actor.user_matrix[idx, 3]
+        assert (trans_val < 0) if direction == 'neg' else (trans_val > 0)
+        assert not widget._pressing_down
+        widget._reset()
+        assert np.allclose(widget._cached_matrix, np.eye(4))
+
     # test X axis translation
-    pl.iren._mouse_left_button_press(width // 2 - 1, height // 2 - 1)
-    assert widget._selected_actor is widget._arrows[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width, height // 2)
-    assert actor.user_matrix[0, 3] < 0
-    pl.iren._mouse_left_button_release(width, height // 2)
-    assert actor.user_matrix[0, 3] < 0
+    test_translation(
+        press_pos=(width // 2 - 4, height // 2 - 4),
+        move_pos=(width, height // 2),
+        idx=0,
+        direction='neg',
+    )
 
     # test callback called
     assert len(interact_calls) == 2
@@ -601,59 +691,62 @@ def test_affine_widget(sphere):
     assert release_calls[0].shape == (4, 4)
 
     # test Y axis translation
-    pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
-    assert widget._selected_actor is widget._arrows[1]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width, height // 2)
-    assert actor.user_matrix[1, 3] < 0
-    pl.iren._mouse_left_button_release()
-    assert actor.user_matrix[1, 3] < 0
+    test_translation(
+        press_pos=(width // 2 + 2, height // 2 - 3),
+        move_pos=(width, height // 2),
+        idx=1,
+        direction='pos',
+    )
 
     # test Z axis translation
-    pl.iren._mouse_left_button_press(width // 2, height // 2 + 5)
-    assert widget._selected_actor is widget._arrows[2]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2, 0)
-    assert actor.user_matrix[3, 3] > 0
-    pl.iren._mouse_left_button_release()
-    assert actor.user_matrix[3, 3] > 0
+    test_translation(
+        press_pos=(width // 2, height // 2 + 5),
+        move_pos=(width // 2, 0),
+        idx=2,
+        direction='neg',
+    )
 
-    # test X axis rotation
-    pl.iren._mouse_left_button_press(width // 2 + 30, height // 2)
-    assert widget._selected_actor is widget._circles[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 + 30, height // 2 + 1)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert x_r > 0
-    assert np.allclose([y_r, z_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
-    assert np.allclose(widget._cached_matrix, np.eye(4))
+    def test_rotation(
+        press_pos: tuple[float, float],
+        move_pos: tuple[float, float],
+        idx: int,
+        rotation: Literal['ccw', 'cw'],
+    ):
+        pl.iren._mouse_left_button_press(*press_pos)
+        assert widget._selected_actor is widget._circles[idx]
+        assert widget._pressing_down
+        pl.iren._mouse_move(*move_pos)
+        euler_angles = r_mat_to_euler_angles(actor.user_matrix)
+        assert euler_angles[idx] > 0 if rotation == 'ccw' else euler_angles[idx] < 0
+        assert np.count_nonzero(np.isclose(euler_angles, 0)) == len(euler_angles) - 1
+        pl.iren._mouse_left_button_release()
+        assert not widget._pressing_down
+        widget._reset()
+        assert np.allclose(widget._cached_matrix, np.eye(4))
 
-    # test Y axis rotation
-    pl.iren._mouse_left_button_press(width // 2 - 30, height // 2)
-    assert widget._selected_actor is widget._circles[1]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 30, height // 2 - 1)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert y_r > 0
-    assert np.allclose([x_r, z_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
+    # test X axis rotation, counterclockwise
+    test_rotation(
+        press_pos=(width // 2 + 30, height // 2),
+        move_pos=(width // 2 + 21, height // 2 + 17),
+        idx=0,
+        rotation='ccw',
+    )
 
-    # test Z axis rotation
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 28)
-    assert widget._selected_actor is widget._circles[2]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
-    x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert z_r > 0
-    assert np.allclose([x_r, y_r], 0)
-    pl.iren._mouse_left_button_release()
-    assert not widget._pressing_down
-    widget._reset()
+    # test Y axis rotation, counterclockwise
+    test_rotation(
+        press_pos=(width // 2 - 20, height // 2 + 20),
+        move_pos=(width // 2 - 30, height // 2 + 4),
+        idx=1,
+        rotation='ccw',
+    )
+
+    # test Z axis rotation, clockwise
+    test_rotation(
+        press_pos=(width // 2, height // 2 - 29),
+        move_pos=(width // 2 - 12, height // 2 - 23),
+        idx=2,
+        rotation='cw',
+    )
 
     # test change axes
     axes = np.array(
@@ -663,13 +756,12 @@ def test_affine_widget(sphere):
     assert np.allclose(widget.axes, axes)
 
     # test X axis translation with new axes
-    pl.iren._mouse_left_button_press(width // 2, height // 2 - 30)
-    assert widget._selected_actor is widget._arrows[0]
-    assert widget._pressing_down
-    pl.iren._mouse_move(width // 2, height // 2 - 32)
-    assert actor.user_matrix[0, 3] > 0
-    pl.iren._mouse_left_button_release(width, height // 2 - 32)
-    assert actor.user_matrix[0, 3] > 0
+    test_translation(
+        press_pos=(width // 2, height // 2 - 38),
+        move_pos=(width // 2, height // 2 - 50),
+        idx=0,
+        direction='pos',
+    )
 
     # test origin
     origin = np.random.default_rng().random(3)
@@ -715,6 +807,10 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason='MacOS CI produces a slightly different camera position. Needs investigation.',
+)
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_camera3d_widget(verify_image_cache):
     sphere = pv.Sphere()
@@ -835,3 +931,55 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.add_camera3d_widget()
     pl.clear_camera3d_widgets()
     pl.show(cpos='xy')
+
+
+class Test_event_parser:
+    """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
+
+    @pytest.fixture
+    def plotter(self):
+        yield (p := pv.Plotter())
+        p.close()
+
+    @pytest.mark.parametrize(
+        ('method', 'widget'),
+        [
+            ('add_box_widget', 'vtkBoxWidget'),
+            ('add_plane_widget', 'vtkImplicitPlaneWidget'),
+            ('add_line_widget', 'vtkLineWidget'),
+            ('add_text_slider_widget', 'vtkSliderWidget'),
+            ('add_slider_widget', 'vtkSliderWidget'),
+            ('add_sphere_widget', 'vtkSphereWidget'),
+            ('add_spline_widget', 'vtkSplineWidget'),
+        ],
+    )
+    def test_add_widget(
+        self,
+        plotter: pv.Plotter,
+        method: str,
+        widget: str,
+        mocker: MockerFixture,
+    ):
+        # Arrange
+        mock = mocker.patch.object(widgets, '_parse_interaction_event')
+        mock_vtk = mocker.patch.object(widgets, '_vtk')
+
+        if widget == 'vtkSplineWidget':
+            mocker.patch.object(widgets.pyvista, 'wrap').return_value = pv.PolyData()
+
+        kwargs = dict(callback=lambda *b: b, interaction_event=(e := 'foo'))
+        if widget == 'vtkLineWidget':
+            mock_vtk.vtkLineWidget().GetPoint1.return_value = (0,) * 3
+            mock_vtk.vtkLineWidget().GetPoint2.return_value = (0,) * 3
+
+        elif widget == 'vtkSliderWidget':
+            k = 'data' if method == 'add_text_slider_widget' else 'rng'
+            kwargs[k] = [0, 1]
+
+        # Act
+        method = getattr(plotter, method)
+        method(**kwargs)
+
+        # Assert
+        mock.assert_called_with(e)
+        getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)

@@ -207,12 +207,12 @@ def create_axes_marker(
     >>> marker = pv.create_axes_marker(
     ...     line_width=4,
     ...     ambient=0.0,
-    ...     x_color="#378df0",
-    ...     y_color="#ab2e5d",
-    ...     z_color="#f7fb9a",
-    ...     xlabel="X Axis",
-    ...     ylabel="Y Axis",
-    ...     zlabel="Z Axis",
+    ...     x_color='#378df0',
+    ...     y_color='#ab2e5d',
+    ...     z_color='#f7fb9a',
+    ...     xlabel='X Axis',
+    ...     ylabel='Y Axis',
+    ...     zlabel='Z Axis',
     ...     label_size=(0.1, 0.1),
     ... )
     >>> pl = pv.Plotter()
@@ -557,7 +557,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
 
     Parameters
     ----------
-    mapping : list(float) or str
+    mapping : list[float] | str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
         ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
@@ -596,12 +596,9 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
     --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
-    >>> tf = pv.opacity_transfer_function("sigmoid", 256)
+    >>> tf = pv.opacity_transfer_function('sigmoid', 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = (
-    ...     pv.opacity_transfer_function("geom_r", 256).astype(float)
-    ...     / 255.0
-    ... )
+    >>> tf = pv.opacity_transfer_function('geom_r', 256).astype(float) / 255.0
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)
@@ -637,10 +634,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise ValueError(
+            msg = (
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}',
-            ) from None
+                f'Valid options: {list(transfer_func.keys())}'
+            )
+            raise ValueError(msg) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -655,7 +653,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
-                    raise ValueError('No interpolation.')
+                    msg = 'No interpolation.'
+                    raise ValueError(msg)
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
 
@@ -670,11 +669,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
-            )
+            msg = f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+            raise RuntimeError(msg)
         return mapping
-    raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
+    msg = f'Transfer function type ({type(mapping)}) not understood'
+    raise TypeError(msg)
 
 
 def parse_font_family(font_family: str) -> int:
@@ -702,7 +701,8 @@ def parse_font_family(font_family: str) -> int:
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
-        raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
+        msg = f'Font must one of the following:\n{", ".join(fonts)}'
+        raise ValueError(msg)
     return FONTS[font_family].value
 
 
@@ -739,7 +739,8 @@ def check_matplotlib_vtk_compatibility():
         return not mpl_vers >= (3, 6)
     elif pyvista.vtk_version_info > (9, 2, 2):
         return mpl_vers >= (3, 6)
-    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
+    msg = 'Uncheckable versions.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover
 
 
 def check_math_text_support():

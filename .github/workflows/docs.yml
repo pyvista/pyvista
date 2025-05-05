@@ -1,5 +1,7 @@
 name: Build Documentation
-on:
+
+# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
+on: # zizmor: ignore[cache-poisoning]
   pull_request: # Uses cache
   workflow_dispatch: # Able to not use cache by user demand
     inputs:
@@ -21,38 +23,51 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
+  USE_CACHE: ${{
+    (
+    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
+    (github.event_name == 'pull_request') ||
+    (github.event_name == 'push')
+    ) &&
+    !startsWith(github.ref, 'refs/tags/v') &&
+    !startsWith(github.ref, 'refs/heads/release/') &&
+    !startsWith(github.ref, 'refs/heads/main')
+    }}
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
+  PYTEST_ADDOPTS: "--color=yes"
+  FORCE_COLOR: "True"
+  VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
+
+permissions:
+  id-token: none
 
 jobs:
   doc:
     name: Build Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
       - name: Install PyVista and dependencies
         run: |
-          pip install -e .[docs]
-
-      - name: Install custom OSMesa VTK variant
-        run: |
-          pip uninstall vtk -y
-          pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
+          pip install --upgrade pip
+          pip install . --group docs
 
       - name: PyVista Report
         run: |
@@ -62,21 +77,21 @@ jobs:
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v') && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
+        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
         with:
           path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
+        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache Sphinx build directory
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
+        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
         with:
           path: doc/_build/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
@@ -92,11 +107,11 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Test Documentation Images
-        run: pytest tests/doc/tst_doc_images.py
+      - name: Test Documentation
+        run: pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
-        if: ${{ failure() && hashFiles('_doc_debug_images_failed/**/*.jpg') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images-failed
@@ -114,7 +129,23 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docs-build
-          path: doc/_build/html/
+          path:
+            | # Only vtksz files in 'doc/_build/html/_images/' are used. Exclude all others since these files may be large.
+            doc/_build/html/
+            !doc/_build/html/index-*.vtksz
+            !doc/_build/html/api/**/*.vtksz
+            !doc/_build/html/extras/**/*.vtksz
+            !doc/_build/html/getting-started/**/*.vtksz
+            !doc/_build/html/user-guide/**/*.vtksz
+
+      - name: Upload non-interactive HTML documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build-light
+          path: |
+            doc/_build/html/
+            !doc/_build/html/**/*.vtksz
 
       - uses: actions/upload-artifact@v4
         with:
@@ -133,7 +164,7 @@ jobs:
 
   preview:
     name: Preview Development Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: doc
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
@@ -159,7 +190,7 @@ jobs:
 
   deploy:
     name: Publish Release Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: doc
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -185,14 +216,16 @@ jobs:
 
   publish-notebooks:
     name: Publish Notebooks for MyBinder
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: doc
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Install Dependencies
         run: |
           pip install cookiecutter
