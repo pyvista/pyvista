@@ -20,12 +20,12 @@ from pyvista import examples
 # From NumPy Meshgrid
 # +++++++++++++++++++
 #
-# Create a simple meshgrid using NumPy.
+# Create a simple meshgrid using NumPy. Note the usage of ij indexing.
 
 # Make data
 xrng = np.linspace(-10, 10)
-yrng = np.linspace(-10, 10)
-x, y = np.meshgrid(xrng, yrng)
+yrng = np.linspace(-10, 10, 20)
+x, y = np.meshgrid(xrng, yrng, indexing='ij')
 r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 

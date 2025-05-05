@@ -2511,7 +2511,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     >>> xrng = np.linspace(-5, 5, 10)
     >>> yrng = np.linspace(-8, 8, 4)
     >>> zrng = np.linspace(-7, 4, 20)
-    >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
+    >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
     >>> grid = pv.StructuredGrid(x, y, z)
     >>> grid
     StructuredGrid (...)
