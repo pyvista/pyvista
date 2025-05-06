@@ -13,8 +13,6 @@ import re
 import sys
 from typing import NamedTuple
 
-import cmcrameri
-
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
@@ -38,6 +36,7 @@ from typing import Literal
 from typing import final
 from typing import get_args
 
+import cmcrameri
 import cmocean
 import colorcet
 import matplotlib as mpl
