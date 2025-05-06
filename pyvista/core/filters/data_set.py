@@ -7544,7 +7544,7 @@ class DataSetFilters(DataObjectFilters):
 
         return output_volume
 
-    def splat_fast(
+    def fast_splatting(
         self: DataSet,
         *,
         progress_bar: bool = False,
@@ -7570,7 +7570,7 @@ class DataSetFilters(DataObjectFilters):
 
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
-        >>> splat_meshes = mesh.splat_fast()
+        >>> splat_meshes = mesh.fast_splatting()
         >>> splat_meshes.plot()
 
         """
