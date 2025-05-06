@@ -41,10 +41,11 @@ to choose a colormap.
 
 .. dropdown:: Guideline for choosing the right scientific colormap
 
-    The following flowchart is from `the misuse of colour in science communication <https://doi.org/10.1038/s41467-020-19160-7>`_
-    and is duplicated here for ease of reference.
-
     .. image:: https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41467-020-19160-7/MediaObjects/41467_2020_19160_Fig6_HTML.png
+
+    Figure from Crameri, F., Shephard, G.E., & Heron, P.J. (2020). The misuse of
+    colour in science communication. Nature Communications, 11, 5444.
+    https://doi.org/10.1038/s41467-020-19160-7. Licensed under CC BY 4.0.
 
 .. note::
 
