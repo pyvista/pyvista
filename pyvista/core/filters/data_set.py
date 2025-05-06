@@ -7544,6 +7544,41 @@ class DataSetFilters(DataObjectFilters):
 
         return output_volume
 
+    def splat_fast(
+        self: DataSet,
+        *,
+        progress_bar: bool = False,
+    ) -> pyvista.PolyData:
+        """Splat optimized for splatting single kernels.
+
+        This filter is a wrapper around `vtkFastSplatter
+        <https://vtk.org/doc/nightly/html/classvtkFastSplatter.html>`_.
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The splat meshes.
+
+        Examples
+        --------
+        Splat a mesh.
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> splat_meshes = mesh.splat_fast()
+        >>> splat_meshes.plot()
+
+        """
+        alg = _vtk.vtkFastSplatter()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Splatting mesh')
+        return _get_output(alg)
+
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
     percentile = _validation.validate_number(
