@@ -109,9 +109,7 @@ class RenderWindowInteractor:
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
         # Set default style
-        self._style_class: Optional[
-            Union[_vtk.vtkContextInteractorStyle, _vtk.vtkInteractorStyle]
-        ] = None
+        self._style_class: Optional[_vtk.vtkInteractorStyle] = None
         self._style: Literal['Interactor', 'Context'] = 'Interactor'
         self.style = InteractorStyleRubberBandPick(self)
         self.__plotter = weakref.ref(plotter)
@@ -235,10 +233,16 @@ class RenderWindowInteractor:
         """
         call = partial(try_callback, call)
         event = self._get_event_str(event)
-        if interactor_style_fallback and event in [
-            'LeftButtonReleaseEvent',
-            'RightButtonReleaseEvent',
-        ]:
+
+        if (
+            isinstance(self.style, _CustomInteractorStyle)
+            and interactor_style_fallback
+            and event
+            in [
+                'LeftButtonReleaseEvent',
+                'RightButtonReleaseEvent',
+            ]
+        ):
             # Release events are swallowed by the interactor, but registering
             # on the interactor style seems to work.
             # See https://github.com/pyvista/pyvista/issues/4976
@@ -441,7 +445,7 @@ class RenderWindowInteractor:
 
         Called when setting interactor_style attribute.
         """
-        self.interactor.SetInteractorStyle(self._style_class)
+        self.interactor.SetInteractorStyle(self.style)
 
     @property
     def style(self) -> Optional[Union[_vtk.vtkContextInteractorStyle, _vtk.vtkInteractorStyle]]:
@@ -524,15 +528,15 @@ class RenderWindowInteractor:
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
             self._style = self._prev_style  # type: ignore[has-type]
-            self._style_class = self._prev_style_class  # type: ignore[has-type]
+            self.style = self._prev_style_class  # type: ignore[has-type]
             self._prev_style = None
             self._prev_style_class = None
         elif scene is not None and self._style != 'Context':
             # Enable context interactor style
             self._prev_style = self._style
-            self._prev_style_class = self._style_class
+            self._prev_style_class = self.style
             self._style = 'Context'
-            self._style_class = self._context_style
+            self.style = self._context_style
         self.update_style()
 
     def enable_trackball_style(self):
@@ -647,19 +651,19 @@ class RenderWindowInteractor:
         self.style = InteractorStyleTrackballCamera(self)
 
         start_action_map = {
-            'environment_rotate': self._style_class.StartEnvRotate,  # type: ignore[attr-defined]
-            'rotate': self._style_class.StartRotate,  # type: ignore[attr-defined]
-            'pan': self._style_class.StartPan,  # type: ignore[attr-defined]
-            'spin': self._style_class.StartSpin,  # type: ignore[attr-defined]
-            'dolly': self._style_class.StartDolly,  # type: ignore[attr-defined]
+            'environment_rotate': self.style.StartEnvRotate,
+            'rotate': self.style.StartRotate,
+            'pan': self.style.StartPan,
+            'spin': self.style.StartSpin,
+            'dolly': self.style.StartDolly,
         }
 
         end_action_map = {
-            'environment_rotate': self._style_class.EndEnvRotate,  # type: ignore[attr-defined]
-            'rotate': self._style_class.EndRotate,  # type: ignore[attr-defined]
-            'pan': self._style_class.EndPan,  # type: ignore[attr-defined]
-            'spin': self._style_class.EndSpin,  # type: ignore[attr-defined]
-            'dolly': self._style_class.EndDolly,  # type: ignore[attr-defined]
+            'environment_rotate': self.style.EndEnvRotate,
+            'rotate': self.style.EndRotate,
+            'pan': self.style.EndPan,
+            'spin': self.style.EndSpin,
+            'dolly': self.style.EndDolly,
         }
 
         for p in [
@@ -678,14 +682,14 @@ class RenderWindowInteractor:
                 raise ValueError(msg)
 
         button_press_map = {
-            'left': self._style_class.OnLeftButtonDown,  # type: ignore[attr-defined]
-            'middle': self._style_class.OnMiddleButtonDown,  # type: ignore[attr-defined]
-            'right': self._style_class.OnRightButtonDown,  # type: ignore[attr-defined]
+            'left': self.style.OnLeftButtonDown,
+            'middle': self.style.OnMiddleButtonDown,
+            'right': self.style.OnRightButtonDown,
         }
         button_release_map = {
-            'left': self._style_class.OnLeftButtonUp,  # type: ignore[attr-defined]
-            'middle': self._style_class.OnMiddleButtonUp,  # type: ignore[attr-defined]
-            'right': self._style_class.OnRightButtonUp,  # type: ignore[attr-defined]
+            'left': self.style.OnLeftButtonUp,
+            'middle': self.style.OnMiddleButtonUp,
+            'right': self.style.OnRightButtonUp,
         }
 
         def _setup_callbacks(button, click, control, shift):
@@ -729,8 +733,8 @@ class RenderWindowInteractor:
             control_left,
             shift_left,
         )
-        self._style_class.add_observer('LeftButtonPressEvent', _left_button_press_callback)  # type: ignore[attr-defined]
-        self._style_class.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)  # type: ignore[attr-defined]
+        self.style.add_observer('LeftButtonPressEvent', _left_button_press_callback)
+        self.style.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
             'middle',
@@ -738,8 +742,8 @@ class RenderWindowInteractor:
             control_middle,
             shift_middle,
         )
-        self._style_class.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)  # type: ignore[attr-defined]
-        self._style_class.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)  # type: ignore[attr-defined]
+        self.style.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
+        self.style.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
             'right',
@@ -747,8 +751,8 @@ class RenderWindowInteractor:
             control_right,
             shift_right,
         )
-        self._style_class.add_observer('RightButtonPressEvent', _right_button_press_callback)  # type: ignore[attr-defined]
-        self._style_class.add_observer('RightButtonReleaseEvent', _right_button_release_callback)  # type: ignore[attr-defined]
+        self.style.add_observer('RightButtonPressEvent', _right_button_press_callback)
+        self.style.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
 
     def enable_2d_style(self):
         """Set the interactive style to 2D.
@@ -1050,7 +1054,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                self._style_class.add_observer(event, callback)  # type: ignore[attr-defined]
+                self.style.add_observer(event, callback)
 
         if shift_pans:
 
@@ -1058,17 +1062,17 @@ class RenderWindowInteractor:
                 """Trigger left mouse panning if shift is pressed."""
                 if event == 'LeftButtonPressEvent':
                     if self.interactor.GetShiftKey():
-                        self._style_class.StartPan()  # type: ignore[union-attr]
-                    self._style_class.OnLeftButtonDown()  # type: ignore[union-attr]
+                        self.style.StartPan()  # type: ignore[union-attr]
+                    self.style.OnLeftButtonDown()  # type: ignore[union-attr]
                 elif event == 'LeftButtonReleaseEvent':
                     # always stop panning on release
-                    self._style_class.EndPan()  # type: ignore[union-attr]
-                    self._style_class.OnLeftButtonUp()  # type: ignore[union-attr]
+                    self.style.EndPan()  # type: ignore[union-attr]
+                    self.style.OnLeftButtonUp()  # type: ignore[union-attr]
 
             callback = partial(try_callback, pan_on_shift_callback)
 
             for event in 'LeftButtonPressEvent', 'LeftButtonReleaseEvent':
-                self._style_class.add_observer(event, callback)  # type: ignore[attr-defined]
+                self.style.add_observer(event, callback)
 
     def enable_rubber_band_style(self):
         """Set the interactive style to Rubber Band Picking.
@@ -1097,7 +1101,7 @@ class RenderWindowInteractor:
         >>> plotter.show()  # doctest:+SKIP
 
         """
-        self.intactor_style = InteractorStyleRubberBandPick(self)
+        self.interactor_style = InteractorStyleRubberBandPick(self)
 
     def enable_rubber_band_2d_style(self):
         """Set the interactive style to Rubber Band 2D.
@@ -1517,11 +1521,12 @@ class RenderWindowInteractor:
         This will terminate the render window if it is not already closed.
         """
         self.remove_observers()
-        if self._style_class == self._context_style:  # pragma: no cover
+        if self.style == self._context_style:  # pragma: no cover
             self._set_context_style(None)  # Disable context interactor style first
-        if self._style_class is not None:
-            self._style_class.remove_observers()
-            self._style_class = None
+        if self.style is not None:
+            if hasattr(self.style, 'remove_observers'):
+                self.style.remove_observers()
+            self.style = None
 
         self.terminate_app()
         self.interactor = None
@@ -1537,18 +1542,18 @@ class _CustomInteractorStyle:
         self._observers = []
         self._observers.append(
             self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),
-        )
+        )  # type: ignore[attr-defined]
         self._observers.append(
             self.AddObserver(
                 'LeftButtonReleaseEvent',
                 partial(try_callback, self._release),
             ),
-        )
+        )  # type: ignore[attr-defined]
 
     def _press(self, *args):
         # Figure out which renderer has the event and disable the
         # others
-        super().OnLeftButtonDown()
+        self.OnLeftButtonDown()  # type: ignore[attr-defined]
         parent = self._parent()
         if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
             click_pos = parent.get_event_position()  # type: ignore[union-attr]
@@ -1557,18 +1562,18 @@ class _CustomInteractorStyle:
                 renderer.SetInteractive(interact)
 
     def _release(self, *args):
-        super().OnLeftButtonUp()
+        self.OnLeftButtonUp()  # type: ignore[attr-defined]
         parent = self._parent()
         if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
             for renderer in parent._plotter.renderers:  # type: ignore[union-attr]
-                renderer.SetInteractive(True)
+                renderer.SetInteractive(True)  # type: ignore[attr-defined]
 
     def add_observer(self, event, callback):
-        self._observers.append(self.AddObserver(event, callback))
+        self._observers.append(self.AddObserver(event, callback))  # type: ignore[attr-defined]
 
     def remove_observers(self):
         for obs in self._observers:
-            self.RemoveObserver(obs)
+            self.RemoveObserver(obs)  # type: ignore[attr-defined]
 
 
 class InteractorStyleImage(_CustomInteractorStyle, _vtk.vtkInteractorStyleImage):
