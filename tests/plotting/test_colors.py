@@ -5,7 +5,7 @@ import importlib.util
 import itertools
 import re
 
-import cmcrameri.cm
+import cmcrameri
 import cmocean
 import colorcet
 import matplotlib as mpl

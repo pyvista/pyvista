@@ -8,6 +8,8 @@ Used code from matplotlib.colors.  Thanks for your work.
 from __future__ import annotations
 
 from colorsys import rgb_to_hls
+import contextlib
+import importlib
 import inspect
 from typing import Literal
 from typing import get_args
@@ -32,7 +34,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
 
@@ -2013,28 +2014,33 @@ def get_cmap_safe(
     """
 
     def get_3rd_party_cmap(cmap_):
-        msg_template = (
-            'Package `{}` is required to use colormap {!r}.\n'
-            'Install PyVista with `pyvista[colormaps]` to install it by default.'
-        )
-        # Define source module and corresponding list of available cmaps
-        # Order matters - priority is given to first package listed
         cmap_sources = {
             'colorcet.cm': _COLORCET_CMAPS,
             'cmocean.cm.cmap_d': _CMOCEAN_CMAPS,
             'cmcrameri.cm.cmaps': _CMCRAMERI_CMAPS,
         }
+
+        def get_nested_attr(obj, attr_path):
+            for attr in attr_path:
+                obj = getattr(obj, attr)
+            return obj
+
+        # Try importing and returning cmap from each package
         for cmap_import, known_cmaps in cmap_sources.items():
-            module = cmap_import.split('.')[0]
-            if has_module(module):  # pragma: no branch
-                mod = __import__(module, fromlist=[''])
-                try:
-                    cmap_dict = eval(cmap_import, {module: mod})
+            parts = cmap_import.split('.')
+            top_module = parts[0]
+
+            with contextlib.suppress(ImportError):
+                mod = importlib.import_module(top_module)
+                cmap_dict = get_nested_attr(mod, parts[1:])
+                with contextlib.suppress(KeyError):
                     return cmap_dict[cmap_]
-                except KeyError:
-                    pass
-            elif cmap_ in known_cmaps:  # pragma: no cover
-                msg = msg_template.format(module, cmap_)
+
+            if cmap_ in known_cmaps:  # pragma: no cover
+                msg = (
+                    f'Package `{top_module}` is required to use colormap {cmap_!r}.\n'
+                    'Install PyVista with `pyvista[colormaps]` to install it by default.'
+                )
                 raise ModuleNotFoundError(msg)
         return None
 
