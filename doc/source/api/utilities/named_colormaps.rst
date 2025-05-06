@@ -15,23 +15,25 @@ The colormaps on this page are from multiple packages:
   and `categorical <https://colorcet.holoviz.org/user_guide/Categorical.html#categorical>`_
   colormaps.
 - :bdg-primary:`cmo` - `cmocean colormaps <https://matplotlib.org/cmocean/>`_.
+- :bdg-danger:`cmc` - `cmcrameri colormaps <https://github.com/callumrollo/cmcrameri?tab=readme-ov-file#cmcrameri>`_.
 
 The type of the colormap is indicated as:
 
 - :bdg-muted:`LSC` if it is a :class:`~matplotlib.colors.LinearSegmentedColormap`
 - :bdg-muted:`LC` if it is a :class:`~matplotlib.colors.ListedColormap`
 
-Each colormap is also labeled as:
+Each colormap is also tagged as:
 
-- :bdg-muted:`PU` if it is perceptually uniform
-- :bdg-danger:`NPU` if it is not perceptually uniform
+- :material-regular:`visibility` - if it is perceptually uniform
+- :material-regular:`visibility_off` - if it is not perceptually uniform
 
 .. warning::
 
     Many of the ``matplotlib`` colormaps such as ``jet`` are not perceptually
     uniform and should be avoided where possible, since these colormaps
     can generate misleading visualizations. Colormaps from ``colorcet`` and
-    ``cmocean`` are therefore generally recommended over those from ``matplotlib``.
+    ``cmocean``, and ``cmcrameri`` are therefore generally recommended over
+    those from ``matplotlib``.
     See `the misuse of colour in science communication <https://doi.org/10.1038/s41467-020-19160-7>`_
     and `testing perceptual uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
     for more information.
@@ -46,7 +48,7 @@ Each colormap is also labeled as:
 .. note::
 
     Install PyVista with ``pyvista[colormaps]`` or ``pyvista[all]`` to also
-    install the ``colorcet`` and ``cmocean`` packages.
+    install the ``colorcet``, ``cmocean``, and ``cmcrameri`` packages.
 
 .. seealso::
 
