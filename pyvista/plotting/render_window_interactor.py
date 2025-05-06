@@ -465,7 +465,6 @@ class RenderWindowInteractor:
 
     @style.setter
     def style(self, style: Optional[Union[_vtk.vtkInteractorStyle, _CustomInteractorStyle]]):
-        # TODO If a plain vtk class, wrap it in pyvista class???
         self._style = 'Interactor'
         self._style_class = style
         self.update_style()
