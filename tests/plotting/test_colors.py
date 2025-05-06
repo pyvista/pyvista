@@ -268,17 +268,19 @@ def reset_matplotlib_cmaps():
             continue
 
 
+def maybe_xfail_mpl():
+    missing_colormaps = {'berlin', 'vanimo', 'managua'}
+    if not missing_colormaps.issubset(mpl.colormaps):
+        pytest.xfail(
+            reason='Older Matplotlib is missing colormaps: berlin, vanimo, managua.',
+        )
+
+
 @pytest.mark.usefixtures('reset_matplotlib_cmaps')
 def test_cmaps_matplotlib_allowed():
-    mpl_colormaps = mpl.colormaps
-    if (
-        'berlin' not in mpl_colormaps
-        and 'vanimo' not in mpl_colormaps
-        and 'managua' not in mpl_colormaps
-    ):
-        pytest.xfail('Older Matplotlib is missing a few colormaps.')
+    maybe_xfail_mpl()
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(mpl_colormaps)
+    actual = set(mpl.colormaps)
     expected = set(_MATPLOTLIB_CMAPS)
     assert actual == expected
 
@@ -301,6 +303,7 @@ def test_cmaps_cmocean_required():
 
 @pytest.mark.usefixtures('reset_matplotlib_cmaps')
 def test_cmaps_cmcrameri_required():
+    maybe_xfail_mpl()
     # Test that cmaps listed in colors module matches the actual cmaps available
     actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
     expected = set(_CMCRAMERI_CMAPS)
