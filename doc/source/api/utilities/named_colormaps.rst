@@ -89,7 +89,7 @@ for highlighting deviations on both sides of a reference value.
 .. dropdown::
     :open:
 
-    .. include:: /api/utilities/colormap_table/colormap_table_MULTISEQUENTIAL.rst
+    .. include:: /api/utilities/colormap_table/colormap_table_MULTI_SEQUENTIAL.rst
 
 Cyclic
 ------
