@@ -1229,6 +1229,12 @@ class ColormapTableDIVERGING(ColormapTable):
     kind = ColormapKind.DIVERGING
 
 
+class ColormapTableMULTISEQUENTIAL(ColormapTable):
+    """Class to generate multi-sequential colormap table."""
+
+    kind = ColormapKind.MULTI_SEQUENTIAL
+
+
 class ColormapTableCYCLIC(ColormapTable):
     """Class to generate cyclic colormap table."""
 
@@ -3057,6 +3063,7 @@ def make_all_tables():  # noqa: D103
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
     ColormapTableLINEAR.generate()
     ColormapTableDIVERGING.generate()
+    ColormapTableMULTISEQUENTIAL.generate()
     ColormapTableCYCLIC.generate()
     ColormapTableCATEGORICAL.generate()
     ColormapTableMISC.generate()

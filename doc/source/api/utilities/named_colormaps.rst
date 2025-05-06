@@ -80,6 +80,17 @@ for highlighting deviation from a reference value.
 
     .. include:: /api/utilities/colormap_table/colormap_table_DIVERGING.rst
 
+Multi-Sequential
+----------------
+
+Colormaps with multiple sequential gradients diverging from a midpoint, ideal
+for highlighting deviations on both sides of a reference value.
+
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_MULTISEQUENTIAL.rst
+
 Cyclic
 ------
 
