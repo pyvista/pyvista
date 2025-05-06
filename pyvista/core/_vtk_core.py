@@ -568,6 +568,9 @@ class VersionInfo(NamedTuple):
     minor: int
     micro: int
 
+    def __str__(self):
+        return str((self.major, self.minor, self.micro))
+
 
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple.

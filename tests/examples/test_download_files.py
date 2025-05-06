@@ -924,8 +924,8 @@ def test_download_gltf_damaged_helmet():
     pl.import_gltf(filename)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info > (9, 1),
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 1),
     reason='Skip until glTF extension KHR_texture_transform is supported.',
 )
 def test_download_gltf_sheen_chair():

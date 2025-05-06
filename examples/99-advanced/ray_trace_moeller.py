@@ -1,11 +1,11 @@
 """
-.. _moeller_ray_trace_example:
+.. _ray_trace_moeller_example:
 
 Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example demonstrates the Moeller-Trumbore intersection algorithm
-using pyvista.
+using :class:`~pyvista.PolyData`.
 
 For additional details, please reference the following:
 

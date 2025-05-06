@@ -1,9 +1,9 @@
 """
-.. _wrap_trimesh:
+.. _wrap_trimesh_example:
 
 Wrapping Other Objects
 ~~~~~~~~~~~~~~~~~~~~~~
-You can wrap several other object types using pyvista including:
+You can :func:`~pyvista.wrap` several other object types using pyvista including:
 
 - `numpy` arrays
 - `trimesh.Trimesh` meshes
