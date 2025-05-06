@@ -232,7 +232,7 @@ class BaseViewer:
                 renderer.hide_axes()
         for view in self._html_views:
             # Check if 'set_widgets' is defined directly in the class, not just as a dynamic attribute
-            # The Trame-Client getattr prints an error message which is undesireable in this case
+            # The Trame-Client getattr prints an error message which is undesirable in this case
             # https://github.com/Kitware/trame-client/blob/8e3e2042214fd238b628216bff48d1762adf50a3/trame_client/widgets/core.py#L467
             if 'set_widgets' in type(view).__dict__:
                 method = getattr(view, 'set_widgets', None)
