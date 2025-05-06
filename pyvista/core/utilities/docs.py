@@ -139,7 +139,6 @@ def pv_html_page_context(
             # The link points to the generated .rst file in doc/source/examples
             # Modify it to point to the source .py file in examples/ instead
             pagename_ = pagename.replace('doc/source/', '')
-            pagename_ = pagename_.replace('.rst', '.py')
             return f'http://github.com/pyvista/pyvista/edit/main/{pagename_}.py'
         elif '_autosummary' in pagename:
             # This is an API example
