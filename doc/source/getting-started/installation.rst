@@ -42,12 +42,16 @@ PyPI
    :target: https://pypi.org/project/pyvista/
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip``::
+using ``pip``:
+
+.. code-block:: console
 
     pip install pyvista
 
 To install all the additional packages that extend PyVista, install using
-``pip`` with::
+``pip`` with:
+
+.. code-block:: console
 
     pip install pyvista[all]
 
@@ -59,7 +63,9 @@ Anaconda
 .. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-To install this package with ``conda`` run::
+To install this package with ``conda`` run:
+
+.. code-block:: console
 
     conda install -c conda-forge pyvista
 
@@ -119,7 +125,9 @@ Source / Developers
 
 Alternatively, you can install the latest version from GitHub by visiting
 `PyVista <https://github.com/pyvista/pyvista>`_, and downloading the source
-(cloning) by running::
+(cloning) by running:
+
+.. code-block:: console
 
     git clone https://github.com/pyvista/pyvista.git
     cd pyvista

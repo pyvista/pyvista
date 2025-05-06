@@ -494,31 +494,75 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install PyVista with all
-test dependencies:
-
-.. code-block:: bash
-
-   pip install -e . --group test
-
-Then, if you have everything installed, you can run the various test
-suites.
+To run our comprehensive suite of unit tests, please refer to the `Unit Testing`_
+section.
 
 Unit Testing
 ~~~~~~~~~~~~
-Run the primary test suite and generate coverage report:
+Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
+or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pip install -e . --group=test # installing testing dependencies
+            pytest # alternatively: python -m pytest
+
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            pip install tox
+            tox run -e py3.11 # change to the python version targeted
+
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
 leverage multiple processes. Example usage:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -n <NUMCORE> --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest -n <NUMCORE>
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11 -- -n <NUMCORE>
+
+Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
+such that:
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest --cov pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11-cov # the -cov factor can be added to any python version
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
@@ -574,9 +618,24 @@ Docstring Testing
 ~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --doctest-modules pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest --doctest-modules pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e doctest-modules
+            tox run -e doctest-local # to test that docstrings are self-contained (ie. no hidden imports)
+            tox run -f doctest # to run both previous commands at the same time
 
 .. note::
 
@@ -589,7 +648,9 @@ Style Checking
 PyVista follows PEP8 standard as outlined in the `Coding Style section
 <#coding-style>`_ and implements style checking using `pre-commit`_.
 
-To ensure your code meets minimum code styling standards, run::
+To ensure your code meets minimum code styling standards, run:
+
+.. code-block:: console
 
   pip install pre-commit
   pre-commit run --all-files
@@ -598,18 +659,22 @@ If you have issues related to ``setuptools`` when installing ``pre-commit``, see
 `pre-commit Issue #2178 comment <https://github.com/pre-commit/pre-commit/issues/2178#issuecomment-1002163763>`_
 for a potential resolution.
 
-You can also install this as a pre-commit hook by running::
+You can also install this as a pre-commit hook by running:
 
-  pre-commit install
+.. code-block:: console
+
+    pre-commit install
 
 This way, it's not possible for you to push code that fails the style
 checks. For example, each commit automatically checks that you meet the style
-requirements::
+requirements:
 
-  $ pre-commit install
-  $ git commit -m "added my cool feature"
-  codespell................................................................Passed
-  ruff.....................................................................Passed
+.. code-block:: console
+
+    pre-commit install
+    git commit -m "added my cool feature"
+    codespell................................................................Passed
+    ruff.....................................................................Passed
 
 The actual installation of the environment happens before the first commit
 following ``pre-commit install``. This will take a bit longer, but subsequent
@@ -654,9 +719,22 @@ There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
 example:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-       pytest tests/plotting --reset_image_cache
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest tests/plotting --reset_image_cache
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11 -- tests/plotting --reset_image_cache
 
 Running ``--reset_image_cache`` creates a new image for each test in
 ``tests/plotting/test_plotting.py`` and is not recommended except for
@@ -700,9 +778,22 @@ For example, the following writes all images generated by ``pytest`` to
 ``debug_images/`` for any tests in ``tests/plotting`` whose function name has
 ``volume`` in it.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/plotting/ -k volume --generated_image_dir debug_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11 -- tests/plotting/ -k volume --generated_image_dir debug_images
 
 See `pytest-pyvista`_ for more details.
 
@@ -770,9 +861,23 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-    pytest tests/core/typing
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest tests/core/typing
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11 -- tests/core/typing
+
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
@@ -788,25 +893,40 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Install documentation dependencies with:
+Documentation can be build either directly (ie. using python commands) or with ``tox`` such that:
 
-.. code-block:: shell
+.. tab-set::
+    :sync-group: category
 
-   python -m pip install -e . --group docs
+    .. tab-item:: python
+        :sync: pytest
 
-Build the documentation on Linux or Mac OS with:
+        .. code-block:: console
 
-.. code-block:: bash
+            python -m pip install -e . --group docs
 
-   make -C doc html
+        .. tab-set::
 
-Build the documentation on Windows with:
+            .. tab-item:: Mac OS / Linux
 
-.. code-block:: winbatch
+                .. code-block:: console
 
-   cd doc
-   python -msphinx -M html source _build
-   python -msphinx -M html . _build
+                    make -C doc html
+
+            .. tab-item:: Windows
+
+                .. code-block:: console
+
+                    cd doc
+                    python -msphinx -M html source _build
+                    python -msphinx -M html . _build
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e docs-build
 
 The generated documentation can be found in the ``doc/_build/html``
 directory.
@@ -866,9 +986,23 @@ The regression testing compares these generated images to those stored in
 
 To test all the images, run ``pytest`` with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_static_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest tests/doc/tst_doc_build.py::test_static_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
+
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -958,9 +1092,23 @@ To ensure that the interactive plots do not unnecessarily inflate the size
 of the documentation build, a limit is placed on the size of ``.vtksz`` files.
 To test that interactive plots do not exceed this limit, run:
 
-.. code:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: console
+
+            pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: console
+
+            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
