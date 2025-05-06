@@ -20,26 +20,26 @@ from pyvista import examples
 # From NumPy Meshgrid
 # +++++++++++++++++++
 #
-# Create a simple meshgrid using NumPy
+# Create a simple meshgrid using NumPy. Note the usage of ij indexing.
 
 # Make data
-x = np.arange(-10, 10, 0.25)
-y = np.arange(-10, 10, 0.25)
-x, y = np.meshgrid(x, y)
+xrng = np.linspace(-10, 10)
+yrng = np.linspace(-10, 10, 20)
+x, y = np.meshgrid(xrng, yrng, indexing='ij')
 r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 # %%
-# Now pass the NumPy meshgrid to PyVista
+# Now pass the NumPy meshgrid to PyVista.
 
 # Create and plot structured grid
 grid = pv.StructuredGrid(x, y, z)
-grid.plot()
+grid.plot(smooth_shading=True)
 
 # %%
 
 # Plot mean curvature as well
-grid.plot_curvature(clim=[-1, 1])
+grid.plot_curvature(clim=[-1, 1], smooth_shading=True)
 
 # %%
 # Generating a structured grid is a one-liner in this module, and the points
@@ -125,7 +125,7 @@ mesh = pv.StructuredGrid()
 # Set the coordinates from the numpy array
 mesh.points = points
 # set the dimensions
-mesh.dimensions = [29, 32, 1]
+mesh.dimensions = (29, 32, 1)
 
 # and then inspect it
 mesh.plot(show_edges=True, show_grid=True, cpos='xy')
