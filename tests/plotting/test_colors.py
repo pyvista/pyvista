@@ -17,6 +17,7 @@ import vtk
 import pyvista as pv
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
+from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
@@ -260,6 +261,21 @@ def reset_matplotlib_cmaps():
             mpl.colormaps.unregister(cmap)
         except (ValueError, AttributeError):
             continue
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_matplotlib_allowed():
+    mpl_colormaps = mpl.colormaps
+    if (
+        'berlin' not in mpl_colormaps
+        and 'vanimo' not in mpl_colormaps
+        and 'managua' not in mpl_colormaps
+    ):
+        pytest.xfail('Older Matplotlib is missing a few colormaps.')
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(mpl_colormaps)
+    expected = set(_MATPLOTLIB_CMAPS)
+    assert actual == expected
 
 
 @pytest.mark.usefixtures('reset_matplotlib_cmaps')
