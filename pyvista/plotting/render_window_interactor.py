@@ -448,7 +448,11 @@ class RenderWindowInteractor:
         self.interactor.SetInteractorStyle(self.style)
 
     @property
-    def style(self) -> Optional[Union[_vtk.vtkContextInteractorStyle, _vtk.vtkInteractorStyle]]:
+    def style(
+        self,
+    ) -> Optional[
+        Union[_vtk.vtkContextInteractorStyle, _vtk.vtkInteractorStyle, _CustomInteractorStyle]
+    ]:
         """Return the current interactor style.
 
         Returns
@@ -460,7 +464,7 @@ class RenderWindowInteractor:
         return self._style_class
 
     @style.setter
-    def style(self, style: _vtk.vtkInteractorStyle):
+    def style(self, style: Optional[Union[_vtk.vtkInteractorStyle, _CustomInteractorStyle]]):
         # TODO If a plain vtk class, wrap it in pyvista class???
         self._style = 'Interactor'
         self._style_class = style
@@ -1534,7 +1538,7 @@ class RenderWindowInteractor:
         self._timer_event = None
 
 
-class _CustomInteractorStyle:
+class _CustomInteractorStyle(_vtk.vtkInteractorStyle):
     def __init__(self, render_window_interactor: RenderWindowInteractor):
         super().__init__()
         self._parent = weakref.ref(render_window_interactor)
@@ -1542,18 +1546,18 @@ class _CustomInteractorStyle:
         self._observers = []
         self._observers.append(
             self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),
-        )  # type: ignore[attr-defined]
+        )
         self._observers.append(
             self.AddObserver(
                 'LeftButtonReleaseEvent',
                 partial(try_callback, self._release),
             ),
-        )  # type: ignore[attr-defined]
+        )
 
     def _press(self, *args):
         # Figure out which renderer has the event and disable the
         # others
-        self.OnLeftButtonDown()  # type: ignore[attr-defined]
+        self.OnLeftButtonDown()
         parent = self._parent()
         if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
             click_pos = parent.get_event_position()  # type: ignore[union-attr]
@@ -1562,18 +1566,18 @@ class _CustomInteractorStyle:
                 renderer.SetInteractive(interact)
 
     def _release(self, *args):
-        self.OnLeftButtonUp()  # type: ignore[attr-defined]
+        self.OnLeftButtonUp()
         parent = self._parent()
         if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
             for renderer in parent._plotter.renderers:  # type: ignore[union-attr]
-                renderer.SetInteractive(True)  # type: ignore[attr-defined]
+                renderer.SetInteractive(True)
 
     def add_observer(self, event, callback):
-        self._observers.append(self.AddObserver(event, callback))  # type: ignore[attr-defined]
+        self._observers.append(self.AddObserver(event, callback))
 
     def remove_observers(self):
         for obs in self._observers:
-            self.RemoveObserver(obs)  # type: ignore[attr-defined]
+            self.RemoveObserver(obs)
 
 
 class InteractorStyleImage(_CustomInteractorStyle, _vtk.vtkInteractorStyleImage):
