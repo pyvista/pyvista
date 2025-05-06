@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import ColormapOptions
 
 
 @abstract_class
@@ -7094,7 +7095,7 @@ class DataSetFilters(DataObjectFilters):
             _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
-                    cmap = get_cmap_safe(colors)
+                    cmap = get_cmap_safe(cast('ColormapOptions', colors))
                 except ValueError:
                     pass
                 else:
