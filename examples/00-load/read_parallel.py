@@ -10,7 +10,6 @@ several files is natively supported by VTK and PyVista.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 # sphinx_gallery_thumbnail_number = 1
@@ -24,12 +23,12 @@ from pyvista import examples
 # Let's inspect where this downloaded our dataset by setting ``load=False`` and
 # looking at the directory containing the file we downloaded.
 filename = examples.download_blood_vessels(load=False)
-path = str(Path(filename).parent)
-os.listdir(path)  # noqa: PTH208
+path = Path(filename).parent
+list(path.iterdir())
 
 
 # %%
-os.listdir(str(Path(path) / 'T0000000500'))  # noqa: PTH208
+list((path / 'T0000000500').iterdir())
 
 
 # %%

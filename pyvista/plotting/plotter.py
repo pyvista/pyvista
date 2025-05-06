@@ -88,8 +88,10 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
+    from pyvista import LookupTable
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting._typing import ColormapOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -2476,7 +2478,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting=None,
         n_colors=256,
         interpolate_before_map=True,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,
@@ -2586,7 +2588,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -3004,7 +3007,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting=None,
         n_colors=256,
         interpolate_before_map=None,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,
@@ -3148,7 +3151,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -3918,7 +3923,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         resolution=None,
         opacity='linear',
         n_colors=256,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         flip_scalars=False,
         reset_camera=None,
         name=None,
@@ -4027,7 +4032,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -4305,7 +4312,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
-                    cmap=color,
+                    cmap=color,  # type: ignore[arg-type]
                     flip_scalars=flip_scalars,
                     reset_camera=reset_camera,
                     name=next_name,
@@ -4436,7 +4443,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if cmap is None:
                 cmap = self._theme.cmap
 
-            cmap = get_cmap_safe(cmap)
+            cmap = get_cmap_safe(cmap)  # type: ignore[arg-type]
             if categories:
                 if categories is True:
                     n_colors = len(np.unique(scalars))
@@ -4444,10 +4451,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     n_colors = categories
 
             if flip_scalars:
-                cmap = cmap.reversed()
+                cmap = cmap.reversed()  # type: ignore[union-attr]
 
             # Set colormap and build lookup table
-            self.mapper.lookup_table.apply_cmap(cmap, n_colors)
+            self.mapper.lookup_table.apply_cmap(cmap, n_colors)  # type: ignore[arg-type]
             self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
             self.mapper.lookup_table.log_scale = log_scale

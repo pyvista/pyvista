@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from colorsys import rgb_to_hls
 import inspect
+from typing import Literal
+from typing import get_args
 
 from cycler import Cycler
 from cycler import cycler
@@ -36,6 +38,7 @@ from . import _vtk
 
 if TYPE_CHECKING:
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -580,8 +583,9 @@ SCHEME_NAMES = {
     for scheme_name, scheme_info in COLOR_SCHEMES.items()
 }
 
-# matches colorcet.cm.keys()
-_COLORCET_CMAPS = [
+# Define colormaps that require colorcet
+# matches set(colorcet.cm.keys()) - set(mpl.colormaps)
+_COLORCET_CMAPS_LITERAL = Literal[
     'CET_C1',
     'CET_C10',
     'CET_C10_r',
@@ -760,8 +764,6 @@ _COLORCET_CMAPS = [
     'circle_mgbm_67_c31_s25_r',
     'colorwheel',
     'colorwheel_r',
-    'coolwarm',
-    'coolwarm_r',
     'cwr',
     'cwr_r',
     'cyclic_bgrmb_35_70_c75',
@@ -884,8 +886,6 @@ _COLORCET_CMAPS = [
     'glasbey_warm_r',
     'gouldian',
     'gouldian_r',
-    'gray',
-    'gray_r',
     'gwv',
     'gwv_r',
     'isolum',
@@ -988,7 +988,6 @@ _COLORCET_CMAPS = [
     'linear_worb_100_25_c53_r',
     'linear_wyor_100_45_c55',
     'linear_wyor_100_45_c55_r',
-    'rainbow',
     'rainbow4',
     'rainbow4_r',
     'rainbow_bgyr_10_90_c83',
@@ -1001,11 +1000,12 @@ _COLORCET_CMAPS = [
     'rainbow_bgyrm_35_85_c69_r',
     'rainbow_bgyrm_35_85_c71',
     'rainbow_bgyrm_35_85_c71_r',
-    'rainbow_r',
 ]
+_COLORCET_CMAPS = get_args(_COLORCET_CMAPS_LITERAL)
 
-# matches cmocean.cm.cmap_d.keys()
-_CMOCEAN_CMAPS = [
+# Define colormaps that require cmocean
+# matches set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
+_CMOCEAN_CMAPS_LITERAL = Literal[
     'algae',
     'algae_i',
     'algae_i_r',
@@ -1046,10 +1046,8 @@ _CMOCEAN_CMAPS = [
     'diff_i_r',
     'diff_r',
     'diff_r_i',
-    'gray',
     'gray_i',
     'gray_i_r',
-    'gray_r',
     'gray_r_i',
     'haline',
     'haline_i',
@@ -1117,6 +1115,192 @@ _CMOCEAN_CMAPS = [
     'turbid_r',
     'turbid_r_i',
 ]
+_CMOCEAN_CMAPS = get_args(_CMOCEAN_CMAPS_LITERAL)
+
+_MATPLOTLIB_CMAPS_LITERAL = Literal[
+    'Accent',
+    'Accent_r',
+    'Blues',
+    'Blues_r',
+    'BrBG',
+    'BrBG_r',
+    'BuGn',
+    'BuGn_r',
+    'BuPu',
+    'BuPu_r',
+    'CMRmap',
+    'CMRmap_r',
+    'Dark2',
+    'Dark2_r',
+    'GnBu',
+    'GnBu_r',
+    'Grays',
+    'Grays_r',
+    'Greens',
+    'Greens_r',
+    'Greys',
+    'Greys_r',
+    'OrRd',
+    'OrRd_r',
+    'Oranges',
+    'Oranges_r',
+    'PRGn',
+    'PRGn_r',
+    'Paired',
+    'Paired_r',
+    'Pastel1',
+    'Pastel1_r',
+    'Pastel2',
+    'Pastel2_r',
+    'PiYG',
+    'PiYG_r',
+    'PuBu',
+    'PuBuGn',
+    'PuBuGn_r',
+    'PuBu_r',
+    'PuOr',
+    'PuOr_r',
+    'PuRd',
+    'PuRd_r',
+    'Purples',
+    'Purples_r',
+    'RdBu',
+    'RdBu_r',
+    'RdGy',
+    'RdGy_r',
+    'RdPu',
+    'RdPu_r',
+    'RdYlBu',
+    'RdYlBu_r',
+    'RdYlGn',
+    'RdYlGn_r',
+    'Reds',
+    'Reds_r',
+    'Set1',
+    'Set1_r',
+    'Set2',
+    'Set2_r',
+    'Set3',
+    'Set3_r',
+    'Spectral',
+    'Spectral_r',
+    'Wistia',
+    'Wistia_r',
+    'YlGn',
+    'YlGnBu',
+    'YlGnBu_r',
+    'YlGn_r',
+    'YlOrBr',
+    'YlOrBr_r',
+    'YlOrRd',
+    'YlOrRd_r',
+    'afmhot',
+    'afmhot_r',
+    'autumn',
+    'autumn_r',
+    'berlin',
+    'berlin_r',
+    'binary',
+    'binary_r',
+    'bone',
+    'bone_r',
+    'brg',
+    'brg_r',
+    'bwr',
+    'bwr_r',
+    'cividis',
+    'cividis_r',
+    'cool',
+    'cool_r',
+    'coolwarm',
+    'coolwarm_r',
+    'copper',
+    'copper_r',
+    'cubehelix',
+    'cubehelix_r',
+    'flag',
+    'flag_r',
+    'gist_earth',
+    'gist_earth_r',
+    'gist_gray',
+    'gist_gray_r',
+    'gist_grey',
+    'gist_grey_r',
+    'gist_heat',
+    'gist_heat_r',
+    'gist_ncar',
+    'gist_ncar_r',
+    'gist_rainbow',
+    'gist_rainbow_r',
+    'gist_stern',
+    'gist_stern_r',
+    'gist_yarg',
+    'gist_yarg_r',
+    'gist_yerg',
+    'gist_yerg_r',
+    'gnuplot',
+    'gnuplot2',
+    'gnuplot2_r',
+    'gnuplot_r',
+    'gray',
+    'gray_r',
+    'grey',
+    'grey_r',
+    'hot',
+    'hot_r',
+    'hsv',
+    'hsv_r',
+    'inferno',
+    'inferno_r',
+    'jet',
+    'jet_r',
+    'magma',
+    'magma_r',
+    'managua',
+    'managua_r',
+    'nipy_spectral',
+    'nipy_spectral_r',
+    'ocean',
+    'ocean_r',
+    'pink',
+    'pink_r',
+    'plasma',
+    'plasma_r',
+    'prism',
+    'prism_r',
+    'rainbow',
+    'rainbow_r',
+    'seismic',
+    'seismic_r',
+    'spring',
+    'spring_r',
+    'summer',
+    'summer_r',
+    'tab10',
+    'tab10_r',
+    'tab20',
+    'tab20_r',
+    'tab20b',
+    'tab20b_r',
+    'tab20c',
+    'tab20c_r',
+    'terrain',
+    'terrain_r',
+    'turbo',
+    'turbo_r',
+    'twilight',
+    'twilight_r',
+    'twilight_shifted',
+    'twilight_shifted_r',
+    'vanimo',
+    'vanimo_r',
+    'viridis',
+    'viridis_r',
+    'winter',
+    'winter_r',
+]
+
+_MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
 class Color:
@@ -1704,8 +1888,12 @@ class Color:
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
-def get_cmap_safe(cmap):
+def get_cmap_safe(
+    cmap: ColormapOptions | list[str],
+):
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+
+    See :ref:`named_colormaps` for supported colormaps.
 
     Parameters
     ----------
@@ -1729,7 +1917,7 @@ def get_cmap_safe(cmap):
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
-            cmap = IPYGANY_MAP[cmap]
+            cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
 
         msg_template = (
             'Package `{}` is required to use colormap {!r}.\n'
@@ -1768,7 +1956,7 @@ def get_cmap_safe(cmap):
                 cmap = getattr(colormaps, cmap)
             else:
                 try:
-                    cmap = colormaps[cmap]
+                    cmap = colormaps[cmap]  # type: ignore[assignment]
                 except KeyError:
                     msg = f"Invalid colormap '{cmap}'"
                     raise ValueError(msg) from None
@@ -1776,10 +1964,10 @@ def get_cmap_safe(cmap):
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
-                msg = 'When inputting a list as a cmap, each item should be a string.'
+                msg = 'When inputting a list as a cmap, each item should be a string.'  # type: ignore[unreachable]
                 raise TypeError(msg)
 
-        cmap = ListedColormap(cmap)
+        cmap = ListedColormap(cmap)  # type: ignore[assignment]
 
     return cmap
 

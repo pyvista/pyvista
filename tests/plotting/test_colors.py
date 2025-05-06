@@ -17,6 +17,7 @@ import vtk
 import pyvista as pv
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
+from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
@@ -252,15 +253,42 @@ def test_unique_colors():
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
 
-def test_colorcet_cmaps_allowed():
+@pytest.fixture
+def reset_matplotlib_cmaps():
+    # Need to unregister all 3rd-party cmaps
+    for cmap in list(mpl.colormaps):
+        try:
+            mpl.colormaps.unregister(cmap)
+        except (ValueError, AttributeError):
+            continue
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_matplotlib_allowed():
+    mpl_colormaps = mpl.colormaps
+    if (
+        'berlin' not in mpl_colormaps
+        and 'vanimo' not in mpl_colormaps
+        and 'managua' not in mpl_colormaps
+    ):
+        pytest.xfail('Older Matplotlib is missing a few colormaps.')
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(colorcet.cm.keys())
+    actual = set(mpl_colormaps)
+    expected = set(_MATPLOTLIB_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_colorcet_required():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(colorcet.cm.keys()) - set(mpl.colormaps)
     expected = set(_COLORCET_CMAPS)
     assert actual == expected
 
 
-def test_cmocean_cmaps_allowed():
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
-    actual = set(cmocean.cm.cmap_d.keys())
+    actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
     expected = set(_CMOCEAN_CMAPS)
     assert actual == expected
