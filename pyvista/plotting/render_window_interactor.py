@@ -1101,7 +1101,7 @@ class RenderWindowInteractor:
         >>> plotter.show()  # doctest:+SKIP
 
         """
-        self.interactor_style = InteractorStyleRubberBandPick(self)
+        self.style = InteractorStyleRubberBandPick(self)
 
     def enable_rubber_band_2d_style(self):
         """Set the interactive style to Rubber Band 2D.
