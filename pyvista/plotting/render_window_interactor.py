@@ -540,7 +540,7 @@ class RenderWindowInteractor:
             self._prev_style = self._style
             self._prev_style_class = self.style
             self._style = 'Context'
-            self.style = self._context_style
+            self._style_class = self._context_style
         self.update_style()
 
     def enable_trackball_style(self):
