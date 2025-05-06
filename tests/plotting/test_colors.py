@@ -32,10 +32,13 @@ if importlib.util.find_spec('cmocean'):
 if importlib.util.find_spec('colorcet'):
     COLORMAPS.append('fire')
 
+if importlib.util.find_spec('cmcrameri'):
+    COLORMAPS.append('batlow')
+
 
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
-    assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
+    assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
 
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])

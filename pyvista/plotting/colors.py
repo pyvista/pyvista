@@ -2011,40 +2011,42 @@ def get_cmap_safe(
         If the input is a list of items that are not strings.
 
     """
+
+    def get_3rd_party_cmap(cmap_):
+        msg_template = (
+            'Package `{}` is required to use colormap {!r}.\n'
+            'Install PyVista with `pyvista[colormaps]` to install it by default.'
+        )
+        # Define source module and corresponding list of available cmaps
+        # Order matters - priority is given to first package listed
+        cmap_sources = {
+            'colorcet.cm': _COLORCET_CMAPS,
+            'cmocean.cm.cmap_d': _CMOCEAN_CMAPS,
+            'cmcrameri.cm.cmaps': _CMCRAMERI_CMAPS,
+        }
+        for cmap_import, known_cmaps in cmap_sources.items():
+            module = cmap_import.split('.')[0]
+            if has_module(module):  # pragma: no branch
+                mod = __import__(module, fromlist=[''])
+                try:
+                    cmap_dict = eval(cmap_import, {module: mod})
+                    return cmap_dict[cmap_]
+                except KeyError:
+                    pass
+            elif cmap_ in known_cmaps:  # pragma: no cover
+                msg = msg_template.format(module, cmap_)
+                raise ModuleNotFoundError(msg)
+        return None
+
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
 
-        msg_template = (
-            'Package `{}` is required to use colormap {!r}.\n'
-            'Install PyVista with `pyvista[colormaps]` to install it by default.'
-        )
-        # Try colorcet first
-        if has_module(module := 'colorcet'):  # pragma: no branch
-            import colorcet
-
-            try:
-                return colorcet.cm[cmap]
-            except KeyError:
-                pass
-        elif cmap in _COLORCET_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        # Try cmocean second
-        if has_module(module := 'cmocean'):  # pragma: no branch
-            import cmocean
-
-            try:
-                return cmocean.cm.cmap_d[cmap]
-            except KeyError:
-                pass
-        elif cmap in _CMOCEAN_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        if not isinstance(cmap, colors.Colormap):
+        cmap_3rd_party = get_3rd_party_cmap(cmap)
+        if cmap_3rd_party:
+            return cmap_3rd_party
+        elif not isinstance(cmap, colors.Colormap):
             if inspect.ismodule(colormaps):  # pragma: no cover
                 # Backwards compatibility with matplotlib<3.5.0
                 if not hasattr(colormaps, cmap):
