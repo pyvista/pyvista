@@ -5,6 +5,7 @@ import importlib.util
 import itertools
 import re
 
+import cmcrameri.cm
 import cmocean
 import colorcet
 import matplotlib as mpl
@@ -15,6 +16,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
@@ -291,4 +293,12 @@ def test_cmaps_cmocean_required():
     # Test that cmaps listed in colors module matches the actual cmaps available
     actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
     expected = set(_CMOCEAN_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_cmcrameri_required():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
+    expected = set(_CMCRAMERI_CMAPS)
     assert actual == expected
