@@ -1094,7 +1094,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def gaussian_splatter(  # type: ignore[misc]
+    def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
         *,
         radius: float = 0.1,
@@ -1128,31 +1128,20 @@ class DataSetFilters(DataObjectFilters):
         Create an image data volume from a point cloud using gaussian splatter.
 
         >>> import pyvista as pv
-        >>> import numpy as np
 
-        Load the Stanford Bunny mesh
+        Load the Stanford Bunny mesh.
 
         >>> bunny = pv.examples.download_bunny()
 
-        Extract point coordinates to create a point cloud
+        Apply Gaussian splatter to generate a volumetric representation.
 
-        >>> points = bunny.points
-        >>> point_cloud = pv.PolyData(points)
+        >>> volume = bunny.gaussian_splatting(radius=0.01)
 
-        Add random scalar values to the points
-
-        >>> rng = np.random.default_rng(seed=42)
-        >>> point_cloud['values'] = rng.random(points.shape[0])
-
-        Apply Gaussian splatter to generate a volumetric representation
-
-        >>> volume = point_cloud.gaussian_splatter(radius=0.01)
-
-        Threshold the volume to filter out low-density regions
+        Threshold the volume to filter out low-density regions.
 
         >>> threshed = volume.threshold(0.05)
 
-        Visualize the thresholded volume with semi-transparency and no scalar bar
+        Visualize the thresholded volume with semi-transparency and no scalar bar.
 
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
