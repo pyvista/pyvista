@@ -84,6 +84,21 @@ pl.show()
 # Take the norm of the magnetic field
 scalars = np.linalg.norm(grid['B'], axis=1)
 
+# Customize the opacity to make it easier to visualize the strength of the
+# field nearby the coil
+opacity = [
+    0.00,
+    0.05,
+    0.1,
+    0.3,
+    0.3,
+    0.5,
+    0.95,
+    0.95,
+    1.0,
+    1.0,
+]
+
 # sphinx_gallery_start_ignore
 # volume rendering does not work in interactive plots currently
 PYVISTA_GALLERY_FORCE_STATIC = True
@@ -99,7 +114,7 @@ pl.add_mesh(coil_block, render_lines_as_tubes=True, line_width=5, color='w')
 vol = pl.add_volume(
     grid,
     scalars=scalars,
-    opacity='sigmoid_6',
+    opacity=opacity,
     cmap='hot',
     show_scalar_bar=False,
 )
