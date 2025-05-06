@@ -11,6 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from tests.plotting.test_plotting import skip_windows_mesa
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -195,6 +196,7 @@ def test_track_click_position():
     assert events.pop(0) == 'single'
 
 
+@skip_windows_mesa
 @pytest.mark.skipif(
     type(_vtk.vtkRenderWindowInteractor()).__name__
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),

@@ -152,7 +152,6 @@ def test_raise_not_matching_raises():
 
 
 def test_version():
-    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -162,6 +161,7 @@ def test_version():
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
+    assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= (0, 0, 0)
 
@@ -470,6 +470,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():

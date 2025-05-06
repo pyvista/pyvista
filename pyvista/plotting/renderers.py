@@ -655,6 +655,10 @@ class Renderers:
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
 
+        See Also
+        --------
+        :ref:`color_cycler_example`
+
         Examples
         --------
         Set the default color cycler to iterate through red, green, and blue.

@@ -2243,7 +2243,7 @@ class PlatonicSolidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource)
     >>> dodeca = pv.PlatonicSolidSource('dodecahedron')
     >>> dodeca.output.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
 

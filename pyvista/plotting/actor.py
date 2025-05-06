@@ -404,6 +404,10 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         pyvista.Property
             The object describing backfaces.
 
+        See Also
+        --------
+        :ref:`backface_prop_example`
+
         Examples
         --------
         Clip a sphere by a plane and color the inside of the clipped sphere
