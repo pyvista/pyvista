@@ -1543,13 +1543,15 @@ class _CustomInteractorStyle(_vtk.vtkInteractorStyle):
         super().__init__()
         self._parent = weakref.ref(render_window_interactor)
 
+        # An unknown problem with AddObserver not typed to include string despite overload.
+        # Ignore typing.
         self._observers = []
         self._observers.append(
-            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),
+            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),  # type: ignore[arg-type]
         )
         self._observers.append(
             self.AddObserver(
-                'LeftButtonReleaseEvent',
+                'LeftButtonReleaseEvent',  # type: ignore[arg-type]
                 partial(try_callback, self._release),
             ),
         )
