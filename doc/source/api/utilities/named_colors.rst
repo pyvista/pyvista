@@ -31,6 +31,11 @@ for additional information about the ``CSS`` and ``TAB`` colors.
     - ``'lightpink'`` is darker than ``'pink'``, and
     - ``'cadmiumyellow'`` is classified as an ``Orange`` color.
 
+.. seealso::
+
+    :ref:`named_colormaps`
+        Similar reference for named colormaps.
+
 Sorted by Name
 --------------
 

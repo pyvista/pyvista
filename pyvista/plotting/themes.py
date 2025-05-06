@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -2315,9 +2316,8 @@ class Theme(_ThemeConfig):
     def cmap(self):  # numpydoc ignore=RT01
         """Return or set the default colormap of pyvista.
 
-        See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``.  If ``colorcet`` or ``cmocean`` are
-        installed, their colormaps can be specified by name.
+        See :ref:`named_colormaps` for supported colormaps.
+        Only applicable when displaying ``scalars``.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three
@@ -2334,7 +2334,7 @@ class Theme(_ThemeConfig):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, cmap):
+    def cmap(self, cmap: ColormapOptions):
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
             msg = f'Invalid color map {cmap}'
