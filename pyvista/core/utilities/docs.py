@@ -133,13 +133,14 @@ def pv_html_page_context(
             The link to the tip of the main branch for the same file.
 
         """
-        if pagename.startswith('examples') and 'index' not in pagename:
+        if pagename.startswith('doc/source/examples') and 'index' not in pagename:
             # This is a gallery example.
 
-            # We can get away with directly using the pagename since "examples"
-            # in the pagename is the same as the "examples" directory in the
-            # repo
-            return f'http://github.com/pyvista/pyvista/edit/main/{pagename}.py'
+            # The link points to the generated .rst file in doc/source/examples
+            # Modify it to point to the source .py file in examples/ instead
+            pagename_ = pagename.replace('doc/source/', '')
+            pagename_ = pagename_.replace('.rst', '.py')
+            return f'http://github.com/pyvista/pyvista/edit/main/{pagename_}.py'
         elif '_autosummary' in pagename:
             # This is an API example
             fullname = pagename.split('_autosummary')[1][1:]
