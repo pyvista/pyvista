@@ -892,7 +892,7 @@ class RenderWindowInteractor:
         >>> plotter.show()  # doctest:+SKIP
 
         """
-        self.style = InteractorStylJoystickCamera(self)
+        self.style = InteractorStyleJoystickCamera(self)
 
     def enable_joystick_actor_style(self):
         """Set the interactive style to Joystick Actor.
@@ -1137,7 +1137,7 @@ class RenderWindowInteractor:
         >>> plotter.show()  # doctest:+SKIP
 
         """
-        self.intactor_style = InteractorStyleRubberBand2D(self)
+        self.style = InteractorStyleRubberBand2D(self)
 
     def _simulate_keypress(self, key):
         """Simulate a keypress."""
@@ -1589,7 +1589,7 @@ class InteractorStyleJoystickActor(_CustomInteractorStyle, _vtk.vtkInteractorSty
     """Joystick actor interactor style."""
 
 
-class InteractorStylJoystickCamera(_CustomInteractorStyle, _vtk.vtkInteractorStyleJoystickCamera):
+class InteractorStyleJoystickCamera(_CustomInteractorStyle, _vtk.vtkInteractorStyleJoystickCamera):
     """Joystick camera interactor style."""
 
 
