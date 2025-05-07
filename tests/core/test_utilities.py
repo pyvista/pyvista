@@ -956,6 +956,12 @@ def test_linkcode_resolve():
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
     assert 'dataset.py' in link
 
+    # test wrapped function
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.plotting.plotter.Plotter.add_ruler'}
+    )
+    assert 'renderer.py' in link
+
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
 
