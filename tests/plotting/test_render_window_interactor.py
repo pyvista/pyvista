@@ -402,3 +402,9 @@ def test_enable_interactors():
     for attr, class_ in mapping.items():
         getattr(pl.iren, attr)()
         assert isinstance(pl.iren.style, class_)
+
+
+def test_setting_custom_style():
+    pl = pv.Plotter()
+    pl.iren.style = _vtk.vtkInteractorStyleJoystickActor()
+    assert isinstance(pl.iren.style, _vtk.vtkInteractorStyleJoystickActor)
