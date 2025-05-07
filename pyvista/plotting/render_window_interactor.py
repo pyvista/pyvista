@@ -453,12 +453,36 @@ class RenderWindowInteractor:
     ) -> Optional[
         Union[_vtk.vtkContextInteractorStyle, _vtk.vtkInteractorStyle, _CustomInteractorStyle]
     ]:
-        """Return the current interactor style.
+        """Get/set the current interactor style.
+
+        .. warning::
+
+            Setting an interactor style needs careful control of events handling.
+            See implementation of interactor styles in source code for more details.
 
         Returns
         -------
         vtkInteractorStyle or vtkContextInteractorStyle or None
             The current interactor style.
+
+        Examples
+        --------
+        Set interactor style with a customized vtk interactor
+
+        >>> import pyvista as pv
+        >>> from vtkmodules.vtkInteractionStyle import (
+        ...     vtkInteractorStyleTrackballCamera,
+        ... )
+
+        >>> class MyCustomInteractorStyle(vtkInteractorStyleTrackballCamera):
+        ...     # Implement custom functionality
+        ...     def __repr__(self):
+        ...         return 'A custom interactor style.'
+
+        >>> plotter = pv.Plotter()
+        >>> plotter.iren.style = MyCustomInteractorStyle()
+        >>> plotter.iren.style
+        A custom interactor style.
 
         """
         return self._style_class
