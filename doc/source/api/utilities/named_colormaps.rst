@@ -24,8 +24,8 @@ The type of the colormap is indicated as:
 
 Each colormap is also tagged as:
 
-- :material-regular:`visibility` - if it is perceptually uniform
-- :material-regular:`visibility_off` - if it is not perceptually uniform
+- :material-regular:`visibility;2em;sd-text-info` - if it is perceptually uniform
+- :material-regular:`visibility_off;2em;sd-text-warning` - if it is not perceptually uniform
 
 .. warning::
 
