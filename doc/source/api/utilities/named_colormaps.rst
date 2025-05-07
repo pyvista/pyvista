@@ -38,6 +38,17 @@ Each colormap is also tagged as:
     and `testing perceptual uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
     for more information.
 
+Refer to the flowchart in the following dropdown for guidance on how
+to choose a colormap.
+
+.. dropdown:: Guideline for choosing the right scientific colormap
+
+    .. image:: https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41467-020-19160-7/MediaObjects/41467_2020_19160_Fig6_HTML.png
+
+    Figure from Crameri, F., Shephard, G.E., & Heron, P.J. (2020). The misuse of
+    colour in science communication. Nature Communications, 11, 5444.
+    https://doi.org/10.1038/s41467-020-19160-7. Licensed under CC BY 4.0.
+
 .. note::
 
     Some colormap names such as ``gray`` and ``rainbow`` are duplicated across
