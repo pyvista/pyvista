@@ -632,8 +632,8 @@ class DisableVtkSnakeCase:
             if sys.meta_path is None:
                 # Python is likely shutting down, so we avoid any dynamic imports
                 # and simply set a default value
-                state = 'error'
-            else:
+                state = 'error'  # pragma: no cover
+            else:  # pragma: no branch
                 import pyvista as pv
 
                 state = pv._VTK_SNAKE_CASE_STATE
