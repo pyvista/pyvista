@@ -92,6 +92,7 @@ extensions = [
     'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
