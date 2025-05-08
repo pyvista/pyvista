@@ -48,8 +48,8 @@ if not Path(pyvista.FIGURE_PATH).exists():
     Path(pyvista.FIGURE_PATH).mkdir()
 
 # necessary when building the sphinx gallery
-pyvista.BUILDING_GALLERY = True
-os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+pyvista.BUILDING_GALLERY = False
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'false'
 
 # SG warnings
 import warnings
