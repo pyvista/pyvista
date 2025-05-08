@@ -291,6 +291,21 @@ def pytest_configure(config: pytest.Config):
         )
 
 
+def marker_names(item: pytest.Item):
+    return [marker.name for marker in item.iter_markers()]
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
+    test_downloads = config.getoption('--test_downloads')
+
+    for item in items:
+        # skip all tests that need downloads
+        if not test_downloads:
+            if 'needs_download' in marker_names(item):
+                skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
+                item.add_marker(skip_downloads)
+
+
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 

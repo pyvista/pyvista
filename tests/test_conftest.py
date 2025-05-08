@@ -143,6 +143,38 @@ def test_warning_vtk(
     assert 'test_warning' in (report.failed if greater else report.passed)
 
 
+@pytest.mark.parametrize('cml', [True, False])
+def test_downloads_mark(
+    cml,
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest
+
+    @pytest.mark.needs_download
+    def test_downloads():
+        ...
+
+    def test_no_downloads():
+        ...
+    """
+    cml = '--test_downloads' if cml else ''
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p, cml)
+
+    results.assert_outcomes(
+        skipped=0 if cml else 1,
+        passed=2 if cml else 1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+
+    assert 'test_no_downloads' in report.passed
+    assert 'test_downloads' in (report.passed if cml else report.skipped)
+
+
 class Cases_needs_vtk:
     @case
     @parametrize(greater=[True, False])
