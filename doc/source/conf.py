@@ -92,7 +92,6 @@ extensions = [
     'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
-    'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -101,6 +100,9 @@ extensions = [
     'sphinxext.opengraph',
     'sphinx_sitemap',
 ]
+
+if pyvista.BUILDING_GALLERY:
+    extensions.append('sphinx_gallery.gen_gallery')
 
 # Configuration of pyvista.ext.coverage
 coverage_additional_modules = [

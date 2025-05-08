@@ -320,7 +320,7 @@ def _split_code_at_show(text):
                 part = []
                 within_plot = False
 
-        elif '.show(' in line or '.plot(' in line:
+        elif _show_or_plot_in_string(line):
             if _strip_comments(line).endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
@@ -330,6 +330,10 @@ def _split_code_at_show(text):
     if '\n'.join(part).strip():
         parts.append('\n'.join(part))
     return is_doctest, parts
+
+
+def _show_or_plot_in_string(string):
+    return '.show(' in string or '.plot(' in string
 
 
 # -----------------------------------------------------------------------------
@@ -479,17 +483,16 @@ def render_figures(
 
     try:
         for i, code_piece in enumerate(code_pieces):
+            # run code
             code_to_run = doctest.script_from_examples(code_piece) if is_doctest else code_piece
+            _run_code(code_to_run, code_path, ns, function_name)
 
-            # Skip this chunk if it doesn't have plotting commands
-            stripped = _strip_comments(code_to_run)
-            if '.plot' not in stripped and '.show' not in stripped:
+            # check if there are no images to generate
+            if not _show_or_plot_in_string(_strip_comments(code_to_run)):
                 results.append((code_piece, []))
                 continue
 
             # generate the plot
-            _run_code(code_to_run, code_path, ns, function_name)
-
             images = []
             figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
