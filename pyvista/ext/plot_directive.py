@@ -466,6 +466,13 @@ def render_figures(
         # Try to determine if all images already exist
         is_doctest, code_pieces = _split_code_at_show(code)
 
+    # Render nothing if no calls to plot or show
+    if not any(
+        '.plot(' in _strip_comments(piece) or '.show(' in _strip_comments(piece)
+        for piece in code_pieces
+    ):
+        return []
+
     # Otherwise, we didn't find the files, so build them
     results = []
     ns = plot_context if context else {}
