@@ -140,7 +140,7 @@ def file_from_files(target_path, fnames):
         if os.name == 'nt':  # pragma: no cover
             fname = PureWindowsPath(fname).as_posix()
         # ignore mac hidden directories
-        if '/__MACOSX/' in fname:
+        if '/__MACOSX/' in fname:  # pragma: no cover
             continue
         if fname.endswith(target_path):
             found_fnames.append(fname)
@@ -2236,7 +2236,7 @@ def download_frog_tissue(load=True):
         'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissues` instead.',
         PyVistaDeprecationWarning,
     )
-    if pyvista._version.version_info >= (0, 47):
+    if pyvista._version.version_info >= (0, 47):  # pragma: no cover
         msg = 'Remove this deprecated function'
         raise RuntimeError(msg)
 
@@ -5381,10 +5381,10 @@ def download_osmnx_graph(load=True):
         '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
         PyVistaDeprecationWarning,
     )
-    if pyvista._version.version_info >= (0, 47):
+    if pyvista._version.version_info >= (0, 47):  # pragma : no cover
         msg = 'Remove this deprecated function'
         raise RuntimeError(msg)
-    if not importlib.util.find_spec('osmnx'):
+    if not importlib.util.find_spec('osmnx'):  # pragma : no cover
         msg = 'Install `osmnx` to use this example'
         raise ImportError(msg)
     return _download_dataset(_dataset_osmnx_graph, load=load)
