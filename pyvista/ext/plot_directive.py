@@ -479,22 +479,17 @@ def render_figures(
 
     try:
         for i, code_piece in enumerate(code_pieces):
-            code_to_run = doctest.script_from_examples(
-                code_piece) if is_doctest else code_piece
+            code_to_run = doctest.script_from_examples(code_piece) if is_doctest else code_piece
 
             # Skip this chunk if it doesn't have plotting commands
-            if '.plot(' not in _strip_comments(
-                    code_to_run) and '.show(' not in _strip_comments(code_to_run):
+            if '.plot(' not in _strip_comments(code_to_run) and '.show(' not in _strip_comments(
+                code_to_run
+            ):
                 results.append((code_piece, []))
                 continue
 
             # generate the plot
-            _run_code(
-                code_to_run,
-                code_path,
-                ns,
-                function_name
-            )
+            _run_code(code_to_run, code_path, ns, function_name)
 
             images = []
             figures = pyvista.plotting.plotter._ALL_PLOTTERS
