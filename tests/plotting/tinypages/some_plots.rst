@@ -204,3 +204,11 @@ but the source will always be included with a conditional caption:
    x = np.linspace(0, 2*np.pi)
    plt.plot(x, np.sin(x))
    plt.show()
+
+**Plot 20** Make a plotter but do not show it. An image should not be generated.
+
+.. pyvista-plot::
+
+   >>> import pyvista as pv
+
+   >>> pl = pv.Plotter()

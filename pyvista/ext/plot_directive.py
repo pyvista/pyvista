@@ -483,38 +483,40 @@ def render_figures(
 
     try:
         for i, code_piece in enumerate(code_pieces):
-            # run code
-            code_to_run = doctest.script_from_examples(code_piece) if is_doctest else code_piece
-            _run_code(code_to_run, code_path, ns, function_name)
-
-            # check if there are no images to generate
-            if not _show_or_plot_in_string(_strip_comments(code_to_run)):
-                results.append((code_piece, []))
-                continue
-
             # generate the plot
-            images = []
-            figures = pyvista.plotting.plotter._ALL_PLOTTERS
+            _run_code(
+                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_path,
+                ns,
+                function_name,
+            )
 
-            for j, (_, plotter) in enumerate(figures.items()):
-                if hasattr(plotter, '_gif_filename'):
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
-                    shutil.move(plotter._gif_filename, image_file.filename)
-                else:
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
-                    try:
-                        plotter.screenshot(image_file.filename)
-                    except RuntimeError:  # pragma no cover
-                        # ignore closed, unrendered plotters
-                        continue
-                    if force_static or (plotter.last_vtksz is None):
-                        images.append(image_file)
-                        continue
+            images = []
+
+            if _show_or_plot_in_string(code_piece):
+                figures = pyvista.plotting.plotter._ALL_PLOTTERS
+
+                for j, (_, plotter) in enumerate(figures.items()):
+                    if hasattr(plotter, '_gif_filename'):
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
+                        shutil.move(plotter._gif_filename, image_file.filename)
                     else:
-                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
-                        with Path(image_file.filename).open('wb') as f:
-                            f.write(plotter.last_vtksz)
-                images.append(image_file)
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
+                        try:
+                            plotter.screenshot(image_file.filename)
+                        except RuntimeError:  # pragma no cover
+                            # ignore closed, unrendered plotters
+                            continue
+                        if force_static or (plotter.last_vtksz is None):
+                            images.append(image_file)
+                            continue
+                        else:
+                            image_file = ImageFile(
+                                output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz'
+                            )
+                            with Path(image_file.filename).open('wb') as f:
+                                f.write(plotter.last_vtksz)
+                    images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
 
