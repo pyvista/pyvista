@@ -466,13 +466,6 @@ def render_figures(
         # Try to determine if all images already exist
         is_doctest, code_pieces = _split_code_at_show(code)
 
-    # Render nothing if no calls to plot or show
-    if not any(
-        '.plot(' in _strip_comments(piece) or '.show(' in _strip_comments(piece)
-        for piece in code_pieces
-    ):
-        return []
-
     # Otherwise, we didn't find the files, so build them
     results = []
     ns = plot_context if context else {}
@@ -486,12 +479,21 @@ def render_figures(
 
     try:
         for i, code_piece in enumerate(code_pieces):
+            code_to_run = doctest.script_from_examples(
+                code_piece) if is_doctest else code_piece
+
+            # Skip this chunk if it doesn't have plotting commands
+            if '.plot(' not in _strip_comments(
+                    code_to_run) and '.show(' not in _strip_comments(code_to_run):
+                results.append((code_piece, []))
+                continue
+
             # generate the plot
             _run_code(
-                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_to_run,
                 code_path,
                 ns,
-                function_name,
+                function_name
             )
 
             images = []
