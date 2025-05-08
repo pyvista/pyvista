@@ -1370,3 +1370,7 @@ def test_merge_points(inplace):
     assert output.n_points == 8
     assert isinstance(mesh, pv.PolyData)
     assert (mesh is output) == inplace
+
+
+def test_mre():
+    _ = pv.PolyData().x
