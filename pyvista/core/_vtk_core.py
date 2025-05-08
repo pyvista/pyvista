@@ -10,6 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+import sys
 from typing import NamedTuple
 import warnings
 
@@ -628,18 +629,14 @@ class DisableVtkSnakeCase:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
 
             # Get the current value of the snake case state variable
-            # We normally can import pyvista dynamically, but this can't be done in
-            # some cases, e.g. when the python interpreter is shutting down,
-            # in which case the meta_path is None and we set the state directly
-            # if sys.meta_path is not None:
-            #     import pyvista as pv
-            #
-            #     state = pv._VTK_SNAKE_CASE_STATE
-            # else:
-            #     state = 'error'
-            import pyvista as pv
+            if sys.meta_path is None:
+                # Python is likely shutting down, so we avoid any dynamic imports
+                # and simply set a default value
+                state = 'error'
+            else:
+                import pyvista as pv
 
-            state = pv._VTK_SNAKE_CASE_STATE
+                state = pv._VTK_SNAKE_CASE_STATE
 
             if state != 'allow':
                 if (
