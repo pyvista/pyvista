@@ -212,3 +212,11 @@ but the source will always be included with a conditional caption:
    >>> import pyvista as pv
 
    >>> pl = pv.Plotter()
+
+**Plot 21** The directive also works with plotting methods like ``plot_cell``.
+
+.. pyvista-plot::
+
+    from pyvista.examples.cells import Wedge, plot_cell
+
+    plot_cell(Wedge())
