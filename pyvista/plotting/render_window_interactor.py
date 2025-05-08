@@ -467,22 +467,25 @@ class RenderWindowInteractor:
 
         Examples
         --------
-        Set interactor style with a customized vtk interactor
+        .. pyvista-plot::
+            :nofigs:
 
-        >>> import pyvista as pv
-        >>> from vtkmodules.vtkInteractionStyle import (
-        ...     vtkInteractorStyleTrackballCamera,
-        ... )
+            Set interactor style with a customized vtk interactor
 
-        >>> class MyCustomInteractorStyle(vtkInteractorStyleTrackballCamera):
-        ...     # Implement custom functionality
-        ...     def __repr__(self):
-        ...         return 'A custom interactor style.'
+            >>> import pyvista as pv
+            >>> from vtkmodules.vtkInteractionStyle import (
+            ...     vtkInteractorStyleTrackballCamera,
+            ... )
 
-        >>> plotter = pv.Plotter()
-        >>> plotter.iren.style = MyCustomInteractorStyle()
-        >>> plotter.iren.style
-        A custom interactor style.
+            >>> class MyCustomInteractorStyle(vtkInteractorStyleTrackballCamera):
+            ...     # Implement custom functionality
+            ...     def __repr__(self):
+            ...         return 'A custom interactor style.'
+
+            >>> plotter = pv.Plotter()
+            >>> plotter.iren.style = MyCustomInteractorStyle()
+            >>> plotter.iren.style
+            A custom interactor style.
 
         """
         return self._style_class
