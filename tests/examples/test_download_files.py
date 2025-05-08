@@ -23,6 +23,7 @@ from pyvista import examples
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
+pytestmark = pytest.mark.needs_download
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
