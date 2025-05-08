@@ -629,10 +629,10 @@ class DisableVtkSnakeCase:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
 
             # Get the current value of the snake case state variable
-            if sys.meta_path is None:
+            if sys.meta_path is None:  # pragma: no cover
                 # Python is likely shutting down, so we avoid any dynamic imports
                 # and simply set a default value
-                state = 'error'  # pragma: no cover
+                state = 'error'  # type: ignore[unreachable]
             else:  # pragma: no branch
                 import pyvista as pv
 
