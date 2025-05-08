@@ -1018,6 +1018,23 @@ PR.  To invalidate a cache for a specific PR, one of the following labels can be
 The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
 rerun the CI with the labels applied.
 
+.. note::
+
+    The cache is only saved if the documentation build succeeds and all documentation tests
+    pass (see `Documentation Image Regression Testing`_). This means that the cache will only
+    reduce build times `after` an initial successful build. In cases where build failures are
+    regularly expected (e.g. debugging Sphinx-related features), it may be more useful to
+    completely skip generating the gallery instead, see `Skip Generating the Sphinx Gallery`_.
+
+Skip Generating the Sphinx Gallery
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, the Sphinx Gallery is always generated when building the documentation.
+To reduce build times, it may be desirable to skip this temporarily.
+
+If building the documentation locally, set the environment variable
+``PYVISTA_BUILDING_GALLERY=false`` to disable generating the Sphinx Gallery.
+If building the documentation in CI on GitHub, apply the ``skip-gallery`` label.
 
 Contributing to the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
