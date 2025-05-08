@@ -23,6 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  PYVISTA_BUILDING_GALLERY  !contains(github.event.pull_request.labels.*.name, 'skip-gallery')
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -37,6 +38,7 @@ env:
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
   VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
+  PYVISTA_BUILDING_GALLERY: true
 
 permissions:
   id-token: none
@@ -50,6 +52,11 @@ jobs:
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
     steps:
+      - name: Set PYVISTA_BUILDING_GALLERY environment variable
+        if: contains(github.event.pull_request.labels.*.name, 'skip-gallery')
+        run: |
+          echo "PYVISTA_BUILDING_GALLERY=false" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -77,7 +84,7 @@ jobs:
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
+        if: env.PYVISTA_BUILDING_GALLERY == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
         with:
           path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
@@ -91,7 +98,7 @@ jobs:
 
       - name: Cache Sphinx build directory
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
+        if: env.USE_CACHE == 'true'env.USE_CACHE == 'true' && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
         with:
           path: doc/_build/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
