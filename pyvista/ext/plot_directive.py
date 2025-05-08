@@ -483,15 +483,6 @@ def render_figures(
 
     try:
         for i, code_piece in enumerate(code_pieces):
-            # run code
-            code_to_run = doctest.script_from_examples(code_piece) if is_doctest else code_piece
-            _run_code(code_to_run, code_path, ns, function_name)
-
-            # check if there are no images to generate
-            if not _show_or_plot_in_string(_strip_comments(code_to_run)):
-                results.append((code_piece, []))
-                continue
-
             # generate the plot
             images = []
             figures = pyvista.plotting.plotter._ALL_PLOTTERS
@@ -630,7 +621,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # make figures
     errors = []
-    if skip:
+    if skip or not _show_or_plot_in_string(code):
         results = [(code, [])]
     else:
         try:
