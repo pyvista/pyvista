@@ -1088,6 +1088,7 @@ def test_download_nek5000():
         assert isinstance(nek_data, pv.UnstructuredGrid)
 
 
+@pytest.mark.skip_windows
 def test_download_biplane():
     filename = examples.download_biplane(load=False)
     assert Path(filename).is_file()
