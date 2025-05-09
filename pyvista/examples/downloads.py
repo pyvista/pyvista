@@ -5340,7 +5340,7 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_osmnx_graph(load=True):
+def download_osmnx_graph(load=True):  # pragma : no cover
     """Load a simple street map from Open Street Map.
 
     Generated from:
@@ -5381,16 +5381,16 @@ def download_osmnx_graph(load=True):
         '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
         PyVistaDeprecationWarning,
     )
-    if pyvista._version.version_info >= (0, 47):  # pragma : no cover
+    if pyvista._version.version_info >= (0, 47):
         msg = 'Remove this deprecated function'
         raise RuntimeError(msg)
-    if not importlib.util.find_spec('osmnx'):  # pragma : no cover
+    if not importlib.util.find_spec('osmnx'):
         msg = 'Install `osmnx` to use this example'
         raise ImportError(msg)
     return _download_dataset(_dataset_osmnx_graph, load=load)
 
 
-def _osmnx_graph_read_func(filename):
+def _osmnx_graph_read_func(filename):  # pragma : no cover
     import pickle
 
     return pickle.load(Path(filename).open('rb'))
