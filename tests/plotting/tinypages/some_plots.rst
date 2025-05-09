@@ -247,3 +247,10 @@ but the source will always be included with a conditional caption:
         plotter.write_frame()
         plotter.clear()
     plotter.close()
+
+**Plot 24** Any function with ``plot_<...>`` syntax will generate a plot.
+
+.. pyvista-plot::
+
+    >>> from pyvista import demos
+    >>> demos.plot_ants_plane()
