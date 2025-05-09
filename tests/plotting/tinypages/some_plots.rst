@@ -234,18 +234,16 @@ but the source will always be included with a conditional caption:
 
 .. pyvista-plot::
 
-    import os
     import pyvista as pv
     from pyvista import examples
     filename = examples.download_single_sphere_animation(load=False)
     reader = pv.PVDReader(filename)
-    gif_filename = 'single_sphere.gif'
     plotter = pv.Plotter()
-    plotter.open_gif(gif_filename)
+    plotter.open_gif('single_sphere.gif')
     for time_value in reader.time_values:
         reader.set_active_time_value(time_value)
         mesh = reader.read()
-        _ = plotter.add_mesh(mesh, smooth_shading=True)
+        plotter.add_mesh(mesh, smooth_shading=True)
         plotter.write_frame()
         plotter.clear()
     plotter.close()
