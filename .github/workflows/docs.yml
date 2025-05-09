@@ -55,6 +55,7 @@ jobs:
         if: contains(github.event.pull_request.labels.*.name, 'skip-gallery')
         run: |
           echo "PYVISTA_BUILDING_GALLERY=false" >> "$GITHUB_ENV"
+          echo "USE_CACHE=false" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v4
         with:
