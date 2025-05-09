@@ -10,6 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+import sys
 from typing import NamedTuple
 import warnings
 
@@ -623,6 +624,12 @@ class DisableVtkSnakeCase:
     def __getattribute__(self, attr):
         if vtk_version_info >= (9, 4):
             # Raise error if accessing attributes from VTK's pythonic snake_case API
+
+            if sys.meta_path is None:  # pragma: no cover
+                # Python is likely shutting down, so we avoid any dynamic imports
+                # and simply return None
+                return None  # type: ignore[unreachable]
+
             import pyvista as pv
 
             state = pv._VTK_SNAKE_CASE_STATE
