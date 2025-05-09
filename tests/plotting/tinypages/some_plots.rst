@@ -254,3 +254,11 @@ but the source will always be included with a conditional caption:
 
     >>> from pyvista import demos
     >>> demos.plot_ants_plane()
+
+**Plot 25** Methods with ``plot=True`` keywords will also generate a plot.
+
+.. pyvista-plot::
+
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
+    >>> sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)

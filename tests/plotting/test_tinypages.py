@@ -81,6 +81,7 @@ def test_tinypages(tmp_path, ename, evalue):
     assert plot_file(21, 0, 0).exists() == expected
     assert plot_file(22, 0, 0).exists() == expected
     assert plot_file(24, 0, 0).exists() == expected
+    assert plot_file(25, 0, 0).exists() == expected
     assert plot_file(8, 0, 0, 'png').exists() == expected
     assert plot_file(9, 0, 0, 'png').exists() == expected
     assert plot_file(9, 1, 0, 'png').exists() == expected

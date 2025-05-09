@@ -496,7 +496,11 @@ def render_figures(
 
             images = []
 
-            if _show_or_plot_in_string(code_piece) or '.open_gif' in code_piece:
+            if (
+                _show_or_plot_in_string(code_piece)
+                or '.open_gif' in code_piece
+                or 'plot=True' in code_piece
+            ):
                 figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
                 for j, (_, plotter) in enumerate(figures.items()):
