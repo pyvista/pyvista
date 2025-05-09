@@ -314,8 +314,6 @@ def plot_ants_plane(notebook=None):
 
     This example plots the following:
 
-    .. code-block:: python
-
        >>> import pyvista as pv
        >>> from pyvista import examples
 

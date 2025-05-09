@@ -2427,13 +2427,26 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
+        >>> origin = [0, 0, 0]
+        >>> end_point = [1, 0, 0]
+        >>> point, cell = sphere.ray_trace(end_point, end_point, first_point=True)
         >>> f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}'
         'Intersected at 0.499 0.000 0.000'
 
         Show a plot of the ray trace.
 
-        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], plot=True)
+        >>> point, cell = sphere.ray_trace(origin, end_point, plot=True)
+
+        Setting ``plot=True`` is roughly equivalent to:
+
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(sphere, label='Test Mesh')
+        >>> segment = np.array([origin, end_point])
+        >>> pl.add_lines(segment, 'b', label='Ray Segment')
+        >>> pl.add_mesh(point, 'r', point_size=10, label='Intersection Points')
+        >>> pl.add_legend()  # type: ignore[call-arg]
+        >>> pl.add_axes()  # type: ignore[call-arg]
+        >>> pl.show()
 
         See :ref:`ray_trace_example` for more examples using this filter.
 
