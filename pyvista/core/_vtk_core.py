@@ -631,7 +631,7 @@ class DisableVtkSnakeCase:
             if sys.meta_path is None:  # pragma: no cover
                 # Python is likely shutting down, so we avoid any dynamic imports
                 # and simply return None
-                return None
+                return None  # type: ignore[unreachable]
 
             import pyvista as pv
 
