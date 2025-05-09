@@ -335,7 +335,7 @@ def _split_code_at_show(text):
 def _show_or_plot_in_string(string):
     # string contains `.show(`, `.plot(`, or `plot_xyz(` where `xyz` is one
     # or more lower-case letters, e.g. `plot_cell(`, `plot_datasets(`
-    pattern = r'(?:\.plot\(|\.show\(|plot_[a-z]+?\()'
+    pattern = r'(?:\.plot\(|\.show\(|(?:[ \t\n.]plot_[a-z]+?)\()'
     return bool(re.search(pattern, string))
 
 
@@ -496,11 +496,11 @@ def render_figures(
 
             images = []
 
-            if _show_or_plot_in_string(code_piece):
+            if _show_or_plot_in_string(code_piece) or '.open_gif' in code_piece:
                 figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
                 for j, (_, plotter) in enumerate(figures.items()):
-                    if hasattr(plotter, '_gif_filename'):  # pragma: no cover
+                    if hasattr(plotter, '_gif_filename'):
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                         shutil.move(plotter._gif_filename, image_file.filename)
                     else:

@@ -220,3 +220,32 @@ but the source will always be included with a conditional caption:
     from pyvista.examples.cells import Wedge, plot_cell
 
     plot_cell(Wedge())
+
+**Plot 22** This example tests that the 'plot' term in 'tecplot' doesn't break the directive.
+
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+
+   >>> mesh = examples.download_tecplot_ascii()
+   >>> mesh.plot()
+
+**Plot 23** Create a gif.
+
+.. pyvista-plot::
+
+    import os
+    import pyvista as pv
+    from pyvista import examples
+    filename = examples.download_single_sphere_animation(load=False)
+    reader = pv.PVDReader(filename)
+    gif_filename = 'single_sphere.gif'
+    plotter = pv.Plotter()
+    plotter.open_gif(gif_filename)
+    for time_value in reader.time_values:
+        reader.set_active_time_value(time_value)
+        mesh = reader.read()
+        _ = plotter.add_mesh(mesh, smooth_shading=True)
+        plotter.write_frame()
+        plotter.clear()
+    plotter.close()
