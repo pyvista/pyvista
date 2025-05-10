@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import cmcrameri
 import cmocean
 from colorcet import all_original_names
 from colorcet import get_aliases
@@ -40,6 +41,12 @@ def test_colormap_table_cmocean():
     cmocean_cmaps = cmocean.cm.cmapnames
     documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'cmocean']
     assert set(documented_cmaps) == set(cmocean_cmaps), ERROR_MSG
+
+
+def test_colormap_table_cmcrameri():
+    cmcrameri_cmaps = [cmap for cmap in cmcrameri.cm.cmaps if not cmap.endswith('_r')]
+    documented_cmaps = [info.name for info in _COLORMAP_INFO if info.package == 'cmcrameri']
+    assert set(documented_cmaps) == set(cmcrameri_cmaps), ERROR_MSG
 
 
 @pytest.fixture
