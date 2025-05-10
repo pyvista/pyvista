@@ -24,22 +24,24 @@ def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
         sys.path.insert(0, str(project_root))
 
     package_path = Path(pv.__path__[0])  # path to pyvista package
-    all_py_files = [p for p in package_path.rglob('*.py') if p.name != '__init__.py']
 
-    for file_path in all_py_files:
-        try:
-            # Convert path to dotted module name
-            rel_path = file_path.relative_to(project_root)
-            module_name = '.'.join(rel_path.with_suffix('').parts)
+    def find_py_files(path: Path):
+        return [p for p in path.rglob('*.py') if p.name != '__init__.py']
 
-            module = importlib.import_module(module_name)
+    core_py_files = find_py_files(package_path / 'core')
+    plotting_py_files = find_py_files(package_path / 'plotting')
 
-            for name in dir(module):
-                obj = getattr(module, name)
-                if isinstance(obj, type) and getattr(obj, '__module__', '') == module_name:
-                    class_types.add(obj)
-        except Exception as e:
-            print(f'Failed to import {file_path}: {e}')
+    for file_path in [*core_py_files, *plotting_py_files]:
+        # Convert path to dotted module name
+        rel_path = file_path.relative_to(project_root)
+        module_name = '.'.join(rel_path.with_suffix('').parts)
+
+        module = importlib.import_module(module_name)
+
+        for name in dir(module):
+            obj = getattr(module, name)
+            if isinstance(obj, type) and getattr(obj, '__module__', '') == module_name:
+                class_types.add(obj)
 
     sorted_classes = sorted(class_types, key=lambda cls: cls.__name__)
     return tuple(cls.__name__ for cls in sorted_classes), tuple(sorted_classes)
