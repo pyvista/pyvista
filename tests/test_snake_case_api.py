@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
-import sys
 
 import pytest
 
@@ -18,11 +17,6 @@ def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
 
     class_types: set[type] = set()
 
-    # Add pyvista root to sys.path if needed
-    project_root = Path(pv.__file__).resolve().parent.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
     package_path = Path(pv.__path__[0])  # path to pyvista package
 
     def find_py_files(path: Path):
@@ -33,7 +27,7 @@ def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
 
     for file_path in [*core_py_files, *plotting_py_files]:
         # Convert path to dotted module name
-        rel_path = file_path.relative_to(project_root)
+        rel_path = file_path.relative_to(package_path.parent)
         module_name = '.'.join(rel_path.with_suffix('').parts)
 
         module = importlib.import_module(module_name)
@@ -42,9 +36,6 @@ def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
             obj = getattr(module, name)
             if isinstance(obj, type) and getattr(obj, '__module__', '') == module_name:
                 class_types.add(obj)
-
-    sorted_classes = sorted(class_types, key=lambda cls: cls.__name__)
-    return tuple(cls.__name__ for cls in sorted_classes), tuple(sorted_classes)
 
     # Sort and return names and types as separate tuples
     sorted_classes = sorted(class_types, key=lambda cls: cls.__name__)
