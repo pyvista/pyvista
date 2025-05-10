@@ -946,7 +946,7 @@ _JSONValueType = Union[
 ]
 
 
-class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
+class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
     """Dict-like object with a JSON-serialized string array representation.
 
     This class behaves just like a regular dict, except its contents
