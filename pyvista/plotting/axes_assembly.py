@@ -76,7 +76,7 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -363,6 +363,13 @@ class AxesAssembly(_XYZAssembly):
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    See Also
+    --------
+    AxesAssemblySymmetric
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------
@@ -990,6 +997,13 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    See Also
+    --------
+    AxesAssembly
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------

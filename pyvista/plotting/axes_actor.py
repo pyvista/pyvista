@@ -14,7 +14,7 @@ from . import _vtk
 from .actor_properties import ActorProperties
 
 
-class AxesActor(_vtk.vtkAxesActor):
+class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     """Axes actor wrapper for vtkAxesActor.
 
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user
@@ -22,6 +22,13 @@ class AxesActor(_vtk.vtkAxesActor):
     user can set the text for the three axes. To see full customization
     options, refer to `vtkAxesActor Details
     <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
+
+    See Also
+    --------
+    :class:`~pyvista.AxesAssembly`
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------

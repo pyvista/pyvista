@@ -1,4 +1,6 @@
 """
+.. _spline_widget_example:
+
 Spline Widget
 ~~~~~~~~~~~~~
 

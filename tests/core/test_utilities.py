@@ -152,7 +152,6 @@ def test_raise_not_matching_raises():
 
 
 def test_version():
-    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -162,6 +161,7 @@ def test_version():
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
+    assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= (0, 0, 0)
 
@@ -470,6 +470,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():
@@ -954,6 +955,12 @@ def test_linkcode_resolve():
     # test property
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
     assert 'dataset.py' in link
+
+    # test wrapped function
+    link = linkcode_resolve(
+        'py', {'module': 'pyvista', 'fullname': 'pyvista.plotting.plotter.Plotter.add_ruler'}
+    )
+    assert 'renderer.py' in link
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
@@ -2202,6 +2209,23 @@ def test_vtk_verbosity_invalid_input(value):
     with pytest.raises(ValueError, match=match):
         with pv.vtk_verbosity(value):
             ...
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_vtk_snake_case():
+    assert pv.vtk_snake_case() == 'error'
+    match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
+
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        _ = pv.PolyData().information
+
+    pv.vtk_snake_case('allow')
+    assert pv.vtk_snake_case() == 'allow'
+    _ = pv.PolyData().information
+
+    with pv.vtk_snake_case('warning'):
+        with pytest.warns(RuntimeWarning, match=match):
+            _ = pv.PolyData().information
 
 
 T = TypeVar('T')

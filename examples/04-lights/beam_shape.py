@@ -1,5 +1,5 @@
 """
-.. _light_beam_shape_example:
+.. _beam_shape_example:
 
 Beam Shape
 ~~~~~~~~~~

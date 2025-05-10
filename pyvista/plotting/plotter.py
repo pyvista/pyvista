@@ -26,7 +26,6 @@ import uuid
 import warnings
 import weakref
 
-import matplotlib as mpl
 import numpy as np
 import scooby
 
@@ -62,6 +61,8 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Renderer
@@ -87,8 +88,10 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
+    from pyvista import LookupTable
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting._typing import ColormapOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -451,7 +454,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.camera.zoom(1.8)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
 
-        See :ref:`load_gltf` for a full example using this method.
+        See :ref:`load_gltf_example` for a full example using this method.
 
         """
         filename = Path(filename).expanduser().resolve()
@@ -586,11 +589,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(filename)
-        filename_mtl = filename.with_suffix('.mtl')
+        importer.SetFileName(str(filename) if pyvista.vtk_version_info < (9, 2, 2) else filename)
+        if filename_mtl is None:
+            filename_mtl = filename.with_suffix('.mtl')
+        else:
+            filename_mtl = Path(filename_mtl).expanduser().resolve()
         if filename_mtl.is_file():
-            importer.SetFileNameMTL(filename_mtl)
-            importer.SetTexturePath(filename_mtl.parents[0])
+            importer.SetFileNameMTL(
+                str(filename_mtl) if pyvista.vtk_version_info < (9, 2, 2) else filename_mtl
+            )
+            importer.SetTexturePath(
+                str(filename_mtl.parents[0])
+                if pyvista.vtk_version_info < (9, 2, 2)
+                else filename_mtl.parents[0]
+            )
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -1028,6 +1040,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         index_column : int, optional
             Index of the subplot to activate along the columns.
+
+        See Also
+        --------
+        link_views
+        :ref:`multi_window_example`
+        :ref:`sharing_scalar_bars_example`
 
         Examples
         --------
@@ -2460,7 +2478,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting=None,
         n_colors=256,
         interpolate_before_map=True,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,
@@ -2570,7 +2588,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -2988,7 +3007,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting=None,
         n_colors=256,
         interpolate_before_map=None,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,
@@ -3048,7 +3067,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             objects (``vtk.vtkAlgorithm`` and ``vtk.vtkAlgorithmOutput``).
             When passing an algorithm, the rendering pipeline will be
             connected to the passed algorithm to dynamically update
-            the scene.
+            the scene (see :ref:`plotting_algorithms_example` for examples).
 
         color : ColorLike, optional
             Use to make the entire mesh have a single solid color.
@@ -3132,7 +3151,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -3324,7 +3345,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component : int, optional
             Set component of vector valued scalars to plot.  Must be
             nonnegative, if supplied. If ``None``, the magnitude of
-            the vector is plotted.
+            the vector is plotted. See :ref:`vector_component_example`
+            for examples.
 
         emissive : bool, optional
             Treat the points/splats as emissive light sources. Only valid for
@@ -3360,6 +3382,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``vertex_color`` - The color of the vertices
             * ``vertex_style`` - Change style to ``'points_gaussian'``
             * ``vertex_opacity`` - Control the opacity of the vertices
+
+            See :ref:`vertices_example` for examples.
 
         edge_opacity : float, optional
             Edge opacity of the mesh. A single float value that will be applied globally
@@ -3899,7 +3923,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         resolution=None,
         opacity='linear',
         n_colors=256,
-        cmap=None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         flip_scalars=False,
         reset_camera=None,
         name=None,
@@ -4008,7 +4032,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -4286,7 +4312,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
-                    cmap=color,
+                    cmap=color,  # type: ignore[arg-type]
                     flip_scalars=flip_scalars,
                     reset_camera=reset_camera,
                     name=next_name,
@@ -4390,31 +4416,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Set scalars range
         min_, max_ = None, None
         if clim is None:
-            if scalars.dtype == np.uint8:
-                clim = [0, 255]
-            else:
-                min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                clim = [min_, max_]
+            min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
+            clim = [min_, max_]
         elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         if log_scale and clim[0] <= 0:
             clim = [sys.float_info.min, clim[1]]
-
-        # data must be between [0, 255], but not necessarily UINT8
-        # Preserve backwards compatibility and have same behavior as VTK.
-        if scalars.dtype != np.uint8 and clim != [0, 255]:
-            # must copy to avoid modifying inplace and remove any VTK weakref
-            scalars = np.array(scalars)
-            clim = np.asarray(clim, dtype=scalars.dtype)
-            scalars.clip(clim[0], clim[1], out=scalars)
-            if log_scale:
-                out = mpl.colors.LogNorm(clim[0], clim[1])(scalars)
-                scalars = out.data * 255
-            else:
-                if min_ is None:
-                    min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
-                np.true_divide((scalars - min_), (max_ - min_) / 255, out=scalars, casting='unsafe')
 
         volume[title] = scalars
         volume.active_scalars_name = title
@@ -4435,7 +4443,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if cmap is None:
                 cmap = self._theme.cmap
 
-            cmap = get_cmap_safe(cmap)
+            cmap = get_cmap_safe(cmap)  # type: ignore[arg-type]
             if categories:
                 if categories is True:
                     n_colors = len(np.unique(scalars))
@@ -4443,10 +4451,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     n_colors = categories
 
             if flip_scalars:
-                cmap = cmap.reversed()
+                cmap = cmap.reversed()  # type: ignore[union-attr]
 
             # Set colormap and build lookup table
-            self.mapper.lookup_table.apply_cmap(cmap, n_colors)
+            self.mapper.lookup_table.apply_cmap(cmap, n_colors)  # type: ignore[arg-type]
             self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
             self.mapper.lookup_table.log_scale = log_scale
@@ -4475,7 +4483,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.volume.prop.independent_components = False
             show_scalar_bar = False
 
-        actor, prop = self.add_actor(
+        actor, _ = self.add_actor(
             self.volume,  # type: ignore[arg-type]
             reset_camera=reset_camera,
             name=name,
@@ -4653,6 +4661,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If ``views`` is int, link the views to the given view
             index or if ``views`` is a tuple or a list, link the given
             views cameras.
+
+        See Also
+        --------
+        subplot
 
         Examples
         --------
@@ -5212,6 +5224,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         size of the gif. See `Optimizing a GIF using pygifsicle
         <https://imageio.readthedocs.io/en/stable/examples.html#optimizing-a-gif-using-pygifsicle>`_.
 
+        See Also
+        --------
+        :ref:`gif_example`
+        :ref:`moving_cmap_example`
+        :ref:`moving_isovalue_example`
+
         Examples
         --------
         Open a gif file, setting the framerate to 8 frames per second and
@@ -5221,7 +5239,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
-        See :ref:`gif_movie_example` for a full example using this method.
+        See :ref:`gif_example` for a full example using this method.
 
         """
         try:
@@ -5300,6 +5318,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         -----
         Values in image_depth are negative to adhere to a
         right-handed coordinate system.
+
+        See Also
+        --------
+        :ref:`image_depth_example`
 
         Examples
         --------
@@ -5611,6 +5633,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vtk.vtkActor2D
             VTK label actor.  Can be used to change properties of the labels.
 
+        See Also
+        --------
+        :ref:`point_labels_example`
+
         Examples
         --------
         >>> import numpy as np
@@ -5748,7 +5774,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         label_actor = _vtk.vtkActor2D()
         label_actor.SetMapper(label_mapper)
-        self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)  # type: ignore[arg-type]
+        self.add_actor(
+            label_actor,  # type: ignore[arg-type]
+            reset_camera=False,
+            name=f'{name}-labels',
+            pickable=False,
+            render=render,
+        )
         return label_actor
 
     def add_point_scalar_labels(
@@ -5818,6 +5850,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         **kwargs : dict, optional
             See :func:`pyvista.Plotter.add_mesh` for optional
             keyword arguments.
+
+        See Also
+        --------
+        :ref:`points_gaussian_scale_example`
 
         Returns
         -------
@@ -6073,6 +6109,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * [Window height x Window width x 4] if
               ``transparent_background`` is set to ``True``.
 
+        See Also
+        --------
+        :ref:`screenshot_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -6167,7 +6207,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
         ... )
 
-        See :ref:`orbiting_example` for a full example using this method.
+        See :ref:`orbit_example` for a full example using this method.
 
         """
         if viewup is None:
@@ -6255,7 +6295,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
         >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
-        See :ref:`orbiting_example` for a full example using this method.
+        See :ref:`orbit_example` for a full example using this method.
 
         """
         if focus is None:
@@ -6358,8 +6398,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mapper = actor.GetMapper()
 
                 # ignore any mappers whose inputs are not datasets
-                if hasattr(mapper, 'GetInputAsDataSet'):
-                    datasets.append(wrap(mapper.GetInputAsDataSet()))
+                if _mapper_has_data_set_input(mapper):
+                    datasets.append(wrap(_mapper_get_data_set_input(mapper)))
 
         return datasets
 

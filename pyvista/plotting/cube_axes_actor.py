@@ -47,7 +47,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     return labels
 
 
-class CubeAxesActor(_vtk.vtkCubeAxesActor):
+class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     """Wrap vtkCubeAxesActor.
 
     This class is created to wrap vtkCubeAxesActor, which is used to draw axes
@@ -117,6 +117,13 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     n_zlabels : int, default: 5
         Number of labels along the z-axis.
+
+    See Also
+    --------
+    :meth:`~pyvista.Plotter.show_bounds`
+    :meth:`~pyvista.Plotter.show_grid`
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------

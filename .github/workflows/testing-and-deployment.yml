@@ -3,6 +3,7 @@ name: Unit Testing and Deployment
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
   pull_request:
+  merge_group:
   workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
@@ -45,6 +46,8 @@ jobs:
           - { os: macos-14, python-version: "3.10" }
           - { os: macos-latest, python-version: "3.11" }
           - { os: macos-latest, python-version: "3.12" }
+          - { os: macos-latest, python-version: "3.13" }
+
     runs-on: ${{ matrix.config.os }}
 
     steps:
@@ -60,7 +63,9 @@ jobs:
           cache: "pip"
 
       - name: Install PyVista test dependencies
-        run: pip install .[test]
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
 
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
@@ -102,9 +107,12 @@ jobs:
             vtk-version: "9.2.6"
             numpy-version: "latest"
           - python-version: "3.12"
-            vtk-version: "latest"
+            vtk-version: "9.3.1"
             numpy-version: "latest"
-          - python-version: "3.12"
+          - python-version: "3.13"
+            vtk-version: "9.4.2"
+            numpy-version: "latest"
+          - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
     steps:
@@ -141,7 +149,9 @@ jobs:
         run: python -c "import pyvista; print(pyvista.Report());"
 
       - name: Install Testing Requirements
-        run: pip install .[test]
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
@@ -217,7 +227,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -230,10 +240,12 @@ jobs:
           cache: "pip"
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@v4.1
 
       - name: Install PyVista test dependencies
-        run: pip install .[test]
+        run: |
+          python -m pip install --upgrade pip
+          pip install . --group test
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"

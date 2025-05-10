@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from matplotlib import colors
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
@@ -92,7 +93,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
 
 
 @no_new_attr
-class LookupTable(_vtk.vtkLookupTable):
+class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -109,6 +110,7 @@ class LookupTable(_vtk.vtkLookupTable):
     cmap : str | colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
+        See :ref:`named_colormaps` for supported colormaps.
 
     n_values : int, default: 256
         Number of colors in the color map.
@@ -160,6 +162,10 @@ class LookupTable(_vtk.vtkLookupTable):
         A dictionary of annotations. Keys are the float values in the scalars
         range to annotate on the scalar bar and the values are the string
         annotations.
+
+    See Also
+    --------
+    :ref:`lookup_table_example`
 
     Examples
     --------
@@ -333,6 +339,8 @@ class LookupTable(_vtk.vtkLookupTable):
     def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
+        See :ref:`named_colormaps` for supported colormaps.
+
         Examples
         --------
         Apply the single Matplotlib color map ``"Oranges"``.
@@ -353,7 +361,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, value):
+    def cmap(self, value: ColormapOptions):
         self.apply_cmap(value, self.n_values)
 
     @property
@@ -740,7 +748,12 @@ class LookupTable(_vtk.vtkLookupTable):
             color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
-    def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
+    def apply_cmap(
+        self,
+        cmap: ColormapOptions | list[str] | LookupTable,
+        n_values: int = 256,
+        flip: bool = False,
+    ):
         """Assign a colormap to this lookup table.
 
         This can be used instead of :attr:`LookupTable.cmap` when you need to
@@ -771,8 +784,8 @@ class LookupTable(_vtk.vtkLookupTable):
         if isinstance(cmap, list):
             n_values = len(cmap)
 
-        cmap = get_cmap_safe(cmap)
-        values = cmap(np.linspace(0, 1, n_values)) * 255
+        cmap = get_cmap_safe(cmap)  # type: ignore[arg-type]
+        values = cmap(np.linspace(0, 1, n_values)) * 255  # type: ignore[misc, operator]
 
         if flip:
             values = values[::-1]
@@ -784,7 +797,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if self._opacity_parm[0] is not None:
             self.apply_opacity(*self._opacity_parm)
 
-        self._cmap = cmap
+        self._cmap = cmap  # type: ignore[assignment]
 
     def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
         """Assign custom opacity to this lookup table.
@@ -912,7 +925,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self.apply_cmap(self._cmap, value)
+            self.apply_cmap(self._cmap, value)  # type: ignore[arg-type]
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
@@ -1051,11 +1064,14 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         color_tf = _vtk.vtkColorTransferFunction()
         mn, mx = self.scalar_range
-        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
-            color_tf.AddRGBPoint(ii, *self.map_value(value, False))
+        for value in np.linspace(mn, mx, self.n_values):
+            # Be sure to index the point by the value to map the scalar range
+            color_tf.AddRGBPoint(value, *self.map_value(value, False))
         return color_tf
 
-    def to_opacity_tf(self, clamping: bool = True) -> _vtk.vtkPiecewiseFunction:
+    def to_opacity_tf(
+        self, clamping: bool = True, max_clip: float = 0.998
+    ) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
 
         Parameters
@@ -1064,6 +1080,12 @@ class LookupTable(_vtk.vtkLookupTable):
             When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
 
             .. versionadded:: 0.44
+
+        max_clip : float, default: 0.998
+            The maximum value to clip the opacity to. This is useful for volume rendering
+            to avoid the jarring effect of completely opaque values.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -1081,8 +1103,14 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()
         opacity_tf.SetClamping(clamping)
-        for ii, value in enumerate(self.values[:, 3]):
-            opacity_tf.AddPoint(ii, value / self.n_values)
+        mn, mx = self.scalar_range
+        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
+            alpha = self.values[ii, 3]
+            # vtkPiecewiseFunction expects alphas between 0 and 1
+            # our lookup table is between 0 and 255
+            alpha = alpha / 255
+            alpha = min(alpha, max_clip)
+            opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
     def map_value(
