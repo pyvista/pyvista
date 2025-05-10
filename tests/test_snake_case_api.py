@@ -130,10 +130,13 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
             match = "The attribute 'global_warning_display' is defined by VTK and is not part of the PyVista API"
             assert match in repr(e)  # noqa: PT017
         else:
-            msg = (
-                f'The class {vtk_subclass.__name__!r} in {vtk_subclass.__module__!r}\n'
-                f'must inherit from {DisableVtkSnakeCase.__name__!r}'
-            )
+            if DisableVtkSnakeCase not in vtk_subclass.__mro__:
+                msg = (
+                    f'The class {vtk_subclass.__name__!r} in {vtk_subclass.__module__!r}\n'
+                    f'must inherit from {DisableVtkSnakeCase.__name__!r} in {DisableVtkSnakeCase.__module__!r}'
+                )
+            else:
+                msg = f'{PyVistaAttributeError.__name__} was NOT raised (but was expected).'
             pytest.fail(msg)
     else:
         assert not hasattr(instance, vtk_attr_snake_case)
