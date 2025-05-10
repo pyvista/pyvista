@@ -5777,6 +5777,13 @@ def download_can(partial=False, load=True):
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
 
     """
+    if pyvista.vtk_version_info > (9, 1, 0):
+        msg = (
+            'This example file is deprecated for VTK v9.2.0 and newer. '
+            'Use `download_can_crushed_hdf` instead.'
+        )
+        raise VTKVersionError(msg)
+
     if partial:
         return _download_dataset(__can_partial, load=load)
     else:
@@ -5784,12 +5791,6 @@ def download_can(partial=False, load=True):
 
 
 def _dataset_can_files_func():
-    if pyvista.vtk_version_info > (9, 1):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
     can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
     can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
     can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
