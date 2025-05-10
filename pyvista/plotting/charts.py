@@ -50,7 +50,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(metaclass=_vtkWrapperMeta):
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -1075,7 +1075,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-class _CustomContextItem(_vtk.vtkPythonItem):
+class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:
             # item is the _CustomContextItem subclass instance
@@ -1663,7 +1663,7 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
         )
 
 
-class _Plot(DocSubs):
+class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
