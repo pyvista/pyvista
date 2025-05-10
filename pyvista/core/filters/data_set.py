@@ -3233,7 +3233,7 @@ class DataSetFilters(DataObjectFilters):
         >>> plotter.view_xy()
         >>> plotter.show()
 
-        See :ref:`streamlines_2D_example` for more examples using this filter.
+        See :ref:`2d_streamlines_example` for more examples using this filter.
 
         """
         if integrator_type not in [2, 4]:
