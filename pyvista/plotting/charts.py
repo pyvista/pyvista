@@ -1841,7 +1841,7 @@ class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
     @label.setter
     def label(self, val) -> None:
         self._label = '' if val is None else val
-        self.SetLabel(self._label)  # type: ignore[attr-defined]
+        self.SetLabel(self._label)
 
     @property
     @doc_subs
@@ -1866,11 +1866,11 @@ class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()  # type: ignore[attr-defined]
+        return self.GetVisible()
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)  # type: ignore[attr-defined]
+        self.SetVisible(val)
 
     @doc_subs
     def toggle(self) -> None:
@@ -1913,7 +1913,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)  # type: ignore[attr-defined]
+        self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
