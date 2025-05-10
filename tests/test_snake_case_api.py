@@ -13,8 +13,6 @@ from pyvista.core.errors import VTKVersionError
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
     """Return all classes defined in the pyvista package."""
-    import pyvista as pv
-
     class_types: set[type] = set()
 
     package_path = Path(pv.__path__[0])  # path to pyvista package
