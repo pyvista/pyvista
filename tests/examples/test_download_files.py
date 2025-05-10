@@ -652,14 +652,15 @@ def test_download_plastic_vase(high_resolution: bool):
     assert dataset.n_points == 18238 if not high_resolution else 1_796_805
 
 
-def test_download_sea_vase():
-    filename = examples.download_sea_vase(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_sea_vase(high_resolution: bool):
+    filename = examples.download_sea_vase(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_sea_vase(load=True)
+    dataset = examples.download_sea_vase(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points == 18063
+    assert dataset.n_points == 18_063 if not high_resolution else 1_810_012
 
 
 def test_download_sparse_points():
@@ -816,7 +817,7 @@ def test_download_drill():
     assert isinstance(dataset, pv.PolyData)
 
 
-@pytest.mark.parametrize('high_resolution', [True, False])
+@parametrize(high_resolution=[True, False])
 def test_download_action_figure(high_resolution: bool):
     dataset = examples.download_action_figure(high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
@@ -1254,3 +1255,12 @@ def test_download_can(partial: bool):
 def test_download_can_raises():
     with pytest.raises(pv.VTKVersionError):
         examples.download_can()
+
+
+def test_download_fea_bracket():
+    filename = examples.download_fea_bracket(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.vtu'
+
+    mesh = examples.download_fea_bracket()
+    assert isinstance(mesh, pv.UnstructuredGrid)
