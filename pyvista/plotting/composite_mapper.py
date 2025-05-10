@@ -78,6 +78,8 @@ class BlockAttributes:
     Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
+    >>> pl.show()
+
     """
 
     def __init__(self, block, attr):
@@ -310,6 +312,8 @@ class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplay
     Opacity:   0.1
     Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
+
+    >>> pl.show()
 
     """
 
@@ -683,6 +687,8 @@ class CompositePolyDataMapper(
         Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
+
+        >>> pl.show()
 
         """
         self.scalar_visibility = False

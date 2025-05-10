@@ -320,7 +320,7 @@ def _split_code_at_show(text):
                 part = []
                 within_plot = False
 
-        elif '.show(' in line or '.plot(' in line:
+        elif _show_or_plot_in_string(line):
             if _strip_comments(line).endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
@@ -330,6 +330,13 @@ def _split_code_at_show(text):
     if '\n'.join(part).strip():
         parts.append('\n'.join(part))
     return is_doctest, parts
+
+
+def _show_or_plot_in_string(string):
+    # string contains `.show(`, `.plot(`, or `plot_xyz(` where `xyz` is one
+    # or more lower-case letters or underscore, e.g. `plot_cell(`, `plot_datasets(`
+    pattern = r'(?:\.plot\(|\.show\(|(?:[ \t\n.]plot_[a-z_]+?)\()'
+    return bool(re.search(pattern, string))
 
 
 # -----------------------------------------------------------------------------
@@ -488,27 +495,35 @@ def render_figures(
             )
 
             images = []
-            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
-            for j, (_, plotter) in enumerate(figures.items()):
-                if hasattr(plotter, '_gif_filename'):
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
-                    shutil.move(plotter._gif_filename, image_file.filename)
-                else:
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
-                    try:
-                        plotter.screenshot(image_file.filename)
-                    except RuntimeError:  # pragma no cover
-                        # ignore closed, unrendered plotters
-                        continue
-                    if force_static or (plotter.last_vtksz is None):
-                        images.append(image_file)
-                        continue
+            if (
+                _show_or_plot_in_string(code_piece)
+                or '.open_gif' in code_piece
+                or 'plot=True' in code_piece
+            ):
+                figures = pyvista.plotting.plotter._ALL_PLOTTERS
+
+                for j, (_, plotter) in enumerate(figures.items()):
+                    if hasattr(plotter, '_gif_filename'):
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
+                        shutil.move(plotter._gif_filename, image_file.filename)
                     else:
-                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
-                        with Path(image_file.filename).open('wb') as f:
-                            f.write(plotter.last_vtksz)
-                images.append(image_file)
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
+                        try:
+                            plotter.screenshot(image_file.filename)
+                        except RuntimeError:  # pragma no cover
+                            # ignore closed, unrendered plotters
+                            continue
+                        if force_static or (plotter.last_vtksz is None):
+                            images.append(image_file)
+                            continue
+                        else:
+                            image_file = ImageFile(
+                                output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz'
+                            )
+                            with Path(image_file.filename).open('wb') as f:
+                                f.write(plotter.last_vtksz)
+                    images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
 

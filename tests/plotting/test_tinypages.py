@@ -78,9 +78,17 @@ def test_tinypages(tmp_path, ename, evalue):
     assert plot_file(1, 0, 0).exists() == expected
     assert plot_file(2, 0, 0).exists() == expected
     assert plot_file(4, 0, 0).exists() == expected
+    assert plot_file(21, 0, 0).exists() == expected
+    assert plot_file(22, 0, 0).exists() == expected
+    assert plot_file(24, 0, 0).exists() == expected
+    assert plot_file(25, 0, 0).exists() == expected
     assert plot_file(8, 0, 0, 'png').exists() == expected
     assert plot_file(9, 0, 0, 'png').exists() == expected
     assert plot_file(9, 1, 0, 'png').exists() == expected
+    assert plot_file(23, 0, 0, 'gif').exists() == expected
+
+    # verify a figure is *not* generated when show isn't called
+    assert not plot_file(20, 0, 0).exists()
 
     # test skip directive
     assert not plot_file(10, 0, 0).exists()
