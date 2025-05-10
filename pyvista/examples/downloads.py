@@ -7220,7 +7220,7 @@ def download_dikhololo_night(load=True):
     return _download_dataset(_dataset_dikhololo_night, load=load)
 
 
-def _dikhololo_night_load_func(texture):
+def _dikhololo_night_load_func(texture):  # pragma: no cover
     texture.SetColorModeToDirectScalars()
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
