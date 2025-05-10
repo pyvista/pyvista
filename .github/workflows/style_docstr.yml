@@ -7,9 +7,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  PYTEST_ADDOPTS: "--color=yes"
-
 permissions:
   id-token: none
 
@@ -21,11 +18,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.13
-          cache: "pip"
+          python-version: "3.13"
+
+      - name: Install tox-uv
+        run: uv pip install tox-uv
 
       - uses: actions/cache@v4
         with:
@@ -34,25 +33,11 @@ jobs:
           restore-keys: |
             Examples-Data-
 
-      - name: Install pyvista and doctest requirements
-        run: |
-          pip install --upgrade pip
-          pip install -e . --group test
-
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v4.1
 
-      - name: Software Report
-        run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
-          which python
-          pip list
-
       - name: Test Package Docstrings
-        run: make doctest-modules
-
-      - name: Test Package Docstrings with Local Namespace
-        run: make doctest-modules-local-namespace
+        run: tox run -f doctest --colored=yes
 
   vale:
     name: Vale
@@ -62,15 +47,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.13
+          python-version: "3.13"
 
       - name: Install test dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
+        run: uv pip install . --group docs
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
