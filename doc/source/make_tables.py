@@ -13,6 +13,8 @@ import re
 import sys
 from typing import NamedTuple
 
+import colorspacious
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
@@ -1061,13 +1063,15 @@ class ColormapTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table:: {}
-        |   :widths: 20 25 55
+        |   :widths: 21 25 18 18 18
         |   :header-rows: 1
         |   :stub-columns: 1
         |
         |   * - Tags
         |     - Name
         |     - Swatch
+        |     - Lightness
+        |     - Cumulative ΔE
         """,
     )
     row_template = _aligned_dedent(
@@ -1075,7 +1079,8 @@ class ColormapTable(DocTable):
         |   * - {}
         |     - {}
         |     - .. image:: /{}
-        |       .. image:: /{}
+        |     - .. image:: /{}
+        |     - .. image:: /{}
         """,
     )
 
@@ -1127,24 +1132,28 @@ class ColormapTable(DocTable):
         tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
 
         # Generate image
-        img_path1 = (
+        img_path_swatch = (
             f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
         )
-        cls.generate_img(cmap, img_path1)
-        img_path2 = img_path1.replace('.png', '_lightness.png')
-        cls.generate_img2(cmap, img_path2)
+        cls.generate_img_swatch(cmap, img_path_swatch)
+        img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
+        cls.generate_img_lightness(cmap, img_path_lightness)
+        img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
+        cls.generate_img_deltaE(cmap, img_path_deltaE)
 
         name_rst = f'``{colormap_info.name}``'
-        return cls.row_template.format(tags, name_rst, img_path1, img_path2)
+        return cls.row_template.format(
+            tags, name_rst, img_path_swatch, img_path_lightness, img_path_deltaE
+        )
 
     @staticmethod
-    def generate_img(cmap, img_path):
+    def generate_img_swatch(cmap, img_path):
         """Generate and save an image of the given colormap."""
-        width = 512  # Should be a multiple of 256 to avoid aliasing
-        height = 32
-
+        width = 256
+        height = 64
+        N = 256
         # Create a smooth gradient across the colormap resolution
-        gradient = np.linspace(0, 1, width)
+        gradient = np.linspace(0, 1, N)
         gradient = np.vstack((gradient,) * height)
 
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
@@ -1157,9 +1166,9 @@ class ColormapTable(DocTable):
         plt.close(fig)
 
     @staticmethod
-    def generate_img2(cmap, img_path):
-        width = 512  # Should be a multiple of 256 to avoid aliasing
-        height = 128
+    def generate_img_lightness(cmap, img_path):
+        width = 256
+        height = 64
 
         N = 256
         x_min, x_max = 0.0, 1.0
@@ -1171,10 +1180,33 @@ class ColormapTable(DocTable):
         y = lab[0, :, 0]
 
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
-        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0)
+        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0, vmin=0.0, vmax=1.0)
 
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(0.0, 100.0)
+        ax.set_axis_off()
+
+        fig.tight_layout(pad=0.0)
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+
+    @staticmethod
+    def generate_img_deltaE(cmap, img_path):
+        width = 256
+        height = 64
+
+        N = 256
+        x_min, x_max = 0.0, 1.0
+        x = np.linspace(x_min, x_max, N)
+
+        rgb = cmap(x)[:, :3]
+
+        # Compute ΔE between adjacent colors
+        delta_e = colorspacious.deltaE(rgb[:-1], rgb[1:])
+        cumulative_e = np.concatenate([[0], np.cumsum(delta_e)])
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.scatter(x, cumulative_e, c=x, cmap=cmap, s=500, linewidths=0.0, vmin=0.0, vmax=1.0)
         ax.set_axis_off()
 
         fig.tight_layout(pad=0.0)

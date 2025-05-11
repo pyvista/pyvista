@@ -625,8 +625,13 @@ class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
     def __getattribute__(self, attr):
-        if vtk_version_info >= (9, 4) and sys.meta_path is not None:
+        if vtk_version_info >= (9, 4):
             # Raise error if accessing attributes from VTK's pythonic snake_case API
+
+            if sys.meta_path is None:  # pragma: no cover
+                # Python is likely shutting down, so we avoid any dynamic imports
+                # and simply return None
+                return None  # type: ignore[unreachable]
 
             import pyvista as pv
 
