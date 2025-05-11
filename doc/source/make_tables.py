@@ -38,6 +38,7 @@ from typing import get_args
 
 import cmocean
 import colorcet
+from colorspacious import cspace_converter
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1074,6 +1075,7 @@ class ColormapTable(DocTable):
         |   * - {}
         |     - {}
         |     - .. image:: /{}
+        |       .. image:: /{}
         """,
     )
 
@@ -1125,11 +1127,15 @@ class ColormapTable(DocTable):
         tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
 
         # Generate image
-        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
-        cls.generate_img(cmap, img_path)
+        img_path1 = (
+            f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        )
+        cls.generate_img(cmap, img_path1)
+        img_path2 = img_path1.replace('.png', '_lightness.png')
+        cls.generate_img2(cmap, img_path2)
 
         name_rst = f'``{colormap_info.name}``'
-        return cls.row_template.format(tags, name_rst, img_path)
+        return cls.row_template.format(tags, name_rst, img_path1, img_path2)
 
     @staticmethod
     def generate_img(cmap, img_path):
@@ -1147,6 +1153,31 @@ class ColormapTable(DocTable):
 
         plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+
+    @staticmethod
+    def generate_img2(cmap, img_path):
+        width = 512  # Should be a multiple of 256 to avoid aliasing
+        height = 128
+
+        N = 256
+        x_min, x_max = 0.0, 1.0
+        x = np.linspace(x_min, x_max, N)
+
+        rgb = cmap(x)[np.newaxis, :, :3]
+        lab = cspace_converter('sRGB1', 'CAM02-UCS')(rgb)
+
+        y = lab[0, :, 0]
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0)
+
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(0.0, 100.0)
+        ax.set_axis_off()
+
+        fig.tight_layout(pad=0.0)
         fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
 
