@@ -1235,7 +1235,7 @@ def test_download_full_head():
 
 
 @parametrize(partial=[True, False])
-@pytest.mark.needs_vtk_version(less_than=(9, 2))
+@pytest.mark.needs_vtk_version(9, 1, less_than=(9, 2))  # 9.1 for HDFReader, 9.2 for example
 def test_download_can(partial: bool):
     filename = examples.download_can(load=False, partial=partial)
 
