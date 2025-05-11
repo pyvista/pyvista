@@ -108,7 +108,7 @@ test = [
 docs = [
   'cmocean==4.0.3',
   'colorcet==3.1.0',
-  'colorspacious==1.1.2',
+  'colour-science==0.4.6',
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',

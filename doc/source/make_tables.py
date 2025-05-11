@@ -13,8 +13,6 @@ import re
 import sys
 from typing import NamedTuple
 
-import colorspacious
-
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
@@ -40,7 +38,6 @@ from typing import get_args
 
 import cmocean
 import colorcet
-from colorspacious import cspace_converter
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1167,6 +1164,12 @@ class ColormapTable(DocTable):
 
     @staticmethod
     def generate_img_lightness(cmap, img_path):
+        def rgb_to_cam02ucs(rgb):
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            return colour.XYZ_to_CAM02UCS(xyz)
+
         width = 256
         height = 64
 
@@ -1175,7 +1178,7 @@ class ColormapTable(DocTable):
         x = np.linspace(x_min, x_max, N)
 
         rgb = cmap(x)[np.newaxis, :, :3]
-        lab = cspace_converter('sRGB1', 'CAM02-UCS')(rgb)
+        lab = rgb_to_cam02ucs(rgb)
 
         y = lab[0, :, 0]
 
@@ -1192,6 +1195,13 @@ class ColormapTable(DocTable):
 
     @staticmethod
     def generate_img_deltaE(cmap, img_path):
+        def delta_E_CIE2000(rgb):
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            lab = colour.XYZ_to_Lab(xyz)
+            return colour.difference.delta_E_CIE2000(lab[:-1], lab[1:])
+
         width = 256
         height = 64
 
@@ -1202,7 +1212,7 @@ class ColormapTable(DocTable):
         rgb = cmap(x)[:, :3]
 
         # Compute ΔE between adjacent colors
-        delta_e = colorspacious.deltaE(rgb[:-1], rgb[1:])
+        delta_e = delta_E_CIE2000(rgb)
         cumulative_e = np.concatenate([[0], np.cumsum(delta_e)])
 
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
