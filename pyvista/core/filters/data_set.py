@@ -1094,6 +1094,64 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
+    def gaussian_splatting(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        radius: float = 0.1,
+        progress_bar: bool = False,
+    ):
+        """Splat points into a volume using a Gaussian distribution.
+
+        This filter uses the ``vtkGaussianSplatter`` to splat points into a volume
+        dataset. Each point is surrounded with a Gaussian distribution function
+        weighted by input scalar data. The distribution function is volumetrically
+        sampled to create a structured dataset.
+
+        Parameters
+        ----------
+        radius : float, default: 0.1
+            Standard deviation of the Gaussian distribution in
+            world coordinates. This determines the "width" of the
+            splatter in terms of the distribution.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image data with scalar values representing the splatting
+            of the points.
+
+        Examples
+        --------
+        Create an image data volume from a point cloud using gaussian splatter.
+
+        >>> import pyvista as pv
+
+        Load the Stanford Bunny mesh.
+
+        >>> bunny = pv.examples.download_bunny()
+
+        Apply Gaussian splatter to generate a volumetric representation.
+
+        >>> volume = bunny.gaussian_splatting(radius=0.01)
+
+        Threshold the volume to filter out low-density regions.
+
+        >>> threshed = volume.threshold(0.05)
+
+        Visualize the thresholded volume with semi-transparency and no scalar bar.
+
+        >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
+
+        """
+        alg = _vtk.vtkGaussianSplatter()
+        alg.SetInputDataObject(self)
+        alg.SetRadius(radius)
+        _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
+        return _get_output(alg)
+
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
         extent: VectorLike[float] | None = None,
