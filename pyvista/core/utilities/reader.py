@@ -2108,7 +2108,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     .. versionadded:: 0.45.0
 
-    This reader requires vtk version >=9.3.0.
+    .. note::
+        This reader requires vtk version >=9.3.0.
 
     Examples
     --------
@@ -2578,7 +2579,8 @@ class AVSucdReader(BaseReader):
 class HDFReader(BaseReader):
     """HDFReader for .hdf files.
 
-    This reader requires vtk version >=9.1.0.
+    .. note::
+        This reader requires vtk version >=9.1.0.
 
 
     Examples
