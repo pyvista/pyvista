@@ -1170,57 +1170,47 @@ class ColormapTable(DocTable):
             xyz = colour.sRGB_to_XYZ(rgb)
             return colour.XYZ_to_CAM02UCS(xyz)
 
-        width = 256
-        height = 64
-
-        N = 256
-        x_min, x_max = 0.0, 1.0
-        x = np.linspace(x_min, x_max, N)
+        x = np.linspace(0.0, 1.0, cmap.N)
 
         rgb = cmap(x)[np.newaxis, :, :3]
         lab = rgb_to_cam02ucs(rgb)
-
         y = lab[0, :, 0]
 
-        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
-        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0, vmin=0.0, vmax=1.0)
-
-        ax.set_xlim(x_min, x_max)
-        ax.set_ylim(0.0, 100.0)
-        ax.set_axis_off()
-
-        fig.tight_layout(pad=0.0)
-        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
-        plt.close(fig)
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
 
     @staticmethod
     def generate_img_deltaE(cmap, img_path):
         def delta_E_CIE2000(rgb):
+            # Compute ΔE between adjacent colors
             import colour
 
             xyz = colour.sRGB_to_XYZ(rgb)
             lab = colour.XYZ_to_Lab(xyz)
             return colour.difference.delta_E_CIE2000(lab[:-1], lab[1:])
 
+        x = np.linspace(0.0, 1.0, cmap.N)
+
+        rgb = cmap(x)[:, :3]
+        delta_e = delta_E_CIE2000(rgb)
+        y = np.concatenate([[0], np.cumsum(delta_e)])
+
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+
+    @staticmethod
+    def save_scatter_plot(x, y, cmap, img_path):
         width = 256
         height = 64
 
-        N = 256
-        x_min, x_max = 0.0, 1.0
-        x = np.linspace(x_min, x_max, N)
-
-        rgb = cmap(x)[:, :3]
-
-        # Compute ΔE between adjacent colors
-        delta_e = delta_E_CIE2000(rgb)
-        cumulative_e = np.concatenate([[0], np.cumsum(delta_e)])
-
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
-        ax.scatter(x, cumulative_e, c=x, cmap=cmap, s=500, linewidths=0.0, vmin=0.0, vmax=1.0)
+        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0, clip_on=False)
         ax.set_axis_off()
 
-        fig.tight_layout(pad=0.0)
-        fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
+        # Add a dummy set of axes to add asymmetric padding to the figure
+        left, bottom, width, height = 0.08, -0.18, 0.87, 1.37
+        ax = fig.add_axes([left, bottom, width, height])
+        ax.set_axis_off()
+
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0.0)
         plt.close(fig)
 
 
