@@ -41,6 +41,7 @@ import colorcet
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import linregress
 
 import pyvista
 import pyvista as pv
@@ -842,160 +843,159 @@ class _ColormapInfo(NamedTuple):
     package: str
     kind: ColormapKind | None
     name: str
-    perceptually_uniform: bool
 
 
 # Define colormap info based on manual review of documentation from each package.
 # NOTE: The order of the cmaps here will be reflected in the docs.
 _COLORMAP_INFO: list[_ColormapInfo] = [
     # LINEAR
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgy', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgyw', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbgyw', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'haline', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'viridis', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cividis', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cubehelix', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmw', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmy', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbc', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kb', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kgy', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kg', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kr', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'fire', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'hot', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'afmhot', False),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'solar', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_heat', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'magma', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'inferno', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'plasma', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'copper', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'pink', False),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'ice', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'dense', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'matter', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'amp', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'turbid', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'speed', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'algae', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'deep', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'tempo', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'rain', True),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'blues', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Blues', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuGn', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuPu', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'GnBu', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Greens', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'OrRd', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Oranges', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBu', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBuGn', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuRd', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Purples', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'RdPu', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Reds', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGn', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGnBu', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrBr', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrRd', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Wistia', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'autumn', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'spring', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'summer', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'winter', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cool', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'bone', False),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gray', True),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'gray', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gray', False),
-    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'dimgray', True),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_gray', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_yarg', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'binary', False),
-    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Grays', False),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'oxy', True),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgy'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgyw'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbgyw'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'haline'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'viridis'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cividis'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cubehelix'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmw'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmy'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbc'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kb'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kgy'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kg'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kr'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'fire'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'hot'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'afmhot'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'solar'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_heat'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'magma'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'inferno'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'plasma'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'copper'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'pink'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'ice'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'dense'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'matter'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'amp'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'turbid'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'speed'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'algae'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'deep'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'tempo'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'rain'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'blues'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Blues'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuGn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'BuPu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'GnBu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Greens'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'OrRd'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Oranges'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuBuGn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'PuRd'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Purples'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'RdPu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Reds'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlGnBu'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrBr'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'YlOrRd'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Wistia'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'autumn'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'spring'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'summer'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'winter'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cool'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'bone'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gray'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'gray'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gray'),
+    _ColormapInfo('colorcet', ColormapKind.LINEAR, 'dimgray'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_gray'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'gist_yarg'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'binary'),
+    _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Grays'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'oxy'),
     # DIVERGING
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr', True),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin', True),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo', True),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky', True),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua', True),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bjy', True),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bwy', True),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'cwr', True),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'gwv', True),
-    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'topo', True),
-    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'delta', True),
-    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'curl', True),
-    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'diff', True),
-    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'tarn', True),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'BrBG', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PuOr', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PRGn', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PiYG', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdGy', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdBu', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlBu', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlGn', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'Spectral', False),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'coolwarm', True),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'coolwarm', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'bwr', False),
-    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'seismic', False),
-    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'balance', True),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bjy'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bwy'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'cwr'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'gwv'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'topo'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'delta'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'curl'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'diff'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'tarn'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'BrBG'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PuOr'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PRGn'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PiYG'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdGy'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdBu'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlBu'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlGn'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'Spectral'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'coolwarm'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'coolwarm'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'bwr'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'seismic'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'balance'),
     # CYCLIC
-    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant', True),
-    _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase', True),
-    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel', False),
-    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv', False),
-    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight', True),
-    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight_shifted', True),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
+    _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase'),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel'),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv'),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight'),
+    _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight_shifted'),
     # CATEGORICAL
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_warm', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_dark', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_light', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_category10', False),
-    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_hv', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set1', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set2', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set3', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab10', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b', False),
-    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c', False),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_warm'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_dark'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_light'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_category10'),
+    _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_hv'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel1'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Pastel2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set1'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set2'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Set3'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab10'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b'),
+    _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c'),
     # MISC
-    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum', False),
-    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4', False),
-    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'rainbow', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_rainbow', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'jet', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'turbo', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'nipy_spectral', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_ncar', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'CMRmap', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'brg', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_stern', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot2', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'ocean', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_earth', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'terrain', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'prism', False),
-    _ColormapInfo('matplotlib', ColormapKind.MISC, 'flag', False),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum'),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4'),
+    _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'rainbow'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_rainbow'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'jet'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'turbo'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'nipy_spectral'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_ncar'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'CMRmap'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'brg'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_stern'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gnuplot2'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'ocean'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'gist_earth'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'terrain'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'prism'),
+    _ColormapInfo('matplotlib', ColormapKind.MISC, 'flag'),
 ]
 
 
@@ -1034,10 +1034,7 @@ def _create_cet_colormap_info():
         kind = colormap_types[type_letter]
 
         # Store as colormap info
-        perceptually_uniform = type_letter not in ['I', 'R']
-        info = _ColormapInfo(
-            package='colorcet', name=name, kind=kind, perceptually_uniform=perceptually_uniform
-        )
+        info = _ColormapInfo(package='colorcet', name=name, kind=kind)
         colormap_infos.append(info)
 
     # Sanity check - make sure we didn't mangle anything
@@ -1122,21 +1119,27 @@ class ColormapTable(DocTable):
             raise RuntimeError
         cmap = cmap_source[colormap_info.name]
 
-        # Generate tags
-        source_rst = source_badge_mapping[colormap_info.package]
-        type_rst = type_mapping[type(cmap)]
-        perceptually_uniform_rst = perceptually_uniform_mapping[colormap_info.perceptually_uniform]
-        tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
-
-        # Generate image
+        # Generate images
         img_path_swatch = (
             f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
         )
         cls.generate_img_swatch(cmap, img_path_swatch)
+
         img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
-        cls.generate_img_lightness(cmap, img_path_lightness)
+        r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
+
         img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
-        cls.generate_img_deltaE(cmap, img_path_deltaE)
+        r2_deltaE = cls.generate_img_deltaE(cmap, img_path_deltaE)
+
+        # Perceptually uniform if constant delta in lightness and color
+        r2_threshold = 0.99
+        perceptually_uniform = r2_deltaL > r2_threshold and r2_deltaE > r2_threshold
+
+        # Generate tags
+        source_rst = source_badge_mapping[colormap_info.package]
+        type_rst = type_mapping[type(cmap)]
+        perceptually_uniform_rst = perceptually_uniform_mapping[perceptually_uniform]
+        tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
 
         name_rst = f'``{colormap_info.name}``'
         return cls.row_template.format(
@@ -1178,6 +1181,9 @@ class ColormapTable(DocTable):
 
         ColormapTable.save_scatter_plot(x, y, cmap, img_path)
 
+        cumulative_abs_delta_lightness = np.concatenate([[0], np.cumsum(np.abs(np.diff(y)))])
+        return ColormapTable.linear_regression(x, cumulative_abs_delta_lightness)
+
     @staticmethod
     def generate_img_deltaE(cmap, img_path):
         def delta_E_CIE2000(rgb):
@@ -1195,6 +1201,7 @@ class ColormapTable(DocTable):
         y = np.concatenate([[0], np.cumsum(delta_e)])
 
         ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        return ColormapTable.linear_regression(x, y)
 
     @staticmethod
     def save_scatter_plot(x, y, cmap, img_path):
@@ -1212,6 +1219,12 @@ class ColormapTable(DocTable):
 
         fig.savefig(img_path, bbox_inches='tight', pad_inches=0.0)
         plt.close(fig)
+
+    @staticmethod
+    def linear_regression(x, y):
+        """Compute r^2 value from linear regression between x and y."""
+        _, _, r_value, _, _ = linregress(x, y)
+        return r_value**2
 
 
 class ColormapTableLINEAR(ColormapTable):

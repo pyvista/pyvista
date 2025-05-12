@@ -163,7 +163,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh.get_cell(0).is_linear
+        >>> mesh.get_cell(0).linear_regression
         True
 
         """
