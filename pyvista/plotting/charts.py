@@ -1663,6 +1663,7 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
         )
 
 
+# Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
 class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
