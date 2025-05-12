@@ -1065,7 +1065,7 @@ class ColormapTable(DocTable):
         |     - Name
         |     - Swatch
         |     - Lightness :math:`L^*`
-        |     - Cumulative :math:`\Delta E`
+        |     - Cumulative ΔE
         """,
     )
     row_template = _aligned_dedent(
