@@ -35,7 +35,17 @@ all plotting functionality in PyVista.
    CameraPosition
    CornerAnnotation
    CubeAxesActor
+   CustomInteractorStyle
    DataSetMapper
+   InteractorStyleImage
+   InteractorStyleJoystickActor
+   InteractorStyleJoystickCamera
+   InteractorStyleRubberBand2D
+   InteractorStyleRubberBandPick
+   InteractorStyleTrackballActor
+   InteractorStyleTrackballCamera
+   InteractorStyleTerrain
+   InteractorStyleZoom
    Label
    LookupTable
    PlanesAssembly

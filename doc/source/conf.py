@@ -288,7 +288,6 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*BasePlotter'),
     (r'py:.*', '.*ScalarBars'),
     (r'py:.*', '.*Theme'),
-    (r'py:.*', '.*_CustomInteractorStyle'),
     #
     # Misc pyvista ignores
     (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
