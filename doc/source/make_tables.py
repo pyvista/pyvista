@@ -1179,7 +1179,7 @@ class ColormapTable(DocTable):
         lab = rgb_to_cam02ucs(rgb)
         y = lab[0, :, 0]
 
-        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
 
         cumulative_abs_delta_lightness = np.concatenate([[0], np.cumsum(np.abs(np.diff(y)))])
         return ColormapTable.linear_regression(x, cumulative_abs_delta_lightness)
@@ -1204,13 +1204,15 @@ class ColormapTable(DocTable):
         return ColormapTable.linear_regression(x, y)
 
     @staticmethod
-    def save_scatter_plot(x, y, cmap, img_path):
+    def save_scatter_plot(x, y, cmap, img_path, y_lim=None):
         width = 256
         height = 64
 
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
         ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0, clip_on=False)
         ax.set_axis_off()
+        if y_lim:
+            ax.set_ylim(*y_lim)
 
         # Add a dummy set of axes to add asymmetric padding to the figure
         left, bottom, width, height = 0.08, -0.18, 0.87, 1.37
