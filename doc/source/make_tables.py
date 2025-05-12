@@ -1055,7 +1055,7 @@ class ColormapTable(DocTable):
 
     title = ''
     header = _aligned_dedent(
-        """
+        r"""
         |.. list-table:: {}
         |   :widths: 21 25 18 18 18
         |   :header-rows: 1
@@ -1064,8 +1064,8 @@ class ColormapTable(DocTable):
         |   * - Tags
         |     - Name
         |     - Swatch
-        |     - Lightness
-        |     - Cumulative ΔE
+        |     - Lightness :math:`L^*`
+        |     - Cumulative :math:`\Delta E`
         """,
     )
     row_template = _aligned_dedent(

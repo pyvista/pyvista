@@ -26,6 +26,24 @@ Each colormap is also labeled as:
 - :bdg-muted:`PU` if it is perceptually uniform
 - :bdg-danger:`NPU` if it is not perceptually uniform
 
+A colormap is considered *perceptually uniform* if its color gradients are
+evenly spaced, meaning equal steps in data produce equal perceptual changes.
+
+Some colormap libraries assess perceptual uniformity using only the lightness
+component (:math:`L^*` in the Lab colorspace), while others also consider
+chromatic components (:math:`a^*` and :math:`b^*`). For the colormaps on this
+reference page, both lightness *and* color differences must meet the uniformity
+criteria to earn the :bdg-muted:`PU` label.
+
+Specifically, a colormap is labeled as perceptually uniform if:
+
+#. The cumulative change in lightness (:math:`L^*`) progresses linearly.
+#. The cumulative color difference (:math:`\Delta E`, using the CIEDE2000
+   metric) progresses linearly.
+
+Linearity is defined as having a coefficient of determination (:math:`R^2`)
+greater than 0.99 when fitted with linear regression.
+
 .. warning::
 
     Many of the ``matplotlib`` colormaps such as ``jet`` are not perceptually
@@ -202,10 +220,6 @@ Rainbow
 
 Multi-hue colormaps that span the full visible spectrum, useful for highlighting
 local differences in sequential data.
-
-.. warning::
-
-    Some of the “rainbow” colormaps have a perceptual discontinuity around the colors red and yellow.
 
 .. dropdown::
     :open:
