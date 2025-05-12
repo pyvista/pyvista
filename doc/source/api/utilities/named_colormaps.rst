@@ -43,6 +43,8 @@ Specifically, a colormap is labeled as perceptually uniform if:
 
 Linearity is defined as having a coefficient of determination (:math:`R^2`)
 greater than 0.99 when fitted with linear regression.
+When choosing a colormap, those with the :bdg-muted:`PU` tag should be
+preferred over those with the :bdg-danger:`NPU` tag.
 
 .. warning::
 
