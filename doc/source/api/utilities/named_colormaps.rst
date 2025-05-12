@@ -30,7 +30,7 @@ A colormap is considered *perceptually uniform* if its color gradients are
 evenly spaced, meaning equal steps in data produce equal perceptual changes.
 
 Some colormap libraries assess perceptual uniformity using only the lightness
-component (:math:`L^*` in the Lab colorspace), while others also consider
+component (:math:`L^*` in the Lab color space), while others also consider
 chromatic components (:math:`a^*` and :math:`b^*`). For the colormaps on this
 reference page, both lightness *and* color differences must meet the uniformity
 criteria to earn the :bdg-muted:`PU` label.
