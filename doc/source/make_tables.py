@@ -12,6 +12,7 @@ from dataclasses import dataclass
 import re
 import sys
 from typing import NamedTuple
+import warnings
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -2243,9 +2244,10 @@ class DatasetCardFetcher:
                 try:
                     if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
-                except pyvista.VTKVersionError:
+                except pyvista.VTKVersionError as err:
                     # caused by 'download_can', this error is handled later
-                    pass
+                    msg = f'could not load {dataset_name} due to {err!r}'
+                    warnings.warn(msg, UserWarning)
                 else:
                     dataset_loader.load_and_store_dataset()
                     assert dataset_loader.dataset is not None
