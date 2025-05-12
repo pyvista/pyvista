@@ -1185,7 +1185,7 @@ class ColormapTable(DocTable):
         # r^2 is good for ramps, but not for iso-luminant colormaps
         # First check for constant lightness
         max_deviation = np.max(np.abs(y - np.mean(y)))  # max deviation from mean
-        if max_deviation < 2.0:  # Lightness change of 2.0 is barely perceivable
+        if max_deviation < 3.0:  # Lightness change of 3.0 is not very perceivable
             return 1.0  # Return r^2 of 1.0, i.e. is perceptually uniform
 
         cumulative_abs_delta_lightness = np.concatenate([[0], np.cumsum(np.abs(np.diff(y)))])
