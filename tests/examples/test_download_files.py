@@ -1251,10 +1251,11 @@ def test_download_can(partial: bool):
     assert dataset.n_points == 6724 if partial else 20_172
 
 
+@parametrize(partial=[True, False])
 @pytest.mark.needs_vtk_version(9, 2)
-def test_download_can_raises():
+def test_download_can_raises(partial: bool):
     with pytest.raises(pv.VTKVersionError):
-        examples.download_can()
+        examples.download_can(partial=partial)
 
 
 def test_download_fea_bracket():
