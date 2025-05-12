@@ -1150,7 +1150,7 @@ class ColormapTable(DocTable):
     def generate_img_swatch(cmap, img_path):
         """Generate and save an image of the given colormap."""
         width = 256
-        height = 64
+        height = 100
         N = 256
         # Create a smooth gradient across the colormap resolution
         gradient = np.linspace(0, 1, N)
