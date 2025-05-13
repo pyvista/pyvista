@@ -1639,7 +1639,7 @@ class InteractorStyleImage(CaptureInteractorStyle, _vtk.vtkInteractorStyleImage)
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_image_style
+    :class:`~pyvista.RenderWindowInteractor.enable_image_style`
 
     """
 
@@ -1659,7 +1659,7 @@ class InteractorStyleJoystickCamera(CaptureInteractorStyle, _vtk.vtkInteractorSt
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_joystick_style
+    :class:`~pyvista.RenderWindowInteractor.enable_joystick_style`
 
     """
 
@@ -1669,7 +1669,7 @@ class InteractorStyleRubberBand2D(CaptureInteractorStyle, _vtk.vtkInteractorStyl
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_rubber_band_2d_style
+    :class:`~pyvista.RenderWindowInteractor.enable_rubber_band_2d_style`
 
     """
 
@@ -1679,7 +1679,7 @@ class InteractorStyleRubberBandPick(CaptureInteractorStyle, _vtk.vtkInteractorSt
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_rubber_band_style
+    :class:`~pyvista.RenderWindowInteractor.enable_rubber_band_style`
 
     """
 
@@ -1689,7 +1689,7 @@ class InteractorStyleTrackballActor(CaptureInteractorStyle, _vtk.vtkInteractorSt
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_trackball_actor_style
+    :class:`~pyvista.RenderWindowInteractor.enable_trackball_actor_style`
 
     """
 
@@ -1701,9 +1701,9 @@ class InteractorStyleTrackballCamera(
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_trackball_style
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_custom_trackball_style
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_2d_style
+    :class:`~pyvista.RenderWindowInteractor.enable_trackball_style`
+    :class:`~pyvista.RenderWindowInteractor.enable_custom_trackball_style`
+    :class:`~pyvista.RenderWindowInteractor.enable_2d_style`
 
     """
 
@@ -1713,7 +1713,7 @@ class InteractorStyleTerrain(CaptureInteractorStyle, _vtk.vtkInteractorStyleTerr
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_terrain_style
+    :class:`~pyvista.RenderWindowInteractor.enable_terrain_style`
 
     """
 
@@ -1723,6 +1723,6 @@ class InteractorStyleZoom(CaptureInteractorStyle, _vtk.vtkInteractorStyleRubberB
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_zoom_style
+    :class:`~pyvista.RenderWindowInteractor.enable_zoom_style`
 
     """
