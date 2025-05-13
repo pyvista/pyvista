@@ -62,6 +62,7 @@ DEFAULT_INPLACE_WARNING = (
 )
 
 
+@abstract_class
 class _PointSet(DataSet):
     """PyVista's equivalent of vtk.vtkPointSet.
 
