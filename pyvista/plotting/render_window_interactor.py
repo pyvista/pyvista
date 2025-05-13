@@ -459,7 +459,7 @@ class RenderWindowInteractor:
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
-            See implementation of interactor styles in source code for more details.
+            See :class:`CaptureInteractorStyle` and its implementation as an example.
 
         Returns
         -------
