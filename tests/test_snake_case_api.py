@@ -109,6 +109,8 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
     elif vtk_subclass is pv.plotting.background_renderer.BackgroundRenderer:
         kwargs['parent'] = pv.Plotter()
         kwargs['image_path'] = pv.examples.logofile
+    elif issubclass(vtk_subclass, pv.plotting.render_window_interactor.CaptureInteractorStyle):
+        kwargs['render_window_interactor'] = pv.Plotter().iren
 
     instance = try_init_object(vtk_subclass, kwargs)
     vtk_attr_camel_case = 'GetGlobalWarningDisplay'

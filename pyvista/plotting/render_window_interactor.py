@@ -19,6 +19,7 @@ import numpy as np
 from pyvista import vtk_version_info
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -1565,6 +1566,7 @@ class RenderWindowInteractor:
         self._timer_event = None
 
 
+@abstract_class
 class CaptureInteractorStyle(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
     """A mixin for subclasses of vtkInteractorStyle with capturing ability.
 
