@@ -1008,6 +1008,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.shape
         (2, 2)
 
+        >>> plotter.show()
+
         """
         return self.renderers.shape
 
