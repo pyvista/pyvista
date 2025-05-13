@@ -36,6 +36,7 @@ Gmsh
 HTML
 Helens
 Hotfixes
+Interactor
 Isoluminant
 Isort
 Jupyter
@@ -116,6 +117,7 @@ https
 imageio
 img
 initializer
+interactor
 itkwidgets
 jupyter
 kubernetes
