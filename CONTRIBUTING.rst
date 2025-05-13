@@ -522,6 +522,33 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
             pip install tox
             tox run -e py3.11 # change to the python version targeted
 
+.. admonition:: tox usage
+    :class: hint
+    :collapsible: closed
+
+    When using ``tox``, specific test environments can be used to test against various
+    dependencies (mostly ``numpy`` and ``vtk``). The full list is available by running:
+
+    .. code-block:: bash
+
+        tox list
+
+    For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
+    on the main branch, simply run:
+
+     .. code-block:: bash
+
+        tox run -e py3.11-vtk_main
+
+    In addition to that, integration tests with libraries that depends on
+    ``pyvista`` can be run locally with ``tox``.
+    The full list is given by:
+
+    .. code-block:: bash
+
+        tox list -f integration
+
+    For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
@@ -562,7 +589,16 @@ such that:
 
         .. code-block:: bash
 
-            tox run -e py3.11-cov # the -cov factor can be added to any python version
+            tox run -e py3.11-cov
+
+        .. note::
+
+            The ``-cov`` factor can be added to any existing environment to enable test coverage, such that:
+
+        .. code-block:: bash
+
+            tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
+            tox run -e py3.11-vtk_main-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
