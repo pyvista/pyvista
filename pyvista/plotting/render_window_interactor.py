@@ -1649,7 +1649,7 @@ class InteractorStyleJoystickActor(CaptureInteractorStyle, _vtk.vtkInteractorSty
 
     See Also
     --------
-    pyvista.plotting.render_window_interactor.RenderWindowInteractor.enable_joystick_actor_style
+    :class:`~pyvista.RenderWindowInteractor.enable_joystick_actor_style`
 
     """
 
