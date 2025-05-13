@@ -36,7 +36,6 @@ permissions:
 
 jobs:
   macOS:
-    name: Mac OS Unit Testing - Python ${{ matrix.config.python-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +47,7 @@ jobs:
           - { os: macos-latest, python-version: "3.13" }
 
     runs-on: ${{ matrix.config.os }}
+    name: Mac OS Unit Testing - Python ${{ matrix.config.python-version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -75,7 +75,6 @@ jobs:
           path: debug_images
 
   Linux:
-    name: Linux Unit Testing - Python ${{ matrix.python-version }} - VTK ${{ matrix.vtk-version }} - Numpy ${{ matrix.numpy-version }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -105,6 +104,7 @@ jobs:
           - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
+    name: Linux Unit Testing - Python ${{ matrix.python-version }} - VTK ${{ matrix.vtk-version }} - Numpy ${{ matrix.numpy-version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -163,7 +163,6 @@ jobs:
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
   windows:
-    name: Windows Unit Testing - Python ${{ matrix.python-version }}
     runs-on: windows-latest
     env:
       CI_WINDOWS: true
@@ -172,6 +171,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    name: Windows Unit Testing - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
         with:
