@@ -50,7 +50,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(metaclass=_vtkWrapperMeta):
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -1075,7 +1075,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-class _CustomContextItem(_vtk.vtkPythonItem):
+class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:
             # item is the _CustomContextItem subclass instance
@@ -1663,7 +1663,8 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
         )
 
 
-class _Plot(DocSubs):
+# Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
+class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
@@ -1841,7 +1842,7 @@ class _Plot(DocSubs):
     @label.setter
     def label(self, val) -> None:
         self._label = '' if val is None else val
-        self.SetLabel(self._label)  # type: ignore[attr-defined]
+        self.SetLabel(self._label)
 
     @property
     @doc_subs
@@ -1866,11 +1867,11 @@ class _Plot(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()  # type: ignore[attr-defined]
+        return self.GetVisible()
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)  # type: ignore[attr-defined]
+        self.SetVisible(val)
 
     @doc_subs
     def toggle(self) -> None:
@@ -1913,7 +1914,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)  # type: ignore[attr-defined]
+        self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
