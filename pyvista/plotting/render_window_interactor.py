@@ -460,7 +460,7 @@ class RenderWindowInteractor:
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
-            See :class:`CaptureInteractorStyle` and its implementation as an example.
+            See :class:`~plotting.render_window_interactor.CaptureInteractorStyle` and its implementation as an example.
 
         Returns
         -------
