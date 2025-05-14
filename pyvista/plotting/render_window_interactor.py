@@ -1571,8 +1571,8 @@ class CaptureInteractorStyle(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
     """A mixin for subclasses of vtkInteractorStyle with capturing ability.
 
     Use a custom capturing events because the default ones
-    swallow the release events
-    http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html
+    swallow the release events. See
+    https://public.kitware.com/pipermail/vtkusers/2013-December/082315.html.
 
     """
 
