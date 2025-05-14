@@ -624,7 +624,8 @@ class vtkPyVistaOverride:
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
-    def __getattribute__(self, attr):
+    @staticmethod
+    def check_vtk_snake_case(target, attr, wrapped=None):
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if vtk_version_info >= (9, 4) and sys.meta_path is not None:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
@@ -636,17 +637,20 @@ class DisableVtkSnakeCase:
                 if (
                     attr not in ['__class__', '__init__']
                     and attr[0].islower()
-                    and is_vtk_attribute(self, attr)
+                    and is_vtk_attribute(target, attr, wrapped)
                 ):
                     msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
                     if state == 'error':
                         raise pv.PyVistaAttributeError(msg)
                     else:
                         warnings.warn(msg, RuntimeWarning)
-        return super().__getattribute__(attr)
+
+    def __getattribute__(self, item):
+        DisableVtkSnakeCase.check_vtk_snake_case(self, item)
+        return object.__getattribute__(self, item)
 
 
-def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
+def is_vtk_attribute(obj: object, attr: str, wrapped: object = None):  # numpydoc ignore=RT01
     """Return True if the attribute is defined by a vtk class.
 
     Parameters
@@ -657,14 +661,16 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
     attr : str
         Name of the attribute to check.
 
+    wrapped : object, optional
+        Optional object to check in case of composition (e.g., a wrapped VTK object).
+
     """
 
     def _find_defining_class(cls, attr):
-        """Find the class that defines a given attribute."""
         for base in cls.__mro__:
             if attr in base.__dict__:
                 return base
         return None
 
-    cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
+    cls = _find_defining_class((wrapped or obj).__class__, attr)
     return cls is not None and cls.__module__.startswith('vtkmodules')
