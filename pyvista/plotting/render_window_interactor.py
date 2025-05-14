@@ -445,7 +445,7 @@ class RenderWindowInteractor:
     def update_style(self):
         """Update the camera interactor style.
 
-        Called when setting interactor_style attribute.
+        Called when setting :meth:`style` attribute.
         """
         self.interactor.SetInteractorStyle(self.style)
 
