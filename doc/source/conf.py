@@ -82,7 +82,7 @@ extensions = [
     'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
-    # 'notfound.extension',
+    # 'notfound.extension', # https://github.com/pyvista/pyvista/pull/7517
     'numpydoc',
     'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
