@@ -536,7 +536,7 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
     For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
     on the main branch, simply run:
 
-     .. code-block:: bash
+    .. code-block:: bash
 
         tox run -e py3.11-vtk_main
 
@@ -595,10 +595,10 @@ such that:
 
             The ``-cov`` factor can be added to any existing environment to enable test coverage, such that:
 
-        .. code-block:: bash
+            .. code-block:: bash
 
-            tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
-            tox run -e py3.11-vtk_main-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
+                tox run -e py3.11-vtk_main-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
