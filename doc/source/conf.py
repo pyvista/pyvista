@@ -93,6 +93,7 @@ extensions = [
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
+    'sphinx_togglebutton',
     'sphinxcontrib.asciinema',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
