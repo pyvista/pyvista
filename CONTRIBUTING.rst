@@ -523,8 +523,7 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
             tox run -e py3.11 # change to the python version targeted
 
 .. admonition:: tox usage
-    :class: hint
-    :collapsible: closed
+    :class: hint dropdown
 
     When using ``tox``, specific test environments can be used to test against various
     dependencies (mostly ``numpy`` and ``vtk``). The full list is available by running:
