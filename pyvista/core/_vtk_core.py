@@ -625,7 +625,7 @@ class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
     @staticmethod
-    def check_vtk_snake_case(target, attr):
+    def check_attribute(target, attr):
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if vtk_version_info >= (9, 4) and sys.meta_path is not None:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
@@ -646,7 +646,7 @@ class DisableVtkSnakeCase:
                         warnings.warn(msg, RuntimeWarning)
 
     def __getattribute__(self, item):
-        DisableVtkSnakeCase.check_vtk_snake_case(self, item)
+        DisableVtkSnakeCase.check_attribute(self, item)
         return object.__getattribute__(self, item)
 
 

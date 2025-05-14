@@ -135,6 +135,6 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         """Forward unknown attribute requests to VTKArray's __getattr__."""
         if self.VTKObject is not None:
             # Enforce rules for using VTK's snake_case API rules
-            _vtk.DisableVtkSnakeCase.check_vtk_snake_case(self.VTKObject, name)
+            _vtk.DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
             return getattr(self.VTKObject, name)
         raise AttributeError
