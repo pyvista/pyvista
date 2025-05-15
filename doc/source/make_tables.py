@@ -1432,13 +1432,6 @@ class ColormapTableCATEGORICAL(ColormapTable):
     """Class to generate categorical colormap table."""
 
     kind = ColormapKind.CATEGORICAL
-    sort_options = _ColormapSortOptions(
-        initial_cmap='glasbey',
-        n_samples=64,
-        pre_sort_cmaps=True,
-        group_by_package=True,
-        sort_by='hue',
-    )
 
 
 class ColormapTableMISC(ColormapTable):
