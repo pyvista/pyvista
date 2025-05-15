@@ -1266,6 +1266,8 @@ class ColormapTable(DocTable):
         import colour
 
         def sample_cmap_cam02ucs(cmap, n_samples: int = 5):
+            """Sample `n_samples` colors from a colormap and convert to CAM02-UCS space."""
+
             def rgb_to_cam02ucs(rgb):
                 xyz = colour.sRGB_to_XYZ(rgb)
                 return colour.XYZ_to_CAM02UCS(xyz)
@@ -1275,11 +1277,12 @@ class ColormapTable(DocTable):
             return rgb_to_cam02ucs(rgb)
 
         def compute_total_delta_e_between_swatch(swatch1, swatch2, weights):
-            """Compute weighted delta E between two swatches."""
-            delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,)
+            """Compute the total weighted delta E between two color swatches."""
+            delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)
             return np.sum(weights * delta_e)
 
         def compute_delta_e_matrix_for_all_groups(grouped_colors, weights):
+            """Compute a square matrix of delta E values between all swatch pairs."""
             n = len(grouped_colors)
             delta_e = np.zeros((n, n))
 
@@ -1289,23 +1292,30 @@ class ColormapTable(DocTable):
                         grouped_colors[i], grouped_colors[j], weights
                     )
                     delta_e[i, j] = delta
-                    delta_e[j, i] = delta  # symmetric
+                    delta_e[j, i] = delta  # matrix is symmetric
 
             return delta_e
 
-        def sort_color_groups_by_similarity(grouped_colors, start_index=0):
-            n = len(grouped_colors)
-            M = grouped_colors[0].shape[0]
-            weights = np.arange(M)[::-1].astype(float)
+        def sort_color_groups_by_similarity(grouped_colors, start_index):
+            """Use a greedy nearest-neighbor traversal based on delta E to order colormaps.
+
+            Start from `start_index`, then iteratively append the most similar unvisited swatch.
+
+            """
+            n_colormaps = len(grouped_colors)
+            num_samples = grouped_colors[0].shape[0]
+
+            # Use perceptual weighting favoring the start of the colormap
+            weights = np.arange(num_samples)[::-1].astype(float)
             weights /= weights.sum()
 
             delta_e_matrix = compute_delta_e_matrix_for_all_groups(grouped_colors, weights)
 
-            visited = np.zeros(n, dtype=bool)
+            visited = np.zeros(n_colormaps, dtype=bool)
             order = [start_index]
             visited[start_index] = True
 
-            for _ in range(n - 1):
+            for _ in range(n_colormaps - 1):
                 last = order[-1]
                 masked_row = np.where(visited, np.inf, delta_e_matrix[last])
                 next_idx = np.argmin(masked_row)
@@ -1315,26 +1325,29 @@ class ColormapTable(DocTable):
             sorted_groups = [grouped_colors[i] for i in order]
             return sorted_groups, order
 
-        # Extract CAM02UCS swatches from data, each swatch has shape (n_samples, 3)
+        # Sample CAM02UCS swatches from each colormap
         grouped_colors = [sample_cmap_cam02ucs(info.name, n_samples) for info in data]
 
-        # Optionally sort each swatch row-wise by chroma (norm of ab components)
+        # Pre-sort each swatch row-wise by chroma
         if pre_sort_cmaps:
             for i, swatch in enumerate(grouped_colors):
-                chroma = np.linalg.norm(swatch[:, 1:3], axis=1)  # use a and b channels
+                chroma = np.linalg.norm(swatch[:, 1:3], axis=1)
                 order = np.argsort(chroma)
                 grouped_colors[i] = swatch[order]
 
-        # Determine starting index using the init cmap
+        # Validate and locate the initial colormap
         cmaps = [info.name for info in data]
         _validation.check_contains(cmaps, must_contain=initial_cmap, name='initial_cmap')
         start_index = cmaps.index(initial_cmap)
 
+        # Sort the colormaps based on perceptual similarity
         sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index)
         sorted_data = [data[i] for i in order]
 
+        # Group the sorted colormaps by package
         if group_by_package:
             sorted_data.sort(key=lambda info: info.package)
+
         return sorted_data
 
 
