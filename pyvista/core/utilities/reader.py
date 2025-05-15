@@ -2581,8 +2581,6 @@ class HDFReader(BaseReader):
 
     .. note::
         This reader requires vtk version >=9.1.0.
-
-
     Examples
     --------
     >>> import pyvista as pv

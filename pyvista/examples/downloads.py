@@ -5340,7 +5340,7 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_osmnx_graph(load=True):  # pragma : no cover
+def download_osmnx_graph(load=True):  # pragma: no cover
     """Load a simple street map from Open Street Map.
 
     Generated from:
@@ -5390,7 +5390,7 @@ def download_osmnx_graph(load=True):  # pragma : no cover
     return _download_dataset(_dataset_osmnx_graph, load=load)
 
 
-def _osmnx_graph_read_func(filename):  # pragma : no cover
+def _osmnx_graph_read_func(filename):  # pragma: no cover
     import pickle
 
     return pickle.load(Path(filename).open('rb'))
