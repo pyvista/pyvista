@@ -1265,11 +1265,13 @@ class ColormapTableLINEAR(ColormapTable):
         from colour.difference import delta_E_CAM02UCS
         import numpy as np
 
+        import pyvista as pv
+
         def compute_total_delta_e_between_swatch(swatch1, swatch2, weights=None):
-            """Compute weighted delta E between two swatches (each M x 3), 1-to-1 per position."""
+            """Compute weighted delta E between two swatches (each M x 3), position-wise."""
             if weights is None:
                 weights = np.ones(swatch1.shape[0])
-            delta_e = delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,) vector
+            delta_e = delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,)
             return np.sum(weights * delta_e)
 
         def compute_delta_e_matrix_for_all_groups(grouped_colors, weights=None):
@@ -1282,22 +1284,21 @@ class ColormapTableLINEAR(ColormapTable):
                         grouped_colors[i], grouped_colors[j], weights
                     )
                     delta_e[i, j] = delta
-                    delta_e[j, i] = delta  # symmetric matrix
+                    delta_e[j, i] = delta  # symmetric
 
             return delta_e
 
-        def sort_color_groups_by_similarity(grouped_colors):
+        def sort_color_groups_by_similarity(grouped_colors, start_index=0):
             n = len(grouped_colors)
-            M = grouped_colors[0].shape[0]  # assume all swatches have same number of colors
-
-            # Prioritize early colors more strongly
+            M = grouped_colors[0].shape[0]
             weights = np.arange(M)[::-1].astype(float)
-            weights /= weights.sum()  # normalize
+            weights /= weights.sum()
 
             delta_e_matrix = compute_delta_e_matrix_for_all_groups(grouped_colors, weights)
+
             visited = np.zeros(n, dtype=bool)
-            order = [0]  # can change this to use a central/representative start
-            visited[0] = True
+            order = [start_index]
+            visited[start_index] = True
 
             for _ in range(n - 1):
                 last = order[-1]
@@ -1313,7 +1314,11 @@ class ColormapTableLINEAR(ColormapTable):
         N_SAMPLES = 11
         grouped_colors = [info.cam02ucs_samples(N_SAMPLES) for info in data]
 
-        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors)
+        # Determine starting index using the global theme colormap name
+        start_name = pv.global_theme.cmap
+        start_index = next((i for i, info in enumerate(data) if info.name == start_name), 0)
+
+        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index)
         return [data[i] for i in order]
 
 
