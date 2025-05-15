@@ -11,7 +11,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 import re
 import sys
-from typing import NamedTuple
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -667,7 +666,7 @@ BROWN_SATURATION_LIGHTNESS_THRESHOLD = 1.2
 
 # Hue constants in range [0, 1]
 _360 = 360.0
-RED_UPPER_BOUND = 8 / _360
+RED_UPPER_BOUND = 12 / _360
 ORANGE_UPPER_BOUND = 39 / _360
 YELLOW_UPPER_BOUND = 61 / _360
 GREEN_UPPER_BOUND = 157 / _360
@@ -838,11 +837,31 @@ class ColormapKind(StrEnum):
     CET_ISOLUMINANT = auto()
 
 
-class _ColormapInfo(NamedTuple):
+@dataclass
+class _ColormapInfo:
     package: str
     kind: ColormapKind | None
     name: str
     perceptually_uniform: bool
+
+    def rgb_samples(self, n_samples: int = 5):
+        cmap = pv.get_cmap_safe(self.name)
+        return cmap(np.linspace(0, 1, n_samples))[:, :3]
+
+    def hls_samples(self, n_samples: int = 5):
+        return [pv.Color(rgb)._float_hls for rgb in self.rgb_samples(n_samples=n_samples)]
+
+    def cam02ucs_samples(self, n_samples: int = 5):
+        def rgb_to_cam02ucs(rgb):
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            return colour.XYZ_to_CAM02UCS(xyz)
+
+        return rgb_to_cam02ucs(self.rgb_samples(n_samples=n_samples))
+
+    def is_grayscale(self):
+        return [hls[2] < 0.01 for hls in self.hls_samples()]
 
 
 # Define colormap info based on manual review of documentation from each package.
@@ -1125,7 +1144,7 @@ class ColormapTable(DocTable):
         tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
 
         # Generate image
-        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.kind}_{i}_{colormap_info.package}_{colormap_info.name}.png'
         cls.generate_img(cmap, img_path)
 
         name_rst = f'``{colormap_info.name}``'
@@ -1155,6 +1174,64 @@ class ColormapTableLINEAR(ColormapTable):
     """Class to generate linear colormap table."""
 
     kind = ColormapKind.LINEAR
+
+    @classmethod
+    def fetch_data(cls):
+        data = super().fetch_data()
+
+        from colour.difference import delta_E_CAM02UCS
+        import numpy as np
+
+        def compute_total_delta_e_between_swatch(swatch1, swatch2, weights=None):
+            """Compute weighted delta E between two swatches (each M x 3), 1-to-1 per position."""
+            if weights is None:
+                weights = np.ones(swatch1.shape[0])
+            delta_e = delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,) vector
+            return np.sum(weights * delta_e)
+
+        def compute_delta_e_matrix_for_all_groups(grouped_colors, weights=None):
+            n = len(grouped_colors)
+            delta_e = np.zeros((n, n))
+
+            for i in range(n):
+                for j in range(i + 1, n):
+                    delta = compute_total_delta_e_between_swatch(
+                        grouped_colors[i], grouped_colors[j], weights
+                    )
+                    delta_e[i, j] = delta
+                    delta_e[j, i] = delta  # symmetric matrix
+
+            return delta_e
+
+        def sort_color_groups_by_similarity(grouped_colors):
+            n = len(grouped_colors)
+            M = grouped_colors[0].shape[0]  # assume all swatches have same number of colors
+
+            # Prioritize early colors more strongly
+            weights = np.arange(M)[::-1].astype(float)
+            weights /= weights.sum()  # normalize
+
+            delta_e_matrix = compute_delta_e_matrix_for_all_groups(grouped_colors, weights)
+            visited = np.zeros(n, dtype=bool)
+            order = [0]  # can change this to use a central/representative start
+            visited[0] = True
+
+            for _ in range(n - 1):
+                last = order[-1]
+                masked_row = np.where(visited, np.inf, delta_e_matrix[last])
+                next_idx = np.argmin(masked_row)
+                order.append(next_idx)
+                visited[next_idx] = True
+
+            sorted_groups = [grouped_colors[i] for i in order]
+            return sorted_groups, order
+
+        # Extract swatches from data (each swatch is Mx3 in CAM02UCS)
+        N_SAMPLES = 11
+        grouped_colors = [info.cam02ucs_samples(N_SAMPLES) for info in data]
+
+        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors)
+        return [data[i] for i in order]
 
 
 class ColormapTableDIVERGING(ColormapTable):
