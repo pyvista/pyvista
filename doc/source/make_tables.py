@@ -1071,6 +1071,7 @@ class ColormapTable(DocTable):
 
     info_source = _COLORMAP_INFO
     kind: ColormapKind | str
+    sort_cmap: str | None = None
 
     title = ''
     header = _aligned_dedent(
@@ -1106,7 +1107,10 @@ class ColormapTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return [info for info in cls.info_source if info.kind == cls.kind]
+        data = [info for info in cls.info_source if info.kind == cls.kind]
+        if cls.sort_cmap is not None:
+            data = ColormapTable.sort_data(data, init_cmap_name=cls.sort_cmap)
+        return data
 
     @classmethod
     def get_header(cls, data):
@@ -1252,16 +1256,8 @@ class ColormapTable(DocTable):
         _, _, r_value, _, _ = linregress(x, y)
         return r_value**2
 
-
-class ColormapTableLINEAR(ColormapTable):
-    """Class to generate linear colormap table."""
-
-    kind = ColormapKind.LINEAR
-
-    @classmethod
-    def fetch_data(cls):
-        data = super().fetch_data()
-
+    @staticmethod
+    def sort_data(data: list[_COLORMAP_INFO], init_cmap_name: str, n_samples: int = 11):
         def compute_total_delta_e_between_swatch(swatch1, swatch2, weights=None):
             """Compute weighted delta E between two swatches (each M x 3), position-wise."""
             import colour
@@ -1308,21 +1304,27 @@ class ColormapTableLINEAR(ColormapTable):
             return sorted_groups, order
 
         # Extract swatches from data (each swatch is Mx3 in CAM02UCS)
-        N_SAMPLES = 11
-        grouped_colors = [info.cam02ucs_samples(N_SAMPLES) for info in data]
+        grouped_colors = [info.cam02ucs_samples(n_samples) for info in data]
 
-        # Determine starting index using the global theme colormap name
-        start_name = pv.global_theme.cmap
-        start_index = next((i for i, info in enumerate(data) if info.name == start_name), 0)
+        # Determine starting index using the init cmap
+        start_index = next((i for i, info in enumerate(data) if info.name == init_cmap_name), 0)
 
         sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index)
         return [data[i] for i in order]
+
+
+class ColormapTableLINEAR(ColormapTable):
+    """Class to generate linear colormap table."""
+
+    kind = ColormapKind.LINEAR
+    sort_cmap = pv.global_theme.cmap
 
 
 class ColormapTableDIVERGING(ColormapTable):
     """Class to generate diverging colormap table."""
 
     kind = ColormapKind.DIVERGING
+    sort_cmap = 'coolwarm'
 
 
 class ColormapTableCYCLIC(ColormapTable):
