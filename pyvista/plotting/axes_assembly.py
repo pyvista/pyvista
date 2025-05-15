@@ -22,6 +22,7 @@ from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.misc import _NameMixin
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -76,6 +77,7 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
+@abstract_class
 class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
@@ -1981,7 +1983,7 @@ class PlanesAssembly(_XYZAssembly):
         self._update_label_positions()
 
 
-class _AxisActor(_vtk.vtkAxisActor):
+class _AxisActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxisActor):
     def __init__(self):
         super().__init__()
         # Only show the title

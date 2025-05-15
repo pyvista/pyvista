@@ -42,6 +42,7 @@ import colorcet
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import linregress
 
 import pyvista
 import pyvista as pv
@@ -866,7 +867,6 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal'),
     _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'devon'),
     _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'oslo'),
-    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'ice'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbc'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kb'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kgy'),
@@ -883,6 +883,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'plasma'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'copper'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'pink'),
+    _ColormapInfo('cmocean', ColormapKind.LINEAR, 'ice'),
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'dense'),
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'matter'),
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'amp'),
@@ -956,11 +957,17 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'managua'),
+    # DIVERGING
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bjy'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bwy'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'cwr'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'gwv'),
+    _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'topo'),
     _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'delta'),
     _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'curl'),
     _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'diff'),
@@ -1117,21 +1124,25 @@ class ColormapTable(DocTable):
 
     title = ''
     header = _aligned_dedent(
-        """
+        r"""
         |.. list-table:: {}
-        |   :widths: 20 25 55
+        |   :widths: 21 25 18 18 18
         |   :header-rows: 1
         |   :stub-columns: 1
         |
         |   * - Tags
         |     - Name
         |     - Swatch
+        |     - Lightness :math:`L^*`
+        |     - Cumulative ΔE
         """,
     )
     row_template = _aligned_dedent(
         """
         |   * - {}
         |     - {}
+        |     - .. image:: /{}
+        |     - .. image:: /{}
         |     - .. image:: /{}
         """,
     )
@@ -1180,27 +1191,41 @@ class ColormapTable(DocTable):
             raise RuntimeError
         cmap = cmap_source[colormap_info.name]
 
+        # Generate images
+        img_path_swatch = (
+            f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        )
+        cls.generate_img_swatch(cmap, img_path_swatch)
+
+        img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
+        r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
+
+        img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
+        r2_deltaE = cls.generate_img_deltaE(cmap, img_path_deltaE)
+
+        # Perceptually uniform if constant delta in lightness and color
+        r2_threshold = 0.99
+        perceptually_uniform = r2_deltaL > r2_threshold and r2_deltaE > r2_threshold
+
         # Generate tags
         source_rst = source_badge_mapping[colormap_info.package]
         type_rst = type_mapping[type(cmap)]
-        perceptually_uniform_rst = perceptually_uniform_mapping[colormap_info.perceptually_uniform]
+        perceptually_uniform_rst = perceptually_uniform_mapping[perceptually_uniform]
         tags = f'{source_rst} {type_rst} {perceptually_uniform_rst}'
 
-        # Generate image
-        img_path = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
-        cls.generate_img(cmap, img_path)
-
         name_rst = f'``{colormap_info.name}``'
-        return cls.row_template.format(tags, name_rst, img_path)
+        return cls.row_template.format(
+            tags, name_rst, img_path_swatch, img_path_lightness, img_path_deltaE
+        )
 
     @staticmethod
-    def generate_img(cmap, img_path):
+    def generate_img_swatch(cmap, img_path):
         """Generate and save an image of the given colormap."""
-        width = 512  # Should be a multiple of 256 to avoid aliasing
-        height = 32
-
+        width = 256
+        height = 100
+        N = 256
         # Create a smooth gradient across the colormap resolution
-        gradient = np.linspace(0, 1, width)
+        gradient = np.linspace(0, 1, N)
         gradient = np.vstack((gradient,) * height)
 
         fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
@@ -1211,6 +1236,76 @@ class ColormapTable(DocTable):
 
         fig.savefig(img_path, bbox_inches='tight', pad_inches=0)
         plt.close(fig)
+
+    @staticmethod
+    def generate_img_lightness(cmap, img_path):
+        def rgb_to_cam02ucs(rgb):
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            return colour.XYZ_to_CAM02UCS(xyz)
+
+        x = np.linspace(0.0, 1.0, cmap.N)
+
+        rgb = cmap(x)[np.newaxis, :, :3]
+        lab = rgb_to_cam02ucs(rgb)
+        y = lab[0, :, 0]
+
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path, y_lim=(0.0, 100.0))
+
+        # Compute linearity of the lightness.
+        # r^2 is good for ramps, but not for iso-luminant colormaps
+        # First check for constant lightness
+        max_deviation = np.max(np.abs(y - np.mean(y)))  # max deviation from mean
+        if max_deviation < 3.0:  # Lightness change of 3.0 is not very perceivable
+            return 1.0  # Return r^2 of 1.0, i.e. is perceptually uniform
+
+        cumulative_abs_delta_lightness = np.concatenate([[0], np.cumsum(np.abs(np.diff(y)))])
+        return ColormapTable.linear_regression(x, cumulative_abs_delta_lightness)
+
+    @staticmethod
+    def generate_img_deltaE(cmap, img_path):
+        def delta_E_CIE2000(rgb):
+            # Compute ΔE between adjacent colors
+            import colour
+
+            xyz = colour.sRGB_to_XYZ(rgb)
+            lab = colour.XYZ_to_Lab(xyz)
+            return colour.difference.delta_E_CIE2000(lab[:-1], lab[1:])
+
+        x = np.linspace(0.0, 1.0, cmap.N)
+
+        rgb = cmap(x)[:, :3]
+        delta_e = delta_E_CIE2000(rgb)
+        y = np.concatenate([[0], np.cumsum(delta_e)])
+
+        ColormapTable.save_scatter_plot(x, y, cmap, img_path)
+        return ColormapTable.linear_regression(x, y)
+
+    @staticmethod
+    def save_scatter_plot(x, y, cmap, img_path, y_lim=None):
+        width = 256
+        height = 64
+
+        fig, ax = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
+        ax.scatter(x, y, c=x, cmap=cmap, s=500, linewidths=0.0, clip_on=False)
+        ax.set_axis_off()
+        if y_lim:
+            ax.set_ylim(*y_lim)
+
+        # Add a dummy set of axes to add asymmetric padding to the figure
+        left, bottom, width, height = 0.08, -0.18, 0.87, 1.37
+        ax = fig.add_axes([left, bottom, width, height])
+        ax.set_axis_off()
+
+        fig.savefig(img_path, bbox_inches='tight', pad_inches=0.0)
+        plt.close(fig)
+
+    @staticmethod
+    def linear_regression(x, y):
+        """Compute r^2 value from linear regression between x and y."""
+        _, _, r_value, _, _ = linregress(x, y)
+        return r_value**2
 
 
 class ColormapTableLINEAR(ColormapTable):

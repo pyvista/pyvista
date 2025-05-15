@@ -92,7 +92,7 @@ def set_algorithm_input(alg, inp, port=0):
         alg.SetInputDataObject(port, inp)
 
 
-class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
+class PreserveTypeAlgorithmBase(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Base algorithm to preserve type.
 
     Parameters
@@ -230,7 +230,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class PointSetToPolyDataAlgorithm(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Algorithm to cast PointSet to PolyData.
 
     This is implemented with :func:`pyvista.PointSet.cast_to_polydata`.
@@ -346,7 +346,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         return 1
 
 
-class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
+class CrinkleAlgorithm(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
     """Algorithm to crinkle cell IDs."""
 
     def __init__(self):
