@@ -1262,16 +1262,13 @@ class ColormapTableLINEAR(ColormapTable):
     def fetch_data(cls):
         data = super().fetch_data()
 
-        from colour.difference import delta_E_CAM02UCS
-        import numpy as np
-
-        import pyvista as pv
-
         def compute_total_delta_e_between_swatch(swatch1, swatch2, weights=None):
             """Compute weighted delta E between two swatches (each M x 3), position-wise."""
+            import colour
+
             if weights is None:
                 weights = np.ones(swatch1.shape[0])
-            delta_e = delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,)
+            delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,)
             return np.sum(weights * delta_e)
 
         def compute_delta_e_matrix_for_all_groups(grouped_colors, weights=None):
