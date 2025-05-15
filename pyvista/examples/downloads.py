@@ -5897,7 +5897,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
-    <https://cgns.github.io/CGNSFiles.html>`_
+    <https://cgns.org/current/examples.html#constricting-channel>`_
 
     Parameters
     ----------
