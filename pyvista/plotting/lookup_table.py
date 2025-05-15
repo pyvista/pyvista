@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
+import matplotlib as mpl
 import numpy as np
 
 import pyvista
@@ -18,8 +19,6 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
-    import matplotlib as mpl
-
     from ._typing import ColorLike
     from ._typing import ColormapOptions
 
@@ -782,8 +781,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """
         if isinstance(cmap, list):
             n_values = len(cmap)
-
-        cmap_obj = get_cmap_safe(cmap)  # type: ignore[arg-type]
+        cmap_obj = cmap if isinstance(cmap, mpl.colors.Colormap) else get_cmap_safe(cmap)
         values = cmap_obj(np.linspace(0, 1, n_values)) * 255
 
         if flip:

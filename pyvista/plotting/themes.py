@@ -1790,7 +1790,7 @@ class Theme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._image_scale = 1
         self._font = _Font()
-        self._cmap = 'viridis'
+        self._cmap: ColormapOptions = 'viridis'
         self._color = Color('white')
         self._color_cycler = None
         self._nan_color = Color('darkgray')
@@ -2318,7 +2318,7 @@ class Theme(_ThemeConfig):
         self._font = config
 
     @property
-    def cmap(self):  # numpydoc ignore=RT01
+    def cmap(self) -> ColormapOptions:  # numpydoc ignore=RT01
         """Return or set the default colormap of pyvista.
 
         See :ref:`named_colormaps` for supported colormaps.
@@ -2340,10 +2340,7 @@ class Theme(_ThemeConfig):
 
     @cmap.setter
     def cmap(self, cmap: ColormapOptions):
-        out = get_cmap_safe(cmap)  # for validation
-        if out is None:
-            msg = f'Invalid color map {cmap}'  # type: ignore[unreachable]
-            raise ValueError(msg)
+        get_cmap_safe(cmap)  # for validation
         self._cmap = cmap
 
     @property

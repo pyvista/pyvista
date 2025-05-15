@@ -4514,7 +4514,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if cmap is None:
                 cmap = self._theme.cmap
 
-            cmap_obj = get_cmap_safe(cmap)  # type: ignore[arg-type]
+            cmap_obj = get_cmap_safe(cmap)
             if categories:
                 if categories is True:
                     n_colors = len(np.unique(scalars))
