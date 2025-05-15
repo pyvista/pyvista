@@ -70,13 +70,16 @@ OpacityOptions = Literal[
     'foreground',
 ]
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
+StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
+LightingOptions = Literal['light kit', 'three lights', 'none']
+CameraOptions = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
 
 
 class BackfaceParams(TypedDict, total=False):
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
-    style: Literal['surface', 'wireframe', 'points']
+    style: StyleOptions
     metallic: float
     roughness: float
     point_size: float
@@ -91,11 +94,11 @@ class BackfaceParams(TypedDict, total=False):
     render_lines_as_tubes: bool
     lighting: bool
     line_width: float
-    culling: Literal['back', 'front', 'none'] | bool
+    culling: CullingOptions | bool
     edge_opacity: float
 
 
-class ScalarBarArgs(TypedDict, total=False):
+class ScalarBarParams(TypedDict, total=False):
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
@@ -104,7 +107,7 @@ class ScalarBarArgs(TypedDict, total=False):
     title_font_size: float
     label_font_size: float
     color: ColorLike
-    font_family: Literal['courier', 'times', 'arial']
+    font_family: FontFamilyOptions
     shadow: bool
     width: float
     height: float
@@ -126,7 +129,7 @@ class ScalarBarArgs(TypedDict, total=False):
     unconstrained_font_size: bool
 
 
-class Silhouette(TypedDict, total=False):
+class SilhouetteParams(TypedDict, total=False):
     color: ColorLike
     line_width: float
     opacity: float

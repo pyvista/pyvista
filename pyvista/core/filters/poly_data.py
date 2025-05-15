@@ -2379,8 +2379,13 @@ class PolyDataFilters(DataSetFilters):
         del sizes
         return distance
 
-    def ray_trace(
-        self, origin, end_point, first_point: bool = False, plot: bool = False, off_screen=None
+    def ray_trace(  # type: ignore[misc]
+        self: PolyData,
+        origin,
+        end_point,
+        first_point: bool = False,
+        plot: bool = False,
+        off_screen=None,
     ):
         """Perform a single ray trace calculation.
 
@@ -2440,7 +2445,7 @@ class PolyDataFilters(DataSetFilters):
         """
         points = _vtk.vtkPoints()
         cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)  # type: ignore[attr-defined]
+        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
@@ -2455,7 +2460,7 @@ class PolyDataFilters(DataSetFilters):
 
         if plot:
             plotter = pyvista.Plotter(off_screen=off_screen)
-            plotter.add_mesh(self, label='Test Mesh')  # type: ignore[arg-type]
+            plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
             plotter.add_mesh(intersection_points, 'r', point_size=10, label='Intersection Points')
@@ -2465,8 +2470,8 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection_points, intersection_cells
 
-    def multi_ray_trace(
-        self,
+    def multi_ray_trace(  # type:ignore[misc]
+        self: PolyData,
         origins,
         directions,
         first_point: bool = False,
@@ -2537,7 +2542,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
+        if not self.is_all_triangles:
             msg = 'Input mesh for multi_ray_trace must be all triangles.'
             raise NotAllTrianglesError(msg)
 
@@ -2556,7 +2561,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2581,14 +2586,14 @@ class PolyDataFilters(DataSetFilters):
                 keepdims=True,
             )
 
-            origin_to_centre_vectors = self.center - origins_retry  # type: ignore[attr-defined] # shape (n_retry, 3)
+            origin_to_centre_vectors = self.center - origins_retry  # shape (n_retry, 3)
             origin_to_centre_lengths = np.linalg.norm(
                 origin_to_centre_vectors,
                 axis=-1,
                 keepdims=True,
             )
             second_points = origins_retry + unit_directions * (
-                origin_to_centre_lengths + self.length  # type: ignore[attr-defined]
+                origin_to_centre_lengths + self.length
             )
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):

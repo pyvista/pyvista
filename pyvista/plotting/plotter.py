@@ -97,22 +97,30 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
+    from pyvista import DataSet
     from pyvista import LookupTable
+    from pyvista import MultiBlock
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
-    from pyvista.plotting import Light
     from pyvista.plotting._typing import BackfaceParams
+    from pyvista.plotting._typing import CameraOptions
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
     from pyvista.plotting._typing import CullingOptions
     from pyvista.plotting._typing import FontFamilyOptions
+    from pyvista.plotting._typing import LightingOptions
     from pyvista.plotting._typing import OpacityOptions
-    from pyvista.plotting._typing import ScalarBarArgs
-    from pyvista.plotting._typing import Silhouette
+    from pyvista.plotting._typing import ScalarBarParams
+    from pyvista.plotting._typing import SilhouetteParams
+    from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
@@ -286,7 +294,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         groups: Sequence[int] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
-        lighting: Literal['light kit', 'three lights', 'none'] = 'light kit',
+        lighting: LightingOptions = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
         **kwargs,
@@ -1455,7 +1463,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.add_actor)
     def add_actor(
         self, *args, **kwargs
-    ) -> tuple[Actor, _vtk.vtkProperty]:  # numpydoc ignore=PR01,RT01
+    ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
@@ -1857,7 +1865,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location: CameraPosition) -> None:
+    def camera_position(self, camera_location: CameraPosition | CameraOptions) -> None:
         self.renderer.camera_position = camera_location
 
     @property
@@ -1884,7 +1892,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.set_background(color)  # type: ignore[arg-type]
 
     @property
-    def window_size(self) -> Sequence[int]:  # numpydoc ignore=RT01
+    def window_size(self) -> list[int]:  # numpydoc ignore=RT01
         """Return the render window size in ``(width, height)``.
 
         Examples
@@ -1943,7 +1951,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         size_before = self.window_size
         if window_size is not None:
-            self.window_size = window_size
+            self.window_size = window_size  # type: ignore[assignment]
         try:
             yield self
         finally:
@@ -2519,7 +2527,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self,
         dataset: pyvista.MultiBlock,
         color: ColorLike | None = None,
-        style: Literal['surface', 'wireframe', 'points', 'points_gaussian'] | None = None,
+        style: StyleOptions | None = None,
         scalars: str | None = None,
         clim: Sequence[float] | None = None,
         show_edges: bool | None = None,
@@ -2534,7 +2542,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
-        scalar_bar_args: ScalarBarArgs | None = None,
+        scalar_bar_args: ScalarBarParams | None = None,
         show_scalar_bar: bool | None = None,
         multi_colors: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = False,
         name: str | None = None,
@@ -2548,13 +2556,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power: float | None = None,
         nan_color: ColorLike | None = None,
         nan_opacity: float = 1.0,
-        culling: bool | CullingOptions | None = None,
+        culling: CullingOptions | bool | None = None,
         rgb: bool | None = None,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
         annotations: dict[float, str] | None = None,
         pickable: bool = True,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         log_scale: bool = False,
         pbr: bool | None = None,
         metallic: float | None = None,
@@ -2939,6 +2947,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
 
         actor, _ = self.add_actor(self.mapper, render=False)
+        actor = cast('Actor', actor)
 
         prop = Property(
             self._theme,
@@ -3046,9 +3055,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_mesh(
         self,
-        mesh: NumpyArray[float] | pyvista.DataSet | pyvista.MultiBlock | _vtk.vtkAlgorithm,
+        mesh: MatrixLike[float] | VectorLike[float] | DataSet | MultiBlock | _vtk.vtkAlgorithm,
         color: ColorLike | None = None,
-        style: Literal['surface', 'wireframe', 'points', 'points_gaussian'] | None = None,
+        style: StyleOptions | None = None,
         scalars: str | NumpyArray[float] | None = None,
         clim: Sequence[float] | None = None,
         show_edges: bool | None = None,
@@ -3063,7 +3072,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
-        scalar_bar_args: ScalarBarArgs | None = None,
+        scalar_bar_args: ScalarBarParams | None = None,
         show_scalar_bar: bool | None = None,
         multi_colors: bool = False,
         name: str | None = None,
@@ -3078,26 +3087,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular_power: float | None = None,
         nan_color: ColorLike | None = None,
         nan_opacity: float = 1.0,
-        culling: Literal['front', 'back'] | None = None,
+        culling: CullingOptions | bool | None = None,
         rgb: bool | None = None,
         categories: bool = False,
-        silhouette: Silhouette | bool | None = None,
+        silhouette: SilhouetteParams | bool | None = None,
         use_transparency: bool = False,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
         annotations: dict[float, str] | None = None,
         pickable: bool = True,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         log_scale: bool = False,
         pbr: bool | None = None,
         metallic: float | None = None,
         roughness: float | None = None,
         render: bool = True,
-        user_matrix: NumpyArray[float] | _vtk.vtkMatrix4x4 | None = None,
+        user_matrix: TransformLike | None = None,
         component: int | None = None,
         emissive: bool | None = None,
         copy_mesh: bool = False,
-        backface_params: BackfaceParams | pyvista.Property | None = None,
+        backface_params: BackfaceParams | Property | None = None,
         show_vertices: bool | None = None,
         edge_opacity: float | None = None,
         **kwargs,
@@ -3389,7 +3398,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when ``True``.
 
-        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+        user_matrix : TransformLike, default: np.eye(4)
             Matrix passed to the Actor class before rendering. This affects the
             actor/rendering only, not the input volume itself. The user matrix is the
             last transformation applied to the actor before rendering. Defaults to the
@@ -3701,7 +3710,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh)
             silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
 
-        scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
+        scalar_bar_args = cast('ScalarBarParams', scalar_bar_args)
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Make sure scalars components are not vectors/tuples
@@ -3998,18 +4007,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         multi_colors: bool = False,
         blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = 'composite',
         mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart'] | None = None,
-        scalar_bar_args: ScalarBarArgs | None = None,
+        scalar_bar_args: ScalarBarParams | None = None,
         show_scalar_bar: bool | None = None,
         annotations: dict[float, str] | None = None,
         pickable: bool = True,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         opacity_unit_distance: float | None = None,
         shade: bool = False,
         diffuse: float = 0.7,  # TODO: different default for volumes
         specular: float = 0.2,  # TODO: different default for volumes
         specular_power: float = 10.0,  # TODO: different default for volumes
         render: bool | None = True,
-        user_matrix: NumpyArray[float] | _vtk.vtkMatrix4x4 | None = None,
+        user_matrix: TransformLike | None = None,
         log_scale: bool = False,
         **kwargs,
     ) -> Actor | list[Actor]:
@@ -4226,7 +4235,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
 
-        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+        user_matrix : TransformLike, default: np.eye(4)
             Matrix passed to the Volume class before rendering. This affects the
             actor/rendering only, not the input volume itself. The user matrix is the
             last transformation applied to the actor before rendering. Defaults to the
@@ -4559,7 +4568,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
         self.renderer.Modified()
-        return actor
+        return cast('Actor', actor)
 
     def add_silhouette(
         self,
@@ -4658,11 +4667,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)  # type: ignore[arg-type]
+        prop = cast('Property', prop)
         prop.SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
         prop.SetOpacity(opacity)
         prop.SetLineWidth(line_width)
 
-        return actor
+        return cast('Actor', actor)
 
     def update_scalar_bar_range(
         self, clim: float | tuple[float, float], name: str | None = None
@@ -4950,7 +4960,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def update_coordinates(
         self,
-        points: pyvista.pyvista_ndarray,
+        points: MatrixLike[float] | VectorLike[float],
         mesh: _vtk.vtkPolyData | _vtk.vtkUnstructuredGrid | None = None,
         render: bool | None = True,
     ) -> None:
@@ -5083,7 +5093,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ]
         | Sequence[float]
         | None = 'upper_left',
-        font_size: float | None = 18,
+        font_size: int | None = 18,
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
         shadow: bool = False,
@@ -5566,11 +5576,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_point_labels(
         self,
-        points: MatrixLike[float] | pyvista.DataSet | _vtk.vtkAlgorithm,
+        points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
         labels: list[str | int] | str,
         italic: bool = False,
         bold: bool = True,
-        font_size: float | None = None,
+        font_size: int | None = None,
         text_color: ColorLike | None = None,
         font_family: FontFamilyOptions | None = None,
         font_file: str | None = None,
@@ -5592,8 +5602,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render: bool = True,
         justification_horizontal: HorizontalOptions | None = None,
         justification_vertical: VerticalOptions | None = None,
-        background_color: Color | None = None,
-        background_opacity: Color | None = None,
+        background_color: ColorLike | None = None,
+        background_opacity: float | None = None,
     ) -> _vtk.vtkActor2D:
         """Create a point actor with one label from list labels assigned to each point.
 
@@ -5716,10 +5726,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 Please use the background color.
                 See: https://github.com/pyvista/pyvista/pull/5407
 
-        background_color : pyvista.Color, optional
+        background_color : Color, optional
             Background color of text's property.
 
-        background_opacity : pyvista.Color, optional
+        background_opacity : float, optional
             Background opacity of text's property.
 
         Returns
@@ -5879,7 +5889,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_point_scalar_labels(
         self,
-        points: MatrixLike[float] | VectorLike[float] | pyvista.DataSet,
+        points: MatrixLike[float] | VectorLike[float] | DataSet,
         labels: list[str | int] | str,
         fmt: str | None = None,
         preamble: str = '',
@@ -5891,7 +5901,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence[float] | np.ndarray | pyvista.DataSet
+        points : sequence[float] | np.ndarray | DataSet
             An ``n x 3`` numpy.ndarray or pyvista dataset with points.
 
         labels : list | str
@@ -5934,7 +5944,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_points(
         self,
-        points: NumpyArray[float] | pyvista.DataSet,
+        points: MatrixLike[float] | VectorLike[float] | DataSet,
         style: Literal['points', 'points_gaussian'] = 'points',
         **kwargs,
     ) -> Actor:
@@ -6615,7 +6625,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset camera clipping planes."""
         self.renderer.ResetCameraClippingRange()
 
-    def add_light(self, light: Light | _vtk.vtkLight, only_active: bool = False) -> None:
+    def add_light(self, light: _vtk.vtkLight, only_active: bool = False) -> None:
         """Add a Light to the scene.
 
         Parameters
@@ -6809,7 +6819,7 @@ class Plotter(BasePlotter):
         polygon_smoothing: bool = False,
         splitting_position: float | None = None,
         title: str | None = None,
-        lighting: Literal['light kit', 'three lights', 'none'] = 'light kit',
+        lighting: LightingOptions = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
     ) -> None:
@@ -6944,13 +6954,13 @@ class Plotter(BasePlotter):
         **kwargs,
     ) -> (
         CameraPosition
-        | pyvista.pyvista_ndarray
+        | pyvista_ndarray
         | EmbeddableWidget
         | Widget
         | IFrame
         | Image
         | tuple[
-            CameraPosition | EmbeddableWidget | Widget | pyvista.pyvista_ndarray | IFrame | Image,
+            CameraPosition | EmbeddableWidget | Widget | pyvista_ndarray | IFrame | Image,
             ...,
         ]
         | None
@@ -7262,7 +7272,7 @@ class Plotter(BasePlotter):
     def add_title(
         self,
         title: str,
-        font_size: float = 18,
+        font_size: int = 18,
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
         shadow: bool = False,
@@ -7372,9 +7382,9 @@ class Plotter(BasePlotter):
         mapper = DataSetMapper(theme=self._theme)
         mapper.SetInputConnection(alg.GetOutputPort())
         actor, prop = self.add_actor(mapper)  # type: ignore[arg-type]
-        prop.SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
+        cast('_vtk.vtkProperty', prop).SetColor(Color(color).float_rgb)  # type: ignore[call-overload]
 
-        return actor
+        return cast('_vtk.vtkActor', actor)
 
     @property
     def meshes(self) -> list[pyvista.DataSet | pyvista.MultiBlock]:  # numpydoc ignore=RT01
