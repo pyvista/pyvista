@@ -1,0 +1,11 @@
+user_agent = "curl/7.83.1"
+exclude_all_private = true # exlclude "localhost", "127.0.0.1", etc.
+
+#[skip_domain]
+## Skip domains known to return 403 Forbidden to bots
+#"stackoverflow.com" = true
+#"askubuntu.com" = true
+#"researchgate.net" = true
+#"doi.org" = true
+#"dl.acm.org" = true
+
