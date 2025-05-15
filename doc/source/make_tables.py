@@ -667,7 +667,7 @@ BROWN_SATURATION_LIGHTNESS_THRESHOLD = 1.2
 
 # Hue constants in range [0, 1]
 _360 = 360.0
-RED_UPPER_BOUND = 12 / _360
+RED_UPPER_BOUND = 8 / _360
 ORANGE_UPPER_BOUND = 39 / _360
 YELLOW_UPPER_BOUND = 61 / _360
 GREEN_UPPER_BOUND = 157 / _360
@@ -1143,7 +1143,9 @@ class ColormapTable(DocTable):
         cmap = cmap_source[colormap_info.name]
 
         # Generate images
-        img_path_swatch = f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.kind}_{i}_{colormap_info.package}_{colormap_info.name}.png'
+        img_path_swatch = (
+            f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        )
         cls.generate_img_swatch(cmap, img_path_swatch)
 
         img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
