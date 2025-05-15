@@ -846,25 +846,6 @@ class _ColormapInfo:
     kind: ColormapKind | None
     name: str
 
-    def rgb_samples(self, n_samples: int = 5):
-        cmap = pv.get_cmap_safe(self.name)
-        return cmap(np.linspace(0, 1, n_samples))[:, :3]
-
-    def hls_samples(self, n_samples: int = 5):
-        return [pv.Color(rgb)._float_hls for rgb in self.rgb_samples(n_samples=n_samples)]
-
-    def cam02ucs_samples(self, n_samples: int = 5):
-        def rgb_to_cam02ucs(rgb):
-            import colour
-
-            xyz = colour.sRGB_to_XYZ(rgb)
-            return colour.XYZ_to_CAM02UCS(xyz)
-
-        return rgb_to_cam02ucs(self.rgb_samples(n_samples=n_samples))
-
-    def is_grayscale(self):
-        return [hls[2] < 0.01 for hls in self.hls_samples()]
-
 
 @dataclass
 class _ColormapSortOptions:
@@ -1120,7 +1101,11 @@ class ColormapTable(DocTable):
         data = [info for info in cls.info_source if info.kind == cls.kind]
         if (options := cls.sort_options) is not None:
             data = ColormapTable.sort_data(
-                data, initial_cmap=options.initial_cmap, n_samples=options.n_samples, pre_sort_cmaps=options.pre_sort_cmaps, group_by_package=options.group_by_package
+                data,
+                initial_cmap=options.initial_cmap,
+                n_samples=options.n_samples,
+                pre_sort_cmaps=options.pre_sort_cmaps,
+                group_by_package=options.group_by_package,
             )
         return data
 
@@ -1272,18 +1257,29 @@ class ColormapTable(DocTable):
 
     @staticmethod
     def sort_data(
-        data: list[_COLORMAP_INFO], initial_cmap: str, n_samples: int, pre_sort_cmaps: bool = False, group_by_package:bool=False
+        data: list[_COLORMAP_INFO],
+        initial_cmap: str,
+        n_samples: int,
+        pre_sort_cmaps: bool = False,
+        group_by_package: bool = False,
     ):
-        def compute_total_delta_e_between_swatch(swatch1, swatch2, weights=None):
-            """Compute weighted delta E between two swatches (each M x 3), position-wise."""
-            import colour
+        import colour
 
-            if weights is None:
-                weights = np.ones(swatch1.shape[0])
+        def sample_cmap_cam02ucs(cmap, n_samples: int = 5):
+            def rgb_to_cam02ucs(rgb):
+                xyz = colour.sRGB_to_XYZ(rgb)
+                return colour.XYZ_to_CAM02UCS(xyz)
+
+            cmap = pv.get_cmap_safe(cmap)
+            rgb = cmap(np.linspace(0, 1, n_samples))[:, :3]
+            return rgb_to_cam02ucs(rgb)
+
+        def compute_total_delta_e_between_swatch(swatch1, swatch2, weights):
+            """Compute weighted delta E between two swatches."""
             delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)  # returns (M,)
             return np.sum(weights * delta_e)
 
-        def compute_delta_e_matrix_for_all_groups(grouped_colors, weights=None):
+        def compute_delta_e_matrix_for_all_groups(grouped_colors, weights):
             n = len(grouped_colors)
             delta_e = np.zeros((n, n))
 
@@ -1320,7 +1316,7 @@ class ColormapTable(DocTable):
             return sorted_groups, order
 
         # Extract CAM02UCS swatches from data, each swatch has shape (n_samples, 3)
-        grouped_colors = [info.cam02ucs_samples(n_samples) for info in data]
+        grouped_colors = [sample_cmap_cam02ucs(info.name, n_samples) for info in data]
 
         # Optionally sort each swatch row-wise by chroma (norm of ab components)
         if pre_sort_cmaps:
@@ -1353,7 +1349,7 @@ class ColormapTableDIVERGING(ColormapTable):
     """Class to generate diverging colormap table."""
 
     kind = ColormapKind.DIVERGING
-    sort_options = _ColormapSortOptions(initial_cmap='coolwarm', n_samples=3)
+    sort_options = _ColormapSortOptions(initial_cmap='coolwarm', n_samples=5)
 
 
 class ColormapTableCYCLIC(ColormapTable):
@@ -1366,14 +1362,15 @@ class ColormapTableCATEGORICAL(ColormapTable):
     """Class to generate categorical colormap table."""
 
     kind = ColormapKind.CATEGORICAL
-    sort_options = _ColormapSortOptions(initial_cmap='glasbey', n_samples=256, group_by_package=True)
+    sort_options = _ColormapSortOptions(
+        initial_cmap='glasbey', n_samples=64, pre_sort_cmaps=True, group_by_package=True
+    )
 
 
 class ColormapTableMISC(ColormapTable):
     """Class to generate misc colormap table."""
 
     kind = ColormapKind.MISC
-
 
 
 class CETColormapTable(ColormapTable):
