@@ -743,7 +743,10 @@ class _DataSetMapper(_BaseMapper):
 
     @property
     def cmap(self) -> str | None:  # numpydoc ignore=RT01
-        """Colormap assigned to this mapper."""
+        """Colormap assigned to this mapper.
+
+        See :ref:`named_colormaps` for supported colormaps.
+        """
         return self._cmap
 
     @property

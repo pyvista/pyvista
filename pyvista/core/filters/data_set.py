@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import ColormapOptions
 
 
 @abstract_class
@@ -5184,8 +5185,6 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Join one or many other grids to this grid.
 
-        Grid is updated in-place by default.
-
         Can be used to merge points of adjacent cells when no grids
         are input.
 
@@ -6743,6 +6742,12 @@ class DataSetFilters(DataObjectFilters):
         By default, a new ``'int_rgb'`` array is added with the same name as the
         specified ``scalars`` but with ``_rgb`` appended.
 
+        .. note::
+            The package ``colorcet`` is required to use the default colors from the
+            ``'glasbey_category10'`` colormap. For a similar, but very limited,
+            alternative that does not require ``colorcet``, set ``colors='tab10'``
+            and consider setting the coloring mode explicitly.
+
         .. versionadded:: 0.45
 
         See Also
@@ -7019,7 +7024,7 @@ class DataSetFilters(DataObjectFilters):
             _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
-                    cmap = get_cmap_safe(colors)
+                    cmap = get_cmap_safe(cast('ColormapOptions', colors))
                 except ValueError:
                     pass
                 else:

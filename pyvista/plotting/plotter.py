@@ -97,6 +97,7 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
+    from pyvista import LookupTable
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -106,6 +107,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import BackfaceParams
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import ColormapOptions
     from pyvista.plotting._typing import CullingOptions
     from pyvista.plotting._typing import FontFamilyOptions
     from pyvista.plotting._typing import OpacityOptions
@@ -573,7 +575,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def import_obj(self, filename: str | Path) -> None:
+    def import_obj(self, filename: str | Path, filename_mtl: str | Path | None = None) -> None:
         """Import from .obj wavefront files.
 
         .. versionadded:: 0.44.0
@@ -583,6 +585,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename : str | Path
             Path to the .obj file.
 
+        filename_mtl : str | Path, optional
+            Path to the .mtl file.
 
         Examples
         --------
@@ -611,11 +615,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(filename)  # type: ignore[arg-type]
-        filename_mtl = filename.with_suffix('.mtl')
-        if filename_mtl.is_file():
-            importer.SetFileNameMTL(filename_mtl)  # type: ignore[arg-type]
-            importer.SetTexturePath(filename_mtl.parents[0])  # type: ignore[arg-type]
+        importer.SetFileName(str(filename) if pyvista.vtk_version_info < (9, 2, 2) else filename)  # type:ignore[arg-type]
+        if filename_mtl is None:
+            filename_mtl_path = filename.with_suffix('.mtl')
+        else:
+            filename_mtl_path = Path(filename_mtl).expanduser().resolve()
+        if filename_mtl_path.is_file():
+            importer.SetFileNameMTL(
+                str(filename_mtl_path)
+                if pyvista.vtk_version_info < (9, 2, 2)
+                else filename_mtl_path  # type: ignore[arg-type]
+            )
+            importer.SetTexturePath(
+                str(filename_mtl_path.parents[0])  # type: ignore[arg-type]
+                if pyvista.vtk_version_info < (9, 2, 2)
+                else filename_mtl_path.parents[0]
+            )
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -1030,6 +1045,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> plotter.shape
         (2, 2)
+
+        >>> plotter.show()
 
         """
         return self.renderers.shape
@@ -2514,7 +2531,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting: bool | None = None,
         n_colors: int = 256,
         interpolate_before_map: bool | None = True,
-        cmap: str | list[str] | pyvista.LookupTable | None = None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -2624,7 +2641,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -3042,7 +3060,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         lighting: bool | None = None,
         n_colors: int = 256,
         interpolate_before_map: bool | None = None,
-        cmap: str | list[str] | pyvista.LookupTable | None = None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -3186,7 +3204,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -3968,7 +3988,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         resolution: VectorLike[float] | None = None,
         opacity: OpacityOptions | NumpyArray[float] = 'linear',
         n_colors: int = 256,
-        cmap: str | list[str] | pyvista.LookupTable | None = None,
+        cmap: ColormapOptions | list[str] | LookupTable | None = None,
         flip_scalars: bool = False,
         reset_camera: bool | None = None,
         name: str | None = None,
@@ -4077,7 +4097,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
-            when mapping the ``scalars``.  See available Matplotlib colormaps.
+            when mapping the ``scalars``. See :ref:`named_colormaps` for supported
+            colormaps.
+
             Only applicable for when displaying ``scalars``.
             ``colormap`` is also an accepted alias
             for this. If ``colorcet`` or ``cmocean`` are installed, their
@@ -4350,7 +4372,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
-                    cmap=color,
+                    cmap=color,  # type: ignore[arg-type]
                     flip_scalars=flip_scalars,
                     reset_camera=reset_camera,
                     name=next_name,
@@ -4483,7 +4505,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if cmap is None:
                 cmap = self._theme.cmap
 
-            mpl_cmap = get_cmap_safe(cmap)
+            cmap_obj = get_cmap_safe(cmap)  # type: ignore[arg-type]
             if categories:
                 if categories is True:
                     n_colors = len(np.unique(scalars))
@@ -4491,10 +4513,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     n_colors = categories
 
             if flip_scalars:
-                mpl_cmap = mpl_cmap.reversed()
+                cmap_obj = cmap_obj.reversed()
 
             # Set colormap and build lookup table
-            self.mapper.lookup_table.apply_cmap(mpl_cmap, n_colors)
+            self.mapper.lookup_table.apply_cmap(cmap_obj, n_colors)
             self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
             self.mapper.lookup_table.log_scale = log_scale

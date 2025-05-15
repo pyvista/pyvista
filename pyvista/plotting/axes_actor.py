@@ -23,6 +23,13 @@ class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     options, refer to `vtkAxesActor Details
     <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
 
+    See Also
+    --------
+    :class:`~pyvista.AxesAssembly`
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
+
     Examples
     --------
     Customize the axis shaft color and shape.

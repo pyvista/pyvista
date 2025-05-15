@@ -21,7 +21,15 @@ if TYPE_CHECKING:
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
     from .charts import ChartPie as ChartPie
+    from .colors import _CMOCEAN_CMAPS_LITERAL
+    from .colors import _COLORCET_CMAPS_LITERAL
+    from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
+
+
+ColormapOptions = Union[
+    '_MATPLOTLIB_CMAPS_LITERAL', '_CMOCEAN_CMAPS_LITERAL', '_COLORCET_CMAPS_LITERAL'
+]
 
 ColorLike = Union[
     tuple[int, int, int],

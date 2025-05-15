@@ -51,6 +51,7 @@ jupyter = [
   'trame>=2.5.2',
 ]
 
+[dependency-groups]
 pinned = [ # Pinned versions of core dependencies
   'matplotlib<3.10.2',
   'numpy<2.2.0',
@@ -64,8 +65,8 @@ typing = [
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'pyvista[pinned]',
   'trimesh<4.6.0',
+  { include-group = 'pinned' },
 ]
 
 test = [
@@ -82,14 +83,13 @@ test = [
   'numpydoc==1.8.0',
   'pyanalyze<=0.13.1',
   'pytest-cov<6.2.0',
-  'pytest-memprof<0.3.0',
   'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
   'pytest_cases<3.8.7',
   'pytest_mock<3.15.0',
-  'pyvista[pinned]',
+  'retry-requests<2.1.0',
   'scipy<1.14.2',
   'sphinx-book-theme<1.2.0',
   'sphinx-gallery<0.19.0',
@@ -102,17 +102,19 @@ test = [
   'trame>=2.5.2,<3.7.1',
   'trimesh<4.6.0',
   'typing-extensions<4.14.0',
+  { include-group = 'pinned' },
 ]
 
 docs = [
   'cmocean==4.0.3',
   'colorcet==3.1.0',
+  'colour-science==0.4.6',
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
   'jupyterlab==4.4.1',
-  'lxml==5.3.2',
+  'lxml==5.4.0',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==1.15.0',
@@ -122,7 +124,6 @@ docs = [
   'pypandoc==1.15',
   'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
-  'pyvista[pinned]',
   'scipy==1.15.2',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
@@ -142,9 +143,10 @@ docs = [
   'trame-vuetify==3.0.1',
   'trame==3.9.0',
   'trimesh==4.6.8',
+  { include-group = 'pinned' },
 ]
 
-dev = ['pre-commit', 'pyvista[test,typing]']
+dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
 [project.urls]
 'Bug Tracker' = 'https://github.com/pyvista/pyvista/issues'

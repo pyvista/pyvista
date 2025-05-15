@@ -428,7 +428,7 @@ def plot_beam(notebook=None):
         scalars=d,
         scalar_bar_args={'title': 'Y Displacement'},
         rng=[-d.max(), d.max()],
-        cmap=cmap,
+        cmap=cmap,  # type: ignore[arg-type]
     )
     plotter.camera_position = cpos  # type: ignore[assignment]
     plotter.add_text('Static Beam Example')
