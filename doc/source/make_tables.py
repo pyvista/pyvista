@@ -12,6 +12,8 @@ from dataclasses import dataclass
 import re
 import sys
 
+from pyvista import _validation
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
@@ -864,6 +866,14 @@ class _ColormapInfo:
         return [hls[2] < 0.01 for hls in self.hls_samples()]
 
 
+@dataclass
+class _ColormapSortOptions:
+    initial_cmap: str
+    n_samples: int
+    pre_sort_cmaps: bool = False
+    group_by_package: bool = False
+
+
 # Define colormap info based on manual review of documentation from each package.
 # NOTE: The order of the cmaps here will be reflected in the docs.
 _COLORMAP_INFO: list[_ColormapInfo] = [
@@ -1071,7 +1081,7 @@ class ColormapTable(DocTable):
 
     info_source = _COLORMAP_INFO
     kind: ColormapKind | str
-    sort_cmap: str | None = None
+    sort_options: _ColormapSortOptions | None = None
 
     title = ''
     header = _aligned_dedent(
@@ -1108,8 +1118,10 @@ class ColormapTable(DocTable):
     @classmethod
     def fetch_data(cls):
         data = [info for info in cls.info_source if info.kind == cls.kind]
-        if cls.sort_cmap is not None:
-            data = ColormapTable.sort_data(data, init_cmap_name=cls.sort_cmap)
+        if (options := cls.sort_options) is not None:
+            data = ColormapTable.sort_data(
+                data, initial_cmap=options.initial_cmap, n_samples=options.n_samples, pre_sort_cmaps=options.pre_sort_cmaps, group_by_package=options.group_by_package
+            )
         return data
 
     @classmethod
@@ -1259,7 +1271,9 @@ class ColormapTable(DocTable):
         return r_value**2
 
     @staticmethod
-    def sort_data(data: list[_COLORMAP_INFO], init_cmap_name: str, n_samples: int = 11):
+    def sort_data(
+        data: list[_COLORMAP_INFO], initial_cmap: str, n_samples: int, pre_sort_cmaps: bool = False, group_by_package:bool=False
+    ):
         def compute_total_delta_e_between_swatch(swatch1, swatch2, weights=None):
             """Compute weighted delta E between two swatches (each M x 3), position-wise."""
             import colour
@@ -1305,28 +1319,41 @@ class ColormapTable(DocTable):
             sorted_groups = [grouped_colors[i] for i in order]
             return sorted_groups, order
 
-        # Extract swatches from data (each swatch is Mx3 in CAM02UCS)
+        # Extract CAM02UCS swatches from data, each swatch has shape (n_samples, 3)
         grouped_colors = [info.cam02ucs_samples(n_samples) for info in data]
 
+        # Optionally sort each swatch row-wise by chroma (norm of ab components)
+        if pre_sort_cmaps:
+            for i, swatch in enumerate(grouped_colors):
+                chroma = np.linalg.norm(swatch[:, 1:3], axis=1)  # use a and b channels
+                order = np.argsort(chroma)
+                grouped_colors[i] = swatch[order]
+
         # Determine starting index using the init cmap
-        start_index = next((i for i, info in enumerate(data) if info.name == init_cmap_name), 0)
+        cmaps = [info.name for info in data]
+        _validation.check_contains(cmaps, must_contain=initial_cmap, name='initial_cmap')
+        start_index = cmaps.index(initial_cmap)
 
         sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index)
-        return [data[i] for i in order]
+        sorted_data = [data[i] for i in order]
+
+        if group_by_package:
+            sorted_data.sort(key=lambda info: info.package)
+        return sorted_data
 
 
 class ColormapTableLINEAR(ColormapTable):
     """Class to generate linear colormap table."""
 
     kind = ColormapKind.LINEAR
-    sort_cmap = pv.global_theme.cmap
+    sort_options = _ColormapSortOptions(initial_cmap=pv.global_theme.cmap, n_samples=11)
 
 
 class ColormapTableDIVERGING(ColormapTable):
     """Class to generate diverging colormap table."""
 
     kind = ColormapKind.DIVERGING
-    sort_cmap = 'coolwarm'
+    sort_options = _ColormapSortOptions(initial_cmap='coolwarm', n_samples=3)
 
 
 class ColormapTableCYCLIC(ColormapTable):
@@ -1339,12 +1366,14 @@ class ColormapTableCATEGORICAL(ColormapTable):
     """Class to generate categorical colormap table."""
 
     kind = ColormapKind.CATEGORICAL
+    sort_options = _ColormapSortOptions(initial_cmap='glasbey', n_samples=256, group_by_package=True)
 
 
 class ColormapTableMISC(ColormapTable):
     """Class to generate misc colormap table."""
 
     kind = ColormapKind.MISC
+
 
 
 class CETColormapTable(ColormapTable):
