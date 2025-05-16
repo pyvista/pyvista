@@ -1375,7 +1375,7 @@ def parametric_keywords(
 
     Parameters
     ----------
-    parametric_function : vtk.vtkParametricFunction
+    parametric_function : :vtk:`vtkParametricFunction`
         Parametric function to generate mesh from.
 
     min_u : float, optional
@@ -1434,7 +1434,7 @@ def surface_from_para(
 
     Parameters
     ----------
-    parametric_function : vtk.vtkParametricFunction
+    parametric_function : :vtk:`vtkParametricFunction`
         Parametric function to generate mesh from.
 
     u_res : int, default: 100

@@ -1213,10 +1213,10 @@ def Cube(
     arguments are ignored.
 
     .. versionchanged:: 0.33.0
-        The cube is created using ``vtk.vtkCubeSource``. For
+        The cube is created using :vtk:`vtkCubeSource`. For
         compatibility with :func:`pyvista.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
-        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        :func:`~pyvista.PlatonicSolid`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
         The cube points are also cleaned by default now, leaving only
         the 8 corners and a watertight (manifold) mesh.

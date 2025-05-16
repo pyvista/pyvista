@@ -587,7 +587,7 @@ def validate_transform4x4(
     Parameters
     ----------
     transform : TransformLike
-        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
+        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 :vtk:`vtkMatrix`, :vtk:`vtkTransform`,
         or a SciPy ``Rotation`` instance. If the input is 3x3, the array is padded using
         a 4x4 identity matrix.
 
