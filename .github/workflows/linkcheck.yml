@@ -53,9 +53,7 @@ jobs:
           title: "chore: linkcheck failure"
           content-filepath: ./lychee/out.md
           labels: |
-            bot
-            new: issue
-            type: documentation
+            documentation
 
       - name: "exit action"
         if: steps.lychee.outputs.exit_code != 0
