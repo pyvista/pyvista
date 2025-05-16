@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import sys
 
+from docutils import nodes
+
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
@@ -714,7 +716,18 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 html_baseurl = 'https://docs.pyvista.org/'
 
 
+def vtk_class(name, rawtext, text, lineno, inliner, options={}, content=[]):  # noqa: B006
+    """Link to vtk class documentation using a custom role.
+
+    E.g. use :vtk:`vtkPolyData` for linking to the `vtkPolyData` class docs.
+    """
+    url = f'https://vtk.org/doc/nightly/html/class{text}.html'
+    node = nodes.reference(rawtext, text, refuri=url, **options)
+    return [node], []
+
+
 def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_role('vtk', vtk_class)
