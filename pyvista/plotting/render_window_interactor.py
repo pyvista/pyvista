@@ -464,7 +464,7 @@ class RenderWindowInteractor:
 
         Returns
         -------
-        vtkInteractorStyle or vtkContextInteractorStyle or None
+        vtkInteractorStyle | vtkContextInteractorStyle | None
             The current interactor style.
 
         Examples
