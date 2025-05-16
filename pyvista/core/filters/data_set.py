@@ -678,7 +678,7 @@ class DataSetFilters(DataObjectFilters):
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ):
-        """Apply a ``vtkThreshold`` filter to the input dataset.
+        """Apply a :vtk:`vtkThreshold` filter to the input dataset.
 
         This filter will apply a :vtk:`vtkThreshold` filter to the input
         dataset and return the resulting object. This extracts cells

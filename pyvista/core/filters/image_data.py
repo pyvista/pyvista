@@ -2583,7 +2583,7 @@ class ImageDataFilters(DataSetFilters):
             If ``'seeded'``, only the regions that include the points defined with
             ``point_seeds`` are extracted.
 
-        point_seeds : MatrixLike[float], VectorLike[float], _vtk.:vtk:`vtkDataSet`, optional
+        point_seeds : MatrixLike[float], VectorLike[float], :vtk:`vtkDataSet`, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
             as a :vtk:`vtkDataSet`. Has no effect if ``extraction_mode`` is not
             ``'seeded'``.

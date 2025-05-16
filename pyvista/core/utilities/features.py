@@ -678,8 +678,7 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     -------
     :vtk:`vtkPerlinNoise`
         Instance of :vtk:`vtkPerlinNoise` to a Perlin noise field as an
-        implicit function. Use with :func:`pyvista.sample_function()
-        <pyvista.core.utilities.features.sample_function>`.
+        implicit function. Use with :func:`~pyvista.sample_function`.
 
     See Also
     --------

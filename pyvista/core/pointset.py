@@ -813,11 +813,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 Invalid Input type:
 
                 Expected first argument to be either a:
-                - vtk.PolyData
+                - vtkPolyData
                 - pyvista.PolyData
                 - numeric numpy.ndarray (1 or 2 dimensions)
                 - List (flat or nested with 3 points per vertex)
-                - :vtk:`vtkDataArray`
+                - vtkDataArray
 
                 Instead got: {type(var_inp)}"""
             raise TypeError(dedent(msg.strip('\n')))

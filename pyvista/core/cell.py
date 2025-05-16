@@ -52,7 +52,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
     Parameters
     ----------
     vtk_cell : :vtk:`vtkCell`, optional
-        The vtk object to wrap as Cell, that must be of ``:vtk:`vtkCell``` type.
+        The vtk object to wrap as Cell, that must be of :vtk:`vtkCell` type.
 
     cell_type : int, optional
         VTK cell type. Determined from ``vtk_cell`` if not input.

@@ -5,14 +5,14 @@ Collision
 ~~~~~~~~~
 Perform a collision detection between two meshes.
 
-This example use the :class:`collision <pyvista.PolyDataFilters.collision>`
+This example use the :meth:`~pyvista.PolyDataFilters.collision`
 filter to detect the faces from one sphere colliding with another
 sphere.
 
 .. note::
    Due to the nature of the :vtk:`vtkCollisionDetectionFilter`,
    repeated uses of this method will be slower that using the
-   ``vtkCollisionDetectionFilter`` directly.  The first
+   :vtk:`vtkCollisionDetectionFilter` directly.  The first
    update of the filter creates two instances of :vtk:`vtkOBBTree`,
    which can be subsequently updated by modifying the transform or
    matrix of the input meshes.

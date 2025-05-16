@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
-    """A ndarray which references the owning dataset and the underlying :vtk:`vtkArray`.
+    """A ndarray which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
