@@ -61,13 +61,14 @@ pinned = [ # Pinned versions of core dependencies
   'typing-extensions<4.14.0',
 ]
 
-typing = [
+typing-core = [
   'mypy<1.14.0',
   'npt-promote==0.2',
-  'numpy>=2.0.0',
   'trimesh<4.6.0',
   { include-group = 'pinned' },
 ]
+
+typing = ['numpy>=2.0.0', { include-group = 'typing-core' }]
 
 test = [
   'cmocean<4.0.4',
@@ -100,9 +101,8 @@ test = [
   'trame-vtk>=2.5.8,<2.8.12',
   'trame-vuetify>=2.3.1,<2.7.2',
   'trame>=2.5.2,<3.7.1',
-  'trimesh<4.6.0',
   'typing-extensions<4.14.0',
-  { include-group = 'pinned' },
+  { include-group = 'typing-core' },
 ]
 
 docs = [
@@ -213,6 +213,7 @@ doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error',
 
+  "ignore:'mypy_extensions.NoReturn' is deprecated, and will be removed in a future version.",
   'ignore:.*Given trait value dtype "float64":UserWarning',                                                              # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
