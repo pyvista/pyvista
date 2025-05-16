@@ -9,33 +9,22 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from dataclasses import dataclass
-import re
-import sys
-from typing import NamedTuple
-import warnings
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        def __str__(self) -> str:
-            return self.value
-
-
 from enum import auto
 import inspect
 import io
 import os
 from pathlib import Path
+import re
+import sys
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
+from typing import NamedTuple
 from typing import final
 from typing import get_args
+import warnings
 
 import cmocean
 import colorcet
@@ -44,7 +33,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import linregress
 
-import pyvista
 import pyvista as pv
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
@@ -63,6 +51,16 @@ from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
 from pyvista.plotting.colors import _VTK_COLORS
 from pyvista.plotting.colors import _format_color_dict
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        def __str__(self) -> str:
+            return self.value
+
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -260,7 +258,7 @@ class CellQualityMeasuresTable(DocTable):
 class CellQualityInfoTable(DocTable):
     """Class to generate table for cell quality info."""
 
-    cell_type: pyvista.CellType
+    cell_type: pv.CellType
 
     @property
     @final
@@ -1808,15 +1806,15 @@ class DatasetCard:
 
         # Get `download` function from downloads.py or planets.py
         func_name = 'download_' + dataset_name
-        if hasattr(pyvista.examples.downloads, func_name):
-            func = getattr(pyvista.examples.downloads, func_name)
-        elif hasattr(pyvista.examples.planets, func_name):
-            func = getattr(pyvista.examples.planets, func_name)
+        if hasattr(pv.examples.downloads, func_name):
+            func = getattr(pv.examples.downloads, func_name)
+        elif hasattr(pv.examples.planets, func_name):
+            func = getattr(pv.examples.planets, func_name)
         else:
             # Get `load` function from examples.py
             func_name = 'load_' + dataset_name
-            if hasattr(pyvista.examples.examples, func_name):
-                func = getattr(pyvista.examples.examples, func_name)
+            if hasattr(pv.examples.examples, func_name):
+                func = getattr(pv.examples.examples, func_name)
 
         if func is None:
             msg = f'Dataset function {func_name} does not exist.'
@@ -2329,7 +2327,7 @@ class DatasetCardFetcher:
                 try:
                     if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
-                except pyvista.VTKVersionError as err:
+                except pv.VTKVersionError as err:
                     # caused by 'download_can', this error is handled later
                     msg = f'could not load {dataset_name} due to {err!r}'
                     warnings.warn(msg, UserWarning)
@@ -2715,7 +2713,7 @@ class BuiltinCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.examples)
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.examples)
 
 
 class DownloadsCarousel(DatasetGalleryCarousel):
@@ -2727,7 +2725,7 @@ class DownloadsCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.downloads)
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.downloads)
 
 
 class PlanetsCarousel(DatasetGalleryCarousel):
@@ -2739,7 +2737,7 @@ class PlanetsCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pv.examples.planets)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
