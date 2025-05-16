@@ -100,6 +100,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -322,7 +323,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # optional function to be called prior to closing
         self.__before_close_callback = None
-        self.mesh: pyvista.MultiBlock | pyvista.DataSet | None = None
+        self.mesh: MultiBlock | DataSet | None = None
         if title is None:
             title = self._theme.title
         self.title = str(title)
@@ -2647,7 +2648,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
+        cmap : str | list | LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``. See :ref:`named_colormaps` for supported
             colormaps.
@@ -3211,7 +3212,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
+        cmap : str | list | LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``. See :ref:`named_colormaps` for supported
             colormaps.
@@ -3425,7 +3426,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             with caution. Defaults to ``False``. This is ignored if the input
             is a ``vtkAlgorithm`` subclass.
 
-        backface_params : dict | pyvista.Property, optional
+        backface_params : dict | Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
             backface rendering. This is useful for instance when the inside of
             oriented surfaces has a different color than the outside. When a
@@ -3780,7 +3781,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
                 raise ValueError(msg)
 
-        mesh = cast('pyvista.DataSet | pyvista.PolyData', mesh)
+        mesh = cast('DataSet | PolyData', mesh)
         if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
             msg = 'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
@@ -3991,7 +3992,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_volume(
         self,
-        volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
+        volume: DataSet | MultiBlock | NumpyArray[float],
         scalars: str | NumpyArray[float] | None = None,
         clim: float | tuple[float, float] | None = None,
         resolution: VectorLike[float] | None = None,
@@ -4030,7 +4031,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray | pyvista.DataSet
+        volume : 3D numpy.ndarray | DataSet
             The input volume to visualize. 3D numpy arrays are accepted.
 
             .. warning::
@@ -4104,7 +4105,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
+        cmap : str | list | LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``. See :ref:`named_colormaps` for supported
             colormaps.
@@ -4573,8 +4574,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_silhouette(
         self,
         mesh: NumpyArray[float]
-        | pyvista.DataSet
-        | pyvista.MultiBlock
+        | DataSet
+        | MultiBlock
         | _vtk.vtkAlgorithm
         | _vtk.vtkAlgorithmOutput,
         color: ColorLike | None = None,
@@ -4675,7 +4676,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return cast('Actor', actor)
 
     def update_scalar_bar_range(
-        self, clim: float | tuple[float, float], name: str | None = None
+        self, clim: float | Sequence[float], name: str | None = None
     ) -> None:
         """Update the value range of the active or named scalar bar.
 
@@ -4691,13 +4692,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(clim, (float, int)):
             clim = (-clim, clim)
         if len(clim) != 2:
-            msg = 'clim argument must be a length 2 iterable of values: (min, max).'  # type: ignore[unreachable]
+            msg = 'clim argument must be a length 2 iterable of values: (min, max).'
             raise TypeError(msg)
         if name is None:
             if not hasattr(self, 'mapper'):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
-            self.mapper.scalar_range = clim
+            self.mapper.scalar_range = clim  # type: ignore[assignment]
             return
 
         try:
@@ -5076,7 +5077,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mesh = None
         self.mapper = None  # type: ignore[assignment]
         self.volume = None  # type: ignore[assignment]
-        self.text: pyvista.CornerAnnotation | pyvista.Text | None = None
+        self.text: pyvista.CornerAnnotation | Text | None = None
 
     def add_text(
         self,
@@ -5103,7 +5104,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_file: str | None = None,
         *,
         render: bool = True,
-    ) -> pyvista.CornerAnnotation | pyvista.Text:
+    ) -> CornerAnnotation | Text:
         """Add text to plot object in the top left corner by default.
 
         Parameters
@@ -5168,7 +5169,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pyvista.CornerAnnotation | pyvista.Text
+        CornerAnnotation | Text
             Text actor added to plot.
 
         Examples
@@ -5609,7 +5610,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence | pyvista.DataSet | vtk.vtkAlgorithm
+        points : sequence | DataSet | vtk.vtkAlgorithm
             An ``n x 3`` sequence points or :class:`pyvista.DataSet` with
             points or mesh-producing algorithm.
 
@@ -7276,7 +7277,7 @@ class Plotter(BasePlotter):
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
         shadow: bool = False,
-    ) -> pyvista.CornerAnnotation | pyvista.Text:
+    ) -> CornerAnnotation | Text:
         """Add text to the top center of the plot.
 
         This is merely a convenience method that calls ``add_text``
@@ -7308,7 +7309,7 @@ class Plotter(BasePlotter):
 
         Returns
         -------
-        pyvista.CornerAnnotation | pyvista.Text
+        CornerAnnotation | Text
             Text actor added to plot.
 
         Examples
@@ -7387,12 +7388,12 @@ class Plotter(BasePlotter):
         return cast('_vtk.vtkActor', actor)
 
     @property
-    def meshes(self) -> list[pyvista.DataSet | pyvista.MultiBlock]:  # numpydoc ignore=RT01
+    def meshes(self) -> list[DataSet | MultiBlock]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns
         -------
-        list[pyvista.DataSet | pyvista.MultiBlock]
+        list[DataSet | MultiBlock]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
