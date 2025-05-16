@@ -2,9 +2,12 @@ accept = [
   403, # Skip domains known to return 403 Forbidden to bots
 ]
 exclude = [
+  "http://*:8888*",
   'file:///home/*',
   'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
 ]
 exclude_all_private = true # exlclude 'localhost', '127.0.0.1', etc.
 exclude_path = ['pyvista/core/utilities/docs.py']
+max_retries = 3
+retry_wait_time_secs = 5
 user_agent = 'curl/7.83.1'

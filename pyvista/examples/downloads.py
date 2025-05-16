@@ -5979,7 +5979,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     """Download a multielement airfoil with a cell centered solution.
 
     Originally downloaded from `CFD General Notation System Example Files
-    <https://cgns.github.io/CGNSFiles.html>`_
+    <https://cgns.org/current/examples.html#d-multielement-airfoil>`_
 
     Parameters
     ----------
