@@ -21,12 +21,12 @@ handful of parameters rather than having to explicitly describe the
 points and geometry of the dataset.
 
 PyVista gridded data is composed of the
-:class:`pyvista.RectilinearGrid` and :class:`pyvista.ImageData`
-classes. These classes inherit from the `vtkRectilinearGrid`_ and
-`vtkImageData`_ classes and are commonly used to model images or
+:class:`~pyvista.RectilinearGrid` and :class:`~pyvista.ImageData`
+classes. These classes inherit from the :vtk:`vtkRectilinearGrid` and
+:vtk:`vtkImageData` classes and are commonly used to model images or
 volumetric data.
 
-A :class:`pyvista.RectilinearGrid` is used for modeling datasets with
+A :class:`~pyvista.RectilinearGrid` is used for modeling datasets with
 variable spacing in the three coordinate directions.
 
 .. jupyter-execute::
@@ -36,7 +36,7 @@ variable spacing in the three coordinate directions.
    demos.plot_datasets('RectilinearGrid')
 
 
-A :class:`pyvista.ImageData` is used for modeling datasets with
+A :class:`~pyvista.ImageData` is used for modeling datasets with
 uniform spacing in the three coordinate directions.
 
 .. jupyter-execute::
@@ -50,13 +50,10 @@ uniform spacing in the three coordinate directions.
 
 The following table describes PyVista's grid set classes. These
 classes inherit all methods from their corresponding VTK
-`vtkRectilinearGrid`_ and `vtkImageData`_ superclasses.
+:vtk:`vtkRectilinearGrid` and :vtk:`vtkImageData` superclasses.
 
 .. autosummary::
    :toctree: _autosummary
 
    pyvista.RectilinearGrid
    pyvista.ImageData
-
-.. _vtkRectilinearGrid: https://www.vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
-.. _vtkImageData: https://www.vtk.org/doc/nightly/html/classvtkImageData.html

@@ -2,8 +2,8 @@
 
 Cameras
 =======
-The :class:`pyvista.Camera` class adds additional functionality and a
-pythonic API to the ``vtk.vtkCamera`` class. :class:`pyvista.Camera`
+The :class:`~pyvista.Camera` class adds additional functionality and a
+pythonic API to the :vtk:`vtkCamera` class. :class:`~pyvista.Camera`
 objects come with a default set of cameras that work well in most
 cases, but in many situations a more hands-on approach to using the
 camera is necessary.
