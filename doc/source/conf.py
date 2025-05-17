@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+from http import HTTPStatus
 import importlib.util
 import locale
 import os
@@ -14,7 +15,6 @@ from typing import TYPE_CHECKING
 from docutils import nodes
 import requests
 from sphinx.roles import ReferenceRole
-from sphinx.util import logging
 
 if TYPE_CHECKING:
     from typing import ClassVar
@@ -723,9 +723,6 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 html_baseurl = 'https://docs.pyvista.org/'
 
 
-logger = logging.getLogger(__name__)
-
-
 class VTKRole(ReferenceRole):
     """Link to vtk class documentation using a custom role.
 
@@ -745,16 +742,14 @@ class VTKRole(ReferenceRole):
         if url not in self.validated_urls:
             try:
                 response = requests.head(url, timeout=2)
-                is_valid = response.status_code == 200
-            except Exception as e:
+                is_valid = response.status_code == HTTPStatus.OK
+            except requests.exceptions.RequestException:
                 is_valid = False
-                logger.debug(f'VTK link check failed for {cls_name}: {e}')
 
             self.validated_urls[url] = is_valid
 
             if not is_valid:
                 msg = f"Invalid VTK class reference: '{cls_name}' → {url}"
-                logger.warning(msg, location=(self.env.docname, self.lineno))
                 if self.env.config.nitpicky:
                     # Make the warning "nitpick-compatible"
                     self.inliner.reporter.warning(msg, line=self.lineno)
