@@ -730,7 +730,7 @@ class VTKRole(ReferenceRole):
     """
 
     base_url = 'https://vtk.org/doc/nightly/html/'
-    class_url_template = base_url + 'class{cls}.html#details'
+    class_url_template = base_url + 'class{cls}.html'
     validated_urls: ClassVar[dict[str, bool]] = {}  # Cache for URLs which have been checked
 
     def run(self):
