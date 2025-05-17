@@ -4,11 +4,13 @@ import re
 from unittest import mock
 
 import numpy as np
+import pandas as pd
 import pytest
 import vtk as _vtk
 
 from pyvista import examples
 from pyvista import pyvista_ndarray
+from pyvista import vtk_points
 
 
 @pytest.fixture
@@ -106,3 +108,10 @@ def test_raises(val):
     )
     with pytest.raises(TypeError, match=match):
         pyvista_ndarray(val)
+
+
+@pytest.mark.parametrize('obj_in', [np.eye(3), vtk_points(np.eye(3)).GetData()])
+def test_wrap_pandas(obj_in):
+    array = pyvista_ndarray(obj_in)
+    df = pd.DataFrame(array)
+    assert np.shares_memory(df.values, array)
