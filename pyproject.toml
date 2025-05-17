@@ -81,6 +81,7 @@ test = [
   'meshio<5.4.0',
   'nest_asyncio<1.6.1',
   'numpydoc==1.8.0',
+  'pandas<=2.3.0',
   'pyanalyze<=0.13.1',
   'pytest-cov<6.2.0',
   'pytest-mypy-plugins<3.3.0',
