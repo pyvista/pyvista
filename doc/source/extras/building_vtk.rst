@@ -27,7 +27,7 @@ Building VTK from source is fairly straightforward. Using the default build
 settings, build a Python wheel of VTK using ``ninja`` using the following
 script. This script uses system python3, but you can use any modern Python
 version. For some additional useful options, see the `conda-forge recipe
-<https://github.com/conda-forge/vtk-feedstock/blob/master/recipe/build.sh>`__.
+<https://github.com/conda-forge/vtk-feedstock/blob/main/recipe/build-base.sh>`__.
 Most of the ones below are designed to reduce the build time and resulting
 wheel size.
 

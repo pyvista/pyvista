@@ -333,7 +333,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
 
         # Track all active plotters. This has the side effect of ensuring that plotters are not
-        # collected until `close()`. See https://github.com//pull/3216
+        # collected until `close()`. See https://github.com/pyvista/pyvista/pull/3245
         # This variable should be safe as a variable name
         self._id_name = f'P_{hex(id(self))}_{len(_ALL_PLOTTERS)}'
         _ALL_PLOTTERS[self._id_name] = self

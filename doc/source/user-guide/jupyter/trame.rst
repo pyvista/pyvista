@@ -129,7 +129,7 @@ Trame Jupyter Extension
 
 `Trame Jupyter Extension <https://github.com/Kitware/trame-jupyter-extension/>`_
 enables the trame server and client to communicate over the existing
-`Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/stable/comms.html>`_
+`Jupyter Comms <https://jupyter-notebook.readthedocs.io/en/4.x/comms.html>`_
 infrastructure, instead of creating a separate WebSocket connection.
 
 Using this extension removes the need for a secondary web server and thus
