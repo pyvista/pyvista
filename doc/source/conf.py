@@ -740,7 +740,7 @@ class VTKRole(ReferenceRole):
         url = self.class_url_template.format(cls=cls_name)
 
         # Validate URL only once
-        is_valid = self.validated_urls.get(url, None)
+        is_valid = self.validated_urls.get(url)
         if is_valid is None:
             try:
                 response = requests.head(url, timeout=2)
@@ -753,7 +753,7 @@ class VTKRole(ReferenceRole):
         assert isinstance(is_valid, bool)
         if not is_valid:
             msg = f"Invalid VTK class reference: '{cls_name}' → {url}"
-            self.inliner.reporter.warning(msg, line=self.lineno)
+            self.inliner.reporter.warning(msg, line=self.lineno, subtype='ref')
 
         # Emit the hyperlink node
         node = nodes.reference(title, title, refuri=url)
