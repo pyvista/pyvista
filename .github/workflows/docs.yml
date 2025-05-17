@@ -133,8 +133,7 @@ jobs:
 
       - name: Build I18N Documentation
         run: |
-          cp -r pyvista-doc-translations/locale/ja doc/source/locales/ja
-          make -C doc mini18n-html SPHINXOPTS="-W --keep-going"
+          make -C doc mini18n-html SPHINXOPTS="-W --keep-going -D locale_dirs='../pyvista-doc-translations/locale'"
           rm -r doc/_build/html/en
           rm -r doc/_build/html/ja
           mv doc/_build/mini18n-html/en doc/_build/html
