@@ -279,7 +279,7 @@ def is_pyvista_dataset(obj: Any) -> bool:
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
-    """Return a _vtk.vtkPlane.
+    """Return a :vtk:`vtkPlane`.
 
     Parameters
     ----------
@@ -291,7 +291,7 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
     Returns
     -------
-    vtk.vtkPlane
+    :vtk:`vtkPlane`
         VTK plane.
 
     """

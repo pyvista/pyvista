@@ -765,7 +765,7 @@ _CELL_TYPE_INFO = dict(
         - not contain zero-thickness portions: adjacent faces should not
           overlap each other even partially
         - not contain disconnected elements: detached vertice(s), edge(s) or face(s)
-        - be simply connected: vtkPolyhedron must describe a single polyhedron
+        - be simply connected: :vtk:`vtkPolyhedron` must describe a single polyhedron
         - not contain duplicate elements: each point index and each face
           description should be unique
         - not contain “internal” or “external” faces: for each face,
@@ -953,7 +953,7 @@ class CellType(IntEnum):
         value : int
             Integer value of the cell type.
 
-        _cell_class : type[_vtk.vtkCell], optional
+        _cell_class : type[:vtk:`vtkCell`], optional
             VTK class for this cell type.
 
         _short_doc : str, optional

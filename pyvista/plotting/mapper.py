@@ -367,7 +367,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
 
 @no_new_attr
 class _DataSetMapper(_BaseMapper):
-    """Base wrapper for _vtk.vtkDataSetMapper.
+    """Base wrapper for :vtk:`vtkDataSetMapper`.
 
     Parameters
     ----------
@@ -870,7 +870,7 @@ class _DataSetMapper(_BaseMapper):
 
 
 class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
-    """Wrap _vtk.vtkDataSetMapper.
+    """Wrap :vtk:`vtkDataSetMapper`.
 
     Parameters
     ----------
@@ -904,7 +904,7 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
 
 @no_new_attr
 class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
-    """Wrap vtkPointGaussianMapper.
+    """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
     ----------
@@ -1118,8 +1118,8 @@ class _BaseVolumeMapper(_BaseMapper):
         * ``"additive"``
 
         Also accepts integer values corresponding to
-        ``vtk.vtkVolumeMapper.BlendModes``. For example
-        ``vtk.vtkVolumeMapper.COMPOSITE_BLEND``.
+        :vtk:`vtkVolumeMapper` ``BlendModes``. For example
+        :vtk:`vtkVolumeMapper` ``COMPOSITE_BLEND``.
 
         """
         value = self.GetBlendMode()
@@ -1162,7 +1162,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
-    """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1171,7 +1171,7 @@ class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeR
 
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
-    """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1180,7 +1180,7 @@ class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
-    """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1189,7 +1189,7 @@ class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRay
 
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
-    """Wrap _vtk.vtkSmartVolumeMapper."""
+    """Wrap :vtk:`vtkSmartVolumeMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1201,7 +1201,7 @@ class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
-    """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""

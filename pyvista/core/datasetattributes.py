@@ -76,13 +76,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     Parameters
     ----------
-    vtkobject : vtkFieldData
-        The vtk object to wrap as a DataSetAttribute, usually an
-        instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
-        ``vtk.vtkFieldData``.
+    vtkobject : :vtk:`vtkFieldData`
+        The vtk object to wrap as a :class:~pyvista.DataSetAttribute`,
+        usually an instance of :vtk:`vtkCellData`, :vtk:`vtkPointData`, or
+        :vtk:`vtkFieldData`.
 
-    dataset : vtkDataSet
-        The vtkDataSet containing the vtkobject.
+    dataset : :vtk:`vtkDataSet`
+        The :vtk:`vtkDataSet` containing the vtkobject.
 
     association : FieldAssociation
         The array association type of the vtkobject.

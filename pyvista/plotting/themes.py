@@ -2833,10 +2833,10 @@ class Theme(_ThemeConfig):
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
 
-        * ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
-        * ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
-        * ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
-        * ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
+        * ``'fixed_point'`` : :vtk:`vtkFixedPointVolumeRayCastMapper`
+        * ``'gpu'`` : :vtk:`vtkGPUVolumeRayCastMapper`
+        * ``'open_gl'`` : :vtk:`vtkOpenGLGPUVolumeRayCastMapper`
+        * ``'smart'`` : :vtk:`vtkSmartVolumeMapper`
 
         Examples
         --------

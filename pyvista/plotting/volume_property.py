@@ -1,4 +1,4 @@
-"""Wrapper for vtkVolumeProperty."""
+"""Wrapper for :vtk:`vtkVolumeProperty`."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from . import _vtk
 
 @no_new_attr
 class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
-    """Wrap the VTK class vtkVolumeProperty.
+    """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume
     rendering. This includes properties for determining the type of
@@ -94,7 +94,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         shade=None,
         opacity_unit_distance=None,
     ):
-        """Initialize the vtkVolumeProperty class."""
+        """Initialize the :vtk:`vtkVolumeProperty` class."""
         super().__init__()
         self._lookup_table_ = None
         self._lookup_table_observer_id = None

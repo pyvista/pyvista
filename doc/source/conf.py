@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+from http import HTTPStatus
 import importlib.util
 import locale
 import os
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
+
+from docutils import nodes
+import requests
+from sphinx.roles import ReferenceRole
+
+if TYPE_CHECKING:
+    from typing import ClassVar
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -714,7 +723,45 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 html_baseurl = 'https://docs.pyvista.org/'
 
 
+class VTKRole(ReferenceRole):
+    """Link to vtk class documentation using a custom role.
+
+    E.g. use :vtk:`vtkPolyData` for linking to the `vtkPolyData` class docs.
+    """
+
+    base_url = 'https://vtk.org/doc/nightly/html/'
+    class_url_template = base_url + 'class{cls}.html'
+    validated_urls: ClassVar[dict[str, bool]] = {}  # Cache for URLs which have been checked
+
+    def run(self):
+        """Run the :vtk: role."""
+        cls_name = self.target
+        title = self.title or cls_name
+        url = self.class_url_template.format(cls=cls_name)
+
+        # Validate URL only once
+        is_valid = self.validated_urls.get(url)
+        if is_valid is None:
+            try:
+                response = requests.head(url, timeout=2)
+                is_valid = response.status_code == HTTPStatus.OK
+            except requests.exceptions.RequestException:
+                is_valid = False
+
+            self.validated_urls[url] = is_valid
+
+        assert isinstance(is_valid, bool)
+        if not is_valid:
+            msg = f"Invalid VTK class reference: '{cls_name}' → {url}"
+            self.inliner.reporter.warning(msg, line=self.lineno, subtype='ref')
+
+        # Emit the hyperlink node
+        node = nodes.reference(title, title, refuri=url)
+        return [node], []
+
+
 def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+    app.add_role('vtk', VTKRole())

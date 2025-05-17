@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkAxes."""
+"""Module containing pyvista implementation of :vtk:`vtkAxes`."""
 
 from __future__ import annotations
 

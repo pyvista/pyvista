@@ -552,7 +552,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        points : MatrixLike[float] | vtk.vtkPoints
+        points : MatrixLike[float] | :vtk:`vtkPoints`
             Points as a array object.
 
         """
@@ -1653,7 +1653,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        mesh : vtk.vtkDataSet
+        mesh : :vtk:`vtkDataSet`
             The overwriting mesh.
 
         deep : bool, default: True
@@ -2355,7 +2355,7 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
-        Concrete implementation of vtkDataSet's `GetCellNeighbors
+        Concrete implementation of :vtk:`vtkDataSet`'s `GetCellNeighbors
         <https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4>`_.
 
         Parameters
@@ -2760,7 +2760,7 @@ class DataSet(DataSetFilters, DataObject):
     def point_cell_ids(self: Self, ind: int) -> list[int]:
         """Get the cell IDs that use the ind-th point.
 
-        Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
+        Implements :vtk:`vtkDataSet`'s `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
 
         Parameters
         ----------

@@ -188,7 +188,7 @@ def create_axes_marker(
 
     Returns
     -------
-    vtk.vtkAxesActor
+    :vtk:`vtkAxesActor`
         Axes actor.
 
     Examples
@@ -343,7 +343,7 @@ def create_axes_orientation_box(
 
     Returns
     -------
-    vtk.vtkAnnotatedCubeActor
+    :vtk:`vtkAnnotatedCubeActor`
         Annotated cube actor.
 
     Examples

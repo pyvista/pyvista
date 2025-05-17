@@ -1,4 +1,4 @@
-"""PyVista wrapping of vtkCellArray."""
+"""PyVista wrapping of :vtk:`vtkCellArray`."""
 
 from __future__ import annotations
 
@@ -60,12 +60,12 @@ def numpy_to_idarr(
     deep: bool = False,
     return_ind: bool = False,
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
-    """Safely convert a numpy array to a vtkIdTypeArray.
+    """Safely convert a numpy array to a :vtk:`vtkIdTypeArray`.
 
     Parameters
     ----------
     ind : sequence[int]
-        Input sequence to be converted to a vtkIdTypeArray. Can be either a mask
+        Input sequence to be converted to a :vtk:`vtkIdTypeArray`. Can be either a mask
         or an integer array-like.
     deep : bool, default: False
         If ``True``, deep copy the input data. If ``False``, do not deep copy
@@ -76,8 +76,8 @@ def numpy_to_idarr(
 
     Returns
     -------
-    vtkIdTypeArray
-        Converted array as a vtkIdTypeArray.
+    :vtk:`vtkIdTypeArray`
+        Converted array as a :vtk:`vtkIdTypeArray`.
     numpy.ndarray
         The input array after it has been cast to the proper dtype. Only
         returned if `return_ind` is set to ``True``.
