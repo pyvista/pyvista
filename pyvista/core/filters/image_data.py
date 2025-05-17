@@ -1041,7 +1041,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
 
-        This filter uses :vtk:`vtkSurfaceNets`
+        This filter uses :vtk:`vtkSurfaceNets3D`
         to extract polygonal surface contours from non-continuous label maps, which
         corresponds to discrete regions in an input 3D image (i.e., volume). It is
         designed to generate surfaces from image point data, e.g. voxel point

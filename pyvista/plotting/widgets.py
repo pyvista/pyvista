@@ -1028,7 +1028,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand`` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
@@ -1159,7 +1159,7 @@ class WidgetHelper:
         Returns
         -------
         list
-            List of :vtk:`vtkActor`(s).
+            List of :vtk:`vtkActor`.
 
         Examples
         --------

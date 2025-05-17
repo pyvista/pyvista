@@ -358,13 +358,13 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Append one or more PolyData into this one.
 
-        Under the hood, the VTK :vtk:`vtkAppendPolyDataFilter`
+        Under the hood, the VTK :vtk:`vtkAppendPolyData`
         filter is used to perform the append operation.
 
         .. versionadded:: 0.40.0
 
         .. note::
-            As stated in the VTK documentation of :vtk:`vtkAppendPolyDataFilter`,
+            As stated in the VTK documentation of :vtk:`vtkAppendPolyData`,
             point and cell data are added to the output PolyData **only** if they
             are present across **all** input PolyData.
 
