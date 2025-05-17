@@ -731,7 +731,7 @@ class VTKRole(ReferenceRole):
 
     base_url = 'https://vtk.org/doc/nightly/html/'
     class_url_template = base_url + 'class{cls}.html#details'
-    validated_urls: ClassVar = {}  # Cache for URLs which have already been checked
+    validated_urls: ClassVar[dict[str, bool]] = {}  # Cache for URLs which have been checked
 
     def run(self):
         """Run the :vtk: role."""
@@ -739,9 +739,9 @@ class VTKRole(ReferenceRole):
         title = self.title or cls_name
         url = self.class_url_template.format(cls=cls_name)
 
-        # Make sure the url being referenced is valid
-        # Only check url if it hasn't already been checked
-        if url not in self.validated_urls:
+        # Validate URL only once
+        is_valid = self.validated_urls.get(url, None)
+        if is_valid is None:
             try:
                 response = requests.head(url, timeout=2)
                 is_valid = response.status_code == HTTPStatus.OK
@@ -750,13 +750,12 @@ class VTKRole(ReferenceRole):
 
             self.validated_urls[url] = is_valid
 
-            if not is_valid:
-                msg = f"Invalid VTK class reference: '{cls_name}' → {url}"
-                if self.env.config.nitpicky:
-                    # Make the warning "nitpick-compatible"
-                    self.inliner.reporter.warning(msg, line=self.lineno)
+        assert isinstance(is_valid, bool)
+        if not is_valid:
+            msg = f"Invalid VTK class reference: '{cls_name}' → {url}"
+            self.inliner.reporter.warning(msg, line=self.lineno)
 
-        # Always emit the link node regardless of validity
+        # Emit the hyperlink node
         node = nodes.reference(title, title, refuri=url)
         return [node], []
 
