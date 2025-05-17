@@ -99,20 +99,6 @@ jobs:
       - name: Build Documentation
         run: make -C doc html
 
-      - uses: actions/checkout@v4
-        with:
-          repository: pyvista/pyvista-doc-translations
-          path: pyvista-doc-translations
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Build I18N Documentation
-        run: |
-          cp -r pyvista-doc-translations/locale/ja doc/source/locales/ja
-          make -C doc mini18n-html SPHINXOPTS="-W --keep-going"
-          mv doc/_build/mini18n-html/en doc/_build/html
-          mv doc/_build/mini18n-html/ja doc/_build/html
-
       - name: Dump Sphinx Warnings and Errors
         if: always()
         run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
@@ -137,6 +123,17 @@ jobs:
         with:
           name: doc-debug-images
           path: _doc_debug_images
+
+      - uses: actions/checkout@v4
+        with:
+          repository: pyvista/pyvista-doc-translations
+          path: pyvista-doc-translations
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Build I18N Documentation
+        run: |
+          make -C doc mini18n-html SPHINXOPTS="-W --keep-going -D locale_dirs='../pyvista-doc-translations/locale' ./_build/html"
 
       - name: Upload HTML documentation
         if: always()
