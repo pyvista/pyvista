@@ -306,7 +306,7 @@ Under the hood, the collision filter detects mesh collisions using
 oriented bounding box (OBB) trees. For a single collision, this filter
 is as performant as the VTK counterpart, but when computing multiple
 collisions with the same meshes, as in the :ref:`collision_example`
-example, it is more efficient to use the :vtk:`vtkCollisionDetectionFilter,
+example, it is more efficient to use the :vtk:`vtkCollisionDetectionFilter`,
 as the OBB tree is computed once for each mesh. In most cases, pure
 PyVista is sufficient for most data science, but there are times when
 you may want to use VTK classes directly.

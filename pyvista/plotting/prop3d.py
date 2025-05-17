@@ -401,8 +401,9 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         Parameters
         ----------
         trans : TransformLike
-            Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 :vtk:`vtkMatrix`, :vtk:`vtkTransform`,
-            or a SciPy ``Rotation`` instance.
+            Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+            :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+            If the input is 3x3, the array is padded using a 4x4 identity matrix.
 
         multiply_mode : 'pre' | 'post', default: 'post'
             Multiplication mode to use.
@@ -514,7 +515,7 @@ def _rotation_matrix_as_orientation(
     Parameters
     ----------
     array : NumpyArray[float] | :vtk:`vtkMatrix3x3`
-        3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix`.
+        3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix3x3`.
 
     Returns
     -------
