@@ -25,6 +25,7 @@ from typing import Literal
 from typing import final
 from typing import get_args
 
+import cmcrameri
 import cmocean
 import colorcet
 import matplotlib as mpl
@@ -827,6 +828,7 @@ class ColorTableMAGENTA(ColorClassificationTable):
 
 class ColormapKind(StrEnum):
     LINEAR = auto()
+    MULTI_SEQUENTIAL = auto()
     DIVERGING = auto()
     CYCLIC = auto()
     CATEGORICAL = auto()
@@ -866,15 +868,21 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'haline'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'viridis'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cividis'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'batlow'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'batlowW'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'batlowK'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'cubehelix'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmw'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bmy'),
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'thermal'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'devon'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'oslo'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kbc'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kb'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kgy'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kg'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'kr'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'lajolla'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'fire'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'hot'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'afmhot'),
@@ -929,6 +937,36 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'binary'),
     _ColormapInfo('matplotlib', ColormapKind.LINEAR, 'Grays'),
     _ColormapInfo('cmocean', ColormapKind.LINEAR, 'oxy'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'lapaz'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'bamako'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'davos'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'bilbao'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'nuuk'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'hawaii'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'tokyo'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'buda'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'acton'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'turku'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'imola'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'glasgow'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'lipari'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'navia'),
+    _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'grayC'),
+    # MULTI SEQUENTIAL
+    _ColormapInfo('cmocean', ColormapKind.MULTI_SEQUENTIAL, 'topo'),
+    _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'bukavu'),
+    _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'oleron'),
+    _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'fes'),
+    # DIVERGING
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'berlin'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
+    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'tofino'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'lisbon'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vanimo'),
+    _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'managua'),
     # DIVERGING
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
@@ -948,16 +986,21 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PuOr'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PRGn'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'PiYG'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'bam'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdGy'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdBu'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlBu'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'RdYlGn'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'Spectral'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'roma'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'coolwarm'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'coolwarm'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'bwr'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'seismic'),
     _ColormapInfo('cmocean', ColormapKind.DIVERGING, 'balance'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vik'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'broc'),
+    _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'cork'),
     # CYCLIC
     _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
     _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase'),
@@ -965,6 +1008,11 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv'),
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight'),
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight_shifted'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'vikO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'romaO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'bamO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'brocO'),
+    _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'corkO'),
     # CATEGORICAL
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw'),
@@ -974,6 +1022,27 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_light'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_category10'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_hv'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'batlowS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'batlowWS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'batlowKS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'turkuS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'devonS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'lajollaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'bamakoS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'davosS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'bilbaoS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'nuukS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'osloS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'hawaiiS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'lapazS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'tokyoS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'budaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'actonS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'imolaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'glasgowS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'lipariS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'naviaS'),
+    _ColormapInfo('cmcrameri', ColormapKind.CATEGORICAL, 'grayCS'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Accent'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Dark2'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'Paired'),
@@ -1118,6 +1187,7 @@ class ColormapTable(DocTable):
     @classmethod
     def get_row(cls, i, colormap_info):
         source_badge_mapping = {
+            'cmcrameri': ':bdg-danger:`cmc`',
             'cmocean': ':bdg-primary:`cmo`',
             'colorcet': ':bdg-success:`cc`',
             'matplotlib': ':bdg-secondary:`mpl`',
@@ -1127,8 +1197,8 @@ class ColormapTable(DocTable):
             mpl.colors.ListedColormap: ':bdg-muted:`LC`',
         }
         perceptually_uniform_mapping = {
-            True: ':bdg-muted:`PU`',
-            False: ':bdg-danger:`NPU`',
+            True: ':material-regular:`visibility;2em;sd-text-info`',
+            False: ':material-regular:`visibility_off;2em;sd-text-warning`',
         }
 
         if colormap_info.package == 'matplotlib':
@@ -1137,6 +1207,8 @@ class ColormapTable(DocTable):
             cmap_source = colorcet.cm
         elif colormap_info.package == 'cmocean':
             cmap_source = cmocean.cm.cmap_d
+        elif colormap_info.package == 'cmcrameri':
+            cmap_source = cmcrameri.cm.cmaps
         else:
             raise RuntimeError
         cmap = cmap_source[colormap_info.name]
@@ -1417,6 +1489,12 @@ class ColormapTableDIVERGING(ColormapTable):
 
     kind = ColormapKind.DIVERGING
     sort_options = _ColormapSortOptions(initial_cmap='coolwarm', sort_by='hue')
+
+
+class ColormapTableMULTISEQUENTIAL(ColormapTable):
+    """Class to generate multi-sequential colormap table."""
+
+    kind = ColormapKind.MULTI_SEQUENTIAL
 
 
 class ColormapTableCYCLIC(ColormapTable):
@@ -3247,6 +3325,7 @@ def make_all_tables():  # noqa: D103
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
     ColormapTableLINEAR.generate()
     ColormapTableDIVERGING.generate()
+    ColormapTableMULTISEQUENTIAL.generate()
     ColormapTableCYCLIC.generate()
     ColormapTableCATEGORICAL.generate()
     ColormapTableMISC.generate()
