@@ -729,7 +729,7 @@ html_sidebars = {
 # atsphinx.mini18n configuration
 mini18n_default_language = 'en'
 mini18n_support_languages = ['en', 'ja']
-locale_dirs = ["../../pyvista-doc-translations/locale"]
+locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
 def setup(app):  # noqa: D103
