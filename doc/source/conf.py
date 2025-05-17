@@ -731,7 +731,7 @@ class VTKRole(ReferenceRole):
 
     base_url = 'https://vtk.org/doc/nightly/html/'
     class_url_template = base_url + 'class{cls}.html#details'
-    validated_urls: ClassVar = {}
+    validated_urls: ClassVar = {}  # Cache for URLs which have already been checked
 
     def run(self):
         """Run the :vtk: role."""
@@ -739,6 +739,8 @@ class VTKRole(ReferenceRole):
         title = self.title or cls_name
         url = self.class_url_template.format(cls=cls_name)
 
+        # Make sure the url being referenced is valid
+        # Only check url if it hasn't already been checked
         if url not in self.validated_urls:
             try:
                 response = requests.head(url, timeout=2)
