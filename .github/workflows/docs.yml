@@ -133,6 +133,8 @@ jobs:
 
       - name: Build I18N Documentation
         run: |
+          rm -r doc/_build/html/en
+          rm -r doc/_build/html/ja
           make -C doc mini18n-html SPHINXOPTS="-W --keep-going -D locale_dirs='../pyvista-doc-translations/locale' ./_build/html"
 
       - name: Upload HTML documentation
