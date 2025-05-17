@@ -107,6 +107,7 @@ test = [
 ]
 
 docs = [
+  'atsphinx-mini18n==0.4.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
   'colour-science==0.4.6',
