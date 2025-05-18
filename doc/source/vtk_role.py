@@ -25,7 +25,7 @@ class VTKRole(ReferenceRole):
 
     def run(self):
         """Run the :vtk: role."""
-        INVALID_URL = ''
+        INVALID_URL = ''  # URL is set to empty string if not valid
         cls_full = self.target
         title = self.title or cls_full
 

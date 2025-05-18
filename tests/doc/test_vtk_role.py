@@ -16,13 +16,13 @@ VTK_POLY_DATA_CLASS_URL = vtk_class_url('vtkPolyData')
 
 VTK_IMAGE_DATA_CLASS_URL = vtk_class_url('vtkImageData')
 GET_DIMENSIONS_ANCHOR = 'a3cbcab15f8744efeb5300e21dcfbe9af'
-GET_DIMENSIONS_URL = VTK_IMAGE_DATA_CLASS_URL + f'#{GET_DIMENSIONS_ANCHOR}'
+GET_DIMENSIONS_URL = f'{VTK_IMAGE_DATA_CLASS_URL}#{GET_DIMENSIONS_ANCHOR}'
 SET_EXTENT_ANCHOR = 'a6e4c45a06e756c2d9d72f2312e773cb9'
-SET_EXTENT_URL = VTK_IMAGE_DATA_CLASS_URL + f'#{SET_EXTENT_ANCHOR}'
+SET_EXTENT_URL = f'{VTK_IMAGE_DATA_CLASS_URL}#{SET_EXTENT_ANCHOR}'
 
 VTK_COMMAND_CLASS_URL = vtk_class_url('vtkCommand')
 EVENT_IDS_ANCHOR = 'a59a8690330ebcb1af6b66b0f3121f8fe'
-EVENT_IDS_URL = VTK_COMMAND_CLASS_URL + f'#{EVENT_IDS_ANCHOR}'
+EVENT_IDS_URL = f'{VTK_COMMAND_CLASS_URL}#{EVENT_IDS_ANCHOR}'
 
 
 @pytest.fixture(scope='module')
@@ -49,32 +49,16 @@ def test_find_member_anchor(vtk_polydata_html):
     assert response.status_code == HTTPStatus.OK
 
 
-@pytest.fixture
-def temp_doc_project(tmp_path):
-    """Set up a minimal Sphinx doc project using the :vtk: role in a docstring."""
+def make_temp_doc_project(tmp_path, sample_text: str):
+    """Set up a minimal Sphinx doc project using the :vtk: role with the given code block."""
     src = tmp_path / 'src'
     src.mkdir()
 
     # Copy vtk_role.py into this temp directory
     shutil.copyfile(vtk_role.__file__, src / 'vtk_role.py')
 
-    # example.py with :vtk: usage
-    (src / 'example.py').write_text(
-        textwrap.dedent("""
-        def foo():
-            \"\"\"Example function referencing :vtk:`vtkPolyData`.
-
-            We can also reference methods, e.g.:
-
-            - :vtk:`vtkImageData.GetDimensions`
-            - :vtk:`vtkImageData.SetExtent`
-
-            Enums also work, e.g. :vtk:`vtkCommand.EventIds`.
-
-            \"\"\"
-            pass
-        """)
-    )
+    # Write example.py with module-level docstring
+    (src / 'example.py').write_text(f'"""\n{sample_text.strip()}\n"""\n')
 
     # conf.py with VTKRole registration
     (src / 'conf.py').write_text(
@@ -91,7 +75,7 @@ def temp_doc_project(tmp_path):
         """)
     )
 
-    # index.rst that includes the example module
+    # index.rst
     (src / 'index.rst').write_text(
         textwrap.dedent("""
         API Reference
@@ -106,8 +90,45 @@ def temp_doc_project(tmp_path):
     return src
 
 
-def test_vtk_role_generates_valid_link(temp_doc_project):
-    build_dir = temp_doc_project.parent / '_build'
+@pytest.mark.parametrize(
+    ('code_block', 'expected_urls', 'expect_warning'),
+    [
+        # Valid cases
+        (
+            textwrap.dedent("""
+            :vtk:`vtkImageData.GetDimensions`
+            :vtk:`vtkImageData.SetExtent`
+            :vtk:`vtkCommand.EventIds`
+            """),
+            [GET_DIMENSIONS_URL, SET_EXTENT_URL, EVENT_IDS_URL],
+            False,
+        ),
+        # Invalid class
+        (
+            ':vtk:`NonExistentClass`',
+            [vtk_class_url('NonExistentClass')],
+            True,
+        ),
+        # Valid class, invalid method
+        (
+            ':vtk:`vtkImageData.FakeMethod`',
+            [vtk_class_url('vtkImageData')],
+            True,
+        ),
+        # Valid class
+        (
+            textwrap.dedent("""
+            :vtk:`vtkImageData`
+            :vtk:`vtkImageData.FakeEnum`
+            """),
+            [vtk_class_url('vtkImageData')],
+            True,
+        ),
+    ],
+)
+def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expect_warning):
+    doc_project = make_temp_doc_project(tmp_path, code_block)
+    build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
 
     result = subprocess.run(
@@ -115,27 +136,26 @@ def test_vtk_role_generates_valid_link(temp_doc_project):
             'sphinx-build',
             '-b',
             'html',
-            str(temp_doc_project),
+            str(doc_project),
             str(build_html_dir),
-            '-W',  # Warnings as errors
+            '-W',
             '--keep-going',
         ],
         capture_output=True,
         text=True,
     )
 
-    print(result.stdout)
-    print(result.stderr)
+    print('STDOUT:\n', result.stdout)
+    print('STDERR:\n', result.stderr)
 
-    assert result.returncode == 0, 'Sphinx build failed'
+    if expect_warning:
+        assert result.returncode != 0, 'Expected warning but build succeeded'
+    else:
+        assert result.returncode == 0, 'Unexpected failure in Sphinx build'
 
-    # Check the main index.html
     index_html = build_html_dir / 'index.html'
     assert index_html.exists()
 
-    # Confirm the expected urls are in the docs
     html = index_html.read_text(encoding='utf-8')
-    assert VTK_POLY_DATA_CLASS_URL in html
-    assert GET_DIMENSIONS_URL in html
-    assert SET_EXTENT_URL in html
-    assert EVENT_IDS_URL in html
+    for url in expected_urls:
+        assert url in html
