@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 from bs4 import BeautifulSoup
 from docutils import nodes
