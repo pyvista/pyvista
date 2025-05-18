@@ -1,28 +1,16 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from pathlib import Path
 import shutil
 import subprocess
-import sys
 import textwrap
 
 import pytest
 import requests
 
-import pyvista as pv
-
-# Compute absolute path to vtk_role.py
-ROOT_DIR = Path(pv.__path__[0]).parent
-VTK_ROLE_PATH = ROOT_DIR / 'doc' / 'source' / 'vtk_role.py'
-
-# Add doc/source to sys.path so we can import vtk_role as a flat module
-sys.path.insert(0, str(VTK_ROLE_PATH.parent))
-
-# Now import it directly
-import vtk_role
-from vtk_role import find_member_anchor
-from vtk_role import vtk_class_url
+from doc.source import vtk_role
+from doc.source.vtk_role import find_member_anchor
+from doc.source.vtk_role import vtk_class_url
 
 VTK_POLY_DATA_CLASS_URL = vtk_class_url('vtkPolyData')
 
