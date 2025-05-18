@@ -79,10 +79,8 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
-    # 'notfound.extension', # https://github.com/atsphinx/mini18n/issues/6
     'numpydoc',
     'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
@@ -727,6 +725,9 @@ html_sidebars = {
 }
 
 # atsphinx.mini18n configuration
+if os.environ['PYVISTA_BUILDING_MINI18N'] == 'true':
+    extensions.append('atsphinx.mini18n')
+    extensions.remove('notfound.extension')  # https://github.com/atsphinx/mini18n/issues/6
 mini18n_default_language = 'en'
 mini18n_support_languages = ['en', 'ja']
 locale_dirs = ['../../pyvista-doc-translations/locale']

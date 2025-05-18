@@ -132,6 +132,8 @@ jobs:
           persist-credentials: false
 
       - name: Build I18N Documentation
+        env:
+          PYVISTA_BUILDING_MINI18N: "true"
         run: |
           make -C doc mini18n-html SPHINXOPTS="-W --keep-going"
           cp -rf doc/build/mini18n-html/. doc/build/html/
