@@ -91,7 +91,7 @@ def make_temp_doc_project(tmp_path, sample_text: str):
 
 
 @pytest.mark.parametrize(
-    ('code_block', 'expected_urls', 'expect_warning'),
+    ('code_block', 'expected_urls', 'expected_warning'),
     [
         # Valid cases
         (
@@ -101,32 +101,32 @@ def make_temp_doc_project(tmp_path, sample_text: str):
             :vtk:`vtkCommand.EventIds`
             """),
             [GET_DIMENSIONS_URL, SET_EXTENT_URL, EVENT_IDS_URL],
-            False,
+            None,
         ),
         # Invalid class
         (
             ':vtk:`NonExistentClass`',
             [vtk_class_url('NonExistentClass')],
-            True,
+            "Invalid VTK class reference: 'NonExistentClass' → https://vtk.org/doc/nightly/html/classNonExistentClass.html",
         ),
         # Valid class, invalid method
         (
             ':vtk:`vtkImageData.FakeMethod`',
             [vtk_class_url('vtkImageData')],
-            True,
+            "VTK method anchor not found for: 'vtkImageData.FakeMethod' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
-        # Valid class
+        # Valid class (so it gets cached), followed by same class with invalid member
         (
             textwrap.dedent("""
             :vtk:`vtkImageData`
             :vtk:`vtkImageData.FakeEnum`
             """),
             [vtk_class_url('vtkImageData')],
-            True,
+            "VTK method anchor not found for: 'vtkImageData.FakeEnum' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
     ],
 )
-def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expect_warning):
+def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_warning):
     doc_project = make_temp_doc_project(tmp_path, code_block)
     build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
@@ -148,8 +148,11 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expect_warn
     print('STDOUT:\n', result.stdout)
     print('STDERR:\n', result.stderr)
 
-    if expect_warning:
+    if expected_warning:
         assert result.returncode != 0, 'Expected warning but build succeeded'
+        assert expected_warning in result.stderr, (
+            f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{result.stderr}'
+        )
     else:
         assert result.returncode == 0, 'Unexpected failure in Sphinx build'
 

@@ -42,7 +42,8 @@ class VTKRole(ReferenceRole):
             # Cache hit, check if valid or not
             if cached_url == INVALID_URL:
                 # Not valid, report the error source
-                if member_name and self.resolved_urls.get((cls_name, None)):
+                has_valid_class_url = self.resolved_urls.get((cls_name, None))
+                if member_name and has_valid_class_url:
                     # Class is valid but member is not
                     self._warn_invalid_class_member_ref(cls_name, member_name)
                 else:
