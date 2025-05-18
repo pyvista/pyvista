@@ -103,6 +103,10 @@ extensions = [
     'sphinxext.opengraph',
     'sphinx_sitemap',
 ]
+# https://github.com/atsphinx/mini18n/issues/6
+if os.environ['PYVISTA_BUILDING_MINI18N'] == 'true':
+    extensions.append('atsphinx.mini18n')
+    extensions.remove('notfound.extension')
 
 # Configuration of pyvista.ext.coverage
 coverage_additional_modules = [
@@ -726,9 +730,6 @@ html_sidebars = {
 }
 
 # atsphinx.mini18n configuration
-if os.environ['PYVISTA_BUILDING_MINI18N'] == 'true':
-    extensions.append('atsphinx.mini18n')
-    extensions.remove('notfound.extension')  # https://github.com/atsphinx/mini18n/issues/6
 mini18n_default_language = 'en'
 mini18n_support_languages = ['en', 'ja']
 locale_dirs = ['../../pyvista-doc-translations/locale']
