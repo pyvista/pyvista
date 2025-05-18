@@ -719,6 +719,7 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
 
+# atsphinx.mini18n options ---------------------------------------------------------
 html_sidebars = {
     '**': [
         'navbar-logo.html',
@@ -728,8 +729,6 @@ html_sidebars = {
         'sbt-sidebar-nav.html',
     ],
 }
-
-# atsphinx.mini18n configuration
 mini18n_default_language = 'en'
 mini18n_support_languages = ['en', 'ja']
 locale_dirs = ['../../pyvista-doc-translations/locale']
