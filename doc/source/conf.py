@@ -725,7 +725,7 @@ html_sidebars = {
 }
 
 # atsphinx.mini18n configuration
-if os.environ['PYVISTA_BUILDING_MINI18N'] == 'true':
+if os.environ.get('PYVISTA_BUILDING_MINI18N', 'false') == 'true':
     extensions.append('atsphinx.mini18n')
     extensions.remove('notfound.extension')  # https://github.com/atsphinx/mini18n/issues/6
 mini18n_default_language = 'en'
