@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from http import HTTPStatus
+import os
 import subprocess
+import sys
 import textwrap
 
 import pytest
@@ -107,6 +109,10 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
     build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
 
+    env = os.environ.copy()
+    if sys.platform == 'win32':
+        env['PY_COLORS'] = '0'  # disable ANSI colors in subprocess output on Windows
+
     result = subprocess.run(  # noqa: UP022
         [
             'sphinx-build',
@@ -119,6 +125,7 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=env,
     )
 
     # need to explicitly decode the output with UTF-8 to avoid UnicodeDecodeError
