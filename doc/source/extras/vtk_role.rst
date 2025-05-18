@@ -1,7 +1,7 @@
 .. _vtk_role_docs:
 
-Sphinx PyVista VTK Role
-=======================
+Sphinx VTK Role
+===============
 
 You can link directly to VTK's documentation with the ``:vtk:`` role
 by adding the following to your ``conf.py`` when building your
