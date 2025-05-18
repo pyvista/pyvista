@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-import os
+import re
 import subprocess
-import sys
 import textwrap
 
 import pytest
@@ -21,6 +20,12 @@ SET_EXTENT_URL = f'{_vtk_class_url("vtkImageData")}#{SET_EXTENT_ANCHOR}'
 
 EVENT_IDS_ANCHOR = 'a59a8690330ebcb1af6b66b0f3121f8fe'
 EVENT_IDS_URL = f'{_vtk_class_url("vtkCommand")}#{EVENT_IDS_ANCHOR}'
+
+ANSI_ESCAPE_PATTERN = re.compile(r'\x1b\[.*?m')
+
+
+def strip_ansi(text):
+    return ANSI_ESCAPE_PATTERN.sub('', text)
 
 
 @pytest.fixture(scope='module')
@@ -109,10 +114,6 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
     build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
 
-    env = os.environ.copy()
-    if sys.platform == 'win32':
-        env['PY_COLORS'] = '0'  # disable ANSI colors in subprocess output on Windows
-
     result = subprocess.run(  # noqa: UP022
         [
             'sphinx-build',
@@ -125,7 +126,6 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env=env,
     )
 
     # need to explicitly decode the output with UTF-8 to avoid UnicodeDecodeError
@@ -134,10 +134,12 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
     print('STDOUT:\n', stdout)
     print('STDERR:\n', stderr)
 
+    stderr_clean = strip_ansi(stderr)
+
     if expected_warning:
         assert result.returncode != 0, 'Expected warning but build succeeded'
-        assert expected_warning in stderr, (
-            f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{stderr}'
+        assert expected_warning in stderr_clean, (
+            f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{stderr_clean}'
         )
     else:
         assert result.returncode == 0, 'Unexpected failure in Sphinx build'
