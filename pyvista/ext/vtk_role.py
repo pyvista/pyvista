@@ -1,3 +1,5 @@
+"""Link to VTK's documentation with the ``:vtk:`` role."""
+
 from __future__ import annotations
 
 from http import HTTPStatus
