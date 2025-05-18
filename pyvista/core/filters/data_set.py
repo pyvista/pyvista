@@ -5243,8 +5243,6 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Join one or many other grids to this grid.
 
-        Grid is updated in-place by default.
-
         Can be used to merge points of adjacent cells when no grids
         are input.
 

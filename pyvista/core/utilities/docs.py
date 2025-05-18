@@ -64,6 +64,9 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     while hasattr(obj, 'fget'):
         obj = obj.fget
 
+    # deal with wrapped object
+    while hasattr(obj, '__wrapped__'):
+        obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
     except Exception:  # pragma: no cover
