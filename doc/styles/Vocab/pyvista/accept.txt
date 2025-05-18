@@ -103,6 +103,7 @@ doctest
 dotfiles
 dunder
 ele
+enum
 enums
 flem
 framebuffer
