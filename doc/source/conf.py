@@ -81,6 +81,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 extensions = [
     'enum_tools.autoenum',
     'jupyter_sphinx',
+    'notfound.extension',
     'numpydoc',
     'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
