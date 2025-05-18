@@ -12,23 +12,19 @@ import requests
 from pyvista.ext.vtk_role import _find_member_anchor
 from pyvista.ext.vtk_role import _vtk_class_url
 
-VTK_POLY_DATA_CLASS_URL = _vtk_class_url('vtkPolyData')
-
-VTK_IMAGE_DATA_CLASS_URL = _vtk_class_url('vtkImageData')
 GET_DIMENSIONS_ANCHOR = 'a3cbcab15f8744efeb5300e21dcfbe9af'
-GET_DIMENSIONS_URL = f'{VTK_IMAGE_DATA_CLASS_URL}#{GET_DIMENSIONS_ANCHOR}'
+GET_DIMENSIONS_URL = f'{_vtk_class_url("vtkImageData")}#{GET_DIMENSIONS_ANCHOR}'
 SET_EXTENT_ANCHOR = 'a6e4c45a06e756c2d9d72f2312e773cb9'
-SET_EXTENT_URL = f'{VTK_IMAGE_DATA_CLASS_URL}#{SET_EXTENT_ANCHOR}'
+SET_EXTENT_URL = f'{_vtk_class_url("vtkImageData")}#{SET_EXTENT_ANCHOR}'
 
-VTK_COMMAND_CLASS_URL = _vtk_class_url('vtkCommand')
 EVENT_IDS_ANCHOR = 'a59a8690330ebcb1af6b66b0f3121f8fe'
-EVENT_IDS_URL = f'{VTK_COMMAND_CLASS_URL}#{EVENT_IDS_ANCHOR}'
+EVENT_IDS_URL = f'{_vtk_class_url("vtkCommand")}#{EVENT_IDS_ANCHOR}'
 
 
 @pytest.fixture(scope='module')
 def vtk_polydata_html():
     """Fixture that fetches HTML for vtkPolyData once per test module."""
-    response = requests.get(VTK_POLY_DATA_CLASS_URL, timeout=3)
+    response = requests.get(_vtk_class_url('vtkPolyData'), timeout=3)
     response.raise_for_status()
     return response.text
 
@@ -44,7 +40,7 @@ def test_find_member_anchor(vtk_polydata_html):
     assert f'id="{anchor}"' in vtk_polydata_html
 
     # Confirm that the final URL with anchor resolves
-    full_url = f'{VTK_POLY_DATA_CLASS_URL}#{anchor}'
+    full_url = f'{_vtk_class_url("vtkPolyData")}#{anchor}'
     response = requests.get(full_url, timeout=3, allow_redirects=True)
     assert response.status_code == HTTPStatus.OK
 
