@@ -14,10 +14,14 @@ documentation using Sphinx.
         'pyvista.ext.vtk_role',
     ]
 
-With the extension enable, you can write, for example, ``:vtk:`vtkPolyData```
-in docstrings to link directly to the ``vtkPolyData`` documentation. This
-will render as :vtk:`vtkPolyData`.
+With the extension enable, you can write, for example, ``:vtk:`vtkImageData```
+in docstrings to link directly to the ``vtkImageData`` documentation. This
+will render as :vtk:`vtkImageData`.
 
-The role also works for linking to class members such as methods or enums,
-e.g. write ``:vtk:`vtkPolyData.GetVerts``` to link directly to the ``GetVerts``
-method. This will render as :vtk:`vtkPolyData.GetVerts`.
+The role also works for linking to class members such as methods or enums.
+For example write ``:vtk:`vtkImageData.GetDimensions``` to link directly to the
+``GetDimensions`` method. This will render as :vtk:`vtkImageData.GetDimensions`.
+
+Just like with standard Sphinx roles, you can use ``~`` to shorten the title
+for the link. For example, ``:vtk:`~vtkImageData.GetDimensions``` will render
+as :vtk:`~vtkImageData.GetDimensions`.

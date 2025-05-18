@@ -5,8 +5,10 @@ from __future__ import annotations
 from http import HTTPStatus
 import re
 import subprocess
+import sys
 import textwrap
 
+from bs4 import BeautifulSoup
 import pytest
 import requests
 
@@ -22,10 +24,6 @@ EVENT_IDS_ANCHOR = 'a59a8690330ebcb1af6b66b0f3121f8fe'
 EVENT_IDS_URL = f'{_vtk_class_url("vtkCommand")}#{EVENT_IDS_ANCHOR}'
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b\[.*?m')
-
-
-def strip_ansi(text):
-    return ANSI_ESCAPE_PATTERN.sub('', text)
 
 
 @pytest.fixture(scope='module')
@@ -74,8 +72,14 @@ def make_temp_doc_project(tmp_path, sample_text: str):
 
 
 @pytest.mark.parametrize(
-    ('code_block', 'expected_urls', 'expected_warning'),
+    ('code_block', 'expected_links', 'expected_warning'),
     [
+        # Tilde-prefixed input: short name should be displayed, full link used
+        (
+            ':vtk:`~vtkImageData.GetDimensions`',
+            {GET_DIMENSIONS_URL: 'GetDimensions'},
+            None,
+        ),
         # Valid cases
         (
             textwrap.dedent("""
@@ -83,19 +87,23 @@ def make_temp_doc_project(tmp_path, sample_text: str):
             :vtk:`vtkImageData.SetExtent`
             :vtk:`vtkCommand.EventIds`
             """),
-            [GET_DIMENSIONS_URL, SET_EXTENT_URL, EVENT_IDS_URL],
+            {
+                GET_DIMENSIONS_URL: 'vtkImageData.GetDimensions',
+                SET_EXTENT_URL: 'vtkImageData.SetExtent',
+                EVENT_IDS_URL: 'vtkCommand.EventIds',
+            },
             None,
         ),
         # Invalid class
         (
             ':vtk:`NonExistentClass`',
-            [_vtk_class_url('NonExistentClass')],
+            {_vtk_class_url('NonExistentClass'): 'NonExistentClass'},
             "Invalid VTK class reference: 'NonExistentClass' → https://vtk.org/doc/nightly/html/classNonExistentClass.html",
         ),
         # Valid class, invalid method
         (
             ':vtk:`vtkImageData.FakeMethod`',
-            [_vtk_class_url('vtkImageData')],
+            {_vtk_class_url('vtkImageData'): 'vtkImageData.FakeMethod'},
             "VTK method anchor not found for: 'vtkImageData.FakeMethod' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
         # Valid class (so it gets cached), followed by same class with invalid member
@@ -104,12 +112,15 @@ def make_temp_doc_project(tmp_path, sample_text: str):
             :vtk:`vtkImageData`
             :vtk:`vtkImageData.FakeEnum`
             """),
-            [_vtk_class_url('vtkImageData')],
+            {
+                _vtk_class_url('vtkImageData'): 'vtkImageData',  # class reference
+                _vtk_class_url('vtkImageData'): 'vtkImageData',  # bad member still uses class URL
+            },
             "VTK method anchor not found for: 'vtkImageData.FakeEnum' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
     ],
 )
-def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_warning):
+def test_vtk_role_link_behavior(tmp_path, code_block, expected_links, expected_warning):
     doc_project = make_temp_doc_project(tmp_path, code_block)
     build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
@@ -134,19 +145,26 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
     print('STDOUT:\n', stdout)
     print('STDERR:\n', stderr)
 
-    stderr_clean = strip_ansi(stderr)
-
     if expected_warning:
         assert result.returncode != 0, 'Expected warning but build succeeded'
-        assert expected_warning in stderr_clean, (
-            f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{stderr_clean}'
-        )
+
+        # Verify warning message. Skip check on Windows due to Unicode/color output differences
+        if not sys.platform.startswith('win'):
+            assert expected_warning in stderr, (
+                f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{stderr}'
+            )
     else:
         assert result.returncode == 0, 'Unexpected failure in Sphinx build'
 
     index_html = build_html_dir / 'index.html'
     assert index_html.exists()
-
     html = index_html.read_text(encoding='utf-8')
-    for url in expected_urls:
-        assert url in html
+
+    # Parse HTML and validate all expected links
+    soup = BeautifulSoup(html, 'html.parser')
+    for href, expected_text in expected_links.items():
+        link = soup.find('a', href=href)
+        assert link is not None, f'Expected link with href="{href}" not found'
+        assert link.text == expected_text, (
+            f'Expected link text "{expected_text}", got "{link.text}"'
+        )

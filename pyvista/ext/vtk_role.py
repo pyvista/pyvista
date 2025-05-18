@@ -26,8 +26,15 @@ class VTKRole(ReferenceRole):
     def run(self):  # numpydoc ignore=RT01
         """Run the :vtk: role."""
         INVALID_URL = ''  # URL is set to empty string if not valid
+
         cls_full = self.target
-        title = self.title or cls_full
+        title = self.title
+
+        # Handle `~` prefix to shorten the title
+        if cls_full.startswith('~'):
+            cls_full = cls_full[1:]
+            if not self.has_explicit_title:
+                title = cls_full.split('.')[-1]
 
         # Split member if present
         if '.' in cls_full:

@@ -103,6 +103,7 @@ doctest
 dotfiles
 dunder
 ele
+enums
 flem
 framebuffer
 gemgis
