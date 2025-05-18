@@ -1,14 +1,28 @@
 from __future__ import annotations
 
 from http import HTTPStatus
+from pathlib import Path
+import shutil
 import subprocess
+import sys
 import textwrap
 
 import pytest
 import requests
 
-from doc.source.vtk_role import find_member_anchor
-from doc.source.vtk_role import vtk_class_url
+import pyvista as pv
+
+# Compute absolute path to vtk_role.py
+ROOT_DIR = Path(pv.__path__[0]).parent
+VTK_ROLE_PATH = ROOT_DIR / 'doc' / 'source' / 'vtk_role.py'
+
+# Add doc/source to sys.path so we can import vtk_role as a flat module
+sys.path.insert(0, str(VTK_ROLE_PATH.parent))
+
+# Now import it directly
+import vtk_role
+from vtk_role import find_member_anchor
+from vtk_role import vtk_class_url
 
 VTK_POLY_DATA_CLASS_URL = vtk_class_url('vtkPolyData')
 
@@ -53,6 +67,9 @@ def temp_doc_project(tmp_path):
     src = tmp_path / 'src'
     src.mkdir()
 
+    # Copy vtk_role.py into this temp directory
+    shutil.copyfile(vtk_role.__file__, src / 'vtk_role.py')
+
     # example.py with :vtk: usage
     (src / 'example.py').write_text(
         textwrap.dedent("""
@@ -79,7 +96,7 @@ def temp_doc_project(tmp_path):
         sys.path.insert(0, os.path.abspath("."))
         extensions = ["sphinx.ext.autodoc"]
 
-        from doc.source.vtk_role import VTKRole
+        from vtk_role import VTKRole
 
         def setup(app):
             app.add_role('vtk', VTKRole())
@@ -122,7 +139,7 @@ def test_vtk_role_generates_valid_link(temp_doc_project):
     print(result.stdout)
     print(result.stderr)
 
-    assert result.returncode == 0, 'Sphinx build failed, stderr: {stderr}'
+    assert result.returncode == 0, 'Sphinx build failed'
 
     # Check the main index.html
     index_html = build_html_dir / 'index.html'
