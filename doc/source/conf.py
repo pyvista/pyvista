@@ -104,7 +104,7 @@ extensions = [
     'sphinx_sitemap',
 ]
 # https://github.com/atsphinx/mini18n/issues/6
-if os.environ['PYVISTA_BUILDING_MINI18N'] == 'true':
+if os.environ.get('PYVISTA_BUILDING_MINI18N', 'false') == 'true':
     extensions.append('atsphinx.mini18n')
     extensions.remove('notfound.extension')
 
