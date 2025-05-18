@@ -34,7 +34,7 @@ Some colormap libraries assess perceptual uniformity using only the lightness
 component (:math:`L^*` in the Lab color space), while others also consider
 chromatic components (:math:`a^*` and :math:`b^*`). For the colormaps on this
 reference page, both lightness *and* color differences must meet the uniformity
-criteria to earn the :bdg-muted:`PU` label.
+criteria to earn the :material-regular:`visibility;2em;sd-text-info` label.
 
 Specifically, a colormap is labeled as perceptually uniform if:
 
@@ -45,8 +45,9 @@ Specifically, a colormap is labeled as perceptually uniform if:
 
 Linearity is defined as having a coefficient of determination (:math:`R^2`)
 greater than 0.99 when fitted with linear regression.
-When choosing a colormap, those with the :bdg-muted:`PU` tag should be
-preferred over those with the :bdg-danger:`NPU` tag.
+When choosing a colormap, those with the :material-regular:`visibility;2em;sd-text-info`
+tag should be preferred over those with the :material-regular:`visibility_off;2em;sd-text-warning`
+tag.
 
 .. warning::
 
