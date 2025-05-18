@@ -8,16 +8,19 @@ import pytest
 import requests
 
 from doc.source.vtk_role import find_member_anchor
+from doc.source.vtk_role import vtk_class_url
 
-class_template_url = 'https://vtk.org/doc/nightly/html/class{}.html'
-VTK_POLY_DATA_CLASS_URL = class_template_url.format('vtkPolyData')
-VTK_IMAGE_DATA_CLASS_URL = class_template_url.format('vtkImageData')
+VTK_POLY_DATA_CLASS_URL = vtk_class_url('vtkPolyData')
 
+VTK_IMAGE_DATA_CLASS_URL = vtk_class_url('vtkImageData')
 GET_DIMENSIONS_ANCHOR = 'a3cbcab15f8744efeb5300e21dcfbe9af'
 GET_DIMENSIONS_URL = VTK_IMAGE_DATA_CLASS_URL + f'#{GET_DIMENSIONS_ANCHOR}'
-
 SET_EXTENT_ANCHOR = 'a6e4c45a06e756c2d9d72f2312e773cb9'
 SET_EXTENT_URL = VTK_IMAGE_DATA_CLASS_URL + f'#{SET_EXTENT_ANCHOR}'
+
+VTK_COMMAND_CLASS_URL = vtk_class_url('vtkCommand')
+EVENT_IDS_ANCHOR = 'a59a8690330ebcb1af6b66b0f3121f8fe'
+EVENT_IDS_URL = VTK_COMMAND_CLASS_URL + f'#{EVENT_IDS_ANCHOR}'
 
 
 @pytest.fixture(scope='module')
@@ -54,12 +57,14 @@ def temp_doc_project(tmp_path):
     (src / 'example.py').write_text(
         textwrap.dedent("""
         def foo():
-            \"\"\"Example function referencing :vtk:`vtkPolyData`
+            \"\"\"Example function referencing :vtk:`vtkPolyData`.
 
-            We can also reference members, e.g.:
+            We can also reference methods, e.g.:
 
             - :vtk:`vtkImageData.GetDimensions`
             - :vtk:`vtkImageData.SetExtent`
+
+            Enums also work, e.g. :vtk:`vtkCommand.EventIds`.
 
             \"\"\"
             pass
@@ -123,8 +128,9 @@ def test_vtk_role_generates_valid_link(temp_doc_project):
     index_html = build_html_dir / 'index.html'
     assert index_html.exists()
 
-    # Confirm the vtk url is in the docs
+    # Confirm the expected urls are in the docs
     html = index_html.read_text(encoding='utf-8')
     assert VTK_POLY_DATA_CLASS_URL in html
     assert GET_DIMENSIONS_URL in html
     assert SET_EXTENT_URL in html
+    assert EVENT_IDS_URL in html
