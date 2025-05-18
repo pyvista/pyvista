@@ -53,7 +53,7 @@ _SENTINEL = pyvista_ndarray([])
 
 
 class DataSetAttributes(_vtk.VTKObjectWrapper):
-    """Python friendly wrapper of ``vtk.DataSetAttributes``.
+    """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
     This class provides the ability to pick one of the present arrays as the
     currently active array for each attribute type by implementing a

@@ -21,12 +21,12 @@ handful of parameters rather than having to explicitly describe the
 points and geometry of the dataset.
 
 PyVista gridded data is composed of the
-:class:`~pyvista.RectilinearGrid` and :class:`~pyvista.ImageData`
+:class:`pyvista.RectilinearGrid` and :class:`pyvista.ImageData`
 classes. These classes inherit from the :vtk:`vtkRectilinearGrid` and
 :vtk:`vtkImageData` classes and are commonly used to model images or
 volumetric data.
 
-A :class:`~pyvista.RectilinearGrid` is used for modeling datasets with
+A :class:`pyvista.RectilinearGrid` is used for modeling datasets with
 variable spacing in the three coordinate directions.
 
 .. jupyter-execute::
@@ -36,7 +36,7 @@ variable spacing in the three coordinate directions.
    demos.plot_datasets('RectilinearGrid')
 
 
-A :class:`~pyvista.ImageData` is used for modeling datasets with
+A :class:`pyvista.ImageData` is used for modeling datasets with
 uniform spacing in the three coordinate directions.
 
 .. jupyter-execute::

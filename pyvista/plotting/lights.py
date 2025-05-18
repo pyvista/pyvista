@@ -417,7 +417,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The world space position is the :py:attr:`position` property
         transformed by the light's transform matrix if it exists. The
         value of this read-only property corresponds to the
-        :vtk:`vtkLight` ``GetTransformedPosition()`` method.
+        :vtk:`vtkLight.GetTransformedPosition` method.
 
         Examples
         --------
@@ -471,7 +471,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The world space focal point is the :py:attr:`focal_point`
         property transformed by the light's transform matrix if it
         exists. The value of this read-only property corresponds to
-        the :vtk:`vtkLight` ``GetTransformedFocalPoint()`` method.
+        the :vtk:`vtkLight.GetTransformedFocalPoint` method.
 
         Examples
         --------
@@ -957,7 +957,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         focal point is set to the origin. The position is defined in
         terms of an elevation and an azimuthal angle, both in degrees.
 
-        Note that the equivalent :vtk:`vtkLight` ``SetDirectionAngle()`` method
+        Note that the equivalent :vtk:`vtkLight.SetDirectionAngle` method
         uses a surprising coordinate system where the (x', y', z') axes of
         the method correspond to the (z, x, y) axes of the renderer.
         This method reimplements the functionality in a way that ``elev``

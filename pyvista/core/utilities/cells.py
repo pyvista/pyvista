@@ -120,12 +120,12 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     cells for the given type (e.g. 3 for triangles).  Multiple
     vtk_type keys with associated arrays can be present in one
     dictionary.  This function only accepts cell types of fixed size
-    and not dynamic sized cells like ``vtk.VTK_POLYGON``
+    and not dynamic sized cells like :attr:`~pyvista.CellType.POLYGON`
 
     Parameters
     ----------
     mixed_cell_dict : dict
-        A dictionary that maps VTK-Enum-types (e.g. VTK_TRIANGLE) to
+        A dictionary that maps VTK-Enum-types (e.g. :attr:`~pyvista.CellType.TRIANGLE`) to
         np.ndarrays of type int.  The ``np.ndarrays`` describe the cell
         connectivity.
     nr_points : int, optional

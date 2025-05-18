@@ -2067,7 +2067,7 @@ class PolyDataFilters(DataSetFilters):
     def fill_holes(
         self, hole_size, inplace: bool = False, progress_bar: bool = False
     ):  # pragma: no cover
-        """Fill holes in a :class:`~pyvista.PolyData` or :vtk:`vtkPolyData` object.
+        """Fill holes in a :class:`pyvista.PolyData` or :vtk:`vtkPolyData` object.
 
         Holes are identified by locating boundary edges, linking them
         together into loops, and then triangulating the resulting

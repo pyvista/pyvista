@@ -4095,7 +4095,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             only ``ImageData`` types can be used.
 
             .. note::
-                If a :class:`~pyvista.UnstructuredGrid` is input, the 'ugrid'
+                If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
                 mapper (:vtk:`vtkUnstructuredGridVolumeRayCastMapper`) will be
                 used regardless.
 
@@ -5507,7 +5507,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence | pyvista.DataSet | :vtk:`vtkAlgorithm`
+        points : sequence | DataSet | :vtk:`vtkAlgorithm`
             An ``n x 3`` sequence points or :class:`pyvista.DataSet` with
             points or mesh-producing algorithm.
 

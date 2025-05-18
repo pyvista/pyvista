@@ -165,7 +165,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     ----------
     im1 : str | numpy.ndarray | :vtk:`vtkRenderWindow` | :vtk:`vtkImageData`
         Render window, numpy array representing the output of a render
-        window, or ``:vtk:`vtkImageData```.
+        window, or :vtk:`vtkImageData`.
 
     im2 : str | numpy.ndarray | :vtk:`vtkRenderWindow` | :vtk:`vtkImageData`
         Render window, numpy array representing the output of a render

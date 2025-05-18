@@ -2,7 +2,7 @@ Cells
 =====
 
 The cell :class:`pyvista.Cell` class is the PyVista representation of the
-:vtk:`vtkGenericCell` and can be used to inspect a :class:`~pyvista.DataSet`'s cells, faces, and edges.
+:vtk:`vtkGenericCell` and can be used to inspect a :class:`pyvista.DataSet`'s cells, faces, and edges.
 
 .. note::
    While methods and classes are quite effective at inspecting and plotting

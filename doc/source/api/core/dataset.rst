@@ -17,7 +17,7 @@ provides direct access:
 
 All of the following data types are listed subclasses of a dataset and share a
 set of common functionality which we wrap into the base class
-:class:`~pyvista.DataSet`.
+:class:`pyvista.DataSet`.
 
 For additional details regarding PyVista's data model, please see
 :ref:`pyvista_data_model`.
@@ -25,11 +25,11 @@ For additional details regarding PyVista's data model, please see
 
 Dataset API Reference
 ---------------------
-The :class:`~pyvista.DataSet` class holds attributes that
+The :class:`pyvista.DataSet` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista. This
 base class is analogous to VTK's :vtk:`vtkDataSet` class.
 
-The :class:`~pyvista.DataSetAttributes` class contains the methods to access
+The :class:`pyvista.DataSetAttributes` class contains the methods to access
 arrays associated with cells, points, and the DataSet in general (fields).
 
 .. autosummary::

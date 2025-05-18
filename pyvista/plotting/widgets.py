@@ -40,11 +40,11 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     interaction_event : InteractionEventType
         The VTK interaction event to use for triggering the callback. Accepts
         either the strings ``'start'``, ``'end'``, ``'always'`` or a
-        :vtk:`vtkCommand` ``EventIds``.
+        :vtk:`vtkCommand.EventIds`.
 
     Returns
     -------
-    :vtk:`vtkCommand` EventIds
+    :vtk:`vtkCommand.EventIds`
         VTK Event type.
 
     """
@@ -129,7 +129,7 @@ class WidgetHelper:
             The method called every time the box is updated. This has
             two options: Take a single argument, the ``PolyData`` box
             (default) or if ``use_planes=True``, then it takes a
-            single argument of the plane collection as a ``:vtk:`vtkPlanes```
+            single argument of the plane collection as a :vtk:`vtkPlanes`
             object.
 
         bounds : tuple(float)
@@ -163,10 +163,10 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
             .. versionchanged:: 0.38.0
-               Now accepts either strings or :vtk:`vtkCommand` ``EventIds``.
+               Now accepts either strings or :vtk:`vtkCommand.EventIds`.
 
         Returns
         -------
@@ -299,11 +299,11 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
             .. versionchanged:: 0.38.0
                Changed from ``event_type`` to ``interaction_event`` and now
-               accepts either strings and :vtk:`vtkCommand` ``EventIds``.
+               accepts either strings and :vtk:`vtkCommand.EventIds`.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -476,10 +476,10 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
             .. versionchanged:: 0.38.0
-               Now accepts either strings and :vtk:`vtkCommand` ``EventIds``.
+               Now accepts either strings and :vtk:`vtkCommand.EventIds`.
 
         outline_opacity : bool or float, optional
             Set the visible of outline. Only valid when using
@@ -717,10 +717,10 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
             .. versionchanged:: 0.38.0
-               Now accepts either strings or :vtk:`vtkCommand` ``EventIds``.
+               Now accepts either strings or :vtk:`vtkCommand.EventIds`.
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
@@ -888,7 +888,7 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
-        interaction_event : :vtk:`vtkCommand` ``EventIds``, optional
+        interaction_event : :vtk:`vtkCommand.EventIds`, optional
             The VTK interaction event to use for triggering the callback.
 
         origin : tuple(float), optional
@@ -1028,7 +1028,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
@@ -1149,7 +1149,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1244,7 +1244,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
         Returns
         -------
@@ -1358,11 +1358,11 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
             .. versionchanged:: 0.38.0
                Changed from ``event_type`` to ``interaction_event`` and now
-               accepts either strings or :vtk:`vtkCommand` ``EventIds``.
+               accepts either strings or :vtk:`vtkCommand.EventIds`.
 
         style : str, optional
             The name of the slider style. The list of available styles
@@ -1486,11 +1486,11 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
             .. versionchanged:: 0.38.0
                Changed from ``event_type`` to ``interaction_event`` and now accepts
-               either strings or :vtk:`vtkCommand` ``EventIds``.
+               either strings or :vtk:`vtkCommand.EventIds`.
 
         style : str, optional
             The name of the slider style. The list of available styles
@@ -2024,7 +2024,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
         Returns
         -------
@@ -2167,7 +2167,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -2388,7 +2388,7 @@ class WidgetHelper:
         interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
-            ``'always'`` or a :vtk:`vtkCommand` ``EventIds``.
+            ``'always'`` or a :vtk:`vtkCommand.EventIds`.
 
         Returns
         -------

@@ -784,7 +784,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
 
     Returns
     -------
-    :vtk:`vtkMatrix3x3` or :vtk:`vtkMatrix4x4`
+    :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         VTK matrix.
 
     """

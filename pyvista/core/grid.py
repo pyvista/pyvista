@@ -639,7 +639,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 self._from_file(uinput)
             else:
                 msg = (  # type: ignore[unreachable]
-                    'First argument, ``uinput`` must be either ``vtk.vtkImageData`` '
+                    'First argument, ``uinput`` must be either ``vtkImageData`` '
                     f'or a path, not {type(uinput)}.  Use keyword arguments to '
                     'specify dimensions, spacing, and origin. For example:\n\n'
                     '    >>> grid = pv.ImageData(\n'

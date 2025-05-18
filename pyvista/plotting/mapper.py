@@ -1118,8 +1118,8 @@ class _BaseVolumeMapper(_BaseMapper):
         * ``"additive"``
 
         Also accepts integer values corresponding to
-        :vtk:`vtkVolumeMapper` ``BlendModes``. For example
-        :vtk:`vtkVolumeMapper` ``COMPOSITE_BLEND``.
+        :vtk:`vtkVolumeMapper.BlendModes`. For example
+        :vtk:`vtkVolumeMapper.COMPOSITE_BLEND`.
 
         """
         value = self.GetBlendMode()

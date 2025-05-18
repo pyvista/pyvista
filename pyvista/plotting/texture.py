@@ -650,12 +650,12 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : ImageData | :vtk:`vtkImageData`
+    image : pyvista.ImageData | :vtk:`vtkImageData`
         Image to convert.
 
     Returns
     -------
-    Texture
+    pyvista.Texture
         The texture.
 
     """
