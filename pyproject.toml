@@ -245,7 +245,11 @@ check_untyped_defs = true
 disallow_any_generics = true
 disallow_subclassing_any = true
 enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
-exclude = ['pyvista/ext/']
+exclude = [
+  'pyvista/ext/coverage.py',
+  'pyvista/ext/plot_directive.py',
+  'pyvista/ext/viewer_directive.py',
+]
 extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true

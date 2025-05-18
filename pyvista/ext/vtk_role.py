@@ -1,14 +1,13 @@
-"""Sphinx role for linking to VTK documentation."""
-
 from __future__ import annotations
 
 from http import HTTPStatus
 from typing import TYPE_CHECKING
+from typing import ClassVar
 
-from bs4 import BeautifulSoup  # pydata-sphinx-theme dependency
+from bs4 import BeautifulSoup
 from docutils import nodes
 import requests
-from sphinx.roles import ReferenceRole
+from sphinx.util.docutils import ReferenceRole
 
 if TYPE_CHECKING:
     from typing import ClassVar
@@ -23,7 +22,7 @@ class VTKRole(ReferenceRole):
     # Cache for (class, member) keys with urls as values
     resolved_urls: ClassVar[dict[tuple[str, str | None], str]] = {}
 
-    def run(self):
+    def run(self):  # numpydoc ignore=RT01
         """Run the :vtk: role."""
         INVALID_URL = ''  # URL is set to empty string if not valid
         cls_full = self.target
@@ -34,7 +33,7 @@ class VTKRole(ReferenceRole):
             cls_name, member_name = cls_full.split('.', 1)
         else:
             cls_name, member_name = cls_full, None
-        cls_url = vtk_class_url(cls_name)
+        cls_url = _vtk_class_url(cls_name)
 
         cache_key = (cls_name, member_name)
         cached_url = self.resolved_urls.get(cache_key)
@@ -79,7 +78,7 @@ class VTKRole(ReferenceRole):
             return [node], []
 
         if member_name:
-            anchor = find_member_anchor(html, member_name)
+            anchor = _find_member_anchor(html, member_name)
             if anchor:
                 full_url = f'{cls_url}#{anchor}'
                 self.resolved_urls[cache_key] = full_url
@@ -99,20 +98,20 @@ class VTKRole(ReferenceRole):
         return [node], []
 
     def _warn_invalid_class_ref(self, cls_name):
-        msg = f"Invalid VTK class reference: '{cls_name}' → {vtk_class_url(cls_name)}"
+        msg = f"Invalid VTK class reference: '{cls_name}' → {_vtk_class_url(cls_name)}"
         self.inliner.reporter.warning(msg, line=self.lineno, subtype='ref')
 
     def _warn_invalid_class_member_ref(self, cls_name, member_name):
-        msg = f"VTK method anchor not found for: '{cls_name}.{member_name}' → {vtk_class_url(cls_name)}#<anchor>, the class URL is used instead."
+        msg = f"VTK method anchor not found for: '{cls_name}.{member_name}' → {_vtk_class_url(cls_name)}#<anchor>, the class URL is used instead."
         self.inliner.reporter.warning(msg, line=self.lineno, subtype='ref')
 
 
-def vtk_class_url(cls_name):
+def _vtk_class_url(cls_name):
     """Return the URL to the documentation for a VTK class."""
     return f'https://vtk.org/doc/nightly/html/class{cls_name}.html'
 
 
-def find_member_anchor(html: str, member_name: str) -> str | None:
+def _find_member_anchor(html: str, member_name: str) -> str | None:
     """Try to find the anchor ID for a method/attribute in the HTML."""
     soup = BeautifulSoup(html, 'html.parser')
     headers = soup.find_all(['h2', 'h3'], class_='memtitle')
@@ -122,3 +121,7 @@ def find_member_anchor(html: str, member_name: str) -> str | None:
             if anchor:
                 return anchor['id']
     return None
+
+
+def setup(app):
+    app.add_role('vtk', VTKRole())

@@ -24,7 +24,6 @@ os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
-from vtk_role import VTKRole
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
@@ -85,6 +84,7 @@ extensions = [
     'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'pyvista.ext.vtk_role',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
@@ -719,4 +719,3 @@ def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
-    app.add_role('vtk', VTKRole())

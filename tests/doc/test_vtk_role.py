@@ -1,26 +1,26 @@
+"""Sphinx role for linking to VTK documentation."""
+
 from __future__ import annotations
 
 from http import HTTPStatus
-import shutil
 import subprocess
 import textwrap
 
 import pytest
 import requests
 
-from doc.source import vtk_role
-from doc.source.vtk_role import find_member_anchor
-from doc.source.vtk_role import vtk_class_url
+from pyvista.ext.vtk_role import _find_member_anchor
+from pyvista.ext.vtk_role import _vtk_class_url
 
-VTK_POLY_DATA_CLASS_URL = vtk_class_url('vtkPolyData')
+VTK_POLY_DATA_CLASS_URL = _vtk_class_url('vtkPolyData')
 
-VTK_IMAGE_DATA_CLASS_URL = vtk_class_url('vtkImageData')
+VTK_IMAGE_DATA_CLASS_URL = _vtk_class_url('vtkImageData')
 GET_DIMENSIONS_ANCHOR = 'a3cbcab15f8744efeb5300e21dcfbe9af'
 GET_DIMENSIONS_URL = f'{VTK_IMAGE_DATA_CLASS_URL}#{GET_DIMENSIONS_ANCHOR}'
 SET_EXTENT_ANCHOR = 'a6e4c45a06e756c2d9d72f2312e773cb9'
 SET_EXTENT_URL = f'{VTK_IMAGE_DATA_CLASS_URL}#{SET_EXTENT_ANCHOR}'
 
-VTK_COMMAND_CLASS_URL = vtk_class_url('vtkCommand')
+VTK_COMMAND_CLASS_URL = _vtk_class_url('vtkCommand')
 EVENT_IDS_ANCHOR = 'a59a8690330ebcb1af6b66b0f3121f8fe'
 EVENT_IDS_URL = f'{VTK_COMMAND_CLASS_URL}#{EVENT_IDS_ANCHOR}'
 
@@ -34,10 +34,10 @@ def vtk_polydata_html():
 
 
 def test_find_member_anchor(vtk_polydata_html):
-    anchor = find_member_anchor(vtk_polydata_html, 'Foo')
+    anchor = _find_member_anchor(vtk_polydata_html, 'Foo')
     assert anchor is None
 
-    anchor = find_member_anchor(vtk_polydata_html, 'GetVerts')
+    anchor = _find_member_anchor(vtk_polydata_html, 'GetVerts')
     assert isinstance(anchor, str)
 
     # Confirm that the anchor appears in the HTML
@@ -54,22 +54,8 @@ def make_temp_doc_project(tmp_path, sample_text: str):
     src = tmp_path / 'src'
     src.mkdir()
 
-    # Copy vtk_role.py into this temp directory
-    shutil.copyfile(vtk_role.__file__, src / 'vtk_role.py')
-
-    # conf.py with VTKRole registration
-    (src / 'conf.py').write_text(
-        textwrap.dedent("""
-        import os
-        import sys
-        sys.path.insert(0, os.path.abspath("."))
-
-        from vtk_role import VTKRole
-
-        def setup(app):
-            app.add_role('vtk', VTKRole())
-        """)
-    )
+    # conf.py with the extension enabled
+    (src / 'conf.py').write_text("""extensions = ['pyvista.ext.vtk_role']""")
 
     # Write index.rst with sample text
     lines = [
@@ -100,13 +86,13 @@ def make_temp_doc_project(tmp_path, sample_text: str):
         # Invalid class
         (
             ':vtk:`NonExistentClass`',
-            [vtk_class_url('NonExistentClass')],
+            [_vtk_class_url('NonExistentClass')],
             "Invalid VTK class reference: 'NonExistentClass' → https://vtk.org/doc/nightly/html/classNonExistentClass.html",
         ),
         # Valid class, invalid method
         (
             ':vtk:`vtkImageData.FakeMethod`',
-            [vtk_class_url('vtkImageData')],
+            [_vtk_class_url('vtkImageData')],
             "VTK method anchor not found for: 'vtkImageData.FakeMethod' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
         # Valid class (so it gets cached), followed by same class with invalid member
@@ -115,7 +101,7 @@ def make_temp_doc_project(tmp_path, sample_text: str):
             :vtk:`vtkImageData`
             :vtk:`vtkImageData.FakeEnum`
             """),
-            [vtk_class_url('vtkImageData')],
+            [_vtk_class_url('vtkImageData')],
             "VTK method anchor not found for: 'vtkImageData.FakeEnum' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
     ],
