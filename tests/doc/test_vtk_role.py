@@ -111,7 +111,7 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
     build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: UP022
         [
             'sphinx-build',
             '-b',
@@ -121,17 +121,20 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_urls, expected_wa
             '-W',
             '--keep-going',
         ],
-        capture_output=True,
-        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
-    print('STDOUT:\n', result.stdout)
-    print('STDERR:\n', result.stderr)
+    # need to explicitly decode the output with UTF-8 to avoid UnicodeDecodeError
+    stdout = result.stdout.decode('utf-8', errors='replace')
+    stderr = result.stderr.decode('utf-8', errors='replace')
+    print('STDOUT:\n', stdout)
+    print('STDERR:\n', stderr)
 
     if expected_warning:
         assert result.returncode != 0, 'Expected warning but build succeeded'
-        assert expected_warning in result.stderr, (
-            f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{result.stderr}'
+        assert expected_warning in stderr, (
+            f'Expected warning:\n{expected_warning!r}\n\nBut got:\n{stderr}'
         )
     else:
         assert result.returncode == 0, 'Unexpected failure in Sphinx build'
