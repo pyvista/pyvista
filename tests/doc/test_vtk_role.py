@@ -50,15 +50,12 @@ def test_find_member_anchor(vtk_polydata_html):
 
 
 def make_temp_doc_project(tmp_path, sample_text: str):
-    """Set up a minimal Sphinx doc project using the :vtk: role with the given code block."""
+    """Set up a minimal Sphinx project that uses the :vtk: role directly in index.rst."""
     src = tmp_path / 'src'
     src.mkdir()
 
     # Copy vtk_role.py into this temp directory
     shutil.copyfile(vtk_role.__file__, src / 'vtk_role.py')
-
-    # Write example.py with module-level docstring
-    (src / 'example.py').write_text(f'"""\n{sample_text.strip()}\n"""\n')
 
     # conf.py with VTKRole registration
     (src / 'conf.py').write_text(
@@ -66,7 +63,6 @@ def make_temp_doc_project(tmp_path, sample_text: str):
         import os
         import sys
         sys.path.insert(0, os.path.abspath("."))
-        extensions = ["sphinx.ext.autodoc"]
 
         from vtk_role import VTKRole
 
@@ -75,17 +71,15 @@ def make_temp_doc_project(tmp_path, sample_text: str):
         """)
     )
 
-    # index.rst
-    (src / 'index.rst').write_text(
-        textwrap.dedent("""
-        API Reference
-        =============
-
-        .. automodule:: example
-           :members:
-           :undoc-members:
-        """)
-    )
+    # Write index.rst with sample text
+    lines = [
+        'Test Page',
+        '=========',
+        '',
+        sample_text.strip(),
+        '',
+    ]
+    (src / 'index.rst').write_text('\n'.join(lines))
 
     return src
 
