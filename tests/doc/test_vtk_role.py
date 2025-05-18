@@ -74,16 +74,10 @@ def make_temp_doc_project(tmp_path, sample_text: str):
 @pytest.mark.parametrize(
     ('code_block', 'expected_links', 'expected_warning'),
     [
-        # Tilde-prefixed input: short name should be displayed, full link used
-        (
-            ':vtk:`~vtkImageData.GetDimensions`',
-            {GET_DIMENSIONS_URL: 'GetDimensions'},
-            None,
-        ),
-        # Valid cases
+        # Valid cases (get/set methods and enum)
         (
             textwrap.dedent("""
-            :vtk:`vtkImageData.GetDimensions`
+            :vtk:`vtkImageData.GetDimensions`.
             :vtk:`vtkImageData.SetExtent`
             :vtk:`vtkCommand.EventIds`
             """),
@@ -93,6 +87,20 @@ def make_temp_doc_project(tmp_path, sample_text: str):
                 EVENT_IDS_URL: 'vtkCommand.EventIds',
             },
             None,
+        ),
+        # Tilde-prefixed input: short name should be displayed, full link used
+        (
+            ':vtk:`~vtkImageData.GetDimensions`',
+            {GET_DIMENSIONS_URL: 'GetDimensions'},
+            None,
+        ),
+        # Valid class with too many member parts — should warn and fallback to first member
+        (
+            ':vtk:`vtkImageData.GetDimensions.SomethingElse`',
+            {
+                GET_DIMENSIONS_URL: 'vtkImageData.GetDimensions.SomethingElse',
+            },
+            "Too many nested members in VTK reference: 'vtkImageData.GetDimensions.SomethingElse'. Interpreting as 'vtkImageData.GetDimensions', ignoring: 'SomethingElse'",
         ),
         # Invalid class
         (

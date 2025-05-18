@@ -36,11 +36,15 @@ class VTKRole(ReferenceRole):
             if not self.has_explicit_title:
                 title = cls_full.split('.')[-1]
 
-        # Split member if present
-        if '.' in cls_full:
-            cls_name, member_name = cls_full.split('.', 1)
+        # Validate and split input like 'vtkClass.member'
+        parts = cls_full.split('.')
+        if len(parts) > 2:
+            cls_name = parts[0]
+            member_name = parts[1]
+            extra = '.'.join(parts[2:])
+            self._warn_nested_members_ref(cls_name, member_name, extra)
         else:
-            cls_name, member_name = cls_full, None
+            cls_name, member_name = parts[0], parts[1] if len(parts) == 2 else None
         cls_url = _vtk_class_url(cls_name)
 
         cache_key = (cls_name, member_name)
@@ -106,11 +110,23 @@ class VTKRole(ReferenceRole):
         return [node], []
 
     def _warn_invalid_class_ref(self, cls_name):
-        msg = f"Invalid VTK class reference: '{cls_name}' → {_vtk_class_url(cls_name)}"
-        self.inliner.reporter.warning(msg, line=self.lineno, subtype='ref')
+        self._issue_warning(
+            f"Invalid VTK class reference: '{cls_name}' → {_vtk_class_url(cls_name)}"
+        )
 
     def _warn_invalid_class_member_ref(self, cls_name, member_name):
-        msg = f"VTK method anchor not found for: '{cls_name}.{member_name}' → {_vtk_class_url(cls_name)}#<anchor>, the class URL is used instead."
+        self._issue_warning(
+            f"VTK method anchor not found for: '{cls_name}.{member_name}' → {_vtk_class_url(cls_name)}#<anchor>, "
+            f'the class URL is used instead.'
+        )
+
+    def _warn_nested_members_ref(self, cls_name, member_name, extra):
+        self._issue_warning(
+            f"Too many nested members in VTK reference: '{cls_name}.{member_name}.{extra}'. "
+            f"Interpreting as '{cls_name}.{member_name}', ignoring: '{extra}'"
+        )
+
+    def _issue_warning(self, msg):
         self.inliner.reporter.warning(msg, line=self.lineno, subtype='ref')
 
 

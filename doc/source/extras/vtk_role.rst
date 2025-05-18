@@ -25,3 +25,10 @@ For example write ``:vtk:`vtkImageData.GetDimensions``` to link directly to the
 Just like with standard Sphinx roles, you can use ``~`` to shorten the title
 for the link. For example, ``:vtk:`~vtkImageData.GetDimensions``` will render
 as :vtk:`~vtkImageData.GetDimensions`.
+
+.. note::
+
+    The directive currently does not support linking to nested members. For example,
+    linking to an enum member with ``:vtk:`vtkCommand.EventIds``` is valid,
+    but linking to a specific enum value with ``:vtk:`vtkCommand.EventIds.PickEvent```
+    is not.
