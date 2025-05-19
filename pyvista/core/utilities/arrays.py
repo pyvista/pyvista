@@ -867,7 +867,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
             )
             raise AmbiguousDataError(msg)
     field, name = mesh.active_vectors_info
-    return _ActiveArrayExistsInfoTuple(field, cast(str, name))
+    return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
 def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoTuple:
@@ -931,7 +931,7 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
             )
             raise AmbiguousDataError(msg)
     field, name = mesh.active_scalars_info
-    return _ActiveArrayExistsInfoTuple(field, cast(str, name))
+    return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
 _JSONValueType = Union[
@@ -946,7 +946,7 @@ _JSONValueType = Union[
 ]
 
 
-class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
+class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
     """Dict-like object with a JSON-serialized string array representation.
 
     This class behaves just like a regular dict, except its contents

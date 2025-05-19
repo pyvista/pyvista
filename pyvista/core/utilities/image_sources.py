@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
+class ImageEllipsoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource):
     """Create a binary image of an ellipsoid class.
 
     .. versionadded:: 0.44.0
@@ -141,7 +141,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
 
 
 @no_new_attr
-class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
+class ImageMandelbrotSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource):
     """Create an image of the Mandelbrot set.
 
     .. versionadded:: 0.44.0
@@ -237,7 +237,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
 
 
 @no_new_attr
-class ImageNoiseSource(_vtk.vtkImageNoiseSource):
+class ImageNoiseSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -389,7 +389,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
 
 
 @no_new_attr
-class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
+class ImageSinusoidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
 
     .. versionadded:: 0.44.0
@@ -592,7 +592,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
 
 
 @no_new_attr
-class ImageGaussianSource(_vtk.vtkImageGaussianSource):
+class ImageGaussianSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
     """Create a binary image with Gaussian pixel values.
 
     .. versionadded:: 0.44.0
@@ -758,7 +758,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
 
 
 @no_new_attr
-class ImageGridSource(_vtk.vtkImageGridSource):
+class ImageGridSource(_vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
     """Create an image of a grid.
 
     .. versionadded:: 0.44.0

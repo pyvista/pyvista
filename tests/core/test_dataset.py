@@ -485,6 +485,23 @@ def test_arrows():
     assert arrows.active_vectors_name == 'GlyphVector'
 
 
+def test_arrows_cell_data():
+    box = pv.Box().compute_normals(cell_normals=True, point_normals=False)
+    assert box.array_names == ['Normals']
+    assert box.cell_data.keys() == ['Normals']
+    assert box.arrows is None
+
+    box.set_active_vectors('Normals')
+    arrows = box.arrows
+    # Test that there are as many arrows as there are vectors
+    num_parts_per_arrow = pv.Arrow().split_bodies().n_blocks
+    num_parts = arrows.split_bodies().n_blocks
+    num_arrows = num_parts / num_parts_per_arrow
+
+    num_vectors = len(box['Normals'])
+    assert num_arrows == num_vectors
+
+
 def test_arrows_ndim_raises(mocker: MockerFixture):
     m = mocker.patch.object(pv.DataSet, 'active_vectors')
     mocker.patch.object(pv.DataSet, 'active_vectors_name')
@@ -765,17 +782,11 @@ def test_axis_rotation_not_inplace():
     assert not np.allclose(p, p_out)
 
 
-def test_bad_instantiation():
+@pytest.mark.parametrize('name', ['DataSet', 'Grid', 'DataSetFilters', 'PointGrid', 'DataObject'])
+def test_init_abstract_class(name):
+    klass = getattr(pv, name)
     with pytest.raises(TypeError):
-        pv.DataSet()
-    with pytest.raises(TypeError):
-        pv.Grid()
-    with pytest.raises(TypeError):
-        pv.DataSetFilters()
-    with pytest.raises(TypeError):
-        pv.PointGrid()
-    with pytest.raises(TypeError):
-        pv.DataObject()
+        klass()
 
 
 def test_string_arrays():
@@ -1173,10 +1184,7 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
-)
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
@@ -1194,10 +1202,7 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
-)
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)

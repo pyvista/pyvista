@@ -50,13 +50,15 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(metaclass=_vtkWrapperMeta):
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
         if item in unwrapped_attrs or wrapped is None:
             return super().__getattribute__(item)
         else:
+            if item[0].islower():
+                return super().__getattribute__(item)
             try:
                 return wrapped.__getattribute__(item)
             except AttributeError:
@@ -459,14 +461,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
     grid : bool, default: True
         Flag to toggle grid lines visibility for this axis.
 
-    Attributes
-    ----------
-    pen : Pen
-        Pen used to draw the axis.
-
-    grid_pen : Pen
-        Pen used to draw the grid lines.
-
     """
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
@@ -479,17 +473,27 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # SetPen and SetGridPen methods are not available for older VTK versions,
             # so fallback to using wrapper objects.
-            self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
+            self._pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
+            self._grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
         else:
-            self.pen = Pen(color=(0, 0, 0))
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95))
-            self.SetPen(self.pen)
-            self.SetGridPen(self.grid_pen)
+            self._pen = Pen(color=(0, 0, 0))
+            self._grid_pen = Pen(color=(0.95, 0.95, 0.95))
+            self.SetPen(self._pen)
+            self.SetGridPen(self._grid_pen)
         self.label = label
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
         self.grid = grid
+
+    @property
+    def pen(self) -> Pen:  # numpydoc ignore=RT01
+        """Pen used to draw the axis."""
+        return self._pen
+
+    @property
+    def grid_pen(self) -> Pen:  # numpydoc ignore=RT01
+        """Pen used to draw the grid lines."""
+        return self._grid_pen
 
     @property
     def label(self):  # numpydoc ignore=RT01
@@ -1071,7 +1075,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-class _CustomContextItem(_vtk.vtkPythonItem):
+class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:
             # item is the _CustomContextItem subclass instance
@@ -1122,7 +1126,7 @@ class _ChartBackground(_CustomContextItem):
         return True
 
 
-class _Chart(DocSubs):
+class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
@@ -1141,7 +1145,7 @@ class _Chart(DocSubs):
     @property
     def _scene(self):
         """Get a reference to the vtkScene in which this chart is drawn."""
-        return self.GetScene()  # type: ignore[attr-defined]
+        return self.GetScene()
 
     @property
     def _renderer(self):
@@ -1185,12 +1189,12 @@ class _Chart(DocSubs):
     @property
     def _geometry(self):
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
-        return tuple(self.GetSize())  # type: ignore[attr-defined]
+        return tuple(self.GetSize())
 
     @_geometry.setter
     def _geometry(self, val) -> None:
         """Set the chart geometry."""
-        self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
+        self.SetSize(_vtk.vtkRectf(*val))
 
     @property
     def _interactive(self):
@@ -1202,11 +1206,11 @@ class _Chart(DocSubs):
         :func:`Renderer.set_chart_interaction` method instead.
 
         """
-        return self.GetInteractive()  # type: ignore[attr-defined]
+        return self.GetInteractive()
 
     @_interactive.setter
     def _interactive(self, val) -> None:
-        self.SetInteractive(val)  # type: ignore[attr-defined]
+        self.SetInteractive(val)
 
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
@@ -1487,11 +1491,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()  # type: ignore[attr-defined]
+        return self.GetVisible()
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)  # type: ignore[attr-defined]
+        self.SetVisible(val)
 
     @doc_subs
     def toggle(self) -> None:
@@ -1534,11 +1538,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetTitle()  # type: ignore[attr-defined]
+        return self.GetTitle()
 
     @title.setter
     def title(self, val) -> None:
-        self.SetTitle(val)  # type: ignore[attr-defined]
+        self.SetTitle(val)
 
     @property
     @doc_subs
@@ -1563,11 +1567,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetShowLegend()  # type: ignore[attr-defined]
+        return self.GetShowLegend()
 
     @legend_visible.setter
     def legend_visible(self, val) -> None:
-        self.SetShowLegend(val)  # type: ignore[attr-defined]
+        self.SetShowLegend(val)
 
     @doc_subs
     def show(
@@ -1659,7 +1663,8 @@ class _Chart(DocSubs):
         )
 
 
-class _Plot(DocSubs):
+# Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
+class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
@@ -1837,7 +1842,7 @@ class _Plot(DocSubs):
     @label.setter
     def label(self, val) -> None:
         self._label = '' if val is None else val
-        self.SetLabel(self._label)  # type: ignore[attr-defined]
+        self.SetLabel(self._label)
 
     @property
     @doc_subs
@@ -1862,11 +1867,11 @@ class _Plot(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()  # type: ignore[attr-defined]
+        return self.GetVisible()
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)  # type: ignore[attr-defined]
+        self.SetVisible(val)
 
     @doc_subs
     def toggle(self) -> None:
@@ -1909,7 +1914,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)  # type: ignore[attr-defined]
+        self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
@@ -3104,6 +3109,11 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
     grid : bool, default: True
         Show the background grid in the plot.
+
+    See Also
+    --------
+    :ref:`chart_basics_example`
+    :ref:`chart_overlays_example`
 
     Examples
     --------
@@ -4615,6 +4625,10 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         the plotter is rendered. For static charts, setting this
         to ``False`` can improve performance.
 
+    See Also
+    --------
+    :ref:`chart_overlays_example`
+
     Examples
     --------
     Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
@@ -4929,6 +4943,10 @@ class Charts:
         ----------
         *charts : Chart2D | Chart3D
             One or more chart objects to be added to the collection.
+
+        See Also
+        --------
+        :ref:`chart_overlays_example`
 
         """
         if self._scene is None:

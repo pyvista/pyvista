@@ -81,7 +81,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if isinstance(dataset, _vtk.VTKObjectWrapper):
             obj.dataset.Set(dataset.VTKObject)
         else:
-            obj.dataset.Set(cast(_vtk.vtkDataSet, dataset))
+            obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
         return obj
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
@@ -131,4 +131,10 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    __getattr__ = _vtk.VTKArray.__getattr__
+    def __getattr__(self, name: str) -> Any:
+        """Forward unknown attribute requests to VTKArray's __getattr__."""
+        if self.VTKObject is not None:
+            # Enforce rules for using VTK's snake_case API rules
+            _vtk.DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
+            return getattr(self.VTKObject, name)
+        raise AttributeError
