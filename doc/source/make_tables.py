@@ -1174,15 +1174,7 @@ class ColormapTable(DocTable):
                 # Sort (or don't) each package separately with separate options
                 data_out = []
                 for package, pkg_options in options.items():
-                    pkg_data = [info for info in data if info.package == package]
-                    if pkg_options is not None:
-                        pkg_data = ColormapTable.sort_data(
-                            pkg_data,
-                            initial_cmap=pkg_options.initial_cmap,
-                            n_samples=pkg_options.n_samples,
-                            sort_by=pkg_options.sort_by,
-                            pre_sort=pkg_options.pre_sort,
-                        )
+                    pkg_data = [info for info in data if info.package == package] if pkg_options is not None else pkg_data = ColormapTable.sort_data(pkg_data, initial_cmap=pkg_options.initial_cmap, n_samples=pkg_options.n_samples, sort_by=pkg_options.sort_by, pre_sort=pkg_options.pre_sort)
                     data_out.extend(pkg_data)
             else:
                 data_out = ColormapTable.sort_data(
