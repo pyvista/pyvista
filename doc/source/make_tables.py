@@ -1531,7 +1531,7 @@ class ColormapTableCATEGORICAL(ColormapTable):
     kind = ColormapKind.CATEGORICAL
     sort_options: ClassVar[_ColormapSortOptions | dict[str:_ColormapSortOptions]] = {
         'colorcet': None,
-        'cmcrameri': _ColormapSortOptions(initial_cmap='grayCS', pre_sort=True, n_samples=100),
+        'cmcrameri': _ColormapSortOptions(initial_cmap='grayCS', pre_sort=True),
         'matplotlib': None,
     }
 
