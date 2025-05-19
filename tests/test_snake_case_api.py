@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -43,18 +44,33 @@ def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'vtk_subclass' in metafunc.fixturenames:
-        class_names, class_types = get_all_pyvista_classes()
+        # This test automatically collects all pyvista classes that _inherit_ from
+        # vtk classes. For classes that wrap vtk classes through composition, we
+        # manually add these here
+        VTK_SUBCLASS_BY_COMPOSITION: set[type] = {pv.pyvista_ndarray}
 
-        def inherits_from_vtk(klass):
-            bases = klass.__mro__[1:]
-            return any(base.__name__.startswith('vtk') for base in bases)
+        def get_vtk_subclasses_through_composition() -> dict[str, type]:
+            return {cls.__name__: cls for cls in VTK_SUBCLASS_BY_COMPOSITION}
 
-        filtered = {
-            name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
-        }
-        assert filtered
-        names = filtered.keys()
-        types = filtered.values()
+        def get_vtk_subclasses_through_inheritance() -> dict[str, type]:
+            class_names, class_types = get_all_pyvista_classes()
+
+            def inherits_from_vtk(klass):
+                bases = klass.__mro__[1:]
+                return any(base.__name__.startswith('vtk') for base in bases)
+
+            inherits_from_vtk = {
+                name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
+            }
+            assert inherits_from_vtk
+            return inherits_from_vtk
+
+        inheritance = get_vtk_subclasses_through_inheritance()
+        composition = get_vtk_subclasses_through_composition()
+        inheritance.update(composition)
+
+        names = inheritance.keys()
+        types = inheritance.values()
         metafunc.parametrize('vtk_subclass', types, ids=names)
 
 
@@ -72,9 +88,14 @@ def try_init_object(class_, kwargs):
 
 
 def test_vtk_snake_case_api_is_disabled(vtk_subclass):
-    # Define kwargs as required for some cases.
     assert pv.vtk_snake_case() == 'error'
+
+    # Default test values for classes
     kwargs = {}
+    vtk_attr_camel_case = 'GetGlobalWarningDisplay'
+    vtk_attr_snake_case = 'global_warning_display'
+
+    # Define kwargs or attributes as required for some cases.
     if vtk_subclass is pv.CubeAxesActor:
         kwargs['camera'] = pv.Camera()
     elif vtk_subclass is pv.Renderer:
@@ -109,12 +130,14 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
     elif vtk_subclass is pv.plotting.background_renderer.BackgroundRenderer:
         kwargs['parent'] = pv.Plotter()
         kwargs['image_path'] = pv.examples.logofile
+    elif vtk_subclass is pv.pyvista_ndarray:
+        vtk_attr_camel_case = 'GetName'
+        vtk_attr_snake_case = 'name'
+        kwargs['array'] = pv.vtk_points(np.eye(3)).GetData()
     elif issubclass(vtk_subclass, pv.plotting.render_window_interactor.CaptureInteractorStyle):
         kwargs['render_window_interactor'] = pv.Plotter().iren
 
     instance = try_init_object(vtk_subclass, kwargs)
-    vtk_attr_camel_case = 'GetGlobalWarningDisplay'
-    vtk_attr_snake_case = 'global_warning_display'
 
     # Make sure the CamelCase attribute exists and can be accessed
     assert hasattr(instance, vtk_attr_camel_case)
@@ -127,7 +150,7 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         except PyVistaAttributeError as e:
             # Test passes, we want an error to be raised
             # Confirm error message is correct
-            match = "The attribute 'global_warning_display' is defined by VTK and is not part of the PyVista API"
+            match = f"The attribute '{vtk_attr_snake_case}' is defined by VTK and is not part of the PyVista API"
             assert match in repr(e)  # noqa: PT017
         else:
             if DisableVtkSnakeCase not in vtk_subclass.__mro__:
