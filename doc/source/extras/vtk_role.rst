@@ -28,6 +28,10 @@ Just like with standard Sphinx roles, you can use ``~`` to shorten the title
 for the link. For example, ``:vtk:`~vtkImageData.GetDimensions``` will render
 as :vtk:`~vtkImageData.GetDimensions`.
 
+Also like standard Sphinx roles, you can provide a custom title for the
+reference. For example, ``:vtk:`Get Image Dimensions<vtkImageData.GetDimensions>```
+will render as :vtk:`Get Image Dimensions<vtkImageData.GetDimensions>`.
+
 .. note::
 
     The directive currently does not support linking to nested members. For example,

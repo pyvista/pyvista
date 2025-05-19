@@ -74,8 +74,7 @@ def make_temp_doc_project(tmp_path, sample_text: str):
 @pytest.mark.parametrize(
     ('code_block', 'expected_links', 'expected_warning'),
     [
-        # Valid cases (get/set methods and enum)
-        (
+        (  # Valid cases (get/set methods and enum)
             textwrap.dedent("""
             :vtk:`vtkImageData.GetDimensions`.
             :vtk:`vtkImageData.SetExtent`
@@ -88,43 +87,52 @@ def make_temp_doc_project(tmp_path, sample_text: str):
             },
             None,
         ),
-        # Tilde-prefixed input: short name should be displayed, full link used
-        (
-            ':vtk:`~vtkImageData.GetDimensions`',
-            {GET_DIMENSIONS_URL: 'GetDimensions'},
+        (  # Use an explicit title
+            ':vtk:`Get Image Dimensions<vtkImageData.GetDimensions>`',
+            {GET_DIMENSIONS_URL: 'Get Image Dimensions'},
             None,
         ),
-        # Valid class with too many member parts — should warn and fallback to first member
-        (
+        (  # Valid class but too many member parts
             ':vtk:`vtkImageData.GetDimensions.SomethingElse`',
             {
                 GET_DIMENSIONS_URL: 'vtkImageData.GetDimensions.SomethingElse',
             },
             "Too many nested members in VTK reference: 'vtkImageData.GetDimensions.SomethingElse'. Interpreting as 'vtkImageData.GetDimensions', ignoring: 'SomethingElse'",
         ),
-        # Invalid class
-        (
-            ':vtk:`NonExistentClass`',
-            {_vtk_class_url('NonExistentClass'): 'NonExistentClass'},
-            "Invalid VTK class reference: 'NonExistentClass' → https://vtk.org/doc/nightly/html/classNonExistentClass.html",
-        ),
-        # Valid class, invalid method
-        (
+        (  # Valid class, invalid method
             ':vtk:`vtkImageData.FakeMethod`',
             {_vtk_class_url('vtkImageData'): 'vtkImageData.FakeMethod'},
             "VTK method anchor not found for: 'vtkImageData.FakeMethod' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
         ),
-        # Valid class (so it gets cached), followed by same class with invalid member
-        (
+        (  # Invalid class
+            ':vtk:`NonExistentClass`',
+            {_vtk_class_url('NonExistentClass'): 'NonExistentClass'},
+            "Invalid VTK class reference: 'NonExistentClass' → https://vtk.org/doc/nightly/html/classNonExistentClass.html",
+        ),
+        (  # Test caching with valid class and invalid member
             textwrap.dedent("""
             :vtk:`vtkImageData`
+            :vtk:`vtkImageData`
+            :vtk:`vtkImageData.FakeEnum`
             :vtk:`vtkImageData.FakeEnum`
             """),
             {
-                _vtk_class_url('vtkImageData'): 'vtkImageData',  # class reference
-                _vtk_class_url('vtkImageData'): 'vtkImageData',  # bad member still uses class URL
+                # Only one URL expected: the url for a bad member falls back to the class URL
+                _vtk_class_url('vtkImageData'): 'vtkImageData',
             },
             "VTK method anchor not found for: 'vtkImageData.FakeEnum' → https://vtk.org/doc/nightly/html/classvtkImageData.html#<anchor>, the class URL is used instead.",
+        ),
+        (  # Test caching with invalid class and invalid member
+            textwrap.dedent("""
+           :vtk:`vtkFooBar`
+           :vtk:`vtkFooBar`
+           :vtk:`vtkFooBar.Baz`
+           :vtk:`vtkFooBar.Baz`
+           """),
+            {
+                _vtk_class_url('vtkFooBar'): 'vtkFooBar',
+            },
+            "Invalid VTK class reference: 'vtkFooBar' → https://vtk.org/doc/nightly/html/classvtkFooBar.html",
         ),
     ],
 )
