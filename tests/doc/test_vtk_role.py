@@ -141,7 +141,7 @@ def make_temp_doc_project(tmp_path, sample_text: str):
         ),
     ],
 )
-def test_vtk_role_link_behavior(tmp_path, code_block, expected_links, expected_warning):
+def test_vtk_role(tmp_path, code_block, expected_links, expected_warning):
     doc_project = make_temp_doc_project(tmp_path, code_block)
     build_dir = tmp_path / '_build'
     build_html_dir = build_dir / 'html'
