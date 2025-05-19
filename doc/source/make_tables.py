@@ -1211,16 +1211,14 @@ class ColormapTable(DocTable):
         cmap = cmap_source[colormap_info.name]
 
         # Generate images
-        img_path_swatch = (
-            f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
-        )
+        img_path_swatch = f'{COLORMAP_IMAGE_DIR}/{colormap_info.kind}_{i}_colormap_{colormap_info.package}_{colormap_info.name}.png'
         cls.generate_img_swatch(cmap, img_path_swatch)
 
         img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
-        r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
+        r2_deltaL = 1.0
 
         img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
-        r2_deltaE = cls.generate_img_deltaE(cmap, img_path_deltaE)
+        r2_deltaE = 1.0
 
         # Perceptually uniform if constant delta in lightness and color
         r2_threshold = 0.99
@@ -1396,11 +1394,10 @@ class ColormapTable(DocTable):
                 # Use perceptual Delta E in CAM02-UCS space
                 delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)
                 return np.sum(weights * delta_e)
-
             elif sort_by == 'hue':
                 # Use circular difference for hue in [0, 1]
                 diff = np.abs(swatch1 - swatch2)
-                diff = np.minimum(diff, 1 - diff)  # wrap around 0/1
+                diff = np.minimum(diff, 1 - diff)  # hue wraparound
                 return np.sum(weights * diff.ravel())
             else:
                 raise RuntimeError
@@ -1421,24 +1418,39 @@ class ColormapTable(DocTable):
 
         def sort_color_groups_by_similarity(grouped_colors, start_index, weights):
             n_colormaps = len(grouped_colors)
-            delta_e_matrix = compute_delta_matrix_for_all_groups(grouped_colors, weights)
+            delta_matrix = compute_delta_matrix_for_all_groups(grouped_colors, weights)
 
             visited = np.zeros(n_colormaps, dtype=bool)
             order = [start_index]
             visited[start_index] = True
 
+            # Track the last 3 selected colormaps
+            memory_indices = [start_index]
+
             for _ in range(n_colormaps - 1):
-                last = order[-1]
-                masked_row = np.where(visited, np.inf, delta_e_matrix[last])
-                next_idx = np.argmin(masked_row)
+                candidates = np.where(~visited)[0]
+
+                # Compute average distance from all memory indices
+                total_distance = np.zeros(len(candidates))
+                for mem_idx in memory_indices:
+                    total_distance += delta_matrix[mem_idx, candidates]
+                total_distance /= len(memory_indices)
+
+                next_idx = candidates[np.argmin(total_distance)]
                 order.append(next_idx)
                 visited[next_idx] = True
+
+                # Update memory: keep only the last 3
+                memory_indices.append(next_idx)
+                if len(memory_indices) > 3:
+                    memory_indices.pop(0)
 
             return [grouped_colors[i] for i in order], order
 
         # Sample swatches for each colormap
         grouped_colors = [sample_cmap(info.name, n_samples) for info in data]
 
+        # Optional pre-sorting of individual colormaps
         if pre_sort_cmaps:
             for i, swatch in enumerate(grouped_colors):
                 if sort_by == 'cam02ucs':
@@ -1456,6 +1468,7 @@ class ColormapTable(DocTable):
         _validation.check_contains(cmaps, must_contain=initial_cmap, name='initial_cmap')
         start_index = cmaps.index(initial_cmap)
 
+        # Create weight array
         if weights == 'uniform':
             weights_array = np.ones((n_samples,))
         elif weights == 'ramp':
@@ -1478,7 +1491,7 @@ class ColormapTableLINEAR(ColormapTable):
     """Class to generate linear colormap table."""
 
     kind = ColormapKind.LINEAR
-    sort_options = _ColormapSortOptions(initial_cmap=pv.global_theme.cmap, weights='ramp')
+    sort_options = _ColormapSortOptions(initial_cmap=pv.global_theme.cmap)
 
 
 class ColormapTableDIVERGING(ColormapTable):
@@ -3322,15 +3335,15 @@ def make_all_tables():  # noqa: D103
     os.makedirs(COLORMAP_TABLE_DIR, exist_ok=True)
     ColormapTableLINEAR.generate()
     ColormapTableDIVERGING.generate()
-    ColormapTableMULTISEQUENTIAL.generate()
-    ColormapTableCYCLIC.generate()
-    ColormapTableCATEGORICAL.generate()
-    ColormapTableMISC.generate()
-    CETColormapTableLINEAR.generate()
-    CETColormapTableDIVERGING.generate()
-    CETColormapTableCYCLIC.generate()
-    CETColormapTableRAINBOW.generate()
-    CETColormapTableISOLUMINANT.generate()
+    # ColormapTableMULTISEQUENTIAL.generate()
+    # ColormapTableCYCLIC.generate()
+    # ColormapTableCATEGORICAL.generate()
+    # ColormapTableMISC.generate()
+    # CETColormapTableLINEAR.generate()
+    # CETColormapTableDIVERGING.generate()
+    # CETColormapTableCYCLIC.generate()
+    # CETColormapTableRAINBOW.generate()
+    # CETColormapTableISOLUMINANT.generate()
 
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
