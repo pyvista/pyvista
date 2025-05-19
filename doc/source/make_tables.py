@@ -852,6 +852,7 @@ class _ColormapSortOptions:
     initial_cmap: str
     n_samples: int = 11
     sort_by: Literal['hue', 'cam02ucs'] = 'cam02ucs'
+    pre_sort: bool = False
 
 
 # Define colormap info based on manual review of documentation from each package.
@@ -1175,6 +1176,7 @@ class ColormapTable(DocTable):
                             initial_cmap=pkg_options.initial_cmap,
                             n_samples=pkg_options.n_samples,
                             sort_by=pkg_options.sort_by,
+                            pre_sort=pkg_options.pre_sort,
                         )
                     data_out.extend(pkg_data)
             else:
@@ -1183,6 +1185,7 @@ class ColormapTable(DocTable):
                     initial_cmap=options.initial_cmap,
                     n_samples=options.n_samples,
                     sort_by=options.sort_by,
+                    pre_sort=options.pre_sort,
                 )
         return data_out
 
@@ -1339,6 +1342,7 @@ class ColormapTable(DocTable):
         initial_cmap: str,
         n_samples: int,
         sort_by: Literal['hue', 'cam02ucs'],
+        pre_sort: bool = False,
     ):
         """Sort colormaps by color similarity.
 
@@ -1359,6 +1363,10 @@ class ColormapTable(DocTable):
             Method used to sort the colormaps. Sort by ``'hue'`` (using HLS color space)
             or ``cam02ucs`` to sort colormaps by perceptual difference.
 
+        pre_sort
+            Whether to sort the colors within each colormap before sampling. This is useful
+            for categorical colormaps to ensure consistent progression for comparison.
+
         Returns
         -------
         Sorted list of colormap info.
@@ -1368,16 +1376,49 @@ class ColormapTable(DocTable):
 
         _validation.check_contains(['hue', 'cam02ucs'], sort_by, name='sort_by')
 
+        def sort_colormap_colors(colors, sort_by: Literal['hue', 'cam02ucs']):
+            """Sort a list of RGB colors within a colormap."""
+            if sort_by == 'cam02ucs':
+                xyz = colour.sRGB_to_XYZ(colors)
+                cam02 = colour.XYZ_to_CAM02UCS(xyz)
+
+                n = len(cam02)
+                visited = np.zeros(n, dtype=bool)
+                order = [0]
+                visited[0] = True
+                for _ in range(n - 1):
+                    last = order[-1]
+                    candidates = np.where(~visited)[0]
+                    dists = np.linalg.norm(cam02[candidates] - cam02[last], axis=1)
+                    next_idx = candidates[np.argmin(dists)]
+                    visited[next_idx] = True
+                    order.append(next_idx)
+                return colors[order]
+
+            elif sort_by == 'hue':
+                hls = np.array([rgb_to_hls(*color) for color in colors])
+                hue_sorted_indices = np.argsort(hls[:, 0])
+                return colors[hue_sorted_indices]
+
+            else:
+                raise RuntimeError
+
         def sample_cmap(cmap_name: str, n_samples: int = 5):
             cmap = pv.get_cmap_safe(cmap_name)
-            rgb = cmap(np.linspace(0, 1, n_samples))[:, :3]
+            rgb_full = cmap(np.linspace(0, 1, cmap.N))[:, :3]
+
+            if pre_sort:
+                rgb_full = sort_colormap_colors(rgb_full, sort_by)
+
+            idx = np.linspace(0, len(rgb_full) - 1, n_samples, dtype=int)
+            rgb_sampled = rgb_full[idx]
 
             if sort_by == 'cam02ucs':
-                xyz = colour.sRGB_to_XYZ(rgb)
+                xyz = colour.sRGB_to_XYZ(rgb_sampled)
                 return colour.XYZ_to_CAM02UCS(xyz)
             elif sort_by == 'hue':
-                hls = np.array([rgb_to_hls(*color) for color in rgb])
-                return hls[:, 0]  # keep only hue
+                hls = np.array([rgb_to_hls(*color) for color in rgb_sampled])
+                return hls[:, 0]
             else:
                 raise RuntimeError
 
@@ -1485,7 +1526,7 @@ class ColormapTableCATEGORICAL(ColormapTable):
     kind = ColormapKind.CATEGORICAL
     sort_options: ClassVar[_ColormapSortOptions | dict[str:_ColormapSortOptions]] = {
         'colorcet': None,
-        'cmcrameri': _ColormapSortOptions(initial_cmap='lipariS'),
+        'cmcrameri': _ColormapSortOptions(initial_cmap='grayCS', pre_sort=True, n_samples=100),
         'matplotlib': None,
     }
 
