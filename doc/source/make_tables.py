@@ -1400,13 +1400,10 @@ class ColormapTable(DocTable):
                     order.append(next_idx)
                 return colors[order]
 
-            elif sort_by == 'hue':
+            else:  # sort_by == 'hue':
                 hls = np.array([rgb_to_hls(*color) for color in colors])
                 hue_sorted_indices = np.argsort(hls[:, 0])
                 return colors[hue_sorted_indices]
-
-            else:
-                raise RuntimeError
 
         def sample_cmap(cmap_name: str, n_samples: int = 5):
             cmap = pv.get_cmap_safe(cmap_name)
@@ -1421,24 +1418,20 @@ class ColormapTable(DocTable):
             if sort_by == 'cam02ucs':
                 xyz = colour.sRGB_to_XYZ(rgb_sampled)
                 return colour.XYZ_to_CAM02UCS(xyz)
-            elif sort_by == 'hue':
+            else:  # sort_by == 'hue':
                 hls = np.array([rgb_to_hls(*color) for color in rgb_sampled])
                 return hls[:, 0]
-            else:
-                raise RuntimeError
 
         def compute_delta_between_swatches(swatch1, swatch2, weights):
             if sort_by == 'cam02ucs':
                 # Use perceptual Delta E in CAM02-UCS space
                 delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)
                 return np.sum(weights * delta_e)
-            elif sort_by == 'hue':
+            else:  # sort_by == 'hue':
                 # Use circular difference for hue in [0, 1]
                 diff = np.abs(swatch1 - swatch2)
                 diff = np.minimum(diff, 1 - diff)  # hue wraparound
                 return np.sum(weights * diff.ravel())
-            else:
-                raise RuntimeError
 
         def compute_delta_matrix_for_all_groups(grouped_colors, weights):
             n = len(grouped_colors)
