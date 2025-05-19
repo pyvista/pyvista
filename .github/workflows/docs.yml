@@ -136,7 +136,7 @@ jobs:
           PYVISTA_BUILDING_MINI18N: "true"
         run: |
           make -C doc mini18n-html SPHINXOPTS="-W --keep-going"
-          cp -rf doc/build/mini18n-html/. doc/build/html/
+          find doc/build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/build/html/ \;
 
       - name: Upload HTML documentation
         if: always()
