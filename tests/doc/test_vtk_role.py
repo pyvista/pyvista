@@ -92,6 +92,11 @@ def make_temp_doc_project(tmp_path, sample_text: str):
             {GET_DIMENSIONS_URL: 'Get Image Dimensions'},
             None,
         ),
+        (  # Use a tilde
+            ':vtk:`~vtkImageData.GetDimensions`',
+            {GET_DIMENSIONS_URL: 'GetDimensions'},
+            None,
+        ),
         (  # Valid class but too many member parts
             ':vtk:`vtkImageData.GetDimensions.SomethingElse`',
             {
