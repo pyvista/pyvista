@@ -79,8 +79,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'atsphinx.mini18n'
-    'enum_tools.autoenum',
+    'atsphinx.mini18nenum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
