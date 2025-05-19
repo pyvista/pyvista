@@ -3,6 +3,8 @@
 Sphinx VTK Role
 ===============
 
+.. versionadded:: 0.46
+
 You can link directly to VTK's documentation with the ``:vtk:`` role
 by adding the following to your ``conf.py`` when building your
 documentation using Sphinx.
@@ -19,7 +21,7 @@ in docstrings to link directly to the ``vtkImageData`` documentation. This
 will render as :vtk:`vtkImageData`.
 
 The role also works for linking to class members such as methods or enums.
-For example write ``:vtk:`vtkImageData.GetDimensions``` to link directly to the
+For example, write ``:vtk:`vtkImageData.GetDimensions``` to link directly to the
 ``GetDimensions`` method. This will render as :vtk:`vtkImageData.GetDimensions`.
 
 Just like with standard Sphinx roles, you can use ``~`` to shorten the title
