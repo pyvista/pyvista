@@ -89,7 +89,6 @@ from vtkmodules.vtkCommonCore import vtkFileOutputWindow  # noqa: F401
 from vtkmodules.vtkCommonCore import vtkFloatArray  # noqa: F401
 from vtkmodules.vtkCommonCore import vtkIdList  # noqa: F401
 from vtkmodules.vtkCommonCore import vtkIdTypeArray  # noqa: F401
-from vtkmodules.vtkCommonCore import vtkLogger
 from vtkmodules.vtkCommonCore import vtkLookupTable  # noqa: F401
 from vtkmodules.vtkCommonCore import vtkMath  # noqa: F401
 from vtkmodules.vtkCommonCore import vtkOutputWindow  # noqa: F401
