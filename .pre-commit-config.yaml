@@ -106,3 +106,8 @@ repos:
     rev: v1.5.2
     hooks:
       - id: zizmor
+
+  - repo: https://github.com/sphinx-contrib/sphinx-lint
+    rev: v1.0.0
+    hooks:
+      - id: sphinx-lint
