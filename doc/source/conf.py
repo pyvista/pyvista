@@ -79,6 +79,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'atsphinx.mini18n'
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -103,10 +104,6 @@ extensions = [
     'sphinxext.opengraph',
     'sphinx_sitemap',
 ]
-# https://github.com/atsphinx/mini18n/issues/6
-if os.environ.get('PYVISTA_BUILDING_MINI18N', 'false') == 'true':
-    extensions.append('atsphinx.mini18n')
-    extensions.remove('notfound.extension')
 
 # Configuration of pyvista.ext.coverage
 coverage_additional_modules = [
