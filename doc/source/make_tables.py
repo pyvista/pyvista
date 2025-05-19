@@ -1228,14 +1228,16 @@ class ColormapTable(DocTable):
         cmap = cmap_source[colormap_info.name]
 
         # Generate images
-        img_path_swatch = f'{COLORMAP_IMAGE_DIR}/{colormap_info.kind}_{i}_colormap_{colormap_info.package}_{colormap_info.name}.png'
+        img_path_swatch = (
+            f'{COLORMAP_IMAGE_DIR}/colormap_{colormap_info.package}_{colormap_info.name}.png'
+        )
         cls.generate_img_swatch(cmap, img_path_swatch)
 
         img_path_lightness = img_path_swatch.replace('.png', '_lightness.png')
-        r2_deltaL = 1.0
+        r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
 
         img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
-        r2_deltaE = 1.0
+        r2_deltaE = cls.generate_img_deltaE(cmap, img_path_deltaE)
 
         # Perceptually uniform if constant delta in lightness and color
         r2_threshold = 0.99
