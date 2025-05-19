@@ -856,9 +856,9 @@ class _ColormapSortOptions:
 
 
 # Define colormap info based on manual review of documentation from each package.
-# NOTE: The order of the cmaps here will be reflected in the docs.
 _COLORMAP_INFO: list[_ColormapInfo] = [
     # LINEAR
+    # Order here does NOT matter since these will be auto-sorted
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgy'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgyw'),
@@ -951,11 +951,13 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'navia'),
     _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'grayC'),
     # MULTI SEQUENTIAL
+    # The order of the cmaps here will be reflected in the docs.
     _ColormapInfo('cmocean', ColormapKind.MULTI_SEQUENTIAL, 'topo'),
     _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'bukavu'),
     _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'oleron'),
     _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'fes'),
     # DIVERGING
+    # Order here does NOT matter since these will be auto-sorted
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'berlin'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
@@ -965,7 +967,6 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'managua'),
-    # DIVERGING
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua'),
@@ -997,6 +998,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'broc'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'cork'),
     # CYCLIC
+    # The order of the cmaps here will be reflected in the docs.
     _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
     _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase'),
     _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel'),
@@ -1009,6 +1011,8 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'brocO'),
     _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'corkO'),
     # CATEGORICAL
+    # The order of the 'colorcet' and 'matplotlib' cmaps here
+    # will be reflected in the docs. The 'cmcrameri' cmaps are auto-sorted.
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool'),
@@ -1051,6 +1055,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c'),
     # MISC
+    # The order of the cmaps here will be reflected in the docs.
     _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum'),
     _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4'),
     _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow'),
