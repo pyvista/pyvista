@@ -135,7 +135,8 @@ def test_vtk_role_link_behavior(tmp_path, code_block, expected_links, expected_w
 
     result = subprocess.run(  # noqa: UP022
         [
-            'sphinx-build',
+            sys.executable,
+            '-msphinx',
             '-b',
             'html',
             str(doc_project),
