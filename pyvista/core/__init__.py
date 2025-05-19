@@ -24,28 +24,13 @@ from .errors import NotAllTrianglesError  # noqa: F401
 from .errors import PointSetCellOperationError  # noqa: F401
 from .errors import PointSetDimensionReductionError  # noqa: F401
 from .errors import PointSetNotSupported  # noqa: F401
+from .errors import PyVistaAttributeError as PyVistaAttributeError
 from .errors import PyVistaDeprecationWarning  # noqa: F401
 from .errors import PyVistaEfficiencyWarning  # noqa: F401
 from .errors import PyVistaFutureWarning  # noqa: F401
 from .errors import PyVistaPipelineError  # noqa: F401
 from .errors import VTKVersionError  # noqa: F401
 from .filters import CompositeFilters  # noqa: F401
-from .dataset import DataSet as DataSet
-from .datasetattributes import DataSetAttributes as DataSetAttributes
-from .errors import AmbiguousDataError as AmbiguousDataError
-from .errors import DeprecationError as DeprecationError
-from .errors import MissingDataError as MissingDataError
-from .errors import NotAllTrianglesError as NotAllTrianglesError
-from .errors import PointSetCellOperationError as PointSetCellOperationError
-from .errors import PointSetDimensionReductionError as PointSetDimensionReductionError
-from .errors import PointSetNotSupported as PointSetNotSupported
-from .errors import PyVistaAttributeError as PyVistaAttributeError
-from .errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
-from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning
-from .errors import PyVistaFutureWarning as PyVistaFutureWarning
-from .errors import PyVistaPipelineError as PyVistaPipelineError
-from .errors import VTKVersionError as VTKVersionError
-from .filters import CompositeFilters as CompositeFilters
 from .filters import DataObjectFilters as DataObjectFilters
 from .filters import DataSetFilters  # noqa: F401
 from .filters import ImageDataFilters  # noqa: F401
