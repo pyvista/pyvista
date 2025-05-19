@@ -851,9 +851,6 @@ class _ColormapInfo:
 class _ColormapSortOptions:
     initial_cmap: str
     n_samples: int = 11
-    pre_sort_cmaps: bool = False
-    group_by_package: bool = False
-    weights: Literal['uniform', 'ramp'] = 'uniform'
     sort_by: Literal['hue', 'cam02ucs'] = 'cam02ucs'
 
 
@@ -1128,7 +1125,7 @@ class ColormapTable(DocTable):
 
     info_source = _COLORMAP_INFO
     kind: ColormapKind | str
-    sort_options: _ColormapSortOptions | None = None
+    sort_options: ClassVar[_ColormapSortOptions | dict[str, _ColormapSortOptions] | None] = None
 
     title = ''
     header = _aligned_dedent(
@@ -1165,17 +1162,29 @@ class ColormapTable(DocTable):
     @classmethod
     def fetch_data(cls):
         data = [info for info in cls.info_source if info.kind == cls.kind]
+        data_out = data
         if (options := cls.sort_options) is not None:
-            data = ColormapTable.sort_data(
-                data,
-                initial_cmap=options.initial_cmap,
-                n_samples=options.n_samples,
-                pre_sort_cmaps=options.pre_sort_cmaps,
-                group_by_package=options.group_by_package,
-                weights=options.weights,
-                sort_by=options.sort_by,
-            )
-        return data
+            if isinstance(options, dict):
+                # Sort (or don't) each package separately with separate options
+                data_out = []
+                for package, pkg_options in options.items():
+                    pkg_data = [info for info in data if info.package == package]
+                    if pkg_options is not None:
+                        pkg_data = ColormapTable.sort_data(
+                            pkg_data,
+                            initial_cmap=pkg_options.initial_cmap,
+                            n_samples=pkg_options.n_samples,
+                            sort_by=pkg_options.sort_by,
+                        )
+                    data_out.extend(pkg_data)
+            else:
+                data_out = ColormapTable.sort_data(
+                    data,
+                    initial_cmap=options.initial_cmap,
+                    n_samples=options.n_samples,
+                    sort_by=options.sort_by,
+                )
+        return data_out
 
     @classmethod
     def get_header(cls, data):
@@ -1329,9 +1338,6 @@ class ColormapTable(DocTable):
         data: list[_COLORMAP_INFO],
         initial_cmap: str,
         n_samples: int,
-        pre_sort_cmaps: bool,
-        group_by_package: bool,
-        weights: Literal['uniform', 'ramp'],
         sort_by: Literal['hue', 'cam02ucs'],
     ):
         """Sort colormaps by color similarity.
@@ -1349,19 +1355,6 @@ class ColormapTable(DocTable):
             Number of samples to use for each colormap for the sorting. Using more samples
             is more computationally expensive but may better represent the colormap.
 
-        pre_sort_cmaps
-            Optionally sort each colormap individually *before* sorting all colormaps.
-            This is useful for categorical colormaps to create a color gradient.
-
-        group_by_package
-            Optionally group the sorted colormaps by package name *after* initially
-            sorting the colormaps by color.
-
-        weights
-            Apply weights to the sampled colormap colors. Use ``'uniform'`` to weight
-            all colors in the colormaps equally. Use ``'ramp'`` to apply linear
-            weighting such that initial colors have more weight than final colors.
-
         sort_by
             Method used to sort the colormaps. Sort by ``'hue'`` (using HLS color space)
             or ``cam02ucs`` to sort colormaps by perceptual difference.
@@ -1373,7 +1366,6 @@ class ColormapTable(DocTable):
         """
         import colour
 
-        _validation.check_contains(['uniform', 'ramp'], weights, name='weights')
         _validation.check_contains(['hue', 'cam02ucs'], sort_by, name='sort_by')
 
         def sample_cmap(cmap_name: str, n_samples: int = 5):
@@ -1450,41 +1442,15 @@ class ColormapTable(DocTable):
         # Sample swatches for each colormap
         grouped_colors = [sample_cmap(info.name, n_samples) for info in data]
 
-        # Optional pre-sorting of individual colormaps
-        if pre_sort_cmaps:
-            for i, swatch in enumerate(grouped_colors):
-                if sort_by == 'cam02ucs':
-                    # Sort by chroma (C = sqrt(a^2 + b^2)) in CAM02-UCS
-                    chroma = np.linalg.norm(swatch[:, 1:3], axis=1)
-                    order = np.argsort(chroma)
-                    grouped_colors[i] = swatch[order]
-                elif sort_by == 'hue':
-                    # Sort by hue value
-                    order = np.argsort(swatch)
-                    grouped_colors[i] = swatch[order]
-
         # Validate and locate the initial colormap
         cmaps = [info.name for info in data]
         _validation.check_contains(cmaps, must_contain=initial_cmap, name='initial_cmap')
         start_index = cmaps.index(initial_cmap)
 
-        # Create weight array
-        if weights == 'uniform':
-            weights_array = np.ones((n_samples,))
-        elif weights == 'ramp':
-            weights_array = np.arange(n_samples)[::-1].astype(float)
-            weights_array /= weights_array.sum()
-
         # Sort colormaps based on selected method
-        sorted_groups, order = sort_color_groups_by_similarity(
-            grouped_colors, start_index, weights_array
-        )
-        sorted_data = [data[i] for i in order]
-
-        if group_by_package:
-            sorted_data.sort(key=lambda info: info.package)
-
-        return sorted_data
+        weights = np.ones((n_samples,))
+        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index, weights)
+        return [data[i] for i in order]
 
 
 class ColormapTableLINEAR(ColormapTable):
@@ -1517,6 +1483,11 @@ class ColormapTableCATEGORICAL(ColormapTable):
     """Class to generate categorical colormap table."""
 
     kind = ColormapKind.CATEGORICAL
+    sort_options: ClassVar[_ColormapSortOptions | dict[str:_ColormapSortOptions]] = {
+        'colorcet': None,
+        'cmcrameri': _ColormapSortOptions(initial_cmap='lipariS'),
+        'matplotlib': None,
+    }
 
 
 class ColormapTableMISC(ColormapTable):
@@ -3337,7 +3308,7 @@ def make_all_tables():  # noqa: D103
     ColormapTableDIVERGING.generate()
     # ColormapTableMULTISEQUENTIAL.generate()
     # ColormapTableCYCLIC.generate()
-    # ColormapTableCATEGORICAL.generate()
+    ColormapTableCATEGORICAL.generate()
     # ColormapTableMISC.generate()
     # CETColormapTableLINEAR.generate()
     # CETColormapTableDIVERGING.generate()
