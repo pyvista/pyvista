@@ -999,8 +999,8 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'cork'),
     # CYCLIC
     # The order of the cmaps here will be reflected in the docs.
-    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
     _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase'),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
     _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel'),
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv'),
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight'),
