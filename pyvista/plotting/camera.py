@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkCamera."""
+"""Module containing pyvista implementation of :vtk:`vtkCamera`."""
 
 from __future__ import annotations
 

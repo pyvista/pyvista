@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
-    """Prop3D wrapper for vtkProp3D.
+    """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
     properties and methods relating to an entity's position, orientation
@@ -401,8 +401,9 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         Parameters
         ----------
         trans : TransformLike
-            Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
-            or a SciPy ``Rotation`` instance.
+            Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+            :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+            If the input is 3x3, the array is padded using a 4x4 identity matrix.
 
         multiply_mode : 'pre' | 'post', default: 'post'
             Multiplication mode to use.
@@ -468,7 +469,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         """Set the entity's orientation from a rotation.
 
         Set the rotation of this entity from a 3x3 rotation matrix. This includes
-        NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
+        NumPy arrays, a :vtk:`vtkMatrix3x3`, and SciPy ``Rotation`` objects.
 
         This method may be used as an alternative for setting the :attr:`orientation`.
 
@@ -513,8 +514,8 @@ def _rotation_matrix_as_orientation(
 
     Parameters
     ----------
-    array : NumpyArray[float] | vtkMatrix3x3
-        3x3 rotation matrix as a NumPy array or a vtkMatrix.
+    array : NumpyArray[float] | :vtk:`vtkMatrix3x3`
+        3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix3x3`.
 
     Returns
     -------

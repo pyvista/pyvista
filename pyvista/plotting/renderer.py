@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkRenderer."""
+"""Module containing pyvista implementation of :vtk:`vtkRenderer`."""
 
 from __future__ import annotations
 
@@ -538,7 +538,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             Include actors with :attr:`~pyvista.Actor.use_bounds` disabled in the
             computation. By default, actors with use bounds disabled are excluded.
 
-        ignore_actors : sequence[str | vtkProp | type[vtkProp]]
+        ignore_actors : sequence[str | :vtk:`vtkProp` | type[:vtk:`vtkProp`]]
             List of actors to ignore. The bounds of any actors included will be ignored.
             Specify actors by name, type, or by instance.
 
@@ -731,7 +731,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor2D
+        :vtk:`vtkActor2D`
             Border actor.
 
         """
@@ -917,8 +917,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor | vtk.vtkMapper | pyvista.Actor
-            The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
+        actor : :vtk:`vtkActor` | :vtk:`vtkMapper` | Actor
+            The actor to be added. Can be either :vtk:`vtkActor` or :vtk:`vtkMapper`.
 
         reset_camera : bool, default: False
             Resets the camera when ``True``.
@@ -946,7 +946,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        actor : vtk.vtkActor or pyvista.Actor
+        actor : :vtk:`vtkActor` | Actor
             The actor.
 
         actor_properties : vtk.Properties
@@ -1044,7 +1044,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        :vtk:`vtkAxesActor`
             Actor of the axes.
 
         See Also
@@ -1106,7 +1106,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor | pyvista.DataSet
+        actor : :vtk:`vtkActor` | DataSet
             The mesh or actor to use as the marker.
 
         interactive : bool, optional
@@ -1127,7 +1127,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkOrientationMarkerWidget
+        :vtk:`vtkOrientationMarkerWidget`
             Orientation marker widget.
 
         See Also
@@ -1387,7 +1387,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkOrientationMarkerWidget
+        :vtk:`vtkOrientationMarkerWidget`
             Orientation marker widget.
 
         See Also
@@ -1519,7 +1519,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAnnotatedCubeActor
+        :vtk:`vtkAnnotatedCubeActor`
             Axes actor.
 
         See Also
@@ -1819,7 +1819,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             annotations. Defaults no padding.
 
         use_3d_text : bool, default: True
-            Use ``vtkTextActor3D`` for titles and labels.
+            Use :vtk:`vtkTextActor3D` for titles and labels.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -2223,7 +2223,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the bounding box.
 
         See Also
@@ -2363,7 +2363,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the floor.
 
         Examples
@@ -2520,7 +2520,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        light : vtk.vtkLight or pyvista.Light
+        light : :vtk:`vtkLight` | Light
             Light to add.
 
         """
@@ -2789,9 +2789,9 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : str, vtk.vtkActor, list or tuple
+        actor : str | :vtk:`vtkActor` | list | tuple
             If the type is ``str``, removes the previously added actor
-            with the given name. If the type is ``vtk.vtkActor``,
+            with the given name. If the type is :vtk:`vtkActor`,
             removes the actor if it's previously added to the
             Renderer. If ``list`` or ``tuple``, removes iteratively
             each actor.
@@ -3379,7 +3379,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkOpenGLRenderer
+        :vtk:`vtkOpenGLRenderer`
             VTK renderer with eye dome lighting pass.
 
         Examples
@@ -3611,7 +3611,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         it is not a cubemap, the texture is supposed to represent an
         equirectangular projection. If used with raytracing backends,
         the texture must be an equirectangular projection and must be
-        constructed with a valid ``vtk.vtkImageData``.
+        constructed with a valid :vtk:`vtkImageData`.
 
         Parameters
         ----------
@@ -3946,7 +3946,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkLegendBoxActor
+        :vtk:`vtkLegendBoxActor`
             Actor for the legend.
 
         See Also
@@ -4194,7 +4194,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the ruler.
 
         Examples
@@ -4374,8 +4374,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
-            The actor for the added ``vtkLegendScaleActor``.
+        :vtk:`vtkActor`
+            The actor for the added :vtk:`vtkLegendScaleActor`.
 
         Warnings
         --------

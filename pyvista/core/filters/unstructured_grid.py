@@ -70,8 +70,7 @@ class UnstructuredGridFilters(DataSetFilters):
         modify the topology of the input dataset, nor change the types of
         cells. It may however, renumber the cell connectivity ids.
 
-        This filter implements `vtkStaticCleanUnstructuredGrid
-        <https://vtk.org/doc/nightly/html/classvtkStaticCleanUnstructuredGrid.html>`_
+        This filter implements :vtk:`vtkStaticCleanUnstructuredGrid`.
 
         Parameters
         ----------
