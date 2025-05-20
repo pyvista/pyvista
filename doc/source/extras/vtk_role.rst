@@ -5,36 +5,12 @@ Sphinx VTK Role
 
 .. versionadded:: 0.46
 
-You can link directly to VTK's documentation with the ``:vtk:`` role
-by adding the following to your ``conf.py`` when building your
-documentation using Sphinx.
+PyVista's documentation uses the Sphinx extension https://github.com/pyvista/vtk-xref
+to link directly to `VTK's documentation <https://vtk.org/doc/nightly/html/index.html>`_.
 
-.. code-block:: python
+This extension adds the ``:vtk:`` role to allow writing, for example,
+``:vtk:`vtkImageData``` inside docstrings to link directly to the ``vtkImageData``
+documentation. This will render as :vtk:`vtkImageData`.
 
-    extensions = [
-        ...,
-        'pyvista.ext.vtk_role',
-    ]
-
-With the extension enable, you can write, for example, ``:vtk:`vtkImageData```
-in docstrings to link directly to the ``vtkImageData`` documentation. This
-will render as :vtk:`vtkImageData`.
-
-The role also works for linking to class members such as methods or enums.
-For example, write ``:vtk:`vtkImageData.GetDimensions``` to link directly to the
-``GetDimensions`` method. This will render as :vtk:`vtkImageData.GetDimensions`.
-
-Just like with standard Sphinx roles, you can use ``~`` to shorten the title
-for the link. For example, ``:vtk:`~vtkImageData.GetDimensions``` will render
-as :vtk:`~vtkImageData.GetDimensions`.
-
-Also like standard Sphinx roles, you can provide a custom title for the
-reference. For example, ``:vtk:`Get Image Dimensions<vtkImageData.GetDimensions>```
-will render as :vtk:`Get Image Dimensions<vtkImageData.GetDimensions>`.
-
-.. note::
-
-    The directive currently does not support linking to nested members. For example,
-    linking to an enum member with ``:vtk:`vtkCommand.EventIds``` is valid,
-    but linking to a specific enum value with ``:vtk:`vtkCommand.EventIds.PickEvent```
-    is not.
+See https://github.com/pyvista/vtk-xref for installation and usage details
+for adding the ``:vtk:`` role to your project.
