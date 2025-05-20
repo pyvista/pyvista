@@ -12,5 +12,5 @@ This extension adds the ``:vtk:`` role to allow writing, for example,
 ``:vtk:`vtkImageData``` inside docstrings to link directly to the ``vtkImageData``
 documentation. This will render as :vtk:`vtkImageData`.
 
-See https://github.com/pyvista/vtk-xref for installation and usage details
+See `vtk-xref's repository <https://github.com/pyvista/vtk-xref>`_ for installation and usage details
 for adding the ``:vtk:`` role to your project.
