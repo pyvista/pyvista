@@ -9,7 +9,7 @@ Positional lights in PyVista have customizable beam shapes, see the
 the sense that they are unidirectional lights with a finite position,
 so they can be visualized using a cone.
 
-This is exactly the purpose of a ``vtk.vtkLightActor``, the
+This is exactly the purpose of a :vtk:`vtkLightActor`, the
 functionality of which can be enabled for spotlights:
 """
 
