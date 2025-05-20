@@ -84,7 +84,6 @@ extensions = [
     'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
-    'pyvista.ext.vtk_role',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
@@ -101,6 +100,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
+    'vtk_xref',
 ]
 
 # Configuration of pyvista.ext.coverage
