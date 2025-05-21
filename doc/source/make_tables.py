@@ -8,6 +8,7 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
+from colorsys import rgb_to_hls
 from dataclasses import dataclass
 from enum import auto
 import inspect
@@ -21,7 +22,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
-from typing import NamedTuple
 from typing import final
 from typing import get_args
 
@@ -34,6 +34,7 @@ import numpy as np
 from scipy.stats import linregress
 
 import pyvista as pv
+from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_object import _get_cell_quality_measures
@@ -839,16 +840,25 @@ class ColormapKind(StrEnum):
     CET_ISOLUMINANT = auto()
 
 
-class _ColormapInfo(NamedTuple):
+@dataclass
+class _ColormapInfo:
     package: str
     kind: ColormapKind | None
     name: str
 
 
+@dataclass
+class _ColormapSortOptions:
+    initial_cmap: str
+    n_samples: int = 11
+    sort_by: Literal['hue', 'cam02ucs'] = 'cam02ucs'
+    pre_sort: bool = False
+
+
 # Define colormap info based on manual review of documentation from each package.
-# NOTE: The order of the cmaps here will be reflected in the docs.
 _COLORMAP_INFO: list[_ColormapInfo] = [
     # LINEAR
+    # Order here does NOT matter since these will be auto-sorted
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'gouldian'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgy'),
     _ColormapInfo('colorcet', ColormapKind.LINEAR, 'bgyw'),
@@ -941,11 +951,13 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'navia'),
     _ColormapInfo('cmcrameri', ColormapKind.LINEAR, 'grayC'),
     # MULTI SEQUENTIAL
+    # The order of the cmaps here will be reflected in the docs.
     _ColormapInfo('cmocean', ColormapKind.MULTI_SEQUENTIAL, 'topo'),
     _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'bukavu'),
     _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'oleron'),
     _ColormapInfo('cmcrameri', ColormapKind.MULTI_SEQUENTIAL, 'fes'),
     # DIVERGING
+    # Order here does NOT matter since these will be auto-sorted
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'berlin'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'berlin'),
@@ -955,7 +967,6 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'managua'),
-    # DIVERGING
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua'),
@@ -987,8 +998,9 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'broc'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'cork'),
     # CYCLIC
-    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
+    # The order of the cmaps here will be reflected in the docs.
     _ColormapInfo('cmocean', ColormapKind.CYCLIC, 'phase'),
+    _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'cyclic_isoluminant'),
     _ColormapInfo('colorcet', ColormapKind.CYCLIC, 'colorwheel'),
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'hsv'),
     _ColormapInfo('matplotlib', ColormapKind.CYCLIC, 'twilight'),
@@ -999,6 +1011,8 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'brocO'),
     _ColormapInfo('cmcrameri', ColormapKind.CYCLIC, 'corkO'),
     # CATEGORICAL
+    # The order of the 'colorcet' and 'matplotlib' cmaps here
+    # will be reflected in the docs. The 'cmcrameri' cmaps are auto-sorted.
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_bw'),
     _ColormapInfo('colorcet', ColormapKind.CATEGORICAL, 'glasbey_cool'),
@@ -1041,6 +1055,7 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20b'),
     _ColormapInfo('matplotlib', ColormapKind.CATEGORICAL, 'tab20c'),
     # MISC
+    # The order of the cmaps here will be reflected in the docs.
     _ColormapInfo('colorcet', ColormapKind.MISC, 'isolum'),
     _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow4'),
     _ColormapInfo('colorcet', ColormapKind.MISC, 'rainbow'),
@@ -1116,6 +1131,7 @@ class ColormapTable(DocTable):
 
     info_source = _COLORMAP_INFO
     kind: ColormapKind | str
+    sort_options: ClassVar[_ColormapSortOptions | dict[str, _ColormapSortOptions] | None] = None
 
     title = ''
     header = _aligned_dedent(
@@ -1151,7 +1167,32 @@ class ColormapTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return [info for info in cls.info_source if info.kind == cls.kind]
+        data = [info for info in cls.info_source if info.kind == cls.kind]
+        data_out = data
+        if (options := cls.sort_options) is not None:
+            if isinstance(options, dict):
+                # Sort (or don't) each package separately with separate options
+                data_out = []
+                for package, pkg_options in options.items():
+                    pkg_data = [info for info in data if info.package == package]
+                    if pkg_options is not None:
+                        pkg_data = ColormapTable.sort_data(
+                            pkg_data,
+                            initial_cmap=pkg_options.initial_cmap,
+                            n_samples=pkg_options.n_samples,
+                            sort_by=pkg_options.sort_by,
+                            pre_sort=pkg_options.pre_sort,
+                        )
+                    data_out.extend(pkg_data)
+            else:
+                data_out = ColormapTable.sort_data(
+                    data,
+                    initial_cmap=options.initial_cmap,
+                    n_samples=options.n_samples,
+                    sort_by=options.sort_by,
+                    pre_sort=options.pre_sort,
+                )
+        return data_out
 
     @classmethod
     def get_header(cls, data):
@@ -1302,17 +1343,169 @@ class ColormapTable(DocTable):
         _, _, r_value, _, _ = linregress(x, y)
         return r_value**2
 
+    @staticmethod
+    def sort_data(
+        data: list[_COLORMAP_INFO],
+        initial_cmap: str,
+        n_samples: int,
+        sort_by: Literal['hue', 'cam02ucs'],
+        pre_sort: bool = False,
+    ):
+        """Sort colormaps by color similarity.
+
+        Parameters
+        ----------
+        data
+            List of colormap info to be sorted.
+
+        initial_cmap
+            Name of colormap to initialize the sorting with. This will be the first
+            colormap.
+
+        n_samples
+            Number of samples to use for each colormap for the sorting. Using more samples
+            is more computationally expensive but may better represent the colormap.
+
+        sort_by
+            Method used to sort the colormaps. Sort by ``'hue'`` (using HLS color space)
+            or ``cam02ucs`` to sort colormaps by perceptual difference.
+
+        pre_sort
+            Whether to sort the colors within each colormap before sampling. This is useful
+            for categorical colormaps to ensure consistent progression for comparison.
+
+        Returns
+        -------
+        Sorted list of colormap info.
+
+        """
+        import colour
+
+        _validation.check_contains(['hue', 'cam02ucs'], sort_by, name='sort_by')
+
+        def sort_colormap_colors(colors, sort_by: Literal['hue', 'cam02ucs']):
+            """Sort a list of RGB colors within a colormap."""
+            if sort_by == 'cam02ucs':
+                xyz = colour.sRGB_to_XYZ(colors)
+                cam02 = colour.XYZ_to_CAM02UCS(xyz)
+
+                n = len(cam02)
+                visited = np.zeros(n, dtype=bool)
+                order = [0]
+                visited[0] = True
+                for _ in range(n - 1):
+                    last = order[-1]
+                    candidates = np.where(~visited)[0]
+                    dists = np.linalg.norm(cam02[candidates] - cam02[last], axis=1)
+                    next_idx = candidates[np.argmin(dists)]
+                    visited[next_idx] = True
+                    order.append(next_idx)
+                return colors[order]
+
+            else:  # sort_by == 'hue':
+                hls = np.array([rgb_to_hls(*color) for color in colors])
+                hue_sorted_indices = np.argsort(hls[:, 0])
+                return colors[hue_sorted_indices]
+
+        def sample_cmap(cmap_name: str, n_samples: int = 5):
+            cmap = pv.get_cmap_safe(cmap_name)
+            rgb_full = cmap(np.linspace(0, 1, cmap.N))[:, :3]
+
+            if pre_sort:
+                rgb_full = sort_colormap_colors(rgb_full, sort_by)
+
+            idx = np.linspace(0, len(rgb_full) - 1, n_samples, dtype=int)
+            rgb_sampled = rgb_full[idx]
+
+            if sort_by == 'cam02ucs':
+                xyz = colour.sRGB_to_XYZ(rgb_sampled)
+                return colour.XYZ_to_CAM02UCS(xyz)
+            else:  # sort_by == 'hue':
+                hls = np.array([rgb_to_hls(*color) for color in rgb_sampled])
+                return hls[:, 0]
+
+        def compute_delta_between_swatches(swatch1, swatch2, weights):
+            if sort_by == 'cam02ucs':
+                # Use perceptual Delta E in CAM02-UCS space
+                delta_e = colour.difference.delta_E_CAM02UCS(swatch1, swatch2)
+                return np.sum(weights * delta_e)
+            else:  # sort_by == 'hue':
+                # Use circular difference for hue in [0, 1]
+                diff = np.abs(swatch1 - swatch2)
+                diff = np.minimum(diff, 1 - diff)  # hue wraparound
+                return np.sum(weights * diff.ravel())
+
+        def compute_delta_matrix_for_all_groups(grouped_colors, weights):
+            n = len(grouped_colors)
+            delta_matrix = np.zeros((n, n))
+
+            for i in range(n):
+                for j in range(i + 1, n):
+                    delta = compute_delta_between_swatches(
+                        grouped_colors[i], grouped_colors[j], weights
+                    )
+                    delta_matrix[i, j] = delta
+                    delta_matrix[j, i] = delta
+
+            return delta_matrix
+
+        def sort_color_groups_by_similarity(grouped_colors, start_index, weights):
+            n_colormaps = len(grouped_colors)
+            delta_matrix = compute_delta_matrix_for_all_groups(grouped_colors, weights)
+
+            visited = np.zeros(n_colormaps, dtype=bool)
+            order = [start_index]
+            visited[start_index] = True
+
+            # Track the last 3 selected colormaps
+            memory_indices = [start_index]
+
+            for _ in range(n_colormaps - 1):
+                candidates = np.where(~visited)[0]
+
+                # Compute average distance from all memory indices
+                total_distance = np.zeros(len(candidates))
+                for mem_idx in memory_indices:
+                    total_distance += delta_matrix[mem_idx, candidates]
+                total_distance /= len(memory_indices)
+
+                next_idx = candidates[np.argmin(total_distance)]
+                order.append(next_idx)
+                visited[next_idx] = True
+
+                # Update memory: keep only the last 3
+                memory_indices.append(next_idx)
+                if len(memory_indices) > 3:
+                    memory_indices.pop(0)
+
+            return [grouped_colors[i] for i in order], order
+
+        # Sample swatches for each colormap
+        grouped_colors = [sample_cmap(info.name, n_samples) for info in data]
+
+        # Validate and locate the initial colormap
+        cmaps = [info.name for info in data]
+        _validation.check_contains(cmaps, must_contain=initial_cmap, name='initial_cmap')
+        start_index = cmaps.index(initial_cmap)
+
+        # Sort colormaps based on selected method
+        weights = np.ones((n_samples,))
+        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index, weights)
+        return [data[i] for i in order]
+
 
 class ColormapTableLINEAR(ColormapTable):
     """Class to generate linear colormap table."""
 
     kind = ColormapKind.LINEAR
+    sort_options = _ColormapSortOptions(initial_cmap=pv.global_theme.cmap)
 
 
 class ColormapTableDIVERGING(ColormapTable):
     """Class to generate diverging colormap table."""
 
     kind = ColormapKind.DIVERGING
+    sort_options = _ColormapSortOptions(initial_cmap='coolwarm', sort_by='hue')
 
 
 class ColormapTableMULTISEQUENTIAL(ColormapTable):
@@ -1331,6 +1524,11 @@ class ColormapTableCATEGORICAL(ColormapTable):
     """Class to generate categorical colormap table."""
 
     kind = ColormapKind.CATEGORICAL
+    sort_options: ClassVar[_ColormapSortOptions | dict[str:_ColormapSortOptions]] = {
+        'colorcet': None,
+        'cmcrameri': _ColormapSortOptions(initial_cmap='grayCS', pre_sort=True),
+        'matplotlib': None,
+    }
 
 
 class ColormapTableMISC(ColormapTable):

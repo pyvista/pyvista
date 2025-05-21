@@ -640,9 +640,9 @@ def merge(
 def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     """Return the implicit function that implements Perlin noise.
 
-    Uses ``vtk.vtkPerlinNoise`` and computes a Perlin noise field as
-    an implicit function. ``vtk.vtkPerlinNoise`` is a concrete
-    implementation of ``vtk.vtkImplicitFunction``. Perlin noise,
+    Uses :vtk:`vtkPerlinNoise` and computes a Perlin noise field as
+    an implicit function. :vtk:`vtkPerlinNoise` is a concrete
+    implementation of :vtk:`vtkImplicitFunction`. Perlin noise,
     originally described by Ken Perlin, is a non-periodic and
     continuous noise function useful for modeling real-world objects.
 
@@ -676,10 +676,9 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
 
     Returns
     -------
-    vtk.vtkPerlinNoise
-        Instance of ``vtk.vtkPerlinNoise`` to a Perlin noise field as an
-        implicit function. Use with :func:`pyvista.sample_function()
-        <pyvista.core.utilities.features.sample_function>`.
+    :vtk:`vtkPerlinNoise`
+        Instance of :vtk:`vtkPerlinNoise` to a Perlin noise field as an
+        implicit function. Use with :func:`~pyvista.sample_function`.
 
     See Also
     --------
@@ -721,19 +720,19 @@ def sample_function(
 ):
     """Sample an implicit function over a structured point set.
 
-    Uses ``vtk.vtkSampleFunction``
+    Uses :vtk:`vtkSampleFunction`
 
     This method evaluates an implicit function and normals at each
-    point in a ``vtk.vtkStructuredPoints``. The user can specify the
+    point in a :vtk:`vtkStructuredPoints`. The user can specify the
     sample dimensions and location in space to perform the sampling.
 
     To create closed surfaces (in conjunction with the
-    vtkContourFilter), capping can be turned on to set a particular
+    :vtk:`vtkContourFilter`), capping can be turned on to set a particular
     value on the boundaries of the sample space.
 
     Parameters
     ----------
-    function : vtk.vtkImplicitFunction
+    function : :vtk:`vtkImplicitFunction`
         Implicit function to evaluate.  For example, the function
         generated from :func:`perlin_noise() <pyvista.core.utilities.features.perlin_noise>`.
 

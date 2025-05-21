@@ -1,4 +1,4 @@
-"""Wrap vtk.vtkRenderWindowInteractor."""
+"""Wrap :vtk:`vtkRenderWindowInteractor`."""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ class Timer:
 
 
 class RenderWindowInteractor:
-    """Wrap vtk.vtkRenderWindowInteractor.
+    """Wrap :vtk:`vtkRenderWindowInteractor`.
 
     This class has been added for the purpose of making some methods
     we add to the RenderWindowInteractor more python, like certain
@@ -83,9 +83,9 @@ class RenderWindowInteractor:
     light_follow_camera : bool, default: True
         If set to ``True``, the light follows the camera.
 
-    interactor : vtk.vtkRenderWindowInteractor, default: None
+    interactor : :vtk:`vtkRenderWindowInteractor`, default: None
         The render window interactor. If set to ``None``, a new
-        vtkRenderWindowInteractor instance will be created.
+        :vtk:`vtkRenderWindowInteractor` instance will be created.
 
     """
 
@@ -464,7 +464,7 @@ class RenderWindowInteractor:
 
         Returns
         -------
-        vtkInteractorStyle | vtkContextInteractorStyle | None
+        :vtk:`vtkInteractorStyle` | :vtk:`vtkContextInteractorStyle` | None
             The current interactor style.
 
         Examples
@@ -540,7 +540,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        scene : vtkContextScene, optional
+        scene : :vtk:`vtkContextScene`, optional
             The scene to interact with or ``None`` to stop interaction with any scene.
 
         """
@@ -1110,7 +1110,7 @@ class RenderWindowInteractor:
         the render window by hitting ``r`` and then using the left
         mouse button. When the mouse button is released, the attached
         picker operates on the pixel in the center of the selection
-        rectangle. If the picker happens to be a ``vtkAreaPicker``
+        rectangle. If the picker happens to be a :vtk:`vtkAreaPicker`
         it will operate on the entire selection rectangle. When the
         ``p`` key is hit the above pick operation occurs on a 1x1
         rectangle. In other respects it behaves the same as the
@@ -1309,7 +1309,7 @@ class RenderWindowInteractor:
 
         Returns
         -------
-        vtk.vtkRenderer
+        :vtk:`vtkRenderer`
             The poked renderer for given or last event position.
 
         """
@@ -1357,7 +1357,7 @@ class RenderWindowInteractor:
 
         Returns
         -------
-        vtk.vtkInteractorStyle
+        :vtk:`vtkInteractorStyle`
             VTK interactor style.
 
         """
@@ -1424,7 +1424,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        render_window : vtk.vtkRenderWindow
+        render_window : :vtk:`vtkRenderWindow`
             Render window to set for the interactor.
 
         """
@@ -1448,7 +1448,7 @@ class RenderWindowInteractor:
 
         Returns
         -------
-        vtk.vtkAbstractPicker
+        :vtk:`vtkAbstractPicker`
             VTK picker.
 
         """
@@ -1523,7 +1523,7 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        renderer : vtk.vtkRenderer
+        renderer : :vtk:`vtkRenderer`
             The renderer in which the action will take place.
 
         point : list or tuple
