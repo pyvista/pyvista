@@ -1036,7 +1036,7 @@ class CellType(IntEnum):
                 title = f'VTK Book: {kind} Cells'
                 cell_linear_ref = f'`{title}<{url}>`'
                 see_also = f'See also {cell_class_ref} and {cell_linear_ref}.'
-            else:
+            else:  # pragma: no cover
                 badges = ''
                 see_also = ''
 
@@ -1052,10 +1052,10 @@ class CellType(IntEnum):
 
             # Add spacing between sections and "see also" section as needed
             if _short_doc and _long_doc:
-                if see_also:
+                if see_also:  # pragma: no branch
                     _long_doc += f'\n\n{_indent_paragraph(see_also, level=3)}'
                 _short_doc += '\n\n'
-            elif see_also:
+            elif see_also:  # pragma: no branch
                 _short_doc += f'\n\n{_indent_paragraph(see_also, level=2)}'
 
             self.__doc__ += (
