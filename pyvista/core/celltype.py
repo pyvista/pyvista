@@ -46,6 +46,11 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 {}{}{}
 """
 
+_VTK_BOOK_LINEAR_CELLS_URL = 'https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#linear-cells'
+_VTK_BOOK_NONLINEAR_CELLS_URL = (
+    'https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#nonlinear-types'
+)
+
 
 def _indent_paragraph(string: str, level: int) -> str:
     indentation = ''.join(['    '] * level)
@@ -877,6 +882,9 @@ class CellType(IntEnum):
 
     .. seealso::
 
+        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`
+            VTK reference about cell types.
+
         `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
             List of all cell types defined in VTK.
 
@@ -1018,8 +1026,19 @@ class CellType(IntEnum):
                     )
                     + '\n\n'
                 )
+
+                cell_class_ref = f':vtk:`{_cell_class.__name__}`'
+                kind, url = (
+                    ('Linear', _VTK_BOOK_LINEAR_CELLS_URL)
+                    if cell.IsLinear()
+                    else ('NonLinear', _VTK_BOOK_NONLINEAR_CELLS_URL)
+                )
+                title = f'VTK Book: {kind} Cells'
+                cell_linear_ref = f'`{title}<{url}>`'
+                see_also = f'See also {cell_class_ref} and {cell_linear_ref}.'
             else:
                 badges = ''
+                see_also = ''
 
             _short_doc = '' if _short_doc is None else _indent_paragraph(_short_doc, level=2)
 
@@ -1030,8 +1049,14 @@ class CellType(IntEnum):
                     _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
                 )
             )
+
+            # Add spacing between sections and "see also" section as needed
             if _short_doc and _long_doc:
+                if see_also:
+                    _long_doc += f'\n\n{_indent_paragraph(see_also, level=3)}'
                 _short_doc += '\n\n'
+            elif see_also:
+                _short_doc += _indent_paragraph(see_also, level=2)
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
