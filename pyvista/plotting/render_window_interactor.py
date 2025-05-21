@@ -111,7 +111,7 @@ class RenderWindowInteractor:
         self._MAX_CLICK_DELTA = 40  # squared => ~6 pixels
 
         # Set default style
-        self._style_class: Optional[_vtk.vtkInteractorStyle] = None
+        self._style_class: _vtk.vtkInteractorStyle | None = None
         self._style: Literal['Interactor', 'Context'] = 'Interactor'
         self.style = InteractorStyleRubberBandPick(self)
         self.__plotter = weakref.ref(plotter)
@@ -452,9 +452,7 @@ class RenderWindowInteractor:
     @property
     def style(
         self,
-    ) -> Optional[
-        Union[_vtk.vtkContextInteractorStyle, _vtk.vtkInteractorStyle, CaptureInteractorStyle]
-    ]:
+    ) -> _vtk.vtkContextInteractorStyle | _vtk.vtkInteractorStyle | CaptureInteractorStyle | None:
         """Get/set the current interactor style.
 
         .. warning::
@@ -490,7 +488,7 @@ class RenderWindowInteractor:
         return self._style_class
 
     @style.setter
-    def style(self, style: Optional[Union[_vtk.vtkInteractorStyle, CaptureInteractorStyle]]):
+    def style(self, style: _vtk.vtkInteractorStyle | CaptureInteractorStyle | None):
         self._style = 'Interactor'
         self._style_class = style
         self.update_style()
