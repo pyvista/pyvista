@@ -85,6 +85,7 @@ def test_colormap_table_colorcet_continuous(colorcet_continuous_cmaps):
         if (info.package == 'colorcet') and (info.kind.name != 'CATEGORICAL')
     ]
     assert set(documented_cmaps) == set(colorcet_continuous_cmaps), CMAP_SET_MISMATCH_ERROR_MSG
+    assert sorted(documented_cmaps) == sorted(colorcet_continuous_cmaps), DUPLICATE_CMAP_ERROR_MSG
 
 
 def test_colormap_table_colorcet_categorical(colorcet_categorical_cmaps):
@@ -94,3 +95,4 @@ def test_colormap_table_colorcet_categorical(colorcet_categorical_cmaps):
         if info.package == 'colorcet' and info.kind.name == 'CATEGORICAL'
     ]
     assert set(documented_cmaps) == set(colorcet_categorical_cmaps), CMAP_SET_MISMATCH_ERROR_MSG
+    assert sorted(documented_cmaps) == sorted(colorcet_categorical_cmaps), DUPLICATE_CMAP_ERROR_MSG
