@@ -1635,6 +1635,8 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
 class InteractorStyleImage(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleImage):
     """Image interactor style.
 
+    Wraps :vtk:`vtkInteractorStyleImage`.
+
     See Also
     --------
     :meth:`pyvista.RenderWindowInteractor.enable_image_style`
@@ -1646,6 +1648,8 @@ class InteractorStyleJoystickActor(
     InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleJoystickActor
 ):
     """Joystick actor interactor style.
+
+    Wraps :vtk:`vtkInteractorStyleJoystickActor`.
 
     See Also
     --------
@@ -1659,6 +1663,8 @@ class InteractorStyleJoystickCamera(
 ):
     """Joystick camera interactor style.
 
+    Wraps :vtk:`vtkInteractorStyleJoystickCamera`.
+
     See Also
     --------
     :meth:`pyvista.RenderWindowInteractor.enable_joystick_style`
@@ -1668,6 +1674,8 @@ class InteractorStyleJoystickCamera(
 
 class InteractorStyleRubberBand2D(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBand2D):
     """Rubber band 2D interactor style.
+
+    Wraps :vtk:`vtkInteractorStyleRubberBand2D`.
 
     See Also
     --------
@@ -1681,6 +1689,8 @@ class InteractorStyleRubberBandPick(
 ):
     """Rubber band pick interactor style.
 
+    Wraps :vtk:`vtkInteractorStyleRubberBandPick`.
+
     See Also
     --------
     :meth:`pyvista.RenderWindowInteractor.enable_rubber_band_style`
@@ -1692,6 +1702,8 @@ class InteractorStyleTrackballActor(
     InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleTrackballActor
 ):
     """Trackball actor interactor style.
+
+    Wraps :vtk:`vtkInteractorStyleTrackballActor`.
 
     See Also
     --------
@@ -1705,6 +1717,8 @@ class InteractorStyleTrackballCamera(
 ):
     """Trackball camera interactor style.
 
+    Wraps :vtk:`vtkInteractorStyleTrackballCamera`.
+
     See Also
     --------
     :meth:`pyvista.RenderWindowInteractor.enable_trackball_style`
@@ -1717,6 +1731,8 @@ class InteractorStyleTrackballCamera(
 class InteractorStyleTerrain(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleTerrain):
     """Terrain interactor style.
 
+    Wraps :vtk:`vtkInteractorStyleTerrain`.
+
     See Also
     --------
     :meth:`pyvista.RenderWindowInteractor.enable_terrain_style`
@@ -1726,6 +1742,8 @@ class InteractorStyleTerrain(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyl
 
 class InteractorStyleZoom(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBandZoom):
     """Rubber band zoom interactor style.
+
+    Wraps :vtk:`vtkInteractorStyleRubberBandZoom`.
 
     See Also
     --------
