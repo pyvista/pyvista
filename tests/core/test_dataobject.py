@@ -240,6 +240,23 @@ def test_user_dict_values(ant, value):
 
 
 @pytest.mark.parametrize(
+    'data_object',
+    [pv.MultiBlock([examples.load_ant()]), examples.load_ant(), examples.load_hexbeam()],
+)
+@pytest.mark.needs_vtk_version(9, 4, 0)
+def test_vtkhdf_writer(tmp_path, data_object):
+    fname = str(tmp_path) + '.vtkhdf'
+    data_object.save(fname)
+    mesh = pv.read(fname)
+
+    # Confirm meshes are equal
+    # There is a bug with active scalars not being set when reading
+    # so we first clear active scalars
+    data_object.set_active_scalars(None)
+    assert data_object == mesh
+
+
+@pytest.mark.parametrize(
     ('data_object', 'ext'),
     [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
 )
