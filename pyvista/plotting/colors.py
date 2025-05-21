@@ -8,6 +8,8 @@ Used code from matplotlib.colors.  Thanks for your work.
 from __future__ import annotations
 
 from colorsys import rgb_to_hls
+import contextlib
+import importlib
 import inspect
 from typing import Literal
 from typing import get_args
@@ -33,7 +35,6 @@ import numpy as np
 
 import pyvista
 from pyvista import _validation
-from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
 
@@ -1118,6 +1119,103 @@ _CMOCEAN_CMAPS_LITERAL = Literal[
 ]
 _CMOCEAN_CMAPS = get_args(_CMOCEAN_CMAPS_LITERAL)
 
+_CMCRAMERI_CMAPS_LITERAL = Literal[
+    'acton',
+    'actonS',
+    'acton_r',
+    'bam',
+    'bamO',
+    'bamO_r',
+    'bam_r',
+    'bamako',
+    'bamakoS',
+    'bamako_r',
+    'batlow',
+    'batlowK',
+    'batlowKS',
+    'batlowK_r',
+    'batlowS',
+    'batlowW',
+    'batlowWS',
+    'batlowW_r',
+    'batlow_r',
+    'bilbao',
+    'bilbaoS',
+    'bilbao_r',
+    'broc',
+    'brocO',
+    'brocO_r',
+    'broc_r',
+    'buda',
+    'budaS',
+    'buda_r',
+    'bukavu',
+    'bukavu_r',
+    'cork',
+    'corkO',
+    'corkO_r',
+    'cork_r',
+    'davos',
+    'davosS',
+    'davos_r',
+    'devon',
+    'devonS',
+    'devon_r',
+    'fes',
+    'fes_r',
+    'glasgow',
+    'glasgowS',
+    'glasgow_r',
+    'grayC',
+    'grayCS',
+    'grayC_r',
+    'hawaii',
+    'hawaiiS',
+    'hawaii_r',
+    'imola',
+    'imolaS',
+    'imola_r',
+    'lajolla',
+    'lajollaS',
+    'lajolla_r',
+    'lapaz',
+    'lapazS',
+    'lapaz_r',
+    'lipari',
+    'lipariS',
+    'lipari_r',
+    'lisbon',
+    'lisbon_r',
+    'navia',
+    'naviaS',
+    'navia_r',
+    'nuuk',
+    'nuukS',
+    'nuuk_r',
+    'oleron',
+    'oleron_r',
+    'oslo',
+    'osloS',
+    'oslo_r',
+    'roma',
+    'romaO',
+    'romaO_r',
+    'roma_r',
+    'tofino',
+    'tofino_r',
+    'tokyo',
+    'tokyoS',
+    'tokyo_r',
+    'turku',
+    'turkuS',
+    'turku_r',
+    'vik',
+    'vikO',
+    'vikO_r',
+    'vik_r',
+]
+_CMCRAMERI_CMAPS = get_args(_CMCRAMERI_CMAPS_LITERAL)
+
 _MATPLOTLIB_CMAPS_LITERAL = Literal[
     'Accent',
     'Accent_r',
@@ -1914,40 +2012,47 @@ def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
 
     """
     _validation.check_instance(cmap, (str, list), name='cmap')
+
+    def get_3rd_party_cmap(cmap_):
+        cmap_sources = {
+            'colorcet.cm': _COLORCET_CMAPS,
+            'cmocean.cm.cmap_d': _CMOCEAN_CMAPS,
+            'cmcrameri.cm.cmaps': _CMCRAMERI_CMAPS,
+        }
+
+        def get_nested_attr(obj, attr_path):
+            for attr in attr_path:
+                obj = getattr(obj, attr)
+            return obj
+
+        # Try importing and returning cmap from each package
+        for cmap_import, known_cmaps in cmap_sources.items():
+            parts = cmap_import.split('.')
+            top_module = parts[0]
+
+            with contextlib.suppress(ImportError):
+                mod = importlib.import_module(top_module)
+                cmap_dict = get_nested_attr(mod, parts[1:])
+                with contextlib.suppress(KeyError):
+                    return cmap_dict[cmap_]
+
+            if cmap_ in known_cmaps:  # pragma: no cover
+                msg = (
+                    f'Package `{top_module}` is required to use colormap {cmap_!r}.\n'
+                    'Install PyVista with `pyvista[colormaps]` to install it by default.'
+                )
+                raise ModuleNotFoundError(msg)
+        return None
+
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:
             cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
 
-        msg_template = (
-            'Package `{}` is required to use colormap {!r}.\n'
-            'Install PyVista with `pyvista[colormaps]` to install it by default.'
-        )
-        # Try colorcet first
-        if has_module(module := 'colorcet'):  # pragma: no branch
-            import colorcet
-
-            try:
-                return colorcet.cm[cmap]
-            except KeyError:
-                pass
-        elif cmap in _COLORCET_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        # Try cmocean second
-        if has_module(module := 'cmocean'):  # pragma: no branch
-            import cmocean
-
-            try:
-                return cmocean.cm.cmap_d[cmap]
-            except KeyError:
-                pass
-        elif cmap in _CMOCEAN_CMAPS:  # pragma: no cover
-            msg = msg_template.format(module, cmap)
-            raise ModuleNotFoundError(msg)
-
-        if not isinstance(cmap, colors.Colormap):
+        cmap_3rd_party = get_3rd_party_cmap(cmap)
+        if cmap_3rd_party:
+            return cmap_3rd_party
+        elif not isinstance(cmap, colors.Colormap):
             if inspect.ismodule(colormaps):  # pragma: no cover
                 # Backwards compatibility with matplotlib<3.5.0
                 if not hasattr(colormaps, cmap):
@@ -2016,11 +2121,11 @@ def color_scheme_to_cycler(scheme):
 
     Parameters
     ----------
-    scheme : str, int, or _vtk.vtkColorSeries
+    scheme : str | int | :vtk:`vtkColorSeries`
         Color scheme to be converted. If a string, it should correspond to a
         valid color scheme name (e.g., 'viridis'). If an integer, it should
         correspond to a valid color scheme ID. If an instance of
-        `_vtk.vtkColorSeries`, it should be a valid color series.
+        :vtk:`vtkColorSeries`, it should be a valid color series.
 
     Returns
     -------

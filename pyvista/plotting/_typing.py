@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
     from .charts import ChartPie as ChartPie
+    from .colors import _CMCRAMERI_CMAPS_LITERAL
     from .colors import _CMOCEAN_CMAPS_LITERAL
     from .colors import _COLORCET_CMAPS_LITERAL
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
@@ -28,7 +29,10 @@ if TYPE_CHECKING:
 
 
 ColormapOptions = Union[
-    '_MATPLOTLIB_CMAPS_LITERAL', '_CMOCEAN_CMAPS_LITERAL', '_COLORCET_CMAPS_LITERAL'
+    '_MATPLOTLIB_CMAPS_LITERAL',
+    '_CMOCEAN_CMAPS_LITERAL',
+    '_COLORCET_CMAPS_LITERAL',
+    '_CMCRAMERI_CMAPS_LITERAL',
 ]
 
 ColorLike = Union[

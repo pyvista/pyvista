@@ -24,16 +24,16 @@ if TYPE_CHECKING:
 
 
 class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
-    """A ndarray which references the owning dataset and the underlying vtkArray.
+    """A ndarray which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
     Parameters
     ----------
-    array : ArrayLike or vtk.vtkAbstractArray
+    array : ArrayLike or :vtk:`vtkAbstractArray`
         Array like.
 
-    dataset : pyvista.DataSet
+    dataset : DataSet
         Input dataset.
 
     association : pyvista.core.utilities.arrays.FieldAssociation
@@ -131,4 +131,10 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    __getattr__ = _vtk.VTKArray.__getattr__
+    def __getattr__(self, name: str) -> Any:
+        """Forward unknown attribute requests to VTKArray's __getattr__."""
+        if self.VTKObject is not None:
+            # Enforce rules for using VTK's snake_case API rules
+            _vtk.DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
+            return getattr(self.VTKObject, name)
+        raise AttributeError

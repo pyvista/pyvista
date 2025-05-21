@@ -15,16 +15,17 @@ The colormaps on this page are from multiple packages:
   and `categorical <https://colorcet.holoviz.org/user_guide/Categorical.html#categorical>`_
   colormaps.
 - :bdg-primary:`cmo` - `cmocean colormaps <https://matplotlib.org/cmocean/>`_.
+- :bdg-danger:`cmc` - `cmcrameri colormaps <https://github.com/callumrollo/cmcrameri?tab=readme-ov-file#cmcrameri>`_.
 
 The type of the colormap is indicated as:
 
 - :bdg-muted:`LSC` if it is a :class:`~matplotlib.colors.LinearSegmentedColormap`
 - :bdg-muted:`LC` if it is a :class:`~matplotlib.colors.ListedColormap`
 
-Each colormap is also labeled as:
+Each colormap is also tagged as:
 
-- :bdg-muted:`PU` if it is perceptually uniform
-- :bdg-danger:`NPU` if it is not perceptually uniform
+- :material-regular:`visibility;2em;sd-text-info` - if it is perceptually uniform
+- :material-regular:`visibility_off;2em;sd-text-warning` - if it is not perceptually uniform
 
 A colormap is considered *perceptually uniform* if its color gradients are
 evenly spaced, meaning equal steps in data produce equal perceptual changes.
@@ -33,7 +34,7 @@ Some colormap libraries assess perceptual uniformity using only the lightness
 component (:math:`L^*` in the Lab color space), while others also consider
 chromatic components (:math:`a^*` and :math:`b^*`). For the colormaps on this
 reference page, both lightness *and* color differences must meet the uniformity
-criteria to earn the :bdg-muted:`PU` label.
+criteria to earn the :material-regular:`visibility;2em;sd-text-info` label.
 
 Specifically, a colormap is labeled as perceptually uniform if:
 
@@ -44,15 +45,17 @@ Specifically, a colormap is labeled as perceptually uniform if:
 
 Linearity is defined as having a coefficient of determination (:math:`R^2`)
 greater than 0.99 when fitted with linear regression.
-When choosing a colormap, those with the :bdg-muted:`PU` tag should be
-preferred over those with the :bdg-danger:`NPU` tag.
+When choosing a colormap, those with the :material-regular:`visibility;2em;sd-text-info`
+tag should be preferred over those with the :material-regular:`visibility_off;2em;sd-text-warning`
+tag.
 
 .. warning::
 
     Many of the ``matplotlib`` colormaps such as ``jet`` are not perceptually
     uniform and should be avoided where possible, since these colormaps
     can generate misleading visualizations. Colormaps from ``colorcet`` and
-    ``cmocean`` are therefore generally recommended over those from ``matplotlib``.
+    ``cmocean``, and ``cmcrameri`` are therefore generally recommended over
+    those from ``matplotlib``.
     See `the misuse of colour in science communication <https://doi.org/10.1038/s41467-020-19160-7>`_
     and `testing perceptual uniformity <https://colorcet.holoviz.org/user_guide/Continuous.html#testing-perceptual-uniformity>`_
     for more information.
@@ -78,7 +81,7 @@ to choose a colormap.
 .. note::
 
     Install PyVista with ``pyvista[colormaps]`` or ``pyvista[all]`` to also
-    install the ``colorcet`` and ``cmocean`` packages.
+    install the ``colorcet``, ``cmocean``, and ``cmcrameri`` packages.
 
 .. seealso::
 
@@ -109,6 +112,17 @@ for highlighting deviation from a reference value.
     :open:
 
     .. include:: /api/utilities/colormap_table/colormap_table_DIVERGING.rst
+
+Multi-Sequential
+----------------
+
+Colormaps with multiple sequential gradients diverging from a midpoint, ideal
+for highlighting deviations on both sides of a reference value.
+
+.. dropdown::
+    :open:
+
+    .. include:: /api/utilities/colormap_table/colormap_table_MULTI_SEQUENTIAL.rst
 
 Cyclic
 ------
