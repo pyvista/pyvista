@@ -1036,6 +1036,7 @@ class CellType(IntEnum):
                     level=2,
                 )
 
+                # Add additional references to VTK docs
                 cell_class_ref = f':vtk:`{_cell_class.__name__}`'
                 kind, url = (
                     ('Linear', _VTK_BOOK_LINEAR_CELLS_URL)
@@ -1043,13 +1044,9 @@ class CellType(IntEnum):
                     else ('NonLinear', _VTK_BOOK_NONLINEAR_CELLS_URL)
                 )
                 title = f'VTK Book: {kind} Cells'
-                cell_linear_ref = f'`{title}<{url}>`_'
+                cell_linear_ref = f'`{title} <{url}>`_'
                 see_also = f'See also {cell_class_ref} and {cell_linear_ref}.'
-
-                if _short_doc:
-                    _long_doc += f'\n\n{see_also}'
-                else:
-                    _short_doc = see_also
+                _long_doc += f'\n\n{see_also}'
 
             _short_doc = _indent_paragraph(_short_doc, level=2)
             _long_doc = _indent_paragraph(
