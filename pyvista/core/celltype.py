@@ -1056,7 +1056,7 @@ class CellType(IntEnum):
                     _long_doc += f'\n\n{_indent_paragraph(see_also, level=3)}'
                 _short_doc += '\n\n'
             elif see_also:
-                _short_doc += _indent_paragraph(see_also, level=2)
+                _short_doc += f'\n\n{_indent_paragraph(see_also, level=2)}'
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
