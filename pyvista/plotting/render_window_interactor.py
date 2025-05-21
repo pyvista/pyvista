@@ -9,8 +9,6 @@ from inspect import signature
 import logging
 import time
 from typing import Literal
-from typing import Optional
-from typing import Union
 import warnings
 import weakref
 
