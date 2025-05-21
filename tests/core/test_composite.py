@@ -1161,7 +1161,7 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
     [('prepend', '//', 'data', 'Block-00//data'), ('preserve', '::', 'data', 'data')],
 )
 def test_move_nested_field_data_to_root(copy, field_data_mode, separator, name_in, name_out):
-    value = [42]
+    value = np.array([42])
     multi = pv.MultiBlock()
     multi.field_data[name_in] = value
     root = pv.MultiBlock([multi])
