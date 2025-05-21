@@ -235,7 +235,7 @@ class RenderWindowInteractor:
         event = self._get_event_str(event)
 
         if (
-            isinstance(self.style, CaptureInteractorStyle)
+            isinstance(self.style, InteractorStyleCaptureMixin)
             and interactor_style_fallback
             and event
             in [
@@ -450,13 +450,18 @@ class RenderWindowInteractor:
     @property
     def style(
         self,
-    ) -> _vtk.vtkContextInteractorStyle | _vtk.vtkInteractorStyle | CaptureInteractorStyle | None:
+    ) -> (
+        _vtk.vtkContextInteractorStyle
+        | _vtk.vtkInteractorStyle
+        | InteractorStyleCaptureMixin
+        | None
+    ):
         """Get/set the current interactor style.
 
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
-            See :class:`~plotting.render_window_interactor.CaptureInteractorStyle` and its implementation as an example.
+            See :class:`~plotting.render_window_interactor.InteractorStyleCaptureMixin` and its implementation as an example.
 
         Returns
         -------
@@ -486,7 +491,7 @@ class RenderWindowInteractor:
         return self._style_class
 
     @style.setter
-    def style(self, style: _vtk.vtkInteractorStyle | CaptureInteractorStyle | None):
+    def style(self, style: _vtk.vtkInteractorStyle | InteractorStyleCaptureMixin | None):
         self._style = 'Interactor'
         self._style_class = style
         self.update_style()
@@ -1560,7 +1565,7 @@ class RenderWindowInteractor:
 
 
 @abstract_class
-class CaptureInteractorStyle(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
+class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
     """A mixin for subclasses of vtkInteractorStyle with capturing ability.
 
     Use a custom capturing events because the default ones
@@ -1619,15 +1624,15 @@ class CaptureInteractorStyle(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
 
     def remove_observers(self):  # numpydoc ignore=SS06
         """Remove all observers added through
-        :func:`~pyvista.plotting.render_window_interactor.CaptureInteractorStyle.add_observer`.
+        :func:`~pyvista.plotting.render_window_interactor.InteractorStyleCaptureMixin.add_observer`.
         """  # noqa : D205
         for obs in self._observers:
             self.RemoveObserver(obs)
 
 
-# All interactor styles here inherit from `CaptureInteractorStyle`, which
+# All interactor styles here inherit from `InteractorStyleCaptureMixin`, which
 # inherits from `DisableVtkSnakeCase`, so don't duplicate again.
-class InteractorStyleImage(CaptureInteractorStyle, _vtk.vtkInteractorStyleImage):
+class InteractorStyleImage(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleImage):
     """Image interactor style.
 
     See Also
@@ -1637,7 +1642,9 @@ class InteractorStyleImage(CaptureInteractorStyle, _vtk.vtkInteractorStyleImage)
     """
 
 
-class InteractorStyleJoystickActor(CaptureInteractorStyle, _vtk.vtkInteractorStyleJoystickActor):
+class InteractorStyleJoystickActor(
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleJoystickActor
+):
     """Joystick actor interactor style.
 
     See Also
@@ -1647,7 +1654,9 @@ class InteractorStyleJoystickActor(CaptureInteractorStyle, _vtk.vtkInteractorSty
     """
 
 
-class InteractorStyleJoystickCamera(CaptureInteractorStyle, _vtk.vtkInteractorStyleJoystickCamera):
+class InteractorStyleJoystickCamera(
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleJoystickCamera
+):
     """Joystick camera interactor style.
 
     See Also
@@ -1657,7 +1666,7 @@ class InteractorStyleJoystickCamera(CaptureInteractorStyle, _vtk.vtkInteractorSt
     """
 
 
-class InteractorStyleRubberBand2D(CaptureInteractorStyle, _vtk.vtkInteractorStyleRubberBand2D):
+class InteractorStyleRubberBand2D(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBand2D):
     """Rubber band 2D interactor style.
 
     See Also
@@ -1667,7 +1676,9 @@ class InteractorStyleRubberBand2D(CaptureInteractorStyle, _vtk.vtkInteractorStyl
     """
 
 
-class InteractorStyleRubberBandPick(CaptureInteractorStyle, _vtk.vtkInteractorStyleRubberBandPick):
+class InteractorStyleRubberBandPick(
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBandPick
+):
     """Rubber band pick interactor style.
 
     See Also
@@ -1677,7 +1688,9 @@ class InteractorStyleRubberBandPick(CaptureInteractorStyle, _vtk.vtkInteractorSt
     """
 
 
-class InteractorStyleTrackballActor(CaptureInteractorStyle, _vtk.vtkInteractorStyleTrackballActor):
+class InteractorStyleTrackballActor(
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleTrackballActor
+):
     """Trackball actor interactor style.
 
     See Also
@@ -1688,7 +1701,7 @@ class InteractorStyleTrackballActor(CaptureInteractorStyle, _vtk.vtkInteractorSt
 
 
 class InteractorStyleTrackballCamera(
-    CaptureInteractorStyle, _vtk.vtkInteractorStyleTrackballCamera
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleTrackballCamera
 ):
     """Trackball camera interactor style.
 
@@ -1701,7 +1714,7 @@ class InteractorStyleTrackballCamera(
     """
 
 
-class InteractorStyleTerrain(CaptureInteractorStyle, _vtk.vtkInteractorStyleTerrain):
+class InteractorStyleTerrain(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleTerrain):
     """Terrain interactor style.
 
     See Also
@@ -1711,7 +1724,7 @@ class InteractorStyleTerrain(CaptureInteractorStyle, _vtk.vtkInteractorStyleTerr
     """
 
 
-class InteractorStyleZoom(CaptureInteractorStyle, _vtk.vtkInteractorStyleRubberBandZoom):
+class InteractorStyleZoom(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBandZoom):
     """Rubber band zoom interactor style.
 
     See Also

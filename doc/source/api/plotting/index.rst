@@ -116,7 +116,7 @@ interaction styles.
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.render_window_interactor.CaptureInteractorStyle
+   plotting.render_window_interactor.InteractorStyleCaptureMixin
    plotting.render_window_interactor.InteractorStyleImage
    plotting.render_window_interactor.InteractorStyleJoystickActor
    plotting.render_window_interactor.InteractorStyleJoystickCamera
