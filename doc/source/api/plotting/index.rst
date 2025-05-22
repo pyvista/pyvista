@@ -106,6 +106,28 @@ class.
    plotting.picking.PickingHelper
 
 
+Interactor Style API
+--------------------
+An interactor style sets mouse and key bindings to interact with
+the plot. Most often methods like :func:`pyvista.Plotter.enable_trackball_style`
+would be used, but this API can be used as a starting point for customizing the
+interaction styles.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   plotting.render_window_interactor.InteractorStyleCaptureMixin
+   plotting.render_window_interactor.InteractorStyleImage
+   plotting.render_window_interactor.InteractorStyleJoystickActor
+   plotting.render_window_interactor.InteractorStyleJoystickCamera
+   plotting.render_window_interactor.InteractorStyleRubberBand2D
+   plotting.render_window_interactor.InteractorStyleRubberBandPick
+   plotting.render_window_interactor.InteractorStyleTrackballActor
+   plotting.render_window_interactor.InteractorStyleTrackballCamera
+   plotting.render_window_interactor.InteractorStyleTerrain
+   plotting.render_window_interactor.InteractorStyleZoom
+
+
 Convenience Functions
 ~~~~~~~~~~~~~~~~~~~~~
 These functions provide a simplified interface to the various plotting
