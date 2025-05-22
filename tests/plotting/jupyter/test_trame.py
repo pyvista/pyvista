@@ -167,7 +167,6 @@ def test_trame(client_type):
     assert len(viewer.views) == 1
 
     viewer.export()
-
     assert isinstance(viewer.screenshot(), memoryview)
 
 
