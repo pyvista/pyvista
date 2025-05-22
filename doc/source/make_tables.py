@@ -967,8 +967,6 @@ _COLORMAP_INFO: list[_ColormapInfo] = [
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'vanimo'),
     _ColormapInfo('cmcrameri', ColormapKind.DIVERGING, 'managua'),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bkr'),
-    _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bky'),
     _ColormapInfo('matplotlib', ColormapKind.DIVERGING, 'managua'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bjy'),
     _ColormapInfo('colorcet', ColormapKind.DIVERGING, 'bwy'),
