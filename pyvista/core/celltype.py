@@ -54,11 +54,6 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 {}
 """
 
-_VTK_BOOK_LINEAR_CELLS_URL = 'https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#linear-cells'
-_VTK_BOOK_NONLINEAR_CELLS_URL = (
-    'https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#nonlinear-types'
-)
-
 
 def _indent_paragraph(string: str, level: int) -> str:
     indentation = ''.join(['    '] * level)
@@ -1038,14 +1033,7 @@ class CellType(IntEnum):
 
                 # Add additional references to VTK docs
                 cell_class_ref = f':vtk:`{_cell_class.__name__}`'
-                kind, url = (
-                    ('Linear', _VTK_BOOK_LINEAR_CELLS_URL)
-                    if cell.IsLinear()
-                    else ('NonLinear', _VTK_BOOK_NONLINEAR_CELLS_URL)
-                )
-                title = f'VTK Book: {kind} Cells'
-                cell_linear_ref = f'`{title} <{url}>`_'
-                see_also = f'See also {cell_class_ref} and {cell_linear_ref}.'
+                see_also = f'See also {cell_class_ref}.'
                 _long_doc += f'\n\n{see_also}'
 
             _short_doc = _indent_paragraph(_short_doc, level=2)
