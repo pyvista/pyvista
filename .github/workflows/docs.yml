@@ -135,6 +135,7 @@ jobs:
         run: |
           make -C doc mini18n-html SPHINXOPTS="-W --keep-going"
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
+          rm -rf doc/_build/mini18n-html
 
       - name: Upload HTML documentation
         if: always()
@@ -149,11 +150,6 @@ jobs:
             !doc/_build/html/extras/**/*.vtksz
             !doc/_build/html/getting-started/**/*.vtksz
             !doc/_build/html/user-guide/**/*.vtksz
-            !doc/_build/html/**/index-*.vtksz
-            !doc/_build/html/**/api/**/*.vtksz
-            !doc/_build/html/**/extras/**/*.vtksz
-            !doc/_build/html/**/getting-started/**/*.vtksz
-            !doc/_build/html/**/user-guide/**/*.vtksz
 
       - name: Upload non-interactive HTML documentation
         if: always()
