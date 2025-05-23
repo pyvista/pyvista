@@ -1,4 +1,4 @@
-"""Wrap vtkActor module."""
+"""Wrap :vtk:`vtkActor` module."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 @no_new_attr
 class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
-    """Wrap vtkActor.
+    """Wrap :vtk:`vtkActor`.
 
     This class represents the geometry & properties in a rendered
     scene. Normally, a :class:`pyvista.Actor` is constructed from
@@ -403,6 +403,10 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         -------
         pyvista.Property
             The object describing backfaces.
+
+        See Also
+        --------
+        :ref:`backface_prop_example`
 
         Examples
         --------

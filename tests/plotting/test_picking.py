@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 from typing import TYPE_CHECKING
 
@@ -176,7 +175,7 @@ def test_surface_point_picking(sphere, left_clicking):
     else:
         pl.iren._mouse_right_button_click(width // 2, height // 2)
 
-    assert len(picked)
+    assert picked
     assert pl.picked_point is not None
 
     # invalid selection
@@ -300,11 +299,8 @@ def test_point_picking(left_clicking):
     assert picked
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 2, 0),
-    reason='Hardware picker unavailable for VTK<9.2',
-)
-@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+@pytest.mark.needs_vtk_version(9, 2, 0, reason='Hardware picker unavailable for VTK<9.2')
+@pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
     class Tracker:

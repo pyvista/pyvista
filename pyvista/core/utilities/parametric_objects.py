@@ -40,6 +40,10 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     pyvista.PolyData
         Line mesh of spline.
 
+    See Also
+    --------
+    :ref:`distance_along_spline_example`
+
     Examples
     --------
     Construct a spline.
@@ -1371,7 +1375,7 @@ def parametric_keywords(
 
     Parameters
     ----------
-    parametric_function : vtk.vtkParametricFunction
+    parametric_function : :vtk:`vtkParametricFunction`
         Parametric function to generate mesh from.
 
     min_u : float, optional
@@ -1430,7 +1434,7 @@ def surface_from_para(
 
     Parameters
     ----------
-    parametric_function : vtk.vtkParametricFunction
+    parametric_function : :vtk:`vtkParametricFunction`
         Parametric function to generate mesh from.
 
     u_res : int, default: 100

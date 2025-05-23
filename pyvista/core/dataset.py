@@ -481,7 +481,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property  # type: ignore[override]
+    @property
     def points(self: Self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
@@ -552,7 +552,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        points : MatrixLike[float] | vtk.vtkPoints
+        points : MatrixLike[float] | :vtk:`vtkPoints`
             Points as a array object.
 
         """
@@ -587,9 +587,12 @@ class DataSet(DataSetFilters, DataObject):
     ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
-        Arrows will be located at the points of the mesh and
+        Arrows will be located at the points or cells of the mesh and
         their size will be dependent on the norm of the vector.
-        Their direction will be the "direction" of the vector
+        Their direction will be the "direction" of the vector.
+
+        If there are both active point and cell vectors, preference is
+        given to the point vectors.
 
         Returns
         -------
@@ -598,28 +601,41 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Create a mesh, compute the normals and set them active, and
-        plot the active vectors.
+        Create a mesh, compute the normals and set them active.
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> mesh_w_normals = mesh.compute_normals()
         >>> mesh_w_normals.active_vectors_name = 'Normals'
+
+        Plot the active vectors as arrows. Show the original mesh as wireframe for
+        context.
+
         >>> arrows = mesh_w_normals.arrows
-        >>> arrows.plot(show_scalar_bar=False)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, style='wireframe')
+        >>> _ = pl.add_mesh(arrows, color='red')
+        >>> pl.show()
 
         """
-        vectors, vectors_name = self.active_vectors, self.active_vectors_name
-        if vectors is None or vectors_name is None:
+        vectors = self.active_vectors
+        if vectors is None:
             return None
 
         if vectors.ndim != 2:
             msg = 'Active vectors are not vectors.'
             raise ValueError(msg)
 
+        field, vectors_name = self.active_vectors_info
+        # Cast type since we know name is not None since vectors is not None at this point
+        vectors_name = cast('str', vectors_name)
+
         scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(vectors, axis=1)
-        self.point_data.set_array(scale, scale_name)
+        if field == FieldAssociation.POINT:
+            self.point_data.set_array(scale, scale_name)
+        else:
+            self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
@@ -1637,7 +1653,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        mesh : vtk.vtkDataSet
+        mesh : :vtk:`vtkDataSet`
             The overwriting mesh.
 
         deep : bool, default: True
@@ -1716,6 +1732,10 @@ class DataSet(DataSetFilters, DataObject):
         -----
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
+
+        See Also
+        --------
+        :ref:`create_pointset_example`
 
         Examples
         --------
@@ -1909,6 +1929,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        :ref:`distance_between_surfaces_example`
 
         Examples
         --------
@@ -2117,8 +2138,8 @@ class DataSet(DataSetFilters, DataObject):
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(
-            cast(Sequence[float], pointa),
-            cast(Sequence[float], pointb),
+            cast('Sequence[float]', pointa),
+            cast('Sequence[float]', pointb),
             tolerance,
             id_list,
         )
@@ -2179,14 +2200,14 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Point B must be a length three tuple of floats.'
             raise TypeError(msg)
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(cast(_vtk.vtkDataSet, self))
+        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         points = _vtk.vtkPoints()
         cell = _vtk.vtkGenericCell()
         locator.IntersectWithLine(
-            cast(Sequence[float], pointa),
-            cast(Sequence[float], pointb),
+            cast('Sequence[float]', pointa),
+            cast('Sequence[float]', pointb),
             tolerance,
             points,
             id_list,
@@ -2226,7 +2247,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Bounds must be a length six tuple of floats.'
             raise TypeError(msg)
         locator = _vtk.vtkCellTreeLocator()
-        locator.SetDataSet(cast(_vtk.vtkDataSet, self))
+        locator.SetDataSet(cast('_vtk.vtkDataSet', self))
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsWithinBounds(list(bounds), id_list)
@@ -2334,8 +2355,7 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
-        Concrete implementation of vtkDataSet's `GetCellNeighbors
-        <https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4>`_.
+        Concrete implementation of :vtk:`vtkDataSet.GetCellNeighbors`.
 
         Parameters
         ----------
@@ -2739,7 +2759,7 @@ class DataSet(DataSetFilters, DataObject):
     def point_cell_ids(self: Self, ind: int) -> list[int]:
         """Get the cell IDs that use the ind-th point.
 
-        Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
+        Implements :vtk:`vtkDataSet.GetPointCells`.
 
         Parameters
         ----------
@@ -2802,7 +2822,11 @@ class DataSet(DataSetFilters, DataObject):
 
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
-        return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+        out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
+        if pyvista.vtk_version_info >= (9, 4, 0):
+            # Need to reverse the order
+            return out[::-1]
+        return out
 
     def point_is_inside_cell(
         self: Self,

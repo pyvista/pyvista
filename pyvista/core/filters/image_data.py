@@ -137,9 +137,7 @@ class ImageDataFilters(DataSetFilters):
         more than 3 dimensional. Setting one axis of the neighborhood
         kernelSize to 1 changes the filter into a 2D median.
 
-        See `vtkImageMedian3D
-        <https://vtk.org/doc/nightly/html/classvtkImageMedian3D.html#details>`_
-        for more details.
+        See :vtk:`vtkImageMedian3D` for more details.
 
         Parameters
         ----------
@@ -707,7 +705,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        See :ref:`image_fft_perlin_example` for a full example using this filter.
+        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()
@@ -787,7 +785,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        See :ref:`image_fft_perlin_example` for a full example using this filter.
+        See :ref:`image_fft_perlin_noise_example` for a full example using this filter.
 
         """
         self._check_fft_scalars()
@@ -853,7 +851,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetFilteredAxes(axis)
         alg.Update()
-        return cast(pyvista.ImageData, wrap(alg.GetOutput()))
+        return cast('pyvista.ImageData', wrap(alg.GetOutput()))
 
     def contour_labeled(
         self,
@@ -1043,7 +1041,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
 
-        This filter uses `vtkSurfaceNets <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html#details>`__
+        This filter uses :vtk:`vtkSurfaceNets3D`
         to extract polygonal surface contours from non-continuous label maps, which
         corresponds to discrete regions in an input 3D image (i.e., volume). It is
         designed to generate surfaces from image point data, e.g. voxel point
@@ -1177,9 +1175,9 @@ class ImageDataFilters(DataSetFilters):
 
             .. warning::
 
-                Enabling this option is likely to generate surfaces with normals
+                Enabling this option is `likely` to generate surfaces with normals
                 pointing outward when ``pad_background`` is ``True`` and
-                ``boundary_style`` is ``True`` (the default). However, this is
+                ``boundary_style`` is ``'external'`` (the default). However, this is
                 not guaranteed if the generated surface is not closed or if internal
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
@@ -1598,7 +1596,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
                 select_inputs,
                 select_outputs,
             )
@@ -2556,8 +2554,7 @@ class ImageDataFilters(DataSetFilters):
 
         Notes
         -----
-        This filter implements `vtkImageConnectivityFilter
-        <https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html>`_.
+        This filter implements :vtk:`vtkImageConnectivityFilter`.
 
         Parameters
         ----------
@@ -2586,9 +2583,9 @@ class ImageDataFilters(DataSetFilters):
             If ``'seeded'``, only the regions that include the points defined with
             ``point_seeds`` are extracted.
 
-        point_seeds : MatrixLike[float], VectorLike[float], _vtk.vtkDataSet, optional
+        point_seeds : MatrixLike[float], VectorLike[float], :vtk:`vtkDataSet`, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
-            as a :class:`~vtk.vtkDataSet`. Has no effect if ``extraction_mode`` is not
+            as a :vtk:`vtkDataSet`. Has no effect if ``extraction_mode`` is not
             ``'seeded'``.
 
         label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
@@ -3124,7 +3121,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
 
         Define a custom plotter to show the image. Although the image data is defined
-        as point data, we use uses :meth:`points_to_cells` to display the image as
+        as point data, we use :meth:`points_to_cells` to display the image as
         :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
         instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
@@ -3262,7 +3259,7 @@ class ImageDataFilters(DataSetFilters):
 
         This time the input and output bounds match without any further processing.
         Like before, the dimensions have doubled; unlike before, however, the spacing is
-        not halved, but is instead smaller than half which is necessaru to ensure the
+        not halved, but is instead smaller than half which is necessary to ensure the
         bounds remain the same. Also unlike before, the origin is unaffected:
 
         >>> image.origin
@@ -3835,7 +3832,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Generate output array
         input_array = cast(
-            pyvista.pyvista_ndarray, get_array(self, name=array_name, preference=association)
+            'pyvista.pyvista_ndarray', get_array(self, name=array_name, preference=association)
         )
         array_out = np.full_like(input_array, fill_value=fill_value)
         replacement_values = (

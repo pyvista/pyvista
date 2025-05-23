@@ -1,5 +1,5 @@
 """
-.. _eigenmodes_example:
+.. _warp_by_vector_eigenmodes_example:
 
 Display Eigenmodes of Vibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

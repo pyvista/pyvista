@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:
-    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
+    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
@@ -43,7 +43,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
 
 
 class Cell(DataObject, _vtk.vtkGenericCell):
-    """Wrapping of vtkCell.
+    """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
     be useful when walking through a cell's individual faces or investigating
@@ -51,8 +51,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     Parameters
     ----------
-    vtk_cell : vtk.vtkCell, optional
-        The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
+    vtk_cell : :vtk:`vtkCell`, optional
+        The vtk object to wrap as Cell, that must be of :vtk:`vtkCell` type.
 
     cell_type : int, optional
         VTK cell type. Determined from ``vtk_cell`` if not input.
@@ -82,11 +82,11 @@ class Cell(DataObject, _vtk.vtkGenericCell):
       Type:       <CellType.TRIANGLE: 5>
       Linear:     True
       Dimension:  2
-      N Points:	  3
+      N Points:   3
       N Faces:    0
       N Edges:    3
       X Bounds:   -5.406e-02, -5.551e-17
-      Y Bounds:	  0.000e+00, 1.124e-02
+      Y Bounds:   0.000e+00, 1.124e-02
       Z Bounds:   -5.000e-01, -4.971e-01
 
     Get the 0-th cell from a :class:`pyvista.UnstructuredGrid`.
@@ -497,7 +497,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
         cell = self.GetFace(index)
-        return Cell(cell, deep=True, cell_type=cast(CellType, cell.GetCellType()))  # type: ignore[abstract]
+        return Cell(cell, deep=True, cell_type=cast('CellType', cell.GetCellType()))  # type: ignore[abstract]
 
     @property
     def bounds(self: Self) -> BoundsTuple:
@@ -545,7 +545,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(tuple[float, float, float], tuple(center))
+        return cast('tuple[float, float, float]', tuple(center))
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
@@ -610,8 +610,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.vtkCellArray):
-    """PyVista wrapping of vtkCellArray.
+class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
+    """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
     a numpy array or list.
@@ -622,7 +622,7 @@ class CellArray(_vtk.vtkCellArray):
     Parameters
     ----------
     cells : np.ndarray or list, optional
-        Import an array of data with the legacy vtkCellArray layout, e.g.
+        Import an array of data with the legacy :vtk:`vtkCellArray` layout, e.g.
         ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
         Where n0 is the number of points in cell 0, and pX_Y is the Y'th
         point in cell X.
@@ -655,7 +655,7 @@ class CellArray(_vtk.vtkCellArray):
         n_cells: int | None = None,
         deep: bool | None = None,
     ) -> None:
-        """Initialize a vtkCellArray."""
+        """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
         self.__offsets: _vtk.vtkIdTypeArray | None = None
         self.__connectivity: _vtk.vtkIdTypeArray | None = None

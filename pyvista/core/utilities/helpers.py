@@ -125,6 +125,10 @@ def wrap(
     pyvista.DataSet
         The PyVista wrapped dataset.
 
+    See Also
+    --------
+    :ref:`wrap_trimesh_example`
+
     Examples
     --------
     Wrap a numpy array representing a random point cloud.
@@ -191,9 +195,7 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        from pyvista import DataObject  # avoid circular import
-
-        return cast(DataObject, dataset)
+        return cast('DataObject', dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -277,7 +279,7 @@ def is_pyvista_dataset(obj: Any) -> bool:
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
-    """Return a _vtk.vtkPlane.
+    """Return a :vtk:`vtkPlane`.
 
     Parameters
     ----------
@@ -289,14 +291,14 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
     Returns
     -------
-    vtk.vtkPlane
+    :vtk:`vtkPlane`
         VTK plane.
 
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal_ = _validation.validate_array3(normal, dtype_out=float)
-    normal_ /= np.linalg.norm(normal_)
+    normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane

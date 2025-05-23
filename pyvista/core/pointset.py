@@ -1,4 +1,4 @@
-"""Sub-classes and wrappers for vtk.vtkPointSet."""
+"""Sub-classes and wrappers for :vtk:`vtkPointSet`."""
 
 from __future__ import annotations
 
@@ -36,6 +36,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
@@ -61,8 +62,9 @@ DEFAULT_INPLACE_WARNING = (
 )
 
 
+@abstract_class
 class _PointSet(DataSet):
-    """PyVista's equivalent of vtk.vtkPointSet.
+    """PyVista's equivalent of :vtk:`vtkPointSet`.
 
     This holds methods common to PolyData and UnstructuredGrid.
     """
@@ -112,7 +114,7 @@ class _PointSet(DataSet):
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
-        DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
+        DataSet.shallow_copy(self, cast('_vtk.vtkDataObject', to_copy))
 
     def remove_cells(
         self,
@@ -135,6 +137,10 @@ class _PointSet(DataSet):
         pyvista.DataSet
             Same type as the input, but with the specified cells
             removed.
+
+        See Also
+        --------
+        :ref:`ghost_cells_example`
 
         Examples
         --------
@@ -249,13 +255,12 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     geometry. This class is useful for improving the performance of filters on
     point clouds, but not plotting.
 
-    For further details see `VTK: vtkPointSet Details
-    <https://vtk.org/doc/nightly/html/classvtkPointSet.html#details>`_.
+    For further details see :vtk:`vtkPointSet`.
 
     Parameters
     ----------
-    var_inp : vtk.vtkPointSet, MatrixLike[float], optional
-        Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
+    var_inp : :vtk:`vtkPointSet`, MatrixLike[float], optional
+        Flexible input type.  Can be a :vtk:`vtkPointSet`, in which case
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
@@ -301,7 +306,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         Wrapping this is necessary for us to show an informative error
         message when the VTK version is too old, causing PointSet to be
         an abstract class. Since we inherit the ``__new__()`` method of
-        ``vtk.vtkPointSet``, we would otherwise see a generic error about
+        :vtk:`vtkPointSet`, we would otherwise see a generic error about
         the class being abstract.
 
         """
@@ -513,7 +518,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     Can be initialized in several ways:
 
     - Create an empty mesh
-    - Initialize from a vtk.vtkPolyData
+    - Initialize from a :vtk:`vtkPolyData`
     - Using vertices
     - Using vertices and faces
     - From a file
@@ -526,8 +531,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     Parameters
     ----------
-    var_inp : vtk.vtkPolyData, str, sequence, optional
-        Flexible input type.  Can be a ``vtk.vtkPolyData``, in which case
+    var_inp : :vtk:`vtkPolyData`, str, sequence, optional
+        Flexible input type.  Can be a :vtk:`vtkPolyData`, in which case
         this PolyData object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
 
@@ -541,7 +546,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence[int], vtk.vtkCellArray, CellArray, optional
+    faces : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
         Polygonal faces of the mesh. Can be either a padded connectivity
         array or an explicit cell array object.
 
@@ -558,7 +563,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence[int], vtk.vtkCellArray, CellArray, optional
+    lines : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
         Line connectivity. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
@@ -569,7 +574,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence[int], vtk.vtkCellArray, CellArray, optional
+    strips : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
         Triangle strips connectivity.  Triangle strips require an
         initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
@@ -603,7 +608,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence[int], vtk.vtkCellArray, CellArray, optional
+    verts : sequence[int], :vtk:`vtkCellArray`, CellArray, optional
         The verts connectivity.  Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
@@ -635,7 +640,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     >>> mesh = pv.PolyData()
 
-    Initialize from a ``vtk.vtkPolyData`` object.
+    Initialize from a :vtk:`vtkPolyData` object.
 
     >>> vtkobj = vtk.vtkPolyData()
     >>> mesh = pv.PolyData(vtkobj)
@@ -721,7 +726,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     ... )
     >>> plotter.show()
 
-    See :ref:`create_poly` for more examples.
+    See :ref:`create_poly_example` for more examples.
 
     """
 
@@ -808,11 +813,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 Invalid Input type:
 
                 Expected first argument to be either a:
-                - vtk.PolyData
+                - vtkPolyData
                 - pyvista.PolyData
                 - numeric numpy.ndarray (1 or 2 dimensions)
                 - List (flat or nested with 3 points per vertex)
-                - vtk.vtkDataArray
+                - vtkDataArray
 
                 Instead got: {type(var_inp)}"""
             raise TypeError(dedent(msg.strip('\n')))
@@ -1085,7 +1090,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             A (n_faces, face_size) array of face indices. For a triangle mesh, ``face_size = 3``.
 
         deep : bool, default: False
-            Whether to deep copy the faces array into vtkCellArray connectivity data.
+            Whether to deep copy the faces array into :vtk:`vtkCellArray` connectivity data.
 
         Returns
         -------
@@ -1298,7 +1303,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Return the number of vertices.
 
         A vertex is a 0D cell, which is usually a cell that references one point,
-        a vtkVertex.  It can also be a vtkPolyVertex.
+        a :vtk:`vtkVertex`. It can also be a :vtk:`vtkPolyVertex`.
         See `pyvista.PolyData.n_points` for the more common measure.
 
         Examples
@@ -1753,16 +1758,16 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a ``vtk.vtkPolyData`` or ``vtk.vtkStructuredGrid`` object
+    - From a :vtk:`vtkPolyData` or :vtk:`vtkStructuredGrid` object
     - From cell, cell types, and point arrays
     - From a file
 
     Parameters
     ----------
-    args : str, vtk.vtkUnstructuredGrid, iterable
+    args : str, :vtk:`vtkUnstructuredGrid`, iterable
         See examples below.
     deep : bool, default: False
-        Whether to deep copy a vtkUnstructuredGrid object.
+        Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
         Default is ``False``.  Keyword only.
 
     Examples
@@ -1775,7 +1780,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     >>> grid = pv.UnstructuredGrid()
 
-    Copy a vtk.vtkUnstructuredGrid
+    Copy a :vtk:`vtkUnstructuredGrid`
 
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
     >>> grid = pv.UnstructuredGrid(vtkgrid)
@@ -1798,7 +1803,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
     >>> grid.plot(show_edges=True)
 
-    See the :ref:`create_unstructured_example` example for more details
+    See the :ref:`create_unstructured_surface_example` example for more details
     on creating unstructured grids within PyVista.
 
     """
@@ -1817,7 +1822,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Initialize the unstructured grid."""
         super().__init__()
 
-        if not len(args):
+        if not args:
             return
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkUnstructuredGrid):
@@ -2055,6 +2060,126 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     def _get_cells(self):
         cells = self.GetCells()
         return _vtk.vtkCellArray() if cells is None else cells  # type: ignore[redundant-expr]
+
+    @property
+    def faces(self) -> NumpyArray[int]:
+        """Return the polyhedron faces.
+
+        .. deprecated:: 0.45.0
+            This property is deprecated and will be removed in a future release.
+            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            may be removed in a future release of VTK. Please use
+            `polyhedral_faces` instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        return convert_array(self.GetFaces())
+
+    @property
+    def polyhedron_faces(self) -> NumpyArray[int]:
+        """Return the polyhedron faces.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        if pyvista.vtk_version_info < (9, 4):
+            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+
+            if polyhedron_faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+
+            cell_faces = []
+            i = 0
+
+            while i < len(polyhedron_faces):
+                faces_: list[VectorLike[int]] = []
+                n_faces = polyhedron_faces[i]
+                i += 1
+
+                while len(faces_) < n_faces:
+                    n_vertices = polyhedron_faces[i]
+                    faces_.append([n_vertices, *polyhedron_faces[i + 1 : i + 1 + n_vertices]])
+                    i += n_vertices + 1
+
+                cell_faces.append(np.concatenate(faces_))
+
+            return np.concatenate(cell_faces)
+
+        else:
+            faces = self.GetPolyhedronFaces()  # vtkCellArray
+            if faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+            return convert_array(faces.GetData())
+
+    @property
+    def face_locations(self) -> NumpyArray[int]:
+        """Return polyhedron face locations.
+
+        .. deprecated:: 0.45.0
+            This property is deprecated and will be removed in a future release.
+            VTK has deprecated `GetFaces` and `GetFaceLocations` in VTK 9.4 and
+            may be removed in a future release of VTK. Please use
+            `polyhedral_face_locations` instead.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of face locations.
+
+        """
+        return convert_array(self.GetFaceLocations())
+
+    @property
+    def polyhedron_face_locations(self) -> NumpyArray[int]:
+        """Return the polyhedron face locations.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of faces.
+
+        """
+        if pyvista.vtk_version_info < (9, 4):
+            polyhedron_faces = pyvista.convert_array(self.GetFaces())
+
+            if polyhedron_faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+
+            i, face_counts = 0, []
+
+            while i < len(polyhedron_faces):
+                n_faces = polyhedron_faces[i]
+                face_counts.append(n_faces)
+                face_count = 0
+                i += 1
+
+                while face_count < n_faces:
+                    i += polyhedron_faces[i] + 1
+                    face_count += 1
+
+            locations = [[0]] * self.n_cells
+            face_count = 0
+
+            for i, n_faces in zip(
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
+            ):
+                locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
+                face_count += n_faces
+
+            return np.concatenate(locations)
+
+        else:
+            faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
+            if faces is None:
+                return np.array([], dtype=int)  # type: ignore[unreachable]
+            return convert_array(faces.GetData())
 
     @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
@@ -2325,16 +2450,16 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     * Create empty grid.
     * Initialize from a filename.
-    * Initialize from a ``vtk.vtkStructuredGrid`` object.
+    * Initialize from a :vtk:`vtkStructuredGrid` object.
     * Initialize directly from one or more :class:`numpy.ndarray`. See the
       example or the documentation of ``uinput``.
 
     Parameters
     ----------
-    uinput : str, Path, vtk.vtkStructuredGrid, numpy.ndarray, optional
+    uinput : str, Path, :vtk:`vtkStructuredGrid`, numpy.ndarray, optional
         Filename, dataset, or array to initialize the structured grid from. If
         a filename is passed, pyvista will attempt to load it as a
-        :class:`StructuredGrid`. If passed a ``vtk.vtkStructuredGrid``, it will
+        :class:`StructuredGrid`. If passed a :vtk:`vtkStructuredGrid`, it will
         be wrapped as a deep copy.
 
         If a :class:`numpy.ndarray` is provided and ``y`` and ``z`` are empty,
@@ -2362,6 +2487,10 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
 
+    See Also
+    --------
+    :ref:`create_structured_surface_example`
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2372,27 +2501,32 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     >>> grid = pv.StructuredGrid()
 
-    Initialize from a ``vtk.vtkStructuredGrid`` object
+    Initialize from a :vtk:`vtkStructuredGrid` object
 
     >>> vtkgrid = vtk.vtkStructuredGrid()
     >>> grid = pv.StructuredGrid(vtkgrid)
 
-    Create from NumPy arrays.
+    Create from NumPy arrays using :func:`numpy.meshgrid`.
 
-    >>> xrng = np.arange(-10, 10, 2, dtype=np.float32)
-    >>> yrng = np.arange(-10, 10, 5, dtype=np.float32)
-    >>> zrng = np.arange(-10, 10, 1, dtype=np.float32)
+    >>> xrng = np.linspace(-5, 5, 10)
+    >>> yrng = np.linspace(-8, 8, 4)
+    >>> zrng = np.linspace(-7, 4, 20)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
     >>> grid = pv.StructuredGrid(x, y, z)
     >>> grid
     StructuredGrid (...)
       N Cells:      513
       N Points:     800
-      X Bounds:     -1.000e+01, 8.000e+00
-      Y Bounds:     -1.000e+01, 5.000e+00
-      Z Bounds:     -1.000e+01, 9.000e+00
+      X Bounds:     -5.000e+00, 5.000e+00
+      Y Bounds:     -8.000e+00, 8.000e+00
+      Z Bounds:     -7.000e+00, 4.000e+00
       Dimensions:   10, 4, 20
       N Arrays:     0
+
+    Note how the grid dimensions match the shape of the input arrays.
+
+    >>> (xrng.size, yrng.size, zrng.size)
+    (10, 4, 20)
 
     """
 
@@ -2757,22 +2891,26 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
 
 class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
-    """Extend the functionality of the ``vtk.vtkExplicitStructuredGrid`` class.
+    """Extend the functionality of the :vtk:`vtkExplicitStructuredGrid` class.
 
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a ``vtk.StructuredGrid``, ``vtk.vtkExplicitStructuredGrid`` or ``vtk.vtkUnstructuredGrid`` object
+    - From a :vtk:`vtkStructuredGrid`, :vtk:`vtkExplicitStructuredGrid` or :vtk:`vtkUnstructuredGrid` object
     - From a VTU or VTK file
     - From ``dims`` and ``corners`` arrays
     - From ``dims``, ``cells`` and ``points`` arrays
 
     Parameters
     ----------
-    args : vtk.vtkExplicitStructuredGrid, vtk.vtkUnstructuredGrid, str, Sequence
+    args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
         See examples below.
     deep : bool, default: False
-        Whether to deep copy a ``vtk.vtkUnstructuredGrid`` object.
+        Whether to deep copy a :vtk:`vtkUnstructuredGrid` object.
+
+    See Also
+    --------
+    :ref:`create_explicit_structured_grid_example`
 
     Examples
     --------

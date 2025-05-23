@@ -45,7 +45,7 @@ running:
 
 .. note::
 
-   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   Use ``python -m pip install -e . --group dev`` to also install all of the
    packages required for development.
 
 Quick Start Development with Codespaces
@@ -495,11 +495,11 @@ request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install PyVista with all
-developer dependencies:
+test dependencies:
 
 .. code-block:: bash
 
-   pip install -e '.[dev]'
+   pip install -e . --group test
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -532,6 +532,43 @@ If needed, code coverage can be deactivated for specific lines by adding the ``#
 for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
+
+The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
+If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
+custom pytest marker ``needs_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
+
+.. code-block:: python
+
+    @pytest.mark.needs_vtk_version(9, 1)
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version((9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(at_least=(8, 2), less_than=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    @pytest.mark.needs_vtk_version(8, 2)
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(9, 1, reason='custom reason')
+    def test():
+        """Test is skipped with a custom message"""
+
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
@@ -751,6 +788,12 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install documentation dependencies with:
+
+.. code-block:: shell
+
+   python -m pip install -e . --group docs
+
 Build the documentation on Linux or Mac OS with:
 
 .. code-block:: bash
@@ -825,7 +868,7 @@ To test all the images, run ``pytest`` with:
 
 .. code-block:: bash
 
-   pytest tests/doc/tst_doc_images.py::test_static_images
+   pytest tests/doc/tst_doc_build.py::test_static_images
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -849,16 +892,19 @@ copies of the images are made as follows:
 
 #. If the comparison between the two images fails:
 
-    - The cache image is copied to ``./_doc_debug_images_failed/from_cache``
-    - The build image is copied to ``./_doc_debug_images_failed/from_build``
+    - The cache image is copied to ``./_doc_debug_images_failed/errors/from_cache``
+    - The build image is copied to ``./_doc_debug_images_failed/errors/from_build``
 
 #.  If an image is in the cache but missing from the build:
 
-    - The cache image is copied to  ``./_doc_debug_images_failed/from_cache``
+    - The cache image is copied to  ``./_doc_debug_images_failed/errors/from_cache``
 
 #.  If an image is in the build but missing from the cache:
 
-    - The build image is copied to  ``./_doc_debug_images_failed/from_build``
+    - The build image is copied to  ``./_doc_debug_images_failed/errors/from_build``
+
+If a warning is generated instead of an error, images are saved to the
+``warnings`` sub-directory instead of ``errors``.
 
 To resolve failed tests, any images in ``from_build`` or ``from_cache``
 may be copied to or removed from the ``Doc Image Cache``. For example,
@@ -875,7 +921,9 @@ should be stored in this directory. The test will first compare the
 build image to the cached image in ``Doc Image Cache`` as normal. If that
 comparison fails, the build image is then compared to all images in the
 flaky test directory. The test is successful if one of the comparisons
-is successful.
+is successful, but a warning will still be issued. If a warning is
+emitted by a flaky test, images are saved to the ``flaky`` sub-directory
+instead of ``warnings``.
 
 .. note::
 
@@ -912,7 +960,7 @@ To test that interactive plots do not exceed this limit, run:
 
 .. code:: bash
 
-   pytest tests/doc/tst_doc_images.py::test_interactive_plot_file_size
+   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:

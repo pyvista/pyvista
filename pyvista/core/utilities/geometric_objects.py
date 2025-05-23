@@ -458,6 +458,7 @@ def Sphere(
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
 
     Examples
     --------
@@ -1212,10 +1213,10 @@ def Cube(
     arguments are ignored.
 
     .. versionchanged:: 0.33.0
-        The cube is created using ``vtk.vtkCubeSource``. For
+        The cube is created using :vtk:`vtkCubeSource`. For
         compatibility with :func:`pyvista.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
-        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        :func:`~pyvista.PlatonicSolid`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
         The cube points are also cleaned by default now, leaving only
         the 8 corners and a watertight (manifold) mesh.
@@ -1282,6 +1283,10 @@ def Cube(
     # clean duplicate points
     if clean:
         cube.clean(inplace=True)
+
+        # Fix incorrect default point normals
+        del cube.point_data['Normals']
+        cube = cube.compute_normals(point_normals=True, cell_normals=False)
 
     return cube
 
@@ -1665,7 +1670,7 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast(pyvista.ImageData, wrap(wavelet_source.GetOutput()))
+    return cast('pyvista.ImageData', wrap(wavelet_source.GetOutput()))
 
 
 def CircularArc(
@@ -1752,7 +1757,7 @@ def CircularArc(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast(pyvista.PolyData, arc)
+    return cast('pyvista.PolyData', arc)
 
 
 def CircularArcFromNormal(
@@ -1832,7 +1837,7 @@ def CircularArcFromNormal(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, angle_, resolution + 1)
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast(pyvista.PolyData, arc)
+    return cast('pyvista.PolyData', arc)
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
@@ -2251,7 +2256,7 @@ def PlatonicSolid(
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')
@@ -2296,7 +2301,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Tetrahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
@@ -2330,7 +2335,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     >>> tetra = pv.Octahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
@@ -2363,7 +2368,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     >>> tetra = pv.Dodecahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
@@ -2397,7 +2402,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Icosahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

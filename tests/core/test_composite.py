@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Generator
 import itertools
 import pathlib
-import platform
 import re
 import weakref
 
@@ -20,8 +19,6 @@ from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core.dataobject import USER_DICT_KEY
-
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 
 def test_multi_block_init_vtk():
@@ -1164,7 +1161,8 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
     [('prepend', '//', 'data', 'Block-00//data'), ('preserve', '::', 'data', 'data')],
 )
 def test_move_nested_field_data_to_root(copy, field_data_mode, separator, name_in, name_out):
-    value = [42]
+    # https://github.com/pyvista/pyvista/pull/7538
+    value = np.array([42])
     multi = pv.MultiBlock()
     multi.field_data[name_in] = value
     root = pv.MultiBlock([multi])

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
-    """Create axis labels as a vtkStringArray.
+    """Create axis labels as a :vtk:`vtkStringArray`.
 
     Parameters
     ----------
@@ -36,8 +36,8 @@ def make_axis_labels(vmin, vmax, n, fmt):
 
     Returns
     -------
-    vtkStringArray
-        The created labels as a vtkStringArray object.
+    :vtk:`vtkStringArray`
+        The created labels as a :vtk:`vtkStringArray` object.
 
     """
     labels = _vtk.vtkStringArray()
@@ -47,13 +47,12 @@ def make_axis_labels(vmin, vmax, n, fmt):
     return labels
 
 
-class CubeAxesActor(_vtk.vtkCubeAxesActor):
-    """Wrap vtkCubeAxesActor.
+class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
+    """Wrap :vtk:`vtkCubeAxesActor`.
 
-    This class is created to wrap vtkCubeAxesActor, which is used to draw axes
+    This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
-    user-friendly interface to use `vtkCubeAxesActor
-    <https://vtk.org/doc/nightly/html/classvtkCubeAxesActor.html>`_.
+    user-friendly interface to use `:vtk:`vtkCubeAxesActor`.
 
     Parameters
     ----------
@@ -117,6 +116,13 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     n_zlabels : int, default: 5
         Number of labels along the z-axis.
+
+    See Also
+    --------
+    :meth:`~pyvista.Plotter.show_bounds`
+    :meth:`~pyvista.Plotter.show_grid`
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------
@@ -252,6 +258,18 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.x_axis_range = bnds.x_min, bnds.x_max
         self.y_axis_range = bnds.y_min, bnds.y_max
         self.z_axis_range = bnds.z_min, bnds.z_max
+
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of axes actor.
+
+        """
+        return self.GetCenter()
 
     @property
     def x_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
@@ -572,19 +590,19 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @property
     def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x-axis labels."""
-        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(0))
+        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(0))
         return convert_string_array(labels_vtk).tolist()
 
     @property
     def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y-axis labels."""
-        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(1))
+        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(1))
         return convert_string_array(labels_vtk).tolist()
 
     @property
     def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z-axis labels."""
-        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(2))
+        labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(2))
         return convert_string_array(labels_vtk).tolist()
 
     def update_bounds(self, bounds):

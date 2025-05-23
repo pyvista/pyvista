@@ -11,6 +11,16 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting.render_window_interactor import InteractorStyleImage
+from pyvista.plotting.render_window_interactor import InteractorStyleJoystickActor
+from pyvista.plotting.render_window_interactor import InteractorStyleJoystickCamera
+from pyvista.plotting.render_window_interactor import InteractorStyleRubberBand2D
+from pyvista.plotting.render_window_interactor import InteractorStyleRubberBandPick
+from pyvista.plotting.render_window_interactor import InteractorStyleTerrain
+from pyvista.plotting.render_window_interactor import InteractorStyleTrackballActor
+from pyvista.plotting.render_window_interactor import InteractorStyleTrackballCamera
+from pyvista.plotting.render_window_interactor import InteractorStyleZoom
+from tests.plotting.test_plotting import skip_windows_mesa
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -195,6 +205,7 @@ def test_track_click_position():
     assert events.pop(0) == 'single'
 
 
+@skip_windows_mesa
 @pytest.mark.skipif(
     type(_vtk.vtkRenderWindowInteractor()).__name__
     not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
@@ -346,3 +357,54 @@ def test_enable_custom_trackball_style():
 def test_enable_2d_style():
     pl = pv.Plotter()
     pl.enable_2d_style()
+
+
+def test_enable_interactors():
+    mapping = {
+        'enable_trackball_style': InteractorStyleTrackballCamera,
+        'enable_custom_trackball_style': InteractorStyleTrackballCamera,
+        'enable_2d_style': InteractorStyleTrackballCamera,
+        'enable_trackball_actor_style': InteractorStyleTrackballActor,
+        'enable_image_style': InteractorStyleImage,
+        'enable_joystick_style': InteractorStyleJoystickCamera,
+        'enable_joystick_actor_style': InteractorStyleJoystickActor,
+        'enable_zoom_style': InteractorStyleZoom,
+        'enable_terrain_style': InteractorStyleTerrain,
+        'enable_rubber_band_style': InteractorStyleRubberBandPick,
+        'enable_rubber_band_2d_style': InteractorStyleRubberBand2D,
+    }
+
+    pl = pv.Plotter()
+
+    # check that all "enable_*_style" methods on plotter are in the mapping and vice versa
+    attrs = dir(pl)
+    attrs_enable_style = {
+        attr for attr in attrs if attr.startswith('enable_') and attr.endswith('_style')
+    }
+
+    check_set = set(mapping.keys())
+    assert attrs_enable_style == check_set
+
+    # do the same for methods on the RenderWindowInteractor
+    attrs = dir(pl.iren)
+    attrs_enable_style = {
+        attr for attr in attrs if attr.startswith('enable_') and attr.endswith('_style')
+    }
+    check_set = set(mapping.keys())
+    assert attrs_enable_style == check_set
+
+    # check that the method gives the right class
+    for attr, class_ in mapping.items():
+        print(attr, class_)
+        getattr(pl, attr)()
+        assert isinstance(pl.iren.style, class_)
+
+    for attr, class_ in mapping.items():
+        getattr(pl.iren, attr)()
+        assert isinstance(pl.iren.style, class_)
+
+
+def test_setting_custom_style():
+    pl = pv.Plotter()
+    pl.iren.style = _vtk.vtkInteractorStyleJoystickActor()
+    assert isinstance(pl.iren.style, _vtk.vtkInteractorStyleJoystickActor)
