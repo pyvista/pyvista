@@ -63,7 +63,6 @@ pinned = [ # Pinned versions of core dependencies
 
 typing = [
   'mypy<1.14.0',
-  'npt-promote==0.2',
   'numpy>=2.0.0',
   'trimesh<4.6.0',
   { include-group = 'pinned' },
@@ -251,7 +250,7 @@ extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
-plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
+plugins = ['pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true
