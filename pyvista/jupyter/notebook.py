@@ -11,10 +11,30 @@ Includes:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import warnings
 
+import numpy as np
 
-def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
+if TYPE_CHECKING:
+    import io
+    from pathlib import Path
+
+    from IPython.lib.display import IFrame
+    from PIL.Image import Image
+
+    from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.trame.jupyter import EmbeddableWidget
+    from pyvista.trame.jupyter import Widget
+
+
+def handle_plotter(
+    plotter: Plotter,
+    backend: JupyterBackendOptions | None = None,
+    screenshot: str | Path | io.BytesIO | bool | None = None,
+    **kwargs,
+) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
 
     Returns
@@ -40,7 +60,9 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
     return show_static_image(plotter, screenshot)
 
 
-def show_static_image(plotter, screenshot):  # numpydoc ignore=RT01
+def show_static_image(
+    plotter: Plotter, screenshot: str | Path | io.BytesIO | bool | None
+) -> Image:  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
 
@@ -48,4 +70,5 @@ def show_static_image(plotter, screenshot):  # numpydoc ignore=RT01
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
+    assert isinstance(plotter.last_image, np.ndarray)
     return PIL.Image.fromarray(plotter.last_image)
