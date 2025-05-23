@@ -5892,7 +5892,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
         return self.add_mesh(points, style=style, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1, **kwargs) -> Actor:
+    def add_arrows(self, cent, direction, mag=1.0, **kwargs) -> Actor:
         """Add arrows to the plotter.
 
         Parameters
