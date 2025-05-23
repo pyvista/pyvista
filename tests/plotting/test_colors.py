@@ -5,6 +5,9 @@ import importlib.util
 import itertools
 import re
 
+import cmcrameri
+import cmocean
+import colorcet
 import matplotlib as mpl
 from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
@@ -13,6 +16,10 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import _CMCRAMERI_CMAPS
+from pyvista.plotting.colors import _CMOCEAN_CMAPS
+from pyvista.plotting.colors import _COLORCET_CMAPS
+from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
@@ -25,10 +32,13 @@ if importlib.util.find_spec('cmocean'):
 if importlib.util.find_spec('colorcet'):
     COLORMAPS.append('fire')
 
+if importlib.util.find_spec('cmcrameri'):
+    COLORMAPS.append('batlow')
+
 
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
-    assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
+    assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
 
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
@@ -246,3 +256,55 @@ def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hexcolors.values())
     if len(duplicates) > 0:
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
+
+
+@pytest.fixture
+def reset_matplotlib_cmaps():
+    # Need to unregister all 3rd-party cmaps
+    for cmap in list(mpl.colormaps):
+        try:
+            mpl.colormaps.unregister(cmap)
+        except (ValueError, AttributeError):
+            continue
+
+
+def maybe_xfail_mpl():
+    missing_colormaps = {'berlin', 'vanimo', 'managua'}
+    if not missing_colormaps.issubset(mpl.colormaps):
+        pytest.xfail(
+            reason='Older Matplotlib is missing colormaps: berlin, vanimo, managua.',
+        )
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_matplotlib_allowed():
+    maybe_xfail_mpl()
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(mpl.colormaps)
+    expected = set(_MATPLOTLIB_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_colorcet_required():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(colorcet.cm.keys()) - set(mpl.colormaps)
+    expected = set(_COLORCET_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_cmocean_required():
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(cmocean.cm.cmap_d.keys()) - set(mpl.colormaps)
+    expected = set(_CMOCEAN_CMAPS)
+    assert actual == expected
+
+
+@pytest.mark.usefixtures('reset_matplotlib_cmaps')
+def test_cmaps_cmcrameri_required():
+    maybe_xfail_mpl()
+    # Test that cmaps listed in colors module matches the actual cmaps available
+    actual = set(cmcrameri.cm.cmaps.keys()) - set(mpl.colormaps)
+    expected = set(_CMCRAMERI_CMAPS)
+    assert actual == expected

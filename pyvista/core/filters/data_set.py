@@ -1,4 +1,4 @@
-"""Filters module with a class of common filters that can be applied to any vtkDataSet."""
+"""Filters module with a class of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
 from __future__ import annotations
 
@@ -49,11 +49,12 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting._typing import ColormapOptions
 
 
 @abstract_class
 class DataSetFilters(DataObjectFilters):
-    """A set of common filters that can be applied to any vtkDataSet."""
+    """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     def align(  # type: ignore[misc]
         self: _DataSetType,
@@ -68,8 +69,7 @@ class DataSetFilters(DataObjectFilters):
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
-        two meshes.  See the VTK class `vtkIterativeClosestPointTransform
-        <https://vtk.org/doc/nightly/html/classvtkIterativeClosestPointTransform.html>`_
+        two meshes. See the VTK class `:vtk:`vtkIterativeClosestPointTransform`.
 
         Parameters
         ----------
@@ -678,9 +678,9 @@ class DataSetFilters(DataObjectFilters):
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ):
-        """Apply a ``vtkThreshold`` filter to the input dataset.
+        """Apply a :vtk:`vtkThreshold` filter to the input dataset.
 
-        This filter will apply a ``vtkThreshold`` filter to the input
+        This filter will apply a :vtk:`vtkThreshold` filter to the input
         dataset and return the resulting object. This extracts cells
         where the scalar value in each cell satisfies the threshold
         criterion.  If ``scalars`` is ``None``, the input's active
@@ -1533,7 +1533,7 @@ class DataSetFilters(DataObjectFilters):
         factor : float, default: 1.0
             Scale factor applied to scaling array.
 
-        geom : vtk.vtkDataSet or tuple(vtk.vtkDataSet), optional
+        geom : :vtk:`vtkDataSet` | tuple[:vtk:`vtkDataSet`], optional
             The geometry to use for the glyph. If missing, an arrow glyph
             is used. If a sequence, the datasets inside define a table of
             geometries to choose from based on scalars or vectors. In this
@@ -2545,9 +2545,9 @@ class DataSetFilters(DataObjectFilters):
 
         This evaluates all the input points to determine whether they are in an
         enclosed surface. The filter produces a (0,1) mask
-        (in the form of a vtkDataArray) that indicates whether points are
+        (in the form of a :vtk:`vtkDataArray`) that indicates whether points are
         outside (mask value=0) or inside (mask value=1) a provided surface.
-        (The name of the output vtkDataArray is ``"SelectedPoints"``.)
+        (The name of the output :vtk:`vtkDataArray` is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
         input dataset. If you wish to extract cells or poinrs, various
@@ -2996,7 +2996,7 @@ class DataSetFilters(DataObjectFilters):
 
         compute_vorticity : bool, default: True
             Vorticity computation at streamline points. Necessary for generating
-            proper stream-ribbons using the ``vtkRibbonFilter``.
+            proper stream-ribbons using the :vtk:`vtkRibbonFilter`.
 
         rotation_scale : float, default: 1.0
             This can be used to scale the rate with which the streamribbons
@@ -3205,7 +3205,7 @@ class DataSetFilters(DataObjectFilters):
 
         compute_vorticity : bool, default: True
             Vorticity computation at streamline points. Necessary for generating
-            proper stream-ribbons using the ``vtkRibbonFilter``.
+            proper stream-ribbons using the :vtk:`vtkRibbonFilter`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5184,8 +5184,6 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Join one or many other grids to this grid.
 
-        Grid is updated in-place by default.
-
         Can be used to merge points of adjacent cells when no grids
         are input.
 
@@ -5197,7 +5195,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        grid : vtk.vtkUnstructuredGrid | list[vtk.vtkUnstructuredGrid], optional
+        grid : :vtk:`vtkUnstructuredGrid` | list[:vtk:`vtkUnstructuredGrid`], optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True
@@ -5518,7 +5516,7 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Compute derivative-based quantities of point/cell scalar field.
 
-        Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
+        Utilize :vtk:`vtkGradientFilter` to compute derivative-based quantities,
         such as gradient, divergence, vorticity, and Q-criterion, of the
         selected point or cell scalar field.
 
@@ -5682,7 +5680,7 @@ class DataSetFilters(DataObjectFilters):
         as attributes in the input mesh's point data. The attribute's copy
         flags are honored, except for normals.
 
-        For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
+        For more details see :vtk:`vtkTessellatorFilter`.
 
         Parameters
         ----------
@@ -5746,8 +5744,7 @@ class DataSetFilters(DataObjectFilters):
 
         Area or volume is also provided in point data.
 
-        This filter uses the VTK `vtkIntegrateAttributes
-        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_
+        This filter uses the VTK :vtk:`vtkIntegrateAttributes`
         and requires VTK v9.1.0 or newer.
 
         Parameters
@@ -5807,8 +5804,7 @@ class DataSetFilters(DataObjectFilters):
         is specified for ``n_partitions``, then the load balancing simply
         uses the power-of-two greater than the requested value
 
-        For more details, see `vtkRedistributeDataSetFilter
-        <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+        For more details, see :vtk:`vtkRedistributeDataSetFilter`.
 
         Parameters
         ----------
@@ -6564,8 +6560,8 @@ class DataSetFilters(DataObjectFilters):
 
         Notes
         -----
-        This filter uses ``vtkPackLabels`` as the underlying method which
-        requires VTK version 9.3 or higher. If ``vtkPackLabels`` is not
+        This filter uses :vtk:`vtkPackLabels` as the underlying method which
+        requires VTK version 9.3 or higher. If :vtk:`vtkPackLabels` is not
         available, packing is done with ``NumPy`` instead which may be
         slower. For best performance, consider upgrading VTK.
 
@@ -6742,6 +6738,12 @@ class DataSetFilters(DataObjectFilters):
 
         By default, a new ``'int_rgb'`` array is added with the same name as the
         specified ``scalars`` but with ``_rgb`` appended.
+
+        .. note::
+            The package ``colorcet`` is required to use the default colors from the
+            ``'glasbey_category10'`` colormap. For a similar, but very limited,
+            alternative that does not require ``colorcet``, set ``colors='tab10'``
+            and consider setting the coloring mode explicitly.
 
         .. versionadded:: 0.45
 
@@ -7019,7 +7021,7 @@ class DataSetFilters(DataObjectFilters):
             _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
-                    cmap = get_cmap_safe(colors)
+                    cmap = get_cmap_safe(cast('ColormapOptions', colors))
                 except ValueError:
                     pass
                 else:
@@ -7108,8 +7110,7 @@ class DataSetFilters(DataObjectFilters):
         input surface are labelled with ``foreground_value`` and ``background_value``,
         respectively.
 
-        This filter implements `vtkPolyDataToImageStencil
-        <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+        This filter implements :vtk:`vtkPolyDataToImageStencil`. This
         algorithm operates as follows:
 
         * The algorithm iterates through the z-slice of the ``reference_volume``.

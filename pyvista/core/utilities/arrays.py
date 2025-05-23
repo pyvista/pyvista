@@ -169,7 +169,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
 
     Parameters
     ----------
-    array : vtk.vtkDataArray | vtk.vtkAbstractArray
+    array : :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
         VTK array.
 
     deep : bool, optional
@@ -178,7 +178,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
 
     Returns
     -------
-    vtk.vtkDataArray or vtk.vtkAbstractArray
+    :vtk:`vtkDataArray` | :vtk:`vtkAbstractArray`
         Copy of the original VTK array.
 
     Examples
@@ -269,12 +269,12 @@ def convert_array(
     deep: bool = False,
     array_type: int | None = None,
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
-    """Convert a NumPy array to a vtkDataArray or vice versa.
+    """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
 
     Parameters
     ----------
-    arr : np.ndarray | vtkDataArray
-        A numpy array or vtkDataArry to convert.
+    arr : np.ndarray | :vtk:`vtkDataArray`
+        A numpy array or :vtk:`vtkDataArray` to convert.
     name : str, optional
         The name of the data array for VTK.
     deep : bool, default: False
@@ -284,9 +284,9 @@ def convert_array(
 
     Returns
     -------
-    vtkDataArray or numpy.ndarray
+    :vtk:`vtkDataArray` | numpy.ndarray
         The converted array.  If input is a :class:`numpy.ndarray` then
-        returns ``vtkDataArray`` or is input is ``vtkDataArray`` then
+        returns :vtk:`vtkDataArray` or if input is :vtk:`vtkDataArray` then
         returns NumPy ``ndarray``.
 
     """
@@ -521,7 +521,7 @@ def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | 
 
     Parameters
     ----------
-    obj : pyvista.DataSet | vtk.vtkDataSet
+    obj : DataSet | :vtk:`vtkDataSet`
         PyVista or VTK dataset.
 
     name : str | int
@@ -541,7 +541,7 @@ def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | 
 
     Parameters
     ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
+    obj : DataSet | :vtk:`vtkDataSet`
         PyVista or VTK dataset.
 
     name : str | int
@@ -561,7 +561,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | N
 
     Parameters
     ----------
-    obj : pyvista.DataSet or vtk.vtkDataSet
+    obj : DataSet | :vtk:`vtkDataSet`
         PyVista or VTK dataset.
 
     name : str | int
@@ -581,7 +581,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
 
     Parameters
     ----------
-    obj : vtk.vtkTable
+    obj : :vtk:`vtkTable`
         PyVista or VTK table.
 
     name : str
@@ -628,12 +628,12 @@ def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
 
     Parameters
     ----------
-    vtkarr_bint : vtk.vtkBitArray
+    vtkarr_bint : :vtk:`vtkBitArray`
         VTK binary array.
 
     Returns
     -------
-    vtk.vtkCharArray
+    :vtk:`vtkCharArray`
         VTK char array.
 
     Notes
@@ -647,11 +647,11 @@ def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
 
 
 def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
-    """Convert a vtkIdList to a NumPy array.
+    """Convert a :vtk:`vtkIdList` to a NumPy array.
 
     Parameters
     ----------
-    vtk_id_list : vtk.vtkIdList
+    vtk_id_list : :vtk:`vtkIdList`
         VTK ID list.
 
     Returns
@@ -683,9 +683,9 @@ def convert_string_array(
 def convert_string_array(
     arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
-    """Convert a numpy array of strings to a vtkStringArray or vice versa.
+    """Convert a numpy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
-    If a scalar string is provided, it is converted to a vtkCharArray
+    If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
 
     Parameters
     ----------
@@ -693,11 +693,11 @@ def convert_string_array(
         Numpy string array to convert.
 
     name : str, optional
-        Name to set the vtkStringArray to.
+        Name to set the :vtk:`vtkStringArray` to.
 
     Returns
     -------
-    vtkStringArray
+    :vtk:`vtkStringArray`
         VTK string array.
 
     Notes
@@ -746,7 +746,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
 
     Parameters
     ----------
-    matrix : vtk.vtkMatrix3x3 | vtk.vtkMatrix4x4
+    matrix : :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         The vtk matrix to be converted to a ``numpy.ndarray``.
         Returned ndarray has shape (3, 3) or (4, 4) as appropriate.
 
@@ -779,12 +779,12 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
     ----------
     array : array_like[float]
         The array or array-like to be converted to a vtk matrix.
-        Shape (3, 3) gets converted to a ``vtk.vtkMatrix3x3``, shape (4, 4)
-        gets converted to a ``vtk.vtkMatrix4x4``. No other shapes are valid.
+        Shape (3, 3) gets converted to a :vtk:`vtkMatrix3x3`, shape (4, 4)
+        gets converted to a :vtk:`vtkMatrix4x4`. No other shapes are valid.
 
     Returns
     -------
-    vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4
+    :vtk:`vtkMatrix3x3` | :vtk:`vtkMatrix4x4`
         VTK matrix.
 
     """
@@ -946,11 +946,11 @@ _JSONValueType = Union[
 ]
 
 
-class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
+class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
     """Dict-like object with a JSON-serialized string array representation.
 
     This class behaves just like a regular dict, except its contents
-    are represented internally as a JSON-formatted vtkStringArray.
+    are represented internally as a JSON-formatted :vtk:`vtkStringArray`.
     The string array is updated dynamically any time the dict is
     modified, such that modifying the dict will also implicitly modify
     its JSON string representation.
@@ -965,18 +965,18 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
 
     @property
     def _string(self: _SerializedDictArray) -> str:
-        """Get the vtkStringArray string."""
+        """Get the :vtk:`vtkStringArray` string."""
         return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
 
     @_string.setter
     def _string(self: _SerializedDictArray, str_: str) -> None:
-        """Set the vtkStringArray to a specified string."""
+        """Set the :vtk:`vtkStringArray` to a specified string."""
         self.SetNumberOfValues(0)  # Clear string
         for char in str_:  # Populate string
             self.InsertNextValue(char)
 
     def _update_string(self: _SerializedDictArray) -> None:
-        """Format dict data as JSON and update the vtkStringArray."""
+        """Format dict data as JSON and update the :vtk:`vtkStringArray`."""
         data_str = json.dumps(self.data)
         if data_str != self._string:
             self._string = data_str

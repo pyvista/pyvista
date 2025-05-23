@@ -1,4 +1,4 @@
-"""Wrap vtkLookupTable."""
+"""Wrap :vtk:`vtkLookupTable`."""
 
 from __future__ import annotations
 
@@ -22,15 +22,16 @@ if TYPE_CHECKING:
     from matplotlib import colors
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
 class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
-    """An ndarray which references the owning table and the underlying vtkArray.
+    """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
-    This class is used to ensure that the internal vtkLookupTable updates when
+    This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
     the values array is updated.
 
     """
@@ -100,8 +101,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     colors (in the RGBA format), and this class provides the functionality to
     do so.
 
-    See `vtkLookupTable
-    <https://vtk.org/doc/nightly/html/classvtkLookupTable.html>`_ for more
+    See :vtk:`vtkLookupTable` for more
     details regarding the underlying VTK API.
 
     Parameters
@@ -109,6 +109,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     cmap : str | colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
+        See :ref:`named_colormaps` for supported colormaps.
 
     n_values : int, default: 256
         Number of colors in the color map.
@@ -337,6 +338,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
+        See :ref:`named_colormaps` for supported colormaps.
+
         Examples
         --------
         Apply the single Matplotlib color map ``"Oranges"``.
@@ -357,7 +360,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, value):
+    def cmap(self, value: ColormapOptions):
         self.apply_cmap(value, self.n_values)
 
     @property
@@ -744,7 +747,12 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
-    def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
+    def apply_cmap(
+        self,
+        cmap: ColormapOptions | list[str] | LookupTable,
+        n_values: int = 256,
+        flip: bool = False,
+    ):
         """Assign a colormap to this lookup table.
 
         This can be used instead of :attr:`LookupTable.cmap` when you need to
@@ -775,8 +783,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if isinstance(cmap, list):
             n_values = len(cmap)
 
-        cmap = get_cmap_safe(cmap)
-        values = cmap(np.linspace(0, 1, n_values)) * 255
+        cmap = get_cmap_safe(cmap)  # type: ignore[arg-type]
+        values = cmap(np.linspace(0, 1, n_values)) * 255  # type: ignore[misc, operator]
 
         if flip:
             values = values[::-1]
@@ -788,7 +796,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if self._opacity_parm[0] is not None:
             self.apply_opacity(*self._opacity_parm)
 
-        self._cmap = cmap
+        self._cmap = cmap  # type: ignore[assignment]
 
     def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
         """Assign custom opacity to this lookup table.
@@ -916,7 +924,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self.apply_cmap(self._cmap, value)
+            self.apply_cmap(self._cmap, value)  # type: ignore[arg-type]
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
@@ -1041,7 +1049,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Returns
         -------
-        vtk.vtkColorTransferFunction
+        :vtk:`vtkColorTransferFunction`
             VTK color transfer function.
 
         Examples
@@ -1080,7 +1088,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Returns
         -------
-        vtk.vtkPiecewiseFunction
+        :vtk:`vtkPiecewiseFunction`
             Piecewise function of the opacity of this color table.
 
         Examples

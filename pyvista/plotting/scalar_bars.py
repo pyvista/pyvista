@@ -199,7 +199,7 @@ class ScalarBars:
         title : str, default: ""
             Title of the scalar bar.  Default is rendered as an empty title.
 
-        mapper : vtkMapper, optional
+        mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar.  Defaults to the last
             mapper created by the plotter.
 
@@ -323,7 +323,7 @@ class ScalarBars:
 
         Returns
         -------
-        vtk.vtkScalarBarActor
+        :vtk:`vtkScalarBarActor`
             Scalar bar actor.
 
         Notes

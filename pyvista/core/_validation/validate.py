@@ -587,9 +587,9 @@ def validate_transform4x4(
     Parameters
     ----------
     transform : TransformLike
-        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
-        or a SciPy ``Rotation`` instance. If the input is 3x3, the array is padded using
-        a 4x4 identity matrix.
+        Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+        :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+        If the input is 3x3, the array is padded using a 4x4 identity matrix.
 
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
@@ -1291,10 +1291,11 @@ def _validate_color_sequence(
                     return tuple(color_list)
             except ValueError:
                 pass
+    n_colors_str = f' {n_colors} ' if n_colors else ' '
     msg = (
         f'Invalid color(s):\n'
         f'\t{color}\n'
         f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.'
+        f'or a sequence of{n_colors_str}ColorLike colors.'
     )
     raise ValueError(msg)

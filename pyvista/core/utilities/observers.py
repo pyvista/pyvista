@@ -26,9 +26,9 @@ def set_error_output_file(filename):
 
     Returns
     -------
-    vtkFileOutputWindow
+    :vtk:`vtkFileOutputWindow`
         VTK file output window.
-    vtkOutputWindow
+    :vtk:`vtkOutputWindow`
         VTK output window.
 
     """
