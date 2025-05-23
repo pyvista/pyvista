@@ -83,3 +83,18 @@ class PickerType(AnnotatedIntEnum):
     SCENE = (7, 'Scene')
     VOLUME = (8, 'Volume')
     WORLD = (9, 'World')
+
+
+class InteractionStyle(AnnotatedIntEnum):
+    """Types of pre-defined interaction styles."""
+
+    TRACKBALL = (0, 'Trackball')
+    TRACKBALL_ACTOR = (1, 'Trackball Actor')
+    TWO_D = (2, '2D')
+    JOYSTICK = (3, 'Joystick')
+    JOYSTICK_ACTOR = (4, 'Joystick Actor')
+    IMAGE = (5, 'Image')
+    RUBBERBAND = (6, 'RubberBand')
+    RUBBERBAND_2D = (7, 'RubberBand 2D')
+    TERRAIN = (8, 'Terrain')
+    ZOOM = (9, 'Zoom')
