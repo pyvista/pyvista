@@ -100,6 +100,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
+    'vtk_xref',
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -226,6 +227,7 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
     (r'py:.*', '.*MatrixLike'),
     (r'py:.*', '.*VectorLike'),
@@ -480,6 +482,7 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
+    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
     'image_scrapers': (DynamicScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),

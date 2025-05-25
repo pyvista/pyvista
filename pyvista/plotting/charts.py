@@ -50,7 +50,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(metaclass=_vtkWrapperMeta):
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -1075,7 +1075,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-class _CustomContextItem(_vtk.vtkPythonItem):
+class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:
             # item is the _CustomContextItem subclass instance
@@ -1127,7 +1127,7 @@ class _ChartBackground(_CustomContextItem):
 
 
 class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
-    """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
+    """Common pythonic interface for :vtk:`vtkChart`, :vtk:`vtkChartBox`, :vtk:`vtkChartPie` and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1144,12 +1144,12 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
 
     @property
     def _scene(self):
-        """Get a reference to the vtkScene in which this chart is drawn."""
+        """Get a reference to the :vtk:`vtkScene` in which this chart is drawn."""
         return self.GetScene()
 
     @property
     def _renderer(self):
-        """Get a reference to the vtkRenderer in which this chart is drawn."""
+        """Get a reference to the :vtk:`vtkRenderer` in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
     def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
@@ -1663,8 +1663,9 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
         )
 
 
-class _Plot(DocSubs):
-    """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
+# Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
+class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
+    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1841,7 +1842,7 @@ class _Plot(DocSubs):
     @label.setter
     def label(self, val) -> None:
         self._label = '' if val is None else val
-        self.SetLabel(self._label)  # type: ignore[attr-defined]
+        self.SetLabel(self._label)
 
     @property
     @doc_subs
@@ -1866,11 +1867,11 @@ class _Plot(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()  # type: ignore[attr-defined]
+        return self.GetVisible()
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)  # type: ignore[attr-defined]
+        self.SetVisible(val)
 
     @doc_subs
     def toggle(self) -> None:
@@ -1898,7 +1899,7 @@ class _Plot(DocSubs):
 
 
 class _MultiCompPlot(_Plot):
-    """Common pythonic interface for vtkPlot instances with multiple components.
+    """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
     Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
     """
@@ -1913,7 +1914,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)  # type: ignore[attr-defined]
+        self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property

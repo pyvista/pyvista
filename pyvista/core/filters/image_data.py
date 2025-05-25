@@ -137,9 +137,7 @@ class ImageDataFilters(DataSetFilters):
         more than 3 dimensional. Setting one axis of the neighborhood
         kernelSize to 1 changes the filter into a 2D median.
 
-        See `vtkImageMedian3D
-        <https://vtk.org/doc/nightly/html/classvtkImageMedian3D.html#details>`_
-        for more details.
+        See :vtk:`vtkImageMedian3D` for more details.
 
         Parameters
         ----------
@@ -1043,7 +1041,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
 
-        This filter uses `vtkSurfaceNets <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html#details>`__
+        This filter uses :vtk:`vtkSurfaceNets3D`
         to extract polygonal surface contours from non-continuous label maps, which
         corresponds to discrete regions in an input 3D image (i.e., volume). It is
         designed to generate surfaces from image point data, e.g. voxel point
@@ -2556,8 +2554,7 @@ class ImageDataFilters(DataSetFilters):
 
         Notes
         -----
-        This filter implements `vtkImageConnectivityFilter
-        <https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html>`_.
+        This filter implements :vtk:`vtkImageConnectivityFilter`.
 
         Parameters
         ----------
@@ -2586,9 +2583,9 @@ class ImageDataFilters(DataSetFilters):
             If ``'seeded'``, only the regions that include the points defined with
             ``point_seeds`` are extracted.
 
-        point_seeds : MatrixLike[float], VectorLike[float], _vtk.vtkDataSet, optional
+        point_seeds : MatrixLike[float], VectorLike[float], :vtk:`vtkDataSet`, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
-            as a :class:`~vtk.vtkDataSet`. Has no effect if ``extraction_mode`` is not
+            as a :vtk:`vtkDataSet`. Has no effect if ``extraction_mode`` is not
             ``'seeded'``.
 
         label_mode : Literal['size', 'constant', 'seeds'], default: 'size'

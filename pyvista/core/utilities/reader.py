@@ -38,7 +38,7 @@ def _lazy_vtk_instantiation(module_name, class_name):
 
 
 def lazy_vtkPOpenFOAMReader():
-    """Lazy import of the vtkPOpenFOAMReader."""
+    """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
     from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
     from vtkmodules.vtkParallelCore import vtkDummyController
 
@@ -1357,7 +1357,7 @@ class VTKDataSetReader(BaseReader):
     -----
     This reader calls ``ReadAllScalarsOn``, ``ReadAllColorScalarsOn``,
     ``ReadAllNormalsOn``, ``ReadAllTCoordsOn``, ``ReadAllVectorsOn``,
-    and ``ReadAllFieldsOn`` on the underlying ``vtkDataSetReader``.
+    and ``ReadAllFieldsOn`` on the underlying :vtk:`vtkDataSetReader`.
 
     Examples
     --------
@@ -1644,7 +1644,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     By default, all point and cell arrays are loaded as well as the boundary
     patch. This varies from VTK's defaults. For more details, see
-    `vtkCGNSReader <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
+    :vtk:`vtkCGNSReader`.
 
     Examples
     --------
