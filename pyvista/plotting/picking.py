@@ -54,7 +54,7 @@ class RectangleSelection:
 
     Parameters
     ----------
-    frustum : _vtk.vtkPlanes
+    frustum : :vtk:`vtkPlanes`
         Frustum that defines the selection.
     viewport : tuple[float, float, float, float]
         The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
@@ -420,12 +420,12 @@ class PickingInterface:  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         show_message : bool | str, default: True
             Show the message about how to use the point picking
@@ -819,12 +819,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
@@ -968,12 +968,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
 
         **kwargs : dict, optional
@@ -982,7 +982,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        vtk.vtkPropPicker
+        :vtk:`vtkPropPicker`
             Property picker.
 
         Examples
@@ -1484,12 +1484,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how

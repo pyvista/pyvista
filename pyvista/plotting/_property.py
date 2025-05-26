@@ -1,4 +1,4 @@
-"""Wrapper for vtkProperty."""
+"""Wrapper for :vtk:`vtkProperty`."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from .opts import InterpolationType
 
 @no_new_attr
 class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
-    """Wrap vtkProperty and expose it pythonically.
+    """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.
 

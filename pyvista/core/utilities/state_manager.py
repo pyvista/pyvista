@@ -161,7 +161,7 @@ class _VTKVerbosity(_StateManager[_VerbosityOptions]):
     Parameters
     ----------
     verbosity : str
-        Verbosity of the ``vtkLogger`` to set.
+        Verbosity of the :vtk:`vtkLogger` to set.
 
         - ``'off'``: No output.
         - ``'error'``: Only error messages.
@@ -267,7 +267,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
     'error'
 
     The following will raise an error because the `information` property is defined
-    by `vtkDataObject` and is not part of PyVista's API.
+    by :vtk:`vtkDataObject` and is not part of PyVista's API.
 
     >>> # pv.PolyData().information
 

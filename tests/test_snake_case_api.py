@@ -134,6 +134,8 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         vtk_attr_camel_case = 'GetName'
         vtk_attr_snake_case = 'name'
         kwargs['array'] = pv.vtk_points(np.eye(3)).GetData()
+    elif issubclass(vtk_subclass, pv.plotting.render_window_interactor.InteractorStyleCaptureMixin):
+        kwargs['render_window_interactor'] = pv.Plotter().iren
 
     instance = try_init_object(vtk_subclass, kwargs)
 

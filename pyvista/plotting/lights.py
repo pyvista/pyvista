@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtk.vtkLight."""
+"""Module containing pyvista implementation of :vtk:`vtkLight`."""
 
 from __future__ import annotations
 
@@ -417,7 +417,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The world space position is the :py:attr:`position` property
         transformed by the light's transform matrix if it exists. The
         value of this read-only property corresponds to the
-        ``vtk.vtkLight.GetTransformedPosition()`` method.
+        :vtk:`vtkLight.GetTransformedPosition` method.
 
         Examples
         --------
@@ -471,7 +471,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         The world space focal point is the :py:attr:`focal_point`
         property transformed by the light's transform matrix if it
         exists. The value of this read-only property corresponds to
-        the ``vtk.vtkLight.GetTransformedFocalPoint()`` method.
+        the :vtk:`vtkLight.GetTransformedFocalPoint` method.
 
         Examples
         --------
@@ -526,7 +526,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
     def on(self):  # numpydoc ignore=RT01
         """Return or set whether the light is on.
 
-        This corresponds to the Switch state of the ``vtk.vtkLight`` class.
+        This corresponds to the Switch state of the :vtk:`vtkLight` class.
 
         Examples
         --------
@@ -761,7 +761,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         """Return (if any) or set the transformation matrix of the light.
 
         The transformation matrix is ``None`` by default, and it is
-        stored as a ``vtk.vtkMatrix4x4`` object when set. If set, the
+        stored as a :vtk:`vtkMatrix4x4` object when set. If set, the
         light's parameters (position and focal point) are transformed
         by the matrix before being rendered. See also the
         :py:attr:`world_position` and :py:attr:`world_focal_point`
@@ -957,7 +957,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         focal point is set to the origin. The position is defined in
         terms of an elevation and an azimuthal angle, both in degrees.
 
-        Note that the equivalent ``vtk.vtkLight.SetDirectionAngle()`` method
+        Note that the equivalent :vtk:`vtkLight.SetDirectionAngle` method
         uses a surprising coordinate system where the (x', y', z') axes of
         the method correspond to the (z, x, y) axes of the renderer.
         This method reimplements the functionality in a way that ``elev``
@@ -1123,12 +1123,12 @@ class Light(DisableVtkSnakeCase, vtkLight):
 
     @classmethod
     def from_vtk(cls, vtk_light):
-        """Create a light from a ``vtk.vtkLight``, resulting in a copy.
+        """Create a light from a :vtk:`vtkLight`, resulting in a copy.
 
         Parameters
         ----------
-        vtk_light : vtk.vtkLight
-            The ``vtk.vtkLight`` to be copied.
+        vtk_light : :vtk:`vtkLight`
+            The :vtk:`vtkLight` to be copied.
 
         Returns
         -------
@@ -1218,7 +1218,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
 
         Parameters
         ----------
-        renderer : vtk.vtkRenderer
+        renderer : :vtk:`vtkRenderer`
             Renderer.
 
         """

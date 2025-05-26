@@ -51,7 +51,7 @@ mesh = pv.wrap(tmesh)
 print(mesh)
 
 # %%
-# Wrap an instance of vtk.vtkPolyData
+# Wrap an instance of :vtk:`vtkPolyData`
 
 import vtk
 

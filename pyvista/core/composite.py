@@ -1,4 +1,4 @@
-"""Container to mimic ``vtkMultiBlockDataSet`` objects.
+"""Container to mimic :vtk:`vtkMultiBlockDataSet` objects.
 
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
@@ -61,8 +61,7 @@ class MultiBlock(
 ):
     """A composite class to hold many data sets which can be iterated over.
 
-    This wraps/extends the `vtkMultiBlockDataSet
-    <https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html>`_ class
+    This wraps/extends the :vtk:`vtkMultiBlockDataSet` class
     so that we can easily plot these data sets and use the composite in a
     Pythonic manner.
 
@@ -2196,7 +2195,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+        to_copy : MultiBlock | :vtk:`vtkMultiBlockDataSet`
             Data object to perform a shallow copy from.
 
         recursive : bool, default: False
@@ -2230,7 +2229,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+        to_copy : MultiBlock | :vtk:`vtkMultiBlockDataSet`
             MultiBlock to perform a deep copy from.
 
         """

@@ -1127,7 +1127,7 @@ class _ChartBackground(_CustomContextItem):
 
 
 class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
-    """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
+    """Common pythonic interface for :vtk:`vtkChart`, :vtk:`vtkChartBox`, :vtk:`vtkChartPie` and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1144,12 +1144,12 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
 
     @property
     def _scene(self):
-        """Get a reference to the vtkScene in which this chart is drawn."""
+        """Get a reference to the :vtk:`vtkScene` in which this chart is drawn."""
         return self.GetScene()
 
     @property
     def _renderer(self):
-        """Get a reference to the vtkRenderer in which this chart is drawn."""
+        """Get a reference to the :vtk:`vtkRenderer` in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
     def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
@@ -1665,7 +1665,7 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
 
 # Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
 class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
-    """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
+    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1899,7 +1899,7 @@ class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
 
 
 class _MultiCompPlot(_Plot):
-    """Common pythonic interface for vtkPlot instances with multiple components.
+    """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
     Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
     """

@@ -4,23 +4,23 @@
 Plotting with VTK Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass a ``vtkAlgorithm`` to the ``Plotter`` for dynamic visualizations.
+Pass a :vtk:`vtkAlgorithm` to the ``Plotter`` for dynamic visualizations.
 
 .. note::
     By "dynamic visualization" we mean that as the input data/source
     changes, so will the visualization in real time.
 
-A ``vtkAlgorithm`` is the superclass for all sources, filters, and sinks
+A :vtk:`vtkAlgorithm` is the superclass for all sources, filters, and sinks
 in VTK. It defines a generalized interface for executing data processing
 algorithms. Pipeline connections are associated with input and output
 ports that are independent of the type of data passing through the
 connections.
 
-We can connect the output port of a ``vtkAlgorithm`` to PyVista's rendering
+We can connect the output port of a :vtk:`vtkAlgorithm` to PyVista's rendering
 pipeline when adding data to the scene through methods like
 :func:`add_mesh() <pyvista.Plotter.add_mesh>`.
 
-This example will walk through using a few ``vtkAlgorithm`` filters directly
+This example will walk through using a few :vtk:`vtkAlgorithm` filters directly
 and passing them to PyVista for dynamic visualization.
 """
 
@@ -37,10 +37,10 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Use ``vtkConeSource`` as a source algorithm. This source will dynamically
+# Use :vtk:`vtkConeSource` as a source algorithm. This source will dynamically
 # create a cone object depending on the instances's parameters. In this
 # example, we will connect a callback to set the cone source algorithm's
-# resolution via ``vtkConeSource.SetResolution()``.
+# resolution via :vtk:`vtkConeSource.SetResolution`.
 algo = pv.ConeSource()
 
 
@@ -51,7 +51,7 @@ def update_resolution(value):
 
 
 # %%
-# Pass the ``vtkConeSource`` (a ``vtkAlgorithm`` subclass) directly to the
+# Pass the :vtk:`vtkConeSource` (a :vtk:`vtkAlgorithm` subclass) directly to the
 # plotter and connect a slider widget to our callback that adjusts the
 # resolution.
 p = pv.Plotter()
@@ -60,7 +60,7 @@ p.add_slider_widget(update_resolution, [5, 100], title='Resolution')
 p.show()
 
 # %%
-# Here is another example using ``vtkRegularPolygonSource``.
+# Here is another example using :vtk:`vtkRegularPolygonSource`.
 poly_source = vtk.vtkRegularPolygonSource()
 poly_source.GeneratePolygonOff()
 poly_source.SetRadius(5.0)
@@ -83,7 +83,7 @@ p.show()
 # %%
 # Filter Pipeline
 # +++++++++++++++
-# We can do this with any ``vtkAlgorithm`` subclass for dynamically generating
+# We can do this with any :vtk:`vtkAlgorithm` subclass for dynamically generating
 # or filtering data. Here is an example of executing a pipeline of VTK filters
 # together.
 
