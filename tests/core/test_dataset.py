@@ -1549,3 +1549,8 @@ def test_active_array_info_deprecated(mesh):
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this deprecated class'
             raise RuntimeError(msg)
+
+
+def test_size():
+    cube = pv.Cube()
+    assert np.allclose(cube.size, (1.0, 1.0, 1.0))
