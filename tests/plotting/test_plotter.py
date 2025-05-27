@@ -21,13 +21,12 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
-from pyvista.plotting.utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.mark.skipif(uses_egl(), reason='OSMesa/EGL builds will not fail.')
+@pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
     plotter = pv.Plotter()
     with pytest.raises(AttributeError, match='not yet been set up'):
@@ -51,7 +50,7 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
     assert actor.prop.render_lines_as_tubes
 
 
-@pytest.mark.skipif(uses_egl(), reason='OSMesa/EGL builds will not fail.')
+@pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_screenshot_fail_suppressed_rendering():
     plotter = pv.Plotter()
     plotter.suppress_rendering = True
@@ -714,7 +713,7 @@ def test_plotter_add_volume_clim(uniform: pv.ImageData):
     arr = uniform.x.astype(np.uint8)
     pl = pv.Plotter()
     vol = pl.add_volume(uniform, scalars=arr)
-    assert vol.mapper.scalar_range == (0, 255)
+    assert vol.mapper.scalar_range == (arr.min(), arr.max())
 
     clim = [-10, 20]
     pl = pv.Plotter()
@@ -815,11 +814,11 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     pv.FIGURE_PATH = str(tmpdir)
     pv.ON_SCREENSHOT = True
 
-    entries = os.listdir(pv.FIGURE_PATH)
+    entries = os.listdir(pv.FIGURE_PATH)  # noqa: PTH208
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show()
-    entries_after = os.listdir(pv.FIGURE_PATH)
+    entries_after = os.listdir(pv.FIGURE_PATH)  # noqa: PTH208
     assert len(entries) + 1 == len(entries_after)
 
     res_file = next(iter(set(entries_after) - set(entries)))
@@ -848,7 +847,7 @@ def test_legend_font(sphere):
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
 
 
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Functions not implemented before 9.3.X')
+@pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter(sphere)
@@ -879,3 +878,16 @@ def test_plotter_shape():
     assert isinstance(pl.shape, tuple)
     assert pl.shape == (1, 2)
     assert isinstance(pl.shape[0], int)
+
+
+@pytest.mark.parametrize(
+    'filename_mtl',
+    [
+        None,
+        Path(pv.examples.download_doorman(load=False)).with_suffix('.mtl'),
+    ],
+)
+def test_import_obj_with_filename_mtl(filename_mtl):
+    filename = Path(pv.examples.download_doorman(load=False))
+    plotter = pv.Plotter()
+    plotter.import_obj(filename, filename_mtl=filename_mtl)

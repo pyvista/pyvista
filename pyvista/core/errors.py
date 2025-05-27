@@ -186,6 +186,23 @@ class PyVistaPipelineError(RuntimeError):
         super().__init__(message)
 
 
+class PyVistaAttributeError(AttributeError):
+    """Exception when accessing an attribute that is not part of the PyVista API.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self,
+        message='The attribute is not part of the PyVista API',
+    ) -> None:  # numpydoc ignore=PR01,RT01
+        super().__init__(message)
+
+
 class PyVistaDeprecationWarning(Warning):
     """Non-supressed Deprecation Warning."""
 

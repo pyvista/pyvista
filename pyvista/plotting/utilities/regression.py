@@ -2,29 +2,32 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING
 from typing import cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
 
+if TYPE_CHECKING:
+    from pyvista import ImageData
+    from pyvista.core._typing_core import NumpyArray
+
 
 def remove_alpha(img):
-    """Remove the alpha channel from a ``vtk.vtkImageData``.
+    """Remove the alpha channel from a :vtk:`vtkImageData`.
 
     Parameters
     ----------
-    img : vtk.vtkImageData
+    img : :vtk:`vtkImageData`
         The input image data with an alpha channel.
 
     Returns
     -------
-    pyvista.ImageData
+    ImageData
         The output image data with the alpha channel removed.
 
     """
@@ -75,12 +78,12 @@ def wrap_image_array(arr):
 
 
 def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]:
-    """Run a ``vtkWindowToImageFilter`` and get output as array.
+    """Run a :vtk:`vtkWindowToImageFilter` and get output as array.
 
     Parameters
     ----------
-    imfilter : _vtk.vtkWindowToImageFilter
-        The ``vtkWindowToImageFilter`` instance to be processed.
+    imfilter : :vtk:`vtkWindowToImageFilter`
+        The :vtk:`vtkWindowToImageFilter` instance to be processed.
 
     Notes
     -----
@@ -97,11 +100,11 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = cast(Optional[pyvista.ImageData], wrap(imfilter.GetOutput()))
+    image = cast('ImageData | None', wrap(imfilter.GetOutput()))
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
-    img_array = cast(NumpyArray[float], point_array(image, 'ImageScalars'))
+    img_array = cast('NumpyArray[float]', point_array(image, 'ImageScalars'))
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]
@@ -112,7 +115,7 @@ def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = 
 
     Parameters
     ----------
-    render_window : vtk.vtkRenderWindow
+    render_window : :vtk:`vtkRenderWindow`
         The render window to extract the image from.
 
     as_vtk : bool, default: False
@@ -128,7 +131,7 @@ def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = 
 
     Returns
     -------
-    ndarray | vtk.vtkImageData
+    ndarray | :vtk:`vtkImageData`
         The image as an array or as a VTK object depending on the ``as_vtk`` parameter.
 
     """
@@ -160,13 +163,13 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
 
     Parameters
     ----------
-    im1 : str | numpy.ndarray | vtkRenderWindow | vtkImageData
+    im1 : str | numpy.ndarray | :vtk:`vtkRenderWindow` | :vtk:`vtkImageData`
         Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``.
+        window, or :vtk:`vtkImageData`.
 
-    im2 : str | numpy.ndarray | vtkRenderWindow | vtkImageData
+    im2 : str | numpy.ndarray | :vtk:`vtkRenderWindow` | :vtk:`vtkImageData`
         Render window, numpy array representing the output of a render
-        window, or ``vtkImageData``.
+        window, or :vtk:`vtkImageData`.
 
     threshold : int, default: 1
         Threshold tolerance for pixel differences.  This should be
@@ -178,7 +181,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
         image using numpy.  The difference between pixel is calculated
         for each RGB channel, summed, and then divided by the number
         of pixels.  This is faster than using
-        ``vtk.vtkImageDifference`` but potentially less accurate.
+        :vtk:`vtkImageDifference` but potentially less accurate.
 
     Returns
     -------

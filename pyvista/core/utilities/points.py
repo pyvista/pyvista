@@ -26,7 +26,7 @@ def vtk_points(
     force_float: bool = False,
     allow_empty: bool = True,
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a ``vtkPoints`` object.
+    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------
@@ -52,8 +52,8 @@ def vtk_points(
 
     Returns
     -------
-    vtk.vtkPoints
-        The vtkPoints object.
+    :vtk:`vtkPoints`
+        The :vtk:`vtkPoints` object.
 
     Examples
     --------

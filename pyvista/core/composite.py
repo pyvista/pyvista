@@ -1,4 +1,4 @@
-"""Container to mimic ``vtkMultiBlockDataSet`` objects.
+"""Container to mimic :vtk:`vtkMultiBlockDataSet` objects.
 
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
@@ -61,8 +61,7 @@ class MultiBlock(
 ):
     """A composite class to hold many data sets which can be iterated over.
 
-    This wraps/extends the `vtkMultiBlockDataSet
-    <https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html>`_ class
+    This wraps/extends the :vtk:`vtkMultiBlockDataSet` class
     so that we can easily plot these data sets and use the composite in a
     Pythonic manner.
 
@@ -452,7 +451,7 @@ class MultiBlock(
         Returns
         -------
         Iterator
-            Iterator of names, blocks, or name-block pairs depending on ``contents``.
+            Iterator of ids, names, blocks, or name-block pairs depending on ``contents``.
 
         See Also
         --------
@@ -488,7 +487,7 @@ class MultiBlock(
         >>> len(list(iterator))
         59
 
-        Check if all blocks are class:`~pyvista.DataSet` objects. Note that ``None``
+        Check if all blocks are :class:`~pyvista.DataSet` objects. Note that ``None``
         blocks are included by default, so this may not be ``True`` in all cases.
 
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
@@ -1244,7 +1243,7 @@ class MultiBlock(
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        all_bounds = [cast(list[float], block.bounds) for block in self if block]
+        all_bounds = [cast('list[float]', block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = (0.0, 0.0, 0.0)
@@ -1712,7 +1711,7 @@ class MultiBlock(
         """
         index = range(self.n_blocks)[index]
         # Safely cast as vtkInformation since `None` case is caught by IndexError above
-        meta = cast(_vtk.vtkInformation, self.GetMetaData(index))
+        meta = cast('_vtk.vtkInformation', self.GetMetaData(index))
         return meta.Get(_vtk.vtkCompositeDataSet.NAME())  # type:ignore[return-value]
 
     def keys(self: MultiBlock) -> list[str]:
@@ -1880,7 +1879,7 @@ class MultiBlock(
             i = index
 
         # data, i, and name are a single value now
-        data = cast(pyvista.DataSet, wrap(data))
+        data = cast('DataSet', wrap(data))
 
         i = range(self.n_blocks)[i]
 
@@ -2196,7 +2195,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+        to_copy : MultiBlock | :vtk:`vtkMultiBlockDataSet`
             Data object to perform a shallow copy from.
 
         recursive : bool, default: False
@@ -2218,9 +2217,9 @@ class MultiBlock(
         ) -> None:
             for i, this_block in enumerate(this_object_):
                 if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
-                    block_to_copy = cast(MultiBlock, new_object.GetBlock(i))
+                    block_to_copy = cast('MultiBlock', new_object.GetBlock(i))
                     this_object_.replace(i, block_to_copy)
-                    _replace_nested_multiblocks(cast(MultiBlock, this_object_[i]), block_to_copy)
+                    _replace_nested_multiblocks(cast('MultiBlock', this_object_[i]), block_to_copy)
 
         if not recursive:
             _replace_nested_multiblocks(self, to_copy)
@@ -2230,7 +2229,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+        to_copy : MultiBlock | :vtk:`vtkMultiBlockDataSet`
             MultiBlock to perform a deep copy from.
 
         """
@@ -2247,7 +2246,7 @@ class MultiBlock(
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
                 elif isinstance(dataset, MultiBlock):
-                    _set_name_for_none_blocks(cast(MultiBlock, this_object_[i]), dataset)
+                    _set_name_for_none_blocks(cast('MultiBlock', this_object_[i]), dataset)
 
         _set_name_for_none_blocks(self, to_copy)
 

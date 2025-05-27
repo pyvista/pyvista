@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkCamera."""
+"""Module containing pyvista implementation of :vtk:`vtkCamera`."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_vtk.vtkCamera):
+class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters

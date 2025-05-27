@@ -52,6 +52,7 @@ from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
 from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._validation.validate import _set_default_kwarg_mandatory
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -975,9 +976,23 @@ def test_validate_rotation():
     with pytest.raises(ValueError, match=match):
         validate_rotation(-I3, must_have_handedness='right')
 
-    match = 'Rotation is not valid. Its inverse must equal its transpose.'
+    match = 'Rotation is not valid. Rotation must be orthogonal.'
     with pytest.raises(ValueError, match=match):
         validate_rotation(I3 * 2)
+
+
+def test_validate_rotation_tolerance():
+    # Define valid rotation matrix which fails the check if the tolerance is too low
+    # Matrix values come directly from a CI test failure
+    # See https://github.com/pyvista/pyvista/pull/7053#issuecomment-2571663768
+    rotation = np.array(
+        [
+            [6.1753786e-01, 4.8325321e-01, -6.2057501e-01],
+            [-2.1952267e-04, 7.8909826e-01, 6.1426693e-01],
+            [7.8654110e-01, -3.7919688e-01, 4.8740414e-01],
+        ]
+    )
+    validate_rotation(rotation)
 
 
 @pytest.mark.parametrize('as_any', [True, False])
@@ -1100,3 +1115,15 @@ def test_validate_dimensionality(dimensionality, reshape, expected_dimensionalit
 def test_validate_dimensionality_errors(dimensionality, message):
     with pytest.raises(ValueError, match=escape(message)):
         validate_dimensionality(dimensionality)
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (None, 'Input must be a single ColorLike color or a sequence of ColorLike colors.'),
+        (42, 'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.'),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)
