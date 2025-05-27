@@ -6006,7 +6006,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.add_mesh(points, style=style, **kwargs)
 
     def add_arrows(
-        self, cent: NumpyArray[float], direction: NumpyArray[float], mag: float = 1, **kwargs
+        self, cent: NumpyArray[float], direction: NumpyArray[float], mag: float = 1.0, **kwargs
     ) -> Actor:
         """Add arrows to the plotter.
 
