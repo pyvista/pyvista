@@ -1664,7 +1664,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             if mode_ not in allowed_modes:
                 msg = (
                     f"Transformation mode '{mode_}' is not supported for {kind}. "
-                    'Mode must be one of\n{allowed_modes}'
+                    'Mode must be one of'
+                    f'\n{allowed_modes}'
                 )
                 raise ValueError(msg)
 
