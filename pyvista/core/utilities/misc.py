@@ -273,7 +273,10 @@ class conditional_decorator:
 def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
-        msg = f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        msg = (
+            f'The value {float(value)} for `{parm_name}` is outside the '
+            f'acceptable range {tuple(rng)}.'
+        )
         raise ValueError(msg)
 
 
