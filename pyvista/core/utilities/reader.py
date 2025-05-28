@@ -460,7 +460,8 @@ class PointCellDataSelection:
     >>> reader.point_array_names
     []
     >>> reader.all_cell_arrays_status  # doctest: +NORMALIZE_WHITESPACE
-    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True, 'omega': True, 'f': True, 'epsilon': True, 'U': True}
+    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True,
+    'omega': True, 'f': True, 'epsilon': True, 'U': True}
     >>> reader.disable_all_cell_arrays()
     >>> reader.enable_cell_array('U')
     >>> mesh = reader.read()  # MultiBlock mesh
@@ -1471,8 +1472,8 @@ class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader.
 
     The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
-    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as class variables,
-    as shown below.
+    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as
+    class variables, as shown below.
 
         - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
         - ``MultiBlockPlot3DReader.PRESSURE = Plot3DFunctionEnum.PRESSURE``
@@ -1555,8 +1556,8 @@ class MultiBlockPlot3DReader(BaseReader):
     def add_function(self, value: int | Plot3DFunctionEnum) -> None:
         """Specify additional functions to compute.
 
-        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
-        easily accessed by their aliases as class variables.
+        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this
+        enumeration are most easily accessed by their aliases as class variables.
 
         Multiple functions may be requested by calling this method multiple times.
 
@@ -1604,9 +1605,9 @@ class MultiBlockPlot3DReader(BaseReader):
     def preserve_intermediate_functions(self):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
-        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still needs to compute
-        ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the output will not have ``Velocity``
-        array, only the requested ``VelocityMagnitude``.
+        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still
+        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the
+        output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
         """
@@ -3494,7 +3495,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
 
 class ExodusIIBlockSet:
-    """Class for enabling and disabling the blocks, sets, block arrays and set arrays in Exodus II files."""
+    """Class for enabling and disabling the blocks, sets, and arrays in Exodus II files."""
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):
         if not exodus_reader.reader.GetObjectTypeName(object_type):
