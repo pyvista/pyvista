@@ -661,10 +661,10 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         elif isinstance(dict_, UserDict):
             self._user_dict.data = dict_.data
         else:
-            msg = (
+            msg = ( # type: ignore[unreachable]
                 f'User dict can only be set with type {dict} or {UserDict}.\n'
                 f'Got {type(dict_)} instead.'
-            )  # type: ignore[unreachable]
+            )
             raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:
