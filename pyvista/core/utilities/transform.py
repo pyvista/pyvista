@@ -274,13 +274,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
             raise ValueError(msg)
@@ -291,13 +293,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand type(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand value(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
             raise ValueError(msg)
@@ -316,14 +320,17 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                 transform = copied.compose(other, multiply_mode='post')
             except TypeError:
                 msg = (
-                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
                 raise TypeError(msg)
             except ValueError:
                 msg = (
-                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector '
+                    f'or have 3x3 or 4x4 shape.'
                 )
                 raise ValueError(msg)
         return transform
@@ -334,13 +341,15 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
             msg = (
-                f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand type(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise TypeError(msg)
         except ValueError:
             msg = (
-                f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"Unsupported operand value(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise ValueError(msg)
@@ -1517,7 +1526,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
             Points with integer values are cast to a float type before the
             transformation is applied. A similar casting is also performed when
-            transforming datasets. See also the notes at :func:`~pyvista.DataObjectFilters.transform`
+            transforming datasets. See also the notes at
+            :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
         Parameters
@@ -1545,7 +1555,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                 - ``'active_vectors'`` transforms active normals and active vectors
                   arrays only.
                 - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
-                  with three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+                  with three components. This mode is equivalent to setting
+                  ``transform_all_input_vectors=True``
                   with :meth:`pyvista.DataObjectFilters.transform`.
 
                 By default, only ``'active_vectors'`` are transformed.
@@ -1652,8 +1663,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
             if mode_ not in allowed_modes:
                 msg = (
-                    f"Transformation mode '{mode_}' is not supported for {kind}. Mode must be one of"
-                    f'\n{allowed_modes}'
+                    f"Transformation mode '{mode_}' is not supported for {kind}. "
+                    'Mode must be one of\n{allowed_modes}'
                 )
                 raise ValueError(msg)
 
@@ -1858,7 +1869,8 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
             - ``'active_vectors'`` transforms active normals and active vectors arrays
               only.
             - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
-              three components. This mode is equivalent to setting ``transform_all_input_vectors=True``
+              three components. This mode is equivalent to setting
+              ``transform_all_input_vectors=True``
               with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
@@ -2306,7 +2318,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         *args,
         **kwargs,
     ) -> Rotation | NumpyArray[float]:
-        """Return the rotation component as a SciPy :class:`~scipy.spatial.transform.Rotation` or any of its representations.
+        """Return the rotation component as a SciPy ``Rotation`` or any of its representations.
 
         The current :attr:`matrix` is first decomposed to extract the rotation component
         and then returned with the specified representation.
@@ -2320,15 +2332,21 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         representation : str, optional
             Representation of the rotation.
 
-            - ``'quat'``: Represent as a quaternion using :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
-            - ``'matrix'``: Represent as a 3x3 matrix using :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
-            - ``'rotvec'``: Represent as a rotation vector using :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
-            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
-            - ``'euler'``: Represent as Euler angles using :meth:`~scipy.spatial.transform.Rotation.as_euler`.
-            - ``'davenport'``: Represent as Davenport angles using :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
+            - ``'quat'``: Represent as a quaternion using
+              :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using
+              :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
 
-            If no representation is given, then an instance of :class:`scipy.spatial.transform.Rotation`
-            is returned by default.
+            If no representation is given, then an instance of
+            :class:`scipy.spatial.transform.Rotation` is returned by default.
 
         *args
             Arguments passed to the ``Rotation`` method for the specified
