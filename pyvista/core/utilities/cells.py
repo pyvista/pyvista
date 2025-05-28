@@ -110,7 +110,7 @@ def numpy_to_idarr(
 
 
 def create_mixed_cells(mixed_cell_dict, nr_points=None):
-    """Generate the required cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
+    """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
     This function generates all required cell arrays according to a given cell
     dictionary. The given cell-dictionary should contain a proper
@@ -183,7 +183,10 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             or (cells_arr.ndim == 1 and cells_arr.size % nr_points_per_elem != 0)
             or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
         ):
-            msg = f'Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type'
+            msg = (
+                f'Expected an np.ndarray of size [N, {nr_points_per_elem}] or '
+                f'[N*{nr_points_per_elem}] with an integral type'
+            )
             raise ValueError(msg)
 
         if np.any(cells_arr < 0):

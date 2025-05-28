@@ -1040,7 +1040,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def index_to_physical_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
+        """Return or set 4x4 matrix to transform index space (ijk) to physical space (xyz).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
@@ -1072,7 +1072,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
+        """Return or set 4x4 matrix to transform from physical space (xyz) to index space (ijk).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
