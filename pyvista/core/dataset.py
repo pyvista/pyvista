@@ -700,7 +700,12 @@ class DataSet(DataSetFilters, DataObject):
             An array from the dataset matching ``name``.
 
         """
-        if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
+        if preference not in [
+            'point',
+            'cell',
+            FieldAssociation.CELL,
+            FieldAssociation.POINT,
+        ]:
             msg = '``preference`` must be either "point" or "cell"'
             raise ValueError(msg)
         if name is None:
@@ -1613,7 +1618,9 @@ class DataSet(DataSetFilters, DataObject):
             row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(
-                name: str, arr: str | pyvista_ndarray, field: Literal['Points', 'Cells', 'Fields']
+                name: str,
+                arr: str | pyvista_ndarray,
+                field: Literal['Points', 'Cells', 'Fields'],
             ) -> str:
                 """Format array information for printing (internal helper)."""
                 if isinstance(arr, str):
@@ -1816,8 +1823,12 @@ class DataSet(DataSetFilters, DataObject):
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
-    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLike[int]:
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = ...
+    ) -> VectorLike[int]: ...
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = 1
+    ) -> int | VectorLike[int]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2006,7 +2017,9 @@ class DataSet(DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
-        out_cells: int | NumpyArray[int] = closest_cells[0] if singular else np.array(closest_cells)
+        out_cells: int | NumpyArray[int] = (
+            closest_cells[0] if singular else np.array(closest_cells)
+        )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
 
         if return_closest_point:

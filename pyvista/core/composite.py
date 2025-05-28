@@ -572,7 +572,9 @@ class MultiBlock(
 
         """
         _validation.check_contains(
-            ['ids', 'names', 'blocks', 'items', 'all'], must_contain=contents, name='contents'
+            ['ids', 'names', 'blocks', 'items', 'all'],
+            must_contain=contents,
+            name='contents',
         )
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
@@ -875,7 +877,9 @@ class MultiBlock(
 
         """
         _validation.check_contains(
-            ['prepend', 'preserve'], must_contain=field_data_mode, name='field_data_mode'
+            ['prepend', 'preserve'],
+            must_contain=field_data_mode,
+            name='field_data_mode',
         )
         _validation.check_contains(
             ['prepend', 'preserve', 'flat', 'nested'],
@@ -1679,7 +1683,9 @@ class MultiBlock(
         if name is None:
             return
         index = (
-            self.get_index_by_name(index) if isinstance(index, str) else range(self.n_blocks)[index]
+            self.get_index_by_name(index)
+            if isinstance(index, str)
+            else range(self.n_blocks)[index]
         )
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
@@ -1936,7 +1942,10 @@ class MultiBlock(
         return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
     def insert(
-        self: MultiBlock, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None
+        self: MultiBlock,
+        index: int,
+        dataset: _TypeMultiBlockLeaf,
+        name: str | None = None,
     ) -> None:
         """Insert data before index.
 
@@ -2705,7 +2714,9 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-{component}'
         return f'{scalars_name}-{component}'
 
-    def _get_consistent_active_scalars(self: MultiBlock) -> tuple[str | None, str | None]:
+    def _get_consistent_active_scalars(
+        self: MultiBlock,
+    ) -> tuple[str | None, str | None]:
         """Get if there are any consistent active scalars."""
         point_names = set()
         cell_names = set()

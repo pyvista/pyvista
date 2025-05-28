@@ -136,12 +136,30 @@ def create_hex_example():
     cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int32)
 
     cell1 = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 1, 1],
+        ],
         dtype=np.float32,
     )
 
     cell2 = np.array(
-        [[0, 0, 2], [1, 0, 2], [1, 1, 2], [0, 1, 2], [0, 0, 3], [1, 0, 3], [1, 1, 3], [0, 1, 3]],
+        [
+            [0, 0, 2],
+            [1, 0, 2],
+            [1, 1, 2],
+            [0, 1, 2],
+            [0, 0, 3],
+            [1, 0, 3],
+            [1, 1, 3],
+            [0, 1, 3],
+        ],
         dtype=np.float32,
     )
 
@@ -236,7 +254,9 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     # Incorrect size
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False)
+        pv.UnstructuredGrid(
+            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False
+        )
 
     # Unknown cell type
     with pytest.raises(ValueError):  # noqa: PT011
@@ -273,7 +293,25 @@ def test_init_polyhedron():
     ]
     nodes = np.array(polyhedron_nodes)
 
-    polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
+    polyhedron_connectivity = [
+        3,
+        5,
+        17,
+        18,
+        19,
+        20,
+        21,
+        4,
+        17,
+        18,
+        23,
+        22,
+        4,
+        17,
+        21,
+        26,
+        22,
+    ]
     cells = np.array([len(polyhedron_connectivity), *polyhedron_connectivity])
     cell_type = np.array([pv.CellType.POLYHEDRON])
     grid = pv.UnstructuredGrid(cells, cell_type, nodes)
@@ -1092,9 +1130,9 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
 
     if extension == '.vtk' and not is_identity_matrix:
         match = re.escape(
-            'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.\n'
-            'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
-            'Use the `.vti` extension instead (XML format).'
+            'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.'
+            '\nSee https://gitlab.kitware.com/vtk/vtk/-/issues/19663 '
+            '\nUse the `.vti` extension instead (XML format).'
         )
         with pytest.warns(UserWarning, match=match):
             uniform.save(filename, binary)
@@ -1130,7 +1168,16 @@ def test_grid_points():
     assert np.allclose(grid.points, points)
 
     points = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 1, 1],
+        ],
     )
     grid = pv.ImageData()
     grid.dimensions = [2, 2, 2]
@@ -1678,7 +1725,8 @@ def test_StructuredGrid_cast_to_explicit_structured_grid_raises():
     x, y, z = np.meshgrid(*[xrng] * 3, indexing='ij')
     grid = pv.StructuredGrid(x, y, z)
     with pytest.raises(
-        TypeError, match='Only 3D structured grid can be casted to an explicit structured grid.'
+        TypeError,
+        match='Only 3D structured grid can be casted to an explicit structured grid.',
     ):
         grid.cast_to_explicit_structured_grid()
 

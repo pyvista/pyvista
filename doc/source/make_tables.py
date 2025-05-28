@@ -220,7 +220,9 @@ class CellQualityMeasuresTable(DocTable):
         # Get all cell example functions,
         # i.e. items from examples.cells that start with a capital letter
         cell_funcs = [
-            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+            name
+            for name, obj in inspect.getmembers(cells, inspect.isfunction)
+            if name[0].isupper()
         ]
 
         # Init dict with all measures as keys
@@ -1488,7 +1490,9 @@ class ColormapTable(DocTable):
 
         # Sort colormaps based on selected method
         weights = np.ones((n_samples,))
-        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index, weights)
+        sorted_groups, order = sort_color_groups_by_similarity(
+            grouped_colors, start_index, weights
+        )
         return [data[i] for i in order]
 
 
@@ -2418,7 +2422,9 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_reader_type(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
+    def generate_reader_type(
+        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+    ):
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_type is None:

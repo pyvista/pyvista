@@ -494,7 +494,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             Ignored dimensions.
 
         """
-        msg = 'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.'
+        msg = (
+            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.'
+        )
         raise AttributeError(msg)
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
@@ -907,10 +909,14 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dims = self.dimensions
         spacing = self.spacing
         origin = self.origin
-        return [(np.linspace(0, (dims[i] - 1) * spacing[i], dims[i]) + origin[i]) for i in range(3)]
+        return [
+            (np.linspace(0, (dims[i] - 1) * spacing[i], dims[i]) + origin[i]) for i in range(3)
+        ]
 
     @property
-    def extent(self: Self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
+    def extent(
+        self: Self,
+    ) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
@@ -948,7 +954,11 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @extent.setter
     def extent(self: Self, new_extent: VectorLike[int]) -> None:
         new_extent_ = _validation.validate_arrayN(
-            new_extent, must_be_integer=True, must_have_length=6, to_list=True, dtype_out=int
+            new_extent,
+            must_be_integer=True,
+            must_have_length=6,
+            to_list=True,
+            dtype_out=int,
         )
         self.SetExtent(new_extent_)
 
@@ -1013,7 +1023,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         )
 
     @wraps(RectilinearGridFilters.to_tetrahedra)
-    def to_tetrahedra(self: Self, *args, **kwargs) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
+    def to_tetrahedra(
+        self: Self, *args, **kwargs
+    ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
 
@@ -1058,7 +1070,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
 
     @index_to_physical_matrix.setter
-    def index_to_physical_matrix(self: Self, matrix: TransformLike) -> None:  # numpydoc ignore=GL08
+    def index_to_physical_matrix(
+        self: Self, matrix: TransformLike
+    ) -> None:  # numpydoc ignore=GL08
         T, R, N, S, K = pyvista.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
             warnings.warn(
@@ -1090,5 +1104,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
 
     @physical_to_index_matrix.setter
-    def physical_to_index_matrix(self: Self, matrix: TransformLike) -> None:  # numpydoc ignore=GL08
+    def physical_to_index_matrix(
+        self: Self, matrix: TransformLike
+    ) -> None:  # numpydoc ignore=GL08
         self.index_to_physical_matrix = pyvista.Transform(matrix).inverse_matrix

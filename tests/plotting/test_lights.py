@@ -191,7 +191,9 @@ def test_transforms():
     light.transform_matrix = trans_matrix
     matrix = light.transform_matrix
     assert all(
-        matrix.GetElement(i, j) == trans_matrix.GetElement(i, j) for i in range(4) for j in range(4)
+        matrix.GetElement(i, j) == trans_matrix.GetElement(i, j)
+        for i in range(4)
+        for j in range(4)
     )
 
     linear_trans = trans_array[:-1, :-1]

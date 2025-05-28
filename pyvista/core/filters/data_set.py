@@ -1665,7 +1665,9 @@ class DataSetFilters(DataObjectFilters):
                 warnings.warn('No data to use for scale. scale will be set to False.')
                 do_scale = False
             except AmbiguousDataError as err:
-                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
+                warnings.warn(
+                    f'{err}\nIt is unclear which one to use. scale will be set to False.'
+                )
                 do_scale = False
             else:
                 do_scale = True
@@ -1693,7 +1695,9 @@ class DataSetFilters(DataObjectFilters):
             try:
                 set_default_active_vectors(dataset)
             except MissingDataError:
-                warnings.warn('No vector-like data to use for orient. orient will be set to False.')
+                warnings.warn(
+                    'No vector-like data to use for orient. orient will be set to False.'
+                )
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
@@ -4672,14 +4676,22 @@ class DataSetFilters(DataObjectFilters):
         def _validate_component_mode(array_, component_mode_):
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
-            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in ['0', '1', '2']:
+            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in [
+                '0',
+                '1',
+                '2',
+            ]:
                 component_mode_ = int(component_mode_)
                 if component_mode_ > num_components - 1 or component_mode_ < 0:
                     msg = f"Invalid component index '{component_mode_}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}."
                     raise ValueError(msg)
                 array_ = array_[:, component_mode_] if num_components > 1 else array_
                 component_logic_function = None
-            elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'multi']:
+            elif isinstance(component_mode_, str) and component_mode_ in [
+                'any',
+                'all',
+                'multi',
+            ]:
                 if array_.ndim == 1:
                     component_logic_function = None
                 elif component_mode_ == 'any':
@@ -4706,7 +4718,9 @@ class DataSetFilters(DataObjectFilters):
                     msg = "Invalid dict mapping. The dict's keys or values must contain strings."
                     raise TypeError(msg)
 
-        def _validate_values_and_ranges(array_, values_, ranges_, num_components_, component_mode_):
+        def _validate_values_and_ranges(
+            array_, values_, ranges_, num_components_, component_mode_
+        ):
             # Make sure we have input values to extract
             is_multi_mode = component_mode_ == 'multi'
             if values_ is None:
@@ -4801,7 +4815,14 @@ class DataSetFilters(DataObjectFilters):
         )
 
     def _split_values(  # type:ignore[misc]
-        self: _DataSetType, *, method, values, ranges, value_names, range_names, **kwargs
+        self: _DataSetType,
+        *,
+        method,
+        values,
+        ranges,
+        value_names,
+        range_names,
+        **kwargs,
     ):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
@@ -6373,7 +6394,9 @@ class DataSetFilters(DataObjectFilters):
         return self.shrink(1.0)
 
     def extract_cells_by_type(  # type: ignore[misc]
-        self: _DataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
+        self: _DataSetType,
+        cell_types: int | VectorLike[int],
+        progress_bar: bool = False,
     ):
         """Extract cells of a specified type.
 
@@ -6672,7 +6695,8 @@ class DataSetFilters(DataObjectFilters):
         else:  # Use numpy
             # Get mapping from input ID to output ID
             arr = cast(
-                'pyvista.pyvista_ndarray', get_array(self, scalars, preference=preference, err=True)
+                'pyvista.pyvista_ndarray',
+                get_array(self, scalars, preference=preference, err=True),
             )
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
             if sort:
@@ -6961,7 +6985,9 @@ class DataSetFilters(DataObjectFilters):
         from pyvista.core._validation.validate import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
 
-        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
+        def _local_validate_color_sequence(
+            seq: ColorLike | Sequence[ColorLike],
+        ) -> Sequence[Color]:
             try:
                 return _validate_color_sequence(seq)
             except ValueError:
@@ -7010,7 +7036,9 @@ class DataSetFilters(DataObjectFilters):
             if coloring_mode is not None:
                 msg = 'Coloring mode cannot be set when a color dictionary is specified.'
                 raise TypeError(msg)
-            colors_ = _local_validate_color_sequence(cast('list[ColorLike]', list(colors.values())))
+            colors_ = _local_validate_color_sequence(
+                cast('list[ColorLike]', list(colors.values()))
+            )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
             items = zip(colors.keys(), color_rgb_sequence)
 
@@ -7081,7 +7109,9 @@ class DataSetFilters(DataObjectFilters):
 
             items = zip(keys, values)
 
-        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
+        colors_out = np.full(
+            (len(array), num_components), default_channel_value, dtype=color_dtype
+        )
         for label, color in items:
             colors_out[array == label, :] = color
 
@@ -7412,7 +7442,9 @@ class DataSetFilters(DataObjectFilters):
             ):
                 msg = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
                 raise TypeError(msg)
-            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            _validation.check_instance(
+                reference_volume, pyvista.ImageData, name='reference volume'
+            )
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
             poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)

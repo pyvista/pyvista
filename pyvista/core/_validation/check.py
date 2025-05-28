@@ -706,9 +706,7 @@ def check_ndim(
         else:
             check_integer(ndim, strict=True, name='ndim')
             expected = f'one of {ndim}'
-        msg = (
-            f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
-        )
+        msg = f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
         raise ValueError(msg)
 
 
@@ -942,7 +940,9 @@ def check_instance(
         raise TypeError(msg)
 
 
-def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object') -> None:
+def check_type(
+    obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object'
+) -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -1045,7 +1045,9 @@ def check_iterable_items(
     )
 
 
-def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
+def check_contains(
+    container: Container[Any], /, must_contain: Any, *, name: str = 'Input'
+) -> None:
     """Check if an item is in a container.
 
     Parameters

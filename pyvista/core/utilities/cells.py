@@ -280,7 +280,9 @@ def get_mixed_cells(vtkobj):
         mask = cell_types == cell_type
         current_cell_starts = cell_starts[mask]
 
-        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(
+        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[
+            np.newaxis
+        ].astype(
             cell_starts.dtype,
         )
 

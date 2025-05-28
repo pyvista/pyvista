@@ -979,7 +979,9 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                msg = f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                msg = (
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                )
                 raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
@@ -1575,7 +1577,9 @@ class ImageDataFilters(DataSetFilters):
             name='boundary_style',
         )
         _validation.check_contains(
-            [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
+            [None, 'quads', 'triangles'],
+            must_contain=output_mesh_type,
+            name='output_mesh_type',
         )
 
         alg_input = _get_alg_input(self, scalars)
@@ -3517,7 +3521,11 @@ class ImageDataFilters(DataSetFilters):
                 # Compute spacing to match bounds of input and dimensions of output
                 bnds = input_image.bounds
                 size = np.array(
-                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                    (
+                        bnds.x_max - bnds.x_min,
+                        bnds.y_max - bnds.y_min,
+                        bnds.z_max - bnds.z_min,
+                    )
                 )
                 if processing_cell_scalars:
                     new_spacing = (size + input_image.spacing) / output_dimensions
@@ -3832,7 +3840,8 @@ class ImageDataFilters(DataSetFilters):
 
         # Generate output array
         input_array = cast(
-            'pyvista.pyvista_ndarray', get_array(self, name=array_name, preference=association)
+            'pyvista.pyvista_ndarray',
+            get_array(self, name=array_name, preference=association),
         )
         array_out = np.full_like(input_array, fill_value=fill_value)
         replacement_values = (

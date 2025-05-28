@@ -300,7 +300,9 @@ def read(
         return mesh
 
 
-def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequence[object]]) -> None:
+def _apply_attrs_to_reader(
+    reader: BaseReader, attrs: dict[str, object | Sequence[object]]
+) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
     Parameters
@@ -467,7 +469,9 @@ def read_exodus(
 
 
 def read_grdecl(
-    filename: str | Path, elevation: bool = True, other_keywords: Sequence[str] | None = None
+    filename: str | Path,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
 
@@ -890,7 +894,9 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
     if not isinstance(mesh, pyvista.DataObject):
-        msg = f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'  # type: ignore[unreachable]
+        msg = (
+            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'  # type: ignore[unreachable]
+        )
         raise TypeError(msg)
 
     with open(filename_str, 'wb') as f:  # noqa: PTH123

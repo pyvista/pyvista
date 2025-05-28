@@ -254,7 +254,9 @@ def _download_archive_file_or_folder(filename, target_file=None):
         pass
     # Return folder, or re-raise error by calling function again
     folder = str(Path(USER_DATA_PATH) / (filename + '.unzip') / target_file)
-    return folder if Path(folder).is_dir() else _download_archive(filename, target_file=target_file)
+    return (
+        folder if Path(folder).is_dir() else _download_archive(filename, target_file=target_file)
+    )
 
 
 def delete_downloads():
@@ -383,7 +385,9 @@ def download_usa_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_usa_texture, load=load)
 
 
-_dataset_usa_texture = _SingleFileDownloadableDatasetLoader('usa_image.jpg', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_usa_texture = _SingleFileDownloadableDatasetLoader(
+    'usa_image.jpg', read_func=read_texture
+)  # type: ignore[arg-type]
 
 
 def download_puppy_texture(load=True):  # pragma: no cover
@@ -1635,7 +1639,9 @@ def download_bird_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_bird_texture, load=load)
 
 
-_dataset_bird_texture = _SingleFileDownloadableDatasetLoader('Pileated.jpg', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_bird_texture = _SingleFileDownloadableDatasetLoader(
+    'Pileated.jpg', read_func=read_texture
+)  # type: ignore[arg-type]
 
 
 def download_office(load=True):  # pragma: no cover
@@ -1936,7 +1942,9 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 # Two loadable files, but only one example
 # Name variables such that non-zoomed version is the 'representative' example
 # Use '__' on the zoomed version to label it as private
-_dataset_gourds_texture = _SingleFileDownloadableDatasetLoader('Gourds.png', read_func=read_texture)  # type: ignore[arg-type]
+_dataset_gourds_texture = _SingleFileDownloadableDatasetLoader(
+    'Gourds.png', read_func=read_texture
+)  # type: ignore[arg-type]
 __gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 
@@ -2233,7 +2241,8 @@ def download_frog_tissue(load=True):  # pragma: no cover
     """
     # Deprecated on v0.44.0, estimated removal on v0.47.0
     warnings.warn(
-        'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissues` instead.',
+        'This example is deprecated and will be removed in v0.47.0. '
+        'Use `load_frog_tissues` instead.',
         PyVistaDeprecationWarning,
     )
     if pyvista._version.version_info >= (0, 47):
@@ -3182,7 +3191,9 @@ def _carotid_load_func(mesh):  # pragma: no cover
     return mesh
 
 
-_dataset_carotid = _SingleFileDownloadableDatasetLoader('carotid.vtk', load_func=_carotid_load_func)
+_dataset_carotid = _SingleFileDownloadableDatasetLoader(
+    'carotid.vtk', load_func=_carotid_load_func
+)
 
 
 def download_blow(load=True):  # pragma: no cover
@@ -6039,7 +6050,9 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_dicom_stack(load: bool = True) -> pyvista.ImageData | str:  # pragma: no cover
+def download_dicom_stack(
+    load: bool = True,
+) -> pyvista.ImageData | str:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)
@@ -6075,7 +6088,7 @@ def download_dicom_stack(load: bool = True) -> pyvista.ImageData | str:  # pragm
     * **TCIA Citation**
 
         Clark K, Vendt B, Smith K, Freymann J, Kirby J, Koppel P, Moore S, Phillips S,
-        Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA):  # pragma: no cover
+        Maffitt D, Pringle M, Tarbox L, Prior F. The Cancer Imaging Archive (TCIA):
         Maintaining and Operating a Public Information Repository, Journal of Digital Imaging,
         Volume 26, Number 6, December, 2013, pp 1045-1057. doi: 10.1007/s10278-013-9622-7
 
@@ -7868,7 +7881,8 @@ class _WholeBodyCTUtilities:  # pragma: no cover
 
 
 _dataset_whole_body_ct_male = _MultiFileDownloadableDatasetLoader(
-    _WholeBodyCTUtilities.files_func('s1397_resampled'), load_func=_WholeBodyCTUtilities.load_func
+    _WholeBodyCTUtilities.files_func('s1397_resampled'),
+    load_func=_WholeBodyCTUtilities.load_func,
 )
 __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
     _WholeBodyCTUtilities.files_func('s1397'), load_func=_WholeBodyCTUtilities.load_func
@@ -8039,7 +8053,8 @@ def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragm
 
 
 _dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
-    _WholeBodyCTUtilities.files_func('s1380_resampled'), load_func=_WholeBodyCTUtilities.load_func
+    _WholeBodyCTUtilities.files_func('s1380_resampled'),
+    load_func=_WholeBodyCTUtilities.load_func,
 )
 __dataset_whole_body_ct_female_high_res = _MultiFileDownloadableDatasetLoader(
     _WholeBodyCTUtilities.files_func('s1380'), load_func=_WholeBodyCTUtilities.load_func

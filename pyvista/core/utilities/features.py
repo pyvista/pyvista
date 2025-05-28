@@ -46,7 +46,11 @@ def _padded_bins(mesh, density):
 
 
 def voxelize(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+    mesh,
+    density=None,
+    check_surface: bool = True,
+    enclosed: bool = False,
+    fit_bounds: bool = False,
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -215,7 +219,11 @@ def voxelize(
 
 
 def voxelize_volume(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+    mesh,
+    density=None,
+    check_surface: bool = True,
+    enclosed: bool = False,
+    fit_bounds: bool = False,
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 

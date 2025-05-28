@@ -261,7 +261,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
-        bool_inter = self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
+        bool_inter = self._boolean(
+            'intersection', other_mesh, tolerance, progress_bar=progress_bar
+        )
 
         # check if a polydata is completely contained within another
         if bool_inter.is_empty:
@@ -568,7 +570,11 @@ class PolyDataFilters(DataSetFilters):
         return merged
 
     def intersection(
-        self, mesh, split_first: bool = True, split_second: bool = True, progress_bar: bool = False
+        self,
+        mesh,
+        split_first: bool = True,
+        split_second: bool = True,
+        progress_bar: bool = False,
     ):
         """Compute the intersection between two meshes.
 
@@ -1371,7 +1377,11 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     def subdivide(
-        self, nsub, subfilter='linear', inplace: bool = False, progress_bar: bool = False
+        self,
+        nsub,
+        subfilter='linear',
+        inplace: bool = False,
+        progress_bar: bool = False,
     ):
         """Increase the number of triangles in a single, connected triangular mesh.
 
@@ -2377,7 +2387,12 @@ class PolyDataFilters(DataSetFilters):
         return distance
 
     def ray_trace(
-        self, origin, end_point, first_point: bool = False, plot: bool = False, off_screen=None
+        self,
+        origin,
+        end_point,
+        first_point: bool = False,
+        plot: bool = False,
+        off_screen=None,
     ):
         """Perform a single ray trace calculation.
 
@@ -2607,7 +2622,11 @@ class PolyDataFilters(DataSetFilters):
         return locations, index_ray, index_tri
 
     def plot_boundaries(  # type: ignore[misc]
-        self: PolyData, edge_color='red', line_width=None, progress_bar: bool = False, **kwargs
+        self: PolyData,
+        edge_color='red',
+        line_width=None,
+        progress_bar: bool = False,
+        **kwargs,
     ):
         """Plot boundaries of a mesh.
 
@@ -2977,7 +2996,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         return self._reverse_sense(
-            reverse_cells=True, reverse_normals=False, inplace=inplace, progress_bar=progress_bar
+            reverse_cells=True,
+            reverse_normals=False,
+            inplace=inplace,
+            progress_bar=progress_bar,
         )
 
     def flip_normal_vectors(  # type: ignore[misc]
@@ -3050,7 +3072,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         return self._reverse_sense(
-            reverse_cells=False, reverse_normals=True, inplace=inplace, progress_bar=progress_bar
+            reverse_cells=False,
+            reverse_normals=True,
+            inplace=inplace,
+            progress_bar=progress_bar,
         )
 
     def delaunay_2d(
