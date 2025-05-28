@@ -39,8 +39,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-
-    from ..wrappers import _WrappableVTKDataObjectType
+    from pyvista.wrappers import _WrappableVTKDataObjectType
 
 
 # vtkDataSet overloads
