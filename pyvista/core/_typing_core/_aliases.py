@@ -99,7 +99,7 @@ class BoundsTuple(NamedTuple):
             aligned = f'{left:>{pad_left}}{dot}{right}'
             lines.append(f'{"" if i == 0 else whitespace}{field:<{field_size}} = {aligned}')
 
-        joined_lines = "\n".join(lines)
+        joined_lines = '\n'.join(lines)
         return f'{name}({joined_lines})'
 
 
