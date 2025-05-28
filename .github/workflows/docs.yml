@@ -125,7 +125,7 @@ jobs:
           path: _doc_debug_images
 
       - uses: actions/checkout@v4
-        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
+        # if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         with:
           repository: pyvista/pyvista-doc-translations
           path: pyvista-doc-translations
@@ -133,7 +133,7 @@ jobs:
           persist-credentials: false
 
       - name: Build I18N Documentation
-        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
+        # if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
           make -C doc mini18n-html
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
