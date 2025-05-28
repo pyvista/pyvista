@@ -480,11 +480,11 @@ def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> N
         Raises a ValueError if the size of scalars does not the dataset.
 
     """
-    if isinstance(dataset, _vtk.vtkTable):
+    if isinstance(dataset, _vtk.vtkTable) and scalars.shape[0] != dataset.n_rows:
         msg = (
             f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
         )
-        raise ValueError(msg)
+        raise TypeError(msg)
     msg = (
         f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '

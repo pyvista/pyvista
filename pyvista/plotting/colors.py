@@ -1515,9 +1515,9 @@ class Color:
                 self._from_rgba(color)
             else:
                 msg = f'Unsupported color type: {type(color)}'
-                raise ValueError(msg)
+                raise TypeError(msg)
             self._name = color_names.get(self.hex_rgb, None)
-        except ValueError as e:
+        except TypeError as e:
             msg = (
                 '\n'
                 f'\tInvalid color input: ({color})\n'
@@ -2146,7 +2146,7 @@ def color_scheme_to_cycler(scheme):
             series.SetColorScheme(scheme)
         else:
             msg = f'Color scheme not understood: {scheme}'
-            raise ValueError(msg)
+            raise TypeError(msg)
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))

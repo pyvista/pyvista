@@ -108,7 +108,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                 f'Reading file returned data of `{type(data).__name__}`, '
                 f'but `{type(self).__name__}` was expected.'
             )
-            raise ValueError(msg)
+            raise TypeError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 

@@ -358,6 +358,7 @@ extend-select = [
   'SIM',
   'T10',
   'TCH',
+  'TRY004',
   'TRY201',
   'TRY203',
   'TRY300',
