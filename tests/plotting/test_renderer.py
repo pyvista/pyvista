@@ -333,7 +333,7 @@ def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
     cube_color = 'magenta'
     cube_kwargs = dict(color=cube_color)
 
-    legend_kwargs = {}
+    legend_kwargs = dict(bcolor='k', size=(0.6, 0.6))
     if use_dict_labels:
         legend_kwargs['labels'] = {
             sphere_label: sphere_color,
@@ -344,7 +344,7 @@ def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
         cube_kwargs['label'] = cube_label
 
     pl = pv.Plotter()
-    pl.add_mesh(pv.Sphere(center=(-1, 0, 0)), **sphere_kwargs)
+    pl.add_mesh(pv.Sphere(center=(0, 0, 1)), **sphere_kwargs)
     pl.add_mesh(pv.Cube(), **cube_kwargs)
     pl.renderer.add_legend(**legend_kwargs)
     pl.show()
