@@ -20,9 +20,9 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import ClassVar
 
-    from .._typing_core import ArrayLike
-    from .._typing_core import NumpyArray
-    from .._typing_core import VectorLike
+    from pyvista._typing_core import ArrayLike
+    from pyvista._typing_core import NumpyArray
+    from pyvista._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
@@ -78,7 +78,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        msg = f'{name} must be a length three iterable of floats.'  # type: ignore[unreachable]
+        msg = f'{name} must be a length three iterable of floats.'
         raise TypeError(msg)
     if len(point) != 3:
         if name == '':
