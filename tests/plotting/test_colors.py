@@ -43,7 +43,7 @@ def test_get_cmap_safe(cmap):
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
 def test_color_scheme_to_cycler_raises(scheme):
-    with pytest.raises(ValueError, match=f'Color scheme not understood: {scheme}'):
+    with pytest.raises(TypeError, match=f'Color scheme not understood: {scheme}'):
         color_scheme_to_cycler(scheme=scheme)
 
 
@@ -141,7 +141,7 @@ def test_color_invalid_opacity(opacity):
         {'invalid_name': 100},
     ],
 )
-def test_color_invalid_color(color):
+def test_color_invalid_values(color):
     match = (
         'Must be a string, rgb(a) sequence, or hex color string.  For example:'
         "\n\t\tcolor='white'"
@@ -152,6 +152,11 @@ def test_color_invalid_color(color):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Color(color)
+
+
+def test_color_invalid_type():
+    with pytest.raises(TypeError, match='color must be an instance of'):
+        pv.Color(range(3))
 
 
 @pytest.mark.parametrize('delimiter', ['-', '_', ' '])
