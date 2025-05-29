@@ -170,7 +170,7 @@ def make_legend_face(face) -> PolyData:
     # This is needed for asymmetric shapes (like a line) because otherwise the legend actor
     # will do its own scaling and skew the shape
     rect = normalize(pyvista.Rectangle())
-    legendface.points = np.append(legendface.points, rect.points, axis=0)
+    legendface.points = np.append(legendface.points, rect.points, axis=0)  # type: ignore[assignment]
     return legendface
 
 

@@ -3907,14 +3907,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
         ):
             # Using only the first geometry
-            geom = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
+            geom: str | pyvista.PolyData = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 
-        geom = make_legend_face(geom)
+        poly = make_legend_face(geom)
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = (geom, label, color)
+        self.renderer._labels[addr] = (poly, label, color)
 
     def add_volume(
         self,
