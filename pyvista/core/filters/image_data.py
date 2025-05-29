@@ -2406,7 +2406,7 @@ class ImageDataFilters(DataSetFilters):
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
