@@ -105,7 +105,7 @@ class PreserveTypeAlgorithmBase(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorith
 
     """
 
-    def __init__(self, nInputPorts=1, nOutputPorts=1):  # noqa: N803
+    def __init__(self, nInputPorts=1, nOutputPorts=1):
         """Initialize algorithm."""
         _vtk.VTKPythonAlgorithmBase.__init__(
             self,
@@ -113,7 +113,7 @@ class PreserveTypeAlgorithmBase(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorith
             nOutputPorts=nOutputPorts,
         )
 
-    def GetInputData(self, inInfo, port, idx):  # noqa: N802, N803
+    def GetInputData(self, inInfo, port, idx):
         """Get input data object.
 
         This will convert :vtk:`vtkPointSet` to :vtk:`vtkPolyData`.
@@ -141,7 +141,7 @@ class PreserveTypeAlgorithmBase(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorith
         return inp
 
     # THIS IS CRUCIAL to preserve data type through filter
-    def RequestDataObject(self, _request, inInfo, outInfo) -> int:  # noqa: N802, N803
+    def RequestDataObject(self, _request, inInfo, outInfo) -> int:
         """Preserve data type.
 
         Parameters
@@ -199,7 +199,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         self.scalars_name = name
         self.preference = preference
 
-    def RequestData(self, _request, inInfo, outInfo) -> int:  # noqa: N802, N803
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -247,7 +247,7 @@ class PointSetToPolyDataAlgorithm(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgori
             outputType='vtkPolyData',
         )
 
-    def RequestData(self, _request, inInfo, outInfo) -> int:  # noqa: N802, N803
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -306,7 +306,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 
-    def RequestData(self, _request, inInfo, outInfo) -> int:  # noqa: N802, N803
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -356,7 +356,7 @@ class CrinkleAlgorithm(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
             outputType='vtkUnstructuredGrid',
         )
 
-    def RequestData(self, _request, inInfo, outInfo) -> int:  # noqa: N802, N803
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution based on the input data and produce the output.
 
         Parameters

@@ -426,6 +426,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
+'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
 'tests/*' = ['D', 'INP']
 
