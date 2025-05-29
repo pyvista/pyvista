@@ -78,7 +78,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        msg = f'{name} must be a length three iterable of floats.'  # type: ignore[unreachable]
+        msg = f'{name} must be a length three iterable of floats.'
         raise TypeError(msg)
     if len(point) != 3:
         if name == '':
