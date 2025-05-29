@@ -134,7 +134,8 @@ def make_legend_face(face) -> PolyData:
         size = np.array((bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min))
         size[size < 1e-8] = 1  # Avoid division by zero
         poly.points -= np.array(poly.center)
-        poly.scale(1 / max(size), inplace=True)
+        max_xy_size = max(size[0:2])
+        poly.scale(1 / max_xy_size, inplace=True)
         print(poly.bounds)
         poly.points += (0, 0.5, 0)
         return poly
