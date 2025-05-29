@@ -146,7 +146,7 @@ def test_get_array_raises():
 
 def test_raise_not_matching_raises():
     with pytest.raises(
-        TypeError, match=re.escape('Number of scalars (1) must match number of rows (0).')
+        ValueError, match=re.escape('Number of scalars (1) must match number of rows (0).')
     ):
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
