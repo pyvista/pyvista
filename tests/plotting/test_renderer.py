@@ -237,10 +237,17 @@ def test_add_remove_legend(sphere):
 
 
 @pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
-def test_legend_face(sphere, face, verify_image_cache):
+def test_legend_face(sphere, face, verify_image_cache):  #
     pl = pv.Plotter()
-    pl.add_mesh(sphere, label='sphere')
-    pl.add_legend(face=face, size=(0.5, 0.5))
+    pl.add_mesh(
+        sphere,
+        color='r',
+        label='Sphere',
+    )
+    pl.add_mesh(pv.Box(), color='w', label='Box')
+    # add a large legend to ensure test fails if face is not configured right
+    pl.add_legend(face=face, bcolor='k', size=(0.6, 0.6))
+    pl.show()
 
 
 def test_legend_from_glyph(sphere, verify_image_cache):
@@ -323,17 +330,30 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl.show()
 
 
-def test_legend_none_face(verify_image_cache):
-    """Verifies that ``face="none"`` does not add a face for each label in legend."""
+@pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
+def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
+    sphere_label = 'sphere'
+    sphere_color = 'lime'
+    sphere_kwargs = dict(color=sphere_color)
+
+    cube_label = 'cube'
+    cube_color = 'magenta'
+    cube_kwargs = dict(color=cube_color)
+
+    legend_kwargs = {}
+    if use_dict_labels:
+        legend_kwargs['labels'] = {
+            sphere_label: sphere_color,
+            cube_label: cube_color,
+        }
+    else:
+        sphere_kwargs['label'] = sphere_label
+        cube_kwargs['label'] = cube_label
+
     pl = pv.Plotter()
-    pl.add_mesh(
-        pv.Icosphere(center=(3, 0, 0), radius=1),
-        color='r',
-        label='Sphere',
-    )
-    pl.add_mesh(pv.Box(), color='w', label='Box')
-    # add a large legend to ensure test fails if face="none" not configured right
-    pl.add_legend(face='none', bcolor='k', size=(0.6, 0.6))
+    pl.add_mesh(pv.Sphere(center=(-1, 0, 0)), **sphere_kwargs)
+    pl.add_mesh(pv.Cube(), **cube_kwargs)
+    pl.renderer.add_legend(**legend_kwargs)
     pl.show()
 
 
