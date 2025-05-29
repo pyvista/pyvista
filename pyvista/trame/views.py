@@ -42,7 +42,7 @@ class _BasePyVistaView:
         """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
-        self._plotter_render_callback = lambda *args: self.update()  # type: ignore[attr-defined]
+        self._plotter_render_callback = lambda *_: self.update()  # type: ignore[attr-defined]
 
     def pyvista_initialize(self):
         if self._plotter().render_window is None:  # type: ignore[union-attr]

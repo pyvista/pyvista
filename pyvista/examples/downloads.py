@@ -158,7 +158,7 @@ def file_from_files(target_path, fnames):
     raise FileNotFoundError(msg)
 
 
-def _file_copier(input_file, output_file, *args, **kwargs):
+def _file_copier(input_file, output_file, *_, **__):
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
         msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"

@@ -111,7 +111,7 @@ class CoverageBuilder(Builder):
     def get_outdated_docs(self) -> str:
         return 'coverage overview'
 
-    def write(self, *ignored: Any) -> None:
+    def write(self, *ignored: Any) -> None:  # noqa: ARG002
         self.py_undoc: dict[str, dict[str, Any]] = {}
         self.build_py_coverage()
         self.write_py_coverage()

@@ -438,7 +438,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             self._source_name = Path(path).name
             # the dataset is already downloaded (it's built-in)
             # so make download() simply return the local filepath
-            self._download_func = lambda source: path
+            self._download_func = lambda _: path
         else:
             # Relative path, use vars from downloads.py
             self._base_url = SOURCE

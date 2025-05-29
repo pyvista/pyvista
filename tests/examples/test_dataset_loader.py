@@ -172,12 +172,13 @@ def examples_local_repository_tmp_dir(tmp_path):
     [os.remove(file) for file in cached_paths if os.path.isfile(file)]
 
 
+@pytest.mark.usefixtures('examples_local_repository_tmp_dir')
 @pytest.mark.parametrize('use_archive', [True, False])
 @pytest.mark.parametrize(
     'FileLoader',
     [_SingleFileDatasetLoader, _DownloadableFile, _SingleFileDownloadableDatasetLoader],
 )
-def test_single_file_loader(FileLoader, use_archive, examples_local_repository_tmp_dir):
+def test_single_file_loader(FileLoader, use_archive):
     basename = 'pyvista_logo.png'
     if use_archive and isinstance(FileLoader, _Downloadable):
         file_loader = FileLoader('archive.zip', target_file=basename)
@@ -243,7 +244,8 @@ def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
-def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
+@pytest.mark.usefixtures('examples_local_repository_tmp_dir')
+def test_multi_file_loader(load_func):
     basename_loaded1 = 'airplane.ply'
     basename_loaded2 = 'hexbeam.vtk'
     basename_not_loaded = 'pyvista_logo.png'
@@ -636,7 +638,7 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     )
 
 
-def test_load_dataset_no_reader(dataset_loader_one_file):
+def test_load_dataset_no_reader():
     # Test using dataset with .npy file
     dataset = downloads._dataset_cloud_dark_matter
 

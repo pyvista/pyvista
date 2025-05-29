@@ -100,7 +100,7 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
     """
 
-    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202
+    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202,ARG001
         if cls is cls_:
             msg = f'{cls.__name__} is an abstract class and may not be instantiated.'
             raise TypeError(msg)

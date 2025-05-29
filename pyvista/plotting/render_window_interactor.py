@@ -399,7 +399,7 @@ class RenderWindowInteractor:
         add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
         if callback is None and add_observer:
             # No observers for this event yet and custom callback not given => insert dummy callback
-            callback = lambda obs, event: None
+            callback = lambda _, __: None
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
@@ -429,7 +429,7 @@ class RenderWindowInteractor:
         """Clear key event callbacks."""
         self._key_press_event_callbacks.clear()
 
-    def key_press_event(self, *args):
+    def key_press_event(self, *args):  # noqa: ARG002
         """Listen for key press event."""
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
@@ -740,7 +740,7 @@ class RenderWindowInteractor:
             control_release_action = end_action_map[control]
             shift_release_action = end_action_map[shift]
 
-            def _press_callback(_obj, event):
+            def _press_callback(_obj, _):
                 if self.interactor.GetControlKey():
                     control_action()
                 elif self.interactor.GetShiftKey():
@@ -749,7 +749,7 @@ class RenderWindowInteractor:
                     click_action()
                 button_press()
 
-            def _release_callback(_obj, event):
+            def _release_callback(_obj, _):
                 click_release_action()
                 control_release_action()
                 shift_release_action()
@@ -1591,7 +1591,7 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
             ),
         )
 
-    def _press(self, *args):
+    def _press(self, *_):
         # Figure out which renderer has the event and disable the
         # others
         self.OnLeftButtonDown()
@@ -1602,7 +1602,7 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
                 interact = renderer.IsInViewport(*click_pos)
                 renderer.SetInteractive(interact)
 
-    def _release(self, *args):
+    def _release(self, *_):
         self.OnLeftButtonUp()
         parent = self._parent()
         if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
