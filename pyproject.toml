@@ -367,7 +367,6 @@ extend-select = [
   'W',
   'YTT',
 ]
-external = ['E131']
 fixable = ['ALL']
 ignore = [
   'ANN002',  # Missing annotations for `*args`
@@ -383,8 +382,6 @@ ignore = [
   'D213',    # Incompatible with D212
   'D402',    # First line should not be the function's signature
   'D416',    # Section name ends in colon
-  'E203',    # whitespace before ':'
-  'E266',    # too many leading '#' for block comment
   'E402',    # module level import not at top of file
   'E501',    # line length too long
   'E722',
