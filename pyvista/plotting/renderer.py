@@ -136,8 +136,8 @@ def make_legend_face(face) -> PolyData:
         poly.points -= np.array(poly.center)
         max_xy_size = max(size[0:2])
         poly.scale(1 / max_xy_size, inplace=True)
-        print(poly.bounds)
-        poly.points += (0, 0.5, 0)
+        y_offset = 0.6  # determined experimentally
+        poly.points += (0, y_offset, 0)
         return poly
 
     if face is None or face == 'none':
