@@ -1647,7 +1647,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.cell_normals
 
     @property
-    def obbTree(self):  # numpydoc ignore=RT01
+    def obbTree(self):  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
         An obbTree is an object to generate oriented bounding box (OBB)

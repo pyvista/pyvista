@@ -1478,7 +1478,7 @@ def test_streamlines_from_source_structured_grids():
     assert all([stream.n_points, stream.n_cells])
 
 
-def mesh_2D_velocity():
+def mesh_2d_velocity():
     mesh = pv.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
     velocity[:, 0] = 1
@@ -1487,45 +1487,45 @@ def mesh_2D_velocity():
     return mesh
 
 
-def test_streamlines_evenly_spaced_2D():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_sep_dist_ratio():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_start_position():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_start_position():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_vectors():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_vectors():
+    mesh = mesh_2d_velocity()
     mesh.set_active_vectors(None)
     streams = mesh.streamlines_evenly_spaced_2D(vectors='velocity', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_integrator_type():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_integrator_type():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_interpolator_type():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_interpolator_type():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_errors():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_errors():
+    mesh = mesh_2d_velocity()
 
     with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(integrator_type=45)
@@ -1541,7 +1541,7 @@ def test_streamlines_evenly_spaced_2D_errors():
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
-    mesh = mesh_2D_velocity()
+    mesh = mesh_2d_velocity()
     mesh.translate((0, 0, 1), inplace=True)  # move to z=1, xy plane
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
@@ -1849,7 +1849,7 @@ def grid4x4():
 
 
 @pytest.fixture
-def extracted_with_adjacent_False(grid4x4):
+def extracted_with_adjacent_false(grid4x4):
     """Return expected output for adjacent_cells=False and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0]
@@ -1864,7 +1864,7 @@ def extracted_with_adjacent_False(grid4x4):
 
 
 @pytest.fixture
-def extracted_with_adjacent_True(grid4x4):
+def extracted_with_adjacent_true(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0, 1, 3, 4]
@@ -1879,7 +1879,7 @@ def extracted_with_adjacent_True(grid4x4):
 
 
 @pytest.fixture
-def extracted_with_include_cells_False(grid4x4):
+def extracted_with_include_cells_false(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=False"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0, 0, 0, 0]
@@ -1897,8 +1897,8 @@ def extracted_with_include_cells_False(grid4x4):
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+def test_extract_points_adjacent_cells_true(dataset_filter, extracted_with_adjacent_true):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
 
     # extract sub-surface with adjacent cells
     sub_surf_adj = dataset_filter(
@@ -1918,8 +1918,8 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
+def test_extract_points_adjacent_cells_false(dataset_filter, extracted_with_adjacent_false):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_false
     # extract sub-surface without adjacent cells
     sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
 
@@ -1933,12 +1933,12 @@ def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adja
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_include_cells_False(
+def test_extract_points_include_cells_false(
     dataset_filter,
     grid4x4,
-    extracted_with_include_cells_False,
+    extracted_with_include_cells_false,
 ):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_false
     # extract sub-surface without cells
     sub_surf_nocells = dataset_filter(
         input_surf,
@@ -1952,8 +1952,8 @@ def test_extract_points_include_cells_False(
     assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
 
 
-def test_extract_points_default(extracted_with_adjacent_True):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+def test_extract_points_default(extracted_with_adjacent_true):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
     # test adjacent_cells=True and include_cells=True by default
     sub_surf_adj = input_surf.extract_points(input_point_ids)
 
@@ -1966,12 +1966,12 @@ def test_extract_points_default(extracted_with_adjacent_True):
 def test_extract_values_preference(
     preference,
     adjacent_fixture,
-    extracted_with_adjacent_True,
-    extracted_with_adjacent_False,
+    extracted_with_adjacent_true,
+    extracted_with_adjacent_false,
 ):
     # test points are extracted with point data (with adjacent = False by default)
     # test cells are extracted with cell data
-    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    fixture = extracted_with_adjacent_true if adjacent_fixture else extracted_with_adjacent_false
     input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
 
     func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)

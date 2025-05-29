@@ -17,7 +17,7 @@ class QApplication:
     def __init__(self, *args):
         pass
 
-    def processEvents(self):
+    def process_events(self):
         pass
 
 
