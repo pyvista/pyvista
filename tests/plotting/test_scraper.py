@@ -17,7 +17,7 @@ class QApplication:
     def __init__(self, *args):
         pass
 
-    def process_events(self):
+    def processEvents(self):  # noqa: N802
         pass
 
 

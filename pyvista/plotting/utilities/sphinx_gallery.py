@@ -80,7 +80,7 @@ def _process_events_before_scraping(plotter):
         # check for pyvistaqt app which can be specifically bound to pyvista plotter
         # objects in order to interact with qt, then process the events from qt
         if hasattr(plotter, 'app') and plotter.app is not None:
-            plotter.app.process_events()
+            plotter.app.processEvents()
         plotter.update()
 
 
