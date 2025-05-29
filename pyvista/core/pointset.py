@@ -1577,7 +1577,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                          ...,
                          [ 0.31232402, -0.06638652, -0.9476532 ],
                          [ 0.21027282, -0.04469487, -0.97662055],
-                         [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
+                         [ 0.10575636, -0.02247921, -0.99413794]],
+                        shape=(842, 3), dtype=float32)
 
         """
         if self.point_data.active_normals is not None:
@@ -1610,7 +1611,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                          ...,
                          [ 0.26742265, -0.02810723, -0.96316934],
                          [ 0.1617585 , -0.01700151, -0.9866839 ],
-                         [ 0.1617585 , -0.01700151, -0.9866839 ]], dtype=float32)
+                         [ 0.1617585 , -0.01700151, -0.9866839 ]],
+                        shape=(1680, 3), dtype=float32)
 
         """
         if self.cell_data.active_normals is not None:
@@ -1641,7 +1643,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                          ...,
                          [ 0.26742265, -0.02810723, -0.96316934],
                          [ 0.1617585 , -0.01700151, -0.9866839 ],
-                         [ 0.1617585 , -0.01700151, -0.9866839 ]], dtype=float32)
+                         [ 0.1617585 , -0.01700151, -0.9866839 ]],
+                        shape=(1680, 3), dtype=float32)
 
         """
         return self.cell_normals
@@ -3354,8 +3357,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
-        dims = np.diff(dims, axis=1)
-        dims = dims.flatten() + 1
+        dims = np.diff(dims, axis=1)  # type: ignore[assignment]
+        dims = dims.flatten() + 1  # type: ignore[assignment]
         return int(dims[0]), int(dims[1]), int(dims[2])
 
     @property

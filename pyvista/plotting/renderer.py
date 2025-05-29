@@ -43,7 +43,8 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
-    from ..core.pointset import PolyData
+    from pyvista.core.pointset import PolyData
+
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 

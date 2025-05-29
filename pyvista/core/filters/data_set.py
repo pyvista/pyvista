@@ -1646,7 +1646,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms):
-                alg.SetSourceData(index, subgeom)
+                alg.SetSourceData(index, subgeom)  # type: ignore[call-overload]
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -6258,7 +6258,7 @@ class DataSetFilters(DataObjectFilters):
             else:
                 matrix = cast('NumpyArray[float]', matrix)
                 inverse_matrix = cast('NumpyArray[float]', inverse_matrix)
-                axes = matrix[:3, :3]  # principal axes
+                axes = matrix[:3, :3]  # type: ignore[assignment]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box
@@ -7068,7 +7068,7 @@ class DataSetFilters(DataObjectFilters):
                 keys_ = np.arange(n_colors)
                 values_ = color_rgb_sequence
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))  # type: ignore[assignment]
                     values_.extend(values_[::-1])
                 keys = keys_
                 values = values_
