@@ -3857,7 +3857,8 @@ def test_color_labels_invalid_input(uniform):
     with pytest.raises(TypeError, match=match):
         uniform.color_labels('bwr')
 
-    with pytest.raises(TypeError, match='color must be an instance of'):
+    match = 'color must be an instance of'
+    with pytest.raises(TypeError, match=match):
         uniform.color_labels([[1]])
     match = (
         'Invalid colors. Colors must be one of:\n'

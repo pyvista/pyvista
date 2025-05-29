@@ -155,7 +155,8 @@ def test_color_invalid_values(color):
 
 
 def test_color_invalid_type():
-    with pytest.raises(TypeError, match='color must be an instance of'):
+    match = 'color must be an instance of'
+    with pytest.raises(TypeError, match=match):
         pv.Color(range(3))
 
 
