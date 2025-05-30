@@ -6860,15 +6860,20 @@ class DataSetFilters(DataObjectFilters):
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels with the filter then plot them. Note that the
+        Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
 
         >>> colored_labels, color_dict = image_labels.color_labels(return_dict=True)
 
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        Plot the labels. We define a helper function to include a legend with the plot.
+
+        >>> def plot_labels(mesh, color_dict):
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(mesh)
+        ...     pl.add_legend(list(color_dict.items()), face='triangle')
+        ...     pl.show()
+
+        >>> plot_labels(colored_labels, color_dict)
 
         Since the labels are unsigned integers, the ``'index'`` coloring mode is used
         by default. Unlike the uniform sampling used by the plotter in the previous
@@ -6888,11 +6893,7 @@ class DataSetFilters(DataObjectFilters):
         as before.
 
         >>> colored_labels, color_dict = subset_labels.color_labels(return_dict=True)
-
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        >>> plot_labels(colored_labels, color_dict)
 
         Use the ``'cycle'`` coloring mode instead to map label values to colors
         sequentially.
@@ -6900,21 +6901,13 @@ class DataSetFilters(DataObjectFilters):
         >>> colored_labels, color_dict = subset_labels.color_labels(
         ...     coloring_mode='cycle', return_dict=True
         ... )
-
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        >>> plot_labels(colored_labels, color_dict)
 
         Map the colors explicitly using a dictionary.
 
-        >>> color_dict = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
+        >>> color_dict = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'gold'}
         >>> colored_labels = image_labels.color_labels(colors)
-
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        >>> plot_labels(colored_labels, color_dict)
 
         Omit the background value from the mapping and specify float colors. When
         floats are specified, values without a mapping are assigned ``nan`` values
@@ -6925,11 +6918,7 @@ class DataSetFilters(DataObjectFilters):
         >>> colored_labels = image_labels.color_labels(
         ...     color_dict, color_type='float_rgba'
         ... )
-
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        >>> plot_labels(colored_labels, color_dict)
 
         Modify the scalars and make two of the labels negative.
 
@@ -6947,11 +6936,7 @@ class DataSetFilters(DataObjectFilters):
         >>> colored_labels, color_dict = image_labels.color_labels(
         ...     negative_indexing=True, return_dict=True
         ... )
-
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        >>> plot_labels(colored_labels, color_dict)
 
         If ``negative_indexing`` is disabled, the coloring defaults to the
         ``'cycle'`` coloring mode instead.
@@ -6959,11 +6944,7 @@ class DataSetFilters(DataObjectFilters):
         >>> colored_labels, color_dict = image_labels.color_labels(
         ...     negative_indexing=False, return_dict=True
         ... )
-
-        >>> pl = pv.Plotter()
-        >>> pl.add_mesh(colored_labels)
-        >>> pl.add_legend(list(color_dict.items()), face='triangle')
-        >>> pl.show()
+        >>> plot_labels(colored_labels, color_dict)
 
         Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
 
