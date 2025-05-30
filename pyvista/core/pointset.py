@@ -2738,8 +2738,8 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             raise RuntimeError(msg)
         for i, k in enumerate(key):
             if isinstance(k, Iterable):
-                msg = 'Fancy indexing is not supported.'
-                raise RuntimeError(msg)
+                msg = 'Fancy indexing with iterable is not supported.'
+                raise TypeError(msg)
             if isinstance(k, numbers.Integral):
                 start = stop = k
                 step = 1

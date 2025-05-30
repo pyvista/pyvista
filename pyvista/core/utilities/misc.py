@@ -175,8 +175,8 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            msg = f'{cls.__name__} has no value matching {value}'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            msg = f'Invalid type {type(value)} for class {cls.__name__}.'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
 
 @cache
