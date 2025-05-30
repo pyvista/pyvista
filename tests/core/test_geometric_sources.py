@@ -642,11 +642,11 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
 
     match = (
         'Custom axes part must be 3D. Got bounds:\n'
-        'BoundsTuple(x_min = -0.5\n'
-        '            x_max =  0.5\n'
-        '            y_min = -0.5\n'
-        '            y_max =  0.5\n'
-        '            z_min =  0.0\n'
+        'BoundsTuple(x_min = -0.5,\n'
+        '            x_max =  0.5,\n'
+        '            y_min = -0.5,\n'
+        '            y_max =  0.5,\n'
+        '            z_min =  0.0,\n'
         '            z_max =  0.0).'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
