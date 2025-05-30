@@ -7052,7 +7052,7 @@ class DataSetFilters(DataObjectFilters):
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
                         msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
-                        raise ValueError(msg)
+                        raise TypeError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast('list[list[float]]', cmap.colors)
                     if color_type == 'float_rgb':
