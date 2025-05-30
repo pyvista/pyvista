@@ -6829,6 +6829,8 @@ class DataSetFilters(DataObjectFilters):
             Return a dictionary with a mapping from label values to the
             colors applied by the filter.
 
+            .. versionadded:: 0.46
+
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
 
