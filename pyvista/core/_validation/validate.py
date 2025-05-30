@@ -620,9 +620,9 @@ def validate_transform4x4(
         arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
     except (ValueError, TypeError):
         if isinstance(transform, vtkMatrix4x4):
-            arr = _array_from_vtkmatrix(transform, shape=(4, 4))
+            arr = _array_from_vtkmatrix(transform, shape=(4, 4))  # type: ignore[assignment]
         elif isinstance(transform, vtkTransform):
-            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
+            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))  # type: ignore[assignment]
         else:
             try:
                 arr = validate_array(

@@ -940,7 +940,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         (4, 4, 4)
 
         >>> grid.bounds
-        BoundsTuple(x_min=2.0, x_max=5.0, y_min=2.0, y_max=5.0, z_min=2.0, z_max=5.0)
+        BoundsTuple(x_min = 2.0,
+                    x_max = 5.0,
+                    y_min = 2.0,
+                    y_max = 5.0,
+                    z_min = 2.0,
+                    z_max = 5.0)
 
         """
         return self.GetExtent()
