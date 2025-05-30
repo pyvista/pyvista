@@ -247,6 +247,7 @@ LEGEND_FACES = {
 }
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('face', LEGEND_FACES.values(), ids=LEGEND_FACES.keys())
 def test_legend_face(face, verify_image_cache):  #
     pl = pv.Plotter()
@@ -272,6 +273,7 @@ def test_legend_from_glyph(sphere, verify_image_cache):
     pl.add_legend(size=(0.5, 0.5))
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
@@ -304,6 +306,7 @@ def test_legend_using_add_legend(random_hills, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
@@ -323,6 +326,7 @@ def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
