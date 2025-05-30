@@ -457,8 +457,8 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            msg = f'Could not parse sideset ID/name: {sideset}'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            msg = f'Could not parse sideset ID/name: {sideset} with type {type(sideset)}'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
         reader.SetSideSetArrayStatus(name, 1)
 

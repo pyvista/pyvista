@@ -4059,7 +4059,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
                 else:
                     msg = f'The object passed to the legend ({type(args)}) is not valid.'
-                    raise ValueError(msg)
+                    raise TypeError(msg)
 
                 legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, list(Color(color).float_rgb))

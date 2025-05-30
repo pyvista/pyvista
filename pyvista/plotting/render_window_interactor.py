@@ -404,7 +404,7 @@ class RenderWindowInteractor:
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
             msg = 'Invalid callback provided, it should be either ``None`` or a callable.'
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         if add_observer:
             self.add_observer(event, self._click_event)
