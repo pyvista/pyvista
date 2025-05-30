@@ -6906,7 +6906,7 @@ class DataSetFilters(DataObjectFilters):
         Map the colors explicitly using a dictionary.
 
         >>> color_dict = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'gold'}
-        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels = image_labels.color_labels(color_dict)
         >>> plot_labels(colored_labels, color_dict)
 
         Omit the background value from the mapping and specify float colors. When
