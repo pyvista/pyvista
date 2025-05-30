@@ -381,22 +381,23 @@ def get_array(
         farr = field_array(mesh, name)
         if sum([array is not None for array in (parr, carr, farr)]) > 1:
             if preference_ == FieldAssociation.CELL:
-                return carr
+                out = carr
             elif preference_ == FieldAssociation.POINT:
-                return parr
+                out = parr
             else:  # must be field
-                return farr
-
-        if parr is not None:
-            return parr
+                out = farr
+        elif parr is not None:
+            out = parr
         elif carr is not None:
-            return carr
+            out = carr
         elif farr is not None:
-            return farr
+            out = farr
         elif err:
             msg = f'Data array ({name}) not present in this dataset.'
             raise KeyError(msg)
-        return None
+        else:
+            out = None
+        return out
 
 
 def get_array_association(

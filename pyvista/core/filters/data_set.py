@@ -5252,8 +5252,8 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
-            for grid in grids:
-                append_filter.AddInputData(grid)
+            for grid_ in grids:
+                append_filter.AddInputData(grid_)
 
         if main_has_priority:
             append_filter.AddInputData(self)

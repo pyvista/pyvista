@@ -60,36 +60,48 @@ def _system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
-    if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
-        return True
 
-    # Windows case
-    if os.name == 'nt':
-        # actually have to check here.  Somewhat expensive.
-        return supports_open_gl()
+    def allow_plotting():
+        return os.environ.get('ALLOW_PLOTTING', '').lower() == 'true'
 
-    # mac case
-    if platform.system() == 'Darwin':
-        # check if finder available
-        proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
-        try:
-            proc.communicate(timeout=10)
-        except TimeoutExpired:
-            return False
-        if proc.returncode == 0:
-            return True
-
-        # display variable set, likely available
-        return 'DISPLAY' in os.environ
-
-    # Linux case
-    try:
-        proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
-        proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):
+    def windows_supports_plotting():
+        if os.name == 'nt':
+            # actually have to check here.  Somewhat expensive.
+            return supports_open_gl()
         return False
-    else:  # pragma: no cover
-        return proc.returncode == 0
+
+    def mac_supports_plotting():
+        if platform.system() == 'Darwin':
+            # check if finder available
+            proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+            try:
+                proc.communicate(timeout=10)
+            except TimeoutExpired:
+                return False
+            if proc.returncode == 0:
+                return True
+
+            # display variable set, likely available
+            return 'DISPLAY' in os.environ
+        return False
+
+    def linux_supports_plotting():
+        if platform.system() == 'Linux':
+            try:
+                proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+                proc.communicate(timeout=10)
+            except (OSError, TimeoutExpired):
+                pass
+            else:  # pragma: no cover
+                return proc.returncode == 0
+        return False
+
+    return (
+        allow_plotting()
+        or windows_supports_plotting()
+        or mac_supports_plotting()
+        or linux_supports_plotting()
+    )
 
 
 def system_supports_plotting():
