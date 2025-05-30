@@ -46,8 +46,8 @@ class ScalarBars:
         lines.append('Scalar Bar Title     Interactive')
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
-            title = f'"{title}"'
-            lines.append(f'{title:20} {interactive!s:5}')
+            title_quotes = f'"{title}"'
+            lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(

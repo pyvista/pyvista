@@ -4431,7 +4431,7 @@ class CubeFacesSource(CubeSource):
                 direction = face_center - cube_center
                 direction /= np.linalg.norm(direction)
                 vector = direction * explode_scale
-                points += vector
+                points += vector  # noqa: PLW2901
 
             # Set poly as a single quad cell
             face_poly.points = points  # type: ignore[union-attr]

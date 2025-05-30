@@ -960,10 +960,13 @@ class MultiBlock(
                 else:
                     # Copy the field data
                     array = field_data_to_copy[array_name]
-                    if field_data_mode != 'prepend':
-                        # Remove prepended names
-                        array_name = array_name.split(separator)[-1]
-                    root_field_data._update_array(array_name, array, bool(copy))
+                    # Remove prepended names
+                    short_array_name = (
+                        array_name.split(separator)[-1]
+                        if field_data_mode != 'prepend'
+                        else array_name
+                    )
+                    root_field_data._update_array(short_array_name, array, bool(copy))
 
             if copy is None:
                 nested_field_data.clear()

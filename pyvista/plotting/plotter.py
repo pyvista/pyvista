@@ -4304,10 +4304,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(block)
+                wrapped = wrap(block)
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()
+                        block_resolution = wrapped.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:
@@ -4315,7 +4315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 color = next(cycler) if multi_colors else cmap
 
                 a = self.add_volume(
-                    block,
+                    wrapped,
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,

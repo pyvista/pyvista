@@ -118,7 +118,7 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     for index1, quad1 in enumerate(quadruplets):
         I, p1, q1, r1 = quad1
         for index2, quad2 in enumerate(quadruplets[index1:]):
-            index2 = index2 + index1
+            index2 = index2 + index1  # noqa: PLW2901
             J, p2, q2, r2 = quad2
             G[index1, index2] = (
                 cijkl[I, 1 - 1, J, 1 - 1]
