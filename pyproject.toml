@@ -359,10 +359,7 @@ extend-select = [
   'T10',
   'TCH',
   'TID',
-  'TRY004',
-  'TRY201',
-  'TRY203',
-  'TRY300',
+  'TRY',
   'UP',
   'W',
   'YTT',
@@ -397,6 +394,7 @@ ignore = [
   'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
   'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
   'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
+  'TRY301',  # Check for raise statements within try blocks
 ]
 unfixable = ['F401']
 
