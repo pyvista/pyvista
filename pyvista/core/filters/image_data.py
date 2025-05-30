@@ -3208,11 +3208,21 @@ class ImageDataFilters(DataSetFilters):
 
         >>> image_as_cells = image.points_to_cells()
         >>> image_as_cells.bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  2.5,
+                    y_min = -0.5,
+                    y_max =  1.5,
+                    z_min =  0.0,
+                    z_max =  0.0)
 
         >>> upsampled_as_cells = upsampled.points_to_cells()
         >>> upsampled_as_cells.bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  2.5,
+                    y_min = -0.5,
+                    y_max =  1.5,
+                    z_min =  0.0,
+                    z_max =  0.0)
 
         Plot the two images together as wireframe to visualize them. The original is in
         red, and the resampled image is in black.
@@ -3292,9 +3302,19 @@ class ImageDataFilters(DataSetFilters):
         bounds are not (and cannot be) extended.
 
         >>> volume.bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  2.5,
+                    y_min = -0.5,
+                    y_max =  1.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
         >>> resampled.bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  2.5,
+                    y_min = -0.5,
+                    y_max =  1.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         Use a reference image to control the resampling instead. Here we load two
         images with different dimensions:

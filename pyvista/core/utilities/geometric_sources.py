@@ -3328,7 +3328,12 @@ class AxesGeometrySource:
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
         >>> axes_geometry_source.output.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         >>> axes_geometry_source.output.center
         (0.0, 0.0, 0.0)
@@ -3337,7 +3342,12 @@ class AxesGeometrySource:
 
         >>> axes_geometry_source.symmetric_bounds = False
         >>> axes_geometry_source.output.bounds
-        BoundsTuple(x_min=-0.10000000149011612, x_max=1.0, y_min=-0.10000000149011612, y_max=1.0, z_min=-0.10000000149011612, z_max=1.0)
+        BoundsTuple(x_min = -0.1,
+                    x_max =  1.0,
+                    y_min = -0.1,
+                    y_max =  1.0,
+                    z_min = -0.1,
+                    z_max =  1.0)
 
         >>> axes_geometry_source.output.center
         (0.45, 0.45, 0.45)
@@ -3719,7 +3729,7 @@ class AxesGeometrySource:
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         )
         if np.any(axis_length < 1e-8):
-            msg = f'Custom axes part must be 3D. Got bounds: {bnds}.'
+            msg = f'Custom axes part must be 3D. Got bounds:\n{bnds}.'
             raise ValueError(msg)
         part.scale(np.reciprocal(axis_length), inplace=True)
         return part

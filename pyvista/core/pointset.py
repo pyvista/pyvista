@@ -2738,8 +2738,8 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             raise RuntimeError(msg)
         for i, k in enumerate(key):
             if isinstance(k, Iterable):
-                msg = 'Fancy indexing is not supported.'
-                raise RuntimeError(msg)
+                msg = 'Fancy indexing with iterable is not supported.'
+                raise TypeError(msg)
             if isinstance(k, numbers.Integral):
                 start = stop = k
                 step = 1
@@ -3421,10 +3421,20 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.hide_cells(range(80, 120))
         >>> grid.bounds
-        BoundsTuple(x_min=0.0, x_max=80.0, y_min=0.0, y_max=50.0, z_min=0.0, z_max=6.0)
+        BoundsTuple(x_min =  0.0,
+                    x_max = 80.0,
+                    y_min =  0.0,
+                    y_max = 50.0,
+                    z_min =  0.0,
+                    z_max =  6.0)
 
         >>> grid.visible_bounds
-        BoundsTuple(x_min=0.0, x_max=80.0, y_min=0.0, y_max=50.0, z_min=0.0, z_max=4.0)
+        BoundsTuple(x_min =  0.0,
+                    x_max = 80.0,
+                    y_min =  0.0,
+                    y_max = 50.0,
+                    z_min =  0.0,
+                    z_max =  4.0)
 
         """
         name = _vtk.vtkDataSetAttributes.GhostArrayName()
