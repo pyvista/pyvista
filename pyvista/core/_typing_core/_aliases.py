@@ -97,7 +97,9 @@ class BoundsTuple(NamedTuple):
             field, parts = items
             left, right = parts
             aligned = f'{left:>{pad_left}}{dot}{right}'
-            lines.append(f'{"" if i == 0 else whitespace}{field:<{field_size}} = {aligned}')
+            spacing = '' if i == 0 else whitespace
+            comma = '' if i == len(fields) - 1 else ','
+            lines.append(f'{spacing}{field:<{field_size}} = {aligned}{comma}')
 
         joined_lines = '\n'.join(lines)
         return f'{name}({joined_lines})'
