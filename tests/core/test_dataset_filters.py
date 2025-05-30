@@ -3878,7 +3878,7 @@ def test_color_labels_invalid_input(uniform):
 
 
 @pytest.mark.parametrize('color_type', ['float_rgb', 'int_rgba'])
-def test_color_labels_return_mapping(labeled_image, color_type):
+def test_color_labels_return_dict(labeled_image, color_type):
     expected_keys = np.unique(labeled_image.active_scalars)
 
     input_colors = pv.plotting.colors.matplotlib_default_colors
