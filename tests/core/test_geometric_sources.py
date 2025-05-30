@@ -640,7 +640,15 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.tip_type = pv.ParametricKlein()
     assert axes_geometry_source.tip_type == 'custom'
 
-    match = 'Custom axes part must be 3D. Got bounds: BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=0.0, z_max=0.0).'
+    match = (
+        'Custom axes part must be 3D. Got bounds:\n'
+        'BoundsTuple(x_min = -0.5\n'
+        '            x_max =  0.5\n'
+        '            y_min = -0.5\n'
+        '            y_max =  0.5\n'
+        '            z_min =  0.0\n'
+        '            z_max =  0.0).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 
