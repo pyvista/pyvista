@@ -52,7 +52,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
     ):
         pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
