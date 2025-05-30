@@ -2813,7 +2813,7 @@ def test_plot_mesh_background(background):
 def test_plot_mesh_background_raises():
     globe = examples.load_globe()
     match = 'Background must be color-like or a file path. Got {} instead.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         globe.plot(texture=pv.Texture(examples.mapfile), background={})
 
 

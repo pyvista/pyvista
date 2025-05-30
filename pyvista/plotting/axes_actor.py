@@ -458,7 +458,7 @@ class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     def labels(self, labels: list[str] | tuple[str]):
         if not isinstance(labels, (list, tuple)):
             msg = f'Labels must be a list or tuple. Got {labels} instead.'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         if len(labels) != 3:
             msg = f'Labels must be a list or tuple with three items. Got {labels} instead.'
