@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 
 from hypothesis import HealthCheck
 from hypothesis import given
@@ -363,10 +364,12 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a color map'):
+    match = "Invalid colormap 'not a color map'"
+    with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
-    with pytest.raises(ValueError, match='Invalid color map'):
+    match = "cmap must be an instance of any type (<class 'str'>, <class 'list'>). Got <class 'NoneType'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
 
 

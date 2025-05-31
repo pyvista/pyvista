@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista import _validation
 
 from . import _vtk
 
@@ -1991,9 +1992,7 @@ class Color:
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
-def get_cmap_safe(
-    cmap: ColormapOptions | list[str],
-):
+def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
     """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
 
     See :ref:`named_colormaps` for supported colormaps.
@@ -2017,6 +2016,7 @@ def get_cmap_safe(
         If the input is a list of items that are not strings.
 
     """
+    _validation.check_instance(cmap, (str, list), name='cmap')
 
     def get_3rd_party_cmap(cmap_):
         cmap_sources = {
@@ -2063,23 +2063,23 @@ def get_cmap_safe(
                 if not hasattr(colormaps, cmap):
                     msg = f'Invalid colormap "{cmap}"'
                     raise ValueError(msg)
-                cmap = getattr(colormaps, cmap)
+                cmap_obj = getattr(colormaps, cmap)
             else:
                 try:
-                    cmap = colormaps[cmap]  # type: ignore[assignment]
+                    cmap_obj = colormaps[cmap]
                 except KeyError:
                     msg = f"Invalid colormap '{cmap}'"
                     raise ValueError(msg) from None
 
-    elif isinstance(cmap, list):
+    else:  # input is a list
         for item in cmap:
             if not isinstance(item, str):
                 msg = 'When inputting a list as a cmap, each item should be a string.'  # type: ignore[unreachable]
                 raise TypeError(msg)
 
-        cmap = ListedColormap(cmap)  # type: ignore[assignment]
+        cmap_obj = ListedColormap(cmap)
 
-    return cmap
+    return cmap_obj
 
 
 def get_default_cycler():
