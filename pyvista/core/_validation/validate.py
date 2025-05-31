@@ -570,10 +570,16 @@ def validate_rotation(
     if must_have_handedness is not None:
         det = np.linalg.det(rotation_matrix)
         if must_have_handedness == 'right' and not det > 0:
-            msg = f'{name} has incorrect handedness. Expected a right-handed rotation, but got a left-handed rotation instead.'
+            msg = (
+                f'{name} has incorrect handedness. Expected a right-handed rotation, but got a '
+                f'left-handed rotation instead.'
+            )
             raise ValueError(msg)
         elif must_have_handedness == 'left' and not det < 0:
-            msg = f'{name} has incorrect handedness. Expected a left-handed rotation, but got a right-handed rotation instead.'
+            msg = (
+                f'{name} has incorrect handedness. Expected a left-handed rotation, but got a '
+                f'right-handed rotation instead.'
+            )
             raise ValueError(msg)
 
     return rotation_matrix

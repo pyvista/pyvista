@@ -655,7 +655,10 @@ class DisableVtkSnakeCase:
                     and attr[0].islower()
                     and is_vtk_attribute(target, attr)
                 ):
-                    msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
+                    msg = (
+                        f'The attribute {attr!r} is defined by VTK and is not part of the '
+                        f'PyVista API'
+                    )
                     if state == 'error':
                         raise pv.PyVistaAttributeError(msg)
                     else:
