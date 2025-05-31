@@ -649,7 +649,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
+            'Use of `DataSet.active_t_coords` is deprecated. '
+            'Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -665,7 +666,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
+            'Use of `DataSet.active_t_coords` is deprecated. '
+            'Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
@@ -774,7 +776,10 @@ class DataSet(DataSetFilters, DataObject):
                 raise ValueError(msg)
 
             if ret < 0:
-                msg = f'Data field ({name}) with type ({field}) could not be set as the active vectors'
+                msg = (
+                    f'Data field ({name}) with type ({field}) could not be set as the '
+                    f'active vectors'
+                )
                 raise ValueError(msg)
 
         self._active_vectors_info = ActiveArrayInfoTuple(field, name)
@@ -813,7 +818,10 @@ class DataSet(DataSetFilters, DataObject):
                 raise ValueError(msg)
 
             if ret < 0:
-                msg = f'Data field ({name}) with type ({field}) could not be set as the active tensors'
+                msg = (
+                    f'Data field ({name}) with type ({field}) could not be set as the '
+                    f'active tensors'
+                )
                 raise ValueError(msg)
 
         self._active_tensors_info = ActiveArrayInfoTuple(field, name)
@@ -870,8 +878,8 @@ class DataSet(DataSetFilters, DataObject):
             raise KeyError(msg)
 
         arr = data.pop(old_name)
-        # Update the array's name before reassigning. This prevents taking a copy of the array
-        # in `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
+        # Update the array's name before reassigning. This prevents taking a copy of the array in
+        # `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
         # See issue #5244.
         arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
@@ -2392,7 +2400,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+        For a :class:`pyvista.ExplicitStructuredGrid`, use
+        :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -2678,7 +2687,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+        For a :class:`pyvista.ExplicitStructuredGrid`, use
+        :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
