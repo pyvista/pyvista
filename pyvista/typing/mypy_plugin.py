@@ -6,14 +6,22 @@ __all__: list[str] = ['promote_type']
 
 import importlib.util
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing import Any
     from typing import Callable
+    from typing import Final
 
     from mypy.plugin import ClassDefContext
     from mypy.types import Instance
     from typing_extensions import Self
+
+
+NUMPY_SIGNED_INTEGER_TYPE_FULLNAME: Final = 'numpy.signedinteger'
+NUMPY_FLOATING_TYPE_FULLNAME: Final = 'numpy.floating'
+NUMPY_BOOL_TYPE_FULLNAME: Final = 'numpy.bool'
 
 
 def promote_type(*types: type) -> Callable[[Any], Any]:
@@ -65,6 +73,54 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
                                 named_type: Instance = ctx.api.named_type(arg.fullname)
                                 decorated_type.type._promote.append(named_type)
 
+    def _promote_bool_callback(ctx: ClassDefContext) -> None:
+        """Add two-way type promotion between `bool` and `numpy.bool_`.
+
+        This promotion allows for use of NumPy typing annotations with `bool`,
+        e.g. npt.NDArray[bool].
+
+        See mypy.semanal_classprop.add_type_promotion for a similar promotion
+        between `int` and `i64` types.
+        """
+        assert ctx.cls.fullname == NUMPY_BOOL_TYPE_FULLNAME
+        numpy_bool: Instance = ctx.api.named_type(NUMPY_BOOL_TYPE_FULLNAME)
+        builtin_bool: Instance = ctx.api.named_type('builtins.bool')
+
+        builtin_bool.type._promote.append(numpy_bool)
+        numpy_bool.type.alt_promote = builtin_bool
+
+    def _promote_int_callback(ctx: ClassDefContext) -> None:
+        """Add two-way type promotion between `int` and `numpy.signedinteger`.
+
+        This promotion allows for use of NumPy typing annotations with `int`,
+        e.g. npt.NDArray[int].
+
+        See mypy.semanal_classprop.add_type_promotion for a similar promotion
+        between `int` and `i64` types.
+        """
+        assert ctx.cls.fullname == NUMPY_SIGNED_INTEGER_TYPE_FULLNAME
+        numpy_signed_integer: Instance = ctx.api.named_type(NUMPY_SIGNED_INTEGER_TYPE_FULLNAME)
+        builtin_int: Instance = ctx.api.named_type('builtins.int')
+
+        builtin_int.type._promote.append(numpy_signed_integer)
+        numpy_signed_integer.type.alt_promote = builtin_int
+
+    def _promote_float_callback(ctx: ClassDefContext) -> None:
+        """Add two-way type promotion between `float` and `numpy.floating`.
+
+        This promotion allows for use of NumPy typing annotations with `float`,
+        e.g. npt.NDArray[float].
+
+        See mypy.semanal_classprop.add_type_promotion for a similar promotion
+        between `int` and `i64` types.
+        """
+        assert ctx.cls.fullname == NUMPY_FLOATING_TYPE_FULLNAME
+        numpy_floating: Instance = ctx.api.named_type(NUMPY_FLOATING_TYPE_FULLNAME)
+        builtin_float: Instance = ctx.api.named_type('builtins.float')
+
+        builtin_float.type._promote.append(numpy_floating)
+        numpy_floating.type.alt_promote = builtin_float
+
     class _PyVistaPlugin(Plugin):
         """Mypy plugin to enable static type promotions."""
 
@@ -76,6 +132,18 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
 
             if fullname == _get_type_fullname(promote_type):
                 return _promote_type_callback
+            return None
+
+        def get_customize_class_mro_hook(
+            self, fullname: str
+        ) -> Callable[[ClassDefContext], None] | None:
+            """Customize class definitions before semantic analysis."""
+            if fullname == NUMPY_FLOATING_TYPE_FULLNAME:
+                return _promote_float_callback
+            elif fullname == NUMPY_SIGNED_INTEGER_TYPE_FULLNAME:
+                return _promote_int_callback
+            elif fullname == NUMPY_BOOL_TYPE_FULLNAME:
+                return _promote_bool_callback
             return None
 
     def plugin(version: str) -> type[_PyVistaPlugin]:  # numpydoc ignore: RT01
