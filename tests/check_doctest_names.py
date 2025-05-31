@@ -154,7 +154,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             continue
 
         # mock print to suppress output from a few talkative tests
-        globs = {'print': (lambda *args, **kwargs: ...)}
+        globs = {'print': (lambda *args, **kwargs: ...)}  # noqa: ARG005
         for iline, example in enumerate(dt.examples, start=1):
             if not example.source.strip() or (
                 respect_skips and skip_pattern.search(example.source)

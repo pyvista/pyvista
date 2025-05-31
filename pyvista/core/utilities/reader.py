@@ -250,7 +250,7 @@ class BaseVTKReader(ABC):
         """Add Observer that can be triggered during Update."""
         self._observers.append([event_type, callback])  # type: ignore[arg-type]
 
-    def RemoveObservers(self, *args) -> None:
+    def RemoveObservers(self, *args) -> None:  # noqa: ARG002
         """Remove Observer."""
         self._observers = []
 
@@ -271,7 +271,7 @@ class BaseVTKReader(ABC):
         Set self._data_object.
         """
 
-    def GetOutputDataObject(self, *args):
+    def GetOutputDataObject(self, *args):  # noqa: ARG002
         """Return stored data."""
         return self._data_object
 
@@ -2262,13 +2262,13 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     def cell_array_names(self):  # noqa: D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def enable_cell_array(self, name) -> None:  # noqa: D102
+    def enable_cell_array(self, name) -> None:  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def disable_cell_array(self, name) -> None:  # noqa: D102
+    def disable_cell_array(self, name) -> None:  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def cell_array_status(self, name):  # noqa: D102
+    def cell_array_status(self, name):  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
     def enable_all_cell_arrays(self) -> None:  # noqa: D102

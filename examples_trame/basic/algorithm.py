@@ -36,7 +36,7 @@ pl.add_mesh(source, color='seagreen')
 
 
 @state.change('resolution')
-def update_contour(resolution, **kwargs):
+def update_contour(resolution, **kwargs):  # noqa: ARG001
     source.resolution = int(resolution)
     ctrl.view_update()
 

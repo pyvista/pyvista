@@ -135,7 +135,7 @@ ctrl.view_update = widget.viewer.update
 
 # trame callbacks
 @state.change('play')
-async def _play(play, **kwargs):
+async def _play(play, **kwargs):  # noqa: ARG001
     while state.play:
         state.resolution += 1
         state.flush()
@@ -145,13 +145,13 @@ async def _play(play, **kwargs):
 
 
 @state.change('resolution')
-def update_resolution(resolution, **kwargs):
+def update_resolution(resolution, **kwargs):  # noqa: ARG001
     algo.resolution = resolution
     ctrl.view_update()
 
 
 @state.change('visibility')
-def set_visibility(visibility, **kwargs):
+def set_visibility(visibility, **kwargs):  # noqa: ARG001
     toggle = {'Hide': 0, 'Show': 1}
     mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()

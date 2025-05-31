@@ -68,7 +68,7 @@ class BaseViewer:
         """Get a set of all associate trame views for this viewer."""
         return self._html_views
 
-    def update(self, **kwargs):
+    def update(self, **kwargs):  # noqa: ARG002
         """Update all associated views.
 
         Parameters
@@ -80,7 +80,7 @@ class BaseViewer:
         for view in self._html_views:
             view.update()
 
-    def push_camera(self, **kwargs):
+    def push_camera(self, **kwargs):  # noqa: ARG002
         """Push camera to all associated views.
 
         Parameters
@@ -92,7 +92,7 @@ class BaseViewer:
         for view in self._html_views:
             view.push_camera()
 
-    def reset_camera(self, **kwargs):
+    def reset_camera(self, **kwargs):  # noqa: ARG002
         """Reset camera for all associated views.
 
         Parameters
@@ -104,7 +104,7 @@ class BaseViewer:
         for view in self._html_views:
             view.reset_camera()
 
-    def update_image(self, **kwargs):
+    def update_image(self, **kwargs):  # noqa: ARG002
         """Update image for all associated views.
 
         Parameters
@@ -116,7 +116,7 @@ class BaseViewer:
         for view in self._html_views:
             view.update_image()
 
-    def update_camera(self, **kwargs):
+    def update_camera(self, **kwargs):  # noqa: ARG002
         """Update image and camera for all associated views.
 
         Parameters
