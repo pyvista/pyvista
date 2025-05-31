@@ -190,11 +190,11 @@ class _ThemeConfig(metaclass=_ForceSlots):
         dict_ = {}
         for key in self._all__slots__():
             value = getattr(self, key)
-            key = key[1:]
+            key_ = key[1:]
             if hasattr(value, 'to_dict'):
-                dict_[key] = value.to_dict()
+                dict_[key_] = value.to_dict()
             else:
-                dict_[key] = value
+                dict_[key_] = value
         return dict_
 
     def __eq__(self, other) -> bool:
@@ -1842,7 +1842,7 @@ class Theme(_ThemeConfig):
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', '8'))
         except ValueError:  # pragma: no cover
             self._multi_samples = 8
 

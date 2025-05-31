@@ -231,8 +231,8 @@ class AffineWidget3D:
             try:
                 _validate_axes(axes)
             except ValueError:
-                for actor in self._arrows + self._circles:
-                    self._pl.remove_actor(actor)
+                for actor_ in self._arrows + self._circles:
+                    self._pl.remove_actor(actor_)
                 raise
             self.axes = axes
 

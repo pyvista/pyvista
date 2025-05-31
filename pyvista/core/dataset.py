@@ -1768,10 +1768,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         pset = pyvista.PointSet()
         pset.points = self.points.copy()
-        if pass_cell_data:
-            self = self.cell_data_to_point_data()
-        pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        out = self.cell_data_to_point_data() if pass_cell_data else self
+        pset.GetPointData().DeepCopy(out.GetPointData())
+        pset.active_scalars_name = out.active_scalars_name
         return pset
 
     def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:

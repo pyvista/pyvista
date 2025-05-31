@@ -343,12 +343,8 @@ extend-select = [
   'PGH',
   'PIE',
   'PLC',
-  'PLR0402',
-  'PLR1711',
-  'PLR1714',
-  'PLR1730',
-  'PLR5501',
-  'PLW0127',
+  'PLR',
+  'PLW',
   'PT',
   'PTH',
   'PYI',
@@ -360,10 +356,7 @@ extend-select = [
   'T10',
   'TCH',
   'TID',
-  'TRY004',
-  'TRY201',
-  'TRY203',
-  'TRY300',
+  'TRY',
   'UP',
   'W',
   'YTT',
@@ -391,6 +384,10 @@ ignore = [
   'ISC001',  # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
+  'PLR0912', # Too many branches
+  'PLR0913', # Too many arguments in function definition
+  'PLR0915', # Too many statements
+  'PLR2004', # Magic value used in comparison
   'Q0',      # Quotes (temporary)
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
   'RET506',  # https://github.com/pyvista/pyvista/pull/5911
@@ -398,6 +395,7 @@ ignore = [
   'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
   'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
   'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
+  'TRY301',  # https://github.com/pyvista/pyvista/pull/7572
 ]
 unfixable = ['F401']
 

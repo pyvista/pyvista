@@ -303,10 +303,9 @@ def test_from_vtk():
     # set the vtk light
     for _, value, vtkname in configuration:
         vtk_setter = getattr(vtk_light, vtkname)
-        if isinstance(value, np.ndarray):
-            # we can't pass the array to vtkLight directly
-            value = pv.vtkmatrix_from_array(value)
-        vtk_setter(value)
+        # we can't pass the array to vtkLight directly
+        input_value = pv.vtkmatrix_from_array(value) if isinstance(value, np.ndarray) else value
+        vtk_setter(input_value)
     light = pv.Light.from_vtk(vtk_light)
     for pvname, value, _ in configuration:
         if isinstance(value, np.ndarray):

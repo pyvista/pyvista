@@ -278,17 +278,20 @@ class _DatasetLoader:
         cell_types: dict[pv.CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
-            if isinstance(data, pv.Texture):
-                data = cast('pv.ImageData', pv.wrap(data.GetInput()))
+            dataset = (
+                cast('pv.ImageData', pv.wrap(data.GetInput()))
+                if isinstance(data, pv.Texture)
+                else data
+            )
             try:
-                if isinstance(data, pv.ExplicitStructuredGrid):
+                if isinstance(dataset, pv.ExplicitStructuredGrid):
                     # extract_cells_by_type does not support this datatype
                     # so get cells manually
-                    cells = (c.type for c in data.cell)
+                    cells = (c.type for c in dataset.cell)
                     [cell_types.update({cell_type: None}) for cell_type in cells]
                 else:
                     for cell_type in pv.CellType:
-                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
+                        extracted = dataset.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
                         if extracted.n_cells > 0:
                             cell_types[cell_type] = None
             except AttributeError:

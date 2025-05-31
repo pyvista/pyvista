@@ -3658,8 +3658,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
-        for plot_type in plot_types:
-            yield from self._plots[plot_type]
+        for pl_type in plot_types:
+            yield from self._plots[pl_type]
 
     def remove_plot(self, plot: ScatterPlot2D | LinePlot2D | AreaPlot | BarPlot | StackPlot):
         """Remove the given plot from this chart.
@@ -3728,9 +3728,9 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
-        for plot_type in plot_types:
+        for pl_type in plot_types:
             # Make a copy, as this list will be modified by remove_plot
-            plots = [*self._plots[plot_type]]
+            plots = [*self._plots[pl_type]]
             for plot in plots:
                 self.remove_plot(plot)
 

@@ -281,13 +281,16 @@ class CompositeFilters(DataObjectFilters):
         """
         alg = _vtk.vtkAppendFilter()
         for block in self:  # type: ignore[attr-defined]
-            if isinstance(block, _vtk.vtkMultiBlockDataSet):
-                block = CompositeFilters.combine(
+            single_block = (
+                CompositeFilters.combine(
                     block,  # type: ignore[arg-type]
                     merge_points=merge_points,
                     tolerance=tolerance,
                 )
-            alg.AddInputData(block)
+                if isinstance(block, _vtk.vtkMultiBlockDataSet)
+                else block
+            )
+            alg.AddInputData(single_block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
         alg.Update()

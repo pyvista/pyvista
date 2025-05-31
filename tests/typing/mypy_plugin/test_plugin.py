@@ -108,6 +108,6 @@ def _run_mypy_code(code, use_plugin, tmp_path):
 
         # Only run mypy on the code block and plugin module files
         args.extend([tmp_file, MYPY_PLUGIN_MODULE])
-        return subprocess.run(args, capture_output=True)
+        return subprocess.run(args, capture_output=True, check=False)
     finally:
         os.chdir(cwd)

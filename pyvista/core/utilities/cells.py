@@ -197,14 +197,19 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             msg = f'Non-valid index (>={nr_points}) given for cells of type {elem_t}'
             raise ValueError(msg)
 
-        if cells_arr.ndim == 1:  # Flattened array present
-            cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
+        # Ensure array is not flat
+        cells_arr_not_flat = (
+            cells_arr.reshape([-1, nr_points_per_elem]) if cells_arr.ndim == 1 else cells_arr
+        )
 
-        nr_elems = cells_arr.shape[0]
+        nr_elems = cells_arr_not_flat.shape[0]
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr],
+                [
+                    np.ones_like(cells_arr_not_flat[..., :1]) * nr_points_per_elem,
+                    cells_arr_not_flat,
+                ],
                 axis=-1,
             ).reshape([-1]),
         )

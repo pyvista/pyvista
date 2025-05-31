@@ -560,9 +560,9 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
     for i, block in enumerate(multi_copy):
         assert pv.is_pyvista_dataset(block) or block is None
         if isinstance(multi[i], MultiBlock):
-            assert (multi[i] is multi_copy[i]) != recursive
+            assert (multi[i] is block) != recursive
         else:
-            assert multi_copy[i] is multi[i]
+            assert block is multi[i]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):

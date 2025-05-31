@@ -2904,11 +2904,9 @@ class DataObjectFilters:
             measures_requested = measures_available_names
         else:
             measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
-            for quality_measure in measures:
+            for measure in measures:
                 _validation.check_contains(
-                    measures_available_names,
-                    must_contain=quality_measure,
-                    name='quality_measure',
+                    measures_available_names, must_contain=measure, name='quality_measure'
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 

@@ -94,7 +94,7 @@ lut = pv.LookupTable()
 lut.value_range = (0.35, 1)  # dark grey to white
 lut.hue_range = (0.35, 0.7)  # green to cyna
 lut.saturation_range = (0.75, 0.5)  # reduce saturation near the upper end
-lut.alpha_range = (0.0, 0.9)  #
+lut.alpha_range = (0.0, 0.9)
 lut.scalar_range = (2, 18)
 lut.plot()
 
