@@ -1282,7 +1282,10 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
     @bounds.setter
     def bounds(self: CubeSource, bounds: VectorLike[float]) -> None:
         if np.array(bounds).size != 6:
-            msg = 'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)'
+            msg = (
+                'Bounds must be given as length 6 tuple: '
+                '(x_min, x_max, y_min, y_max, z_min, z_max)'
+            )
             raise TypeError(msg)
         self.SetBounds(bounds)  # type: ignore[arg-type]
 
@@ -2798,7 +2801,10 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
     @bounds.setter
     def bounds(self: BoxSource, bounds: VectorLike[float]) -> None:
         if np.array(bounds).size != 6:
-            msg = 'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)'
+            msg = (
+                'Bounds must be given as length 6 tuple: '
+                '(x_min, x_max, y_min, y_max, z_min, z_max)'
+            )
             raise TypeError(msg)
         self.SetBounds(bounds)  # type: ignore[arg-type]
 
@@ -2828,7 +2834,7 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
 
     @property
     def quads(self: BoxSource) -> bool:
-        """Flag to tell the source to generate either a quad or two triangle for a set of four points.
+        """Flag to tell the source to generate a quad or two triangle for a set of four points.
 
         Returns
         -------
@@ -2841,7 +2847,7 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
 
     @quads.setter
     def quads(self: BoxSource, quads: bool) -> None:
-        """Set flag to tell the source to generate either a quad or two triangle for a set of four points.
+        """Set flag to tell the source to generate a quad or two triangle for a set of four points.
 
         Parameters
         ----------

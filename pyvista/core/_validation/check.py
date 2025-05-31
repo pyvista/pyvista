@@ -706,7 +706,10 @@ def check_ndim(
         else:
             check_integer(ndim, strict=True, name='ndim')
             expected = f'one of {ndim}'
-        msg = f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
+        msg = (
+            f'{name} has the incorrect number of dimensions. '
+            f'Got {array_ndim}, expected {expected}.'
+        )
         raise ValueError(msg)
 
 

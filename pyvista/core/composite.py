@@ -917,8 +917,10 @@ class MultiBlock(
                     ) -> NoReturn:
                         index_fmt = _format_nested_index(index_)
                         msg = (
-                            f"The root user dict cannot be updated with data from nested MultiBlock at index {index_fmt} with name '{block_name_}'.\n"
-                            f"The key '{duplicate_key}' already exists in the root user dict and would be overwritten."
+                            f'The root user dict cannot be updated with data from nested '
+                            f"MultiBlock at index {index_fmt} with name '{block_name_}'.\n"
+                            f"The key '{duplicate_key}' already exists in the root user dict "
+                            f'and would be overwritten.'
                         )
                         raise ValueError(msg)
 
@@ -954,7 +956,8 @@ class MultiBlock(
                     # Duplicate keys - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
-                        f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt} with name '{block_name}'\n"
+                        f"The field data array '{array_name}' from nested MultiBlock "
+                        f"at index {index_fmt} with name '{block_name}'\n"
                         f"also exists in the root MultiBlock's field data and cannot be moved."
                     )
                     if not prepend_names:
@@ -1099,8 +1102,14 @@ class MultiBlock(
         >>> flat.n_blocks
         3
 
-        >>> type(flat[0]), type(flat[1]), type(flat[2])
-        (<class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.grid.ImageData'>, <class 'NoneType'>)
+        >>> (
+        ...     type(flat[0]),
+        ...     type(flat[1]),
+        ...     type(flat[2]),
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        (<class 'pyvista.core.pointset.PolyData'>,
+         <class 'pyvista.core.grid.ImageData'>,
+         <class 'NoneType'>)
 
         By default, the block names are preserved.
 
@@ -1123,8 +1132,14 @@ class MultiBlock(
         between this ordering of blocks and the default ordering returned earlier.
 
         >>> flat = nested.flatten(order='nested_last')
-        >>> type(flat[0]), type(flat[1]), type(flat[2])
-        (<class 'NoneType'>, <class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>)
+        >>> (
+        ...     type(flat[0]),
+        ...     type(flat[1]),
+        ...     type(flat[2]),
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        (<class 'NoneType'>,
+         <class 'pyvista.core.grid.ImageData'>,
+         <class 'pyvista.core.pointset.PolyData'>)
 
         """
         _validation.check_contains(
@@ -1167,8 +1182,10 @@ class MultiBlock(
                     # Duplicate block name - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
-                        f"Block at index {index_fmt} with name '{name}' cannot be flattened. Another block \n"
-                        "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
+                        f"Block at index {index_fmt} with name '{name}' "
+                        f'cannot be flattened. Another block \n'
+                        'with the same name already exists. '
+                        "Use `name_mode='reset'` or `check_duplicate_keys=False`."
                     )
                     raise ValueError(msg)
             output_multi.append(block, None if reset_name else name)
@@ -2487,7 +2504,8 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_biplane`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_biplane()
@@ -2522,7 +2540,8 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_biplane`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_biplane()
@@ -2556,7 +2575,8 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_biplane`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_biplane()
@@ -2588,7 +2608,8 @@ class MultiBlock(
 
         Examples
         --------
-        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_mug`.
+        Load a dataset with nested multi-blocks. Here we load
+        :func:`~pyvista.examples.downloads.download_mug`.
 
         >>> from pyvista import examples
         >>> multi = examples.download_mug()

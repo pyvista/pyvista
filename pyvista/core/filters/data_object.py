@@ -97,12 +97,14 @@ class DataObjectFilters:
             If present, any shear component is removed by the filter.
 
         .. note::
-            Transforming :class:`~pyvista.ImageData` modifies its :class:`~pyvista.ImageData.origin`,
-            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
-            properties.
+            Transforming :class:`~pyvista.ImageData` modifies its
+            :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and
+            :class:`~pyvista.ImageData.direction_matrix` properties.
 
         .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+            `inplace` was previously defaulted to `True`. In the future this will change
+            to `False`.
 
         Parameters
         ----------
@@ -172,7 +174,8 @@ class DataObjectFilters:
                 raise RuntimeError(msg)
 
             msg = (
-                f'The default value of `inplace` for the filter `{self.__class__.__name__}.transform` will change in the future. '
+                f'The default value of `inplace` for the filter '
+                f'`{self.__class__.__name__}.transform` will change in the future. '
                 'Previously it defaulted to `True`, but will change to `False`. '
                 'Explicitly set `inplace` to `True` or `False` to silence this warning.'
             )
@@ -2975,7 +2978,7 @@ class DataObjectFilters:
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
-    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    """Return snake case quality measure keys and vtkCellQuality attribute setter names."""
     # Get possible quality measures dynamically
     str_start = 'SetQualityMeasureTo'
     measures = {}

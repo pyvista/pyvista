@@ -373,7 +373,10 @@ class DataSetFilters(DataObjectFilters):
             if np.dot(axes[2], axis_2_direction) >= 0:
                 pass  # nothing to do, sign is correct
             elif axis_0_direction is not None and axis_1_direction is not None:
-                msg = f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
+                msg = (
+                    f'Invalid `axis_2_direction` {axis_2_direction}. '
+                    f'This direction results in a left-handed transformation.'
+                )
                 raise ValueError(msg)
             else:
                 axes[2] *= -1
@@ -578,7 +581,8 @@ class DataSetFilters(DataObjectFilters):
         if both:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):
-                # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
+                # For some reason vtkClipPolyData with SetGenerateClippedOutput on
+                # leaves unreferenced vertices
                 result0, result1 = (r.clean() for r in (result0, result1))  # type: ignore[unreachable]
             return result0, result1
         return result0
@@ -769,7 +773,7 @@ class DataSetFilters(DataObjectFilters):
         :meth:`~pyvista.ImageDataFilters.image_threshold`
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
-            Threshold-like filter for :class:`~pyvista.ImageData` to keep some values and replace others.
+            Threshold-like filter for ``ImageData`` to keep some values and replace others.
 
         Returns
         -------
@@ -1627,7 +1631,8 @@ class DataSetFilters(DataObjectFilters):
             indices = np.arange(len(geoms))
         elif not isinstance(indices, (np.ndarray, Sequence)):
             msg = (  # type: ignore[unreachable]
-                'If "geom" is a sequence then "indices" must also be a sequence of the same length.'
+                'If "geom" is a sequence then "indices" must also be a '
+                'sequence of the same length.'
             )
             raise TypeError(msg)
         if len(indices) != len(geoms) and len(geoms) != 1:
@@ -1738,8 +1743,8 @@ class DataSetFilters(DataObjectFilters):
             )
             set_actives_on_source_data = True
 
-        # upstream operations (cell to point conversion, point merging) may have unset the correct active
-        # scalars/vectors, so set them again
+        # upstream operations (cell to point conversion, point merging) may have unset
+        # the correct active scalars/vectors, so set them again
         if set_actives_on_source_data:
             if scale:
                 source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
@@ -1861,7 +1866,8 @@ class DataSetFilters(DataObjectFilters):
             .. note::
                This filter requires point scalars to determine region
                connectivity. If cell scalars are provided, they are first
-               converted to point scalars with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`
+               converted to point scalars with
+               :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`
                before applying the filter. The converted point scalars are
                removed from the output after applying the filter.
 
@@ -2028,7 +2034,10 @@ class DataSetFilters(DataObjectFilters):
                 msg = 'Scalar range must have two elements defining the min and max.'
                 raise ValueError(msg)
             if scalar_range[0] > scalar_range[1]:
-                msg = f'Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}'
+                msg = (
+                    f'Lower value of scalar range {scalar_range[0]} cannot be greater '
+                    f'than the upper value {scalar_range[0]}'
+                )
                 raise ValueError(msg)
 
             # Input will be modified, so copy first
@@ -2131,7 +2140,11 @@ class DataSetFilters(DataObjectFilters):
             alg.SetClosestPoint(*closest_point)
 
         else:
-            msg = f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"  # type: ignore[unreachable]
+            msg = (
+                f"Invalid value for `extraction_mode` '{extraction_mode}'. "
+                f"Expected one of the following: 'all', 'largest', 'specified', "
+                f"'cell_seed', 'point_seed', or 'closest'"
+            )  # type: ignore[unreachable]
             raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
@@ -2750,7 +2763,8 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
-        # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
+        # I believe the locator and the interpolator call `GetPoints` and not all mesh types
+        # have that method
         target_ = wrap(target)
         target_ = (
             target_.cast_to_unstructured_grid()
@@ -3875,7 +3889,7 @@ class DataSetFilters(DataObjectFilters):
         fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
-        """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
+        """Sample a dataset along a circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
         distance from Point A and the Y-axis is the variable of
@@ -4469,7 +4483,7 @@ class DataSetFilters(DataObjectFilters):
         See Also
         --------
         split_values
-            Wrapper around this filter to split values and return a :class:`~pyvista.MultiBlock` by default.
+            Wrapper around this filter to split values and return a :class:`~pyvista.MultiBlock`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Similar filter specialized for :class:`~pyvista.ImageData`.
         extract_points
@@ -4683,7 +4697,11 @@ class DataSetFilters(DataObjectFilters):
             ]:
                 component_mode_ = int(component_mode_)
                 if component_mode_ > num_components - 1 or component_mode_ < 0:
-                    msg = f"Invalid component index '{component_mode_}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}."
+                    msg = (
+                        f"Invalid component index '{component_mode_}' specified for "
+                        f'scalars with {num_components} component(s). '
+                        f'Value must be one of: {tuple(range(num_components))}.'
+                    )
                     raise ValueError(msg)
                 array_ = array_[:, component_mode_] if num_components > 1 else array_
                 component_logic_function = None
@@ -4699,7 +4717,10 @@ class DataSetFilters(DataObjectFilters):
                 elif component_mode_ in ['all', 'multi']:
                     component_logic_function = functools.partial(np.all, axis=1)
             else:
-                msg = f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'multi'."
+                msg = (
+                    f"Invalid component '{component_mode_}'. "
+                    f"Must be an integer, 'any', 'all', or 'multi'."
+                )
                 raise ValueError(msg)
             return array_, num_components, component_logic_function
 
@@ -4728,7 +4749,10 @@ class DataSetFilters(DataObjectFilters):
                     msg = 'No ranges or values were specified. At least one must be specified.'
                     raise TypeError(msg)
                 elif is_multi_mode:
-                    msg = f"Ranges cannot be extracted using component mode '{component_mode_}'. Expected {None}, got {ranges_}."
+                    msg = (
+                        f"Ranges cannot be extracted using component mode '{component_mode_}'. "
+                        f'Expected {None}, got {ranges_}.'
+                    )
                     raise TypeError(msg)
             elif (
                 isinstance(values_, str) and values_ == '_unique'
@@ -4741,10 +4765,16 @@ class DataSetFilters(DataObjectFilters):
                 if is_multi_mode:
                     values_ = np.atleast_2d(values_)
                     if values_.ndim > 2:
-                        msg = f'Component values cannot be more than 2 dimensions. Got {values_.ndim}.'
+                        msg = (
+                            f'Component values cannot be more than 2 dimensions. '
+                            f'Got {values_.ndim}.'
+                        )
                         raise ValueError(msg)
                     if values_.shape[1] != num_components_:
-                        msg = f'Num components in values array ({values_.shape[1]}) must match num components in data array ({num_components_}).'
+                        msg = (
+                            f'Num components in values array ({values_.shape[1]}) must match '
+                            f'num components in data array ({num_components_}).'
+                        )
                         raise ValueError(msg)
                 else:
                     values_ = np.atleast_1d(values_)
@@ -4774,7 +4804,10 @@ class DataSetFilters(DataObjectFilters):
                 not_valid = np.invert(is_valid_range)
                 if np.any(not_valid):
                     invalid_ranges = ranges_[not_valid]
-                    msg = f'Invalid range {invalid_ranges[0]} specified. Lower value cannot be greater than upper value.'
+                    msg = (
+                        f'Invalid range {invalid_ranges[0]} specified. '
+                        f'Lower value cannot be greater than upper value.'
+                    )
                     raise ValueError(msg)
             return values_, ranges_
 
@@ -6777,7 +6810,7 @@ class DataSetFilters(DataObjectFilters):
             Label data based on its connectivity.
 
         pyvista.ImageDataFilters.contour_labels
-            Generate contours from labeled image data. The contours may be colored with this filter.
+            Generate contours from labeled images. The contours may be colored with this filter.
 
         pack_labels
             Make labeled data contiguous. May be used as a pre-processing step before
@@ -6788,14 +6821,14 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
             Color(s) to use. Specify a dictionary to explicitly control the mapping
             from label values to colors. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
             control the mapping. A single color is also supported to color the entire
             mesh with one color.
 
-            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            By default,the ``'glasbey_category10'`` categorical colormap is used
             where the first 10 colors are the same default colors used by ``matplotlib``.
             See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
             for more information.
@@ -7044,7 +7077,10 @@ class DataSetFilters(DataObjectFilters):
 
         else:
             if array.ndim > 1:
-                msg = f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                msg = (
+                    f'Multi-component scalars are not supported for coloring. '
+                    f'Scalar array {scalars} must be one-dimensional.'
+                )
                 raise ValueError(msg)
             _is_rgb_sequence = False
             if isinstance(colors, str):
@@ -7054,7 +7090,10 @@ class DataSetFilters(DataObjectFilters):
                     pass
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
-                        msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        msg = (
+                            f"Colormap '{colors}' must be a ListedColormap, "
+                            f'got {cmap.__class__.__name__} instead.'
+                        )
                         raise TypeError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast('list[list[float]]', cmap.colors)
@@ -7086,8 +7125,10 @@ class DataSetFilters(DataObjectFilters):
             if coloring_mode == 'index':
                 if not np.all(_is_index_like(array, max_value=n_colors)):
                     msg = (
-                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
-                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                        f"Index coloring mode cannot be used with scalars '{name}'. "
+                        f'Scalars must be positive integers \n'
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less '
+                        f'than the number of colors ({n_colors}).'
                     )
                     raise ValueError(msg)
                 keys: Iterable[float]
@@ -7177,7 +7218,8 @@ class DataSetFilters(DataObjectFilters):
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
 
         .. note::
-            This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+            This filter returns voxels represented as point data, not
+            :attr:`~pyvista.CellType.VOXEL` cells.
             This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
@@ -7440,7 +7482,10 @@ class DataSetFilters(DataObjectFilters):
                 or cell_length_percentile is not None
                 or cell_length_sample_size is not None
             ):
-                msg = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                msg = (
+                    'Cannot specify a reference volume with other geometry parameters. '
+                    '`reference_volume` must define the geometry exclusively.'
+                )
                 raise TypeError(msg)
             _validation.check_instance(
                 reference_volume, pyvista.ImageData, name='reference volume'
@@ -7506,7 +7551,10 @@ class DataSetFilters(DataObjectFilters):
                 initial_dimensions[initial_dimensions < 1] = 1
                 dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
             elif rounding_func is not None:
-                msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+                msg = (
+                    'Rounding func cannot be set when dimensions is specified. '
+                    'Set one or the other.'
+                )
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
@@ -7595,11 +7643,17 @@ def _set_threshold_limit(alg, value, method, invert):
     # Check value
     if isinstance(value, (np.ndarray, Sequence)):
         if len(value) != 2:
-            msg = f'Value range must be length one for a float value or two for min/max; not ({value}).'
+            msg = (
+                f'Value range must be length one for a float value '
+                f'or two for min/max; not ({value}).'
+            )
             raise ValueError(msg)
         # Check range
         if value[0] > value[1]:
-            msg = 'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
+            msg = (
+                'Value sequence is invalid, please use (min, max). '
+                'The provided first value is greater than the second.'
+            )
             raise ValueError(msg)
     elif isinstance(value, Iterable):
         msg = 'Value must either be a single scalar or a sequence.'
