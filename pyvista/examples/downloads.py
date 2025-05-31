@@ -386,8 +386,9 @@ def download_usa_texture(load=True):  # pragma: no cover
 
 
 _dataset_usa_texture = _SingleFileDownloadableDatasetLoader(
-    'usa_image.jpg', read_func=read_texture
-)  # type: ignore[arg-type]
+    'usa_image.jpg',
+    read_func=read_texture,  # type: ignore[arg-type]
+)
 
 
 def download_puppy_texture(load=True):  # pragma: no cover
@@ -1640,8 +1641,9 @@ def download_bird_texture(load=True):  # pragma: no cover
 
 
 _dataset_bird_texture = _SingleFileDownloadableDatasetLoader(
-    'Pileated.jpg', read_func=read_texture
-)  # type: ignore[arg-type]
+    'Pileated.jpg',
+    read_func=read_texture,  # type: ignore[arg-type]
+)
 
 
 def download_office(load=True):  # pragma: no cover
@@ -1943,8 +1945,9 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 # Name variables such that non-zoomed version is the 'representative' example
 # Use '__' on the zoomed version to label it as private
 _dataset_gourds_texture = _SingleFileDownloadableDatasetLoader(
-    'Gourds.png', read_func=read_texture
-)  # type: ignore[arg-type]
+    'Gourds.png',
+    read_func=read_texture,  # type: ignore[arg-type]
+)
 __gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 

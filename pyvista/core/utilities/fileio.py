@@ -904,8 +904,8 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
     if not isinstance(mesh, pyvista.DataObject):
-        msg = (
-            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'  # type: ignore[unreachable]
+        msg = (  # type: ignore[unreachable]
+            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
         raise TypeError(msg)
 

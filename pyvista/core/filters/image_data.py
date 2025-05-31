@@ -2995,7 +2995,7 @@ class ImageDataFilters(DataSetFilters):
                 }[target_dimensionality]
                 msg = (
                     f'The operation requires to {operator.__name__} at least {operation_size} '
-                    f'dimension(s) to {self.dimensions}. A {operation_mask} ImageData with dims '
+                    f'dimension(s) to {self.dimensions}. A {operation_mask} ImageData with dims '  # type: ignore[attr-defined]
                     f'{desired_dimensions} cannot be obtained.'
                 )
                 raise ValueError(msg)

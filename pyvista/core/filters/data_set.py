@@ -2140,11 +2140,11 @@ class DataSetFilters(DataObjectFilters):
             alg.SetClosestPoint(*closest_point)
 
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f"Invalid value for `extraction_mode` '{extraction_mode}'. "
                 f"Expected one of the following: 'all', 'largest', 'specified', "
                 f"'cell_seed', 'point_seed', or 'closest'"
-            )  # type: ignore[unreachable]
+            )
             raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
