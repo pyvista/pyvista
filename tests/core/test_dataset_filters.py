@@ -493,6 +493,13 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.parametrize('dataset', [examples.download_bunny()])
+def test_gaussian_splatting(dataset):
+    output = dataset.gaussian_splatting(progress_bar=True)
+    assert output is not None
+    assert isinstance(output, pv.ImageData)
+
+
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         geom = dataset.extract_geometry(progress_bar=True)
