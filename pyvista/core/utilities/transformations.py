@@ -328,11 +328,11 @@ def apply_transformation_to_points(
         points_2[:, :-1] = points
         points_2[:, -1] = 1
     else:
-        points_2 = points
+        points_2 = points  # type: ignore[assignment]
 
     # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
     # that the matrices to be multiplied lie in the last two dimensions.
-    points_2 = (transformation[np.newaxis, :, :] @ points_2.T)[0, :3, :].T
+    points_2 = (transformation[np.newaxis, :, :] @ points_2.T)[0, :3, :].T  # type: ignore[assignment]
 
     # If inplace, set the points
     if inplace:

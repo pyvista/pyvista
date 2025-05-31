@@ -2113,7 +2113,7 @@ class DatasetCard:
             """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
             if not callable(func):
                 msg = 'Input must be a callable function.'
-                raise ValueError(msg)
+                raise TypeError(msg)
 
             # Get the docstring of the function
             docstring = func.__doc__

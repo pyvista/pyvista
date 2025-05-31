@@ -75,7 +75,12 @@ First, check out some common meta-properties:
 
     What are the mesh bounds?
     >>> mesh.bounds
-    BoundsTuple(x_min=139.061, x_max=1654.93, y_min=32.09, y_max=1319.95, z_min-17.74, z_max=282.13)
+    BoundsTuple(x_min =  139.06100463867188,
+                x_max = 1654.9300537109375,
+                y_min =   32.09429931640625,
+                y_max = 1319.949951171875,
+                z_min =  -17.741199493408203,
+                z_max =  282.1300048828125)
 
     Where is the center of this mesh?
 

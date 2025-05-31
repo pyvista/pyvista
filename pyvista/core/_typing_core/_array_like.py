@@ -33,7 +33,7 @@ import numpy.typing as npt
 # Define numeric types
 NumberType = TypeVar(
     'NumberType',
-    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],
 )
 NumberType.__doc__ = """Type variable for numeric data types."""
 
@@ -41,7 +41,7 @@ NumberType.__doc__ = """Type variable for numeric data types."""
 # Its definition should be identical to `NumberType`
 _NumberType = TypeVar(  # noqa: PYI018
     '_NumberType',
-    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],
 )
 
 NumpyArray = npt.NDArray[NumberType]

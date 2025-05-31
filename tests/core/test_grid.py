@@ -700,7 +700,7 @@ def test_slice_structured(struct_grid):
     assert struct_grid.y[1, :, 1:3].ravel() == pytest.approx(sliced.y.ravel())
     assert struct_grid.z[1, :, 1:3].ravel() == pytest.approx(sliced.z.ravel())
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         # fancy indexing error
         struct_grid[[1, 2, 3], :, 1:3]
 
@@ -773,7 +773,7 @@ def test_instantiate_by_filename():
 
     # load the files into the wrong types
     for fname, wrong_type in fname_to_wrong_type.items():
-        with pytest.raises(ValueError):  # noqa: PT011
+        with pytest.raises(TypeError):
             data = wrong_type(fname)
 
 

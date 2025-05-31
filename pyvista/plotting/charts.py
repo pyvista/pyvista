@@ -148,7 +148,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
         msg = '`member` must be a callable.'
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     # Safeguard against None docstring when using -OO
     existing_doc = member.__doc__ or ''

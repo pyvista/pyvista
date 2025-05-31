@@ -36,7 +36,7 @@ def test_track_click_position_raises(callback):
     match = re.escape(
         'Invalid callback provided, it should be either ``None`` or a callable.',
     )
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         pl.track_click_position(callback=callback)
 
 

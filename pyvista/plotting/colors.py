@@ -17,6 +17,8 @@ from typing import get_args
 from cycler import Cycler
 from cycler import cycler
 
+from pyvista.core import _validation
+
 try:
     from matplotlib import colormaps
     from matplotlib import colors
@@ -1503,6 +1505,9 @@ class Color:
         if color is None:
             color = pyvista.global_theme.color if default_color is None else default_color
 
+        _validation.check_instance(
+            color, (Color, str, dict, list, tuple, np.ndarray, _vtk.vtkColor3ub), name='color'
+        )
         try:
             if isinstance(color, Color):
                 # Create copy of color instance
@@ -1519,9 +1524,9 @@ class Color:
             elif isinstance(color, _vtk.vtkColor3ub):
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
-            else:
-                msg = f'Unsupported color type: {type(color)}'
-                raise ValueError(msg)
+            else:  # pragma: no cover
+                msg = f'Unexpected color type: {type(color)}'
+                raise TypeError(msg)
             self._name = color_names.get(self.hex_rgb, None)
         except ValueError as e:
             msg = (
@@ -2159,7 +2164,7 @@ def color_scheme_to_cycler(scheme):
             series.SetColorScheme(scheme)
         else:
             msg = f'Color scheme not understood: {scheme}'
-            raise ValueError(msg)
+            raise TypeError(msg)
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))

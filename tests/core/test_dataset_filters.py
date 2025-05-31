@@ -3894,17 +3894,18 @@ def test_color_labels_invalid_input(uniform):
         uniform.color_labels({}, coloring_mode='index')
 
     match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         uniform.color_labels('bwr')
 
+    match = 'color must be an instance of'
+    with pytest.raises(TypeError, match=match):
+        uniform.color_labels([[1]])
     match = (
         'Invalid colors. Colors must be one of:\n'
         '  - sequence of color-like values,\n'
         '  - dict with color-like values,\n'
         '  - named colormap string.'
     )
-    with pytest.raises(ValueError, match=match):
-        uniform.color_labels([[1]])
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
 

@@ -245,7 +245,7 @@ def get_mixed_cells(vtkobj):
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
         msg = 'Expected a pyvista object'
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
