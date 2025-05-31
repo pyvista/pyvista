@@ -344,7 +344,7 @@ extend-select = [
   'PIE',
   'PLC',
   'PLR',
-  'PLW0127',
+  'PLW',
   'PT',
   'PTH',
   'PYI',
