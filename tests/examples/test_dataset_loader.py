@@ -175,16 +175,16 @@ def examples_local_repository_tmp_dir(tmp_path):
 @pytest.mark.usefixtures('examples_local_repository_tmp_dir')
 @pytest.mark.parametrize('use_archive', [True, False])
 @pytest.mark.parametrize(
-    'FileLoader',
+    'file_loader',
     [_SingleFileDatasetLoader, _DownloadableFile, _SingleFileDownloadableDatasetLoader],
 )
-def test_single_file_loader(FileLoader, use_archive):
+def test_single_file_loader(file_loader, use_archive):
     basename = 'pyvista_logo.png'
-    if use_archive and isinstance(FileLoader, _Downloadable):
-        file_loader = FileLoader('archive.zip', target_file=basename)
+    if use_archive and isinstance(file_loader, _Downloadable):
+        file_loader = file_loader('archive.zip', target_file=basename)
         expected_path_is_absolute = False
     else:
-        file_loader = FileLoader(basename)
+        file_loader = file_loader(basename)
         expected_path_is_absolute = True
 
     # test initial path

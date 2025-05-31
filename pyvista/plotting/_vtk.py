@@ -96,7 +96,7 @@ try:
     from vtkmodules.vtkRenderingCore import vtkHardwarePicker as vtkHardwarePicker
 except ImportError:  # pragma: no cover
     # VTK < 9.2 is missing this class
-    vtkHardwarePicker = None  # type: ignore[assignment, misc]
+    vtkHardwarePicker = None  # type: ignore[assignment, misc] # noqa: N816
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_OFF as VTK_RESOLVE_OFF
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_POLYGON_OFFSET as VTK_RESOLVE_POLYGON_OFFSET
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_SHIFT_ZBUFFER as VTK_RESOLVE_SHIFT_ZBUFFER

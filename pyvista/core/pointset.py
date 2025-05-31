@@ -834,7 +834,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             # These properties can be supplied as either arrays or pre-constructed `CellArray`s
             if not isinstance(v, _vtk.vtkCellArray):
                 try:
-                    v = CellArray(v)
+                    v = CellArray(v)  # noqa: PLW2901
                 except CellSizeError as err:
                     # Raise an additional error so user knows which property triggered the error
                     msg = f'`{k}` cell array size is invalid.'
@@ -1650,7 +1650,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.cell_normals
 
     @property
-    def obbTree(self):  # numpydoc ignore=RT01
+    def obbTree(self):  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
         An obbTree is an object to generate oriented bounding box (OBB)

@@ -1734,10 +1734,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
-        if out is not None:
-            return out
-        else:
-            return array
+        return out if out is not None else array
 
     def apply_to_points(
         self,
@@ -2419,21 +2416,22 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         _, R, _, _, _ = self.decompose()
 
         if representation == 'matrix':
-            return R
-
-        rotation = Rotation.from_matrix(R)
-        if representation is None:
-            return rotation
-        elif representation == 'quat':
-            return rotation.as_quat(*args, **kwargs)
-        elif representation == 'rotvec':
-            return rotation.as_rotvec(*args, **kwargs)
-        elif representation == 'mrp':
-            return rotation.as_mrp(*args, **kwargs)
-        elif representation == 'euler':
-            return rotation.as_euler(*args, **kwargs)
-        elif representation == 'davenport':
-            return rotation.as_davenport(*args, **kwargs)
-        else:  # pragma: no cover
-            msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
-            raise RuntimeError(msg)
+            out = R
+        else:
+            rotation = Rotation.from_matrix(R)
+            if representation is None:
+                out = rotation
+            elif representation == 'quat':
+                out = rotation.as_quat(*args, **kwargs)
+            elif representation == 'rotvec':
+                out = rotation.as_rotvec(*args, **kwargs)
+            elif representation == 'mrp':
+                out = rotation.as_mrp(*args, **kwargs)
+            elif representation == 'euler':
+                out = rotation.as_euler(*args, **kwargs)
+            elif representation == 'davenport':
+                out = rotation.as_davenport(*args, **kwargs)
+            else:  # pragma: no cover
+                msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
+                raise RuntimeError(msg)
+        return out

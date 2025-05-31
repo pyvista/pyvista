@@ -960,10 +960,13 @@ class MultiBlock(
                 else:
                     # Copy the field data
                     array = field_data_to_copy[array_name]
-                    if field_data_mode != 'prepend':
-                        # Remove prepended names
-                        array_name = array_name.split(separator)[-1]
-                    root_field_data._update_array(array_name, array, bool(copy))
+                    # Remove prepended names
+                    short_array_name = (
+                        array_name.split(separator)[-1]
+                        if field_data_mode != 'prepend'
+                        else array_name
+                    )
+                    root_field_data._update_array(short_array_name, array, bool(copy))
 
             if copy is None:
                 nested_field_data.clear()
@@ -1878,7 +1881,7 @@ class MultiBlock(
                 elif d is None:
                     del self[index_iter[-1] + 1]  # delete next entry
                 else:
-                    self[idx] = d  #
+                    self[idx] = d
             return
         else:
             i = index
@@ -2224,7 +2227,7 @@ class MultiBlock(
                 if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
                     block_to_copy = cast('MultiBlock', new_object.GetBlock(i))
                     this_object_.replace(i, block_to_copy)
-                    _replace_nested_multiblocks(cast('MultiBlock', this_object_[i]), block_to_copy)
+                    _replace_nested_multiblocks(cast('MultiBlock', this_block), block_to_copy)
 
         if not recursive:
             _replace_nested_multiblocks(self, to_copy)

@@ -44,14 +44,14 @@ def supports_open_gl():
         ``True`` if the system supports OpenGL, ``False`` otherwise.
 
     """
-    global SUPPORTS_OPENGL
+    global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():
+def _system_supports_plotting():  # noqa: PLR0911
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -101,7 +101,7 @@ def system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
-    global SUPPORTS_PLOTTING
+    global SUPPORTS_PLOTTING  # noqa: PLW0603
     if SUPPORTS_PLOTTING is None:
         SUPPORTS_PLOTTING = _system_supports_plotting()
 
