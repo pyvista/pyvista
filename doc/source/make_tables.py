@@ -694,7 +694,7 @@ class ColorClassification(StrEnum):
     MAGENTA = auto()
 
 
-def classify_color(color: Color) -> ColorClassification:
+def classify_color(color: Color) -> ColorClassification:  # noqa: PLR0911
     """Classify color based on its Hue, Lightness, and Saturation (HLS)."""
     hue, lightness, saturation = color._float_hls
 
