@@ -543,7 +543,7 @@ try:
 except ImportError:  # pragma: no cover
     # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
 
-    class vtkPythonItem:  # type: ignore[no-redef]
+    class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
         """Empty placeholder."""
 
         def __init__(self):  # pragma: no cover
@@ -589,7 +589,7 @@ class VersionInfo(NamedTuple):
         return str((self.major, self.minor, self.micro))
 
 
-def VTKVersionInfo():
+def VTKVersionInfo():  # noqa: N802
     """Return the vtk version as a namedtuple.
 
     Returns
@@ -613,7 +613,7 @@ def VTKVersionInfo():
 vtk_version_info = VTKVersionInfo()
 
 
-class vtkPyVistaOverride:
+class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 
     def __init_subclass__(cls, **kwargs):

@@ -1371,7 +1371,7 @@ def test_imagedata_offset():
     assert grid.dimensions == actual_dimensions
 
 
-def test_UnstructuredGrid_cast_to_explicit_structured_grid():
+def test_unstructured_grid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
     grid = grid.cast_to_unstructured_grid()
@@ -1386,7 +1386,7 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
 
-def test_UnstructuredGrid_cast_to_explicit_structured_grid_raises():
+def test_unstructured_grid_cast_to_explicit_structured_grid_raises():
     with pytest.raises(
         TypeError,
         match="'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required",
@@ -1394,7 +1394,7 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid_raises():
         pv.UnstructuredGrid().cast_to_explicit_structured_grid()
 
 
-def test_ExplicitStructuredGrid_init():
+def test_explicit_structured_grid_init():
     grid = examples.load_explicit_structured()
     assert isinstance(grid, pv.ExplicitStructuredGrid)
     assert grid.n_cells == 120
@@ -1430,7 +1430,7 @@ def test_ExplicitStructuredGrid_init():
     assert grid.n_points == 16
 
 
-def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
+def test_explicit_structured_grid_cast_to_unstructured_grid():
     block_i = np.fromstring(
         """
         0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0
@@ -1475,7 +1475,7 @@ def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     assert np.array_equal(grid.cell_data['BLOCK_K'], block_k)
 
 
-def test_ExplicitStructuredGrid_save():
+def test_explicit_structured_grid_save():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
     grid.save('grid.vtu')
@@ -1487,12 +1487,12 @@ def test_ExplicitStructuredGrid_save():
     Path('grid.vtu').unlink()
 
 
-def test_ExplicitStructuredGrid_save_raises():
+def test_explicit_structured_grid_save_raises():
     with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
         examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
 
 
-def test_ExplicitStructuredGrid_hide_cells():
+def test_explicit_structured_grid_hide_cells():
     ghost = np.asarray(
         """
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -1518,7 +1518,7 @@ def test_ExplicitStructuredGrid_hide_cells():
     assert np.array_equal(grid.cell_data['vtkGhostType'], ghost)
 
 
-def test_ExplicitStructuredGrid_show_cells():
+def test_explicit_structured_grid_show_cells():
     grid = examples.load_explicit_structured()
     grid.hide_cells(range(80, 120), inplace=True)
 
@@ -1533,7 +1533,7 @@ def test_ExplicitStructuredGrid_show_cells():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 0
 
 
-def test_ExplicitStructuredGrid_dimensions():
+def test_explicit_structured_grid_dimensions():
     grid = examples.load_explicit_structured()
     assert isinstance(grid.dimensions, tuple)
     assert isinstance(grid.dimensions[0], int)
@@ -1541,7 +1541,7 @@ def test_ExplicitStructuredGrid_dimensions():
     assert grid.dimensions == (5, 6, 7)
 
 
-def test_ExplicitStructuredGrid_visible_bounds():
+def test_explicit_structured_grid_visible_bounds():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
     assert isinstance(grid.visible_bounds, tuple)
@@ -1550,7 +1550,7 @@ def test_ExplicitStructuredGrid_visible_bounds():
     assert grid.visible_bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
 
-def test_ExplicitStructuredGrid_cell_id():
+def test_explicit_structured_grid_cell_id():
     grid = examples.load_explicit_structured()
 
     ind = grid.cell_id((3, 4, 0))
@@ -1563,7 +1563,7 @@ def test_ExplicitStructuredGrid_cell_id():
     assert np.array_equal(ind, [19, 31, 41, 54])
 
 
-def test_ExplicitStructuredGrid_cell_coords():
+def test_explicit_structured_grid_cell_coords():
     grid = examples.load_explicit_structured()
 
     coords = grid.cell_coords(19)
@@ -1577,7 +1577,7 @@ def test_ExplicitStructuredGrid_cell_coords():
     assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
 
 
-def test_ExplicitStructuredGrid_neighbors():
+def test_explicit_structured_grid_neighbors():
     grid = examples.load_explicit_structured()
 
     with pytest.raises(ValueError, match='Invalid value for `rel`'):
@@ -1599,7 +1599,7 @@ def test_ExplicitStructuredGrid_neighbors():
     assert indices == [1, 4, 20]
 
 
-def test_ExplicitStructuredGrid_compute_connectivity():
+def test_explicit_structured_grid_compute_connectivity():
     connectivity = np.asarray(
         """
     42 43 43 41 46 47 47 45 46 47 47 45 46 47 47 45 38 39 39 37 58 59 59 57
@@ -1626,7 +1626,7 @@ def test_ExplicitStructuredGrid_compute_connectivity():
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
-def test_ExplicitStructuredGrid_compute_connections():
+def test_explicit_structured_grid_compute_connections():
     connections = np.asarray(
         """
     3 4 4 3 4 5 5 4 4 5 5 4 4 5 5 4 3 4 4 3 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4
@@ -1651,7 +1651,7 @@ def test_ExplicitStructuredGrid_compute_connections():
     assert np.array_equal(grid.cell_data['number_of_connections'], connections)
 
 
-def test_ExplicitStructuredGrid_raise_init():
+def test_explicit_structured_grid_raise_init():
     with pytest.raises(ValueError, match='Too many args'):
         pv.ExplicitStructuredGrid(1, 2, 3, True)
 
@@ -1690,7 +1690,7 @@ def test_ExplicitStructuredGrid_raise_init():
 @pytest.mark.needs_vtk_version(
     9, 2, 2, reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean'
 )
-def test_ExplicitStructuredGrid_clean():
+def test_explicit_structured_grid_clean():
     grid = examples.load_explicit_structured()
 
     # Duplicate points
@@ -1710,7 +1710,7 @@ def test_ExplicitStructuredGrid_clean():
 
 
 @pointsetmark
-def test_StructuredGrid_cast_to_explicit_structured_grid():
+def test_structured_grid_cast_to_explicit_structured_grid():
     grid = examples.download_office()
     grid = grid.hide_cells(np.arange(80, 120))
     grid = pv.ExplicitStructuredGrid(grid)
@@ -1720,7 +1720,7 @@ def test_StructuredGrid_cast_to_explicit_structured_grid():
     assert (grid.cell_data['vtkGhostType'] > 0).sum() == 40
 
 
-def test_StructuredGrid_cast_to_explicit_structured_grid_raises():
+def test_structured_grid_cast_to_explicit_structured_grid_raises():
     xrng = np.arange(-10, 10, 20, dtype=np.float32)
     x, y, z = np.meshgrid(*[xrng] * 3, indexing='ij')
     grid = pv.StructuredGrid(x, y, z)

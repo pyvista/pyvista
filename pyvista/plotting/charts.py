@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 # region Some metaclass wrapping magic
-class _vtkWrapperMeta(type):
+class _vtkWrapperMeta(type):  # noqa: N801
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
@@ -50,7 +50,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -1081,11 +1081,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item) -> bool:
+        def Initialize(self, item) -> bool:  # noqa: N802
             # item is the _CustomContextItem subclass instance
             return True
 
-        def Paint(self, item, painter):
+        def Paint(self, item, painter):  # noqa: N802
             # item is the _CustomContextItem subclass instance
             return item.paint(painter)
 

@@ -988,7 +988,7 @@ def test_label_connectivity_seed_points(segmented_grid):
     assert sizes[1] == 2
 
 
-def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):
+def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):  # noqa: N802
     points = pv.PolyData()
     points.points = [(2, 1, 0), (0, 0, 1)]
     connected, labels, sizes = segmented_grid.label_connectivity(

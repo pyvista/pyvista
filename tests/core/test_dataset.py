@@ -1328,7 +1328,7 @@ ids = list(map(type, grids))
 ids_cells = list(map(type, grids_cells))
 
 
-def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
+def test_raises_cell_neighbors_explicit_structured_grid(datasets_vtk9):
     for dataset in datasets_vtk9:  # noqa: F402
         with pytest.raises(TypeError):
             _ = dataset.cell_neighbors(0)

@@ -177,7 +177,7 @@ def test_downloads_mark(
     assert 'test_downloads' in (report.passed if cml else report.skipped)
 
 
-class Cases_needs_vtk:
+class CasesNeedsVtk:
     @case
     @parametrize(greater=[True, False])
     def case_min_only(self, greater: bool, monkeypatch: pytest.MonkeyPatch):
@@ -425,9 +425,7 @@ class Cases_needs_vtk:
 
 
 @parametrize_with_cases(
-    'tests, outcome',
-    cases=Cases_needs_vtk,
-    filter=~ft.has_tag('raises') & ~ft.has_tag('reason'),
+    'tests, outcome', cases=CasesNeedsVtk, filter=~ft.has_tag('raises') & ~ft.has_tag('reason')
 )
 def test_needs_vtk_version(tests: str, outcome: dict, pytester: pytest.Pytester):
     p = pytester.makepyfile(tests)
@@ -436,7 +434,7 @@ def test_needs_vtk_version(tests: str, outcome: dict, pytester: pytest.Pytester)
     results.assert_outcomes(**outcome)
 
 
-@parametrize_with_cases('tests, outcome', cases=Cases_needs_vtk, has_tag='raises')
+@parametrize_with_cases('tests, outcome', cases=CasesNeedsVtk, has_tag='raises')
 def test_needs_vtk_version_raises(tests: str, outcome: dict, pytester: pytest.Pytester):
     p = pytester.makepyfile(tests)
     results = pytester.runpytest(p)
@@ -444,7 +442,7 @@ def test_needs_vtk_version_raises(tests: str, outcome: dict, pytester: pytest.Py
     results.assert_outcomes(**outcome)
 
 
-@parametrize_with_cases('tests, match', cases=Cases_needs_vtk, has_tag='reason')
+@parametrize_with_cases('tests, match', cases=CasesNeedsVtk, has_tag='reason')
 def test_needs_vtk_version_reason(tests: str, match: list[str], pytester: pytest.Pytester):
     p = pytester.makepyfile(tests)
     results = pytester.runpytest(p)

@@ -154,8 +154,8 @@ class _ForceSlots(type):
     """Metaclass to force classes and subclasses to have __slots__."""
 
     @classmethod
-    def __prepare__(metaclass, name, bases, **kwargs):
-        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
+    def __prepare__(cls, name, bases, **kwargs):
+        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
         super_prepared['__slots__'] = ()
         return super_prepared
 
@@ -3480,7 +3480,7 @@ class _TestingTheme(Theme):
         self.resample_environment_texture = True
 
 
-class _NATIVE_THEMES(Enum):
+class _NATIVE_THEMES(Enum):  # noqa: N801
     """Global built-in themes available to PyVista."""
 
     paraview = ParaViewTheme

@@ -337,6 +337,7 @@ extend-select = [
   'INT',
   'ISC',
   'LOG',
+  'N',
   'NPY',
   'PERF',
   'PGH',
@@ -388,6 +389,7 @@ ignore = [
   'E741',    # ambiguous variable name
   'F403',    # 'from module import *' used; unable to detect undefined names
   'ISC001',  # May cause conflicts when used with the formatter
+  'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
   'Q0',      # Quotes (temporary)
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
@@ -410,14 +412,19 @@ allow-dict-calls-with-keyword-arguments = true
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
 ]
+'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'examples_trame/*' = ['D100', 'D103']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
 'pyvista/core/filters/*' = ['PYI019']
+'pyvista/core/utilities/geometric_objects.py' = ['N802']
+'pyvista/core/utilities/parametric_objects.py' = ['N802']
+'pyvista/examples/cells.py' = ['N802']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
+'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
 'tests/*' = ['D', 'INP']
 
@@ -438,7 +445,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/utilities/helpers.py' = ['ANN']
 'pyvista/core/utilities/image_sources.py' = ['ANN']
 'pyvista/core/utilities/observers.py' = ['ANN']
-'pyvista/core/utilities/reader.py' = ['ANN']
+'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
 
 # ANN ignores for `pyvista/plotting`
 'pyvista/plotting*' = ['ANN']

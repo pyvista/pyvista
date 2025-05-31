@@ -177,7 +177,7 @@ def test_createvectorpolydata_error():
         vector_poly_data([0, 1, 2], vec)
 
 
-def test_createvectorpolydata_1D():
+def test_createvectorpolydata_1d():
     orig = np.random.default_rng().random(3)
     vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
@@ -2170,7 +2170,7 @@ def test_classproperty():
     @no_new_attr
     class Foo:
         @_classproperty
-        def prop(cls):
+        def prop(cls):  # noqa: N805
             return magic_number
 
     assert Foo.prop == magic_number
