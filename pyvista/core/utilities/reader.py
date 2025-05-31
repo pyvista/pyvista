@@ -463,7 +463,7 @@ class PointCellDataSelection:
     []
     >>> reader.all_cell_arrays_status  # doctest: +NORMALIZE_WHITESPACE
     {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True,
-     'omega': True, 'f': True, 'epsilon': True, 'U': True}
+    'omega': True, 'f': True, 'epsilon': True, 'U': True}
     >>> reader.disable_all_cell_arrays()
     >>> reader.enable_cell_array('U')
     >>> mesh = reader.read()  # MultiBlock mesh
@@ -1474,8 +1474,8 @@ class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader.
 
     The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
-    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as class variables,
-    as shown below.
+    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as
+    class variables, as shown below.
 
         - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
         - ``MultiBlockPlot3DReader.PRESSURE = Plot3DFunctionEnum.PRESSURE``
@@ -1608,8 +1608,8 @@ class MultiBlockPlot3DReader(BaseReader):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
         For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still
-        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then
-        the output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
+        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the
+        output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
         """
