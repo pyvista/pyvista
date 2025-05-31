@@ -586,6 +586,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
         - ``'previous'``
         - ``'next'``
 
+        .. versionchanged:: 0.46
+
+            Linear interpolation is now always used by default. Previously,
+            quadratic interpolation was used if ``scipy`` was installed.
+
     Returns
     -------
     numpy.ndarray
