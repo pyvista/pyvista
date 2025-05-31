@@ -810,7 +810,7 @@ def test_glyph_settings(sphere):
         alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_both'
         assert alg.input_active_vectors_info.name == 'vectors_both'
-        ## Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
+        # Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
         assert len(alg.input_data_object.active_scalars) == sphere.n_cells
         assert len(alg.input_data_object.active_scalars) == sphere.n_cells
 

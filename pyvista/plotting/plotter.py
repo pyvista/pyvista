@@ -1626,7 +1626,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_environment_texture``."""
         return self.renderer.remove_environment_texture(*args, **kwargs)
 
-    #### Properties from Renderer ####
+    # Properties from Renderer ####
 
     @property
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
