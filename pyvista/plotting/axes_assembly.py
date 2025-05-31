@@ -806,7 +806,9 @@ class AxesAssembly(_XYZAssembly):
         is set for all axes by default.
 
         >>> axes_assembly.set_actor_prop('show_edges', True, part='shaft')
-        >>> axes_assembly.get_actor_prop('show_edges')  # doctest: +NORMALIZE_WHITESPACE
+        >>> axes_assembly.get_actor_prop(
+        ...     'show_edges'
+        ... )  # doctest: +NORMALIZE_WHITESPACE
         _AxesPropTuple(x_shaft=True,
                        y_shaft=True,
                        z_shaft=True,
@@ -816,8 +818,12 @@ class AxesAssembly(_XYZAssembly):
 
         Set the property again, but this time set separate values for each shaft.
 
-        >>> axes_assembly.set_actor_prop('show_edges', [True, False, True], part='shaft')
-        >>> axes_assembly.get_actor_prop('show_edges')  # doctest: +NORMALIZE_WHITESPACE
+        >>> axes_assembly.set_actor_prop(
+        ...     'show_edges', [True, False, True], part='shaft'
+        ... )
+        >>> axes_assembly.get_actor_prop(
+        ...     'show_edges'
+        ... )  # doctest: +NORMALIZE_WHITESPACE
         _AxesPropTuple(x_shaft=True,
                        y_shaft=False,
                        z_shaft=True,
