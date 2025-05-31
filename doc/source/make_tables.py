@@ -263,8 +263,8 @@ class CellQualityInfoTable(DocTable):
 
     @property
     @final
-    def path(cls):
-        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
+    def path(self):
+        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{self.cell_type.name}.rst'
 
     header = _aligned_dedent(
         """
@@ -693,7 +693,7 @@ class ColorClassification(StrEnum):
     MAGENTA = auto()
 
 
-def classify_color(color: Color) -> ColorClassification:
+def classify_color(color: Color) -> ColorClassification:  # noqa: PLR0911
     """Classify color based on its Hue, Lightness, and Saturation (HLS)."""
     hue, lightness, saturation = color._float_hls
 
@@ -744,8 +744,8 @@ class ColorClassificationTable(ColorTable):
 
     @property
     @final
-    def path(cls):
-        return f'{COLORS_TABLE_DIR}/color_table_{cls.classification.name}.rst'
+    def path(self):
+        return f'{COLORS_TABLE_DIR}/color_table_{self.classification.name}.rst'
 
     @classmethod
     def fetch_data(cls):
@@ -1158,8 +1158,8 @@ class ColormapTable(DocTable):
 
     @property
     @final
-    def path(cls):
-        kind = cls.kind
+    def path(self):
+        kind = self.kind
         name = kind.name if isinstance(kind, ColormapKind) else kind
         return f'{COLORMAP_TABLE_DIR}/colormap_table_{name}.rst'
 
@@ -1235,7 +1235,7 @@ class ColormapTable(DocTable):
         r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
 
         img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
-        r2_deltaE = cls.generate_img_deltaE(cmap, img_path_deltaE)
+        r2_deltaE = cls.generate_img_delta_e(cmap, img_path_deltaE)
 
         # Perceptually uniform if constant delta in lightness and color
         r2_threshold = 0.99
@@ -1298,8 +1298,8 @@ class ColormapTable(DocTable):
         return ColormapTable.linear_regression(x, cumulative_abs_delta_lightness)
 
     @staticmethod
-    def generate_img_deltaE(cmap, img_path):
-        def delta_E_CIE2000(rgb):
+    def generate_img_delta_e(cmap, img_path):
+        def delta_e_cie2000(rgb):
             # Compute ΔE between adjacent colors
             import colour
 
@@ -1310,7 +1310,7 @@ class ColormapTable(DocTable):
         x = np.linspace(0.0, 1.0, cmap.N)
 
         rgb = cmap(x)[:, :3]
-        delta_e = delta_E_CIE2000(rgb)
+        delta_e = delta_e_cie2000(rgb)
         y = np.concatenate([[0], np.cumsum(delta_e)])
 
         ColormapTable.save_scatter_plot(x, y, cmap, img_path)
@@ -2898,10 +2898,10 @@ class DatasetGalleryCarousel(DocTable):
 
     @property
     @final
-    def path(cls):
-        assert isinstance(cls.name, str), 'Table name must be defined.'
-        assert cls.name.endswith('_carousel'), 'Table name must end with "_carousel".'
-        return f'{DATASET_GALLERY_DIR}/{cls.name}.rst'
+    def path(self):
+        assert isinstance(self.name, str), 'Table name must be defined.'
+        assert self.name.endswith('_carousel'), 'Table name must end with "_carousel".'
+        return f'{DATASET_GALLERY_DIR}/{self.name}.rst'
 
     @classmethod
     def fetch_data(cls):
@@ -2960,7 +2960,7 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
     name = 'all_datasets_carousel'
 
     @_classproperty
-    def doc(cls):
+    def doc(cls):  # noqa: N805
         return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
     @classmethod

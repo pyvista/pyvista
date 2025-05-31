@@ -1039,7 +1039,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
 @pytest.mark.needs_vtk_version(

@@ -3673,21 +3673,21 @@ class AxesGeometrySource:
         """Create part geometry with its length axis pointing in the +z direction."""
         resolution = 50
         if geometry == 'cylinder':
-            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+            out = pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
-            return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+            out = pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
         elif geometry == 'hemisphere':
-            return pyvista.SolidSphere(end_phi=90).extract_geometry()
+            out = pyvista.SolidSphere(end_phi=90).extract_geometry()
         elif geometry == 'cone':
-            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+            out = pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            return pyvista.Pyramid().extract_geometry()
+            out = pyvista.Pyramid().extract_geometry()
         elif geometry == 'cube':
-            return pyvista.Cube()
+            out = pyvista.Cube()
         elif geometry == 'octahedron':
             mesh = pyvista.Octahedron()
             mesh.cell_data.remove('FaceIndex')
-            return mesh
+            out = mesh
         else:
             _validation.check_contains(
                 AxesGeometrySource.GEOMETRY_TYPES,
@@ -3696,6 +3696,7 @@ class AxesGeometrySource:
             )
             msg = f"Geometry '{geometry}' is not implemented"  # pragma: no cover
             raise NotImplementedError(msg)  # pragma: no cover
+        return out
 
     @staticmethod
     def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
@@ -3852,9 +3853,9 @@ class OrthogonalPlanesSource:
         self._normal_sign = tuple(valid_sign)
 
         # Modify sources
-        for source, axis_vector, sign in zip(self.sources, np.eye(3), valid_sign):
+        for source, axis_vector, sign_ in zip(self.sources, np.eye(3), valid_sign):
             has_positive_normal = np.dot(source.normal, axis_vector) > 0
-            if has_positive_normal and sign == '-':
+            if has_positive_normal and sign_ == '-':
                 source.flip_normal()
 
     @property
