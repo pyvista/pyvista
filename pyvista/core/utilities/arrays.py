@@ -161,7 +161,7 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-_vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)
+_vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N816
 
 
 def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:

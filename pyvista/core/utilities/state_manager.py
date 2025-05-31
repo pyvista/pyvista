@@ -236,7 +236,7 @@ vtk_verbosity = _VTKVerbosity()
 _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 
 
-class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
+class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     """Context manager to control access to VTK's pythonic snake_case API.
 
     VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
