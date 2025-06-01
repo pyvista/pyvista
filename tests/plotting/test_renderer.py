@@ -249,7 +249,7 @@ LEGEND_FACES = {
 
 @pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('face', LEGEND_FACES.values(), ids=LEGEND_FACES.keys())
-def test_legend_face(face, verify_image_cache):  #
+def test_legend_face(face, verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), color='r', label='Sphere')
     pl.add_mesh(pv.Cube(), color='w', label='Cube')
