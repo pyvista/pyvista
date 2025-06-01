@@ -1703,7 +1703,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.bounds
-        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         return self.renderer.bounds
@@ -4299,10 +4304,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(block)
+                wrapped = wrap(block)
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()
+                        block_resolution = wrapped.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:
@@ -4310,7 +4315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 color = next(cycler) if multi_colors else cmap
 
                 a = self.add_volume(
-                    block,
+                    wrapped,
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
@@ -5892,7 +5897,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
         return self.add_mesh(points, style=style, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1, **kwargs) -> Actor:
+    def add_arrows(self, cent, direction, mag=1.0, **kwargs) -> Actor:
         """Add arrows to the plotter.
 
         Parameters

@@ -557,9 +557,9 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
     for i, block in enumerate(multi_copy):
         assert pv.is_pyvista_dataset(block) or block is None
         if isinstance(multi[i], MultiBlock):
-            assert (multi[i] is multi_copy[i]) != recursive
+            assert (multi[i] is block) != recursive
         else:
-            assert multi_copy[i] is multi[i]
+            assert block is multi[i]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -1161,8 +1161,7 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
     [('prepend', '//', 'data', 'Block-00//data'), ('preserve', '::', 'data', 'data')],
 )
 def test_move_nested_field_data_to_root(copy, field_data_mode, separator, name_in, name_out):
-    # https://github.com/pyvista/pyvista/pull/7538
-    value = np.array([42])
+    value = [42]
     multi = pv.MultiBlock()
     multi.field_data[name_in] = value
     root = pv.MultiBlock([multi])

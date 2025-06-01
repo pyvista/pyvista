@@ -1646,7 +1646,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms):
-                alg.SetSourceData(index, subgeom)
+                alg.SetSourceData(index, subgeom)  # type: ignore[call-overload]
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -3124,7 +3124,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
-    def streamlines_evenly_spaced_2D(  # type: ignore[misc]
+    def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
         vectors: str | None = None,
         start_position: VectorLike[float] | None = None,
@@ -5252,8 +5252,8 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
-            for grid in grids:
-                append_filter.AddInputData(grid)
+            for grid_ in grids:
+                append_filter.AddInputData(grid_)
 
         if main_has_priority:
             append_filter.AddInputData(self)
@@ -6258,7 +6258,7 @@ class DataSetFilters(DataObjectFilters):
             else:
                 matrix = cast('NumpyArray[float]', matrix)
                 inverse_matrix = cast('NumpyArray[float]', inverse_matrix)
-                axes = matrix[:3, :3]  # principal axes
+                axes = matrix[:3, :3]  # type: ignore[assignment]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box
@@ -7027,7 +7027,7 @@ class DataSetFilters(DataObjectFilters):
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
                         msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
-                        raise ValueError(msg)
+                        raise TypeError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast('list[list[float]]', cmap.colors)
                     if color_type == 'float_rgb':
@@ -7068,7 +7068,7 @@ class DataSetFilters(DataObjectFilters):
                 keys_ = np.arange(n_colors)
                 values_ = color_rgb_sequence
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))  # type: ignore[assignment]
                     values_.extend(values_[::-1])
                 keys = keys_
                 values = values_

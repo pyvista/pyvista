@@ -74,8 +74,8 @@ opacity = [0, 0.2, 0.9, 0.6, 0.3]
 # %%
 # When given a minimized opacity mapping like that above, PyVista interpolates
 # it across a range of how many colors are shown when mapping the scalars.
-# If ``scipy`` is available, then a quadratic interpolation is used -
-# otherwise, a simple linear interpolation is used.
+# Linear interpolation is used by default, but other kinds of interpolation
+# can be used if ``scipy`` is available.
 # Curious what that opacity transfer function looks like? You can fetch it:
 
 # Have PyVista interpolate the transfer function
