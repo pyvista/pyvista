@@ -118,7 +118,7 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     for index1, quad1 in enumerate(quadruplets):
         I, p1, q1, r1 = quad1
         for index2, quad2 in enumerate(quadruplets[index1:]):
-            index2 = index2 + index1
+            index2 = index2 + index1  # noqa: PLW2901
             J, p2, q2, r2 = quad2
             G[index1, index2] = (
                 cijkl[I, 1 - 1, J, 1 - 1]
@@ -183,8 +183,8 @@ omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
 # expected values from (Bernard 2014, p.14),
 # error depends on polynomial order ``N``
-expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])
-computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thresh=1, decimals=1)
+expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])  # noqa: N816
+computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thresh=1, decimals=1)  # noqa: N816
 print('found the following first unique eigenfrequencies:')
 for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
     error = np.abs(freq2 - freq1) / freq1 * 100.0

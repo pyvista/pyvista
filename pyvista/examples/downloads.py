@@ -137,13 +137,12 @@ def file_from_files(target_path, fnames):
     found_fnames = []
     for fname in fnames:
         # always convert windows paths
-        if os.name == 'nt':  # pragma: no cover
-            fname = PureWindowsPath(fname).as_posix()
+        posix_fname = PureWindowsPath(fname).as_posix() if os.name == 'nt' else fname
         # ignore mac hidden directories
-        if '/__MACOSX/' in fname:
+        if '/__MACOSX/' in posix_fname:
             continue
-        if fname.endswith(target_path):
-            found_fnames.append(fname)
+        if posix_fname.endswith(target_path):
+            found_fnames.append(posix_fname)
 
     if len(found_fnames) == 1:
         return found_fnames[0]

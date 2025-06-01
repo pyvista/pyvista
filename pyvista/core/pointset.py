@@ -834,7 +834,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             # These properties can be supplied as either arrays or pre-constructed `CellArray`s
             if not isinstance(v, _vtk.vtkCellArray):
                 try:
-                    v = CellArray(v)
+                    v = CellArray(v)  # noqa: PLW2901
                 except CellSizeError as err:
                     # Raise an additional error so user knows which property triggered the error
                     msg = f'`{k}` cell array size is invalid.'
@@ -1650,7 +1650,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.cell_normals
 
     @property
-    def obbTree(self):  # numpydoc ignore=RT01
+    def obbTree(self):  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
         An obbTree is an object to generate oriented bounding box (OBB)
@@ -3421,19 +3421,19 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.hide_cells(range(80, 120))
         >>> grid.bounds
-        BoundsTuple(x_min =  0.0
-                    x_max = 80.0
-                    y_min =  0.0
-                    y_max = 50.0
-                    z_min =  0.0
+        BoundsTuple(x_min =  0.0,
+                    x_max = 80.0,
+                    y_min =  0.0,
+                    y_max = 50.0,
+                    z_min =  0.0,
                     z_max =  6.0)
 
         >>> grid.visible_bounds
-        BoundsTuple(x_min =  0.0
-                    x_max = 80.0
-                    y_min =  0.0
-                    y_max = 50.0
-                    z_min =  0.0
+        BoundsTuple(x_min =  0.0,
+                    x_max = 80.0,
+                    y_min =  0.0,
+                    y_max = 50.0,
+                    z_min =  0.0,
                     z_max =  4.0)
 
         """

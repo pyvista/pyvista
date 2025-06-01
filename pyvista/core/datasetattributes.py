@@ -165,7 +165,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             lines = []
             for i, (name, array) in enumerate(self.items()):
                 if len(name) > 23:
-                    name = f'{name[:20]}...'
+                    name = f'{name[:20]}...'  # noqa: PLW2901
                 try:
                     arr_type = attr_type[self.IsArrayAnAttribute(i)]
                 except (IndexError, TypeError, AttributeError):  # pragma: no cover
