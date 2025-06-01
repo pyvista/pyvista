@@ -116,7 +116,8 @@ plt.show()
 # dimensionality of structured grid including:
 #
 # * manually counting the nodes along the edges of the pointset
-# * using a technique like principle component analysis to strip the rotation from the dataset and count the unique values along each axis for the new;y projected dataset.
+# * using a technique like principle component analysis to strip the rotation from the
+#   dataset and count the unique values along each axis for the new y-projected dataset.
 
 # Once you've figured out your grid's dimensions, simple create the
 # :class:`pyvista.StructuredGrid` as follows:

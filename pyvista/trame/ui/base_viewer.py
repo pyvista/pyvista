@@ -232,7 +232,8 @@ class BaseViewer:
                 renderer.hide_axes()
         for view in self._html_views:
             if view.set_widgets:
-                # VtkRemoteView does not have set_widgets function, but VtkRemoteLocalView and VtkLocalView do.
+                # VtkRemoteView does not have set_widgets function, but
+                # VtkRemoteLocalView and VtkLocalView do.
                 view.set_widgets(
                     [
                         ren.axes_widget

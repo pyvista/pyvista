@@ -90,7 +90,10 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
                         args = get_args(literal)
                         if len(args) >= 1:
                             return args
-        msg = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+        msg = (
+            'Type argument for subclasses must be a single non-empty Literal with all state '
+            'options provided.'
+        )
         raise TypeError(msg)
 
     def __init__(self) -> None:

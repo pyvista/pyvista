@@ -97,16 +97,20 @@ class CompositeFilters(DataObjectFilters):
         >>> unstructured = examples.load_tetbeam()
         >>> multi = pv.MultiBlock([volume, poly, unstructured])
 
-        >>> type(multi[0]), type(multi[1]), type(multi[2])
-        (<class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+        >>> [type(block) for block in multi]  # doctest: +NORMALIZE_WHITESPACE
+        [<class 'pyvista.core.grid.ImageData'>,
+         <class 'pyvista.core.pointset.PolyData'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>]
 
         Use the generic filter to apply :meth:`~pyvista.DataSet.cast_to_unstructured_grid`
         to all blocks.
 
         >>> filtered = multi.generic_filter('cast_to_unstructured_grid')
 
-        >>> type(filtered[0]), type(filtered[1]), type(filtered[2])
-        (<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+        >>> [type(block) for block in filtered]  # doctest: +NORMALIZE_WHITESPACE
+        [<class 'pyvista.core.pointset.UnstructuredGrid'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>]
 
         Use the :meth:`~pyvista.DataSetFilters.partition` filter on all blocks.
         Any arguments can be specified as though the filter is being used directly.
@@ -142,7 +146,8 @@ class CompositeFilters(DataObjectFilters):
         :class:`~pyvista.ImageData`.
 
         >>> multi.generic_filter('resample', 0.5)  # doctest:+SKIP
-        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type PolyData.
+        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with
+        name 'Block-01' and type PolyData.
 
         Use a custom function instead to apply the generic filter conditionally. Here we
         filter the image blocks but simply pass-through a copy of any other blocks.
@@ -189,7 +194,8 @@ class CompositeFilters(DataObjectFilters):
                     index = _format_nested_index(ids)
                 msg = (
                     f"The filter '{func_name}'\n"
-                    f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                    f'could not be applied to the{nested}block at index {index} with '
+                    f"name '{name_}' and type {obj_name}."
                 )
                 raise RuntimeError(msg) from e
             return output_

@@ -51,7 +51,8 @@ mesh.get_cell(0).type
 # mesh that has an i-j-k ordering that allows for simplified
 # cell connectivity.
 #
-# The points are generated as a regular grid in spherical coordinates using  :func:`pyvista.spherical_to_cartesian`.
+# The points are generated as a regular grid in spherical coordinates using
+# :func:`pyvista.spherical_to_cartesian`.
 # Here, we will used the convention that ``theta`` is the
 # azimuthal angle, similar to longitude on the globe.  ``phi`` is the
 # polar angle, similar to latitude on the globe.
@@ -135,8 +136,8 @@ phi = phi[1:-1]
 nphi -= 2
 
 # %%
-# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for points in the ``(N, 3)``
-# format required by PyVista.  Note that this method results in
+# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for
+# points in the ``(N, 3)`` format required by PyVista.  Note that this method results in
 # the theta variable changing the fastest.
 
 r_, phi_, theta_ = np.meshgrid([radius], phi, theta, indexing='ij')

@@ -57,7 +57,8 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.',
+    message='Matplotlib is currently using agg, which is a non-GUI backend, '
+    'so cannot show the figure.',
 )
 
 # Prevent deprecated features from being used in examples
@@ -86,7 +87,7 @@ extensions = [
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
+    'sphinx.ext.linkcode',  # Adds [Source] button to each API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
@@ -647,7 +648,8 @@ latex_documents = [
 
 # -- Options for gettext output -------------------------------------------
 
-# To specify names to enable gettext extracting and translation applying for i18n additionally. You can specify below names:
+# To specify names to enable gettext extracting and translation applying for i18n additionally.
+# You can specify below names:
 gettext_additional_targets = ['raw']
 
 # -- Options for manual page output ---------------------------------------
@@ -677,7 +679,7 @@ texinfo_documents = [
 # -- Custom 404 page
 
 notfound_context = {
-    'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
+    'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',  # noqa: E501
 }
 notfound_urls_prefix = None
 

@@ -46,7 +46,11 @@ def _padded_bins(mesh, density):
 
 
 def voxelize(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+    mesh,
+    density=None,
+    check_surface: bool = True,
+    enclosed: bool = False,
+    fit_bounds: bool = False,
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -185,8 +189,8 @@ def voxelize(
             z = np.arange(z_min, z_max, density_z)
 
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
-    # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
-    # see https://github.com/pyvista/pyvista/pull/4365
+    # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering,
+    # not y-x-z ordering, see https://github.com/pyvista/pyvista/pull/4365
 
     # Create unstructured grid from the structured grid
     grid = pyvista.StructuredGrid(x, y, z)
@@ -215,7 +219,11 @@ def voxelize(
 
 
 def voxelize_volume(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+    mesh,
+    density=None,
+    check_surface: bool = True,
+    enclosed: bool = False,
+    fit_bounds: bool = False,
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 

@@ -32,7 +32,8 @@ if TYPE_CHECKING:
 class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
-    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+    This is an annotation object that manages four text actors / mappers to provide
+    annotation in the four corners of a viewport.
 
     Parameters
     ----------
@@ -265,8 +266,9 @@ class Label(_Prop3DMixin, Text):
     In addition, this class supports an additional :attr:`relative_position` attribute.
     In general, it is recommended to simply use :attr:`~pyvista.Prop3D.position` when positioning a
     :class:`Label` by itself. However, if the position of the label depends on the
-    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and :attr:`relative_position`
-    may be used together. In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
+    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and
+    :attr:`relative_position` may be used together.
+    In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
     should be kept in-sync. See the examples below.
 
     Parameters

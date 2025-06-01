@@ -86,6 +86,7 @@ def test_failure_to_find():
     module = importlib.import_module('pyvista.utilities')
     with pytest.raises(
         AttributeError,
-        match=r'Module `pyvista\.utilities` has been deprecated and we could not automatically find',
+        match=r'Module `pyvista\.utilities` has been deprecated '
+        r'and we could not automatically find',
     ):
         _ = module.this_does_not_exist

@@ -106,7 +106,7 @@ def pv_html_page_context(
     context,
     doctree,
 ) -> None:  # pragma: no cover
-    """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
+    """Add a function for returning an "edit this page" link pointing to `main`.
 
     This is specific to PyVista to ensure that the "edit this page" link always
     goes to the right page, specifically for:

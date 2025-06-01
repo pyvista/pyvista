@@ -472,7 +472,8 @@ def plot_datasets(dataset_type=None):
     ]
     if dataset_type is not None and dataset_type not in allowable_types:
         msg = (
-            f'Invalid dataset_type {dataset_type}.  Must be one of the following: {allowable_types}'
+            f'Invalid dataset_type {dataset_type}.  '
+            f'Must be one of the following: {allowable_types}'
         )
         raise ValueError(msg)
 

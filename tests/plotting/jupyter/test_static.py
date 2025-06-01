@@ -30,7 +30,9 @@ def test_validate_jupyter_backend_raises(mocker: MockerFixture):
 
     m = mocker.patch.object(jupyter, 'importlib')
     m.util.find_spec.return_value = False
-    with pytest.raises(ImportError, match='Install IPython to display with pyvista in a notebook.'):
+    with pytest.raises(
+        ImportError, match='Install IPython to display with pyvista in a notebook.'
+    ):
         _validate_jupyter_backend('foo')
 
 

@@ -435,7 +435,10 @@ def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
 
     assert point_voxel_image.n_points == cell_voxel_image.n_cells
     assert cell_voxel_image.active_scalars_name == active_scalars
-    assert set(cell_voxel_image.array_names) == {'Spatial Point Data', 'Spatial Point Data2'}
+    assert set(cell_voxel_image.array_names) == {
+        'Spatial Point Data',
+        'Spatial Point Data2',
+    }
     assert np.array_equal(point_voxel_points, cell_voxel_center_points)
     assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
     assert cell_voxel_image.point_data.keys() == []
@@ -464,7 +467,10 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
 
     assert cell_voxel_image.n_cells == point_voxel_image.n_points
     assert cell_voxel_image.active_scalars_name == active_scalars
-    assert set(point_voxel_image.array_names) == {'Spatial Cell Data', 'Spatial Cell Data2'}
+    assert set(point_voxel_image.array_names) == {
+        'Spatial Cell Data',
+        'Spatial Cell Data2',
+    }
     assert np.array_equal(cell_voxel_center_points, point_voxel_points)
     assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
     assert point_voxel_image.cell_data.keys() == []
@@ -483,7 +489,9 @@ def test_points_to_cells_scalars(uniform):
     assert converted.active_scalars_name == scalars
     assert converted.cell_data.keys() == [scalars]
 
-    match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    match = (
+        "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    )
     with pytest.raises(ValueError, match=match):
         uniform.points_to_cells('Spatial Cell Data')
 
@@ -531,25 +539,73 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert zero_dimensionality_image.points_to_cells(
         dimensionality=(False, False, False)
     ).dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality=0).dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality=1).dimensions == (2, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality=2).dimensions == (2, 2, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality=3).dimensions == (2, 2, 2)
-    assert zero_dimensionality_image.cells_to_points(dimensionality=0).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=0).dimensions == (
+        1,
+        1,
+        1,
+    )
+    assert zero_dimensionality_image.points_to_cells(dimensionality=1).dimensions == (
+        2,
+        1,
+        1,
+    )
+    assert zero_dimensionality_image.points_to_cells(dimensionality=2).dimensions == (
+        2,
+        2,
+        1,
+    )
+    assert zero_dimensionality_image.points_to_cells(dimensionality=3).dimensions == (
+        2,
+        2,
+        2,
+    )
+    assert zero_dimensionality_image.cells_to_points(dimensionality=0).dimensions == (
+        1,
+        1,
+        1,
+    )
 
     assert one_dimensionality_image.dimensions == (1, 2, 1)
-    assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
-    assert one_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 3, 1)
-    assert one_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 3, 2)
-    assert one_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (
+        1,
+        3,
+        1,
+    )
+    assert one_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (
+        2,
+        3,
+        1,
+    )
+    assert one_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (
+        2,
+        3,
+        2,
+    )
+    assert one_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (
+        1,
+        1,
+        1,
+    )
     assert one_dimensionality_image.points_to_cells(dimensionality='1D').cells_to_points(
         dimensionality='1D'
     ).dimensions == (1, 2, 1)
 
     assert two_dimensionality_image.dimensions == (2, 1, 2)
-    assert two_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (3, 1, 3)
-    assert two_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 2, 3)
-    assert two_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (
+        3,
+        1,
+        3,
+    )
+    assert two_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (
+        3,
+        2,
+        3,
+    )
+    assert two_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (
+        1,
+        1,
+        1,
+    )
     assert two_dimensionality_image.points_to_cells(dimensionality='2D').cells_to_points(
         dimensionality='2D'
     ).dimensions == (2, 1, 2)
@@ -579,16 +635,18 @@ def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
     with pytest.raises(
         ValueError,
         match=(
-            r'Cannot re-mesh points to cells. The dimensions of the input \(1, 2, 2\) is not compatible'
-            r' with the dimensions of the output \(2, 2, 2\) and would require to map 4 points on 1 cells.'
+            r'Cannot re-mesh points to cells. The dimensions of the input \(1, 2, 2\) '
+            r'is not compatible with the dimensions of the output \(2, 2, 2\) '
+            r'and would require to map 4 points on 1 cells.'
         ),
     ):
         image.points_to_cells(dimensionality=[True, False, False])
     with pytest.raises(
         ValueError,
         match=(
-            r'Cannot re-mesh cells to points. The dimensions of the input \(1, 2, 2\) is not compatible'
-            r' with the dimensions of the output \(1, 2, 2\) and would require to map 1 cells on 4 points.'
+            r'Cannot re-mesh cells to points. The dimensions of the input \(1, 2, 2\) '
+            r'is not compatible with the dimensions of the output \(1, 2, 2\) '
+            r'and would require to map 1 cells on 4 points.'
         ),
     ):
         image.cells_to_points(dimensionality='2D')
@@ -789,29 +847,44 @@ def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
     with pytest.raises(TypeError, match=match):
         zero_dimensionality_image.pad_image(pad_size=1.0)
 
-    match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    match = (
+        "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    )
     with pytest.raises(ValueError, match=match):
         uniform.pad_image(scalars='Spatial Cell Data')
 
-    match = "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array ImageFile."
+    match = (
+        "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of "
+        'array ImageFile.'
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         beach.pad_image(0.1)
 
-    match = "Invalid pad value foo. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
+    match = (
+        "Invalid pad value foo. Must be 'mirror' or 'wrap', or a number/component vector "
+        'for constant padding.'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         beach.pad_image('foo')
 
-    match = "Invalid pad value [[2]]. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
+    match = (
+        "Invalid pad value [[2]]. Must be 'mirror' or 'wrap', or a number/component vector "
+        'for constant padding.'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         beach.pad_image([[2]])
 
-    match = "Number of components (2) in pad value (0, 0) must match the number components (3) in array 'ImageFile'."
+    match = (
+        'Number of components (2) in pad value (0, 0) must match the number components (3) '
+        "in array 'ImageFile'."
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         beach.pad_image((0, 0))
 
     beach['single'] = range(beach.n_points)  # Create data with varying num array components
     match = (
-        "Cannot pad array 'single' with value (0, 0, 0). Number of components (1) in 'single' must match the number of components (3) in value."
+        "Cannot pad array 'single' with value (0, 0, 0). Number of components (1) in 'single' "
+        'must match the number of components (3) in value.'
         '\nTry setting `pad_all_scalars=False` or update the array.'
     )
     beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=False)
@@ -999,7 +1072,8 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='invalid')
     with pytest.raises(
-        ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
+        ValueError,
+        match='`point_seeds` must be specified when `extraction_mode="seeded"`.',
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
     match = re.escape(
@@ -1008,7 +1082,8 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
     with pytest.raises(ValueError, match=match):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
-        ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'
+        ValueError,
+        match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".',
     ):
         _ = segmented_grid.label_connectivity(label_mode='invalid')
     with pytest.raises(
@@ -1029,7 +1104,13 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
 
 
 @pytest.mark.parametrize(
-    ('image_dims', 'operation_mask', 'operator', 'expected_dims_mask', 'expected_dims_result'),
+    (
+        'image_dims',
+        'operation_mask',
+        'operator',
+        'expected_dims_mask',
+        'expected_dims_result',
+    ),
     [
         ((1, 1, 1), (True, True, True), operator.add, True, (2, 4, 6)),
         ((1, 1, 1), (False, False, False), operator.add, False, (1, 1, 1)),
@@ -1064,7 +1145,8 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            '`invalid` is not a valid `operation_mask`. Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+            '`invalid` is not a valid `operation_mask`. Use one of '
+            '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
         ),
         (
             (1, 1, 1),
@@ -1085,21 +1167,24 @@ def test_validate_dim_operation(
             '1D',
             operator.add,
             ValueError,
-            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
+            'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
         ),
         (
             (2, 1, 2),
             '3D',
             operator.sub,
             ValueError,
-            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
+            'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
         ),
         (
             (1, 2, 5),
             (True, False, True),
             operator.sub,
             ValueError,
-            'The mask (True, False, True), size [1 3 5], and operation sub would result in [0 2 0] which contains <= 0 dimensions.',
+            'The mask (True, False, True), size [1 3 5], and operation sub would result in '
+            '[0 2 0] which contains <= 0 dimensions.',
         ),
     ],
 )

@@ -51,7 +51,13 @@ def simulate(pointa, pointb):
         pointb=pointb,
         integration_direction='forward',
     )
-    p.add_mesh(streamlines, name='streamlines', line_width=5, render_lines_as_tubes=True, clim=clim)
+    p.add_mesh(
+        streamlines,
+        name='streamlines',
+        line_width=5,
+        render_lines_as_tubes=True,
+        clim=clim,
+    )
 
 
 p.add_line_widget(callback=simulate, use_vertices=True)

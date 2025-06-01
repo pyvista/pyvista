@@ -419,7 +419,11 @@ def test_widget_radio_button_click(uniform):
     size = 50
     position = (10.0, 10.0)
     b = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=False, size=size, position=position
+        callback=func,
+        radio_button_group='group',
+        value=False,
+        size=size,
+        position=position,
     )
     p.show(auto_close=False)
     # Test switching logic
@@ -462,7 +466,11 @@ def test_widget_radio_button_multiple_switch(uniform):
     b1_position = (10.0, 10.0)
     b2_position = (10.0, 70.0)
     b1 = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=True, size=size, position=b1_position
+        callback=func,
+        radio_button_group='group',
+        value=True,
+        size=size,
+        position=b1_position,
     )
     b2 = p.add_radio_button_widget(
         callback=func, radio_button_group='group', size=size, position=b2_position
@@ -750,7 +758,11 @@ def test_affine_widget(sphere):
 
     # test change axes
     axes = np.array(
-        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]],
+        [
+            [0.70710678, 0.70710678, 0.0],
+            [-0.70710678, 0.70710678, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
     )
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
@@ -827,7 +839,9 @@ def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_opacity=outline_opacity)
+    plane_widget = p.add_plane_widget(
+        callback=func, implicit=True, outline_opacity=outline_opacity
+    )
     assert plane_widget.GetOutlineProperty().GetOpacity() == float(outline_opacity)
     p.close()
 

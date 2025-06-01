@@ -127,7 +127,9 @@ def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
     pl = pv.Plotter()
     with pytest.raises(
         TypeError,
-        match=re.escape('Smooth shading is not currently supported when a vtkAlgorithm is passed.'),
+        match=re.escape(
+            'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
+        ),
     ):
         pl.add_mesh('foo', smooth_shading=True)
 
@@ -164,7 +166,8 @@ def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
 def test_plotter_add_volume_scalar_raises():
     pl = pv.Plotter()
     match = re.escape(
-        '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
+        '`scalar` is an invalid keyword argument for `add_mesh`. '
+        'Perhaps you mean `scalars` with an s?'
     )
     with pytest.raises(TypeError, match=match):
         pl.add_volume(pv.Sphere(), scalar='foo')
@@ -188,7 +191,8 @@ def test_plotter_add_volume_mapper_raises():
     im = pv.ImageData(dimensions=(10, 10, 10))
     im.point_data['foo'] = 1
     match = re.escape(
-        'Mapper (foo) unknown. Available volume mappers include: fixed_point, gpu, open_gl, smart, ugrid'
+        'Mapper (foo) unknown. Available volume mappers include: '
+        'fixed_point, gpu, open_gl, smart, ugrid'
     )
     with pytest.raises(TypeError, match=match):
         pl.add_volume(im, mapper='foo')
@@ -340,7 +344,8 @@ def test_save_graphic_raises():
 
     pl = pv.Plotter()
     match = re.escape(
-        'Extension (.not_supported) is an invalid choice.\n\nValid options include: .svg, .eps, .ps, .pdf, .tex'
+        'Extension (.not_supported) is an invalid choice.\n\nValid options include: '
+        '.svg, .eps, .ps, .pdf, .tex'
     )
     with pytest.raises(ValueError, match=match):
         pl.save_graphic(filename='foo.not_supported')
@@ -351,7 +356,8 @@ def test_add_background_image_raises():
     pl.add_background_image(pv.examples.mapfile)
 
     match = re.escape(
-        'A background image already exists.  Remove it with ``remove_background_image`` before adding one'
+        'A background image already exists.  Remove it with ``remove_background_image`` '
+        'before adding one'
     )
     with pytest.raises(RuntimeError, match=match):
         pl.add_background_image(pv.examples.mapfile)
@@ -529,7 +535,7 @@ def test_remove_scalars_single(sphere, hexbeam):
 
 
 def test_active_scalars_remain(sphere, hexbeam):
-    """Ensure active scalars remain active despite plotting different scalars when copy_mesh=True."""
+    # Ensure active scalars remain active despite plotting different scalars when copy_mesh=True.
     sphere.clear_data()
     hexbeam.clear_data()
     point_data_name = 'point_data'

@@ -9,7 +9,10 @@ import pytest
 
 from doc.source.make_tables import _COLORMAP_INFO
 
-CMAP_SET_MISMATCH_ERROR_MSG = 'Colormaps in documentation differ from colormaps available. The colormap table should be updated.'
+CMAP_SET_MISMATCH_ERROR_MSG = (
+    'Colormaps in documentation differ from colormaps available. '
+    'The colormap table should be updated.'
+)
 DUPLICATE_CMAP_ERROR_MSG = 'Duplicate colormaps exist in the documentation.'
 
 
