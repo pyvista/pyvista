@@ -129,16 +129,22 @@ def make_legend_face(face) -> PolyData:
     """
 
     def normalize(poly):
-        # Normalize so max bounds are [-0.5, 0.5] along any axis
-        bnds = poly.bounds
+        norm_poly = poly.copy()  # Avoid mutating input
+
+        # Center data
+        norm_poly.points -= np.array(norm_poly.center)
+
+        # Scale so max bounds are [-0.5, 0.5] along x and y axes
+        bnds = norm_poly.bounds
         size = np.array((bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min))
         size[size < 1e-8] = 1  # Avoid division by zero
-        poly.points -= np.array(poly.center)
         max_xy_size = max(size[0:2])
-        poly.scale(1 / max_xy_size, inplace=True)
+        norm_poly.scale(1 / max_xy_size, inplace=True)
+
+        # Add final offset to align the symbol with the adjacent text
         y_offset = 0.6  # determined experimentally
-        poly.points += (0, y_offset, 0)
-        return poly
+        norm_poly.points += (0, y_offset, 0)
+        return norm_poly
 
     if face is None or face == 'none':
         legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
