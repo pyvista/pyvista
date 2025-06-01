@@ -5469,7 +5469,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
 
         if fill_value is not None:
-            zval[self._image_depth_null] = fill_value
+            zval[self._image_depth_null] = fill_value  # type:ignore[index]
 
         return zval
 
