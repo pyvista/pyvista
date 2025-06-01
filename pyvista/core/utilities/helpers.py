@@ -91,7 +91,7 @@ def wrap(dataset: Trimesh) -> PolyData: ...
 # TODO: Support meshio overload
 # @overload
 # def wrap(dataset: Mesh) -> UnstructuredGrid: ...
-def wrap(
+def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
     | Trimesh

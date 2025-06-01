@@ -4019,9 +4019,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is not None:
-                    vtk_object = make_legend_face(face)
-                self._legend.SetEntry(i, vtk_object, text, list(color.float_rgb))
+                vtk_object_input = make_legend_face(face) if face is not None else vtk_object
+                self._legend.SetEntry(i, vtk_object_input, text, list(color.float_rgb))
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
