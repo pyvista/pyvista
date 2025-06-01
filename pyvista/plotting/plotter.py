@@ -66,6 +66,7 @@ from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Renderer
+from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
 from .text import CornerAnnotation
@@ -3911,16 +3912,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
         ):
             # Using only the first geometry
-            geom = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
+            geom: str | pyvista.PolyData = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
         else:
-            geom = pyvista.Triangle()
-            if scalars is not None:
-                geom = pyvista.Box()
+            geom = 'triangle' if scalars is None else 'rectangle'
 
-        geom.points -= geom.center  # type: ignore[misc]
+        poly = make_legend_face(geom)
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = (geom, label, color)
+        self.renderer._labels[addr] = (poly, label, color)
 
     def add_volume(
         self,
