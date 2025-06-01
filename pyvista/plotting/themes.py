@@ -3463,7 +3463,6 @@ class _TestingTheme(Theme):
         self.axes.show = False
         self.return_cpos = False
         self.resample_environment_texture = True
-        # self.volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
 
 
 class _NATIVE_THEMES(Enum):
