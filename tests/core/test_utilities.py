@@ -844,7 +844,7 @@ def test_merge(sphere, cube, datasets):
     # check unstructured
     merged_ugrid = pv.merge(datasets, merge_points=False)
     assert isinstance(merged_ugrid, pv.UnstructuredGrid)
-    assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
+    assert merged_ugrid.n_points == sum(ds.n_points for ds in datasets)
     # check main has priority
     sphere_a = sphere.copy()
     sphere_b = sphere.copy()
@@ -2444,7 +2444,7 @@ def test_is_vtk_attribute_input_type(obj):
     assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
 
 
-def test_deprecate_positional_args():
+def test_deprecate_positional_args_one_arg():
     @_deprecate_positional_args(version=(0, 50))
     def foo(bar): ...
 
@@ -2455,6 +2455,8 @@ def test_deprecate_positional_args():
     with pytest.warns(FutureWarning, match=match):
         foo(True)
 
+
+def test_deprecate_positional_args_many_args():
     @_deprecate_positional_args(version=(1, 2))
     def foo(bar, baz): ...
 
@@ -2464,3 +2466,22 @@ def test_deprecate_positional_args():
     )
     with pytest.warns(FutureWarning, match=match):
         foo(True, True)
+
+
+def test_deprecate_positional_args_allowed():
+    @_deprecate_positional_args(allowed=['bar'])
+    def foo(bar): ...
+
+    foo(True)
+
+
+def test_deprecate_positional_args_max_allowed():
+    @_deprecate_positional_args(allowed=['bar', 'baz', 'qux', 'ham', 'eggs', 'cats'])
+    def foo(bar, baz, qux, ham, eggs, cats): ...
+
+    match = (
+        'A maximum of 5 positional arguments are allowed. '
+        "Got 6:\n['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        foo(True, True, True, True, True, True)

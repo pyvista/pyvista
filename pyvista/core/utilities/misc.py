@@ -23,6 +23,7 @@ from pyvista._version import version_info
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import Callable
     from typing import ClassVar
 
     from pyvista._typing_core import ArrayLike
@@ -386,15 +387,25 @@ class _NameMixin:
         self._name = str(value)
 
 
-def _deprecate_positional_args(func=None, *, version: tuple[int, int]):  # noqa: ANN001, ANN202
+def _deprecate_positional_args(
+    func: Callable[..., Any] | None = None,
+    *,
+    version: tuple[int, int] = (0, 50),
+    allowed: list[str] | None = None,
+)-> Callable[..., Any]:
     """Use a decorator to deprecate positional arguments.
 
     Parameters
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : tuple[int, int]
+
+    version : tuple[int, int], default: (0, 50)
         The version (major, minor) when positional arguments will result in RuntimeError.
+
+    allowed : list[str], optional
+        List of argument names which are allowed to be positional. A maximum of 5 arguments
+        may be listed (as per ruff rule PLR0917).
 
     """
 
@@ -407,29 +418,45 @@ def _deprecate_positional_args(func=None, *, version: tuple[int, int]):  # noqa:
 
         @wraps(f)
         def inner_f(*args, **kwargs):  # noqa: ANN202
+            max_n_positional = 5
+            n_positional = len(not_kwonly)
+            if n_positional > max_n_positional:
+                msg = (
+                    f'A maximum of {max_n_positional} positional arguments are allowed. '
+                    f'Got {n_positional}:\n{not_kwonly}'
+                )
+                raise RuntimeError(msg)
             if not_kwonly:
+                # Check for allowed positional args
+                not_kwonly_and_not_allowed = not_kwonly.copy()
+                if allowed is not None:
+                    for name in allowed:
+                        if name in not_kwonly:
+                            not_kwonly_and_not_allowed.remove(name)
+
                 arg_names = ', '.join(f'{arg!r}' for arg in not_kwonly)
-                if len(not_kwonly) == 1:
-                    a = ' a '
-                    s = ''
-                    this = 'this'
-                else:
-                    a = ' '
-                    s = 's'
-                    this = 'these'
-                if version_info < version:
-                    version_str = '.'.join([str(v) for v in version])
-                    warnings.warn(
-                        (
-                            f'Argument{s} {arg_names} must be passed as{a}keyword argument{s}.\n'
-                            f'From version {version_str}, passing {this} as{a}positional argument{s} '
-                            'will result in a RuntimeError.'
-                        ),
-                        FutureWarning,
-                    )
-                else:
-                    msg = f'Argument{s} must be passed as{a}keyword argument{s}.'
-                    raise RuntimeError(msg)
+                if not_kwonly_and_not_allowed:
+                    if len(not_kwonly_and_not_allowed) == 1:
+                        a = ' a '
+                        s = ''
+                        this = 'this'
+                    else:
+                        a = ' '
+                        s = 's'
+                        this = 'these'
+                    if version_info < version:
+                        version_str = '.'.join([str(v) for v in version])
+                        warnings.warn(
+                            (
+                                f'Argument{s} {arg_names} must be passed as{a}keyword argument{s}.\n'
+                                f'From version {version_str}, passing {this} as{a}positional argument{s} '
+                                'will result in a RuntimeError.'
+                            ),
+                            FutureWarning,
+                        )
+                    else:
+                        msg = f'Argument{s} must be passed as{a}keyword argument{s}.'
+                        raise RuntimeError(msg)
             return f(*args, **kwargs)
 
         return inner_f
