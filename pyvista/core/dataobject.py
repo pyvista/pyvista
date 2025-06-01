@@ -767,7 +767,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         """
         self.CopyAttributes(dataset)
 
-    def __getstate__(  # type: ignore[return]
+    def __getstate__(  # type: ignore[return]  # noqa: RET503
         self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
@@ -777,7 +777,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         elif pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
         # Invalid format, use the setter to raise an error
-        pyvista.set_pickle_format(pickle_format)  # noqa:  RET503
+        pyvista.set_pickle_format(pickle_format)
 
     def _serialize_vtk_pickle_format(
         self: Self,

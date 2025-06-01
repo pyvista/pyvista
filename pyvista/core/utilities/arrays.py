@@ -379,7 +379,7 @@ def get_array(
         parr = point_array(mesh, name)
         carr = cell_array(mesh, name)
         farr = field_array(mesh, name)
-        if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if sum(array is not None for array in (parr, carr, farr)) > 1:
             if preference_ == FieldAssociation.CELL:
                 out = carr
             elif preference_ == FieldAssociation.POINT:

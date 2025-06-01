@@ -345,7 +345,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         return self.to_image().active_scalars.reshape(
-            list(self.dimensions)[::-1] + [self.n_components],
+            [*list(self.dimensions)[::-1], self.n_components]
         )[::-1]
 
     def rotate_cw(self) -> Texture:

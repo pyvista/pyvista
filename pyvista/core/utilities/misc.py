@@ -392,7 +392,7 @@ def _deprecate_positional_args(
     *,
     version: tuple[int, int] = (0, 50),
     allowed: list[str] | None = None,
-)-> Callable[..., Any]:
+) -> Callable[..., Any]:
     """Use a decorator to deprecate positional arguments.
 
     Parameters

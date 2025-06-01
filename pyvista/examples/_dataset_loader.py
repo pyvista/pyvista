@@ -28,7 +28,7 @@ downloading, reading, and processing files with a generic mapping:
 
 """
 
-# ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+# ruff: noqa: PTH112, PTH113, PTH117, PTH118, PTH202
 # mypy: disable-error-code="redundant-expr"
 from __future__ import annotations
 
@@ -566,11 +566,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     @property
     def path_loadable(self) -> tuple[str, ...]:
         return tuple(
-            [
-                file.path
-                for file in self._file_objects
-                if isinstance(file, _SingleFileDatasetLoader)
-            ],
+            file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)
         )
 
     @property
@@ -581,11 +577,11 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def _filesize_format(self) -> tuple[str, ...]:
-        return tuple([_format_file_size(size) for size in self._filesize_bytes])
+        return tuple(_format_file_size(size) for size in self._filesize_bytes)
 
     @property
     def _total_size_bytes(self) -> int:
-        return sum([file._total_size_bytes for file in self._file_objects])
+        return sum(file._total_size_bytes for file in self._file_objects)
 
     @property
     def total_size(self) -> str:
