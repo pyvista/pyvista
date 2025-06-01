@@ -58,6 +58,7 @@ from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
@@ -2441,3 +2442,25 @@ def test_is_vtk_attribute():
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
     assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
+
+
+def test_deprecate_positional_args():
+    @_deprecate_positional_args(version=(0, 50))
+    def foo(bar): ...
+
+    match = (
+        "Argument 'bar' must be passed as a keyword argument.\n"
+        'From version 0.50, passing this as a positional argument will result in a RuntimeError.'
+    )
+    with pytest.warns(FutureWarning, match=match):
+        foo(True)
+
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    match = (
+        "Arguments 'bar', 'baz' must be passed as keyword arguments.\n"
+        'From version 1.2, passing these as positional arguments will result in a RuntimeError.'
+    )
+    with pytest.warns(FutureWarning, match=match):
+        foo(True, True)

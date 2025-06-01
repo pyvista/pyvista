@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 import enum
 from functools import cache
+from functools import wraps
 import importlib
+from inspect import Parameter
+from inspect import signature
 import sys
 import threading
 import traceback
@@ -15,6 +18,8 @@ import warnings
 
 import numpy as np
 from typing_extensions import Self
+
+from pyvista._version import version_info
 
 if TYPE_CHECKING:
     from typing import Any
@@ -379,3 +384,56 @@ class _NameMixin:
             msg = 'Name must be truthy.'
             raise ValueError(msg)
         self._name = str(value)
+
+
+def _deprecate_positional_args(func=None, *, version: tuple[int, int]):  # noqa: ANN001, ANN202
+    """Use a decorator to deprecate positional arguments.
+
+    Parameters
+    ----------
+    func : callable, default=None
+        Function to check arguments on.
+    version : tuple[int, int]
+        The version (major, minor) when positional arguments will result in RuntimeError.
+
+    """
+
+    def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
+        sig = signature(f)
+        not_kwonly = []
+        for name, param in sig.parameters.items():
+            if param.kind != Parameter.KEYWORD_ONLY:
+                not_kwonly.append(name)
+
+        @wraps(f)
+        def inner_f(*args, **kwargs):  # noqa: ANN202
+            if not_kwonly:
+                arg_names = ', '.join(f'{arg!r}' for arg in not_kwonly)
+                if len(not_kwonly) == 1:
+                    a = ' a '
+                    s = ''
+                    this = 'this'
+                else:
+                    a = ' '
+                    s = 's'
+                    this = 'these'
+                if version_info < version:
+                    version_str = '.'.join([str(v) for v in version])
+                    warnings.warn(
+                        (
+                            f'Argument{s} {arg_names} must be passed as{a}keyword argument{s}.\n'
+                            f'From version {version_str}, passing {this} as{a}positional argument{s} '
+                            'will result in a RuntimeError.'
+                        ),
+                        FutureWarning,
+                    )
+                else:
+                    msg = f'Argument{s} must be passed as{a}keyword argument{s}.'
+                    raise RuntimeError(msg)
+            return f(*args, **kwargs)
+
+        return inner_f
+
+    if func is not None:
+        return _inner_deprecate_positional_args(func)
+    return _inner_deprecate_positional_args
