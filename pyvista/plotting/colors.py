@@ -1566,9 +1566,7 @@ class Color:
 
         """
         h = h.lstrip('#')
-        if h.startswith('0x'):
-            h = h[2:]
-        return h
+        return h.removeprefix('0x')
 
     @staticmethod
     def convert_color_channel(
