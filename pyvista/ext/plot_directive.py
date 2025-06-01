@@ -283,7 +283,7 @@ def _contains_doctest(text):
         pass
     else:
         return False
-    r = re.compile(r'^\s*>>>', re.M)
+    r = re.compile(r'^\s*>>>', re.MULTILINE)
     m = r.search(text)
     return bool(m)
 

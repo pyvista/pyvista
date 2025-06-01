@@ -537,7 +537,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='quadratic'):
+def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='linear'):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -585,6 +585,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
         - ``'cubic'``
         - ``'previous'``
         - ``'next'``
+
+        .. versionchanged:: 0.46
+
+            Linear interpolation is now always used by default. Previously,
+            quadratic interpolation was used if ``scipy`` was installed.
 
     Returns
     -------
@@ -655,10 +660,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
                 if not interpolate:
                     msg = 'No interpolation.'
                     raise ValueError(msg)
-                # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
 
-                # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0

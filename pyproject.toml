@@ -331,6 +331,7 @@ extend-select = [
   'F',
   'FA',
   'FLY',
+  'FURB',
   'I',
   'ICN',
   'INP',
@@ -342,9 +343,7 @@ extend-select = [
   'PERF',
   'PGH',
   'PIE',
-  'PLC',
-  'PLR',
-  'PLW',
+  'PL',
   'PT',
   'PTH',
   'PYI',
@@ -354,6 +353,7 @@ extend-select = [
   'RUF',
   'SIM',
   'T10',
+  'T20',
   'TCH',
   'TID',
   'TRY',
@@ -404,14 +404,14 @@ allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
 '__init__.py' = ['PLC0414']
-'doc/source/make_tables.py' = ['D101', 'D102']
-'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115']
+'doc/source/make_tables.py' = ['D101', 'D102', 'T20']
+'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115', 'T20']
 'examples/**' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
 ]
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
-'examples_trame/*' = ['D100', 'D103']
+'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
 'pyvista/core/filters/*' = ['PYI019']
@@ -424,7 +424,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D', 'INP']
+'tests/*' = ['D', 'INP', 'T20']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list
