@@ -44,14 +44,14 @@ def supports_open_gl():
         ``True`` if the system supports OpenGL, ``False`` otherwise.
 
     """
-    global SUPPORTS_OPENGL
+    global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():
+def _system_supports_plotting():  # noqa: PLR0911
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -101,7 +101,7 @@ def system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
-    global SUPPORTS_PLOTTING
+    global SUPPORTS_PLOTTING  # noqa: PLW0603
     if SUPPORTS_PLOTTING is None:
         SUPPORTS_PLOTTING = _system_supports_plotting()
 
@@ -537,7 +537,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='quadratic'):
+def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='linear'):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -585,6 +585,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
         - ``'cubic'``
         - ``'previous'``
         - ``'next'``
+
+        .. versionchanged:: 0.46
+
+            Linear interpolation is now always used by default. Previously,
+            quadratic interpolation was used if ``scipy`` was installed.
 
     Returns
     -------
@@ -655,10 +660,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
                 if not interpolate:
                     msg = 'No interpolation.'
                     raise ValueError(msg)
-                # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
 
-                # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0

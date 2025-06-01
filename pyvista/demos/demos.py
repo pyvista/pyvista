@@ -255,7 +255,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     # Make data
     X = np.arange(-10, 10, 0.25)
     Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
+    X, Y = np.meshgrid(X, Y)  # type: ignore[assignment]
     R = np.sqrt(X**2 + Y**2)
     Z = np.sin(R)
 

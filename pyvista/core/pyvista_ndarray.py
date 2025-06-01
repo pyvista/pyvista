@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
+class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02  # noqa: N801
     """A ndarray which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
@@ -70,7 +70,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'pyvista_ndarray got an invalid type {type(array)}. '
                 'Expected an Iterable or vtk.vtkAbstractArray'
             )
@@ -103,7 +103,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:
+    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:  # type: ignore[override]
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

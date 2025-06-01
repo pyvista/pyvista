@@ -176,7 +176,7 @@ def test_createvectorpolydata_error():
         vector_poly_data([0, 1, 2], vec)
 
 
-def test_createvectorpolydata_1D():
+def test_createvectorpolydata_1d():
     orig = np.random.default_rng().random(3)
     vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
@@ -638,8 +638,8 @@ def test_annotated_int_enum_from_any_raises(value):
         BAR = (0, 'foo')
 
     with pytest.raises(
-        ValueError,
-        match=re.escape(f'{Foo.__name__} has no value matching {value}'),
+        TypeError,
+        match=re.escape(f'Invalid type {type(value)} for class {Foo.__name__}'),
     ):
         Foo.from_any(value)
 
@@ -655,10 +655,10 @@ def test_lines_segments_from_points(points):
 
 def test_cells_dict_utils():
     # No pyvista object
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
@@ -2122,7 +2122,7 @@ def test_classproperty():
     @no_new_attr
     class Foo:
         @_classproperty
-        def prop(cls):
+        def prop(cls):  # noqa: N805
             return magic_number
 
     assert Foo.prop == magic_number

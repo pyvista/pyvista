@@ -254,7 +254,7 @@ def plot(
                 pl.add_background_image(path)
         else:
             msg = f'Background must be color-like or a file path. Got {background} instead.'
-            raise ValueError(msg)
+            raise TypeError(msg)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows

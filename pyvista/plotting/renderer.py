@@ -43,7 +43,8 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
-    from ..core.pointset import PolyData
+    from pyvista.core.pointset import PolyData
+
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 
@@ -3996,9 +3997,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is not None:
-                    vtk_object = make_legend_face(face)
-                self._legend.SetEntry(i, vtk_object, text, list(color.float_rgb))
+                vtk_object_input = make_legend_face(face) if face is not None else vtk_object
+                self._legend.SetEntry(i, vtk_object_input, text, list(color.float_rgb))
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
@@ -4036,7 +4036,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
                 else:
                     msg = f'The object passed to the legend ({type(args)}) is not valid.'
-                    raise ValueError(msg)
+                    raise TypeError(msg)
 
                 legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, list(Color(color).float_rgb))

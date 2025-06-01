@@ -1878,8 +1878,8 @@ class PlanesAssembly(_XYZAssembly):
             opacity, broadcast=True, dtype_out=float, to_tuple=True
         )
         self._opacity = valid_opacity
-        for actor, opacity in zip(self._plane_actors, valid_opacity):
-            actor.prop.opacity = opacity
+        for actor, opacity_ in zip(self._plane_actors, valid_opacity):
+            actor.prop.opacity = opacity_
 
     @property
     def camera(self):  # numpydoc ignore=RT01

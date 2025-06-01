@@ -26,26 +26,26 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_plotting
 
 
-def r_mat_to_euler_angles(R):
+def r_mat_to_euler_angles(r):
     """Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
 
     Returns the angles in radians.
     """
     # Check for gimbal lock: singular cases
-    if abs(R[2, 0]) == 1:
+    if abs(r[2, 0]) == 1:
         # Gimbal lock exists
         yaw = 0  # Set yaw to 0 and compute the others
-        if R[2, 0] == -1:  # Directly looking up
+        if r[2, 0] == -1:  # Directly looking up
             pitch = np.pi / 2
-            roll = yaw + np.arctan2(R[0, 1], R[0, 2])
+            roll = yaw + np.arctan2(r[0, 1], r[0, 2])
         else:  # Directly looking down
             pitch = -np.pi / 2
-            roll = -yaw + np.arctan2(-R[0, 1], -R[0, 2])
+            roll = -yaw + np.arctan2(-r[0, 1], -r[0, 2])
     else:
         # Not at the singularities
-        pitch = -np.arcsin(R[2, 0])
-        roll = np.arctan2(R[2, 1] / np.cos(pitch), R[2, 2] / np.cos(pitch))
-        yaw = np.arctan2(R[1, 0] / np.cos(pitch), R[0, 0] / np.cos(pitch))
+        pitch = -np.arcsin(r[2, 0])
+        roll = np.arctan2(r[2, 1] / np.cos(pitch), r[2, 2] / np.cos(pitch))
+        yaw = np.arctan2(r[1, 0] / np.cos(pitch), r[0, 0] / np.cos(pitch))
 
     if np.isclose(roll, np.pi):
         roll = 0
@@ -933,7 +933,7 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-class Test_event_parser:
+class TestEventParser:
     """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
 
     @pytest.fixture

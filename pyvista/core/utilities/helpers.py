@@ -39,8 +39,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-
-    from ..wrappers import _WrappableVTKDataObjectType
+    from pyvista.wrappers import _WrappableVTKDataObjectType
 
 
 # vtkDataSet overloads
@@ -92,7 +91,7 @@ def wrap(dataset: Trimesh) -> PolyData: ...
 # TODO: Support meshio overload
 # @overload
 # def wrap(dataset: Mesh) -> UnstructuredGrid: ...
-def wrap(
+def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
     | Trimesh
@@ -229,7 +228,6 @@ def wrap(
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
-        return None  # pragma: no cover
 
     # wrap meshio
     if is_meshio_mesh(dataset):
