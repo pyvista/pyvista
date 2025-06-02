@@ -365,7 +365,7 @@ def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), **sphere_kwargs)
     pl.add_mesh(pv.Cube(), **cube_kwargs)
-    pl.renderer.add_legend(**legend_kwargs)
+    pl.add_legend(**legend_kwargs)
     pl.show()
 
 
