@@ -250,7 +250,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     mouse_position = None
     click_position = None
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['shape'])
+    def __init__(  # noqa: PLR0917
         self,
         shape=(1, 1),
         border=None,
@@ -2470,7 +2471,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if force_redraw:
             self.render()
 
-    def add_composite(
+    @_deprecate_positional_args(allowed=['dataset'])
+    def add_composite(  # noqa: PLR0917
         self,
         dataset,
         color=None,
@@ -3000,7 +3002,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return actor, self.mapper
 
     @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh(
+    def add_mesh(  # noqa: PLR0917
         self,
         mesh,
         color=None,
@@ -3924,7 +3926,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         addr = actor.GetAddressAsString('')
         self.renderer._labels[addr] = (geom, label, color)
 
-    def add_volume(
+    @_deprecate_positional_args(allowed=['volume'])
+    def add_volume(  # noqa: PLR0917
         self,
         volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
         scalars=None,
@@ -4508,7 +4511,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-    def add_silhouette(
+    @_deprecate_positional_args
+    def add_silhouette(  # noqa: PLR0917
         self,
         mesh,
         color=None,
@@ -5004,7 +5008,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume = None  # type: ignore[assignment]
         self.text = None
 
-    def add_text(
+    @_deprecate_positional_args(allowed=['text'])
+    def add_text(  # noqa: PLR0917
         self,
         text,
         position='upper_left',
@@ -5380,7 +5385,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False) -> Actor:
+    _deprecate_positional_args(allowed=['lines'])
+
+    def add_lines(  # noqa: PLR0917
+        self, lines, color='w', width=5, label=None, name=None, connected=False
+    ) -> Actor:
         """Add lines to the plotting object.
 
         Parameters
@@ -5479,7 +5488,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
-    def add_point_labels(
+    @_deprecate_positional_args(allowed=['points', 'labels'])
+    def add_point_labels(  # noqa: PLR0917
         self,
         points,
         labels,
@@ -6243,7 +6253,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.iren.fly_to(self.renderer, point)  # type: ignore[union-attr]
 
-    def orbit_on_path(
+    @_deprecate_positional_args
+    def orbit_on_path(  # noqa: PLR0917
         self,
         path=None,
         focus=None,
@@ -6675,7 +6686,8 @@ class Plotter(BasePlotter):
 
     last_update_time = 0.0
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         off_screen=None,
         notebook=None,
@@ -6809,7 +6821,8 @@ class Plotter(BasePlotter):
         self._initialized = True
         log.debug('Plotter init stop')
 
-    def show(
+    @_deprecate_positional_args
+    def show(  # noqa: PLR0917
         self,
         title=None,
         window_size=None,
