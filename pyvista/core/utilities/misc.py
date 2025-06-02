@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
+_MAX_POSITIONAL_ARGS = 5  # Should match value in pyproject.toml
+
 
 def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
@@ -415,11 +417,10 @@ def _deprecate_positional_args(
         @wraps(f)
         def inner_f(*args, **kwargs):  # noqa: ANN202
             if allowed:
-                max_allowed = 5
                 n_allowed = len(allowed)
-                if n_allowed > max_allowed:
+                if n_allowed > _MAX_POSITIONAL_ARGS:
                     msg = (
-                        f'A maximum of {max_allowed} positional arguments are allowed. '
+                        f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed. '
                         f'Got {n_allowed}:\n{allowed}'
                     )
                     raise RuntimeError(msg)
@@ -451,7 +452,7 @@ def _deprecate_positional_args(
 
                 if version_info < version:
                     version_str = '.'.join(map(str, version))
-                    arg_list = ', '.join(f"'{a}'" for a in offending_args)
+                    arg_list = ', '.join(f'{a!r}' for a in offending_args)
                     warnings.warn(
                         f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}.\n'
                         f'From version {version_str}, passing {this} as{a}positional argument{s} '

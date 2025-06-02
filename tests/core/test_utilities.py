@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import pickle
 import platform
 import re
 import shutil
+import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -56,6 +58,7 @@ from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import _MAX_POSITIONAL_ARGS
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _deprecate_positional_args
@@ -70,6 +73,9 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+
+with contextlib.suppress(ImportError):
+    import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -2498,3 +2504,16 @@ def test_deprecate_positional_class_methods():
     obj = Foo()
     obj.foo_method()
     obj.foo_classmethod()
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason='Requires Python 3.11+ for tomllib',
+)
+def test_max_positional_args_matches_pyproject():
+    pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+    with pyproject_path.open('rb') as f:
+        pyproject_data = tomllib.load(f)
+    expected_value = pyproject_data['tool']['ruff']['lint']['pylint']['max-positional-args']
+
+    assert expected_value == _MAX_POSITIONAL_ARGS

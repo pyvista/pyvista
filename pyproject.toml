@@ -469,6 +469,9 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/utilities/__init__.py' = ['ANN']
 'tests*' = ['ANN']
 
+[tool.ruff.lint.pylint]
+max-positional-args = 5
+
 [tool.ruff.lint.isort]
 combine-as-imports = true # Combines 'as' imports on the same line
 force-single-line = true # https://github.com/pyvista/pyvista/pull/5712
