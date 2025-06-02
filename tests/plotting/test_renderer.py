@@ -341,6 +341,7 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
 def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
     sphere_label = 'sphere'
