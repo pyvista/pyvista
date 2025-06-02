@@ -16,7 +16,6 @@ import warnings
 import numpy as np
 import pytest
 from pytest_cases import parametrize
-from requests.exceptions import HTTPError
 
 import pyvista as pv
 from pyvista import examples
@@ -24,10 +23,7 @@ from pyvista import examples
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
-pytestmark = [
-    pytest.mark.needs_download,
-    pytest.mark.flaky(retries=5, delay=1, only_on=[HTTPError]),  # due to Github rate limit
-]
+pytestmark = pytest.mark.needs_download
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
