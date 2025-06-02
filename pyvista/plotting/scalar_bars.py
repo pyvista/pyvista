@@ -9,6 +9,7 @@ import numpy as np
 
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from . import _vtk
 from .colors import Color
@@ -161,7 +162,8 @@ class ScalarBars:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
-    def add_scalar_bar(
+    @_deprecate_positional_args(allowed=['title'])
+    def add_scalar_bar(  # noqa: PLR0917
         self,
         title='',
         mapper=None,

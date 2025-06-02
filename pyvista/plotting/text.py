@@ -10,6 +10,7 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -525,7 +526,8 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         theme=None,
         color=None,

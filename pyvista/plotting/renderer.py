@@ -21,6 +21,7 @@ from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -902,7 +903,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         """
         return dict(self._actors.items())
 
-    def add_actor(
+    @_deprecate_positional_args(allowed=['actor'])
+    def add_actor(  # noqa: PLR0917
         self,
         actor,
         reset_camera=False,
@@ -1004,7 +1006,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         return actor, prop
 
-    def add_axes_at_origin(
+    @_deprecate_positional_args
+    def add_axes_at_origin(  # noqa: PLR0917
         self,
         x_color=None,
         y_color=None,
@@ -1180,7 +1183,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.Modified()
         return self.axes_widget
 
-    def add_axes(
+    @_deprecate_positional_args
+    def add_axes(  # noqa: PLR0917
         self,
         interactive=None,
         line_width=2,
@@ -1346,7 +1350,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         axes_widget.SetViewport(viewport)
         return self.axes_actor
 
-    def add_north_arrow_widget(
+    @_deprecate_positional_args
+    def add_north_arrow_widget(  # noqa: PLR0917
         self,
         interactive=None,
         color='#4169E1',
@@ -1661,7 +1666,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             return bool(self.axes_widget.GetEnabled())
         return False
 
-    def show_bounds(
+    @_deprecate_positional_args
+    def show_bounds(  # noqa: PLR0917
         self,
         mesh=None,
         bounds=None,
@@ -2165,7 +2171,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
-    def add_bounding_box(
+    @_deprecate_positional_args
+    def add_bounding_box(  # noqa: PLR0917
         self,
         color='grey',
         corner_factor=0.5,
@@ -2283,7 +2290,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.Modified()
         return self.bounding_box_actor
 
-    def add_floor(
+    @_deprecate_positional_args(allowed=['-z'])
+    def add_floor(  # noqa: PLR0917
         self,
         face='-z',
         i_resolution=10,
@@ -3844,7 +3852,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1] * (ymax - ymin)
 
-    def add_legend(
+    @_deprecate_positional_args(allowed=['labels'])
+    def add_legend(  # noqa: PLR0917
         self,
         labels=None,
         bcolor=None,
@@ -4099,7 +4108,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         """Legend actor."""
         return self._legend
 
-    def add_ruler(
+    @_deprecate_positional_args(allowed=['pointa', 'pointb'])
+    def add_ruler(  # noqa: PLR0917
         self,
         pointa,
         pointb,
@@ -4269,7 +4279,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
-    def add_legend_scale(
+    @_deprecate_positional_args
+    def add_legend_scale(  # noqa: PLR0917
         self,
         corner_offset_factor=2.0,
         bottom_border_offset=30,

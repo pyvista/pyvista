@@ -14,6 +14,7 @@ import sys
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from . import _vtk
 from .colors import Color
@@ -123,7 +124,8 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
 
-def create_axes_marker(
+@_deprecate_positional_args
+def create_axes_marker(  # noqa: PLR0917
     label_color=None,
     x_color=None,
     y_color=None,
@@ -264,7 +266,8 @@ def create_axes_marker(
     return axes_actor
 
 
-def create_axes_orientation_box(
+@_deprecate_positional_args
+def create_axes_orientation_box(  # noqa: PLR0917
     line_width=1,
     text_scale=0.366667,
     edge_color='black',

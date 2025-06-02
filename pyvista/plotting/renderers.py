@@ -9,6 +9,7 @@ from weakref import proxy
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
@@ -48,7 +49,8 @@ class Renderers:
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         shape=(1, 1),
@@ -544,7 +546,8 @@ class Renderers:
         """
         return self._shadow_renderer
 
-    def set_background(
+    @_deprecate_positional_args(allowed=['color'])
+    def set_background(  # noqa: PLR0917
         self,
         color,
         top=None,

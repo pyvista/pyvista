@@ -6,6 +6,7 @@ from typing import ClassVar
 import weakref
 
 import pyvista
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -83,7 +84,8 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['_lookup_table_', '_lookup_table_observer_id']
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         lookup_table=None,
         interpolation_type=None,
