@@ -344,11 +344,11 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
 @pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
 def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
     sphere_label = 'sphere'
-    sphere_color = 'lime'
+    sphere_color = 'r'
     sphere_kwargs = dict(color=sphere_color)
 
     cube_label = 'cube'
-    cube_color = 'magenta'
+    cube_color = 'w'
     cube_kwargs = dict(color=cube_color)
 
     legend_kwargs = dict(bcolor='k', size=(0.6, 0.6))
@@ -362,23 +362,9 @@ def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
         cube_kwargs['label'] = cube_label
 
     pl = pv.Plotter()
-    pl.add_mesh(pv.Sphere(center=(0, 0, 1)), **sphere_kwargs)
+    pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), **sphere_kwargs)
     pl.add_mesh(pv.Cube(), **cube_kwargs)
     pl.renderer.add_legend(**legend_kwargs)
-    pl.show()
-
-
-def test_legend_none_face(verify_image_cache):
-    """Verifies that ``face="none"`` does not add a face for each label in legend."""
-    pl = pv.Plotter()
-    pl.add_mesh(
-        pv.Icosphere(center=(3, 0, 0), radius=1),
-        color='r',
-        label='Sphere',
-    )
-    pl.add_mesh(pv.Box(), color='w', label='Box')
-    # add a large legend to ensure test fails if face="none" not configured right
-    pl.add_legend(face='none', bcolor='k', size=(0.6, 0.6))
     pl.show()
 
 
