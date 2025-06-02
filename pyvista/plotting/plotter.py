@@ -3883,7 +3883,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
 
         self.add_actor(
-            actor,  # type: ignore[arg-type]
+            actor,
             reset_camera=reset_camera,
             name=name,
             pickable=pickable,
@@ -4324,7 +4324,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
-                    cmap=color,  # type: ignore[arg-type]
+                    cmap=color,
                     flip_scalars=flip_scalars,
                     reset_camera=reset_camera,
                     name=next_name,
@@ -4983,7 +4983,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.iren = None
 
         if hasattr(self, 'text'):
-            del self.text
+            del self.text  # type: ignore[has-type]
 
         # end movie
         if hasattr(self, 'mwriter'):
