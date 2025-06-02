@@ -152,8 +152,8 @@ class _ForceSlots(type):
     """Metaclass to force classes and subclasses to have __slots__."""
 
     @classmethod
-    def __prepare__(metaclass, name, bases, **kwargs):
-        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
+    def __prepare__(cls, name, bases, **kwargs):
+        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
         super_prepared['__slots__'] = ()
         return super_prepared
 
@@ -188,11 +188,11 @@ class _ThemeConfig(metaclass=_ForceSlots):
         dict_ = {}
         for key in self._all__slots__():
             value = getattr(self, key)
-            key = key[1:]
+            key_ = key[1:]
             if hasattr(value, 'to_dict'):
-                dict_[key] = value.to_dict()
+                dict_[key_] = value.to_dict()
             else:
-                dict_[key] = value
+                dict_[key_] = value
         return dict_
 
     def __eq__(self, other) -> bool:
@@ -1832,7 +1832,7 @@ class Theme(_ThemeConfig):
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', '8'))
         except ValueError:  # pragma: no cover
             self._multi_samples = 8
 
@@ -2833,10 +2833,10 @@ class Theme(_ThemeConfig):
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
 
-        * ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
-        * ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
-        * ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
-        * ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
+        * ``'fixed_point'`` : :vtk:`vtkFixedPointVolumeRayCastMapper`
+        * ``'gpu'`` : :vtk:`vtkGPUVolumeRayCastMapper`
+        * ``'open_gl'`` : :vtk:`vtkOpenGLGPUVolumeRayCastMapper`
+        * ``'smart'`` : :vtk:`vtkSmartVolumeMapper`
 
         Examples
         --------
@@ -3465,7 +3465,7 @@ class _TestingTheme(Theme):
         self.resample_environment_texture = True
 
 
-class _NATIVE_THEMES(Enum):
+class _NATIVE_THEMES(Enum):  # noqa: N801
     """Global built-in themes available to PyVista."""
 
     paraview = ParaViewTheme

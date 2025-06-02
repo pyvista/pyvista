@@ -1,4 +1,4 @@
-"""Wrap vtkLookupTable."""
+"""Wrap :vtk:`vtkLookupTable`."""
 
 from __future__ import annotations
 
@@ -28,10 +28,10 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
-    """An ndarray which references the owning table and the underlying vtkArray.
+class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
+    """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
-    This class is used to ensure that the internal vtkLookupTable updates when
+    This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
     the values array is updated.
 
     """
@@ -101,8 +101,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     colors (in the RGBA format), and this class provides the functionality to
     do so.
 
-    See `vtkLookupTable
-    <https://vtk.org/doc/nightly/html/classvtkLookupTable.html>`_ for more
+    See :vtk:`vtkLookupTable` for more
     details regarding the underlying VTK API.
 
     Parameters
@@ -1050,7 +1049,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Returns
         -------
-        vtk.vtkColorTransferFunction
+        :vtk:`vtkColorTransferFunction`
             VTK color transfer function.
 
         Examples
@@ -1089,7 +1088,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Returns
         -------
-        vtk.vtkPiecewiseFunction
+        :vtk:`vtkPiecewiseFunction`
             Piecewise function of the opacity of this color table.
 
         Examples

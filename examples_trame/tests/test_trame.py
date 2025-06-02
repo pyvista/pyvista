@@ -30,5 +30,6 @@ def collect_example_files():
 def test_serve(test_file):
     returncode = subprocess.run(
         [sys.executable, EXAMPLES_DIR / test_file, '--serve', '--timeout', '1', '--port', '0'],
+        check=False,
     ).returncode
     assert returncode == 0

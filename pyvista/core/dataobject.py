@@ -83,7 +83,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : DataObject | :vtk:`vtkDataObject`
             Data object to perform a shallow copy from.
 
         """
@@ -94,7 +94,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : DataObject | :vtk:`vtkDataObject`
             Data object to perform a deep copy from.
 
         """
@@ -108,7 +108,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                 f'Reading file returned data of `{type(data).__name__}`, '
                 f'but `{type(self).__name__}` was expected.'
             )
-            raise ValueError(msg)
+            raise TypeError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -733,7 +733,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet
+        dataset : :vtk:`vtkDataSet`
             Dataset to copy the geometry and topology from.
 
         Examples

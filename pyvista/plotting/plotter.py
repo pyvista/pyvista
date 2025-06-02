@@ -66,6 +66,7 @@ from .mapper import _mapper_has_data_set_input
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Renderer
+from .renderer import make_legend_face
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
 from .text import CornerAnnotation
@@ -376,13 +377,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def render_window(self) -> _vtk.vtkRenderWindow | None:  # numpydoc ignore=RT01
-        """Access the vtkRenderWindow attached to this plotter.
+        """Access the :vtk:`vtkRenderWindow` attached to this plotter.
 
         If the plotter is closed, this will return ``None``.
 
         Returns
         -------
-        vtk.vtkRenderWindow or None
+        :vtk:`vtkRenderWindow` | None
             Render window if the plotter is not closed.
 
         Notes
@@ -941,7 +942,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkScalarBarActor
+        :vtk:`vtkScalarBarActor`
             First scalar bar actor.
 
         """
@@ -1097,7 +1098,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkLegendBoxActor
+        :vtk:`vtkLegendBoxActor`
             Legend actor.
 
         """
@@ -1703,7 +1704,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.bounds
-        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         return self.renderer.bounds
@@ -2141,7 +2147,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[vtk.vtkActor]
+        list[:vtk:`vtkActor`]
             List of actors.
 
         Examples
@@ -2437,7 +2443,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         stime : int, default: 1
-            Duration of timer that interrupt vtkRenderWindowInteractor
+            Duration of timer that interrupt :vtk:`vtkRenderWindowInteractor`
             in milliseconds.
 
         force_redraw : bool, default: True
@@ -3062,11 +3068,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet or pyvista.MultiBlock or vtk.vtkAlgorithm
+        mesh : DataSet | MultiBlock | :vtk:`vtkAlgorithm`
             Any PyVista or VTK mesh is supported. Also, any dataset
             that :func:`pyvista.wrap` can handle including NumPy
             arrays of XYZ points. Plotting also supports VTK algorithm
-            objects (``vtk.vtkAlgorithm`` and ``vtk.vtkAlgorithmOutput``).
+            objects (:vtk:`vtkAlgorithm` and :vtk:`vtkAlgorithmOutput`).
             When passing an algorithm, the rendering pipeline will be
             connected to the passed algorithm to dynamically update
             the scene (see :ref:`plotting_algorithms_example` for examples).
@@ -3338,7 +3344,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when ``True``.
 
-        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+        user_matrix : np.ndarray | :vtk:`vtkMatrix4x4`, default: np.eye(4)
             Matrix passed to the Actor class before rendering. This affects the
             actor/rendering only, not the input volume itself. The user matrix is the
             last transformation applied to the actor before rendering. Defaults to the
@@ -3363,7 +3369,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             have these updates rendered, e.g. by changing the active scalars or
             through an interactive widget. This should only be set to ``True``
             with caution. Defaults to ``False``. This is ignored if the input
-            is a ``vtkAlgorithm`` subclass.
+            is a :vtk:`vtkAlgorithm` subclass.
 
         backface_params : dict | pyvista.Property, optional
             A :class:`pyvista.Property` or a dict of parameters to use for
@@ -3906,16 +3912,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
         ):
             # Using only the first geometry
-            geom = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
+            geom: str | pyvista.PolyData = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
         else:
-            geom = pyvista.Triangle()
-            if scalars is not None:
-                geom = pyvista.Box()
+            geom = 'triangle' if scalars is None else 'rectangle'
 
-        geom.points -= geom.center  # type: ignore[misc]
+        poly = make_legend_face(geom)
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = (geom, label, color)
+        self.renderer._labels[addr] = (poly, label, color)
 
     def add_volume(
         self,
@@ -4096,7 +4100,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             .. note::
                 If a :class:`pyvista.UnstructuredGrid` is input, the 'ugrid'
-                mapper (``vtkUnstructuredGridVolumeRayCastMapper``) will be
+                mapper (:vtk:`vtkUnstructuredGridVolumeRayCastMapper`) will be
                 used regardless.
 
             .. note::
@@ -4163,7 +4167,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         render : bool, default: True
             Force a render when True.
 
-        user_matrix : np.ndarray | vtk.vtkMatrix4x4, default: np.eye(4)
+        user_matrix : np.ndarray | :vtk:`vtkMatrix4x4`, default: np.eye(4)
             Matrix passed to the Volume class before rendering. This affects the
             actor/rendering only, not the input volume itself. The user matrix is the
             last transformation applied to the actor before rendering. Defaults to the
@@ -4299,10 +4303,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(block)
+                wrapped = wrap(block)
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()
+                        block_resolution = wrapped.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:
@@ -4310,7 +4314,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 color = next(cycler) if multi_colors else cmap
 
                 a = self.add_volume(
-                    block,
+                    wrapped,
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
@@ -4518,7 +4522,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        mesh : pyvista.DataSet | vtk.vtkAlgorithm
+        mesh : DataSet | :vtk:`vtkAlgorithm`
             Mesh or mesh-producing algorithm for generating silhouette
             to plot.
 
@@ -5023,8 +5027,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Position to place the bottom left corner of the text box.
             If tuple is used, the position of the text uses the pixel
             coordinate system (default). In this case,
-            it returns a more general `vtkOpenGLTextActor`.
-            If string name is used, it returns a `vtkCornerAnnotation`
+            it returns a more general :vtk:`vtkOpenGLTextActor`.
+            If string name is used, it returns a :vtk:`vtkCornerAnnotation`
             object normally used for fixed labels (like title or xlabel).
             Default is to find the top left corner of the rendering window
             and place text box up there. Available position: ``'lower_left'``,
@@ -5507,7 +5511,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        points : sequence | pyvista.DataSet | vtk.vtkAlgorithm
+        points : sequence | DataSet | :vtk:`vtkAlgorithm`
             An ``n x 3`` sequence points or :class:`pyvista.DataSet` with
             points or mesh-producing algorithm.
 
@@ -5632,7 +5636,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor2D
+        :vtk:`vtkActor2D`
             VTK label actor.  Can be used to change properties of the labels.
 
         See Also
@@ -5814,7 +5818,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor2D
+        :vtk:`vtkActor2D`
             VTK label actor.  Can be used to change properties of the labels.
 
         """
@@ -5892,7 +5896,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
         return self.add_mesh(points, style=style, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1, **kwargs) -> Actor:
+    def add_arrows(self, cent, direction, mag=1.0, **kwargs) -> Actor:
         """Add arrows to the plotter.
 
         Parameters
@@ -6496,7 +6500,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        light : Light or vtkLight
+        light : Light | :vtk:`vtkLight`
             The light to be added.
 
         only_active : bool, default: False
@@ -7157,7 +7161,7 @@ class Plotter(BasePlotter):
 
         Returns
         -------
-        vtk.vtkTextActor
+        :vtk:`vtkTextActor`
             Text actor added to plot.
 
         Examples
@@ -7211,7 +7215,7 @@ class Plotter(BasePlotter):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the 2D cursor.
 
         Examples

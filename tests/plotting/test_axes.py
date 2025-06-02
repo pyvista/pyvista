@@ -177,7 +177,7 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.z_label == new_labels[2]
 
     match = 'Labels must be a list or tuple. Got abc instead.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         axes_actor.labels = 'abc'
 
     match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."

@@ -3328,7 +3328,12 @@ class AxesGeometrySource:
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
         >>> axes_geometry_source.output.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         >>> axes_geometry_source.output.center
         (0.0, 0.0, 0.0)
@@ -3337,7 +3342,12 @@ class AxesGeometrySource:
 
         >>> axes_geometry_source.symmetric_bounds = False
         >>> axes_geometry_source.output.bounds
-        BoundsTuple(x_min=-0.10000000149011612, x_max=1.0, y_min=-0.10000000149011612, y_max=1.0, z_min=-0.10000000149011612, z_max=1.0)
+        BoundsTuple(x_min = -0.1,
+                    x_max =  1.0,
+                    y_min = -0.1,
+                    y_max =  1.0,
+                    z_min = -0.1,
+                    z_max =  1.0)
 
         >>> axes_geometry_source.output.center
         (0.45, 0.45, 0.45)
@@ -3663,21 +3673,21 @@ class AxesGeometrySource:
         """Create part geometry with its length axis pointing in the +z direction."""
         resolution = 50
         if geometry == 'cylinder':
-            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+            out = pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
-            return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+            out = pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
         elif geometry == 'hemisphere':
-            return pyvista.SolidSphere(end_phi=90).extract_geometry()
+            out = pyvista.SolidSphere(end_phi=90).extract_geometry()
         elif geometry == 'cone':
-            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+            out = pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            return pyvista.Pyramid().extract_geometry()
+            out = pyvista.Pyramid().extract_geometry()
         elif geometry == 'cube':
-            return pyvista.Cube()
+            out = pyvista.Cube()
         elif geometry == 'octahedron':
             mesh = pyvista.Octahedron()
             mesh.cell_data.remove('FaceIndex')
-            return mesh
+            out = mesh
         else:
             _validation.check_contains(
                 AxesGeometrySource.GEOMETRY_TYPES,
@@ -3686,6 +3696,7 @@ class AxesGeometrySource:
             )
             msg = f"Geometry '{geometry}' is not implemented"  # pragma: no cover
             raise NotImplementedError(msg)  # pragma: no cover
+        return out
 
     @staticmethod
     def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
@@ -3719,7 +3730,7 @@ class AxesGeometrySource:
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         )
         if np.any(axis_length < 1e-8):
-            msg = f'Custom axes part must be 3D. Got bounds: {bnds}.'
+            msg = f'Custom axes part must be 3D. Got bounds:\n{bnds}.'
             raise ValueError(msg)
         part.scale(np.reciprocal(axis_length), inplace=True)
         return part
@@ -3842,9 +3853,9 @@ class OrthogonalPlanesSource:
         self._normal_sign = tuple(valid_sign)
 
         # Modify sources
-        for source, axis_vector, sign in zip(self.sources, np.eye(3), valid_sign):
+        for source, axis_vector, sign_ in zip(self.sources, np.eye(3), valid_sign):
             has_positive_normal = np.dot(source.normal, axis_vector) > 0
-            if has_positive_normal and sign == '-':
+            if has_positive_normal and sign_ == '-':
                 source.flip_normal()
 
     @property
@@ -4421,7 +4432,7 @@ class CubeFacesSource(CubeSource):
                 direction = face_center - cube_center
                 direction /= np.linalg.norm(direction)
                 vector = direction * explode_scale
-                points += vector
+                points += vector  # noqa: PLW2901
 
             # Set poly as a single quad cell
             face_poly.points = points  # type: ignore[union-attr]

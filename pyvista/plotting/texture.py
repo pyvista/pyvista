@@ -1,4 +1,4 @@
-"""Wrapper for vtk.vtkTexture."""
+"""Wrapper for :vtk:`vtkTexture`."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class Texture(DataObject, _vtk.vtkTexture):
-    """Wrap vtkTexture.
+    """Wrap :vtk:`vtkTexture`.
 
     Textures can be used to apply images to surfaces, as in the case of
     :ref:`texture_example`.
@@ -31,8 +31,8 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.ImageData], optional
-        Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
+    uinput : str, :vtk:`vtkImageData`, :vtk:`vtkTexture`, sequence[ImageData], optional
+        Filename, :vtk:`vtkImageData`, :vtk:`vtkTexture`, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
 
@@ -405,11 +405,11 @@ class Texture(DataObject, _vtk.vtkTexture):
         return Texture(self.to_image().copy())  # type: ignore[abstract]
 
     def to_skybox(self):
-        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
+        """Return the texture as a ``:vtk:`vtkSkybox``` if cube mapping is enabled.
 
         Returns
         -------
-        vtk.vtkSkybox
+        :vtk:`vtkSkybox`
             Skybox if cube mapping is enabled.  Otherwise, ``None``.
 
         """
@@ -650,7 +650,7 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : pyvista.ImageData | vtkImageData
+    image : pyvista.ImageData | :vtk:`vtkImageData`
         Image to convert.
 
     Returns

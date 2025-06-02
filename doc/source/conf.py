@@ -21,7 +21,7 @@ faulthandler.enable()
 # Note that `import make_tables` below imports pyvista.
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
-sys.path.insert(0, str(Path().resolve()))
+sys.path.insert(0, str(Path().cwd()))
 import make_external_gallery
 import make_tables
 
@@ -101,6 +101,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
+    'vtk_xref',
 ]
 
 # Configuration of pyvista.ext.coverage

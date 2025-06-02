@@ -17,6 +17,8 @@ from typing import get_args
 from cycler import Cycler
 from cycler import cycler
 
+from pyvista.core import _validation
+
 try:
     from matplotlib import colormaps
     from matplotlib import colors
@@ -1497,6 +1499,9 @@ class Color:
         if color is None:
             color = pyvista.global_theme.color if default_color is None else default_color
 
+        _validation.check_instance(
+            color, (Color, str, dict, list, tuple, np.ndarray, _vtk.vtkColor3ub), name='color'
+        )
         try:
             if isinstance(color, Color):
                 # Create copy of color instance
@@ -1513,9 +1518,9 @@ class Color:
             elif isinstance(color, _vtk.vtkColor3ub):
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
-            else:
-                msg = f'Unsupported color type: {type(color)}'
-                raise ValueError(msg)
+            else:  # pragma: no cover
+                msg = f'Unexpected color type: {type(color)}'
+                raise TypeError(msg)
             self._name = color_names.get(self.hex_rgb, None)
         except ValueError as e:
             msg = (
@@ -1561,9 +1566,7 @@ class Color:
 
         """
         h = h.lstrip('#')
-        if h.startswith('0x'):
-            h = h[2:]
-        return h
+        return h.removeprefix('0x')
 
     @staticmethod
     def convert_color_channel(
@@ -2121,11 +2124,11 @@ def color_scheme_to_cycler(scheme):
 
     Parameters
     ----------
-    scheme : str, int, or _vtk.vtkColorSeries
+    scheme : str | int | :vtk:`vtkColorSeries`
         Color scheme to be converted. If a string, it should correspond to a
         valid color scheme name (e.g., 'viridis'). If an integer, it should
         correspond to a valid color scheme ID. If an instance of
-        `_vtk.vtkColorSeries`, it should be a valid color series.
+        :vtk:`vtkColorSeries`, it should be a valid color series.
 
     Returns
     -------
@@ -2146,7 +2149,7 @@ def color_scheme_to_cycler(scheme):
             series.SetColorScheme(scheme)
         else:
             msg = f'Color scheme not understood: {scheme}'
-            raise ValueError(msg)
+            raise TypeError(msg)
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
@@ -2182,23 +2185,24 @@ def get_cycler(color_cycler):
 
     """
     if color_cycler is None:
-        return None
+        cycler_ = None
     elif isinstance(color_cycler, str):
         if color_cycler == 'default':
-            return get_default_cycler()
+            cycler_ = get_default_cycler()
         elif color_cycler == 'matplotlib':
-            return get_matplotlib_theme_cycler()
+            cycler_ = get_matplotlib_theme_cycler()
         elif color_cycler == 'all':
-            return get_hexcolors_cycler()
+            cycler_ = get_hexcolors_cycler()
         elif color_cycler in COLOR_SCHEMES:
-            return color_scheme_to_cycler(color_cycler)
+            cycler_ = color_scheme_to_cycler(color_cycler)
         else:
             msg = f'color cycler of name `{color_cycler}` not found.'
             raise ValueError(msg)
     elif isinstance(color_cycler, (tuple, list)):
-        return cycler('color', color_cycler)
+        cycler_ = cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
-        return color_cycler
+        cycler_ = color_cycler
     else:
         msg = f'color cycler of type {type(color_cycler)} not supported.'
         raise TypeError(msg)
+    return cycler_
