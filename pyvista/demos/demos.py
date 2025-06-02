@@ -378,8 +378,8 @@ def plot_ants_plane(notebook=None):
 
     # Create plotting object
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]

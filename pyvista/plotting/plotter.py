@@ -4511,7 +4511,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed='mesh')
     def add_silhouette(  # noqa: PLR0917
         self,
         mesh,
@@ -6252,7 +6252,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.iren.fly_to(self.renderer, point)  # type: ignore[union-attr]
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed='path')
     def orbit_on_path(  # noqa: PLR0917
         self,
         path=None,
