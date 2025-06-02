@@ -13,6 +13,7 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -104,7 +105,8 @@ class WidgetHelper:
         self.logo_widgets = []
         self.camera3d_widgets = []
 
-    def add_box_widget(
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_box_widget(  # noqa: PLR0917
         self,
         callback,
         bounds=None,
@@ -243,7 +245,8 @@ class WidgetHelper:
             box_widget.Off()
         self.box_widgets.clear()
 
-    def add_mesh_clip_box(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def add_mesh_clip_box(  # noqa: PLR0917
         self,
         mesh,
         invert: bool = False,
@@ -388,7 +391,8 @@ class WidgetHelper:
             return self.add_mesh(crinkler, reset_camera=False, **kwargs)  # type: ignore[attr-defined]
         return self.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)  # type: ignore[attr-defined]
 
-    def add_plane_widget(
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_plane_widget(  # noqa: PLR0917
         self,
         callback,
         normal='x',
@@ -637,7 +641,8 @@ class WidgetHelper:
             plane_widget.Off()
         self.plane_widgets.clear()
 
-    def add_mesh_clip_plane(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def add_mesh_clip_plane(  # noqa: PLR0917
         self,
         mesh,
         normal='x',
@@ -820,7 +825,8 @@ class WidgetHelper:
             return self.add_mesh(crinkler, **kwargs)  # type: ignore[attr-defined]
         return self.add_mesh(clipper, **kwargs)  # type: ignore[attr-defined]
 
-    def add_volume_clip_plane(
+    @_deprecate_positional_args(allowed=['volume'])
+    def add_volume_clip_plane(  # noqa: PLR0917
         self,
         volume,
         normal='x',
@@ -957,7 +963,8 @@ class WidgetHelper:
 
         return widget
 
-    def add_mesh_slice(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def add_mesh_slice(  # noqa: PLR0917
         self,
         mesh,
         normal='x',
@@ -1194,7 +1201,8 @@ class WidgetHelper:
 
         return actors
 
-    def add_line_widget(
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_line_widget(  # noqa: PLR0917
         self,
         callback,
         bounds=None,
@@ -1313,7 +1321,8 @@ class WidgetHelper:
             line_widget.Off()
         self.line_widgets.clear()
 
-    def add_text_slider_widget(
+    @_deprecate_positional_args(allowed=['callback', 'data'])
+    def add_text_slider_widget(  # noqa: PLR0917
         self,
         callback,
         data,
@@ -1423,7 +1432,8 @@ class WidgetHelper:
         title_callback(slider_widget, None)
         return slider_widget
 
-    def add_slider_widget(
+    @_deprecate_positional_args(allowed=['callback', 'rng'])
+    def add_slider_widget(  # noqa: PLR0917
         self,
         callback,
         rng,
@@ -1634,7 +1644,8 @@ class WidgetHelper:
             slider_widget.Off()
         self.slider_widgets.clear()
 
-    def add_mesh_threshold(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def add_mesh_threshold(  # noqa: PLR0917
         self,
         mesh,
         scalars=None,
@@ -1791,7 +1802,8 @@ class WidgetHelper:
         kwargs.setdefault('reset_camera', False)
         return self.add_mesh(alg, scalars=scalars, **kwargs)  # type: ignore[attr-defined]
 
-    def add_mesh_isovalue(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def add_mesh_isovalue(  # noqa: PLR0917
         self,
         mesh,
         scalars=None,
@@ -1952,7 +1964,8 @@ class WidgetHelper:
         kwargs.setdefault('reset_camera', False)
         return self.add_mesh(alg, scalars=scalars, **kwargs)  # type: ignore[attr-defined]
 
-    def add_spline_widget(
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_spline_widget(  # noqa: PLR0917
         self,
         callback,
         bounds=None,
@@ -2096,7 +2109,8 @@ class WidgetHelper:
             spline_widget.Off()
         self.spline_widgets.clear()
 
-    def add_mesh_slice_spline(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def add_mesh_slice_spline(  # noqa: PLR0917
         self,
         mesh,
         generate_triangles: bool = False,
@@ -2313,7 +2327,8 @@ class WidgetHelper:
             distance_widget.Off()
         self.distance_widgets.clear()
 
-    def add_sphere_widget(
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_sphere_widget(  # noqa: PLR0917
         self,
         callback,
         center=(0, 0, 0),
@@ -2467,7 +2482,8 @@ class WidgetHelper:
             sphere_widget.Off()
         self.sphere_widgets.clear()
 
-    def add_affine_transform_widget(
+    @_deprecate_positional_args(allowed=['actor'])
+    def add_affine_transform_widget(  # noqa: PLR0917
         self,
         actor,
         origin=None,
@@ -2560,7 +2576,8 @@ class WidgetHelper:
             interact_callback,
         )
 
-    def add_checkbox_button_widget(
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_checkbox_button_widget(  # noqa: PLR0917
         self,
         callback,
         value: bool = False,
@@ -2672,7 +2689,8 @@ class WidgetHelper:
         self.button_widgets.append(button_widget)
         return button_widget
 
-    def add_radio_button_widget(
+    @_deprecate_positional_args(allowed=['callback', 'radio_button_group'])
+    def add_radio_button_widget(  # noqa: PLR0917
         self,
         callback,
         radio_button_group,
