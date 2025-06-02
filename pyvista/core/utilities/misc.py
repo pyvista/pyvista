@@ -7,7 +7,6 @@ import enum
 from functools import cache
 from functools import wraps
 import importlib
-from inspect import Parameter
 from inspect import signature
 import sys
 import threading
@@ -411,52 +410,57 @@ def _deprecate_positional_args(
 
     def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
         sig = signature(f)
-        not_kwonly = []
-        for name, param in sig.parameters.items():
-            if param.kind != Parameter.KEYWORD_ONLY:
-                not_kwonly.append(name)
+        param_names = list(sig.parameters)
 
         @wraps(f)
         def inner_f(*args, **kwargs):  # noqa: ANN202
-            max_n_positional = 5
-            n_positional = len(not_kwonly)
-            if n_positional > max_n_positional:
-                msg = (
-                    f'A maximum of {max_n_positional} positional arguments are allowed. '
-                    f'Got {n_positional}:\n{not_kwonly}'
-                )
-                raise RuntimeError(msg)
-            if not_kwonly:
-                # Check for allowed positional args
-                not_kwonly_and_not_allowed = not_kwonly.copy()
-                if allowed is not None:
-                    for name in allowed:
-                        if name in not_kwonly:
-                            not_kwonly_and_not_allowed.remove(name)
+            if allowed:
+                max_allowed = 5
+                n_allowed = len(allowed)
+                if n_allowed > max_allowed:
+                    msg = (
+                        f'A maximum of {max_allowed} positional arguments are allowed. '
+                        f'Got {n_allowed}: {allowed}'
+                    )
+                    raise RuntimeError(msg)
 
-                arg_names = ', '.join(f'{arg!r}' for arg in not_kwonly)
-                if not_kwonly_and_not_allowed:
-                    if len(not_kwonly_and_not_allowed) == 1:
-                        a = ' a '
-                        s = ''
-                        this = 'this'
-                    else:
-                        a = ' '
-                        s = 's'
-                        this = 'these'
-                    if version_info < version:
-                        version_str = '.'.join([str(v) for v in version])
-                        warnings.warn(
-                            (
-                                f'Argument{s} {arg_names} must be passed as{a}keyword argument{s}.\n'
-                                f'From version {version_str}, passing {this} as{a}positional argument{s} '
-                                'will result in a RuntimeError.'
-                            ),
-                            FutureWarning,
-                        )
-                    else:
-                        msg = f'Argument{s} must be passed as{a}keyword argument{s}.'
-                        raise RuntimeError(msg)
+            # Map args to parameter names
+            passed_positional_names = param_names[: len(args)]
+
+            # Exclude allowed ones
+            if allowed:
+                offending_args = [name for name in passed_positional_names if name not in allowed]
+            else:
+                offending_args = passed_positional_names
+
+            if 'self' in offending_args:
+                offending_args.remove('self')
+            if 'cls' in offending_args:
+                offending_args.remove('cls')
+
+            if len(offending_args) > 0:
+                # Craft a message to print a warning or raise an error
+                if len(offending_args) == 1:
+                    a = ' a '
+                    s = ''
+                    this = 'this'
+                else:
+                    a = ' '
+                    s = 's'
+                    this = 'these'
+
+                if version_info < version:
+                    version_str = '.'.join(map(str, version))
+                    arg_list = ', '.join(f"'{a}'" for a in offending_args)
+                    warnings.warn(
+                        f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}.\n'
+                        f'From version {version_str}, passing {this} as{a}positional argument{s} '
+                        'will result in a RuntimeError.',
+                        FutureWarning,
+                    )
+                else:
+                    msg = f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword argument{s}.'
+                    raise RuntimeError(msg)
             return f(*args, **kwargs)
 
         return inner_f
