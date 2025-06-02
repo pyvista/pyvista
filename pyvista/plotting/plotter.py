@@ -5385,8 +5385,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    _deprecate_positional_args(allowed=['lines'])
-
+    @_deprecate_positional_args(allowed=['lines'])
     def add_lines(  # noqa: PLR0917
         self, lines, color='w', width=5, label=None, name=None, connected=False
     ) -> Actor:
