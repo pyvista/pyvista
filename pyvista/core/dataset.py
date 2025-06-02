@@ -1226,11 +1226,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> cube = pv.Cube()
         >>> cube.bounds
-        BoundsTuple(x_min = -0.5
-                    x_max =  0.5
-                    y_min = -0.5
-                    y_max =  0.5
-                    z_min = -0.5
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
                     z_max =  0.5)
 
         """
@@ -1753,10 +1753,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         pset = pyvista.PointSet()
         pset.points = self.points.copy()
-        if pass_cell_data:
-            self = self.cell_data_to_point_data()
-        pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        out = self.cell_data_to_point_data() if pass_cell_data else self
+        pset.GetPointData().DeepCopy(out.GetPointData())
+        pset.active_scalars_name = out.active_scalars_name
         return pset
 
     def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:
@@ -2861,11 +2860,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> mesh.get_cell(0).bounds
-        BoundsTuple(x_min = 0.0
-                    x_max = 0.5
-                    y_min = 0.0
-                    y_max = 0.5
-                    z_min = 0.0
+        BoundsTuple(x_min = 0.0,
+                    x_max = 0.5,
+                    y_min = 0.0,
+                    y_max = 0.5,
+                    z_min = 0.0,
                     z_max = 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True

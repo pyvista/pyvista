@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 # region Some metaclass wrapping magic
-class _vtkWrapperMeta(type):
+class _vtkWrapperMeta(type):  # noqa: N801
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
@@ -50,7 +50,7 @@ class _vtkWrapperMeta(type):
         return obj
 
 
-class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -146,7 +146,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
         msg = '`member` must be a callable.'
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     # Safeguard against None docstring when using -OO
     existing_doc = member.__doc__ or ''
@@ -1077,11 +1077,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item) -> bool:
+        def Initialize(self, item) -> bool:  # noqa: N802
             # item is the _CustomContextItem subclass instance
             return True
 
-        def Paint(self, item, painter):
+        def Paint(self, item, painter):  # noqa: N802
             # item is the _CustomContextItem subclass instance
             return item.paint(painter)
 
@@ -3636,8 +3636,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
-        for plot_type in plot_types:
-            yield from self._plots[plot_type]
+        for pl_type in plot_types:
+            yield from self._plots[pl_type]
 
     def remove_plot(self, plot):
         """Remove the given plot from this chart.
@@ -3706,9 +3706,9 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
-        for plot_type in plot_types:
+        for pl_type in plot_types:
             # Make a copy, as this list will be modified by remove_plot
-            plots = [*self._plots[plot_type]]
+            plots = [*self._plots[pl_type]]
             for plot in plots:
                 self.remove_plot(plot)
 

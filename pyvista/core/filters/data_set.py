@@ -3124,7 +3124,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
-    def streamlines_evenly_spaced_2D(  # type: ignore[misc]
+    def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
         vectors: str | None = None,
         start_position: VectorLike[float] | None = None,
@@ -5252,8 +5252,8 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
-            for grid in grids:
-                append_filter.AddInputData(grid)
+            for grid_ in grids:
+                append_filter.AddInputData(grid_)
 
         if main_has_priority:
             append_filter.AddInputData(self)
@@ -7027,7 +7027,7 @@ class DataSetFilters(DataObjectFilters):
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
                         msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
-                        raise ValueError(msg)
+                        raise TypeError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast('list[list[float]]', cmap.colors)
                     if color_type == 'float_rgb':

@@ -279,7 +279,7 @@ def _contains_doctest(text):
         pass
     else:
         return False
-    r = re.compile(r'^\s*>>>', re.M)
+    r = re.compile(r'^\s*>>>', re.MULTILINE)
     m = r.search(text)
     return bool(m)
 
@@ -313,15 +313,15 @@ def _split_code_at_show(text):
         part.append(line)
 
         # check if show(...) or plot(...) is within the line
-        line = _strip_comments(line)
+        line_no_comments = _strip_comments(line)
         if within_plot:  # allow for multi-line plot(...
-            if _strip_comments(line).endswith(')'):
+            if line_no_comments.endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
                 within_plot = False
 
-        elif _show_or_plot_in_string(line):
-            if _strip_comments(line).endswith(')'):
+        elif _show_or_plot_in_string(line_no_comments):
+            if line_no_comments.endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
             else:  # allow for multi-line plot(...
@@ -682,8 +682,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         else:
             source_code = ''
 
-        if nofigs:
-            images = []
+        images_input = [] if nofigs else images
 
         opts = [
             f':{key}: {val}'
@@ -696,11 +695,11 @@ def run(arguments, content, options, state_machine, state, lineno):
             dest_dir=dest_dir_link,
             build_dir=build_dir_link,
             source_link=None,
-            multi_image=len(images) > 1,
+            multi_image=len(images_input) > 1,
             options=opts,
-            images=images,
+            images=images_input,
             source_code=source_code,
-            html_show_formats=config.pyvista_plot_html_show_formats and len(images),
+            html_show_formats=config.pyvista_plot_html_show_formats and len(images_input),
             caption=caption,
         )
 

@@ -633,8 +633,8 @@ def check_shape(
 
     array_shape = np.shape(array)
     for input_shape in shape:
-        input_shape = _validate_shape_value(input_shape)
-        if _shape_is_allowed(array_shape, input_shape):
+        valid_shape = _validate_shape_value(input_shape)
+        if _shape_is_allowed(array_shape, valid_shape):
             return
 
     msg = f'{name} has shape {array_shape} which is not allowed. '
