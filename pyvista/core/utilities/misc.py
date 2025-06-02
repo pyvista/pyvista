@@ -7,7 +7,8 @@ import enum
 from functools import cache
 from functools import wraps
 import importlib
-from inspect import signature
+import inspect
+from pathlib import Path
 import sys
 import threading
 import traceback
@@ -411,19 +412,31 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
-        sig = signature(f)
+        sig = inspect.signature(f)
         param_names = list(sig.parameters)
+
+        # Validate `allowed` against actual parameter names
+        if allowed is not None:
+            for name in allowed:
+                if name not in param_names:
+                    path = Path(inspect.getfile(inspect.unwrap(f)))
+                    line = inspect.getsourcelines(inspect.unwrap(f))[-1]
+                    msg = (
+                        f'Allowed positional argument {name!r} is not a parameter of \n'
+                        f'`{f.__name__}` at {path}:{line}'
+                    )
+                    raise ValueError(msg)
 
         @wraps(f)
         def inner_f(*args, **kwargs):  # noqa: ANN202
-            if allowed:
+            if allowed is not None:
                 n_allowed = len(allowed)
                 if n_allowed > _MAX_POSITIONAL_ARGS:
                     msg = (
                         f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed. '
                         f'Got {n_allowed}:\n{allowed}'
                     )
-                    raise RuntimeError(msg)
+                    raise ValueError(msg)
 
             # Map args to parameter names
             passed_positional_names = param_names[: len(args)]
@@ -456,12 +469,12 @@ def _deprecate_positional_args(
                     warnings.warn(
                         f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}.\n'
                         f'From version {version_str}, passing {this} as{a}positional argument{s} '
-                        'will result in a RuntimeError.',
+                        'will result in a TypeError.',
                         FutureWarning,
                     )
                 else:
                     msg = f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword argument{s}.'
-                    raise RuntimeError(msg)
+                    raise TypeError(msg)
             return f(*args, **kwargs)
 
         return inner_f

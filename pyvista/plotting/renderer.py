@@ -2290,7 +2290,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.Modified()
         return self.bounding_box_actor
 
-    @_deprecate_positional_args(allowed=['-z'])
+    @_deprecate_positional_args(allowed=['face'])
     def add_floor(  # noqa: PLR0917
         self,
         face='-z',

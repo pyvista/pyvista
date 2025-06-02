@@ -2457,7 +2457,7 @@ def test_deprecate_positional_args_error_messages():
 
     match = (
         "Argument 'bar' must be passed as a keyword argument.\n"
-        'From version 0.50, passing this as a positional argument will result in a RuntimeError.'
+        'From version 0.50, passing this as a positional argument will result in a TypeError.'
     )
     with pytest.warns(FutureWarning, match=match):
         foo(True)
@@ -2468,7 +2468,7 @@ def test_deprecate_positional_args_error_messages():
 
     match = (
         "Arguments 'bar', 'baz' must be passed as keyword arguments.\n"
-        'From version 1.2, passing these as positional arguments will result in a RuntimeError.'
+        'From version 1.2, passing these as positional arguments will result in a TypeError.'
     )
     with pytest.warns(FutureWarning, match=match):
         foo(True, True)
@@ -2489,8 +2489,15 @@ def test_deprecate_positional_args_allowed():
         'A maximum of 5 positional arguments are allowed. '
         "Got 6:\n['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
     )
-    with pytest.raises(RuntimeError, match=re.escape(match)):
+    with pytest.raises(ValueError, match=re.escape(match)):
         foo(True, True, True, True, True, True)
+
+    # Test invalid allowed
+    match = "Allowed positional argument 'invalid' is not a parameter of \n`foo` at"
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['invalid'])
+        def foo(bar): ...
 
 
 def test_deprecate_positional_class_methods():
