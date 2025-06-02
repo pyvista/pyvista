@@ -4511,7 +4511,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
         return actor
 
-        @_deprecate_positional_args(allowed=['mesh'])
+    @_deprecate_positional_args(allowed=['mesh'])
     def add_silhouette(  # noqa: PLR0917
         self,
         mesh,
