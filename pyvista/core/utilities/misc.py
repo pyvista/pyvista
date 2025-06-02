@@ -420,7 +420,7 @@ def _deprecate_positional_args(
                 if n_allowed > max_allowed:
                     msg = (
                         f'A maximum of {max_allowed} positional arguments are allowed. '
-                        f'Got {n_allowed}: {allowed}'
+                        f'Got {n_allowed}:\n{allowed}'
                     )
                     raise RuntimeError(msg)
 
