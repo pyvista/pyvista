@@ -298,14 +298,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add renderers
         self.renderers = Renderers(
             self,
-            shape,
-            splitting_position,
-            row_weights,
-            col_weights,
-            groups,
-            border,
-            border_color,
-            border_width,
+            shape=shape,
+            splitting_position=splitting_position,
+            row_weights=row_weights,
+            col_weights=col_weights,
+            groups=groups,
+            border=border,
+            border_color=border_color,
+            border_width=border_width,
         )
 
         # This keeps track of scalars names already plotted and their ranges
