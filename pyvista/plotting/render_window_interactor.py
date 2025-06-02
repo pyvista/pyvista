@@ -17,6 +17,7 @@ import numpy as np
 from pyvista import vtk_version_info
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
@@ -602,7 +603,8 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleTrackballCamera(self)
 
-    def enable_custom_trackball_style(
+    @_deprecate_positional_args
+    def enable_custom_trackball_style(  # noqa: PLR0917
         self,
         left='rotate',
         shift_left='pan',

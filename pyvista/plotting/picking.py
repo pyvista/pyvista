@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -372,7 +373,8 @@ class PickingInterface:  # numpydoc ignore=PR01
             msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
             raise PyVistaPickingError(msg)
 
-    def enable_point_picking(
+    @_deprecate_positional_args
+    def enable_point_picking(  # noqa: PLR0917
         self,
         callback=None,
         tolerance=0.025,
@@ -541,7 +543,8 @@ class PickingInterface:  # numpydoc ignore=PR01
                 name='_point_picking_message',
             )
 
-    def enable_rectangle_picking(
+    @_deprecate_positional_args
+    def enable_rectangle_picking(  # noqa: PLR0917
         self,
         callback=None,
         show_message=True,
@@ -757,7 +760,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 renderer.remove_actor(self._picking_text, render=False)
         self._picking_text = None
 
-    def enable_surface_point_picking(
+    @_deprecate_positional_args
+    def enable_surface_point_picking(  # noqa: PLR0917
         self,
         callback=None,
         show_message=True,
@@ -907,7 +911,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    def enable_mesh_picking(
+    @_deprecate_positional_args
+    def enable_mesh_picking(  # noqa: PLR0917
         self,
         callback=None,
         show=True,
@@ -1058,7 +1063,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             pickable_window=False,
         )
 
-    def enable_rectangle_through_picking(
+    @_deprecate_positional_args
+    def enable_rectangle_through_picking(  # noqa: PLR0917
         self,
         callback=None,
         show=True,
@@ -1176,7 +1182,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    def enable_rectangle_visible_picking(
+    @_deprecate_positional_args
+    def enable_rectangle_visible_picking(  # noqa: PLR0917
         self,
         callback=None,
         show=True,
@@ -1318,7 +1325,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    def enable_cell_picking(
+    @_deprecate_positional_args
+    def enable_cell_picking(  # noqa: PLR0917
         self,
         callback=None,
         through=True,
@@ -1427,7 +1435,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    def enable_element_picking(
+    @_deprecate_positional_args
+    def enable_element_picking(  # noqa: PLR0917
         self,
         callback=None,
         mode='cell',
@@ -1668,7 +1677,8 @@ class PickingHelper(PickingMethods):
 
         self.track_click_position(callback=_the_callback, side='right')  # type: ignore[attr-defined]
 
-    def enable_path_picking(
+    @_deprecate_positional_args
+    def enable_path_picking(  # noqa: PLR0917
         self,
         callback=None,
         show_message=True,
@@ -1776,7 +1786,8 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    def enable_geodesic_picking(
+    @_deprecate_positional_args
+    def enable_geodesic_picking(  # noqa: PLR0917
         self,
         callback=None,
         show_message=True,
@@ -1918,7 +1929,8 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    def enable_horizon_picking(
+    @_deprecate_positional_args()
+    def enable_horizon_picking(  # noqa: PLR0917
         self,
         callback=None,
         normal=(0.0, 0.0, 1.0),
