@@ -127,10 +127,29 @@ def make_legend_face(face) -> PolyData:
         If the provided face value is invalid.
 
     """
+
+    def normalize(poly):
+        norm_poly = poly.copy()  # Avoid mutating input
+
+        # Center data
+        norm_poly.points -= np.array(norm_poly.center)
+
+        # Scale so max bounds are [-0.5, 0.5] along x and y axes
+        bnds = norm_poly.bounds
+        size = np.array((bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min))
+        size[size < 1e-8] = 1  # Avoid division by zero
+        max_xy_size = max(size[0:2])
+        norm_poly.scale(1 / max_xy_size, inplace=True)
+
+        # Add final offset to align the symbol with the adjacent text
+        y_offset = 0.6  # determined experimentally
+        norm_poly.points += (0, y_offset, 0)
+        return norm_poly
+
     if face is None or face == 'none':
         legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
     elif face in ['-', 'line']:
-        legendface = _line_for_legend()
+        legendface = pyvista.Rectangle().scale((1, 0.2, 1))
     elif face in ['^', 'triangle']:
         legendface = pyvista.Triangle()
     elif face in ['o', 'circle']:
@@ -149,6 +168,15 @@ def make_legend_face(face) -> PolyData:
             '\tpyvista.PolyData'
         )
         raise ValueError(msg)
+
+    # Normalize the geometry
+    legendface = normalize(legendface)
+
+    # Add points to each corner of the normalized geom to define the full extent of the geometry.
+    # This is needed for asymmetric shapes (like a line) because otherwise the legend actor
+    # will do its own scaling and skew the shape
+    rect = normalize(pyvista.Rectangle())
+    legendface.points = np.append(legendface.points, rect.points, axis=0)  # type: ignore[assignment]
     return legendface
 
 
@@ -3997,9 +4025,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is not None:
-                    vtk_object = make_legend_face(face)
-                self._legend.SetEntry(i, vtk_object, text, list(color.float_rgb))
+                vtk_object_input = make_legend_face(face) if face is not None else vtk_object
+                self._legend.SetEntry(i, vtk_object_input, text, list(color.float_rgb))
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
@@ -4450,25 +4477,6 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             pickable=False,
             render=render,
         )
-
-
-def _line_for_legend():
-    """Create a simple line-like rectangle for the legend."""
-    points = [
-        [0, 0, 0],
-        [0.4, 0, 0],
-        [0.4, 0.07, 0],
-        [0, 0.07, 0],
-        [
-            0.5,
-            0,
-            0,
-        ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
-    ]
-    legendface = pyvista.PolyData()
-    legendface.points = np.array(points)  # type: ignore[assignment]
-    legendface.faces = [4, 0, 1, 2, 3]  # type: ignore[assignment]
-    return legendface
 
 
 def _fixup_bounds(bounds) -> BoundsTuple:

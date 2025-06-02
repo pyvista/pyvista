@@ -160,7 +160,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     return vtk_writer
 
 
-def read(
+def read(  # noqa: PLR0911
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
@@ -320,7 +320,7 @@ def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequenc
         attr = getattr(reader.reader, name)
         if args is not None:
             if not isinstance(args, (list, tuple)):
-                args = [args]
+                args = [args]  # noqa: PLW2901
             attr(*args)
         else:
             attr()
@@ -608,18 +608,18 @@ def read_grdecl(
         includes = []
 
         for line in f:
-            line = line.strip()
+            line_ = line.strip()
 
-            if line.startswith('MAPUNITS'):
+            if line_.startswith('MAPUNITS'):
                 keywords['MAPUNITS'] = read_keyword(f, split=False).replace("'", '').strip()
 
-            elif line.startswith('MAPAXES'):
+            elif line_.startswith('MAPAXES'):
                 keywords['MAPAXES'] = read_keyword(f, converter=float)
 
-            elif line.startswith('GRIDUNIT'):
+            elif line_.startswith('GRIDUNIT'):
                 keywords['GRIDUNIT'] = read_keyword(f, split=False).replace("'", '').strip()
 
-            elif line.startswith('SPECGRID'):
+            elif line_.startswith('SPECGRID'):
                 data = read_keyword(f)
                 keywords['SPECGRID'] = [
                     int(data[0]),
@@ -629,11 +629,11 @@ def read_grdecl(
                     data[4].strip(),
                 ]
 
-            elif line.startswith('INCLUDE'):
+            elif line_.startswith('INCLUDE'):
                 filename = read_keyword(f, split=False)
                 includes.append(filename.replace("'", ''))
 
-            elif line.startswith(keys):
+            elif line_.startswith(keys):
                 key = line.split()[0]
                 data = read_keyword(f)
 
@@ -642,8 +642,8 @@ def read_grdecl(
 
                     for x in data:
                         if '*' in x:
-                            size, x = x.split('*')
-                            keywords[key] += int(size) * [float(x)]  # type: ignore[operator]
+                            size, new_x = x.split('*')
+                            keywords[key] += int(size) * [float(new_x)]  # type: ignore[operator]
 
                         else:
                             keywords[key].append(float(x))  # type: ignore[union-attr]

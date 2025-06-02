@@ -1566,9 +1566,7 @@ class Color:
 
         """
         h = h.lstrip('#')
-        if h.startswith('0x'):
-            h = h[2:]
-        return h
+        return h.removeprefix('0x')
 
     @staticmethod
     def convert_color_channel(
@@ -2187,23 +2185,24 @@ def get_cycler(color_cycler):
 
     """
     if color_cycler is None:
-        return None
+        cycler_ = None
     elif isinstance(color_cycler, str):
         if color_cycler == 'default':
-            return get_default_cycler()
+            cycler_ = get_default_cycler()
         elif color_cycler == 'matplotlib':
-            return get_matplotlib_theme_cycler()
+            cycler_ = get_matplotlib_theme_cycler()
         elif color_cycler == 'all':
-            return get_hexcolors_cycler()
+            cycler_ = get_hexcolors_cycler()
         elif color_cycler in COLOR_SCHEMES:
-            return color_scheme_to_cycler(color_cycler)
+            cycler_ = color_scheme_to_cycler(color_cycler)
         else:
             msg = f'color cycler of name `{color_cycler}` not found.'
             raise ValueError(msg)
     elif isinstance(color_cycler, (tuple, list)):
-        return cycler('color', color_cycler)
+        cycler_ = cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
-        return color_cycler
+        cycler_ = color_cycler
     else:
         msg = f'color cycler of type {type(color_cycler)} not supported.'
         raise TypeError(msg)
+    return cycler_

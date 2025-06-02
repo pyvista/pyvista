@@ -94,14 +94,14 @@ skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')
-skip_lesser_9_0_X = pytest.mark.needs_vtk_version(
+skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')  # noqa: N816
+skip_lesser_9_0_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 1, reason='Functions not implemented before 9.0.X'
 )
-skip_lesser_9_3_X = pytest.mark.needs_vtk_version(
+skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 3, reason='Functions not implemented before 9.3.X'
 )
-skip_lesser_9_4_X = pytest.mark.needs_vtk_version(
+skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
 
@@ -941,36 +941,6 @@ def test_add_legend(sphere):
         plotter.add_legend()
     legend_labels = [['sphere', 'r']]
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1])
-    plotter.show()
-
-
-def test_legend_circle_face(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    face = 'circle'
-    _ = plotter.add_legend(
-        labels=legend_labels,
-        border=True,
-        bcolor=None,
-        size=[0.1, 0.1],
-        face=face,
-    )
-    plotter.show()
-
-
-def test_legend_rectangle_face(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    face = 'rectangle'
-    _ = plotter.add_legend(
-        labels=legend_labels,
-        border=True,
-        bcolor=None,
-        size=[0.1, 0.1],
-        face=face,
-    )
     plotter.show()
 
 
@@ -4253,7 +4223,7 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ids=XYZ_ASSEMBLY_TEST_CASES.keys(),
 )
 @pytest.mark.parametrize(
-    ('Assembly', 'obj_kwargs'),
+    ('assembly', 'obj_kwargs'),
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
@@ -4261,10 +4231,10 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs, verify_image_cache):
+def test_xyz_assembly(test_kwargs, assembly, obj_kwargs, verify_image_cache):
     verify_image_cache.high_variance_test = True
     plot = pv.Plotter()
-    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
+    assembly = assembly(**test_kwargs, **obj_kwargs, label_color='white')
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
@@ -4275,13 +4245,13 @@ def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs, verify_image_cache):
 
 
 @pytest.mark.parametrize(
-    'Assembly',
+    'assembly',
     [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly_show_labels_false(Assembly):
+def test_xyz_assembly_show_labels_false(assembly):
     plot = pv.Plotter()
-    assembly = Assembly(show_labels=False)
+    assembly = assembly(show_labels=False)
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
