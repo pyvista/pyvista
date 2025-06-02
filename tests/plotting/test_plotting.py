@@ -991,13 +991,13 @@ def test_legend_invalid_face(sphere):
 
 def test_legend_subplots(sphere, cube):
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.add_mesh(sphere, 'blue', smooth_shading=True, label='Sphere')
+    plotter.add_mesh(sphere, color='blue', smooth_shading=True, label='Sphere')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
 
     plotter.subplot(0, 1)
-    plotter.add_mesh(cube, 'r', label='Cube')
+    plotter.add_mesh(cube, color='r', label='Cube')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
