@@ -2444,8 +2444,9 @@ def test_is_vtk_attribute_input_type(obj):
     assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
 
 
-def test_deprecate_positional_args_one_arg():
-    @_deprecate_positional_args(version=(0, 50))
+def test_deprecate_positional_args_error_messages():
+    # Test single arg
+    @_deprecate_positional_args
     def foo(bar): ...
 
     match = (
@@ -2455,8 +2456,7 @@ def test_deprecate_positional_args_one_arg():
     with pytest.warns(FutureWarning, match=match):
         foo(True)
 
-
-def test_deprecate_positional_args_many_args():
+    # Test many args
     @_deprecate_positional_args(version=(1, 2))
     def foo(bar, baz): ...
 
@@ -2469,13 +2469,13 @@ def test_deprecate_positional_args_many_args():
 
 
 def test_deprecate_positional_args_allowed():
+    # Test single allowed
     @_deprecate_positional_args(allowed=['bar'])
     def foo(bar): ...
 
     foo(True)
 
-
-def test_deprecate_positional_args_max_allowed():
+    # Too many allowed args
     @_deprecate_positional_args(allowed=['bar', 'baz', 'qux', 'ham', 'eggs', 'cats'])
     def foo(bar, baz, qux, ham, eggs, cats): ...
 
@@ -2485,3 +2485,16 @@ def test_deprecate_positional_args_max_allowed():
     )
     with pytest.raises(RuntimeError, match=re.escape(match)):
         foo(True, True, True, True, True, True)
+
+
+def test_deprecate_positional_class_methods():
+    # Test that 'cls' and 'self' args do not cause problems
+    @_deprecate_positional_args
+    class Foo:
+        @classmethod
+        def foo_classmethod(cls, *, bar=None): ...
+        def foo_method(self, *, bar=None): ...
+
+    obj = Foo()
+    obj.foo_method()
+    obj.foo_classmethod()
