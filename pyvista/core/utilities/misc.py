@@ -422,10 +422,22 @@ def _deprecate_positional_args(
                     path = Path(inspect.getfile(inspect.unwrap(f)))
                     line = inspect.getsourcelines(inspect.unwrap(f))[-1]
                     msg = (
-                        f'Allowed positional argument {name!r} is not a parameter of \n'
+                        f'Allowed positional argument {name!r} is not a parameter of\n'
                         f'`{f.__name__}` at {path}:{line}'
                     )
                     raise ValueError(msg)
+
+            # Check that `allowed` appears in the same order as in the signature
+            sig_allowed = [name for name in param_names if name in allowed]
+            if sig_allowed != allowed:
+                path = Path(inspect.getfile(inspect.unwrap(f)))
+                line = inspect.getsourcelines(inspect.unwrap(f))[-1]
+                msg = (
+                    f'The `allowed` list {allowed} is not in the same order as parameters in\n`'
+                    f'{f.__name__}` at {path}:{line}.\n'
+                    f'Expected order: {sig_allowed}.'
+                )
+                raise ValueError(msg)
 
         @wraps(f)
         def inner_f(*args, **kwargs):  # noqa: ANN202

@@ -2493,11 +2493,18 @@ def test_deprecate_positional_args_allowed():
         foo(True, True, True, True, True, True)
 
     # Test invalid allowed
-    match = "Allowed positional argument 'invalid' is not a parameter of \n`foo` at"
+    match = "Allowed positional argument 'invalid' is not a parameter of\n`foo` at"
     with pytest.raises(ValueError, match=re.escape(match)):
 
         @_deprecate_positional_args(allowed=['invalid'])
         def foo(bar): ...
+
+    # Test invalid order
+    match = "The `allowed` list ['b', 'a'] is not in the same order as parameters in\n`foo` at"
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['b', 'a'])
+        def foo(a, b, c): ...
 
 
 def test_deprecate_positional_class_methods():
