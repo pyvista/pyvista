@@ -31,6 +31,7 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
 
 permissions:
   id-token: none
@@ -61,6 +62,15 @@ jobs:
           python-version: ${{ matrix.config.python-version }}
           if: env.USE_CACHE == 'true'
           cache: "pip"
+
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
+
+      - name: Cache example data
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          key: vtk-data-${{ hashFiles('pyvista/**') }}
 
       - name: Install PyVista test dependencies
         run: |
@@ -127,12 +137,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: actions/cache@v4
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
+
+      - name: Cache example data
+        uses: actions/cache@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          key: vtk-data-${{ hashFiles('pyvista/**') }}
 
       - name: Build wheel and install pyvista
         run: |
@@ -224,6 +236,7 @@ jobs:
     runs-on: windows-latest
     env:
       CI_WINDOWS: true
+      PYVISTA_USERDATA_PATH: ${{ github.workspace }}\vtk-data
     strategy:
       fail-fast: false
       matrix:
@@ -239,6 +252,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
+
+      - name: Cache example data
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          key: vtk-data-${{ hashFiles('pyvista/**') }}
+
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.1
 
@@ -249,19 +271,6 @@ jobs:
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
-
-      - name: Set example data path as env variable
-        run: |
-          chcp 65001 #set code page to utf-8
-          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
 
       - name: Test Core API
         run: python -m pytest -v --ignore=tests/plotting --test_downloads
