@@ -337,8 +337,8 @@ def plot_ants_plane(notebook=None):
        Create plotting object.
 
        >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+       >>> _ = plotter.add_mesh(ant, color='r')
+       >>> _ = plotter.add_mesh(ant_copy, color='b')
 
        Add airplane mesh and make the color equal to the Y position.
 

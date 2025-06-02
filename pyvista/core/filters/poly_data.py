@@ -2454,8 +2454,10 @@ class PolyDataFilters(DataSetFilters):
             plotter = pyvista.Plotter(off_screen=off_screen)
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
-            plotter.add_lines(segment, 'b', label='Ray Segment')
-            plotter.add_mesh(intersection_points, 'r', point_size=10, label='Intersection Points')
+            plotter.add_lines(segment, color='b', label='Ray Segment')
+            plotter.add_mesh(
+                intersection_points, color='r', point_size=10, label='Intersection Points'
+            )
             plotter.add_legend()  # type: ignore[call-arg]
             plotter.add_axes()  # type: ignore[call-arg]
             plotter.show()
