@@ -2568,7 +2568,7 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
         'plot_init': 'chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])',
     }
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['chart', 'x', 'y1', 'y2'])
     def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:  # noqa: PLR0917
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
@@ -3373,9 +3373,9 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         marker_style, line_style, color = self._parse_format(fmt)
         scatter_plot, line_plot = None, None
         if marker_style != '':
-            scatter_plot = self.scatter(x, y, color, style=marker_style)
+            scatter_plot = self.scatter(x, y, color=color, style=marker_style)
         if line_style != '':
-            line_plot = self.line(x, y, color, style=line_style)
+            line_plot = self.line(x, y, color=color, style=line_style)
         return scatter_plot, line_plot
 
     @_deprecate_positional_args(allowed=['x', 'y'])
