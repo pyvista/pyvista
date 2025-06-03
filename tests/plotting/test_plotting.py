@@ -5070,7 +5070,7 @@ def test_bitwise_and_or_of_polydata(operator):
     sphere = pv.Sphere(radius=radius, **kwargs)
     sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
     # Expand the wireframe ever so slightly to avoid rendering artifacts
-    wireframe = pv.Sphere(radius + 0.001, **kwargs).extract_all_edges()
+    wireframe = pv.Sphere(radius=radius + 0.001, **kwargs).extract_all_edges()
     wireframe_shifted = pv.Sphere(radius=radius + 0.001, center=shift, **kwargs).extract_all_edges()
 
     if operator == 'or':

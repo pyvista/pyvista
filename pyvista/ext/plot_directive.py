@@ -645,14 +645,14 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     else:
         try:
             results = render_figures(
-                code,
-                source_file_name,
-                build_dir,
-                output_base,
-                keep_context,
-                function_name,
-                config,
-                force_static,
+                code=code,
+                code_path=source_file_name,
+                output_dir=build_dir,
+                output_base=output_base,
+                context=keep_context,
+                function_name=function_name,
+                config=config,
+                force_static=force_static,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter

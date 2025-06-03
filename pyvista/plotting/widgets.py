@@ -2565,15 +2565,15 @@ class WidgetHelper:
         return AffineWidget3D(
             self,
             actor,
-            origin,
-            start,
-            scale,
-            line_radius,
-            always_visible,
-            axes_colors,
-            axes,
-            release_callback,
-            interact_callback,
+            origin=origin,
+            start=start,
+            scale=scale,
+            line_radius=line_radius,
+            always_visible=always_visible,
+            axes_colors=axes_colors,
+            axes=axes,
+            release_callback=release_callback,
+            interact_callback=interact_callback,
         )
 
     @_deprecate_positional_args(allowed=['callback'])
