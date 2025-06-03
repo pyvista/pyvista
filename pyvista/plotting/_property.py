@@ -159,7 +159,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     _theme = None
     _color_set = None
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['theme'])
     def __init__(  # noqa: PLR0917
         self,
         theme=None,
