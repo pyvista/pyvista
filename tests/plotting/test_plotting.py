@@ -3534,7 +3534,7 @@ def test_charts_sin():
     y = np.sin(x)
     chart = pv.Chart2D()
     chart.scatter(x, y)
-    chart.line(x, y, 'r')
+    chart.line(x, y, color='r')
     chart.show()
 
 

@@ -2948,20 +2948,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     show_scalar_bar = False
 
                 scalar_bar_args = self.mapper.set_scalars(
-                    scalars,
-                    preference,
-                    component,
-                    annotations,
-                    rgb,
-                    scalar_bar_args,
-                    n_colors,
-                    nan_color,
-                    above_color,
-                    below_color,
-                    clim,
-                    cmap,
-                    flip_scalars,
-                    log_scale,
+                    scalars_name=scalars,
+                    preference=preference,
+                    component=component,
+                    annotations=annotations,
+                    rgb=rgb,
+                    scalar_bar_args=scalar_bar_args,
+                    n_colors=n_colors,
+                    nan_color=nan_color,
+                    above_color=above_color,
+                    below_color=below_color,
+                    clim=clim,
+                    cmap=cmap,
+                    flip_scalars=flip_scalars,
+                    log_scale=log_scale,
                 )
             else:
                 self.mapper.scalar_visibility = False

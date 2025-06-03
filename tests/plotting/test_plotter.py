@@ -442,7 +442,14 @@ def test_plotter_image_scale():
 
 def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
-    mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        mesh=globe,
+        scalars=None,
+        texture=True,
+        split_sharp_edges=True,
+        feature_angle=False,
+        preference=None,
+    )
     assert scalars is None
     assert 'Normals' in mesh.point_data
     assert 'Texture Coordinates' in mesh.point_data
@@ -452,7 +459,14 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     """Test edge cases for smooth shading"""
     scalars_name = 'sample_point_scalars'
     scalars = hexbeam.point_data[scalars_name]
-    mesh, scalars = _plotting.prepare_smooth_shading(hexbeam, scalars, False, True, True, None)
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        mesh=hexbeam,
+        scalars=scalars,
+        texture=False,
+        split_sharp_edges=True,
+        feature_angle=True,
+        preference=None,
+    )
 
     assert 'Normals' in mesh.point_data
 
@@ -469,12 +483,12 @@ def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
     point_cloud = pv.PolyData([0.0, 0.0, 0.0])
     assert point_cloud.n_verts == point_cloud.n_cells
     mesh, scalars = _plotting.prepare_smooth_shading(
-        point_cloud,
-        None,
-        True,
-        split_sharp_edges,
-        False,
-        None,
+        mesh=point_cloud,
+        scalars=None,
+        texture=True,
+        split_sharp_edges=split_sharp_edges,
+        feature_angle=False,
+        preference=None,
     )
     assert scalars is None
     assert 'Normals' not in mesh.point_data
