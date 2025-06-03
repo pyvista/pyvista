@@ -10,8 +10,8 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource

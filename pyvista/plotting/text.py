@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 

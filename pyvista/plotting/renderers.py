@@ -9,7 +9,7 @@ from weakref import proxy
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import _deprecate_positional_args
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer

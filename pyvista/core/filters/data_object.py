@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
@@ -26,7 +27,6 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

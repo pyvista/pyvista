@@ -17,7 +17,7 @@ import numpy as np
 
 import pyvista
 from pyvista import vtk_version_info
-from pyvista.core.utilities.misc import _deprecate_positional_args
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 from .colors import COLOR_SCHEMES

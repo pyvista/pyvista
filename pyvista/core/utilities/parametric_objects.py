@@ -9,10 +9,10 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .geometric_sources import translate
 from .helpers import wrap

@@ -30,6 +30,8 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
@@ -58,10 +60,8 @@ from pyvista.core.utilities.features import create_grid
 from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
-from pyvista.core.utilities.misc import _MAX_POSITIONAL_ARGS
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module

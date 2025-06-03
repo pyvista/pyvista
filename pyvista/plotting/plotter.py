@@ -30,6 +30,7 @@ import numpy as np
 import scooby
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -40,7 +41,6 @@ from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 

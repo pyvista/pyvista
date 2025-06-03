@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from functools import wraps
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 
 

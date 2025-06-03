@@ -19,13 +19,13 @@ import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 

@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:

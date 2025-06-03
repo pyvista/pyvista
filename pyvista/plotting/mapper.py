@@ -9,13 +9,13 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import no_new_attr
 

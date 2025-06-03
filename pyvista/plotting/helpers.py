@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.helpers import is_pyvista_dataset
-from pyvista.core.utilities.misc import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray

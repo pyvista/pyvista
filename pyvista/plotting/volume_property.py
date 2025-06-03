@@ -6,7 +6,7 @@ from typing import ClassVar
 import weakref
 
 import pyvista
-from pyvista.core.utilities.misc import _deprecate_positional_args
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk

@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import _deprecate_positional_args
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 
 @_deprecate_positional_args(allowed=['var_item'])

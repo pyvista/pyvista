@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 

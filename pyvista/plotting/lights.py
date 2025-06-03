@@ -18,10 +18,10 @@ except ImportError:  # pragma: no cover
 
 from typing import TYPE_CHECKING
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .colors import Color
 

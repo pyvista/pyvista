@@ -10,8 +10,8 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk

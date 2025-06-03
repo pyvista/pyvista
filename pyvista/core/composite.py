@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
-from functools import wraps
 import itertools
 import pathlib
 from typing import TYPE_CHECKING
@@ -130,10 +129,7 @@ class MultiBlock(
 
     """
 
-    @wraps(pyvista._plot.plot)
-    def plot(self, *args, **kwargs):  # noqa: ANN201  # numpydoc ignore=RT01
-        """Plot this dataset."""
-        return pyvista._plot.plot(*args, **kwargs)
+    plot = pyvista._plot.plot
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
 

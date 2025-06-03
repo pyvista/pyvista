@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
@@ -34,7 +35,6 @@ from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform

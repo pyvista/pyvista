@@ -14,8 +14,8 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core.utilities.misc import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from typing_extensions import Self

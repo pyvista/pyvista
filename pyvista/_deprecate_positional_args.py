@@ -1,0 +1,142 @@
+from __future__ import annotations
+
+from functools import wraps
+import inspect
+from typing import Any
+from typing import Callable
+import warnings
+
+_MAX_POSITIONAL_ARGS = 5  # Should match value in pyproject.toml
+
+
+def _deprecate_positional_args(
+    func: Callable[..., Any] | None = None,
+    *,
+    version: tuple[int, int] = (0, 50),
+    allowed: list[str] | None = None,
+) -> Callable[..., Any]:
+    """Use a decorator to deprecate positional arguments.
+
+    Parameters
+    ----------
+    func : callable, default=None
+        Function to check arguments on.
+
+    version : tuple[int, int], default: (0, 50)
+        The version (major, minor) when positional arguments will result in RuntimeError.
+
+    allowed : list[str], optional
+        List of argument names which are allowed to be positional. A maximum of 5 arguments
+        may be listed (as per ruff rule PLR0917).
+
+    """
+
+    def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
+        def qualified_name() -> str:
+            return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
+
+        decorator_name = _deprecate_positional_args.__name__
+
+        sig = inspect.signature(f)
+        param_names = list(sig.parameters)
+
+        if allowed is not None:
+            # Validate input type
+            if not isinstance(allowed, list):
+                msg = (
+                    f'In decorator {decorator_name} for function {qualified_name()!r}:\n'
+                    f'Allowed arguments must be a list, got {type(allowed)}.'
+                )
+                raise TypeError(msg)
+
+            # Validate number of allowed args
+            n_allowed = len(allowed)
+            if n_allowed > _MAX_POSITIONAL_ARGS:
+                msg = (
+                    f'In decorator {decorator_name!r} for function {qualified_name()!r}:\n'
+                    f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed.\n'
+                    f'Got {n_allowed}: {allowed}'
+                )
+                raise ValueError(msg)
+
+            # Validate `allowed` against actual parameter names
+            for name in allowed:
+                if name not in param_names:
+                    msg = (
+                        f'Allowed positional argument {name!r} in decorator '
+                        f'{decorator_name!r}\n'
+                        f'is not a parameter of function {qualified_name()!r}.'
+                    )
+                    raise ValueError(msg)
+
+            # Check that `allowed` appears in the same order as in the signature
+            sig_allowed = [name for name in param_names if name in allowed]
+            if sig_allowed != allowed:
+                msg = (
+                    f'The `allowed` list {allowed} in decorator {decorator_name!r} is not in the\n'
+                    f'same order as the parameters in {qualified_name()!r}.\n'
+                    f'Expected order: {sig_allowed}.'
+                )
+                raise ValueError(msg)
+
+        @wraps(f)
+        def inner_f(*args, **kwargs):  # noqa: ANN202
+            # Map args to parameter names
+            passed_positional_names = param_names[: len(args)]
+
+            # Exclude allowed ones
+            if allowed:
+                offending_args = [name for name in passed_positional_names if name not in allowed]
+            else:
+                offending_args = passed_positional_names
+
+            if 'self' in offending_args:
+                offending_args.remove('self')
+            if 'cls' in offending_args:
+                offending_args.remove('cls')
+
+            if len(offending_args) > 0:
+                from pyvista import version_info
+
+                # Craft a message to print a warning or raise an error
+                if len(offending_args) == 1:
+                    a = ' a '
+                    s = ''
+                    this = 'this'
+                else:
+                    a = ' '
+                    s = 's'
+                    this = 'these'
+
+                if version_info < version:
+                    # Print warning
+                    version_str = '.'.join(map(str, version))
+                    arg_list = ', '.join(f'{a!r}' for a in offending_args)
+
+                    def warn_positional_args() -> None:
+                        msg = (
+                            f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}\n'
+                            f'to function {qualified_name()!r}.\n'
+                            f'From version {version_str}, passing {this} as{a}positional '
+                            f'argument{s} will result in a TypeError.'
+                        )
+                        warnings.warn(msg, FutureWarning)
+
+                    warn_positional_args()
+                else:
+                    # Raise error
+                    def error_positional_args() -> None:
+                        msg = (
+                            f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword '
+                            f'argument{s}'
+                        )
+                        raise TypeError(msg)
+
+                    error_positional_args()
+            return f(*args, **kwargs)
+
+        return inner_f
+
+    if func is not None:
+        return _inner_deprecate_positional_args(func)
+    return _inner_deprecate_positional_args

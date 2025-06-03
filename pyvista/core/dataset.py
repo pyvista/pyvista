@@ -6,7 +6,6 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
-from functools import wraps
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -186,10 +185,7 @@ class DataSet(DataSetFilters, DataObject):
 
     """
 
-    @wraps(pyvista._plot.plot)
-    def plot(self, *args, **kwargs):  # noqa: ANN201  # numpydoc ignore=RT01
-        """Plot this dataset."""
-        return pyvista._plot.plot(*args, **kwargs)
+    plot = pyvista._plot.plot
 
     def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""

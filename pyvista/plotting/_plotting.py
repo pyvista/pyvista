@@ -7,8 +7,8 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import get_array
-from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from .colors import Color
