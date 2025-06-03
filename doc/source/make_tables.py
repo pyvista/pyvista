@@ -1970,14 +1970,14 @@ class DatasetCard:
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
         dataset_props_block = self._create_dataset_props_block(
-            dataset_type,
-            celltype_badges,
-            n_cells,
-            n_points,
-            length,
-            dimensions,
-            spacing,
-            n_arrays,
+            dataset_type=dataset_type,
+            celltype_badges=celltype_badges,
+            n_cells=n_cells,
+            n_points=n_points,
+            length=length,
+            dimensions=dimensions,
+            spacing=spacing,
+            n_arrays=n_arrays,
         )
         file_info_block = self._create_file_props_block(
             self.loader,
