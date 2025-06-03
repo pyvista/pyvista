@@ -139,7 +139,7 @@ def file_from_files(target_path, fnames):
         # always convert windows paths
         posix_fname = PureWindowsPath(fname).as_posix() if os.name == 'nt' else fname
         # ignore mac hidden directories
-        if '/__MACOSX/' in posix_fname:  # pragma: no cover
+        if '/__MACOSX/' in posix_posix_fname:  # pragma: no cover
             continue
         if posix_fname.endswith(target_path):
             found_fnames.append(posix_fname)
