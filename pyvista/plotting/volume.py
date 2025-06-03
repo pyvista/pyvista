@@ -41,7 +41,12 @@ class Volume(Prop3D, _vtk.vtkVolume):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(vol)
         >>> actor.mapper.bounds
-        BoundsTuple(x_min=0.0, x_max=9.0, y_min=0.0, y_max=9.0, z_min=0.0, z_max=9.0)
+        BoundsTuple(x_min = 0.0,
+                    x_max = 9.0,
+                    y_min = 0.0,
+                    y_max = 9.0,
+                    z_min = 0.0,
+                    z_max = 9.0)
 
         """
         return self.GetMapper()  # type: ignore[return-value]

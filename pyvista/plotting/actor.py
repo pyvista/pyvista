@@ -241,11 +241,21 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> pl.bounds
-        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+        BoundsTuple(x_min =  139.06100463867188,
+                    x_max = 1654.9300537109375,
+                    y_min =   32.09429931640625,
+                    y_max = 1319.949951171875,
+                    z_min =  -17.741199493408203,
+                    z_max =  282.1300048828125)
 
         >>> actor.visibility = False
         >>> pl.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         """
         return bool(self.GetVisibility())
@@ -276,11 +286,21 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> pl.bounds
-        BoundsTuple(x_min=139.06100463867188, x_max=1654.9300537109375, y_min=32.09429931640625, y_max=1319.949951171875, z_min=-17.741199493408203, z_max=282.1300048828125)
+        BoundsTuple(x_min =  139.06100463867188,
+                    x_max = 1654.9300537109375,
+                    y_min =   32.09429931640625,
+                    y_max = 1319.949951171875,
+                    z_min =  -17.741199493408203,
+                    z_max =  282.1300048828125)
 
         >>> actor.use_bounds = False
         >>> pl.bounds
-        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  1.0,
+                    y_min = -1.0,
+                    y_max =  1.0,
+                    z_min = -1.0,
+                    z_max =  1.0)
 
         Although the actor's bounds are no longer used, the actor remains visible.
 
