@@ -3710,12 +3710,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 msg = 'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
                 raise TypeError(msg)
             mesh, scalars = prepare_smooth_shading(
-                mesh,
-                scalars,
-                texture,
-                split_sharp_edges,
-                feature_angle,
-                preference,
+                mesh=mesh,
+                scalars=scalars,
+                texture=texture,
+                split_sharp_edges=split_sharp_edges,
+                feature_angle=feature_angle,
+                preference=preference,
             )
 
         if rgb:
