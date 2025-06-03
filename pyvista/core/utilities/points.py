@@ -148,7 +148,7 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
         )
     ]
     poly = pyvista.PolyData()
-    poly.points = points  # type: ignore[assignment]
+    poly.points = points
     poly.lines = lines
     return poly
 
@@ -183,7 +183,7 @@ def lines_from_points(
 
     """
     poly = pyvista.PolyData()
-    poly.points = points  # type: ignore[assignment]
+    poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
