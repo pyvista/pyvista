@@ -2487,9 +2487,6 @@ def test_deprecate_positional_args_allowed():
     foo(True)
 
     # Too many allowed args
-    @_deprecate_positional_args(allowed=['bar', 'baz', 'qux', 'ham', 'eggs', 'cats'])
-    def foo(bar, baz, qux, ham, eggs, cats): ...
-
     match = (
         "In decorator '_deprecate_positional_args' for function "
         "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
@@ -2497,7 +2494,9 @@ def test_deprecate_positional_args_allowed():
         "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        foo(True, True, True, True, True, True)
+
+        @_deprecate_positional_args(allowed=['bar', 'baz', 'qux', 'ham', 'eggs', 'cats'])
+        def foo(bar, baz, qux, ham, eggs, cats): ...
 
     # Test invalid allowed
     match = (
@@ -2505,7 +2504,6 @@ def test_deprecate_positional_args_allowed():
         'is not a parameter of '
         "function 'test_deprecate_positional_args_allowed.<locals>.foo'."
     )
-
     with pytest.raises(ValueError, match=re.escape(match)):
 
         @_deprecate_positional_args(allowed=['invalid'])
