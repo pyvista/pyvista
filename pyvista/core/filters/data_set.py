@@ -804,7 +804,7 @@ class DataSetFilters(DataObjectFilters):
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
         >>> grid = pv.sample_function(
-        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
+        ...     noise, bounds=[0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> grid.plot(
         ...     cmap='gist_earth_r',
@@ -817,7 +817,7 @@ class DataSetFilters(DataObjectFilters):
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
         >>> grid = pv.sample_function(
-        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
+        ...     noise, bounds=[0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
         ... )
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(
@@ -956,7 +956,7 @@ class DataSetFilters(DataObjectFilters):
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
         >>> grid = pv.sample_function(
-        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30)
+        ...     noise, bounds=[0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30)
         ... )
         >>> threshed = grid.threshold_percent(0.5)
         >>> threshed.plot(
@@ -1155,7 +1155,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['isosurfaces', 'scalars'])
     def contour(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
@@ -3641,7 +3641,9 @@ class DataSetFilters(DataObjectFilters):
         ...     uniform.bounds.y_min,
         ...     uniform.bounds.z_min,
         ... ]
-        >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
+        >>> sampled_arc = uniform.sample_over_circular_arc(
+        ...     pointa=pointa, pointb=pointb, center=center
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(sampled_arc, line_width=10)
@@ -3722,7 +3724,7 @@ class DataSetFilters(DataObjectFilters):
         ...     uniform.bounds.z_max,
         ... ]
         >>> arc = uniform.sample_over_circular_arc_normal(
-        ...     center, normal=normal, polar=polar
+        ...     center=center, normal=normal, polar=polar
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
@@ -7362,7 +7364,7 @@ class DataSetFilters(DataObjectFilters):
 
         Visualize the effect of internal surfaces.
 
-        >>> mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
+        >>> mesh = pv.Cylinder() + pv.Cylinder(center=(0, 0.75, 0))
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 100, 50)
         ... ).points_to_cells()

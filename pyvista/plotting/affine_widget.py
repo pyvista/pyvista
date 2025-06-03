@@ -245,7 +245,7 @@ class AffineWidget3D:
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
             arrow = pyvista.Arrow(
-                (0, 0, 0),
+                start=(0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
                 tip_radius=0.05,

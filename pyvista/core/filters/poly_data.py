@@ -874,7 +874,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(5)
-        >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
+        >>> smooth_cube = cube.smooth(n_iter=1000, feature_smoothing=False)
         >>> n_edge_cells = cube.extract_feature_edges().n_cells
         >>> n_smooth_cells = smooth_cube.extract_feature_edges().n_cells
         >>> f'Sharp Edges on Cube:        {n_edge_cells}'
@@ -3937,7 +3937,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> mesh_a = pv.Sphere(radius=0.5)
-        >>> mesh_b = pv.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
+        >>> mesh_b = pv.Cube(center=(0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
         pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])

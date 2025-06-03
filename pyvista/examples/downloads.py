@@ -4882,7 +4882,7 @@ def download_action_figure(load=True, *, high_resolution=False):  # pragma: no c
     >>> dataset = examples.download_action_figure()
     >>> _ = dataset.clean(inplace=True)
     >>> pl = pv.Plotter(lighting=None)
-    >>> pl.add_light(pv.Light((30, 10, 10)))
+    >>> pl.add_light(pv.Light(position=(30, 10, 10)))
     >>> _ = pl.add_mesh(
     ...     dataset,
     ...     color='w',
