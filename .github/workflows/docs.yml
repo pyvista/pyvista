@@ -37,6 +37,7 @@ env:
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
   VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
+  PYVISTA_BUILDING_GALLERY: true
 
 permissions:
   id-token: none
@@ -50,6 +51,12 @@ jobs:
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
     steps:
+      - name: Set PYVISTA_BUILDING_GALLERY environment variable
+        if: contains(github.event.pull_request.labels.*.name, 'skip-gallery')
+        run: |
+          echo "PYVISTA_BUILDING_GALLERY=false" >> "$GITHUB_ENV"
+          echo "USE_CACHE=false" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
