@@ -1607,11 +1607,11 @@ class ImageDataFilters(DataSetFilters):
             )
         _configure_smoothing(
             alg,
-            alg_input.spacing,
-            smoothing_iterations,
-            smoothing_relaxation,
-            smoothing_scale,
-            smoothing_distance,
+            spacing_=alg_input.spacing,
+            iterations_=smoothing_iterations,
+            relaxation_=smoothing_relaxation,
+            scale_=smoothing_scale,
+            distance_=smoothing_distance,
         )
 
         # Get output

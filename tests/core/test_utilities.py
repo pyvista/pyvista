@@ -532,7 +532,7 @@ def test_transform_vectors_sph_to_cart():
     lev = [1]  # elevation (radius)
     u, v = np.meshgrid(lon, lat, indexing='ij')
     w = u**2 - v**2
-    uu, vv, ww = pv.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
+    uu, vv, ww = pv.transform_vectors_sph_to_cart(theta=lon, phi=lat, r=lev, u=u, v=v, w=w)
     assert np.allclose(
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
@@ -2450,13 +2450,17 @@ def test_is_vtk_attribute_input_type(obj):
     assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
 
 
+warnings.simplefilter('always')
+
+
 def test_deprecate_positional_args_error_messages():
     # Test single arg
     @_deprecate_positional_args
     def foo(bar): ...
 
     match = (
-        "Argument 'bar' must be passed as a keyword argument.\n"
+        "Argument 'bar' must be passed as a keyword argument\n"
+        "to function 'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
         'From version 0.50, passing this as a positional argument will result in a TypeError.'
     )
     with pytest.warns(FutureWarning, match=match):
@@ -2467,7 +2471,8 @@ def test_deprecate_positional_args_error_messages():
     def foo(bar, baz): ...
 
     match = (
-        "Arguments 'bar', 'baz' must be passed as keyword arguments.\n"
+        "Arguments 'bar', 'baz' must be passed as keyword arguments\n"
+        "to function 'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
         'From version 1.2, passing these as positional arguments will result in a TypeError.'
     )
     with pytest.warns(FutureWarning, match=match):
@@ -2486,21 +2491,33 @@ def test_deprecate_positional_args_allowed():
     def foo(bar, baz, qux, ham, eggs, cats): ...
 
     match = (
-        'A maximum of 5 positional arguments are allowed. '
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
+        'A maximum of 5 positional arguments are allowed.\n'
         "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         foo(True, True, True, True, True, True)
 
     # Test invalid allowed
-    match = "Allowed positional argument 'invalid' is not a parameter of\n`foo` at"
+    match = (
+        "Allowed positional argument 'invalid' in decorator '_deprecate_positional_args'\n"
+        'is not a parameter of '
+        "function 'test_deprecate_positional_args_allowed.<locals>.foo'."
+    )
+
     with pytest.raises(ValueError, match=re.escape(match)):
 
         @_deprecate_positional_args(allowed=['invalid'])
         def foo(bar): ...
 
     # Test invalid order
-    match = "The `allowed` list ['b', 'a'] is not in the same order as parameters in\n`foo` at"
+    match = (
+        "The `allowed` list ['b', 'a'] in decorator '_deprecate_positional_args' "
+        'is not in the\nsame order as the parameters in '
+        "'test_deprecate_positional_args_allowed.<locals>.foo'.\n"
+        "Expected order: ['a', 'b']."
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
 
         @_deprecate_positional_args(allowed=['b', 'a'])

@@ -2425,7 +2425,7 @@ def test_add_remove_floor(sphere):
     pl.add_floor(color='b', line_width=2, lighting=True)
     pl.add_bounding_box()  # needed for update_bounds_axes
     assert len(pl.renderer._floors) == 1
-    pl.add_mesh(pv.Sphere(1.0))
+    pl.add_mesh(pv.Sphere(radius=1.0))
     pl.update_bounds_axes()
     assert len(pl.renderer._floors) == 1
     pl.show()

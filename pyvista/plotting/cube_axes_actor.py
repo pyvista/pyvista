@@ -140,7 +140,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     """
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['camera'])
     def __init__(  # noqa: PLR0917
         self,
         camera,

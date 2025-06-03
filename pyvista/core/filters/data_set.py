@@ -3835,11 +3835,11 @@ class DataSetFilters(DataObjectFilters):
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
             self,
-            pointa,
-            pointb,
-            center,
-            resolution,
-            tolerance,
+            pointa=pointa,
+            pointb=pointb,
+            center=center,
+            resolution=resolution,
+            tolerance=tolerance,
             progress_bar=progress_bar,
         )
 
@@ -3976,12 +3976,12 @@ class DataSetFilters(DataObjectFilters):
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
             self,
-            center,
-            resolution,
-            normal,
-            polar,
-            angle,
-            tolerance,
+            center=center,
+            resolution=resolution,
+            normal=normal,
+            polar=polar,
+            angle=angle,
+            tolerance=tolerance,
             progress_bar=progress_bar,
         )
 
@@ -5050,7 +5050,7 @@ class DataSetFilters(DataObjectFilters):
         surf = DataSetFilters.extract_surface(self, pass_cellid=True, progress_bar=progress_bar)
         return surf.point_data['vtkOriginalPointIds']
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['feature_angle'])
     def extract_feature_edges(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         feature_angle: float = 30.0,
@@ -5524,7 +5524,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
         return _get_output(alg)
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['scalars'])
     def compute_derivative(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,

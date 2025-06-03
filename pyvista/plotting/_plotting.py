@@ -181,7 +181,6 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     return custom_opac, opacity
 
 
-@_deprecate_positional_args
 def _common_arg_parser(
     *,
     dataset,

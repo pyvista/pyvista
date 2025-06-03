@@ -489,7 +489,7 @@ class _DataSetMapper(_BaseMapper):
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['scalars', 'scalars_name'])
     def set_scalars(  # noqa: PLR0917
         self,
         scalars,

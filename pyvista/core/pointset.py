@@ -759,7 +759,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.iv': _vtk.vtkIVWriter,
     }
 
-    @_deprecate_positional_args(allowed=['var_inp'])
+    @_deprecate_positional_args(allowed=['var_inp', 'faces'])
     def __init__(  # noqa: PLR0917
         self,
         var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,

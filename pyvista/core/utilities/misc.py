@@ -8,7 +8,6 @@ from functools import cache
 from functools import wraps
 import importlib
 import inspect
-from pathlib import Path
 import sys
 import threading
 import traceback
@@ -412,10 +411,10 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
-        def function_at_path_and_line() -> str:
-            path = Path(inspect.getfile(inspect.unwrap(f)))
-            line = inspect.getsourcelines(inspect.unwrap(f))[-1]
-            return f'`{f.__name__}` at {path}:{line}'
+        def qualified_name() -> str:
+            return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
+
+        decorator_name = _deprecate_positional_args.__name__
 
         sig = inspect.signature(f)
         param_names = list(sig.parameters)
@@ -423,22 +422,34 @@ def _deprecate_positional_args(
         # Validate `allowed` against actual parameter names
         if allowed is not None:
             if not isinstance(allowed, list):
-                msg = f'"Allowed arguments must be a list for\n{function_at_path_and_line()}'
-                raise TypeError(msg)
+
+                def error_allowed_args() -> None:
+                    msg = (
+                        f'In decorator {decorator_name} for function {qualified_name()!r}:\n'
+                        f'Allowed arguments must be a list, got {type(allowed)}.'
+                    )
+                    raise TypeError(msg)
+
+                error_allowed_args()
             for name in allowed:
                 if name not in param_names:
-                    msg = (
-                        f'Allowed positional argument {name!r} is not a parameter of\n'
-                        f'{function_at_path_and_line()}.'
-                    )
-                    raise ValueError(msg)
+
+                    def error_allowed_args(name_: str) -> None:
+                        msg = (
+                            f'Allowed positional argument {name_!r} in decorator '
+                            f'{decorator_name!r}\n'
+                            f'is not a parameter of function {qualified_name()!r}.'
+                        )
+                        raise ValueError(msg)
+
+                    error_allowed_args(name)
 
             # Check that `allowed` appears in the same order as in the signature
             sig_allowed = [name for name in param_names if name in allowed]
             if sig_allowed != allowed:
                 msg = (
-                    f'The `allowed` list {allowed} is not in the same order as parameters in\n'
-                    f'{function_at_path_and_line()}.\n'
+                    f'The `allowed` list {allowed} in decorator {decorator_name!r} is not in the\n'
+                    f'same order as the parameters in {qualified_name()!r}.\n'
                     f'Expected order: {sig_allowed}.'
                 )
                 raise ValueError(msg)
@@ -449,9 +460,9 @@ def _deprecate_positional_args(
                 n_allowed = len(allowed)
                 if n_allowed > _MAX_POSITIONAL_ARGS:
                     msg = (
-                        f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed. '
-                        f'Got {n_allowed}: {allowed} for\n'
-                        f'{function_at_path_and_line()}.'
+                        f'In decorator {decorator_name!r} for function {qualified_name()!r}:\n'
+                        f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed.\n'
+                        f'Got {n_allowed}: {allowed}'
                     )
                     raise ValueError(msg)
 
@@ -483,20 +494,27 @@ def _deprecate_positional_args(
                 if version_info < version:
                     version_str = '.'.join(map(str, version))
                     arg_list = ', '.join(f'{a!r}' for a in offending_args)
+
+                    # def warn_positional_args() -> None:
                     msg = (
-                        f'{function_at_path_and_line()}\n'
-                        f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}.\n'
-                        f'From version {version_str}, passing {this} as{a}positional argument{s} '
-                        'will result in a TypeError.'
+                        f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}\n'
+                        f'to function {qualified_name()!r}.\n'
+                        f'From version {version_str}, passing {this} as{a}positional '
+                        f'argument{s} will result in a TypeError.'
                     )
                     warnings.warn(msg, FutureWarning)
+
+                    # warn_positional_args()
                 else:
-                    msg = (
-                        f'n{function_at_path_and_line()}\n'
-                        f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword '
-                        f'argument{s}'
-                    )
-                    raise TypeError(msg)
+
+                    def error_positional_args() -> None:
+                        msg = (
+                            f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword '
+                            f'argument{s}'
+                        )
+                        raise TypeError(msg)
+
+                    error_positional_args()
             return f(*args, **kwargs)
 
         return inner_f

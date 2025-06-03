@@ -23,7 +23,7 @@ radius = 0.5
 @pytest.fixture
 def sphere():
     # this shadows the main sphere fixture from conftest!
-    return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
+    return pv.Sphere(radius=radius, theta_resolution=10, phi_resolution=10)
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def sphere_shifted():
 
 @pytest.fixture
 def sphere_dense():
-    return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
+    return pv.Sphere(radius=radius, theta_resolution=100, phi_resolution=100)
 
 
 @pytest.fixture
@@ -901,7 +901,7 @@ def test_clip_plane(sphere):
 
 
 def test_extract_largest(sphere):
-    mesh = sphere + pv.Sphere(0.1, theta_resolution=5, phi_resolution=5)
+    mesh = sphere + pv.Sphere(radius=0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces_strict == sphere.n_faces_strict
 
