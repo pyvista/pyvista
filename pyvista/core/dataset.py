@@ -552,7 +552,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        points : MatrixLike[float] | vtk.vtkPoints
+        points : MatrixLike[float] | :vtk:`vtkPoints`
             Points as a array object.
 
         """
@@ -1226,7 +1226,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> cube = pv.Cube()
         >>> cube.bounds
-        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -1653,7 +1658,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        mesh : vtk.vtkDataSet
+        mesh : :vtk:`vtkDataSet`
             The overwriting mesh.
 
         deep : bool, default: True
@@ -1733,6 +1738,10 @@ class DataSet(DataSetFilters, DataObject):
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
+        See Also
+        --------
+        :ref:`create_pointset_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1744,10 +1753,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         pset = pyvista.PointSet()
         pset.points = self.points.copy()
-        if pass_cell_data:
-            self = self.cell_data_to_point_data()
-        pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        out = self.cell_data_to_point_data() if pass_cell_data else self
+        pset.GetPointData().DeepCopy(out.GetPointData())
+        pset.active_scalars_name = out.active_scalars_name
         return pset
 
     def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:
@@ -1925,6 +1933,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        :ref:`distance_between_surfaces_example`
 
         Examples
         --------
@@ -2350,8 +2359,7 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
-        Concrete implementation of vtkDataSet's `GetCellNeighbors
-        <https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4>`_.
+        Concrete implementation of :vtk:`vtkDataSet.GetCellNeighbors`.
 
         Parameters
         ----------
@@ -2755,7 +2763,7 @@ class DataSet(DataSetFilters, DataObject):
     def point_cell_ids(self: Self, ind: int) -> list[int]:
         """Get the cell IDs that use the ind-th point.
 
-        Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
+        Implements :vtk:`vtkDataSet.GetPointCells`.
 
         Parameters
         ----------
@@ -2852,7 +2860,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> mesh.get_cell(0).bounds
-        BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.5, z_min=0.0, z_max=0.5)
+        BoundsTuple(x_min = 0.0,
+                    x_max = 0.5,
+                    y_min = 0.0,
+                    y_max = 0.5,
+                    z_min = 0.0,
+                    z_max = 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True
 
@@ -2910,7 +2923,7 @@ class DataSet(DataSetFilters, DataObject):
                          ...,
                          [1.        , 0.85714286],
                          [1.        , 0.92857143],
-                         [1.        , 1.        ]])
+                         [1.        , 1.        ]], shape=(540, 2))
 
         """
         return self.point_data.active_texture_coordinates

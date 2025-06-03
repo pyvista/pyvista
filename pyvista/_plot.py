@@ -131,6 +131,8 @@ def plot(
 
     jupyter_kwargs : dict, optional
         Keyword arguments for the Jupyter notebook plotting backend.
+        See :ref:`customize_trame_toolbar_example` for an example
+        using this keyword.
 
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
@@ -252,7 +254,7 @@ def plot(
                 pl.add_background_image(path)
         else:
             msg = f'Background must be color-like or a file path. Got {background} instead.'
-            raise ValueError(msg)
+            raise TypeError(msg)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows

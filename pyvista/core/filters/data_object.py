@@ -1637,7 +1637,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        implicit_function : vtk.vtkImplicitFunction
+        implicit_function : :vtk:`vtkImplicitFunction`
             Specify the implicit function to perform the cutting.
 
         generate_triangles : bool, default: False
@@ -2213,7 +2213,7 @@ class DataObjectFilters:
         >>> sphere_elv['Elevation'][:4]  # doctest:+SKIP
         array([-0.5       ,  0.5       , -0.49706897, -0.48831028], dtype=float32)
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`using_filters_example` for more examples using this filter.
 
         """
         # Fix the projection line:
@@ -2649,7 +2649,7 @@ class DataObjectFilters:
         with a value of 1 meaning successful sampling. And a value of 0 means
         unsuccessful.
 
-        This uses :class:`vtk.vtkResampleWithDataSet`.
+        This uses :vtk:`vtkResampleWithDataSet`.
 
         Parameters
         ----------
@@ -2676,15 +2676,15 @@ class DataObjectFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        locator : vtkAbstractCellLocator or str or None, default: 'static_cell'
+        locator : :vtk:`vtkAbstractCellLocator` or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
             operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
-                * 'cell' - vtkCellLocator
-                * 'cell_tree' - vtkCellTreeLocator
-                * 'obb_tree' - vtkOBBTree
-                * 'static_cell' - vtkStaticCellLocator
+                * 'cell' - :vtk:`vtkCellLocator`
+                * 'cell_tree' - :vtk:`vtkCellTreeLocator`
+                * 'obb_tree' - :vtk:`vtkOBBTree`
+                * 'static_cell' - :vtk:`vtkStaticCellLocator`
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
@@ -2733,7 +2733,8 @@ class DataObjectFilters:
         >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
-        See :ref:`resampling_example` for more examples using this filter.
+        See :ref:`resampling_example` and :ref:`interpolate_sample_example`
+        for more examples using this filter.
 
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
@@ -2888,9 +2889,9 @@ class DataObjectFilters:
             measures_requested = measures_available_names
         else:
             measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
-            for quality_measure in measures:
+            for measure in measures:
                 _validation.check_contains(
-                    measures_available_names, must_contain=quality_measure, name='quality_measure'
+                    measures_available_names, must_contain=measure, name='quality_measure'
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 

@@ -1,46 +1,77 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import importlib.util
+from pathlib import Path
 
+import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 
-if TYPE_CHECKING:
-    from types import ModuleType
 
+def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
+    """Return all classes defined in the pyvista package."""
+    class_types: set[type] = set()
 
-def get_all_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
-    """Return all classes which inherit from vtk classes."""
-    class_types: list[type] = []
+    package_path = Path(pv.__path__[0])  # path to pyvista package
 
-    def _append_classes_from_module(module: ModuleType):
-        keys = module.__dict__.keys()
-        for module_item in keys:
-            module_attr = getattr(module, module_item)
-            if not hasattr(module_attr, '__mro__'):
-                continue  # not a class
-            if any(item.__name__.startswith('vtk') for item in module_attr.__mro__):
-                class_types.append(module_attr)
+    def find_py_files(path: Path):
+        return [p for p in path.rglob('*.py') if p.name != '__init__.py']
 
-    # Get from core and plotting separately since plotting module has a lazy importer
-    _append_classes_from_module(pv.core)
-    _append_classes_from_module(pv.plotting)
+    core_py_files = find_py_files(package_path / 'core')
+    plotting_py_files = find_py_files(package_path / 'plotting')
+
+    for file_path in [*core_py_files, *plotting_py_files]:
+        # Convert path to dotted module name
+        rel_path = file_path.relative_to(package_path.parent)
+        module_name = '.'.join(rel_path.with_suffix('').parts)
+
+        module = importlib.import_module(module_name)
+
+        for name in dir(module):
+            obj = getattr(module, name)
+            if isinstance(obj, type) and getattr(obj, '__module__', '') == module_name:
+                class_types.add(obj)
 
     # Sort and return names and types as separate tuples
-    dict_ = {class_.__name__: class_ for class_ in class_types}
-    sorted_dict = {key: dict_[key] for key in sorted(dict_.keys())}
-    return tuple(sorted_dict.keys()), tuple(sorted_dict.values())
+    sorted_classes = sorted(class_types, key=lambda cls: cls.__name__)
+    return tuple(cls.__name__ for cls in sorted_classes), tuple(sorted_classes)
 
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'vtk_subclass' in metafunc.fixturenames:
-        # Generate a separate test for any class that has bounds
-        class_names, class_types = get_all_classes()
-        metafunc.parametrize('vtk_subclass', class_types, ids=class_names)
+        # This test automatically collects all pyvista classes that _inherit_ from
+        # vtk classes. For classes that wrap vtk classes through composition, we
+        # manually add these here
+        VTK_SUBCLASS_BY_COMPOSITION: set[type] = {pv.pyvista_ndarray}
+
+        def get_vtk_subclasses_through_composition() -> dict[str, type]:
+            return {cls.__name__: cls for cls in VTK_SUBCLASS_BY_COMPOSITION}
+
+        def get_vtk_subclasses_through_inheritance() -> dict[str, type]:
+            class_names, class_types = get_all_pyvista_classes()
+
+            def inherits_from_vtk(klass):
+                bases = klass.__mro__[1:]
+                return any(base.__name__.startswith('vtk') for base in bases)
+
+            inherits_from_vtk = {
+                name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
+            }
+            assert inherits_from_vtk
+            return inherits_from_vtk
+
+        inheritance = get_vtk_subclasses_through_inheritance()
+        composition = get_vtk_subclasses_through_composition()
+        inheritance.update(composition)
+
+        names = inheritance.keys()
+        types = inheritance.values()
+        metafunc.parametrize('vtk_subclass', types, ids=names)
 
 
 def try_init_object(class_, kwargs):
@@ -57,9 +88,14 @@ def try_init_object(class_, kwargs):
 
 
 def test_vtk_snake_case_api_is_disabled(vtk_subclass):
-    # Define kwargs as required for some cases.
     assert pv.vtk_snake_case() == 'error'
+
+    # Default test values for classes
     kwargs = {}
+    vtk_attr_camel_case = 'GetGlobalWarningDisplay'
+    vtk_attr_snake_case = 'global_warning_display'
+
+    # Define kwargs or attributes as required for some cases.
     if vtk_subclass is pv.CubeAxesActor:
         kwargs['camera'] = pv.Camera()
     elif vtk_subclass is pv.Renderer:
@@ -72,18 +108,58 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
     elif vtk_subclass is pv.CornerAnnotation:
         kwargs['position'] = 'top'
         kwargs['text'] = 'text'
+    elif vtk_subclass is pv.plotting.utilities.algorithms.ActiveScalarsAlgorithm:
+        kwargs['name'] = 'name'
+    elif vtk_subclass is pv.charts.AreaPlot:
+        kwargs['chart'] = pv.charts.Chart2D()
+        kwargs['x'] = (0, 0, 0)
+        kwargs['y1'] = (1, 0, 0)
+    elif vtk_subclass in [pv.charts.BarPlot, pv.charts.LinePlot2D, pv.charts.ScatterPlot2D]:
+        kwargs['chart'] = pv.charts.Chart2D()
+        kwargs['x'] = (0, 0, 0)
+        kwargs['y'] = (1, 0, 0)
+    elif vtk_subclass is pv.charts.StackPlot:
+        kwargs['chart'] = pv.charts.Chart2D()
+        kwargs['x'] = (0, 0, 0)
+        kwargs['ys'] = (1, 0, 0)
+    elif vtk_subclass in [pv.charts.BoxPlot, pv.charts.PiePlot]:
+        kwargs['chart'] = pv.charts.Chart2D()
+        kwargs['data'] = [0, 0, 0]
+    elif vtk_subclass is pv.charts._ChartBackground:
+        kwargs['chart'] = pv.charts.Chart2D()
+    elif vtk_subclass is pv.plotting.background_renderer.BackgroundRenderer:
+        kwargs['parent'] = pv.Plotter()
+        kwargs['image_path'] = pv.examples.logofile
+    elif vtk_subclass is pv.pyvista_ndarray:
+        vtk_attr_camel_case = 'GetName'
+        vtk_attr_snake_case = 'name'
+        kwargs['array'] = pv.vtk_points(np.eye(3)).GetData()
+    elif issubclass(vtk_subclass, pv.plotting.render_window_interactor.InteractorStyleCaptureMixin):
+        kwargs['render_window_interactor'] = pv.Plotter().iren
 
     instance = try_init_object(vtk_subclass, kwargs)
-    vtk_attr_camel_case = 'GetGlobalWarningDisplay'
-    vtk_attr_snake_case = 'global_warning_display'
 
     # Make sure the CamelCase attribute exists and can be accessed
     assert hasattr(instance, vtk_attr_camel_case)
 
     if pv.vtk_version_info >= (9, 4):
         # Test getting the snake_case equivalent raises error
-        match = "The attribute 'global_warning_display' is defined by VTK and is not part of the PyVista API"
-        with pytest.raises(PyVistaAttributeError, match=match):
+
+        try:
             getattr(instance, vtk_attr_snake_case)
+        except PyVistaAttributeError as e:
+            # Test passes, we want an error to be raised
+            # Confirm error message is correct
+            match = f"The attribute '{vtk_attr_snake_case}' is defined by VTK and is not part of the PyVista API"
+            assert match in repr(e)  # noqa: PT017
+        else:
+            if DisableVtkSnakeCase not in vtk_subclass.__mro__:
+                msg = (
+                    f'The class {vtk_subclass.__name__!r} in {vtk_subclass.__module__!r}\n'
+                    f'must inherit from {DisableVtkSnakeCase.__name__!r} in {DisableVtkSnakeCase.__module__!r}'
+                )
+            else:
+                msg = f'{PyVistaAttributeError.__name__} was NOT raised (but was expected).'
+            pytest.fail(msg)
     else:
         assert not hasattr(instance, vtk_attr_snake_case)

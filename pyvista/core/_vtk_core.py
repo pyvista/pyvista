@@ -10,6 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+import sys
 from typing import NamedTuple
 import warnings
 
@@ -526,7 +527,7 @@ try:
 except ImportError:  # pragma: no cover
     # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
 
-    class vtkPythonItem:  # type: ignore[no-redef]
+    class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
         """Empty placeholder."""
 
         def __init__(self):  # pragma: no cover
@@ -568,8 +569,11 @@ class VersionInfo(NamedTuple):
     minor: int
     micro: int
 
+    def __str__(self):
+        return str((self.major, self.minor, self.micro))
 
-def VTKVersionInfo():
+
+def VTKVersionInfo():  # noqa: N802
     """Return the vtk version as a namedtuple.
 
     Returns
@@ -593,7 +597,7 @@ def VTKVersionInfo():
 vtk_version_info = VTKVersionInfo()
 
 
-class vtkPyVistaOverride:
+class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 
     def __init_subclass__(cls, **kwargs):
@@ -620,9 +624,12 @@ class vtkPyVistaOverride:
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's `snake_case` API."""
 
-    def __getattribute__(self, attr):
-        if vtk_version_info >= (9, 4):
+    @staticmethod
+    def check_attribute(target, attr):
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if vtk_version_info >= (9, 4) and sys.meta_path is not None:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
+
             import pyvista as pv
 
             state = pv._VTK_SNAKE_CASE_STATE
@@ -630,14 +637,17 @@ class DisableVtkSnakeCase:
                 if (
                     attr not in ['__class__', '__init__']
                     and attr[0].islower()
-                    and is_vtk_attribute(self, attr)
+                    and is_vtk_attribute(target, attr)
                 ):
                     msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
                     if state == 'error':
                         raise pv.PyVistaAttributeError(msg)
                     else:
                         warnings.warn(msg, RuntimeWarning)
-        return super().__getattribute__(attr)
+
+    def __getattribute__(self, item):
+        DisableVtkSnakeCase.check_attribute(self, item)
+        return object.__getattribute__(self, item)
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01

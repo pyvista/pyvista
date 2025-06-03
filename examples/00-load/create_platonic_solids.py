@@ -1,10 +1,10 @@
 """
-.. _platonic_example:
+.. _create_platonic_solids_example:
 
 Platonic Solids
 ~~~~~~~~~~~~~~~
 
-PyVista wraps the ``vtk.vtkPlatonicSolidSource`` filter as
+PyVista wraps the :vtk:`vtkPlatonicSolidSource` filter as
 :func:`pyvista.PlatonicSolid`.
 """
 

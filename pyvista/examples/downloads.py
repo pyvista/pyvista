@@ -137,13 +137,12 @@ def file_from_files(target_path, fnames):
     found_fnames = []
     for fname in fnames:
         # always convert windows paths
-        if os.name == 'nt':  # pragma: no cover
-            fname = PureWindowsPath(fname).as_posix()
+        posix_fname = PureWindowsPath(fname).as_posix() if os.name == 'nt' else fname
         # ignore mac hidden directories
-        if '/__MACOSX/' in fname:
+        if '/__MACOSX/' in posix_fname:
             continue
-        if fname.endswith(target_path):
-            found_fnames.append(fname)
+        if posix_fname.endswith(target_path):
+            found_fnames.append(posix_fname)
 
     if len(found_fnames) == 1:
         return found_fnames[0]
@@ -450,6 +449,8 @@ def download_puppy(load=True):  # pragma: no cover
 
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
 
+        :ref:`read_image_example`
+
     """
     return _download_dataset(_dataset_puppy, load=load)
 
@@ -519,9 +520,9 @@ def download_st_helens(load=True):  # pragma: no cover
         This dataset is used in the following examples:
 
         * :ref:`colormap_example`
-        * :ref:`lighting_properties_example`
-        * :ref:`plot_opacity_example`
-        * :ref:`orbiting_example`
+        * :ref:`lighting_mesh_example`
+        * :ref:`opacity_example`
+        * :ref:`orbit_example`
         * :ref:`plot_over_line_example`
         * :ref:`plotter_lighting_example`
         * :ref:`themes_example`
@@ -976,7 +977,7 @@ def download_topo_global(load=True):  # pragma: no cover
 
         This dataset is used in the following examples:
 
-        * :ref:`surface_normal_example`
+        * :ref:`compute_normals_example`
         * :ref:`background_image_example`
 
     """
@@ -1089,7 +1090,7 @@ def download_knee(load=True):  # pragma: no cover
 
         This dataset is used in the following examples:
 
-        * :ref:`plot_opacity_example`
+        * :ref:`opacity_example`
         * :ref:`volume_rendering_example`
         * :ref:`slider_bar_widget_example`
 
@@ -1174,8 +1175,8 @@ def download_lidar(load=True):  # pragma: no cover
 
         This dataset is used in the following examples:
 
-        * :ref:`create_point_cloud`
-        * :ref:`edl`
+        * :ref:`create_point_cloud_example`
+        * :ref:`edl_example`
 
     """
     return _download_dataset(_dataset_lidar, load=load)
@@ -1243,10 +1244,10 @@ def download_nefertiti(load=True):  # pragma: no cover
 
         This dataset is used in the following examples:
 
-        * :ref:`surface_normal_example`
+        * :ref:`compute_normals_example`
         * :ref:`extract_edges_example`
         * :ref:`show_edges_example`
-        * :ref:`edl`
+        * :ref:`edl_example`
         * :ref:`pbr_example`
         * :ref:`box_widget_example`
 
@@ -1289,7 +1290,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
         * :ref:`read_parallel_example`
         * :ref:`streamlines_example`
-        * :ref:`integrate_example`
+        * :ref:`integrate_data_example`
 
     """
     return _download_dataset(_dataset_blood_vessels, load=load)
@@ -1489,7 +1490,7 @@ def download_foot_bones(load=True):  # pragma: no cover
         :ref:`Foot Bones Dataset <foot_bones_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`voxelize_surface_mesh_example`
+        :ref:`voxelize_example`
             Example using this dataset.
 
     """
@@ -1732,7 +1733,7 @@ def download_horse(load=True):  # pragma: no cover
 
         :ref:`Horse Points Dataset <horse_points_dataset>`
 
-        :ref:`disabling_mesh_lighting_example`
+        :ref:`mesh_lighting_example`
             Example using this dataset.
 
     """
@@ -3387,9 +3388,9 @@ def download_dragon(load=True):  # pragma: no cover
         This dataset is used in the following examples:
 
         * :ref:`floors_example`
-        * :ref:`orbiting_example`
+        * :ref:`orbit_example`
         * :ref:`silhouette_example`
-        * :ref:`light_shadows_example`
+        * :ref:`shadows_example`
 
     """
     return _download_dataset(_dataset_dragon, load=load)
@@ -3682,7 +3683,7 @@ def download_model_with_variance(load=True):  # pragma: no cover
         :ref:`Model With Variance Dataset <model_with_variance_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`plot_opacity_example`
+        :ref:`opacity_example`
             Example using this dataset.
 
     """
@@ -3931,6 +3932,8 @@ def download_dolfin(load=True):  # pragma: no cover
         :ref:`Dolfin Dataset <dolfin_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`read_dolfin_example`
+
     """
     return _download_dataset(_dataset_dolfin, load=load)
 
@@ -4064,7 +4067,7 @@ def download_embryo(load=True):  # pragma: no cover
 
         * :ref:`contouring_example`
         * :ref:`resampling_example`
-        * :ref:`orthogonal_slices_example`
+        * :ref:`slice_orthogonal_example`
 
     """
     return _download_dataset(_dataset_embryo, load=load)
@@ -4567,7 +4570,7 @@ def download_gpr_data_array(load=True):  # pragma: no cover
 
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
 
-        :ref:`create_draped_surf_example`
+        :ref:`create_draped_surface_example`
             Example using this dataset.
 
     """
@@ -4607,7 +4610,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
 
-        :ref:`create_draped_surf_example`
+        :ref:`create_draped_surface_example`
             Example using this dataset.
 
     """
@@ -5067,7 +5070,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
         :ref:`Cylinder Crossflow Dataset <cylinder_crossflow_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`2d_streamlines_example`
+        :ref:`streamlines_2D_example`
             Example using this dataset.
 
     """
@@ -5893,7 +5896,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
-    <https://cgns.github.io/CGNSFiles.html>`_
+    <https://cgns.org/current/examples.html#constricting-channel>`_
 
     Parameters
     ----------
@@ -5975,7 +5978,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     """Download a multielement airfoil with a cell centered solution.
 
     Originally downloaded from `CFD General Notation System Example Files
-    <https://cgns.github.io/CGNSFiles.html>`_
+    <https://cgns.org/current/examples.html#d-multielement-airfoil>`_
 
     Parameters
     ----------
@@ -6446,7 +6449,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
 
-        :ref:`plotting_point_clouds`
+        :ref:`point_clouds_example`
             Full example using this dataset
 
     """
@@ -6511,7 +6514,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 
         :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
 
-        :ref:`plotting_point_clouds`
+        :ref:`point_clouds_example`
             More details on how to plot point clouds.
 
     """
@@ -6584,7 +6587,7 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
         :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`plotting_point_clouds`
+        :ref:`point_clouds_example`
             More details on how to plot point clouds.
 
     """
@@ -6698,6 +6701,8 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
 
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`fea_hertzian_contact_pressure_example`
 
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
 

@@ -21,8 +21,7 @@ def skip_check_gc(skip_check_gc):
 
 
 # skip all tests if VTK<9.2.0
-if pv.vtk_version_info < (9, 2):
-    pytestmark = pytest.mark.skip
+pytestmark = pytest.mark.needs_vtk_version(9, 2)
 
 
 def vtk_array_to_tuple(arr):
@@ -703,7 +702,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         charts.BarPlot(chart_2d, x, y, c[0], ori, l)
     # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
@@ -746,7 +745,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         charts.StackPlot(chart_2d, x, ys, c[0], l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011

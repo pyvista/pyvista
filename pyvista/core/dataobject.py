@@ -83,7 +83,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : DataObject | :vtk:`vtkDataObject`
             Data object to perform a shallow copy from.
 
         """
@@ -94,7 +94,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : DataObject | :vtk:`vtkDataObject`
             Data object to perform a deep copy from.
 
         """
@@ -108,7 +108,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                 f'Reading file returned data of `{type(data).__name__}`, '
                 f'but `{type(self).__name__}` was expected.'
             )
-            raise ValueError(msg)
+            raise TypeError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -175,6 +175,14 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                         'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
                     )
 
+        def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
+            if not np.allclose(mesh.direction_matrix, np.eye(3)):
+                warnings.warn(
+                    'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.\n'
+                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
+                    'Use the `.vti` extension instead (XML format).'
+                )
+
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
@@ -213,6 +221,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         # warn if data will be lost
         if isinstance(self, pyvista.MultiBlock):
             _warn_multiblock_nested_field_data(self)
+        if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
+            _warn_imagedata_direction_matrix(self)
 
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
@@ -723,7 +733,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet
+        dataset : :vtk:`vtkDataSet`
             Dataset to copy the geometry and topology from.
 
         Examples

@@ -587,9 +587,9 @@ def validate_transform4x4(
     Parameters
     ----------
     transform : TransformLike
-        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
-        or a SciPy ``Rotation`` instance. If the input is 3x3, the array is padded using
-        a 4x4 identity matrix.
+        Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+        :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+        If the input is 3x3, the array is padded using a 4x4 identity matrix.
 
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
@@ -620,9 +620,9 @@ def validate_transform4x4(
         arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
     except (ValueError, TypeError):
         if isinstance(transform, vtkMatrix4x4):
-            arr = _array_from_vtkmatrix(transform, shape=(4, 4))
+            arr = _array_from_vtkmatrix(transform, shape=(4, 4))  # type: ignore[assignment]
         elif isinstance(transform, vtkTransform):
-            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
+            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))  # type: ignore[assignment]
         else:
             try:
                 arr = validate_array(
@@ -848,7 +848,7 @@ def validate_data_range(rng: VectorLike[float], /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(
+def validate_arrayNx3(  # noqa: N802
     arr: VectorLike[float] | MatrixLike[float], /, *, reshape: bool = True, **kwargs
 ):
     """Validate an array is numeric and has shape Nx3.
@@ -921,7 +921,7 @@ def validate_arrayNx3(
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):
+def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):  # noqa: N802
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -994,7 +994,7 @@ def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, 
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_unsigned(
+def validate_arrayN_unsigned(  # noqa: N802
     arr: VectorLike[float], /, *, reshape: bool = True, **kwargs
 ) -> NumpyArray[int]:
     """Validate a numeric 1D array of non-negative (unsigned) integers.
@@ -1291,10 +1291,11 @@ def _validate_color_sequence(
                     return tuple(color_list)
             except ValueError:
                 pass
+    n_colors_str = f' {n_colors} ' if n_colors else ' '
     msg = (
         f'Invalid color(s):\n'
         f'\t{color}\n'
         f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.'
+        f'or a sequence of{n_colors_str}ColorLike colors.'
     )
     raise ValueError(msg)

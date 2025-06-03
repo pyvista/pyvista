@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -151,8 +152,8 @@ class _ForceSlots(type):
     """Metaclass to force classes and subclasses to have __slots__."""
 
     @classmethod
-    def __prepare__(metaclass, name, bases, **kwargs):
-        super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
+    def __prepare__(cls, name, bases, **kwargs):
+        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
         super_prepared['__slots__'] = ()
         return super_prepared
 
@@ -187,11 +188,11 @@ class _ThemeConfig(metaclass=_ForceSlots):
         dict_ = {}
         for key in self._all__slots__():
             value = getattr(self, key)
-            key = key[1:]
+            key_ = key[1:]
             if hasattr(value, 'to_dict'):
-                dict_[key] = value.to_dict()
+                dict_[key_] = value.to_dict()
             else:
-                dict_[key] = value
+                dict_[key_] = value
         return dict_
 
     def __eq__(self, other) -> bool:
@@ -1447,7 +1448,7 @@ class _TrameConfig(_ThemeConfig):
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
         if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))  # noqa: PTH118
+            self._server_proxy_prefix = str(Path(service) / prefix.lstrip('/'))
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1831,7 +1832,7 @@ class Theme(_ThemeConfig):
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
+            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', '8'))
         except ValueError:  # pragma: no cover
             self._multi_samples = 8
 
@@ -1899,7 +1900,7 @@ class Theme(_ThemeConfig):
         will be interpolated across the topology of the dataset which is
         more accurate.
 
-        See also :ref:`interpolate_before_mapping_example`.
+        See also :ref:`interpolate_before_map_example`.
 
         Examples
         --------
@@ -2315,9 +2316,8 @@ class Theme(_ThemeConfig):
     def cmap(self):  # numpydoc ignore=RT01
         """Return or set the default colormap of pyvista.
 
-        See available Matplotlib colormaps.  Only applicable for when
-        displaying ``scalars``.  If ``colorcet`` or ``cmocean`` are
-        installed, their colormaps can be specified by name.
+        See :ref:`named_colormaps` for supported colormaps.
+        Only applicable when displaying ``scalars``.
 
         You can also specify a list of colors to override an existing
         colormap with a custom one.  For example, to create a three
@@ -2334,7 +2334,7 @@ class Theme(_ThemeConfig):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, cmap):
+    def cmap(self, cmap: ColormapOptions):
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
             msg = f'Invalid color map {cmap}'
@@ -2833,10 +2833,10 @@ class Theme(_ThemeConfig):
         Must be one of the following strings, which are mapped to the
         following VTK volume mappers.
 
-        * ``'fixed_point'`` : ``vtk.vtkFixedPointVolumeRayCastMapper``
-        * ``'gpu'`` : ``vtk.vtkGPUVolumeRayCastMapper``
-        * ``'open_gl'`` : ``vtk.vtkOpenGLGPUVolumeRayCastMapper``
-        * ``'smart'`` : ``vtk.vtkSmartVolumeMapper``
+        * ``'fixed_point'`` : :vtk:`vtkFixedPointVolumeRayCastMapper`
+        * ``'gpu'`` : :vtk:`vtkGPUVolumeRayCastMapper`
+        * ``'open_gl'`` : :vtk:`vtkOpenGLGPUVolumeRayCastMapper`
+        * ``'smart'`` : :vtk:`vtkSmartVolumeMapper`
 
         Examples
         --------
@@ -3465,7 +3465,7 @@ class _TestingTheme(Theme):
         self.resample_environment_texture = True
 
 
-class _NATIVE_THEMES(Enum):
+class _NATIVE_THEMES(Enum):  # noqa: N801
     """Global built-in themes available to PyVista."""
 
     paraview = ParaViewTheme

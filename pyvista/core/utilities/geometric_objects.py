@@ -293,7 +293,7 @@ def CylinderStructured(
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
-    zz = np.full((X.size, z_resolution), dz)
+    zz = np.full((X.size, z_resolution), dz)  # type:ignore[assignment]
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
 
@@ -458,6 +458,7 @@ def Sphere(
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
 
     Examples
     --------
@@ -947,10 +948,10 @@ def SolidSphereGeneric(
             cells.append(5)
             cells.extend(
                 [
-                    _index(0, iphi, itheta),
-                    _index(0, iphi, itheta + 1),
-                    _index(0, iphi + 1, itheta + 1),
-                    _index(0, iphi + 1, itheta),
+                    _index(0, iphi, itheta),  # type:ignore[arg-type]
+                    _index(0, iphi, itheta + 1),  # type:ignore[arg-type]
+                    _index(0, iphi + 1, itheta + 1),  # type:ignore[arg-type]
+                    _index(0, iphi + 1, itheta),  # type:ignore[arg-type]
                     0,
                 ],
             )
@@ -1001,14 +1002,14 @@ def SolidSphereGeneric(
         cells.append(8)
         cells.extend(
             [
-                _index(ir, iphi, itheta),
-                _index(ir, iphi + 1, itheta),
-                _index(ir, iphi + 1, itheta + 1),
-                _index(ir, iphi, itheta + 1),
-                _index(ir + 1, iphi, itheta),
-                _index(ir + 1, iphi + 1, itheta),
-                _index(ir + 1, iphi + 1, itheta + 1),
-                _index(ir + 1, iphi, itheta + 1),
+                _index(ir, iphi, itheta),  # type:ignore[arg-type]
+                _index(ir, iphi + 1, itheta),  # type:ignore[arg-type]
+                _index(ir, iphi + 1, itheta + 1),  # type:ignore[arg-type]
+                _index(ir, iphi, itheta + 1),  # type:ignore[arg-type]
+                _index(ir + 1, iphi, itheta),  # type:ignore[arg-type]
+                _index(ir + 1, iphi + 1, itheta),  # type:ignore[arg-type]
+                _index(ir + 1, iphi + 1, itheta + 1),  # type:ignore[arg-type]
+                _index(ir + 1, iphi, itheta + 1),  # type:ignore[arg-type]
             ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
@@ -1212,10 +1213,10 @@ def Cube(
     arguments are ignored.
 
     .. versionchanged:: 0.33.0
-        The cube is created using ``vtk.vtkCubeSource``. For
+        The cube is created using :vtk:`vtkCubeSource`. For
         compatibility with :func:`pyvista.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
-        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        :func:`~pyvista.PlatonicSolid`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
         The cube points are also cleaned by default now, leaving only
         the 8 corners and a watertight (manifold) mesh.
@@ -1737,9 +1738,9 @@ def CircularArc(
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
-    pointb = list(pointb)
-    pointb[0] -= 1e-10
-    pointb[1] -= 1e-10
+    pointb = list(pointb)  # type: ignore[assignment]
+    pointb[0] -= 1e-10  # type: ignore[index]
+    pointb[1] -= 1e-10  # type: ignore[index]
 
     arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
@@ -2255,7 +2256,7 @@ def PlatonicSolid(
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')
@@ -2300,7 +2301,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Tetrahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
@@ -2334,7 +2335,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     >>> tetra = pv.Octahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
@@ -2367,7 +2368,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     >>> tetra = pv.Dodecahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
@@ -2401,7 +2402,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Icosahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

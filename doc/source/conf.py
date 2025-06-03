@@ -21,7 +21,7 @@ faulthandler.enable()
 # Note that `import make_tables` below imports pyvista.
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
-sys.path.insert(0, str(Path().resolve()))
+sys.path.insert(0, str(Path().cwd()))
 import make_external_gallery
 import make_tables
 
@@ -100,6 +100,7 @@ extensions = [
     'sphinx_toolbox.more_autodoc.autonamedtuple',
     'sphinxext.opengraph',
     'sphinx_sitemap',
+    'vtk_xref',
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -226,6 +227,7 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
     (r'py:.*', '.*MatrixLike'),
     (r'py:.*', '.*VectorLike'),
@@ -461,6 +463,7 @@ has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmn
 
 
 sphinx_gallery_conf = {
+    'abort_on_example_error': True,  # Fail early
     # convert rst to md for ipynb
     'pypandoc': True,
     # path to your examples scripts
@@ -479,10 +482,12 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
+    'reference_url': {'pyvista': None},  # Add hyperlinks inside code blocks to pyvista methods
     'image_scrapers': (DynamicScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
+    'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
 }
 
 suppress_warnings = ['config.cache']

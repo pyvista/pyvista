@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
-    """Create axis labels as a vtkStringArray.
+    """Create axis labels as a :vtk:`vtkStringArray`.
 
     Parameters
     ----------
@@ -36,8 +36,8 @@ def make_axis_labels(vmin, vmax, n, fmt):
 
     Returns
     -------
-    vtkStringArray
-        The created labels as a vtkStringArray object.
+    :vtk:`vtkStringArray`
+        The created labels as a :vtk:`vtkStringArray` object.
 
     """
     labels = _vtk.vtkStringArray()
@@ -48,12 +48,11 @@ def make_axis_labels(vmin, vmax, n, fmt):
 
 
 class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
-    """Wrap vtkCubeAxesActor.
+    """Wrap :vtk:`vtkCubeAxesActor`.
 
-    This class is created to wrap vtkCubeAxesActor, which is used to draw axes
+    This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
-    user-friendly interface to use `vtkCubeAxesActor
-    <https://vtk.org/doc/nightly/html/classvtkCubeAxesActor.html>`_.
+    user-friendly interface to use `:vtk:`vtkCubeAxesActor`.
 
     Parameters
     ----------
@@ -117,6 +116,13 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     n_zlabels : int, default: 5
         Number of labels along the z-axis.
+
+    See Also
+    --------
+    :meth:`~pyvista.Plotter.show_bounds`
+    :meth:`~pyvista.Plotter.show_grid`
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------

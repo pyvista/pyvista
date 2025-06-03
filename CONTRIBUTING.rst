@@ -45,7 +45,7 @@ running:
 
 .. note::
 
-   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   Use ``python -m pip install -e . --group dev`` to also install all of the
    packages required for development.
 
 Quick Start Development with Codespaces
@@ -495,11 +495,11 @@ request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
 To run our comprehensive suite of unit tests, install PyVista with all
-developer dependencies:
+test dependencies:
 
 .. code-block:: bash
 
-   pip install -e '.[dev]'
+   pip install -e . --group test
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -532,6 +532,42 @@ If needed, code coverage can be deactivated for specific lines by adding the ``#
 for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
+
+The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
+If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
+custom pytest marker ``needs_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
+
+.. code-block:: python
+
+    @pytest.mark.needs_vtk_version(9, 1)
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version((9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info < (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1)"""
+
+
+    @pytest.mark.needs_vtk_version(at_least=(8, 2), less_than=(9, 1))
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 1))
+    @pytest.mark.needs_vtk_version(8, 2)
+    def test():
+        """Test is skipped if pv.vtk_version_info >= (9,1) or pv.vtk_version_info < (8,2,0)"""
+
+
+    @pytest.mark.needs_vtk_version(9, 1, reason='custom reason')
+    def test():
+        """Test is skipped with a custom message"""
 
 VTK Dev Wheel Testing
 ^^^^^^^^^^^^^^^^^^^^^
@@ -768,6 +804,12 @@ runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install documentation dependencies with:
+
+.. code-block:: shell
+
+   python -m pip install -e . --group docs
+
 Build the documentation on Linux or Mac OS with:
 
 .. code-block:: bash
@@ -842,7 +884,7 @@ To test all the images, run ``pytest`` with:
 
 .. code-block:: bash
 
-   pytest tests/doc/tst_doc_images.py::test_static_images
+   pytest tests/doc/tst_doc_build.py::test_static_images
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -934,7 +976,7 @@ To test that interactive plots do not exceed this limit, run:
 
 .. code:: bash
 
-   pytest tests/doc/tst_doc_images.py::test_interactive_plot_file_size
+   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:

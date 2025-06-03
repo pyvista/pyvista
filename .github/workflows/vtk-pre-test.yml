@@ -50,7 +50,9 @@ jobs:
             Examples-1-
 
       - name: Install PyVista Testing Requirements
-        run: pip install .[test]
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:

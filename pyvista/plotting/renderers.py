@@ -191,7 +191,7 @@ class Renderers:
                         if self.loc_to_group((i, j)) is not None:
                             msg = f'Groups cannot overlap. Overlap found at position {(i, j)}.'
                             raise ValueError(msg)
-                    self.groups = np.concatenate(
+                    self.groups = np.concatenate(  # type: ignore[assignment]
                         (self.groups, np.array([norm_group], dtype=int)),
                         axis=0,
                     )
@@ -654,6 +654,10 @@ class Renderers:
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
+
+        See Also
+        --------
+        :ref:`color_cycler_example`
 
         Examples
         --------

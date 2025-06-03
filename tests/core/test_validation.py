@@ -52,6 +52,7 @@ from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
 from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._validation.validate import _set_default_kwarg_mandatory
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -258,7 +259,7 @@ def test_validate_shape_value():
 
 
 @pytest.mark.parametrize('reshape', [True, False])
-def test_validate_arrayNx3(reshape):
+def test_validate_arrayNx3(reshape):  # noqa: N802
     arr = validate_arrayNx3((1, 2, 3))
     assert arr.shape == (1, 3)
     assert np.array_equal(arr, [[1, 2, 3]])
@@ -285,7 +286,7 @@ def test_validate_arrayNx3(reshape):
 
 
 @pytest.mark.parametrize('reshape', [True, False])
-def test_validate_arrayN(reshape):
+def test_validate_arrayN(reshape):  # noqa: N802
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN(0)
     assert arr.shape == (1,)
@@ -323,7 +324,7 @@ def test_validate_arrayN(reshape):
 
 
 @pytest.mark.parametrize('reshape', [True, False])
-def test_validate_arrayN_unsigned(reshape):
+def test_validate_arrayN_unsigned(reshape):  # noqa: N802
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_unsigned(0.0)
     assert arr.shape == (1,)
@@ -632,12 +633,12 @@ def test_check_string():
     with pytest.raises(TypeError, match=match):
         check_string('abc', name=0.0)
 
-    class str_subclass(str):
+    class StrSubclass(str):
         pass
 
-    check_string(str_subclass(), allow_subclass=True)
+    check_string(StrSubclass(), allow_subclass=True)
     with pytest.raises(TypeError, match="Object must have type <class 'str'>."):
-        check_string(str_subclass(), allow_subclass=False)
+        check_string(StrSubclass(), allow_subclass=False)
 
 
 def test_check_less_than():
@@ -1114,3 +1115,15 @@ def test_validate_dimensionality(dimensionality, reshape, expected_dimensionalit
 def test_validate_dimensionality_errors(dimensionality, message):
     with pytest.raises(ValueError, match=escape(message)):
         validate_dimensionality(dimensionality)
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (None, 'Input must be a single ColorLike color or a sequence of ColorLike colors.'),
+        (42, 'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.'),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)

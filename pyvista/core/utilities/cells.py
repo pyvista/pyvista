@@ -1,4 +1,4 @@
-"""PyVista wrapping of vtkCellArray."""
+"""PyVista wrapping of :vtk:`vtkCellArray`."""
 
 from __future__ import annotations
 
@@ -60,12 +60,12 @@ def numpy_to_idarr(
     deep: bool = False,
     return_ind: bool = False,
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
-    """Safely convert a numpy array to a vtkIdTypeArray.
+    """Safely convert a numpy array to a :vtk:`vtkIdTypeArray`.
 
     Parameters
     ----------
     ind : sequence[int]
-        Input sequence to be converted to a vtkIdTypeArray. Can be either a mask
+        Input sequence to be converted to a :vtk:`vtkIdTypeArray`. Can be either a mask
         or an integer array-like.
     deep : bool, default: False
         If ``True``, deep copy the input data. If ``False``, do not deep copy
@@ -76,8 +76,8 @@ def numpy_to_idarr(
 
     Returns
     -------
-    vtkIdTypeArray
-        Converted array as a vtkIdTypeArray.
+    :vtk:`vtkIdTypeArray`
+        Converted array as a :vtk:`vtkIdTypeArray`.
     numpy.ndarray
         The input array after it has been cast to the proper dtype. Only
         returned if `return_ind` is set to ``True``.
@@ -120,12 +120,12 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     cells for the given type (e.g. 3 for triangles).  Multiple
     vtk_type keys with associated arrays can be present in one
     dictionary.  This function only accepts cell types of fixed size
-    and not dynamic sized cells like ``vtk.VTK_POLYGON``
+    and not dynamic sized cells like :attr:`~pyvista.CellType.POLYGON`
 
     Parameters
     ----------
     mixed_cell_dict : dict
-        A dictionary that maps VTK-Enum-types (e.g. VTK_TRIANGLE) to
+        A dictionary that maps VTK-Enum-types (e.g. :attr:`~pyvista.CellType.TRIANGLE`) to
         np.ndarrays of type int.  The ``np.ndarrays`` describe the cell
         connectivity.
     nr_points : int, optional
@@ -194,14 +194,19 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             msg = f'Non-valid index (>={nr_points}) given for cells of type {elem_t}'
             raise ValueError(msg)
 
-        if cells_arr.ndim == 1:  # Flattened array present
-            cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
+        # Ensure array is not flat
+        cells_arr_not_flat = (
+            cells_arr.reshape([-1, nr_points_per_elem]) if cells_arr.ndim == 1 else cells_arr
+        )
 
-        nr_elems = cells_arr.shape[0]
+        nr_elems = cells_arr_not_flat.shape[0]
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr],
+                [
+                    np.ones_like(cells_arr_not_flat[..., :1]) * nr_points_per_elem,
+                    cells_arr_not_flat,
+                ],
                 axis=-1,
             ).reshape([-1]),
         )
@@ -245,7 +250,7 @@ def get_mixed_cells(vtkobj):
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
         msg = 'Expected a pyvista object'
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
