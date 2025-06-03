@@ -15,6 +15,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _validation
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -615,7 +616,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         '.vti': _vtk.vtkXMLImageDataWriter,
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['uinput'])
+    def __init__(  # noqa: PLR0917
         self: Self,
         uinput: ImageData | str | Path | None = None,
         dimensions: VectorLike[float] | None = None,

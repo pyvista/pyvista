@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -172,7 +173,8 @@ class AffineWidget3D:
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter', 'actor'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         actor,

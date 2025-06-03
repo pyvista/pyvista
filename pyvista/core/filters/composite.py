@@ -14,6 +14,7 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -352,7 +353,8 @@ class CompositeFilters(DataObjectFilters):
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    def _compute_normals(
+    @_deprecate_positional_args
+    def _compute_normals(  # noqa: PLR0917
         self,
         cell_normals: bool = True,
         point_normals: bool = True,

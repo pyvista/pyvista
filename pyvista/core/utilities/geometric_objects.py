@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -138,7 +139,8 @@ def Capsule(
     return output
 
 
-def Cylinder(
+@_deprecate_positional_args
+def Cylinder(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     radius: float = 0.5,
@@ -214,7 +216,8 @@ def Cylinder(
     return output
 
 
-def CylinderStructured(
+@_deprecate_positional_args
+def CylinderStructured(  # noqa: PLR0917
     radius: float = 0.5,
     height: float = 1.0,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -316,7 +319,8 @@ def CylinderStructured(
     return grid
 
 
-def Arrow(
+@_deprecate_positional_args
+def Arrow(  # noqa: PLR0917
     start: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     tip_length: float = 0.25,
@@ -390,7 +394,8 @@ def Arrow(
     return surf
 
 
-def Sphere(
+@_deprecate_positional_args
+def Sphere(  # noqa: PLR0917
     radius: float = 0.5,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
@@ -494,7 +499,8 @@ def Sphere(
     return surf
 
 
-def SolidSphere(
+@_deprecate_positional_args
+def SolidSphere(  # noqa: PLR0917
     outer_radius: float = 0.5,
     inner_radius: float = 0.0,
     radius_resolution: int = 5,
@@ -653,7 +659,8 @@ def SolidSphere(
     )
 
 
-def SolidSphereGeneric(
+@_deprecate_positional_args
+def SolidSphereGeneric(  # noqa: PLR0917
     radius: VectorLike[float] | None = None,
     theta: VectorLike[float] | None = None,
     phi: VectorLike[float] | None = None,
@@ -1020,7 +1027,8 @@ def SolidSphereGeneric(
     return mesh
 
 
-def Plane(
+@_deprecate_positional_args
+def Plane(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
     i_size: int = 1,
@@ -1147,7 +1155,8 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     return MultipleLinesSource(points=points).output
 
 
-def Tube(
+@_deprecate_positional_args
+def Tube(  # noqa: PLR0917
     pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
     pointb: VectorLike[float] = (0.5, 0.0, 0.0),
     resolution: int = 1,
@@ -1197,7 +1206,8 @@ def Tube(
     return line_src.output.tube(radius=radius, n_sides=n_sides, capping=capping)
 
 
-def Cube(
+@_deprecate_positional_args
+def Cube(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     x_length: float = 1.0,
     y_length: float = 1.0,
@@ -1328,7 +1338,8 @@ def Box(
     return BoxSource(level=level, quads=quads, bounds=bounds).output
 
 
-def Cone(
+@_deprecate_positional_args
+def Cone(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     height: float = 1.0,
@@ -1437,7 +1448,8 @@ def Polygon(
     return src.output
 
 
-def Disc(
+@_deprecate_positional_args
+def Disc(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     inner: float = 0.25,
     outer: float = 0.5,
@@ -1494,7 +1506,8 @@ def Disc(
     return surf
 
 
-def Text3D(
+@_deprecate_positional_args(allowed=['string'])
+def Text3D(  # noqa: PLR0917
     string: str,
     depth: float | None = None,
     width: float | None = None,
@@ -1572,7 +1585,8 @@ def Text3D(
     ).output
 
 
-def Wavelet(
+@_deprecate_positional_args
+def Wavelet(  # noqa: PLR0917
     extent: VectorLike[float] = (-10, 10, -10, 10, -10, 10),
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     maximum: float = 255.0,
@@ -2133,7 +2147,8 @@ def Ellipse(
     return wrap(pyvista.PolyData(points, cells))
 
 
-def Superquadric(
+@_deprecate_positional_args
+def Superquadric(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     scale: VectorLike[float] = (1.0, 1.0, 1.0),
     size: float = 0.5,

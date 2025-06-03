@@ -24,6 +24,7 @@ import numpy as np
 import pyvista
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
@@ -183,7 +184,8 @@ def logo_basic():
     return logo_letters(merge=True).compute_normals(split_vertices=True)
 
 
-def plot_logo(
+@_deprecate_positional_args
+def plot_logo(  # noqa: PLR0917
     window_size=None,
     off_screen=None,
     screenshot=None,

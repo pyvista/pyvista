@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core.utilities.helpers import is_pyvista_dataset
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
@@ -60,7 +61,8 @@ def plot_arrows(cent, direction, **kwargs):
     return pyvista.plot([cent, direction], **kwargs)
 
 
-def plot_compare_four(
+@_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'])
+def plot_compare_four(  # noqa: PLR0917
     data_a,
     data_b,
     data_c,

@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -758,7 +759,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.iv': _vtk.vtkIVWriter,
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['var_inp'])
+    def __init__(  # noqa: PLR0917
         self,
         var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
         faces: CellArrayLike | None = None,
@@ -3144,7 +3146,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
         tolerance=0,
         remove_unused_points: bool = True,

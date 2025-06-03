@@ -15,9 +15,11 @@ from pathlib import Path
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 
-def plot(
+@_deprecate_positional_args(allowed=['var_item'])
+def plot(  # noqa: PLR0917
     var_item,
     off_screen=None,
     full_screen=None,

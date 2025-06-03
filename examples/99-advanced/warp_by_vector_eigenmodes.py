@@ -28,7 +28,7 @@ from scipy.linalg import eigh
 import pyvista as pv
 
 
-def analytical_integral_rppd(p, q, r, a, b, c):
+def analytical_integral_rppd(*, p, q, r, a, b, c):
     """Return the analytical value of the RPPD integral.
 
     This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).

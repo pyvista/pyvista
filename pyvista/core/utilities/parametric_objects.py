@@ -12,6 +12,7 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .geometric_sources import translate
 from .helpers import wrap
@@ -876,7 +877,8 @@ def ParametricPseudosphere(**kwargs) -> PolyData:
     return surf
 
 
-def ParametricRandomHills(
+@_deprecate_positional_args
+def ParametricRandomHills(  # noqa: PLR0917
     numberofhills: int | None = None,
     hillxvariance: float | None = None,
     hillyvariance: float | None = None,
@@ -1214,7 +1216,8 @@ def ParametricSuperEllipsoid(
     return surf
 
 
-def ParametricSuperToroid(
+@_deprecate_positional_args
+def ParametricSuperToroid(  # noqa: PLR0917
     ringradius: float | None = None,
     crosssectionradius: float | None = None,
     xradius: float | None = None,
@@ -1359,7 +1362,8 @@ def ParametricTorus(
     return surf
 
 
-def parametric_keywords(
+@_deprecate_positional_args(allowed=['parametric_function'])
+def parametric_keywords(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     min_u: float = 0.0,
     max_u: float = 2 * pi,
@@ -1422,7 +1426,8 @@ def parametric_keywords(
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
-def surface_from_para(
+@_deprecate_positional_args(allowed=['parametric_function'])
+def surface_from_para(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     u_res: int = 100,
     v_res: int = 100,

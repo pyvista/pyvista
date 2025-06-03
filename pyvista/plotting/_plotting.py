@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from .colors import Color
@@ -15,7 +16,8 @@ from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
 
-def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
+@_deprecate_positional_args
+def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):  # noqa: PLR0917
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with Phong shading to have active normals.
@@ -101,7 +103,8 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
     return mesh, scalars
 
 
-def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):
+@_deprecate_positional_args
+def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):  # noqa: PLR0917
     """Process opacity.
 
     This function accepts an opacity string or array and always
@@ -178,7 +181,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
     return custom_opac, opacity
 
 
+@_deprecate_positional_args
 def _common_arg_parser(
+    *,
     dataset,
     theme,
     n_colors,

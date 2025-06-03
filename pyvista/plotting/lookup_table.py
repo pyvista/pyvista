@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -210,7 +211,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['cmap'])
+    def __init__(  # noqa: PLR0917
         self,
         cmap=None,
         n_values=256,

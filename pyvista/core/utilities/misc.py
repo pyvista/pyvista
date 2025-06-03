@@ -412,15 +412,23 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
+        def function_path_and_line() -> tuple[Path, int]:
+            path = Path(inspect.getfile(inspect.unwrap(f)))
+            line = inspect.getsourcelines(inspect.unwrap(f))[-1]
+            return path, line
+
         sig = inspect.signature(f)
         param_names = list(sig.parameters)
 
         # Validate `allowed` against actual parameter names
         if allowed is not None:
+            if not isinstance(allowed, list):
+                path, line = function_path_and_line()
+                msg = f'"Allowed arguments must be a list for\n`{f.__name__}` at {path}:{line}'
+                raise TypeError(msg)
             for name in allowed:
                 if name not in param_names:
-                    path = Path(inspect.getfile(inspect.unwrap(f)))
-                    line = inspect.getsourcelines(inspect.unwrap(f))[-1]
+                    path, line = function_path_and_line()
                     msg = (
                         f'Allowed positional argument {name!r} is not a parameter of\n'
                         f'`{f.__name__}` at {path}:{line}'

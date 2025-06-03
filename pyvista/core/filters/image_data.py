@@ -25,6 +25,7 @@ from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -358,7 +359,8 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def image_threshold(
+    @_deprecate_positional_args(allowed=['threshold'])
+    def image_threshold(  # noqa: PLR0917
         self,
         threshold,
         in_value=1.0,
@@ -642,7 +644,8 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def low_pass(
+    @_deprecate_positional_args
+    def low_pass(  # noqa: PLR0917
         self,
         x_cutoff,
         y_cutoff,
@@ -722,7 +725,8 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def high_pass(
+    @_deprecate_positional_args
+    def high_pass(  # noqa: PLR0917
         self,
         x_cutoff,
         y_cutoff,
@@ -853,7 +857,7 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast('pyvista.ImageData', wrap(alg.GetOutput()))
 
-    def contour_labeled(
+    def contour_labeled(  # noqa: PLR0917
         self,
         n_labels: int | None = None,
         smoothing: bool = False,
@@ -1533,6 +1537,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
+            *,
             spacing_: tuple[float, float, float],
             iterations_: int,
             relaxation_: float,

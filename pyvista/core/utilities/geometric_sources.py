@@ -25,6 +25,7 @@ from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -129,7 +130,8 @@ if _vtk.vtk_version_info < (9, 3):
 
         _new_attr_exceptions: ClassVar[list[str]] = ['_direction', 'direction']
 
-        def __init__(
+        @_deprecate_positional_args
+        def __init__(  # noqa: PLR0917
             self: CapsuleSource,
             center: VectorLike[float] = (0.0, 0.0, 0.0),
             direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -351,7 +353,8 @@ class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: ConeSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -625,7 +628,8 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['_center', 'center', '_direction', 'direction']
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: CylinderSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -949,7 +953,8 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         '_modified',
     ]
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['string'])
+    def __init__(  # noqa: PLR0917
         self: Text3DSource,
         string: str | None = None,
         depth: float | None = None,
@@ -1233,7 +1238,8 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
         '_bounds',
     ]
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: CubeSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         x_length: float = 1.0,
@@ -1795,7 +1801,8 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: SphereSource,
         radius: float = 0.5,
         center: VectorLike[float] | None = None,
@@ -2355,7 +2362,8 @@ class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: PlaneSource,
         i_resolution: int = 10,
         j_resolution: int = 10,
@@ -2892,7 +2900,8 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: SuperquadricSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: VectorLike[float] = (1.0, 1.0, 1.0),

@@ -15,6 +15,7 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -488,7 +489,8 @@ class _DataSetMapper(_BaseMapper):
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
-    def set_scalars(
+    @_deprecate_positional_args
+    def set_scalars(  # noqa: PLR0917
         self,
         scalars,
         scalars_name,

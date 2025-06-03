@@ -26,6 +26,7 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -1273,6 +1274,7 @@ class DataObjectFilters:
     def _clip_with_function(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         function: _vtk.vtkImplicitFunction,
+        *,
         invert: bool = True,
         value: float = 0.0,
         return_clipped: bool = False,
@@ -1404,7 +1406,8 @@ class DataObjectFilters:
             clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
-    def clip(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['normal'])
+    def clip(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
@@ -1503,7 +1506,8 @@ class DataObjectFilters:
                 return self
         return result
 
-    def clip_box(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['bounds'])
+    def clip_box(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,
@@ -1754,7 +1758,8 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    def slice_orthogonal(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def slice_orthogonal(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         x: float | None = None,
         y: float | None = None,
@@ -1857,7 +1862,8 @@ class DataObjectFilters:
         )
         return output
 
-    def slice_along_axis(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def slice_along_axis(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
@@ -2138,7 +2144,8 @@ class DataObjectFilters:
             output.clear_data()
         return output
 
-    def elevation(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def elevation(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
@@ -2621,7 +2628,8 @@ class DataObjectFilters:
             return self
         return mesh
 
-    def sample(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['target'])
+    def sample(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         target: DataSet | _vtk.vtkDataSet,
         tolerance: float | None = None,

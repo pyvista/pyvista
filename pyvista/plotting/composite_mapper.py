@@ -14,6 +14,7 @@ from pyvista import vtk_version_info
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from . import _vtk
 from .colors import Color
@@ -701,7 +702,8 @@ class CompositePolyDataMapper(
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
-    def set_scalars(
+    @_deprecate_positional_args(allowed=['scalars_name'])
+    def set_scalars(  # noqa: PLR0917
         self,
         scalars_name,
         preference,

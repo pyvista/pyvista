@@ -21,6 +21,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .observers import Observer
 
@@ -375,7 +376,8 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:
     return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
-def read_exodus(
+@_deprecate_positional_args(allowed=['filename'])
+def read_exodus(  # noqa: PLR0917
     filename: str | Path,
     animate_mode_shapes: bool = True,
     apply_displacements: bool = True,

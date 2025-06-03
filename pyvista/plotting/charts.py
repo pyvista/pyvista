@@ -17,6 +17,7 @@ import numpy as np
 
 import pyvista
 from pyvista import vtk_version_info
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from . import _vtk
 from .colors import COLOR_SCHEMES
@@ -1573,8 +1574,9 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
     def legend_visible(self, val) -> None:
         self.SetShowLegend(val)
 
+    @_deprecate_positional_args
     @doc_subs
-    def show(
+    def show(  # noqa: PLR0917
         self,
         interactive: bool = True,
         off_screen=None,
@@ -2165,7 +2167,8 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
         'plot_init': 'chart.line([0, 1, 2], [2, 1, 3])',
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
+    def __init__(  # noqa: PLR0917
         self,
         chart,
         x,
@@ -2335,7 +2338,8 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
         'plot_init': 'chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])',
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
+    def __init__(  # noqa: PLR0917
         self,
         chart,
         x,
@@ -2564,7 +2568,8 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
         'plot_init': 'chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])',
     }
 
-    def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:
+    @_deprecate_positional_args
+    def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:  # noqa: PLR0917
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -2768,7 +2773,8 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
         'multiplot_init': 'chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
+    def __init__(  # noqa: PLR0917
         self,
         chart,
         x,
@@ -3372,7 +3378,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
             line_plot = self.line(x, y, color, style=line_style)
         return scatter_plot, line_plot
 
-    def scatter(self, x, y, color='b', size=10, style='o', label=''):
+    @_deprecate_positional_args(allowed=['x', 'y'])
+    def scatter(self, x, y, color='b', size=10, style='o', label=''):  # noqa: PLR0917
         """Add a scatter plot to this chart.
 
         Parameters
@@ -3418,7 +3425,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('scatter', x, y, color=color, size=size, style=style, label=label)
 
-    def line(self, x, y, color='b', width=1.0, style='-', label=''):
+    @_deprecate_positional_args(allowed=['x', 'y'])
+    def line(self, x, y, color='b', width=1.0, style='-', label=''):  # noqa: PLR0917
         """Add a line plot to this chart.
 
         Parameters

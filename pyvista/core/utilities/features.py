@@ -10,6 +10,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .helpers import wrap
 
@@ -464,7 +465,8 @@ def grid_from_sph_coords(theta, phi, r):
     return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
 
 
-def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT02
+@_deprecate_positional_args
+def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # noqa: PLR0917  # numpydoc ignore=RT02
     """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -706,7 +708,8 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     return noise
 
 
-def sample_function(
+@_deprecate_positional_args(allowed=['function'])
+def sample_function(  # noqa: PLR0917
     function: _vtk.vtkImplicitFunction,
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),

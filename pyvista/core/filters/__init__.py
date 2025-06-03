@@ -47,6 +47,7 @@ def _update_alg(alg, progress_bar: bool = False, message='') -> None:
 
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
+    *,
     iport=0,
     iconnection=0,
     oport=0,

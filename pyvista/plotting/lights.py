@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 from pyvista.core import _validation
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from .colors import Color
 
@@ -144,7 +145,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         position=None,
         focal_point=None,

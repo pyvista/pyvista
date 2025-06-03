@@ -5,6 +5,7 @@ from __future__ import annotations
 import pyvista
 from pyvista import vtk_version_info
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -158,7 +159,8 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     _theme = None
     _color_set = None
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         theme=None,
         interpolation=None,

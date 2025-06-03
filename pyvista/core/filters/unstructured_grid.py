@@ -10,6 +10,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 
 
@@ -54,7 +55,8 @@ class UnstructuredGridFilters(DataSetFilters):
         _update_alg(alg)
         return _get_output(alg)
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
         tolerance=0,
         remove_unused_points: bool = True,

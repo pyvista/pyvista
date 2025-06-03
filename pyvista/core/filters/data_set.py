@@ -34,6 +34,7 @@ from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
@@ -56,7 +57,8 @@ if TYPE_CHECKING:
 class DataSetFilters(DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
-    def align(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['target'])
+    def align(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         max_landmarks: int = 100,
@@ -484,7 +486,8 @@ class DataSetFilters(DataObjectFilters):
         result.point_data['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
-    def clip_scalar(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def clip_scalar(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         invert: bool = True,
@@ -583,7 +586,8 @@ class DataSetFilters(DataObjectFilters):
             return result0, result1
         return result0
 
-    def clip_surface(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['surface'])
+    def clip_surface(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         surface: DataSet | _vtk.vtkDataSet,
         invert: bool = True,
@@ -665,7 +669,8 @@ class DataSetFilters(DataObjectFilters):
             crinkle=crinkle,
         )
 
-    def threshold(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['value'])
+    def threshold(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
@@ -875,7 +880,8 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Thresholding')
         return _get_output(alg)
 
-    def threshold_percent(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['percent'])
+    def threshold_percent(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         percent: float = 0.50,
         scalars: str | None = None,
@@ -1149,7 +1155,8 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def contour(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def contour(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
         scalars: str | NumpyArray[float] | None = None,
@@ -1335,7 +1342,8 @@ class DataSetFilters(DataObjectFilters):
 
         return output
 
-    def texture_map_to_plane(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def texture_map_to_plane(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         origin: VectorLike[float] | None = None,
         point_u: VectorLike[float] | None = None,
@@ -1495,7 +1503,8 @@ class DataSetFilters(DataObjectFilters):
             self.GetPointData().AddArray(otc)
         return self
 
-    def glyph(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def glyph(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         orient: bool | str = True,
         scale: bool | str = True,
@@ -1769,7 +1778,8 @@ class DataSetFilters(DataObjectFilters):
 
         return output
 
-    def connectivity(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['extraction_mode', 'variable_input'])
+    def connectivity(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         extraction_mode: Literal[
             'all',
@@ -2636,7 +2646,8 @@ class DataSetFilters(DataObjectFilters):
         out['SelectedPoints'] = bools
         return out
 
-    def interpolate(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['target'])
+    def interpolate(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         sharpness: float = 2.0,
@@ -2786,7 +2797,8 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
 
-    def streamlines(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['vectors'])
+    def streamlines(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         vectors: str | None = None,
         source_center: VectorLike[float] | None = None,
@@ -2907,7 +2919,8 @@ class DataSetFilters(DataObjectFilters):
             return output, input_source
         return output
 
-    def streamlines_from_source(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['source', 'vectors'])
+    def streamlines_from_source(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         source: _vtk.vtkDataSet,
         vectors: str | None = None,
@@ -3124,7 +3137,8 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
-    def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
+    @_deprecate_positional_args(allowed=['vectors'])
+    def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802, PLR0917
         self: _DataSetType,
         vectors: str | None = None,
         start_position: VectorLike[float] | None = None,
@@ -3400,7 +3414,8 @@ class DataSetFilters(DataObjectFilters):
         line = pyvista.Line(pointa, pointb, resolution=resolution)
         return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
-    def plot_over_line(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['pointa', 'pointb'])
+    def plot_over_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3562,7 +3577,8 @@ class DataSetFilters(DataObjectFilters):
         multiple_lines = pyvista.MultipleLines(points=points)
         return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
-    def sample_over_circular_arc(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def sample_over_circular_arc(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3639,7 +3655,8 @@ class DataSetFilters(DataObjectFilters):
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
-    def sample_over_circular_arc_normal(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def sample_over_circular_arc_normal(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         center: VectorLike[float],
         resolution: int | None = None,
@@ -3726,7 +3743,8 @@ class DataSetFilters(DataObjectFilters):
         )
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
-    def plot_over_circular_arc(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def plot_over_circular_arc(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3854,7 +3872,8 @@ class DataSetFilters(DataObjectFilters):
         if show:  # pragma: no cover
             plt.show()
 
-    def plot_over_circular_arc_normal(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def plot_over_circular_arc_normal(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         center: VectorLike[float],
         resolution: int | None = None,
@@ -5031,7 +5050,8 @@ class DataSetFilters(DataObjectFilters):
         surf = DataSetFilters.extract_surface(self, pass_cellid=True, progress_bar=progress_bar)
         return surf.point_data['vtkOriginalPointIds']
 
-    def extract_feature_edges(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def extract_feature_edges(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         feature_angle: float = 30.0,
         boundary_edges: bool = True,
@@ -5169,7 +5189,8 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
         )
 
-    def merge(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['grid'])
+    def merge(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         grid: DataSet
         | _vtk.vtkDataSet
@@ -5503,7 +5524,8 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
         return _get_output(alg)
 
-    def compute_derivative(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def compute_derivative(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         gradient: bool | str = True,
@@ -6535,7 +6557,8 @@ class DataSetFilters(DataObjectFilters):
             sort=True,
         )
 
-    def pack_labels(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def pack_labels(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         sort: bool = False,
         scalars: str | None = None,

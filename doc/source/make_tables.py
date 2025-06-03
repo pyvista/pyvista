@@ -2312,6 +2312,7 @@ class DatasetCard:
     @classmethod
     def _create_dataset_props_block(
         cls,
+        *,
         dataset_type,
         celltype_badges,
         n_cells,

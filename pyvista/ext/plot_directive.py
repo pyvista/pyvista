@@ -448,6 +448,7 @@ def _run_code(code, code_path, ns=None, function_name=None):
 
 
 def render_figures(
+    *,
     code,
     code_path,
     output_dir,
@@ -535,7 +536,7 @@ def render_figures(
     return results
 
 
-def run(arguments, content, options, state_machine, state, lineno):
+def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config

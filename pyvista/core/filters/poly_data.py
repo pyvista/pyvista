@@ -28,6 +28,7 @@ from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _deprecate_positional_args
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -420,7 +421,8 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def merge(  # type: ignore[override, misc]
+    @_deprecate_positional_args(allowed=['dataset'])
+    def merge(  # type: ignore[override, misc]  # noqa: PLR0917
         self: PolyData,
         dataset,
         merge_points: bool = True,
@@ -808,7 +810,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def smooth(
+    @_deprecate_positional_args
+    def smooth(  # noqa: PLR0917
         self,
         n_iter=20,
         relaxation_factor=0.01,
@@ -900,7 +903,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def smooth_taubin(
+    @_deprecate_positional_args
+    def smooth_taubin(  # noqa: PLR0917
         self,
         n_iter=20,
         pass_band=0.1,
@@ -1023,7 +1027,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def decimate_pro(
+    @_deprecate_positional_args(allowed=['reduction'])
+    def decimate_pro(  # noqa: PLR0917
         self,
         reduction,
         feature_angle=45.0,
@@ -1267,7 +1272,8 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def tube(
+    @_deprecate_positional_args
+    def tube(  # noqa: PLR0917
         self,
         radius=None,
         scalars=None,
@@ -1474,7 +1480,8 @@ class PolyDataFilters(DataSetFilters):
 
         return submesh
 
-    def subdivide_adaptive(
+    @_deprecate_positional_args
+    def subdivide_adaptive(  # noqa: PLR0917
         self,
         max_edge_len=None,
         max_tri_area=None,
@@ -1579,7 +1586,8 @@ class PolyDataFilters(DataSetFilters):
 
         return submesh
 
-    def decimate(
+    @_deprecate_positional_args(allowed=['target_reduction'])
+    def decimate(  # noqa: PLR0917
         self,
         target_reduction,
         volume_preservation: bool = False,
@@ -1790,7 +1798,8 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def compute_normals(
+    @_deprecate_positional_args
+    def compute_normals(  # noqa: PLR0917
         self,
         cell_normals: bool = True,
         point_normals: bool = True,
@@ -2121,7 +2130,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
         point_merging: bool = True,
         tolerance=None,
@@ -2223,7 +2233,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def geodesic(
+    @_deprecate_positional_args(allowed=['start_vertex', 'end_vertex'])
+    def geodesic(  # noqa: PLR0917
         self,
         start_vertex,
         end_vertex,
@@ -2658,7 +2669,8 @@ class PolyDataFilters(DataSetFilters):
         plotter.add_legend()  # type: ignore[call-arg]
         return plotter.show()
 
-    def plot_normals(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def plot_normals(  # type: ignore[misc]  # noqa: PLR0917
         self: PolyData,
         show_mesh: bool = True,
         mag=1.0,
@@ -3055,7 +3067,8 @@ class PolyDataFilters(DataSetFilters):
             reverse_cells=False, reverse_normals=True, inplace=inplace, progress_bar=progress_bar
         )
 
-    def delaunay_2d(
+    @_deprecate_positional_args
+    def delaunay_2d(  # noqa: PLR0917
         self,
         tol=1e-05,
         alpha=0.0,
@@ -3257,7 +3270,8 @@ class PolyDataFilters(DataSetFilters):
         np.apply_along_axis(f, 1, mesh.points)
         return mesh
 
-    def ribbon(
+    @_deprecate_positional_args
+    def ribbon(  # noqa: PLR0917
         self,
         width=None,
         scalars=None,
@@ -3459,7 +3473,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def extrude_rotate(
+    @_deprecate_positional_args
+    def extrude_rotate(  # noqa: PLR0917
         self,
         resolution=30,
         inplace: bool = False,
@@ -3628,7 +3643,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def extrude_trim(
+    @_deprecate_positional_args(allowed=['direction', 'trim_surface'])
+    def extrude_trim(  # noqa: PLR0917
         self,
         direction,
         trim_surface,
@@ -3741,7 +3757,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def strip(
+    @_deprecate_positional_args
+    def strip(  # noqa: PLR0917
         self,
         join: bool = False,
         max_length=1000,
@@ -3827,7 +3844,8 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Stripping Mesh')
         return _get_output(alg)
 
-    def collision(
+    @_deprecate_positional_args(allowed=['other_mesh'])
+    def collision(  # noqa: PLR0917
         self,
         other_mesh,
         contact_mode=0,
@@ -3994,7 +4012,8 @@ class PolyDataFilters(DataSetFilters):
 
         return output, alg.GetNumberOfContacts()
 
-    def contour_banded(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['n_contours'])
+    def contour_banded(  # type: ignore[misc]  # noqa: PLR0917
         self: PolyData,
         n_contours,
         rng=None,

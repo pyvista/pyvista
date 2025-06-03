@@ -12,6 +12,7 @@ import numpy as np
 import pyvista
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
+from pyvista.core.utilities.misc import _deprecate_positional_args
 
 from . import _vtk
 
@@ -139,7 +140,8 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         camera,
         minor_ticks: bool = False,
