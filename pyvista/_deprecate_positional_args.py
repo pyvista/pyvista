@@ -2,19 +2,39 @@ from __future__ import annotations
 
 from functools import wraps
 import inspect
-from typing import Any
 from typing import Callable
+from typing import TypeVar
+from typing import overload
 import warnings
+
+from typing_extensions import ParamSpec
 
 _MAX_POSITIONAL_ARGS = 5  # Should match value in pyproject.toml
 
 
+P = ParamSpec('P')
+T = TypeVar('T')
+
+
+@overload
 def _deprecate_positional_args(
-    func: Callable[..., Any] | None = None,
+    func: Callable[P, T],
+    *,
+    version: tuple[int, int] = ...,
+    allowed: list[str] | None = ...,
+) -> Callable[P, T]: ...
+@overload
+def _deprecate_positional_args(
+    *,
+    version: tuple[int, int] = ...,
+    allowed: list[str] | None = ...,
+) -> Callable[[Callable[P, T]], Callable[P, T]]: ...
+def _deprecate_positional_args(
+    func: Callable[..., T] | None = None,
     *,
     version: tuple[int, int] = (0, 50),
     allowed: list[str] | None = None,
-) -> Callable[..., Any]:
+) -> Callable[..., T] | Callable[[Callable[P, T]], Callable[P, T]]:
     """Use a decorator to deprecate positional arguments.
 
     Parameters
@@ -31,7 +51,7 @@ def _deprecate_positional_args(
 
     """
 
-    def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
+    def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
@@ -43,7 +63,7 @@ def _deprecate_positional_args(
         if allowed is not None:
             # Validate input type
             if not isinstance(allowed, list):
-                msg = (
+                msg = (  # type: ignore[unreachable]
                     f'In decorator {decorator_name} for function {qualified_name()!r}:\n'
                     f'Allowed arguments must be a list, got {type(allowed)}.'
                 )
@@ -80,8 +100,7 @@ def _deprecate_positional_args(
                 raise ValueError(msg)
 
         @wraps(f)
-        def inner_f(*args, **kwargs):  # noqa: ANN202
-            # Map args to parameter names
+        def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
             passed_positional_names = param_names[: len(args)]
 
             # Exclude allowed ones
@@ -95,7 +114,7 @@ def _deprecate_positional_args(
             if 'cls' in offending_args:
                 offending_args.remove('cls')
 
-            if len(offending_args) > 0:
+            if offending_args:
                 from pyvista import version_info
 
                 # Craft a message to print a warning or raise an error

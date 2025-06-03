@@ -182,7 +182,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'
             raise TypeError(msg)
         if self._lookup_table != lookup_table:
             self._lookup_table = lookup_table

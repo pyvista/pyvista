@@ -2668,11 +2668,11 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[union-attr]
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
-            self._data_object.point_data.active_scalars_name = 'frame0'
+        if 'frame0' in self._data_object.point_data:  # type: ignore[union-attr]
+            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[union-attr]
 
         img.close()
 

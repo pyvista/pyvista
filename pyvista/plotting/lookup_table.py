@@ -1034,7 +1034,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         label_level += self._nan_color_set
 
-        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)  # type: ignore[arg-type]
+        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)
         scalar_bar.SetLookupTable(self)
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)

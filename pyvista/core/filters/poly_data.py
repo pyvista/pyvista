@@ -2469,8 +2469,8 @@ class PolyDataFilters(DataSetFilters):
             plotter.add_mesh(
                 intersection_points, color='r', point_size=10, label='Intersection Points'
             )
-            plotter.add_legend()  # type: ignore[call-arg]
-            plotter.add_axes()  # type: ignore[call-arg]
+            plotter.add_legend()
+            plotter.add_axes()
             plotter.show()
 
         return intersection_points, intersection_cells

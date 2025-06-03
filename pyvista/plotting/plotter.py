@@ -3883,7 +3883,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
 
         self.add_actor(
-            actor,
+            actor,  # type:ignore[arg-type]
             reset_camera=reset_camera,
             name=name,
             pickable=pickable,
@@ -4324,7 +4324,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
-                    cmap=color,
+                    cmap=color,  # type: ignore[arg-type]
                     flip_scalars=flip_scalars,
                     reset_camera=reset_camera,
                     name=next_name,

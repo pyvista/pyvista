@@ -339,7 +339,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
 
         """
         pl = pyvista.Plotter()
-        pl.add_actor(self)  # type: ignore[arg-type]
+        pl.add_actor(self)
         pl.show(**kwargs)
 
     def copy(self: Self, deep: bool = True) -> Self:

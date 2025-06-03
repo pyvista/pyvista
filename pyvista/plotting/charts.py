@@ -1655,9 +1655,9 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
             off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
-        pl.add_chart(self)  # type: ignore[arg-type]
+        pl.add_chart(self)
         if interactive and (not off_screen or pyvista.BUILDING_GALLERY):  # pragma: no cover
-            pl.set_chart_interaction(self)  # type: ignore[arg-type]
+            pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,

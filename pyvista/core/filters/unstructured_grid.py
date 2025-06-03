@@ -18,7 +18,7 @@ from pyvista.core.utilities.misc import abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @wraps(PolyDataFilters.delaunay_2d)
+    @wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
     def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]

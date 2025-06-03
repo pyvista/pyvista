@@ -1182,7 +1182,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center  # type: ignore[misc]
+        out.points -= out.center
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1191,7 +1191,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center  # type: ignore[misc]
+            out.points += self.center
 
 
 @no_new_attr
@@ -3648,7 +3648,7 @@ class AxesGeometrySource:
                 new_face = [3, point_id, point_id, point_id]
 
                 # Update mesh
-                part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[assignment]
+                part.points = np.append(part.points, flipped_point, axis=0)
                 part.faces = np.append(part.faces, new_face)
 
     def update(self: AxesGeometrySource) -> None:
