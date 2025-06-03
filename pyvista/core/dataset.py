@@ -186,7 +186,7 @@ class DataSet(DataSetFilters, DataObject):
 
     """
 
-    @wraps
+    @wraps(pyvista._plot.plot)
     def plot(self, *args, **kwargs):  # noqa: ANN201  # numpydoc ignore=RT01
         """Plot this dataset."""
         return pyvista._plot.plot(*args, **kwargs)
