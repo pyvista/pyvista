@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: vtk-data-${{ hashFiles('pyvista/**') }}
+          key: vtk-data-${{ hashFiles('pyvista/examples/**') }}
 
       - name: Install PyVista test dependencies
         run: |
@@ -144,7 +144,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: vtk-data-${{ hashFiles('pyvista/**') }}
+          key: vtk-data-${{ hashFiles('pyvista/examples/**') }}
 
       - name: Build wheel and install pyvista
         run: |
@@ -259,7 +259,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: vtk-data-${{ hashFiles('pyvista/**') }}
+          key: vtk-data-${{ hashFiles('pyvista/examples/**') }}
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.1
