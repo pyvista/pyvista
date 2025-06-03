@@ -36,7 +36,7 @@ def test_quadrilateral_raises(points):
 
 
 def test_cylinder():
-    surf = pv.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
+    surf = pv.Cylinder(center=[0, 10, 0], direction=[1, 1, 1], radius=1, height=5)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
@@ -49,14 +49,14 @@ def test_cylinder_structured():
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
 def test_arrow(scale):
-    surf = pv.Arrow([0, 0, 0], [1, 1, 1], scale=scale)
+    surf = pv.Arrow(start=[0, 0, 0], direction=[1, 1, 1], scale=scale)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 
 def test_arrow_raises_error():
     with pytest.raises(TypeError):
-        pv.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
+        pv.Arrow(start=[0, 0, 0], direction=[1, 1, 1], scale='badarg')
 
 
 def test_sphere():
@@ -438,21 +438,21 @@ def test_tube():
     tube = pv.Tube(n_sides=3)
     assert tube.n_points == 6
     assert tube.n_cells == 3
-    tube = pv.Tube(pointa, pointb, 10)
+    tube = pv.Tube(pointa=pointa, pointb=pointb, resolution=10)
     assert tube.n_points == 165
     assert tube.n_cells == 15
 
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.Tube(pointa, pointb, -1)
+        pv.Tube(pointa=pointa, pointb=pointb, resolution=-1)
 
     with pytest.raises(TypeError):
-        pv.Tube(pointa, pointb, 0.1)  # from vtk
+        pv.Tube(pointa=pointa, pointb=pointb, resolution=0.1)  # from vtk
 
     with pytest.raises(TypeError):
-        pv.Tube((0, 0), pointb)
+        pv.Tube(pointa=(0, 0), pointb=pointb)
 
     with pytest.raises(TypeError):
-        pv.Tube(pointa, (10, 1.0))
+        pv.Tube(pointa=pointa, pointb=(10, 1.0))
 
 
 @pytest.mark.parametrize('capping', [True, False])
@@ -472,8 +472,8 @@ def test_capsule():
 @pytest.mark.parametrize('center', [(4, 5, 6), (1, 1, 1)])
 @pytest.mark.parametrize('direction', [(0, 1, -1), (1, 1, 0)])
 def test_capsule_center(center, direction):
-    capsule = pv.Capsule(center, direction)
-    cylinder = pv.Cylinder(center, direction)
+    capsule = pv.Capsule(center=center, direction=direction)
+    cylinder = pv.Cylinder(center=center, direction=direction)
     assert np.allclose(capsule.center, cylinder.center)
 
 
@@ -568,7 +568,7 @@ def test_superquadric():
 
 
 def test_text_3d():
-    mesh = pv.Text3D('foo', 0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
+    mesh = pv.Text3D('foo', depth=0.5, width=2, height=3, normal=(0, 0, 1), center=(1, 2, 3))
     assert mesh.n_points
     assert mesh.n_cells
 

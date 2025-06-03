@@ -644,7 +644,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
     def low_pass(  # noqa: PLR0917
         self,
         x_cutoff,
@@ -725,7 +725,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
     def high_pass(  # noqa: PLR0917
         self,
         x_cutoff,

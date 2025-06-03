@@ -648,11 +648,11 @@ def SolidSphere(  # noqa: PLR0917
     theta = np.linspace(start_theta, end_theta, theta_resolution)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
-        radius,
-        theta,
-        phi,
-        center,
-        direction,
+        radius=radius,
+        theta=theta,
+        phi=phi,
+        center=center,
+        direction=direction,
         radians=radians,
         tol_radius=tol_radius,
         tol_angle=tol_angle,

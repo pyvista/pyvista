@@ -2536,8 +2536,8 @@ def test_deprecate_positional_class_methods():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason='Requires Python 3.11+ for tomllib',
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
 )
 def test_max_positional_args_matches_pyproject():
     pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'

@@ -1862,7 +1862,7 @@ class DataObjectFilters:
         )
         return output
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['n', 'axis'])
     def slice_along_axis(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         n: int = 5,

@@ -170,7 +170,7 @@ def KochanekSpline(
         u_res = points_.shape[0]
 
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res)
+    spline = surface_from_para(spline_function, u_res=u_res)
     return spline.compute_arc_length()
 
 
