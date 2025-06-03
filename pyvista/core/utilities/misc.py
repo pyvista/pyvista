@@ -412,10 +412,10 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f):  # noqa: ANN001, ANN202
-        def function_path_and_line() -> tuple[Path, int]:
+        def function_at_path_and_line() -> str:
             path = Path(inspect.getfile(inspect.unwrap(f)))
             line = inspect.getsourcelines(inspect.unwrap(f))[-1]
-            return path, line
+            return f'`{f.__name__}` at {path}:{line}'
 
         sig = inspect.signature(f)
         param_names = list(sig.parameters)
@@ -423,26 +423,22 @@ def _deprecate_positional_args(
         # Validate `allowed` against actual parameter names
         if allowed is not None:
             if not isinstance(allowed, list):
-                path, line = function_path_and_line()
-                msg = f'"Allowed arguments must be a list for\n`{f.__name__}` at {path}:{line}'
+                msg = f'"Allowed arguments must be a list for\n{function_at_path_and_line()}'
                 raise TypeError(msg)
             for name in allowed:
                 if name not in param_names:
-                    path, line = function_path_and_line()
                     msg = (
                         f'Allowed positional argument {name!r} is not a parameter of\n'
-                        f'`{f.__name__}` at {path}:{line}'
+                        f'{function_at_path_and_line()}.'
                     )
                     raise ValueError(msg)
 
             # Check that `allowed` appears in the same order as in the signature
             sig_allowed = [name for name in param_names if name in allowed]
             if sig_allowed != allowed:
-                path = Path(inspect.getfile(inspect.unwrap(f)))
-                line = inspect.getsourcelines(inspect.unwrap(f))[-1]
                 msg = (
-                    f'The `allowed` list {allowed} is not in the same order as parameters in\n`'
-                    f'{f.__name__}` at {path}:{line}.\n'
+                    f'The `allowed` list {allowed} is not in the same order as parameters in\n'
+                    f'{function_at_path_and_line()}.\n'
                     f'Expected order: {sig_allowed}.'
                 )
                 raise ValueError(msg)
@@ -454,7 +450,8 @@ def _deprecate_positional_args(
                 if n_allowed > _MAX_POSITIONAL_ARGS:
                     msg = (
                         f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed. '
-                        f'Got {n_allowed}:\n{allowed}'
+                        f'Got {n_allowed}: {allowed} for\n'
+                        f'{function_at_path_and_line()}.'
                     )
                     raise ValueError(msg)
 
@@ -486,14 +483,19 @@ def _deprecate_positional_args(
                 if version_info < version:
                     version_str = '.'.join(map(str, version))
                     arg_list = ', '.join(f'{a!r}' for a in offending_args)
-                    warnings.warn(
+                    msg = (
+                        f'{function_at_path_and_line()}\n'
                         f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}.\n'
                         f'From version {version_str}, passing {this} as{a}positional argument{s} '
-                        'will result in a TypeError.',
-                        FutureWarning,
+                        'will result in a TypeError.'
                     )
+                    warnings.warn(msg, FutureWarning)
                 else:
-                    msg = f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword argument{s}.'
+                    msg = (
+                        f'n{function_at_path_and_line()}\n'
+                        f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword '
+                        f'argument{s}'
+                    )
                     raise TypeError(msg)
             return f(*args, **kwargs)
 

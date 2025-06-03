@@ -2487,7 +2487,7 @@ def test_deprecate_positional_args_allowed():
 
     match = (
         'A maximum of 5 positional arguments are allowed. '
-        "Got 6:\n['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
+        "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         foo(True, True, True, True, True, True)
