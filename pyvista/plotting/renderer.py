@@ -4078,8 +4078,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
-        >>> _ = plotter.add_mesh(cube, 'red')
+        >>> _ = plotter.add_mesh(sphere, color='grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, color='red')
         >>> _ = plotter.add_legend(labels, face='rectangle')
         >>> plotter.show()
 
