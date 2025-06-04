@@ -135,7 +135,7 @@ example_cells.plot_cell(pyrmaid)
 def add_cell_helper(pl, text, grid, subplot, cpos=None):
     """Add a single cell to a plotter with fancy plotting."""
     pl.subplot(*subplot)
-    pl.add_text(text, 'lower_edge', color='k', font_size=8)
+    pl.add_text(text, position='lower_edge', color='k', font_size=8)
     pl.add_mesh(grid, opacity=0.5, color='lightblue', line_width=5)
     edges = grid.extract_all_edges()
     if edges.n_cells:
