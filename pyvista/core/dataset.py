@@ -573,7 +573,7 @@ class DataSet(DataSetFilters, DataObject):
             return
         # otherwise, wrap and use the array
         points, _ = _coerce_pointslike_arg(points, copy=False)
-        vtkpts = vtk_points(points, False)
+        vtkpts = vtk_points(points, deep=False)
         if not pdata:
             self.SetPoints(vtkpts)
         else:

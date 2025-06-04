@@ -1983,7 +1983,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
-        points = vtk_points(points, deep, force_float)
+        points = vtk_points(points, deep=deep, force_float=force_float)
         self.SetPoints(points)
 
         self.SetCells(cell_type, vtkcells)

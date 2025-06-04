@@ -335,7 +335,7 @@ def _apply_attrs_to_reader(
             attr()
 
 
-@_deprecate_positional_args(allowed=['read_texture'])
+@_deprecate_positional_args(allowed=['filename'])
 def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001
     """Load a texture from an image file.
 

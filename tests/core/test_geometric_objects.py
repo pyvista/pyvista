@@ -516,12 +516,12 @@ def test_box():
     bounds = [-10.0, 10.0, 10.0, 20.0, -5.0, 5.0]
     level = 3
     quads = True
-    mesh1 = pv.Box(bounds, level, quads)
+    mesh1 = pv.Box(bounds, level=level, quads=quads)
     assert mesh1.n_cells == (level + 1) * (level + 1) * 6
     assert np.allclose(mesh1.bounds, bounds)
 
     quads = False
-    mesh2 = pv.Box(bounds, level, quads)
+    mesh2 = pv.Box(bounds, level=level, quads=quads)
     assert mesh2.n_cells == mesh1.n_cells * 2
 
 
@@ -601,7 +601,7 @@ def test_circular_arc():
     center = [0, 0, 0]
     resolution = 100
 
-    mesh = pv.CircularArc(pointa, pointb, center, resolution)
+    mesh = pv.CircularArc(pointa, pointb, center, resolution=resolution)
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
     distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi / 2.0
@@ -609,7 +609,7 @@ def test_circular_arc():
 
     # pointa and pointb are not equidistant from center
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh = pv.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
+        mesh = pv.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], resolution=100)
 
 
 def test_circular_arc_from_normal():

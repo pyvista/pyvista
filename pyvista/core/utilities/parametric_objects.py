@@ -67,7 +67,7 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, False))
+    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
 
     # get interpolation density
     u_res = n_points

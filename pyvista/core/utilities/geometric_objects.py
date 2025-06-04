@@ -1914,7 +1914,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = _vtk.vtkUnstructuredGrid()
-    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
+    ug.SetPoints(pyvista.vtk_points(np.array(points), deep=False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return wrap(ug)
