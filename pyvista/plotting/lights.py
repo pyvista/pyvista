@@ -155,7 +155,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         intensity=None,
         positional=None,
         cone_angle=None,
-        show_actor=False,
+        show_actor=False,  # noqa: FBT002
         exponent=None,
         shadow_attenuation=None,
         attenuation_values=None,
@@ -995,7 +995,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         phi = np.radians(azim)
         self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
-    def copy(self, deep=True):
+    @_deprecate_positional_args
+    def copy(self, deep=True):  # noqa: FBT002
         """Return a shallow or a deep copy of the light.
 
         The only mutable attribute of :class:`pyvista.Light` is the

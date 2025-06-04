@@ -167,7 +167,7 @@ _vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N
 
 
 @_deprecate_positional_args(allowed=['array'])
-def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001
+def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001, FBT002
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -273,7 +273,7 @@ def convert_array(
 def convert_array(
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
-    deep: bool = False,  # noqa: FBT001
+    deep: bool = False,  # noqa: FBT001, FBT002
     array_type: int | None = None,
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
@@ -337,7 +337,7 @@ def get_array(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,  # noqa: FBT001
+    err: bool = False,  # noqa: FBT001, FBT002
 ) -> pyvista_ndarray | None:
     """Search point, cell and field data for an array.
 
@@ -413,7 +413,7 @@ def get_array_association(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,  # noqa: FBT001
+    err: bool = False,  # noqa: FBT001, FBT002
 ) -> FieldAssociation:
     """Return the array association.
 

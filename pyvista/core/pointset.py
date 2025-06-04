@@ -75,7 +75,7 @@ class _PointSet(DataSet):
     }
 
     @_deprecate_positional_args
-    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:  # noqa: FBT001
+    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:  # noqa: FBT001, FBT002
         """Return the coordinates for the center of mass of the mesh.
 
         Parameters
@@ -122,7 +122,7 @@ class _PointSet(DataSet):
     def remove_cells(
         self,
         ind: VectorLike[bool] | VectorLike[int],
-        inplace: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ) -> _PointSet:
         """Remove cells.
 
@@ -204,8 +204,8 @@ class _PointSet(DataSet):
     def translate(
         self: Self,
         xyz: VectorLike[float],
-        transform_all_input_vectors: bool = False,  # noqa: FBT001
-        inplace: bool = False,  # noqa: FBT001
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ):
         """Translate the mesh.
 
@@ -320,7 +320,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return super().__new__(cls, *args, **kwargs)
 
     @_deprecate_positional_args(allowed=['var_inp'])
-    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001
+    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
         """Initialize the pointset."""
         super().__init__()
 
@@ -343,7 +343,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return DataSet.__str__(self)
 
     @_deprecate_positional_args
-    def cast_to_polydata(self, deep: bool = True):  # noqa: FBT001
+    def cast_to_polydata(self, deep: bool = True):  # noqa: FBT001, FBT002
         """Cast this dataset to polydata.
 
         Parameters
@@ -776,9 +776,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         n_lines: int | None = None,
         strips: CellArrayLike | None = None,
         n_strips: int | None = None,
-        deep: bool = False,  # noqa: FBT001
+        deep: bool = False,  # noqa: FBT001, FBT002
         force_ext: str | None = None,
-        force_float: bool = True,  # noqa: FBT001
+        force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
     ) -> None:
@@ -1091,7 +1091,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         cls,
         points: MatrixLike[float],
         faces: MatrixLike[int],
-        deep: bool = False,  # noqa: FBT001
+        deep: bool = False,  # noqa: FBT001, FBT002
     ):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
 
@@ -1439,7 +1439,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.GetNumberOfPolys()
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(self, filename, binary: bool = True, texture=None, recompute_normals: bool = True):  # noqa: FBT001
+    def save(self, filename, binary: bool = True, texture=None, recompute_normals: bool = True):  # noqa: FBT001, FBT002
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -2279,7 +2279,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
 
     @_deprecate_positional_args
-    def linear_copy(self, deep: bool = False):  # noqa: FBT001
+    def linear_copy(self, deep: bool = False):  # noqa: FBT001, FBT002
         """Return a copy of the unstructured grid containing only linear cells.
 
         Converts the following cell types to their linear equivalents.
@@ -2774,7 +2774,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return self.extract_subset(voi, rate, boundary=False)
 
     @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind, inplace: bool = False):  # noqa: FBT001
+    def hide_cells(self, ind, inplace: bool = False):  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
         Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
@@ -3172,11 +3172,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def clean(  # noqa: PLR0917
         self,
         tolerance=0,
-        remove_unused_points: bool = True,  # noqa: FBT001
-        produce_merge_map: bool = True,  # noqa: FBT001
-        average_point_data: bool = True,  # noqa: FBT001
+        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
+        produce_merge_map: bool = True,  # noqa: FBT001, FBT002
+        average_point_data: bool = True,  # noqa: FBT001, FBT002
         merging_array_name=None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> ExplicitStructuredGrid:
         """Merge duplicate points and remove unused points in an ExplicitStructuredGrid.
 
@@ -3252,7 +3252,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def save(
         self,
         filename: Path | str,
-        binary: bool = True,  # noqa: FBT001
+        binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this VTK object to file.
@@ -3296,7 +3296,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid.save(filename, binary=binary)
 
     @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -3340,7 +3340,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return grid
 
     @_deprecate_positional_args
-    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001
+    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -3709,7 +3709,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return sorted(indices)
 
     @_deprecate_positional_args
-    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001
+    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
@@ -3758,7 +3758,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             return grid
 
     @_deprecate_positional_args
-    def compute_connections(self, inplace: bool = False):  # noqa: FBT001
+    def compute_connections(self, inplace: bool = False):  # noqa: FBT001, FBT002
         """Compute an array with the number of connected cell faces.
 
         This method calculates the number of topological cell

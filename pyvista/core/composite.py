@@ -1400,7 +1400,7 @@ class MultiBlock(
     def get_data_range(  # type: ignore[override]
         self: MultiBlock,
         name: str | None,
-        allow_missing: bool = False,  # noqa: FBT001
+        allow_missing: bool = False,  # noqa: FBT001, FBT002
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
@@ -2081,7 +2081,7 @@ class MultiBlock(
             self.set_block_name(i, name)
 
     @_deprecate_positional_args
-    def clean(self: MultiBlock, empty: bool = True) -> None:  # noqa: FBT001
+    def clean(self: MultiBlock, empty: bool = True) -> None:  # noqa: FBT001, FBT002
         """Remove any null blocks in place.
 
         Parameters
@@ -2195,7 +2195,7 @@ class MultiBlock(
         # in case we add meta data to this pbject down the road.
 
     @_deprecate_positional_args
-    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:  # noqa: FBT001
+    def copy(self: MultiBlock, deep: bool = True) -> MultiBlock:  # noqa: FBT001, FBT002
         """Return a copy of the multiblock.
 
         Parameters
@@ -2235,7 +2235,7 @@ class MultiBlock(
     def shallow_copy(  # type: ignore[override]
         self: MultiBlock,
         to_copy: _vtk.vtkMultiBlockDataSet,
-        recursive: bool = False,  # noqa: FBT001
+        recursive: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Shallow copy the given multiblock to this multiblock.
 
@@ -2301,7 +2301,7 @@ class MultiBlock(
         self: MultiBlock,
         name: str | None,
         preference: PointLiteral | CellLiteral = 'cell',
-        allow_missing: bool = False,  # noqa: FBT001
+        allow_missing: bool = False,  # noqa: FBT001, FBT002
     ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
@@ -2402,7 +2402,7 @@ class MultiBlock(
         return field_asc, scalars
 
     @_deprecate_positional_args
-    def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001
+    def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
@@ -2448,7 +2448,7 @@ class MultiBlock(
         return self.generic_filter(block_filter, _skip_none=False)
 
     @_deprecate_positional_args
-    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001
+    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
         .. versionadded:: 0.45

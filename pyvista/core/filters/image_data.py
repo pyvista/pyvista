@@ -49,7 +49,7 @@ class ImageDataFilters(DataSetFilters):
         radius_factor=1.5,
         std_dev=2.0,
         scalars=None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Smooth the data with a Gaussian kernel.
 
@@ -139,7 +139,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Smooth data using a median filter.
 
@@ -223,8 +223,8 @@ class ImageDataFilters(DataSetFilters):
         self,
         voi,
         rate=(1, 1, 1),
-        boundary: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        boundary: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
 
@@ -291,7 +291,7 @@ class ImageDataFilters(DataSetFilters):
         erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Dilates one value and erodes another.
 
@@ -387,7 +387,7 @@ class ImageDataFilters(DataSetFilters):
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -510,7 +510,7 @@ class ImageDataFilters(DataSetFilters):
         return output
 
     @_deprecate_positional_args
-    def fft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001
+    def fft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -594,7 +594,7 @@ class ImageDataFilters(DataSetFilters):
         return output
 
     @_deprecate_positional_args
-    def rfft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001
+    def rfft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -676,7 +676,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -757,7 +757,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
@@ -885,14 +885,14 @@ class ImageDataFilters(DataSetFilters):
     def contour_labeled(  # noqa: PLR0917
         self,
         n_labels: int | None = None,
-        smoothing: bool = False,  # noqa: FBT001
+        smoothing: bool = False,  # noqa: FBT001, FBT002
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: float = 1,
         output_mesh_type: Literal['quads', 'triangles'] = 'quads',
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 

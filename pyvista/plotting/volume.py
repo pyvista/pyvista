@@ -81,7 +81,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         self.SetProperty(obj)  # type: ignore[arg-type]
 
     @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Create a copy of this volume.
 
         Parameters

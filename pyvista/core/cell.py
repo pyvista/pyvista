@@ -114,7 +114,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         self: Self,
         vtk_cell: _vtk.vtkCell | None = None,
         cell_type: CellType | None = None,
-        deep: bool = False,  # noqa: FBT001
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the cell."""
         super().__init__()
@@ -580,7 +580,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return self.head(display=False, html=False)
 
     @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the cell.
 
         Parameters
@@ -768,7 +768,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
     def from_arrays(
         offsets: MatrixLike[int],
         connectivity: MatrixLike[int],
-        deep: bool = False,  # noqa: FBT001
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
 
@@ -816,7 +816,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
     def from_regular_cells(
         cls: type[CellArray],
         cells: MatrixLike[int],
-        deep: bool = False,  # noqa: FBT001
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 

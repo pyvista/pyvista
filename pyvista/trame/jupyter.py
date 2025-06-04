@@ -12,8 +12,6 @@ from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
 
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-
 try:
     from ipywidgets.widgets import HTML
 except ImportError:
@@ -268,8 +266,7 @@ def initialize(
     return viewer
 
 
-@_deprecate_positional_args(allowed=['plotter'])
-def show_trame(  # noqa: PLR0917
+def show_trame(
     plotter,
     mode=None,
     name=None,

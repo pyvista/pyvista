@@ -67,7 +67,7 @@ class VtkErrorCatcher:
     """
 
     @_deprecate_positional_args
-    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:  # noqa: FBT001
+    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:  # noqa: FBT001, FBT002
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -108,8 +108,8 @@ class Observer:
     def __init__(
         self,
         event_type='ErrorEvent',
-        log: bool = True,  # noqa: FBT001
-        store_history: bool = False,  # noqa: FBT001
+        log: bool = True,  # noqa: FBT001, FBT002
+        store_history: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize observer."""
         self.__event_occurred = False
@@ -182,7 +182,7 @@ class Observer:
         return occ
 
     @_deprecate_positional_args
-    def get_message(self, etc: bool = False):  # noqa: FBT001
+    def get_message(self, etc: bool = False):  # noqa: FBT001, FBT002
         """Get the last set error message.
 
         Returns

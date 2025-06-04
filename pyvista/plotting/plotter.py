@@ -432,7 +432,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(msg)
         self._theme.load_theme(theme)
 
-    def import_gltf(self, filename, set_camera=True):
+    @_deprecate_positional_args(allowed=['filename'])
+    def import_gltf(self, filename, set_camera=True):  # noqa: FBT002
         """Import a glTF file into the plotter.
 
         See https://www.khronos.org/gltf/ for more information.
@@ -712,8 +713,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return filename
 
+    @_deprecate_positional_args(allowed=['filename'])
     def export_gltf(
-        self, filename, inline_data=True, rotate_scene=True, save_normals=True
+        self,
+        filename,
+        inline_data=True,  # noqa: FBT002
+        rotate_scene=True,  # noqa: FBT002
+        save_normals=True,  # noqa: FBT002
     ) -> None:
         """Export the current rendering scene as a glTF file.
 
@@ -873,7 +879,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
-    def enable_hidden_line_removal(self, all_renderers=True) -> None:
+    @_deprecate_positional_args
+    def enable_hidden_line_removal(self, all_renderers=True) -> None:  # noqa: FBT002
         """Enable hidden line removal.
 
         Wireframe geometry will be drawn using hidden line removal if
@@ -913,7 +920,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.enable_hidden_line_removal()
 
-    def disable_hidden_line_removal(self, all_renderers=True) -> None:
+    @_deprecate_positional_args
+    def disable_hidden_line_removal(self, all_renderers=True) -> None:  # noqa: FBT002
         """Disable hidden line removal.
 
         Enable again with :func:`enable_hidden_line_removal
@@ -1119,7 +1127,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
 
-    def enable_3_lights(self, only_active=False) -> None:
+    @_deprecate_positional_args
+    def enable_3_lights(self, only_active=False) -> None:  # noqa: FBT002
         """Enable 3-lights illumination.
 
         This will replace all pre-existing lights in the scene.
@@ -1173,7 +1182,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
 
-    def enable_lightkit(self, only_active=False) -> None:
+    @_deprecate_positional_args
+    def enable_lightkit(self, only_active=False) -> None:  # noqa: FBT002
         """Enable the default light-kit lighting.
 
         See:
@@ -1216,7 +1226,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers=True):
+    @_deprecate_positional_args(allowed=['aa_type'])
+    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers=True):  # noqa: FBT002
         """Enable anti-aliasing.
 
         This tends to make edges appear softer and less pixelated.
@@ -1302,7 +1313,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.enable_anti_aliasing(aa_type)
 
-    def disable_anti_aliasing(self, all_renderers=True):
+    @_deprecate_positional_args
+    def disable_anti_aliasing(self, all_renderers=True):  # noqa: FBT002
         """Disable anti-aliasing.
 
         Parameters
@@ -2064,7 +2076,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for callback in self._on_render_callbacks:
             callback(self)
 
-    def add_on_render_callback(self, callback, render_event=False) -> None:
+    @_deprecate_positional_args(allowed=['callback'])
+    def add_on_render_callback(self, callback, render_event=False) -> None:  # noqa: FBT002
         """Add a method to be called post-render.
 
         Parameters
@@ -2448,7 +2461,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer = self.renderer
         renderer.view_isometric()
 
-    def update(self, stime=1, force_redraw=True) -> None:
+    @_deprecate_positional_args(allowed=['stime'])
+    def update(self, stime=1, force_redraw=True) -> None:  # noqa: FBT002
         """Update window, redraw, process messages query.
 
         Parameters
@@ -2494,16 +2508,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_size=None,
         line_width=None,
         opacity=1.0,
-        flip_scalars=False,
+        flip_scalars=False,  # noqa: FBT002
         lighting=None,
         n_colors=256,
-        interpolate_before_map=True,
+        interpolate_before_map=True,  # noqa: FBT002
         cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
-        multi_colors=False,
+        multi_colors=False,  # noqa: FBT002
         name=None,
         render_points_as_spheres=None,
         render_lines_as_tubes=None,
@@ -2520,16 +2534,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color=None,
         above_color=None,
         annotations=None,
-        pickable=True,
+        pickable=True,  # noqa: FBT002
         preference='point',
-        log_scale=False,
+        log_scale=False,  # noqa: FBT002
         pbr=None,
         metallic=None,
         roughness=None,
-        render=True,
+        render=True,  # noqa: FBT002
         component=None,
-        color_missing_with_nan=False,
-        copy_mesh=False,
+        color_missing_with_nan=False,  # noqa: FBT002
+        copy_mesh=False,  # noqa: FBT002
         show_vertices=None,
         edge_opacity=None,
         **kwargs,
@@ -3027,7 +3041,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_size=None,
         line_width=None,
         opacity=None,
-        flip_scalars=False,
+        flip_scalars=False,  # noqa: FBT002
         lighting=None,
         n_colors=256,
         interpolate_before_map=None,
@@ -3036,7 +3050,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
-        multi_colors=False,
+        multi_colors=False,  # noqa: FBT002
         name=None,
         texture=None,
         render_points_as_spheres=None,
@@ -3051,23 +3065,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity=1.0,
         culling=None,
         rgb=None,
-        categories=False,
+        categories=False,  # noqa: FBT002
         silhouette=None,
-        use_transparency=False,
+        use_transparency=False,  # noqa: FBT002
         below_color=None,
         above_color=None,
         annotations=None,
-        pickable=True,
+        pickable=True,  # noqa: FBT002
         preference='point',
-        log_scale=False,
+        log_scale=False,  # noqa: FBT002
         pbr=None,
         metallic=None,
         roughness=None,
-        render=True,
+        render=True,  # noqa: FBT002
         user_matrix=None,
         component=None,
         emissive=None,
-        copy_mesh=False,
+        copy_mesh=False,  # noqa: FBT002
         backface_params=None,
         show_vertices=None,
         edge_opacity=None,
@@ -3954,28 +3968,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity='linear',
         n_colors=256,
         cmap: ColormapOptions | list[str] | LookupTable | None = None,
-        flip_scalars=False,
+        flip_scalars=False,  # noqa: FBT002
         reset_camera=None,
         name=None,
         ambient=None,
-        categories=False,
-        culling=False,
-        multi_colors=False,
+        categories=False,  # noqa: FBT002
+        culling=False,  # noqa: FBT002
+        multi_colors=False,  # noqa: FBT002
         blending='composite',
         mapper=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
         annotations=None,
-        pickable=True,
+        pickable=True,  # noqa: FBT002
         preference='point',
         opacity_unit_distance=None,
-        shade=False,
+        shade=False,  # noqa: FBT002
         diffuse=0.7,  # TODO: different default for volumes
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
-        render=True,
+        render=True,  # noqa: FBT002
         user_matrix=None,
-        log_scale=False,
+        log_scale=False,  # noqa: FBT002
         **kwargs,
     ):
         """Add a volume, rendered using a smart mapper by default.
@@ -4849,7 +4863,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(**kwargs)
 
-    def update_scalars(self, scalars, mesh=None, render=True) -> None:
+    @_deprecate_positional_args(allowed=['scalars'])
+    def update_scalars(self, scalars, mesh=None, render=True) -> None:  # noqa: FBT002
         """Update scalars of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -4927,7 +4942,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-    def update_coordinates(self, points, mesh=None, render=True) -> None:
+    @_deprecate_positional_args(allowed=['points'])
+    def update_coordinates(self, points, mesh=None, render=True) -> None:  # noqa: FBT002
         """Update the points of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -5050,9 +5066,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size=18,
         color=None,
         font=None,
-        shadow=False,
+        shadow=False,  # noqa: FBT002
         name=None,
-        viewport=False,
+        viewport=False,  # noqa: FBT002
         orientation=0.0,
         font_file=None,
         *,
@@ -5232,7 +5248,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         loop=0,
         fps=10,
         palettesize=256,
-        subrectangles=False,
+        subrectangles=False,  # noqa: FBT002
         **kwargs,
     ) -> None:
         """Open a gif file.
@@ -5343,8 +5359,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.update()
         self.mwriter.append_data(self.image)
 
+    @_deprecate_positional_args
     def get_image_depth(
-        self, fill_value=np.nan, reset_camera_clipping_range=True
+        self,
+        fill_value=np.nan,
+        reset_camera_clipping_range=True,  # noqa: FBT002
     ) -> pyvista.pyvista_ndarray:
         """Return a depth image representing current render window.
 
@@ -5422,7 +5441,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @_deprecate_positional_args(allowed=['lines'])
     def add_lines(  # noqa: PLR0917
-        self, lines, color='w', width=5, label=None, name=None, connected=False
+        self,
+        lines,
+        color='w',
+        width=5,
+        label=None,
+        name=None,
+        connected=False,  # noqa: FBT002
     ) -> Actor:
         """Add lines to the plotting object.
 
@@ -5527,28 +5552,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self,
         points,
         labels,
-        italic=False,
-        bold=True,
+        italic=False,  # noqa: FBT002
+        bold=True,  # noqa: FBT002
         font_size=None,
         text_color=None,
         font_family=None,
         font_file=None,
-        shadow=False,
-        show_points=True,
+        shadow=False,  # noqa: FBT002
+        show_points=True,  # noqa: FBT002
         point_color=None,
         point_size=None,
         name=None,
         shape_color='grey',
         shape='rounded_rect',
-        fill_shape=True,
+        fill_shape=True,  # noqa: FBT002
         margin=3,
         shape_opacity=1.0,
-        pickable=False,
-        render_points_as_spheres=False,
+        pickable=False,  # noqa: FBT002
+        render_points_as_spheres=False,  # noqa: FBT002
         tolerance=0.001,
         reset_camera=None,
-        always_visible=False,
-        render=True,
+        always_visible=False,  # noqa: FBT002
+        render=True,  # noqa: FBT002
         justification_horizontal=None,
         justification_vertical=None,
         background_color=None,
@@ -6043,7 +6068,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # return image array if requested
         return image if return_img else None
 
-    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True) -> None:
+    @_deprecate_positional_args(allowed=['filename'])
+    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True) -> None:  # noqa: FBT002
         """Save a screenshot of the rendering window as a graphic file.
 
         This can be helpful for publication documents.
@@ -6123,11 +6149,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             writer.UsePainterSettings()
         writer.Update()
 
+    @_deprecate_positional_args(allowed=['filename'])
     def screenshot(
         self,
         filename=None,
         transparent_background=None,
-        return_img=True,
+        return_img=True,  # noqa: FBT002
         window_size=None,
         scale=None,
     ):
@@ -6299,9 +6326,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         focus=None,
         step=0.5,
         viewup=None,
-        write_frames=False,
-        threaded=False,
-        progress_bar=False,
+        write_frames=False,  # noqa: FBT002
+        threaded=False,  # noqa: FBT002
+        progress_bar=False,  # noqa: FBT002
     ):
         """Orbit on the given path focusing on the focus point.
 
@@ -6471,7 +6498,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             del self.renderers
 
-    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):
+    @_deprecate_positional_args(allowed=['image_path'])
+    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):  # noqa: FBT002
         """Add a background image to a plot.
 
         Parameters
@@ -6548,7 +6576,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset camera clipping planes."""
         self.renderer.ResetCameraClippingRange()
 
-    def add_light(self, light, only_active=False) -> None:
+    @_deprecate_positional_args(allowed=['light'])
+    def add_light(self, light, only_active=False) -> None:  # noqa: FBT002
         """Add a Light to the scene.
 
         Parameters
@@ -6579,7 +6608,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in renderers:
             renderer.add_light(light)
 
-    def remove_all_lights(self, only_active=False) -> None:
+    @_deprecate_positional_args
+    def remove_all_lights(self, only_active=False) -> None:  # noqa: FBT002
         """Remove all lights from the scene.
 
         Parameters
@@ -6738,9 +6768,9 @@ class Plotter(BasePlotter):
         border_color='k',
         border_width=2.0,
         window_size=None,
-        line_smoothing=False,
-        point_smoothing=False,
-        polygon_smoothing=False,
+        line_smoothing=False,  # noqa: FBT002
+        point_smoothing=False,  # noqa: FBT002
+        polygon_smoothing=False,  # noqa: FBT002
         splitting_position=None,
         title=None,
         lighting='light kit',
@@ -6865,15 +6895,15 @@ class Plotter(BasePlotter):
         self,
         title=None,
         window_size=None,
-        interactive=True,
+        interactive=True,  # noqa: FBT002
         auto_close=None,
-        interactive_update=False,
+        interactive_update=False,  # noqa: FBT002
         full_screen=None,
-        screenshot=False,
-        return_img=False,
+        screenshot=False,  # noqa: FBT002
+        return_img=False,  # noqa: FBT002
         cpos=None,
         jupyter_backend=None,
-        return_viewer=False,
+        return_viewer=False,  # noqa: FBT002
         return_cpos=None,
         before_close_callback=None,
         **kwargs,
@@ -7183,8 +7213,14 @@ class Plotter(BasePlotter):
             return return_values[0]
         return return_values or None
 
+    @_deprecate_positional_args(allowed=['title'])
     def add_title(
-        self, title, font_size=18, color=None, font=None, shadow=False
+        self,
+        title,
+        font_size=18,
+        color=None,
+        font=None,
+        shadow=False,  # noqa: FBT002
     ) -> _vtk.vtkTextActor:
         """Add text to the top center of the plot.
 

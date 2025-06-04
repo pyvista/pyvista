@@ -2855,7 +2855,7 @@ class GaussianCubeReader(BaseReader):
     _vtk_class_name = 'vtkGaussianCubeReader'
 
     @_deprecate_positional_args
-    def read(self, grid: bool = True):  # noqa: FBT001
+    def read(self, grid: bool = True):  # noqa: FBT001, FBT002
         """Read the file and return the output.
 
         Parameters

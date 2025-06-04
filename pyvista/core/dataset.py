@@ -987,7 +987,7 @@ class DataSet(DataSetFilters, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
     @_deprecate_positional_args(allowed=['ido'])
-    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001
+    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1671,7 +1671,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.head(display=False, html=False)
 
     @_deprecate_positional_args(allowed=['mesh'])
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -1737,7 +1737,7 @@ class DataSet(DataSetFilters, DataObject):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1778,7 +1778,7 @@ class DataSet(DataSetFilters, DataObject):
         return pset
 
     @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001
+    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1913,7 +1913,7 @@ class DataSet(DataSetFilters, DataObject):
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = False,  # noqa: FBT001
+        return_closest_point: bool = False,  # noqa: FBT001, FBT002
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
         """Find index of closest cell in this mesh to the given point.
 

@@ -453,7 +453,10 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
 
     @abstractmethod
     @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # numpydoc ignore=RT01  # noqa: FBT001
+    def copy(
+        self: Self,
+        deep: bool = True,  # noqa: FBT001, FBT002
+    ) -> Self:  # numpydoc ignore=RT01
         """Return a copy of this prop."""
         raise NotImplementedError  # pragma: no cover
 

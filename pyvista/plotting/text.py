@@ -537,11 +537,11 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
         orientation=None,
         font_size=None,
         font_file=None,
-        shadow: bool = False,  # noqa: FBT001
+        shadow: bool = False,  # noqa: FBT001, FBT002
         justification_horizontal=None,
         justification_vertical=None,
-        italic: bool = False,  # noqa: FBT001
-        bold: bool = False,  # noqa: FBT001
+        italic: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = False,  # noqa: FBT001, FBT002
         background_color=None,
         background_opacity=None,
     ):

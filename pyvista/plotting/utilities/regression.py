@@ -112,7 +112,7 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
 
 
 @_deprecate_positional_args(allowed=['render_window'])
-def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):  # noqa: FBT001
+def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):  # noqa: FBT001, FBT002
     """Extract the image from the render window as an array.
 
     Parameters
@@ -161,7 +161,7 @@ def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = 
 
 
 @_deprecate_positional_args(allowed=['im1', 'im2'])
-def compare_images(im1, im2, threshold=1, use_vtk: bool = True):  # noqa: FBT001
+def compare_images(im1, im2, threshold=1, use_vtk: bool = True):  # noqa: FBT001, FBT002
     """Compare two different images of the same size.
 
     Parameters

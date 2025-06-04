@@ -179,10 +179,10 @@ class AffineWidget3D:
         plotter,
         actor,
         origin=None,
-        start: bool = True,  # noqa: FBT001
+        start: bool = True,  # noqa: FBT001, FBT002
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,  # noqa: FBT001
+        always_visible: bool = True,  # noqa: FBT001, FBT002
         axes_colors=None,
         axes=None,
         release_callback=None,

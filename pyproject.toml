@@ -334,6 +334,7 @@ extend-select = [
   'F',
   'FA',
   'FBT001',
+  'FBT002',
   'FLY',
   'FURB',
   'I',
@@ -410,7 +411,17 @@ allow-dict-calls-with-keyword-arguments = true
 [tool.ruff.lint.per-file-ignores]
 '__init__.py' = ['PLC0414']
 'doc/source/make_tables.py' = ['D101', 'D102', 'T20']
-'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115', 'T20']
+'examples/*' = [
+  'D102',
+  'D103',
+  'D205',
+  'D212',
+  'D400',
+  'D415',
+  'FBT',
+  'SIM115',
+  'T20',
+]
 'examples/**' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
@@ -421,18 +432,20 @@ allow-dict-calls-with-keyword-arguments = true
   'N803',
   'PLR0917',
 ]
-'examples_trame/*' = ['D100', 'D103', 'T20']
+'examples_trame/*' = ['D100', 'D103', 'FBT002', 'T20']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
 'pyvista/core/filters/*' = ['PYI019']
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
 'pyvista/core/utilities/parametric_objects.py' = ['N802']
+'pyvista/examples/*' = ['FBT002']
 'pyvista/examples/cells.py' = ['N802']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
+'pyvista/trame/*' = ['FBT001', 'FBT002', 'PLR0917']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
 'tests/*' = ['D', 'FBT', 'INP', 'PLR0917', 'T20']
 

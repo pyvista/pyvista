@@ -631,7 +631,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dimensions: VectorLike[float] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        deep: bool = False,  # noqa: FBT001
+        deep: bool = False,  # noqa: FBT001, FBT002
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
     ) -> None:

@@ -24,29 +24,29 @@ def plot(  # noqa: PLR0917
     off_screen=None,
     full_screen=None,
     screenshot=None,
-    interactive=True,
+    interactive=True,  # noqa: FBT002
     cpos=None,
     window_size=None,
-    show_bounds=False,
+    show_bounds=False,  # noqa: FBT002
     show_axes=None,
     notebook=None,
     background=None,
     text='',
-    return_img=False,
-    eye_dome_lighting=False,
-    volume=False,
-    parallel_projection=False,
+    return_img=False,  # noqa: FBT002
+    eye_dome_lighting=False,  # noqa: FBT002
+    volume=False,  # noqa: FBT002
+    parallel_projection=False,  # noqa: FBT002
     jupyter_backend=None,
-    return_viewer=False,
-    return_cpos=False,
+    return_viewer=False,  # noqa: FBT002
+    return_cpos=False,  # noqa: FBT002
     jupyter_kwargs=None,
     theme=None,
     anti_aliasing=None,
     zoom=None,
-    border=False,
+    border=False,  # noqa: FBT002
     border_color='k',
     border_width=2.0,
-    ssao=False,
+    ssao=False,  # noqa: FBT002
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.

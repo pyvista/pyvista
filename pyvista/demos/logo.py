@@ -99,7 +99,8 @@ def text_3d(string, depth=0.5):
     return pyvista.wrap(tri_filter.GetOutput())
 
 
-def logo_letters(merge=False, depth=0.3):
+@_deprecate_positional_args
+def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
     """Generate a mesh for each letter in "PyVista".
 
     Parameters
@@ -190,8 +191,8 @@ def plot_logo(  # noqa: PLR0917
     off_screen=None,
     screenshot=None,
     cpos=None,
-    just_return_plotter=False,
-    show_note=False,
+    just_return_plotter=False,  # noqa: FBT002
+    show_note=False,  # noqa: FBT002
     **kwargs,
 ):
     """Plot the stylized PyVista logo.

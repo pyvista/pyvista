@@ -49,7 +49,7 @@ def _deprecate_positional_args(
 
     allowed : list[str], optional
         List of argument names which are allowed to be positional. A maximum of 5 arguments
-        may be listed (as per ruff rule PLR0917, FBT001, FBT002, FBT003).
+        may be listed (as per ruff rule PLR0917, FBT001, FBT002, FBT002, FBT003).
 
     """
 

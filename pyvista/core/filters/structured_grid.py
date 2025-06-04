@@ -17,7 +17,7 @@ class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001
+    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001, FBT002
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max

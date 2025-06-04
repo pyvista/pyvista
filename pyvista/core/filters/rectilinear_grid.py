@@ -21,10 +21,10 @@ class RectilinearGridFilters:
     def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
-        mixed: str | Sequence[int] | bool = False,  # noqa: FBT001
-        pass_cell_ids: bool = True,  # noqa: FBT001
-        pass_data: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        mixed: str | Sequence[int] | bool = False,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
+        pass_data: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create a tetrahedral mesh structured grid.
 

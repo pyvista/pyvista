@@ -133,7 +133,7 @@ def create_axes_marker(  # noqa: PLR0917
     xlabel='X',
     ylabel='Y',
     zlabel='Z',
-    labels_off: bool = False,  # noqa: FBT001
+    labels_off: bool = False,  # noqa: FBT001, FBT002
     line_width=2,
     cone_radius=0.4,
     shaft_length=0.8,
@@ -280,11 +280,11 @@ def create_axes_orientation_box(  # noqa: PLR0917
     x_face_color='red',
     y_face_color='green',
     z_face_color='blue',
-    color_box: bool = False,  # noqa: FBT001
+    color_box: bool = False,  # noqa: FBT001, FBT002
     label_color=None,
-    labels_off: bool = False,  # noqa: FBT001
+    labels_off: bool = False,  # noqa: FBT001, FBT002
     opacity=0.5,
-    show_text_edges: bool = False,  # noqa: FBT001
+    show_text_edges: bool = False,  # noqa: FBT001, FBT002
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -541,7 +541,7 @@ def normalize(x, minimum=None, maximum=None):
 
 
 @_deprecate_positional_args(allowed=['mapping', 'n_colors'])
-def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='linear'):  # noqa: FBT001
+def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='linear'):  # noqa: FBT001, FBT002
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of

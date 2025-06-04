@@ -128,7 +128,7 @@ def get_ext(filename: str | Path) -> str:
 
 
 @_deprecate_positional_args(allowed=['vtk_writer'])
-def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001
+def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001, FBT002
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -168,7 +168,7 @@ def read(  # noqa: PLR0911
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
-    progress_bar: bool = False,  # noqa: FBT001
+    progress_bar: bool = False,  # noqa: FBT001, FBT002
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -336,7 +336,7 @@ def _apply_attrs_to_reader(
 
 
 @_deprecate_positional_args(allowed=['filename'])
-def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001
+def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001, FBT002
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -388,11 +388,11 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
 @_deprecate_positional_args(allowed=['filename'])
 def read_exodus(  # noqa: PLR0917
     filename: str | Path,
-    animate_mode_shapes: bool = True,  # noqa: FBT001
-    apply_displacements: bool = True,  # noqa: FBT001
+    animate_mode_shapes: bool = True,  # noqa: FBT001, FBT002
+    apply_displacements: bool = True,  # noqa: FBT001, FBT002
     displacement_magnitude: float = 1.0,
-    read_point_data: bool = True,  # noqa: FBT001
-    read_cell_data: bool = True,  # noqa: FBT001
+    read_point_data: bool = True,  # noqa: FBT001, FBT002
+    read_cell_data: bool = True,  # noqa: FBT001, FBT002
     enabled_sidesets: Iterable[str | int] | None = None,
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -480,7 +480,7 @@ def read_exodus(  # noqa: PLR0917
 @_deprecate_positional_args(allowed=['filename'])
 def read_grdecl(
     filename: str | Path,
-    elevation: bool = True,  # noqa: FBT001
+    elevation: bool = True,  # noqa: FBT001, FBT002
     other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
@@ -530,16 +530,18 @@ def read_grdecl(
 
     @overload
     def read_keyword(
-        f: TextIO, split: Literal[True] = True, converter: type = ...
+        f: TextIO,
+        split: Literal[True] = True,  # noqa: FBT002
+        converter: type = ...,
     ) -> list[str]: ...
     @overload
-    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...
+    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...  # noqa: FBT002
     @overload
     def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...  # noqa: FBT001
     @_deprecate_positional_args(allowed=['f'])
     def read_keyword(
         f: TextIO,
-        split: bool = True,  # noqa: FBT001
+        split: bool = True,  # noqa: FBT001, FBT002
         converter: type | None = None,
     ) -> str | list[str]:
         """Read a keyword.

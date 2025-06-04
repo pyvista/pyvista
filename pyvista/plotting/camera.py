@@ -800,9 +800,9 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     def tight(
         self,
         padding=0.0,
-        adjust_render_window: bool = True,  # noqa: FBT001
+        adjust_render_window: bool = True,  # noqa: FBT001, FBT002
         view='xy',
-        negative: bool = False,  # noqa: FBT001
+        negative: bool = False,  # noqa: FBT001, FBT002
     ):
         """Adjust the camera position so that the actors fill the entire renderer.
 

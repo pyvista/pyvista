@@ -1653,6 +1653,7 @@ def _pad_lines(
 
 def _indent_multi_line_string(
     string: str,
+    *,
     indent_size=3,
     indent_level: int = 1,
     omit_first_line=True,

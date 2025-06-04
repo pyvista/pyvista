@@ -187,7 +187,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """Copy pyvista meta data onto this object from another object."""
 
     @_deprecate_positional_args
-    def copy(self, deep: bool = True):  # noqa: FBT001
+    def copy(self, deep: bool = True):  # noqa: FBT001, FBT002
         """Return a copy of the PartitionedDataSet.
 
         Parameters

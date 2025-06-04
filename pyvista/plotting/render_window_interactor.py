@@ -88,7 +88,8 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
+    @_deprecate_positional_args(allowed=['plotter'])
+    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):  # noqa: FBT002
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -202,7 +203,8 @@ class RenderWindowInteractor:
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    def add_observer(self, event, call, interactor_style_fallback=True):
+    @_deprecate_positional_args(allowed=['event', 'call'])
+    def add_observer(self, event, call, interactor_style_fallback=True):  # noqa: FBT002
         """Add an observer for the given event.
 
         Parameters
@@ -303,7 +305,8 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key, raise_on_missing=False):
+    @_deprecate_positional_args(allowed=['key'])
+    def clear_events_for_key(self, key, raise_on_missing=False):  # noqa: FBT002
         """Remove the callbacks associated to the key.
 
         Parameters
@@ -371,7 +374,8 @@ class RenderWindowInteractor:
         for callback in self._click_event_callbacks[event][double, True]:
             callback(self._plotter.click_position)
 
-    def track_click_position(self, callback=None, side='right', double=False, viewport=False):
+    @_deprecate_positional_args(allowed=['callback', 'side'])
+    def track_click_position(self, callback=None, side='right', double=False, viewport=False):  # noqa: FBT002
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -984,8 +988,8 @@ class RenderWindowInteractor:
     @_deprecate_positional_args
     def enable_terrain_style(
         self,
-        mouse_wheel_zooms: bool | float = True,  # noqa: FBT001
-        shift_pans: bool = True,  # noqa: FBT001
+        mouse_wheel_zooms: bool | float = True,  # noqa: FBT001, FBT002
+        shift_pans: bool = True,  # noqa: FBT001, FBT002
     ):
         """Set the interactive style to Terrain.
 
@@ -1384,7 +1388,8 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_timer(self, duration, repeating=True):
+    @_deprecate_positional_args(allowed=['duration'])
+    def create_timer(self, duration, repeating=True):  # noqa: FBT002
         """Create a timer.
 
         Parameters

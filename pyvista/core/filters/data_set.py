@@ -64,9 +64,9 @@ class DataSetFilters(DataObjectFilters):
         max_landmarks: int = 100,
         max_mean_distance: float = 1e-5,
         max_iterations: int = 500,
-        check_mean_distance: bool = True,  # noqa: FBT001
-        start_by_matching_centroids: bool = True,  # noqa: FBT001
-        return_matrix: bool = False,  # noqa: FBT001
+        check_mean_distance: bool = True,  # noqa: FBT001, FBT002
+        start_by_matching_centroids: bool = True,  # noqa: FBT001, FBT002
+        return_matrix: bool = False,  # noqa: FBT001, FBT002
     ):
         """Align a dataset to another.
 
@@ -405,7 +405,7 @@ class DataSetFilters(DataObjectFilters):
     def compute_implicit_distance(  # type: ignore[misc]
         self: _DataSetType,
         surface: DataSet | _vtk.vtkDataSet,
-        inplace: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute the implicit distance from the points to a surface.
 
@@ -496,11 +496,11 @@ class DataSetFilters(DataObjectFilters):
     def clip_scalar(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
-        invert: bool = True,  # noqa: FBT001
+        invert: bool = True,  # noqa: FBT001, FBT002
         value: float = 0.0,
-        inplace: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
-        both: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        both: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a scalar.
 
@@ -597,11 +597,11 @@ class DataSetFilters(DataObjectFilters):
     def clip_surface(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         surface: DataSet | _vtk.vtkDataSet,
-        invert: bool = True,  # noqa: FBT001
+        invert: bool = True,  # noqa: FBT001, FBT002
         value: float = 0.0,
-        compute_distance: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
-        crinkle: bool = False,  # noqa: FBT001
+        compute_distance: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        crinkle: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
@@ -681,14 +681,14 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
-        invert: bool = False,  # noqa: FBT001
-        continuous: bool = False,  # noqa: FBT001
+        invert: bool = False,  # noqa: FBT001, FBT002
+        continuous: bool = False,  # noqa: FBT001, FBT002
         preference: Literal['point', 'cell'] = 'cell',
-        all_scalars: bool = False,  # noqa: FBT001
+        all_scalars: bool = False,  # noqa: FBT001, FBT002
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         method: Literal['upper', 'lower'] = 'upper',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Apply a :vtk:`vtkThreshold` filter to the input dataset.
 
@@ -892,11 +892,11 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         percent: float = 0.50,
         scalars: str | None = None,
-        invert: bool = False,  # noqa: FBT001
-        continuous: bool = False,  # noqa: FBT001
+        invert: bool = False,  # noqa: FBT001, FBT002
+        continuous: bool = False,  # noqa: FBT001, FBT002
         preference: Literal['point', 'cell'] = 'cell',
         method: Literal['upper', 'lower'] = 'upper',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
@@ -1029,8 +1029,8 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def outline(  # type: ignore[misc]
         self: _DataObjectType,
-        generate_faces: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        generate_faces: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the full extent for the input dataset.
 
@@ -1075,7 +1075,7 @@ class DataSetFilters(DataObjectFilters):
     def outline_corners(  # type: ignore[misc]
         self: _DataObjectType,
         factor: float = 0.2,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the corners for the input dataset.
 
@@ -1114,7 +1114,7 @@ class DataSetFilters(DataObjectFilters):
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
         extent: VectorLike[float] | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract the outer surface of a volume or structured grid dataset.
 
@@ -1172,13 +1172,13 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
         scalars: str | NumpyArray[float] | None = None,
-        compute_normals: bool = False,  # noqa: FBT001
-        compute_gradients: bool = False,  # noqa: FBT001
-        compute_scalars: bool = True,  # noqa: FBT001
+        compute_normals: bool = False,  # noqa: FBT001, FBT002
+        compute_gradients: bool = False,  # noqa: FBT001, FBT002
+        compute_scalars: bool = True,  # noqa: FBT001, FBT002
         rng: VectorLike[float] | None = None,
         preference: Literal['point', 'cell'] = 'point',
         method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Contour an input self by an array.
 
@@ -1360,10 +1360,10 @@ class DataSetFilters(DataObjectFilters):
         origin: VectorLike[float] | None = None,
         point_u: VectorLike[float] | None = None,
         point_v: VectorLike[float] | None = None,
-        inplace: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
         name: str = 'Texture Coordinates',
-        use_bounds: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        use_bounds: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Texture map this dataset to a user defined plane.
 
@@ -1445,10 +1445,10 @@ class DataSetFilters(DataObjectFilters):
     def texture_map_to_sphere(  # type: ignore[misc]
         self: _DataSetType,
         center: VectorLike[float] | None = None,
-        prevent_seam: bool = True,  # noqa: FBT001
-        inplace: bool = False,  # noqa: FBT001
+        prevent_seam: bool = True,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
         name: str = 'Texture Coordinates',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Texture map this dataset to a user defined sphere.
 
@@ -1519,17 +1519,17 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def glyph(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
-        orient: bool | str = True,  # noqa: FBT001
-        scale: bool | str = True,  # noqa: FBT001
+        orient: bool | str = True,  # noqa: FBT001, FBT002
+        scale: bool | str = True,  # noqa: FBT001, FBT002
         factor: float = 1.0,
         geom: _vtk.vtkDataSet | DataSet | Sequence[_vtk.vtkDataSet | DataSet] | None = None,
         indices: VectorLike[int] | None = None,
         tolerance: float | None = None,
-        absolute: bool = False,  # noqa: FBT001
-        clamping: bool = False,  # noqa: FBT001
+        absolute: bool = False,  # noqa: FBT001, FBT002
+        clamping: bool = False,  # noqa: FBT001, FBT002
         rng: VectorLike[float] | None = None,
         color_mode: Literal['scale', 'scalar', 'vector'] = 'scale',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
 
@@ -1810,13 +1810,13 @@ class DataSetFilters(DataObjectFilters):
         variable_input: float | VectorLike[float] | None = None,
         scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
-        label_regions: bool = True,  # noqa: FBT001
+        label_regions: bool = True,  # noqa: FBT001, FBT002
         region_ids: VectorLike[int] | None = None,
         point_ids: VectorLike[int] | None = None,
         cell_ids: VectorLike[int] | None = None,
         closest_point: VectorLike[float] | None = None,
-        inplace: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Find and label connected regions.
@@ -2233,8 +2233,8 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def extract_largest(  # type: ignore[misc]
         self: _DataSetType,
-        inplace: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract largest connected set in mesh.
 
@@ -2282,8 +2282,8 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def split_bodies(  # type: ignore[misc]
         self: _DataSetType,
-        label: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        label: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Find, label, and split connected bodies/volumes.
 
@@ -2350,8 +2350,8 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         factor: float = 1.0,
         normal: VectorLike[float] | None = None,
-        inplace: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Warp the dataset's points by a point data scalars array's values.
@@ -2441,8 +2441,8 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         vectors: str | None = None,
         factor: float = 1.0,
-        inplace: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Warp the dataset's points by a point data vectors array's values.
 
@@ -2525,7 +2525,7 @@ class DataSetFilters(DataObjectFilters):
         alpha: float = 0.0,
         tol: float = 0.001,
         offset: float = 2.5,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Construct a 3D Delaunay triangulation of the mesh.
 
@@ -2585,9 +2585,9 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         surface: PolyData,
         tolerance: float = 0.001,
-        inside_out: bool = False,  # noqa: FBT001
-        check_surface: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inside_out: bool = False,  # noqa: FBT001, FBT002
+        check_surface: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -2693,9 +2693,9 @@ class DataSetFilters(DataObjectFilters):
         strategy: Literal['null_value', 'mask_points', 'closest_point'] = 'null_value',
         null_value: float = 0.0,
         n_points: int | None = None,
-        pass_cell_data: bool = True,  # noqa: FBT001
-        pass_point_data: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        pass_cell_data: bool = True,  # noqa: FBT001, FBT002
+        pass_point_data: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -2844,10 +2844,10 @@ class DataSetFilters(DataObjectFilters):
         source_radius: float | None = None,
         n_points: int = 100,
         start_position: VectorLike[float] | None = None,
-        return_source: bool = False,  # noqa: FBT001
+        return_source: bool = False,  # noqa: FBT001, FBT002
         pointa: VectorLike[float] | None = None,
         pointb: VectorLike[float] | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Integrate a vector field to generate streamlines.
@@ -2965,7 +2965,7 @@ class DataSetFilters(DataObjectFilters):
         vectors: str | None = None,
         integrator_type: Literal[45, 2, 4] = 45,
         integration_direction: Literal['both', 'backward', 'forward'] = 'both',
-        surface_streamlines: bool = False,  # noqa: FBT001
+        surface_streamlines: bool = False,  # noqa: FBT001, FBT002
         initial_step_length: float = 0.5,
         step_unit: Literal['cl', 'l'] = 'cl',
         min_step_length: float = 0.01,
@@ -2974,10 +2974,10 @@ class DataSetFilters(DataObjectFilters):
         terminal_speed: float = 1e-12,
         max_error: float = 1e-6,
         max_time: float | None = None,
-        compute_vorticity: bool = True,  # noqa: FBT001
+        compute_vorticity: bool = True,  # noqa: FBT001, FBT002
         rotation_scale: float = 1.0,
         interpolator_type: Literal['point', 'cell', 'p', 'c'] = 'point',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         max_length: float | None = None,
     ):
         """Generate streamlines of vectors from the points of a source mesh.
@@ -3192,8 +3192,8 @@ class DataSetFilters(DataObjectFilters):
         closed_loop_maximum_distance: float = 0.5,
         loop_angle: float = 20.0,
         minimum_number_of_loop_points: int = 4,
-        compute_vorticity: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        compute_vorticity: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate evenly spaced streamlines on a 2D dataset.
 
@@ -3364,7 +3364,7 @@ class DataSetFilters(DataObjectFilters):
     def decimate_boundary(  # type: ignore[misc]
         self: _DataSetType,
         target_reduction: float = 0.5,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a decimated version of a triangulation of the boundary.
 
@@ -3404,7 +3404,7 @@ class DataSetFilters(DataObjectFilters):
         pointb: VectorLike[float],
         resolution: int | None = None,
         tolerance: float | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Sample a dataset onto a line.
 
@@ -3471,11 +3471,11 @@ class DataSetFilters(DataObjectFilters):
         title: str | None = None,
         ylabel: str | None = None,
         figsize: tuple[int, int] | None = None,
-        figure: bool = True,  # noqa: FBT001
-        show: bool = True,  # noqa: FBT001
+        figure: bool = True,  # noqa: FBT001, FBT002
+        show: bool = True,  # noqa: FBT001, FBT002
         tolerance: float | None = None,
         fname: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
@@ -3575,7 +3575,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         points: MatrixLike[float],
         tolerance: float | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Sample a dataset onto a multiple lines.
 
@@ -3633,7 +3633,7 @@ class DataSetFilters(DataObjectFilters):
         center: VectorLike[float],
         resolution: int | None = None,
         tolerance: float | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Sample a dataset over a circular arc.
 
@@ -3714,7 +3714,7 @@ class DataSetFilters(DataObjectFilters):
         polar: VectorLike[float] | None = None,
         angle: float | None = None,
         tolerance: float | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
 
@@ -3804,11 +3804,11 @@ class DataSetFilters(DataObjectFilters):
         title: str | None = None,
         ylabel: str | None = None,
         figsize: tuple[int, int] | None = None,
-        figure: bool = True,  # noqa: FBT001
-        show: bool = True,  # noqa: FBT001
+        figure: bool = True,  # noqa: FBT001, FBT002
+        show: bool = True,  # noqa: FBT001, FBT002
         tolerance: float | None = None,
         fname: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Sample a dataset along a circular arc and plot it.
 
@@ -3934,11 +3934,11 @@ class DataSetFilters(DataObjectFilters):
         title: str | None = None,
         ylabel: str | None = None,
         figsize: tuple[int, int] | None = None,
-        figure: bool = True,  # noqa: FBT001
-        show: bool = True,  # noqa: FBT001
+        figure: bool = True,  # noqa: FBT001, FBT002
+        show: bool = True,  # noqa: FBT001, FBT002
         tolerance: float | None = None,
         fname: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Sample a dataset along a circular arc defined by a normal and polar vector and plot it.
 
@@ -4068,8 +4068,8 @@ class DataSetFilters(DataObjectFilters):
     def extract_cells(  # type: ignore[misc]
         self: _DataSetType,
         ind: int | VectorLike[int],
-        invert: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        invert: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a subset of the grid.
 
@@ -4143,9 +4143,9 @@ class DataSetFilters(DataObjectFilters):
     def extract_points(  # type: ignore[misc]
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
-        adjacent_cells: bool = True,  # noqa: FBT001
-        include_cells: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        adjacent_cells: bool = True,  # noqa: FBT001, FBT002
+        include_cells: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
@@ -5013,10 +5013,10 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def extract_surface(  # type: ignore[misc]
         self: _DataSetType,
-        pass_pointid: bool = True,  # noqa: FBT001
-        pass_cellid: bool = True,  # noqa: FBT001
+        pass_pointid: bool = True,  # noqa: FBT001, FBT002
+        pass_cellid: bool = True,  # noqa: FBT001, FBT002
         nonlinear_subdivision: int = 1,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract surface mesh of the grid.
 
@@ -5113,7 +5113,7 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def surface_indices(  # type: ignore[misc]
         self: _DataSetType,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return the surface indices of a grid.
 
@@ -5145,12 +5145,12 @@ class DataSetFilters(DataObjectFilters):
     def extract_feature_edges(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         feature_angle: float = 30.0,
-        boundary_edges: bool = True,  # noqa: FBT001
-        non_manifold_edges: bool = True,  # noqa: FBT001
-        feature_edges: bool = True,  # noqa: FBT001
-        manifold_edges: bool = True,  # noqa: FBT001
-        clear_data: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        boundary_edges: bool = True,  # noqa: FBT001, FBT002
+        non_manifold_edges: bool = True,  # noqa: FBT001, FBT002
+        feature_edges: bool = True,  # noqa: FBT001, FBT002
+        manifold_edges: bool = True,  # noqa: FBT001, FBT002
+        clear_data: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract edges from the surface of the mesh.
 
@@ -5230,8 +5230,8 @@ class DataSetFilters(DataObjectFilters):
     def merge_points(  # type: ignore[misc]
         self: _DataSetType,
         tolerance: float = 0.0,
-        inplace: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Merge duplicate points in this mesh.
 
@@ -5289,11 +5289,11 @@ class DataSetFilters(DataObjectFilters):
         | MultiBlock
         | Sequence[DataSet | _vtk.vtkDataSet]
         | None = None,
-        merge_points: bool = True,  # noqa: FBT001
+        merge_points: bool = True,  # noqa: FBT001, FBT002
         tolerance: float = 0.0,
-        inplace: bool = False,  # noqa: FBT001
-        main_has_priority: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        main_has_priority: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Join one or many other grids to this grid.
 
@@ -5414,7 +5414,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         quality_measure: str = 'scaled_jacobian',
         null_value: float = -1.0,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -5621,13 +5621,13 @@ class DataSetFilters(DataObjectFilters):
     def compute_derivative(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
-        gradient: bool | str = True,  # noqa: FBT001
-        divergence: bool | str = False,  # noqa: FBT001
-        vorticity: bool | str = False,  # noqa: FBT001
-        qcriterion: bool | str = False,  # noqa: FBT001
-        faster: bool = False,  # noqa: FBT001
+        gradient: bool | str = True,  # noqa: FBT001, FBT002
+        divergence: bool | str = False,  # noqa: FBT001, FBT002
+        vorticity: bool | str = False,  # noqa: FBT001, FBT002
+        qcriterion: bool | str = False,  # noqa: FBT001, FBT002
+        faster: bool = False,  # noqa: FBT001, FBT002
         preference: Literal['point', 'cell'] = 'point',
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute derivative-based quantities of point/cell scalar field.
 
@@ -5735,7 +5735,7 @@ class DataSetFilters(DataObjectFilters):
     def shrink(  # type: ignore[misc]
         self: _DataSetType,
         shrink_factor: float = 1.0,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Shrink the individual faces of a mesh.
 
@@ -5789,8 +5789,8 @@ class DataSetFilters(DataObjectFilters):
     def tessellate(  # type: ignore[misc]
         self: _DataSetType,
         max_n_subdivide: int = 3,
-        merge_points: bool = True,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        merge_points: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Tessellate a mesh.
 
@@ -5859,7 +5859,7 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def integrate_data(  # type: ignore[misc]
         self: _DataSetType,
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Integrate point and cell data.
 
@@ -5913,8 +5913,8 @@ class DataSetFilters(DataObjectFilters):
     def partition(  # type: ignore[misc]
         self: _DataSetType,
         n_partitions: int,
-        generate_global_id: bool = False,  # noqa: FBT001
-        as_composite: bool = True,  # noqa: FBT001
+        generate_global_id: bool = False,  # noqa: FBT001, FBT002
+        as_composite: bool = True,  # noqa: FBT001, FBT002
     ):
         """Break down input dataset into a requested number of partitions.
 
@@ -6498,7 +6498,7 @@ class DataSetFilters(DataObjectFilters):
     def extract_cells_by_type(  # type: ignore[misc]
         self: _DataSetType,
         cell_types: int | VectorLike[int],
-        progress_bar: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extract cells of a specified type.
 
@@ -6576,8 +6576,8 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
-        inplace: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ):
         """Sort labeled data by number of points or cells.
 
@@ -6664,12 +6664,12 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args
     def pack_labels(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
-        sort: bool = False,  # noqa: FBT001
+        sort: bool = False,  # noqa: FBT001, FBT002
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
-        progress_bar: bool = False,  # noqa: FBT001
-        inplace: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ):
         """Renumber labeled data such that labels are contiguous.
 

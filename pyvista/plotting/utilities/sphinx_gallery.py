@@ -86,7 +86,7 @@ def _process_events_before_scraping(plotter):
 
 
 @_deprecate_positional_args(allowed=['image_path_iterator'])
-def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:  # noqa: FBT001
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:  # noqa: FBT001, FBT002
     """Generate images from the current plotters.
 
     The file names are taken from the ``image_path_iterator`` iterator.

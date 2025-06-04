@@ -22,7 +22,7 @@ def axis_angle_rotation(
     axis: VectorLike[float],
     angle: float,
     point: VectorLike[float] | None = None,
-    deg: bool = True,  # noqa: FBT001
+    deg: bool = True,  # noqa: FBT001, FBT002
 ) -> NumpyArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
@@ -263,11 +263,15 @@ def reflection(
 
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True] = True
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[True] = True,  # noqa: FBT002
 ) -> None: ...
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[False] = False,  # noqa: FBT002
 ) -> NumpyArray[float]: ...
 @overload
 def apply_transformation_to_points(
@@ -275,10 +279,11 @@ def apply_transformation_to_points(
     points: NumpyArray[float],
     inplace: bool = ...,  # noqa: FBT001
 ) -> NumpyArray[float] | None: ...
+@_deprecate_positional_args(allowed=['transformation', 'points'])
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
     points: NumpyArray[float],
-    inplace: Literal[True, False] = False,
+    inplace: Literal[True, False] = False,  # noqa: FBT002
 ) -> NumpyArray[float] | None:
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 

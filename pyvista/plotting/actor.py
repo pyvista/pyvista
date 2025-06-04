@@ -344,7 +344,7 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         pl.show(**kwargs)
 
     @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Create a copy of this actor.
 
         Parameters

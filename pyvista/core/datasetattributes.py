@@ -568,7 +568,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return narray
 
     @_deprecate_positional_args(allowed=['data', 'name'])
-    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:  # noqa: FBT001
+    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:  # noqa: FBT001, FBT002
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -637,7 +637,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self: Self,
         scalars: ArrayLike[float],
         name: str = 'scalars',
-        deep_copy: bool = False,  # noqa: FBT001
+        deep_copy: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Set the active scalars of the dataset with an array.
 
@@ -695,7 +695,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self: Self,
         vectors: MatrixLike[float],
         name: str,
-        deep_copy: bool = False,  # noqa: FBT001
+        deep_copy: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Set the active vectors of this data attribute.
 
@@ -1093,7 +1093,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def update(
         self: Self,
         array_dict: dict[str, NumpyArray[float]] | DataSetAttributes,
-        copy: bool = True,  # noqa: FBT001
+        copy: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 

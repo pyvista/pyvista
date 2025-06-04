@@ -24,9 +24,9 @@ if TYPE_CHECKING:
 @_deprecate_positional_args(allowed=['points'])
 def vtk_points(
     points: VectorLike[float] | MatrixLike[float],
-    deep: bool = True,  # noqa: FBT001
-    force_float: bool = False,  # noqa: FBT001
-    allow_empty: bool = True,  # noqa: FBT001
+    deep: bool = True,  # noqa: FBT001, FBT002
+    force_float: bool = False,  # noqa: FBT001, FBT002
+    allow_empty: bool = True,  # noqa: FBT001, FBT002
 ) -> _vtk.vtkPoints:
     """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
 
@@ -158,7 +158,7 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
 @_deprecate_positional_args(allowed=['points'])
 def lines_from_points(
     points: VectorLike[float] | MatrixLike[float],
-    close: bool = False,  # noqa: FBT001
+    close: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Make a connected line set given an array of points.
 
@@ -200,7 +200,7 @@ def lines_from_points(
 @_deprecate_positional_args(allowed=['points'])
 def fit_plane_to_points(
     points: MatrixLike[float],
-    return_meta: bool = False,  # noqa: FBT001
+    return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
 ) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:

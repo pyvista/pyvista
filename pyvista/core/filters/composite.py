@@ -242,7 +242,7 @@ class CompositeFilters(DataObjectFilters):
         return wrap(gf.GetOutputDataObject(0))
 
     @_deprecate_positional_args
-    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001
+    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -301,9 +301,9 @@ class CompositeFilters(DataObjectFilters):
     @_deprecate_positional_args
     def outline(  # type: ignore[misc]
         self: MultiBlock,
-        generate_faces: bool = False,  # noqa: FBT001
-        nested: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        generate_faces: bool = False,  # noqa: FBT001, FBT002
+        nested: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -337,8 +337,8 @@ class CompositeFilters(DataObjectFilters):
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock,
         factor=0.2,
-        nested: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        nested: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
@@ -368,16 +368,16 @@ class CompositeFilters(DataObjectFilters):
     @_deprecate_positional_args
     def _compute_normals(  # noqa: PLR0917
         self,
-        cell_normals: bool = True,  # noqa: FBT001
-        point_normals: bool = True,  # noqa: FBT001
-        split_vertices: bool = False,  # noqa: FBT001
-        flip_normals: bool = False,  # noqa: FBT001
-        consistent_normals: bool = True,  # noqa: FBT001
-        auto_orient_normals: bool = False,  # noqa: FBT001
-        non_manifold_traversal: bool = True,  # noqa: FBT001
+        cell_normals: bool = True,  # noqa: FBT001, FBT002
+        point_normals: bool = True,  # noqa: FBT001, FBT002
+        split_vertices: bool = False,  # noqa: FBT001, FBT002
+        flip_normals: bool = False,  # noqa: FBT001, FBT002
+        consistent_normals: bool = True,  # noqa: FBT001, FBT002
+        auto_orient_normals: bool = False,  # noqa: FBT001, FBT002
+        non_manifold_traversal: bool = True,  # noqa: FBT001, FBT002
         feature_angle=30.0,
-        track_vertices: bool = False,  # noqa: FBT001
-        progress_bar: bool = False,  # noqa: FBT001
+        track_vertices: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]

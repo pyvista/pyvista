@@ -50,9 +50,9 @@ def _padded_bins(mesh, density):
 def voxelize(
     mesh,
     density=None,
-    check_surface: bool = True,  # noqa: FBT001
-    enclosed: bool = False,  # noqa: FBT001
-    fit_bounds: bool = False,  # noqa: FBT001
+    check_surface: bool = True,  # noqa: FBT001, FBT002
+    enclosed: bool = False,  # noqa: FBT001, FBT002
+    fit_bounds: bool = False,  # noqa: FBT001, FBT002
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -224,9 +224,9 @@ def voxelize(
 def voxelize_volume(
     mesh,
     density=None,
-    check_surface: bool = True,  # noqa: FBT001
-    enclosed: bool = False,  # noqa: FBT001
-    fit_bounds: bool = False,  # noqa: FBT001
+    check_surface: bool = True,  # noqa: FBT001, FBT002
+    enclosed: bool = False,  # noqa: FBT001, FBT002
+    fit_bounds: bool = False,  # noqa: FBT001, FBT002
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
@@ -584,9 +584,9 @@ def spherical_to_cartesian(r, phi, theta):
 @_deprecate_positional_args(allowed=['datasets'])
 def merge(
     datasets,
-    merge_points: bool = True,  # noqa: FBT001
-    main_has_priority: bool = True,  # noqa: FBT001
-    progress_bar: bool = False,  # noqa: FBT001
+    merge_points: bool = True,  # noqa: FBT001, FBT002
+    main_has_priority: bool = True,  # noqa: FBT001, FBT002
+    progress_bar: bool = False,  # noqa: FBT001, FBT002
 ):
     """Merge several datasets.
 
@@ -724,13 +724,13 @@ def sample_function(  # noqa: PLR0917
     function: _vtk.vtkImplicitFunction,
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
-    compute_normals: bool = False,  # noqa: FBT001
+    compute_normals: bool = False,  # noqa: FBT001, FBT002
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
-    capping: bool = False,  # noqa: FBT001
+    capping: bool = False,  # noqa: FBT001, FBT002
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
     normal_arr_name: str = 'normals',
-    progress_bar: bool = False,  # noqa: FBT001
+    progress_bar: bool = False,  # noqa: FBT001, FBT002
 ):
     """Sample an implicit function over a structured point set.
 

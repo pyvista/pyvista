@@ -307,8 +307,8 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 def axis_rotation(
     points: NumpyArray[float],
     angle: float,
-    inplace: bool = False,  # noqa: FBT001
-    deg: bool = True,  # noqa: FBT001
+    inplace: bool = False,  # noqa: FBT001, FBT002
+    deg: bool = True,  # noqa: FBT001, FBT002
     axis='z',
 ):
     """Rotate points by angle about an axis.

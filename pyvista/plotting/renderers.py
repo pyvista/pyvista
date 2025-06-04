@@ -211,7 +211,12 @@ class Renderers:
                     nb_rows = 1
                     nb_cols = 1
                 if nb_rows is not None:
-                    renderer = Renderer(self._plotter, border, border_color, border_width)
+                    renderer = Renderer(
+                        self._plotter,
+                        border=border,
+                        border_color=border_color,
+                        border_width=border_width,
+                    )
                     x0 = col_off[col]
                     y0 = row_off[row + nb_rows]
                     x1 = col_off[col + nb_cols]  # type: ignore[operator]
@@ -231,7 +236,9 @@ class Renderers:
         ]
 
         # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
+        self._shadow_renderer = Renderer(
+            self._plotter, border=border, border_color=border_color, border_width=border_width
+        )
         self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
@@ -392,7 +399,7 @@ class Renderers:
         self._active_index = self.loc_to_index((index_row, index_column))
 
     @_deprecate_positional_args(allowed=['interactive'])
-    def set_chart_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001
+    def set_chart_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001, FBT002
         """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
@@ -557,7 +564,7 @@ class Renderers:
         right=None,
         side=None,
         corner=None,
-        all_renderers: bool = True,  # noqa: FBT001
+        all_renderers: bool = True,  # noqa: FBT001, FBT002
     ):
         """Set the background color.
 
@@ -631,7 +638,7 @@ class Renderers:
             )
 
     @_deprecate_positional_args(allowed=['color_cycler'])
-    def set_color_cycler(self, color_cycler, all_renderers: bool = True):  # noqa: FBT001
+    def set_color_cycler(self, color_cycler, all_renderers: bool = True):  # noqa: FBT001, FBT002
         """Set or reset the color cycler.
 
         This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`

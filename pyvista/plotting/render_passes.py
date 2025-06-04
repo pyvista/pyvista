@@ -203,7 +203,7 @@ class RenderPasses:
         self._update_passes()
 
     @_deprecate_positional_args
-    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001, FBT002
         """Enable the depth of field pass.
 
         Parameters

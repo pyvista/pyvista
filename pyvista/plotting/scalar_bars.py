@@ -55,8 +55,8 @@ class ScalarBars:
     def _remove_mapper_from_plotter(
         self,
         actor,
-        reset_camera: bool = False,  # noqa: FBT001
-        render: bool = False,  # noqa: FBT001
+        reset_camera: bool = False,  # noqa: FBT001, FBT002
+        render: bool = False,  # noqa: FBT001, FBT002
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -88,7 +88,7 @@ class ScalarBars:
             return
 
     @_deprecate_positional_args(allowed=['title'])
-    def remove_scalar_bar(self, title=None, render: bool = True):  # noqa: FBT001
+    def remove_scalar_bar(self, title=None, render: bool = True):  # noqa: FBT001, FBT002
         """Remove a scalar bar.
 
         Parameters
@@ -170,13 +170,13 @@ class ScalarBars:
         title='',
         mapper=None,
         n_labels=5,
-        italic: bool = False,  # noqa: FBT001
-        bold: bool = False,  # noqa: FBT001
+        italic: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = False,  # noqa: FBT001, FBT002
         title_font_size=None,
         label_font_size=None,
         color=None,
         font_family=None,
-        shadow: bool = False,  # noqa: FBT001
+        shadow: bool = False,  # noqa: FBT001, FBT002
         width=None,
         height=None,
         position_x=None,
@@ -184,17 +184,17 @@ class ScalarBars:
         vertical=None,
         interactive=None,
         fmt=None,
-        use_opacity: bool = True,  # noqa: FBT001
-        outline: bool = False,  # noqa: FBT001
-        nan_annotation: bool = False,  # noqa: FBT001
+        use_opacity: bool = True,  # noqa: FBT001, FBT002
+        outline: bool = False,  # noqa: FBT001, FBT002
+        nan_annotation: bool = False,  # noqa: FBT001, FBT002
         below_label=None,
         above_label=None,
         background_color=None,
         n_colors=None,
-        fill: bool = False,  # noqa: FBT001
-        render: bool = False,  # noqa: FBT001
+        fill: bool = False,  # noqa: FBT001, FBT002
+        render: bool = False,  # noqa: FBT001, FBT002
         theme=None,
-        unconstrained_font_size: bool = False,  # noqa: FBT001
+        unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 

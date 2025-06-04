@@ -1369,11 +1369,11 @@ def parametric_keywords(  # noqa: PLR0917
     max_u: float = 2 * pi,
     min_v: float = 0.0,
     max_v: float = 2 * pi,
-    join_u: bool = False,  # noqa: FBT001
-    join_v: bool = False,  # noqa: FBT001
-    twist_u: bool = False,  # noqa: FBT001
-    twist_v: bool = False,  # noqa: FBT001
-    clockwise: bool = True,  # noqa: FBT001
+    join_u: bool = False,  # noqa: FBT001, FBT002
+    join_v: bool = False,  # noqa: FBT001, FBT002
+    twist_u: bool = False,  # noqa: FBT001, FBT002
+    twist_v: bool = False,  # noqa: FBT001, FBT002
+    clockwise: bool = True,  # noqa: FBT001, FBT002
 ) -> None:
     """Apply keyword arguments to a parametric function.
 
@@ -1432,8 +1432,8 @@ def surface_from_para(  # noqa: PLR0917
     u_res: int = 100,
     v_res: int = 100,
     w_res: int = 100,
-    clean: bool = False,  # noqa: FBT001
-    texture_coordinates: bool = False,  # noqa: FBT001
+    clean: bool = False,  # noqa: FBT001, FBT002
+    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Construct a mesh from a parametric function.
 

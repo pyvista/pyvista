@@ -145,20 +145,20 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     def __init__(  # noqa: PLR0917
         self,
         camera,
-        minor_ticks: bool = False,  # noqa: FBT001
+        minor_ticks: bool = False,  # noqa: FBT001, FBT002
         tick_location=None,
         x_title='X Axis',
         y_title='Y Axis',
         z_title='Z Axis',
-        x_axis_visibility: bool = True,  # noqa: FBT001
-        y_axis_visibility: bool = True,  # noqa: FBT001
-        z_axis_visibility: bool = True,  # noqa: FBT001
+        x_axis_visibility: bool = True,  # noqa: FBT001, FBT002
+        y_axis_visibility: bool = True,  # noqa: FBT001, FBT002
+        z_axis_visibility: bool = True,  # noqa: FBT001, FBT002
         x_label_format=None,
         y_label_format=None,
         z_label_format=None,
-        x_label_visibility: bool = True,  # noqa: FBT001
-        y_label_visibility: bool = True,  # noqa: FBT001
-        z_label_visibility: bool = True,  # noqa: FBT001
+        x_label_visibility: bool = True,  # noqa: FBT001, FBT002
+        y_label_visibility: bool = True,  # noqa: FBT001, FBT002
+        z_label_visibility: bool = True,  # noqa: FBT001, FBT002
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,

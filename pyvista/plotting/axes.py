@@ -38,10 +38,10 @@ class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
     @_deprecate_positional_args
     def __init__(
         self,
-        show_actor: bool = False,  # noqa: FBT001
+        show_actor: bool = False,  # noqa: FBT001, FBT002
         actor_scale=1,
         line_width=1.0,
-        symmetric: bool = False,  # noqa: FBT001
+        symmetric: bool = False,  # noqa: FBT001, FBT002
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()
