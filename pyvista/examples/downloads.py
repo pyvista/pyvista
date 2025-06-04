@@ -4366,7 +4366,7 @@ def download_cubemap_park(load=True):  # pragma: no cover
     >>> pl = pv.Plotter(lighting=None)
     >>> dataset = examples.download_cubemap_park()
     >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset, True)
+    >>> pl.set_environment_texture(dataset, is_srgb=True)
     >>> pl.camera_position = 'xy'
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
@@ -4425,7 +4425,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
     >>> cubemap = examples.download_cubemap_space_4k()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, True)
+    >>> pl.set_environment_texture(cubemap, is_srgb=True)
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
@@ -4489,7 +4489,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
     >>> cubemap = examples.download_cubemap_space_4k()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_actor(cubemap.to_skybox())
-    >>> pl.set_environment_texture(cubemap, True)
+    >>> pl.set_environment_texture(cubemap, is_srgb=True)
     >>> pl.camera.zoom(0.4)
     >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
@@ -7445,7 +7445,9 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> # create coils
     >>> coils = []
     >>> for z in np.linspace(-8, 8, 16):
-    ...     coils.append(pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False))
+    ...     coils.append(
+    ...         pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False)
+    ...     )
     >>> coils = pv.MultiBlock(coils)
     >>> # plot the magnet field strength in the Z direction
     >>> scalars = np.abs(grid['B'][:, 2])
