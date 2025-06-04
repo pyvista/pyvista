@@ -1019,7 +1019,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.AddActor(actor)  # must add actor before resetting camera
 
         if reset_camera or (not self.camera_set and reset_camera is None and not rv):
-            self.reset_camera(render)
+            self.reset_camera(render=render)
         elif render:
             self.parent.render()
 

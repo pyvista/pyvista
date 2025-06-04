@@ -1636,9 +1636,9 @@ def test_camera(sphere):
     plotter.view_xz()
     plotter.view_yz()
     plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
-    plotter.view_xy(True)
-    plotter.view_xz(True)
-    plotter.view_yz(True)
+    plotter.view_xy(negative=True)
+    plotter.view_xz(negative=True)
+    plotter.view_yz(negative=True)
     plotter.show()
 
     plotter = pv.Plotter()
