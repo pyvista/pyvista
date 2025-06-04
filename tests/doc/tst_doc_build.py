@@ -73,11 +73,11 @@ def _preprocess_build_images(build_images_dir: str, output_dir: str):
         output_paths.append(output_path)
 
         # Ensure image size is max 400x400 and save to output
-        im = Image.open(input_path)
-        im = im.convert('RGB') if im.mode != 'RGB' else im
-        if not (im.size[0] <= 400 and im.size[1] <= 400):
-            im.thumbnail(size=(400, 400))
-        im.save(output_path, quality='keep') if im.format == 'JPEG' else im.save(output_path)
+        with Image.open(input_path) as im:
+            im = im.convert('RGB') if im.mode != 'RGB' else im  # noqa: PLW2901
+            if not (im.size[0] <= 400 and im.size[1] <= 400):
+                im.thumbnail(size=(400, 400))
+            im.save(output_path, quality='keep') if im.format == 'JPEG' else im.save(output_path)
 
     return output_paths
 
