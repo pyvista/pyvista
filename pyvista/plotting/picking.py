@@ -373,7 +373,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
             raise PyVistaPickingError(msg)
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_point_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -543,7 +543,7 @@ class PickingInterface:  # numpydoc ignore=PR01
                 name='_point_picking_message',
             )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_rectangle_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -760,7 +760,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 renderer.remove_actor(self._picking_text, render=False)
         self._picking_text = None
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_surface_point_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -911,7 +911,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_mesh_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1063,7 +1063,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             pickable_window=False,
         )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_rectangle_through_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1182,7 +1182,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_rectangle_visible_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1325,7 +1325,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_cell_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1435,7 +1435,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_element_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1677,7 +1677,7 @@ class PickingHelper(PickingMethods):
 
         self.track_click_position(callback=_the_callback, side='right')  # type: ignore[attr-defined]
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_path_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1786,7 +1786,7 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_geodesic_picking(  # noqa: PLR0917
         self,
         callback=None,
@@ -1929,7 +1929,7 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    @_deprecate_positional_args()
+    @_deprecate_positional_args(allowed=['callback'])
     def enable_horizon_picking(  # noqa: PLR0917
         self,
         callback=None,
