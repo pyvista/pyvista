@@ -206,9 +206,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (np.ndarray, Sequence)):
                 self._from_arrays(
                     x=np.asanyarray(args[0]),
-                    y=None,
-                    z=None,
-                    check_duplicates=check_duplicates,  # type: ignore[arg-type]
+                    y=None,  # type: ignore[arg-type]
+                    z=None,  # type: ignore[arg-type]
+                    check_duplicates=check_duplicates,
                 )
             else:
                 msg = f'Type ({type(args[0])}) not understood by `RectilinearGrid`'
