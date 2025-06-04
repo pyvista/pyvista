@@ -6872,7 +6872,7 @@ class DataSetFilters(DataObjectFilters):
         >>> def labels_plotter(mesh, color_dict):
         ...     pl = pv.Plotter()
         ...     pl.add_mesh(mesh)
-        ...     pl.add_legend(list(color_dict.items()), face='triangle')
+        ...     pl.add_legend(color_dict)
         ...     return pl
 
         >>> labels_plotter(colored_labels, color_dict).show()
