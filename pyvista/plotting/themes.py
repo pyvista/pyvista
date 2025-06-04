@@ -144,7 +144,9 @@ def set_plot_theme(theme):
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
-        msg = f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        msg = (
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        )
         raise TypeError(msg)
 
 
@@ -569,7 +571,14 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color', '_decimate', '_enabled', '_feature_angle', '_line_width', '_opacity']
+    __slots__ = [
+        '_color',
+        '_decimate',
+        '_enabled',
+        '_feature_angle',
+        '_line_width',
+        '_opacity',
+    ]
 
     def __init__(self):
         self._color = Color('black')
@@ -820,7 +829,8 @@ class _AxesConfig(_ThemeConfig):
 
     >>> pv.global_theme.axes.show = True
 
-    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
+    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+    as the orientation widget.
 
     >>> pv.global_theme.axes.box = True
 
@@ -1846,7 +1856,7 @@ class Theme(_ThemeConfig):
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
-        self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
+        self._volume_mapper = 'smart'
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
@@ -2384,7 +2394,8 @@ class Theme(_ThemeConfig):
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler.
 
@@ -2954,7 +2965,8 @@ class Theme(_ThemeConfig):
 
         >>> pv.global_theme.axes.show = True
 
-        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
+        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+        as the orientation widget.
 
         >>> pv.global_theme.axes.box = True
 
@@ -2969,7 +2981,9 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
+    def before_close_callback(
+        self,
+    ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback  # type: ignore[return-value]
 
@@ -3213,7 +3227,8 @@ class Theme(_ThemeConfig):
     def resample_environment_texture(self) -> bool | float:  # numpydoc ignore=RT01
         """Set or return resampling environment texture.
 
-        Resample the environment texture when using :meth:`~pyvista.Plotter.set_environment_texture`.
+        Resample the environment texture when using
+        :meth:`~pyvista.Plotter.set_environment_texture`.
         Set this to a float to set the sampling rate explicitly or set
         to ``True`` to downsample the texture to 1/16th of its original
         resolution.

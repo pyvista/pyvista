@@ -368,7 +368,10 @@ def test_cmap(default_theme):
     with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
-    match = "cmap must be an instance of any type (<class 'str'>, <class 'list'>). Got <class 'NoneType'> instead."
+    match = (
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>). "
+        "Got <class 'NoneType'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
 
@@ -501,7 +504,8 @@ def test_plotter_set_theme():
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -514,7 +518,8 @@ def test_load_theme(tmpdir, default_theme):
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))

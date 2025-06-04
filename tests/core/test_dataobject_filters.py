@@ -761,7 +761,10 @@ def test_transform_imagedata_warns_with_shear(uniform):
 
 
 def test_transform_filter_inplace_default_warns(cube):
-    expected_msg = 'The default value of `inplace` for the filter `PolyData.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `PolyData.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = cube.transform(np.eye(4))
 

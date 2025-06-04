@@ -179,8 +179,8 @@ class DynamicScraper:  # pragma: no cover
 
     Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
 
-    If the boolean variable ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True/False`` is set as a global
-    variable in the document then its value will be used as default for the
+    If the boolean variable ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True/False``
+    is set as a global variable in the document then its value will be used as default for the
     force_static argument of the pyvista-plot command. see also the notes at :func:plot_directive
 
     To alter the global value behavior just for some plots you may set the
