@@ -473,7 +473,7 @@ class _DataSetMapper(_BaseMapper):
                     scalars_name not in self.dataset.point_data
                     or scalars_name == pyvista.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.point_data.set_array(scalars, scalars_name, False)
+                    self.dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
                 self.dataset.active_scalars_name = scalars_name
                 self.scalar_map_mode = 'point'
             elif use_cells:

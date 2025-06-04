@@ -2846,7 +2846,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = f'Invalid type ({type(dataset)}). Must be a composite dataset.'
             raise TypeError(msg)
         # always convert
-        dataset = dataset.as_polydata_blocks(copy_mesh)  # type: ignore[attr-defined]
+        dataset = dataset.as_polydata_blocks(copy=copy_mesh)  # type: ignore[attr-defined]
         self.mesh = dataset  # for legacy behavior
 
         # Parse arguments
