@@ -95,14 +95,24 @@ class Renderers:
                 xsplit = splitting_position
 
             for i in rangen:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = Renderer(
+                    self._plotter,
+                    border=border,
+                    border_color=border_color,
+                    border_width=border_width,
+                )
                 if '|' in shape:
                     arenderer.viewport = (0, i / n, xsplit, (i + 1) / n)
                 else:
                     arenderer.viewport = (i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
-                arenderer = Renderer(self._plotter, border, border_color, border_width)
+                arenderer = Renderer(
+                    self._plotter,
+                    border=border,
+                    border_color=border_color,
+                    border_width=border_width,
+                )
                 if '|' in shape:
                     arenderer.viewport = (xsplit, i / m, 1, (i + 1) / m)
                 else:

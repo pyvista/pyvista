@@ -53,7 +53,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
                 raise TypeError(msg)
             self._renderer = proxy(renderer)
         else:
-            self._renderer = None # type: ignore[assignment]
+            self._renderer = None  # type: ignore[assignment]
 
     def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
@@ -269,7 +269,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
-        if self._renderer: # type: ignore[truthy-bool]
+        if self._renderer:  # type: ignore[truthy-bool]
             self.reset_clipping_range()
         self.is_set = True
 

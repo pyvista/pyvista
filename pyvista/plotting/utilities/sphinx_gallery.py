@@ -127,7 +127,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
             image_names.append(fname)
         else:
             plotter.screenshot(fname)
-            if not dynamic or plotter.last_vtksz is None: # type: ignore[has-type]
+            if not dynamic or plotter.last_vtksz is None:  # type: ignore[has-type]
                 image_names.append(fname)
             else:  # pragma: no cover
                 fname = fname[:-3] + 'vtksz'
