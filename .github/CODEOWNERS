@@ -9,4 +9,3 @@
 /.github/workflows/docs.yml                         @banesullivan
 /.github/workflows/docker-package.yml               @banesullivan
 /.github/workflows/vtk-pre-test.yml                 @banesullivan
-/pyvista/trame/                                     @pyvista/kitware
