@@ -81,7 +81,9 @@ def test_clean_raises(mocker: MockerFixture):
 def test_flip_normals_raises():
     plane = pv.Plane()
     with (
-        pytest.raises(NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'),
+        pytest.raises(
+            NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'
+        ),
         pytest.warns(PyVistaDeprecationWarning),
     ):
         plane.flip_normals()
