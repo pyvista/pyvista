@@ -388,23 +388,23 @@ def test_plotter_line_point_smoothing():
 
 def test_enable_hidden_line_removal():
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(False)
+    plotter.enable_hidden_line_removal(all_renderers=False)
     assert plotter.renderers[0].GetUseHiddenLineRemoval()
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.enable_hidden_line_removal(True)
+    plotter.enable_hidden_line_removal(all_renderers=True)
     assert plotter.renderers[1].GetUseHiddenLineRemoval()
 
 
 def test_disable_hidden_line_removal():
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(True)
+    plotter.enable_hidden_line_removal(all_renderers=True)
 
-    plotter.disable_hidden_line_removal(False)
+    plotter.disable_hidden_line_removal(all_renderers=False)
     assert not plotter.renderers[0].GetUseHiddenLineRemoval()
     assert plotter.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.disable_hidden_line_removal(True)
+    plotter.disable_hidden_line_removal(all_renderers=True)
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
 
 
