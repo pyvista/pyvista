@@ -16,7 +16,7 @@ from pyvista.core.utilities.misc import abstract_class
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
-    @_deprecate_positional_args(allowed=['voi'])
+    @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001
         """Select piece (e.g., volume of interest).
 

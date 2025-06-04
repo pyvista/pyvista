@@ -408,7 +408,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
         Need this because cell-wise operations fail for PointSets.
         """
-        return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
+        return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.threshold_percent)  # type:ignore[has-type]
     def threshold_percent(self, *args, **kwargs):  # numpydoc ignore=RT01
@@ -416,7 +416,9 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
         Need this because cell-wise operations fail for PointSets.
         """
-        return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
+        return (
+            self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
+        )
 
     @wraps(PolyDataFilters.explode)
     def explode(self, *args, **kwargs):  # numpydoc ignore=RT01
@@ -425,12 +427,12 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         The explode filter relies on cells.
 
         """
-        return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
+        return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
-        return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
+        return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
     @property
     def area(self) -> float:  # numpydoc ignore=RT01
