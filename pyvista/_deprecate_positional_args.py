@@ -101,6 +101,8 @@ def _deprecate_positional_args(
 
         @wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
+            from pyvista.core.errors import PyVistaDeprecationWarning
+
             passed_positional_names = param_names[: len(args)]
 
             # Exclude allowed ones
@@ -139,7 +141,7 @@ def _deprecate_positional_args(
                             f'From version {version_str}, passing {this} as{a}positional '
                             f'argument{s} will result in a TypeError.'
                         )
-                        warnings.warn(msg, DeprecationWarning)
+                        warnings.warn(msg, PyVistaDeprecationWarning)
 
                     warn_positional_args()
                 else:
