@@ -1083,7 +1083,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]) -> None:  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
-        self.faces = CellArray.from_regular_cells(faces)  # type: ignore[assignment]
+        self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
     @_deprecate_positional_args(allowed=['points', 'faces'])
@@ -1162,7 +1162,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @irregular_faces.setter
     def irregular_faces(self, faces: Sequence[VectorLike[int]]) -> None:  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
-        self.faces = CellArray.from_irregular_cells(faces)  # type: ignore[assignment]
+        self.faces = CellArray.from_irregular_cells(faces)
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
