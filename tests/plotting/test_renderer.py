@@ -332,6 +332,7 @@ def test_legend_using_add_legend_with_glyph(random_hills):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_using_add_legend_only_labels(random_hills):
     pl = pv.Plotter()
 
