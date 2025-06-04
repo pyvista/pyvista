@@ -158,10 +158,9 @@ def _deprecate_positional_args(
             # Raise error post-deprecation
             if version_info >= version:
                 # Construct expected positional args and signature
-                positional_args = allowed.copy()
-                insert0 = 'self' if has_self else 'cls' if has_cls else None
-                if insert0:
-                    positional_args.insert(0, insert0)
+                positional_args = ['self'] if has_self else ['cls'] if has_cls else []
+                for name in positional_args:
+                    positional_args.append(name)  # noqa: PERF402
                 new_signature = f'{qualified_name()}({", ".join(positional_args)}, *, ...)'
 
                 # Get source file and line number
