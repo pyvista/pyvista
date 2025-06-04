@@ -19,6 +19,7 @@ import numpy as np
 import numpy.typing as npt
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -111,6 +112,7 @@ def parse_field_choice(
 
 def _coerce_pointslike_arg(
     points: MatrixLike[float] | VectorLike[float],
+    *,
     copy: bool = False,
 ) -> tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
@@ -164,7 +166,8 @@ def _coerce_pointslike_arg(
 _vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N816
 
 
-def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
+@_deprecate_positional_args(allowed=['array'])
+def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -249,24 +252,28 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
 def convert_array(
     arr: _vtk.vtkAbstractArray,
     name: str | None = ...,
-    deep: bool = ...,
+    deep: bool = ...,  # noqa: FBT001
     array_type: int | None = None,
 ) -> npt.NDArray[Any]: ...
 @overload
 def convert_array(
-    arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None
+    arr: npt.ArrayLike,
+    name: str | None = ...,
+    deep: bool = ...,  # noqa: FBT001
+    array_type: int | None = None,
 ) -> _vtk.vtkAbstractArray: ...
 @overload
 def convert_array(
     arr: None,
     name: str | None = ...,
-    deep: bool = ...,
+    deep: bool = ...,  # noqa: FBT001
     array_type: int | None = ...,
 ) -> None: ...
+@_deprecate_positional_args(allowed=['arr', 'name'])
 def convert_array(
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
-    deep: bool = False,
+    deep: bool = False,  # noqa: FBT001
     array_type: int | None = None,
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
@@ -325,11 +332,12 @@ def convert_array(
     return _vtk.vtk_to_numpy(arr)
 
 
+@_deprecate_positional_args(allowed=['mesh', 'name', 'preference'])
 def get_array(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,
+    err: bool = False,  # noqa: FBT001
 ) -> pyvista_ndarray | None:
     """Search point, cell and field data for an array.
 
@@ -400,11 +408,12 @@ def get_array(
         return out
 
 
+@_deprecate_positional_args(allowed=['mesh', 'name', 'preference'])
 def get_array_association(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,
+    err: bool = False,  # noqa: FBT001
 ) -> FieldAssociation:
     """Return the array association.
 
