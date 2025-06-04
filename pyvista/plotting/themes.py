@@ -1853,7 +1853,7 @@ class Theme(_ThemeConfig):
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
-        self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
+        self._volume_mapper = 'smart'
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
