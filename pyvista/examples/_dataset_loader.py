@@ -786,7 +786,7 @@ def _get_file_or_folder_ext(path: str):
     return ext
 
 
-def _get_all_nested_filepaths(filepath, exclude_readme=True):
+def _get_all_nested_filepaths(filepath, *, exclude_readme=True):
     """Walk through directory and get all file paths.
 
     Optionally exclude any readme files (if any).
