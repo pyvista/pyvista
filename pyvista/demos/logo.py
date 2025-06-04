@@ -301,7 +301,9 @@ def plot_logo(  # noqa: PLR0917
 
     cells = a_part.cells.reshape(-1, 5)
     scalars = grid.points[cells[:, 1], 1]
-    plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
+    plotter.add_mesh(
+        a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False
+    )
 
     if show_note:
         text = text_3d('You can move me!', depth=0.1)

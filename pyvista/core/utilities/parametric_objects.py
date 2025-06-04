@@ -1457,7 +1457,8 @@ def surface_from_para(  # noqa: PLR0917
 
     texture_coordinates : bool, default: False
         The generation of texture coordinates.
-        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
+        This is off by default. Note that this is only applicable
+        to parametric surfaces whose parametric dimension is 2.
         Note that texturing may fail in some cases.
 
     Returns

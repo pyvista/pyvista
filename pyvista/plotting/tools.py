@@ -675,7 +675,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            msg = f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+            msg = (
+                f'Transfer function cannot have more values than `n_colors`. '
+                f'This has {mapping.size} elements'
+            )
             raise RuntimeError(msg)
         return mapping
     msg = f'Transfer function type ({type(mapping)}) not understood'

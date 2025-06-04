@@ -203,7 +203,9 @@ class PointPickingElementHandler:
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_edges > 1:
             ei = (
-                cell.cast_to_unstructured_grid().extract_all_edges().find_closest_cell(picked_point)
+                cell.cast_to_unstructured_grid()
+                .extract_all_edges()
+                .find_closest_cell(picked_point)
             )
             edge = cell.edges[ei].cast_to_unstructured_grid()
             edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
@@ -370,7 +372,10 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            msg = (
+                'Picking is already enabled, please disable previous picking '
+                'with `disable_picking()`.'
+            )
             raise PyVistaPickingError(msg)
 
     @_deprecate_positional_args(allowed=['callback'])
@@ -861,7 +866,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         # only allow certain pickers to be used for surface picking
         #  the picker class needs to have `GetDataSet()`
         picker = PickerType.from_any(picker)
-        valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
+        valid_pickers = [
+            PickerType.POINT,
+            PickerType.CELL,
+            PickerType.HARDWARE,
+            PickerType.VOLUME,
+        ]
         if picker not in valid_pickers:
             msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
             raise ValueError(msg)
@@ -1293,7 +1303,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            'Display representations other than `surface` will result in incorrect results.',
+                            'Display representations other than `surface` will result '
+                            'in incorrect results.',
                         )
                     smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()

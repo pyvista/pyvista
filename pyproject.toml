@@ -300,7 +300,7 @@ exclude = [ # don't report on objects that match any of these regex
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
 indent-width = 4
-line-length = 100
+line-length = 99
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -381,7 +381,6 @@ ignore = [
   'D402',    # First line should not be the function's signature
   'D416',    # Section name ends in colon
   'E402',    # module level import not at top of file
-  'E501',    # line length too long
   'E722',
   'E731',    # do not assign a lambda expression, use a def
   'E741',    # ambiguous variable name

@@ -72,7 +72,8 @@ def _get_output(
 from .composite import CompositeFilters
 from .data_object import DataObjectFilters
 
-# Re-export submodules to maintain the same import paths before filters.py was split into submodules
+# Re-export submodules to maintain the same import paths
+# before filters.py was split into submodules
 from .data_set import DataSetFilters
 from .image_data import ImageDataFilters
 from .poly_data import PolyDataFilters

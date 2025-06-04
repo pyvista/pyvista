@@ -630,7 +630,7 @@ class Renderers:
     def set_color_cycler(self, color_cycler, all_renderers: bool = True):
         """Set or reset the color cycler.
 
-        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`
         call to set the default color of the dataset being plotted.
 
         When setting, the value must be either a list of color-like objects,
@@ -639,7 +639,8 @@ class Renderers:
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.

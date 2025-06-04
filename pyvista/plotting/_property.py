@@ -87,10 +87,14 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
-    render_points_as_spheres : bool, default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+    render_points_as_spheres : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+
         Render points as spheres rather than dots.
 
-    render_lines_as_tubes : bool, default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+    render_lines_as_tubes : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+
         Show lines as thick tubes rather than flat lines.  Control
         the width with ``line_width``.
 
@@ -250,7 +254,8 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
             import warnings
 
             warnings.warn(
-                '`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+                '`edge_opacity` cannot be used under VTK v9.3.0. '
+                'Try installing VTK v9.3.0 or newer.',
                 UserWarning,
             )
         if edge_opacity is None:

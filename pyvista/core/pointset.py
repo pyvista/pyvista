@@ -979,7 +979,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
-        Faces can also be set by assigning a :class:`~pyvista.CellArray` object instead of an array.
+        Faces can also be set by assigning a :class:`~pyvista.CellArray` object
+        instead of an array.
 
         Returns
         -------
@@ -1137,8 +1138,12 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         >>> import pyvista as pv
         >>> pyramid = pv.Pyramid().extract_surface()
-        >>> pyramid.irregular_faces
-        (array([0, 1, 2, 3]), array([0, 3, 4]), array([0, 4, 1]), array([3, 2, 4]), array([2, 1, 4]))
+        >>> pyramid.irregular_faces  # doctest: +NORMALIZE_WHITESPACE
+        (array([0, 1, 2, 3]),
+         array([0, 3, 4]),
+         array([0, 4, 1]),
+         array([3, 2, 4]),
+         array([2, 1, 4]))
 
         """
         return _get_irregular_cells(self.GetPolys())
@@ -2901,7 +2906,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a :vtk:`vtkStructuredGrid`, :vtk:`vtkExplicitStructuredGrid` or :vtk:`vtkUnstructuredGrid` object
+    - From a :vtk:`vtkStructuredGrid`, :vtk:`vtkExplicitStructuredGrid` or
+      :vtk:`vtkUnstructuredGrid` object
     - From a VTU or VTK file
     - From ``dims`` and ``corners`` arrays
     - From ``dims``, ``cells`` and ``points`` arrays
@@ -3107,7 +3113,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         See Also
         --------
         pyvista.DataSetFilters.extract_cells : Extract a subset of a dataset.
-        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid : Cast an unstructured grid to an explicit structured grid.
+        pyvista.UnstructuredGrid.cast_to_explicit_structured_grid
+            Cast an unstructured grid to an explicit structured grid.
 
         Notes
         -----
@@ -3163,7 +3170,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         modify the topology of the input dataset, nor change the types of
         cells. It may however, renumber the cell connectivity ids.
 
-        This filter casts the grid to an UnstructuredGrid to clean it, then casts the cleaned unstructured grid to an explicit structured grid.
+        This filter casts the grid to an UnstructuredGrid to clean it, then
+        casts the cleaned unstructured grid to an explicit structured grid.
 
         Parameters
         ----------
@@ -3670,7 +3678,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         }
 
         if rel not in rel_map:
-            msg = f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}'
+            msg = (
+                f'Invalid value for `rel` of {rel}. Should be one of the '
+                f'following\n{rel_map.keys()}'
+            )
             raise ValueError(msg)
         rel_func = rel_map[rel]
 
@@ -3707,7 +3718,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         See Also
         --------
-        ExplicitStructuredGrid.compute_connections : Compute an array with the number of connected cell faces.
+        ExplicitStructuredGrid.compute_connections
+            Compute an array with the number of connected cell faces.
 
         Examples
         --------

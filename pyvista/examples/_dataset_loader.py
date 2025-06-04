@@ -170,7 +170,9 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         name_iter = [name] if isinstance(name, str) else name
         url = self.base_url
         base_url_iter = [url] if isinstance(url, str) else url
-        url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
+        url_raw = [
+            os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)
+        ]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
     @property
@@ -705,7 +707,8 @@ def _load_as_multiblock(
         )
         paths = [Path(path) for path in paths]
         names = [
-            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name for path in paths
+            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
+            for path in paths
         ]
 
     for file, name in zip(files, names):
@@ -715,7 +718,10 @@ def _load_as_multiblock(
         assert isinstance(
             loaded,
             (pv.MultiBlock, pv.DataSet),
-        ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
+        ), (
+            f'Only MultiBlock or DataSet objects can be loaded as a MultiBlock. '
+            f"Got {type(loaded)}.'"
+        )
         multi.append(loaded, name)
     return multi
 

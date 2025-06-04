@@ -32,7 +32,8 @@ def make_axis_labels(vmin, vmax, n, fmt):
     n : int
         The number of labels to create.
     fmt : str
-        A format string for the labels. If the string starts with '%', the label will be formatted using the old-style string formatting method.
+        A format string for the labels. If the string starts with '%', the label will be formatted
+        using the old-style string formatting method.
         Otherwise, the label will be formatted using the new-style string formatting method.
 
     Returns
@@ -328,7 +329,11 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
         if vtk_geq_9_3:
             if isinstance(offset, float):
-                msg = f'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of (x,y) offsets. Setting the x offset to {(x := 0.0)}'
+                msg = (
+                    f'Setting title_offset with a float is deprecated from vtk >= 9.3. '
+                    f'Accepts now a sequence of (x,y) offsets. '
+                    f'Setting the x offset to {(x := 0.0)}'
+                )
                 warnings.warn(msg, UserWarning)
                 self.SetTitleOffset([x, offset])
             else:
@@ -336,7 +341,10 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             return
 
         if isinstance(offset, MutableSequence):
-            msg = f'Setting title_offset with a sequence is only supported from vtk >= 9.3. Considering only the second value (ie. y-offset) of {(y := offset[1])}'
+            msg = (
+                f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
+                f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
+            )
             warnings.warn(msg, UserWarning)
             self.SetTitleOffset(y)
             return

@@ -929,7 +929,10 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             self.apply_cmap(self._cmap, value)  # type: ignore[arg-type]
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            msg = (
+                'Number of values cannot be set when the values array has been manually set. '
+                'Reassign the values array if you wish to change the number of values.'
+            )
             raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
@@ -1078,7 +1081,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Parameters
         ----------
         clamping : bool, optional
-            When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
+            When zero range clamping is False, values returns 0.0 when a value is requested
+            outside of the points specified.
 
             .. versionadded:: 0.44
 

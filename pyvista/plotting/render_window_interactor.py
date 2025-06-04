@@ -399,7 +399,8 @@ class RenderWindowInteractor:
         event = self._get_click_event(side)
         add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
         if callback is None and add_observer:
-            # No observers for this event yet and custom callback not given => insert dummy callback
+            # No observers for this event yet and custom callback not given
+            # insert dummy callback
             callback = lambda obs, event: None
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
@@ -462,7 +463,8 @@ class RenderWindowInteractor:
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
-            See :class:`~plotting.render_window_interactor.InteractorStyleCaptureMixin` and its implementation as an example.
+            See :class:`~plotting.render_window_interactor.InteractorStyleCaptureMixin`
+            and its implementation as an example.
 
         Returns
         -------
@@ -979,7 +981,9 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleZoom(self)
 
-    def enable_terrain_style(self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True):
+    def enable_terrain_style(
+        self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True
+    ):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
@@ -1489,7 +1493,8 @@ class RenderWindowInteractor:
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
+            This function is deprecated. Use
+            :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
         ----------
@@ -1674,7 +1679,9 @@ class InteractorStyleJoystickCamera(
     """
 
 
-class InteractorStyleRubberBand2D(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBand2D):
+class InteractorStyleRubberBand2D(
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBand2D
+):
     """Rubber band 2D interactor style.
 
     Wraps :vtk:`vtkInteractorStyleRubberBand2D`.

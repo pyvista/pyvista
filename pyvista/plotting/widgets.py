@@ -498,8 +498,8 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows an interactive plane moving along the x-axis in the random-hill example, which is used to mark the max altitude
-        at a particular distance x.
+        Shows an interactive plane moving along the x-axis in the random-hill example,
+        which is used to mark the max altitude at a particular distance x.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1261,7 +1261,8 @@ class WidgetHelper:
 
         Examples
         --------
-        Shows an interactive line widget to move the sliced object like in `add_mesh_slice` function.
+        Shows an interactive line widget to move the sliced object
+        like in `add_mesh_slice` function.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -1571,7 +1572,10 @@ class WidgetHelper:
             fmt = pyvista.global_theme.font.fmt
 
         def normalize(point, viewport):
-            return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
+            return (
+                point[0] * (viewport[2] - viewport[0]),
+                point[1] * (viewport[3] - viewport[1]),
+            )
 
         pointa = normalize(pointa, self.renderer.GetViewport())  # type: ignore[attr-defined]
         pointb = normalize(pointb, self.renderer.GetViewport())  # type: ignore[attr-defined]
@@ -1925,7 +1929,9 @@ class WidgetHelper:
             field = get_array_association(mesh, scalars, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            msg = f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+            msg = (
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+            )
             raise TypeError(msg)
 
         rng = mesh.get_data_range(scalars)
@@ -2664,7 +2670,14 @@ class WidgetHelper:
         button_on = create_button(color_on, background_color, color_on)
         button_off = create_button(color_on, background_color, color_off)
 
-        bounds = [position[0], position[0] + size, position[1], position[1] + size, 0.0, 0.0]
+        bounds = [
+            position[0],
+            position[0] + size,
+            position[1],
+            position[1] + size,
+            0.0,
+            0.0,
+        ]
 
         button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
@@ -2795,7 +2808,9 @@ class WidgetHelper:
             if radio_button_group not in self.radio_button_title_dict:
                 self.radio_button_title_dict[radio_button_group] = []
             button_title = self.add_text(  # type: ignore[attr-defined]
-                title, position=(position[0] + size + 10.0, position[1] + 7.5), font_size=15
+                title,
+                position=(position[0] + size + 10.0, position[1] + 7.5),
+                font_size=15,
             )
             self.radio_button_title_dict[radio_button_group].append(button_title)
 
@@ -2832,7 +2847,14 @@ class WidgetHelper:
         button_on = create_radio_button(color_on, background_color)
         button_off = create_radio_button(color_off, background_color)
 
-        bounds = [position[0], position[0] + size, position[1], position[1] + size, 0.0, 0.0]
+        bounds = [
+            position[0],
+            position[0] + size,
+            position[1],
+            position[1] + size,
+            0.0,
+            0.0,
+        ]
 
         button_rep = _vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
