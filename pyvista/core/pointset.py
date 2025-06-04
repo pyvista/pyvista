@@ -1867,7 +1867,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
-            self._from_cells_dict(args[0], args[1], deep)
+            self._from_cells_dict(args[0], args[1], deep=deep)
             self._check_for_consistency()
 
         elif len(args) == 3:

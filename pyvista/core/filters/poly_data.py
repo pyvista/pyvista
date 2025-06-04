@@ -195,7 +195,7 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
-        return self._boolean('union', other_mesh, tolerance, progress_bar=progress_bar)
+        return self._boolean('union', other_mesh, tolerance=tolerance, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['other_mesh'])
     def boolean_intersection(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):  # noqa: FBT001
@@ -269,7 +269,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         bool_inter = self._boolean(
-            'intersection', other_mesh, tolerance, progress_bar=progress_bar
+            'intersection', other_mesh, tolerance=tolerance, progress_bar=progress_bar
         )
 
         # check if a polydata is completely contained within another
@@ -344,7 +344,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
-        return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
+        return self._boolean(
+            'difference', other_mesh, tolerance=tolerance, progress_bar=progress_bar
+        )
 
     def __add__(self: PolyData, dataset):  # type: ignore[misc]
         """Merge these two meshes."""
@@ -2100,7 +2102,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             return result
 
-    @_deprecate_positional_args(allowed=['fill_holes'])
+    @_deprecate_positional_args(allowed=['hole_size'])
     def fill_holes(
         self,
         hole_size,

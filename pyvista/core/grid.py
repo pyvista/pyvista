@@ -204,7 +204,12 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], (np.ndarray, Sequence)):
-                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)  # type: ignore[arg-type]
+                self._from_arrays(
+                    x=np.asanyarray(args[0]),
+                    y=None,
+                    z=None,
+                    check_duplicates=check_duplicates,  # type: ignore[arg-type]
+                )
             else:
                 msg = f'Type ({type(args[0])}) not understood by `RectilinearGrid`'
                 raise TypeError(msg)
@@ -216,17 +221,17 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    np.asanyarray(args[2]),  # type: ignore[misc]
-                    check_duplicates,
+                    x=np.asanyarray(args[0]),
+                    y=np.asanyarray(args[1]),
+                    z=np.asanyarray(args[2]),  # type: ignore[misc]
+                    check_duplicates=check_duplicates,
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    None,  # type: ignore[arg-type]
-                    check_duplicates,
+                    x=np.asanyarray(args[0]),
+                    y=np.asanyarray(args[1]),
+                    z=None,  # type: ignore[arg-type]
+                    check_duplicates=check_duplicates,
                 )
             else:
                 msg = 'Arguments not understood by `RectilinearGrid`.'
@@ -246,10 +251,10 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     def _from_arrays(
         self: Self,
+        *,
         x: NumpyArray[float],
         y: NumpyArray[float],
         z: NumpyArray[float],
-        *,
         check_duplicates: bool = False,
     ) -> None:
         """Create VTK rectilinear grid directly from numpy arrays.
@@ -1030,7 +1035,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)
+    @wraps(RectilinearGridFilters.to_tetrahedra)  # type:ignore[has-type]
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01

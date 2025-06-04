@@ -23,7 +23,7 @@ class UnstructuredGridFilters(DataSetFilters):
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @wraps(PolyDataFilters.reconstruct_surface)
+    @wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
     def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]

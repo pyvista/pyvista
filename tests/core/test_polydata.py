@@ -633,7 +633,7 @@ def test_invalid_curvature(sphere):
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
-    sphere.save(filename, binary)
+    sphere.save(filename, binary=binary)
 
     if binary:
         if extension == '.vtp':
@@ -1001,7 +1001,7 @@ def test_center_of_mass(sphere):
     cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     assert len(cloud.center_of_mass()) == 3
     cloud['weights'] = np.random.default_rng().random(cloud.n_points)
-    center = cloud.center_of_mass(True)
+    center = cloud.center_of_mass(scalars_weight=True)
     assert len(center) == 3
 
 

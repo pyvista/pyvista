@@ -2534,6 +2534,7 @@ def test_deprecate_positional_args_error_messages():
         foo(True, True)
 
 
+@pytest.mark.skipif(sys.platform.startswith('win'), reason='Regex fails due to os separator')
 def test_deprecate_positional_args_post_deprecation():
     @_deprecate_positional_args(allowed=['bar'], version=(0, 46))
     def foo(bar, baz): ...
