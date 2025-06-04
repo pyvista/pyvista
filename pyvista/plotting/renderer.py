@@ -3906,15 +3906,19 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        labels : list, optional
+        labels : list | dict, optional
             When set to ``None``, uses existing labels as specified by
 
             - :func:`add_mesh <Plotter.add_mesh>`
             - :func:`add_lines <Plotter.add_lines>`
             - :func:`add_points <Plotter.add_points>`
 
-            List containing one entry for each item to be added to the
-            legend. Each entry can contain one of the following:
+            For dict inputs, the keys are used as labels and the values are used
+            as the colors. Labels must be strings, and colors can be any
+            :class:`~pyvista.ColorLike`.
+
+            For list inputs, the list must contain one entry for each item to
+            be added to the legend. Each entry can contain one of the following:
 
             * Two strings ([label, color]), where ``label`` is the name of the
               item to add, and ``color`` is the color of the label to add.
@@ -4011,7 +4015,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()
 
-        Alternatively provide labels in the plotter.
+        Alternatively provide labels in the plotter as a list.
 
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
@@ -4020,6 +4024,15 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
         >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show()
+
+        Or use a dictionary to define them.
+
+        >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'red')
+        >>> _ = plotter.add_legend(labels, face='rectangle')
         >>> plotter.show()
 
         """
@@ -4045,6 +4058,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
+
+            if isinstance(labels, dict):
+                face = 'triangle' if face is None else face
+                labels = list(labels.items())
 
             for i, args in enumerate(labels):
                 face_ = None
