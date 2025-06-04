@@ -232,7 +232,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):  # noqa: FBT001
             if img.render_window is None:
                 msg = 'Unable to extract image from Plotter as it has already been closed.'
                 raise RuntimeError(msg)
-            return image_from_window(img.render_window, True, ignore_alpha=True)
+            return image_from_window(img.render_window, as_vtk=True, ignore_alpha=True)
         else:
             msg = (
                 f'Unsupported data type {type(img)}.  Should be '

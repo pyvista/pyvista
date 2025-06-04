@@ -796,8 +796,9 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         self._values_manual = False
 
         # reapply the opacity
-        if self._opacity_parm[0] is not None:
-            self.apply_opacity(*self._opacity_parm)
+        opacity, interpolate, kind = self._opacity_parm
+        if opacity is not None:
+            self.apply_opacity(opacity=opacity, interpolate=interpolate, kind=kind)
 
         self._cmap = cmap  # type: ignore[assignment]
 
@@ -1072,7 +1073,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         mn, mx = self.scalar_range
         for value in np.linspace(mn, mx, self.n_values):
             # Be sure to index the point by the value to map the scalar range
-            color_tf.AddRGBPoint(value, *self.map_value(value, False))
+            color_tf.AddRGBPoint(value, *self.map_value(value, opacity=False))
         return color_tf
 
     @_deprecate_positional_args

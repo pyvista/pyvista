@@ -863,7 +863,7 @@ class CompositePolyDataMapper(
                 cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             if cmap is not None:
-                self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)
+                self.lookup_table.apply_cmap(cmap, n_colors, flip=flip_scalars)
             elif flip_scalars:
                 self.lookup_table.SetHueRange(0.0, 0.66667)
             else:

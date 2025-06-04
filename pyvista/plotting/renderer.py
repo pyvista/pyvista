@@ -873,9 +873,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
     @wraps(Charts.set_interaction)
+    @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
-        return self._charts.set_interaction(interactive, toggle) if self.has_charts else []  # type: ignore[union-attr]
+        return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
     @wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
@@ -1454,7 +1455,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(terrain)
         >>> widget = pl.add_north_arrow_widget()
-        >>> pl.enable_terrain_style(True)
+        >>> pl.enable_terrain_style(mouse_wheel_zooms=True)
         >>> pl.show()
 
         """
@@ -3365,6 +3366,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         """
         self._render_passes.remove_blur_pass()
 
+    @_deprecate_positional_args
     def enable_depth_of_field(self, automatic_focal_distance=True) -> None:
         """Enable depth of field plotting.
 
@@ -3405,7 +3407,9 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         See :ref:`depth_of_field_example` for a full example using this method.
 
         """
-        self._render_passes.enable_depth_of_field_pass(automatic_focal_distance)
+        self._render_passes.enable_depth_of_field_pass(
+            automatic_focal_distance=automatic_focal_distance
+        )
 
     def disable_depth_of_field(self) -> None:
         """Disable depth of field plotting.

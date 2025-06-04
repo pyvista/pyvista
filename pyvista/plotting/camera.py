@@ -869,7 +869,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         objects_size = position1 - position0
         position = position0 + objects_size / 2
 
-        direction, viewup = view_vectors(view, negative)
+        direction, viewup = view_vectors(view, negative=negative)
         horizontal = np.cross(direction, viewup)
 
         vert_dist = abs(objects_size @ viewup)

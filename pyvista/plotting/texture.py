@@ -9,6 +9,8 @@ import warnings
 import numpy as np
 
 import pyvista
+
+pyvista.OFF_SCREEN = True
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -517,7 +519,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         lighting = kwargs.pop('lighting', None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, True)
+        pl.set_environment_texture(self, is_srgb=True)
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
