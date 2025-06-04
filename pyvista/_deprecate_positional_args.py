@@ -101,6 +101,7 @@ def _deprecate_positional_args(
 
         @wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
+            from pyvista._version import version_info
             from pyvista.core.errors import PyVistaDeprecationWarning
 
             passed_positional_names = param_names[: len(args)]
@@ -117,8 +118,6 @@ def _deprecate_positional_args(
                 offending_args.remove('cls')
 
             if offending_args:
-                from pyvista import version_info
-
                 # Craft a message to print a warning or raise an error
                 if len(offending_args) == 1:
                     a = ' a '
