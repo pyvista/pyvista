@@ -139,7 +139,7 @@ def _deprecate_positional_args(
                             f'From version {version_str}, passing {this} as{a}positional '
                             f'argument{s} will result in a TypeError.'
                         )
-                        warnings.warn(msg, FutureWarning)
+                        warnings.warn(msg, DeprecationWarning)
 
                     warn_positional_args()
                 else:

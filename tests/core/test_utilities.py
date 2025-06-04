@@ -2463,7 +2463,7 @@ def test_deprecate_positional_args_error_messages():
         "to function 'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
         'From version 0.50, passing this as a positional argument will result in a TypeError.'
     )
-    with pytest.warns(FutureWarning, match=match):
+    with pytest.warns(DeprecationWarning, match=match):
         foo(True)
 
     # Test many args
