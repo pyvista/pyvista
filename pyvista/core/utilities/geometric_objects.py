@@ -149,7 +149,8 @@ def Cylinder(
     """Create the surface of a cylinder.
 
     .. warning::
-       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
+       :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
@@ -2094,7 +2095,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
 def Ellipse(
     semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, resolution: int = 100
 ) -> PolyData:
-    """Create a single PolyData ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
+    """Create a single ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
 
     Parameters
     ----------
