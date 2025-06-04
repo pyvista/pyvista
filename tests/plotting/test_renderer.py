@@ -311,6 +311,7 @@ def test_legend_using_add_legend(random_hills):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_using_add_legend_with_glyph(random_hills):
     pl = pv.Plotter()
 
@@ -342,6 +343,35 @@ def test_legend_using_add_legend_only_labels(random_hills):
     legend_entries = ['label 1', 'label 2']
 
     pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+@pytest.mark.needs_vtk_version(9, 1, 0)
+@pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
+def test_legend_using_add_legend_dict(use_dict_labels):
+    sphere_label = 'sphere'
+    sphere_color = 'r'
+    sphere_kwargs = dict(color=sphere_color)
+
+    cube_label = 'cube'
+    cube_color = 'w'
+    cube_kwargs = dict(color=cube_color)
+
+    legend_kwargs = dict(bcolor='k', size=(0.6, 0.6))
+    if use_dict_labels:
+        legend_kwargs['labels'] = {
+            sphere_label: sphere_color,
+            cube_label: cube_color,
+        }
+    else:
+        sphere_kwargs['label'] = sphere_label
+        cube_kwargs['label'] = cube_label
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), **sphere_kwargs)
+    pl.add_mesh(pv.Cube(), **cube_kwargs)
+    pl.add_legend(**legend_kwargs)
     pl.show()
 
 

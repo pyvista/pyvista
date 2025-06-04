@@ -166,7 +166,8 @@ def _warn_xserver():  # pragma: no cover
             '\n'
             'This system does not appear to be running an xserver.\n'
             'PyVista will likely segfault when rendering.\n\n'
-            'Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.\n',
+            'Alternatively, an offscreen version using OSMesa libraries '
+            'and ``vtk-osmesa`` is available.\n',
         )
 
 
@@ -709,7 +710,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return filename
 
-    def export_gltf(self, filename, inline_data=True, rotate_scene=True, save_normals=True) -> None:
+    def export_gltf(
+        self, filename, inline_data=True, rotate_scene=True, save_normals=True
+    ) -> None:
         """Export the current rendering scene as a glTF file.
 
         Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
@@ -1462,7 +1465,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
-    def add_axes_at_origin(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
+    def add_axes_at_origin(
+        self, *args, **kwargs
+    ) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
@@ -2045,7 +2050,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         :func:`add_on_render_callback() <pyvista.Plotter.add_on_render_callback>`
         and the ``render_event=False`` option set will still execute on any call.
         """
-        if self.render_window is not None and not self._first_time and not self._suppress_rendering:
+        if (
+            self.render_window is not None
+            and not self._first_time
+            and not self._suppress_rendering
+        ):
             log.debug('Rendering')
             self.renderers.on_plotter_render()
             self.render_window.Render()
@@ -2554,11 +2563,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng`` is
             also an accepted alias for this.
 
-        show_edges : bool, default: :attr:`pyvista.global_theme.show_edges <pyvista.plotting.themes.Theme.show_edges>`
+        show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        edge_color : ColorLike, default: :attr:`pyvista.global_theme.edge_color <pyvista.plotting.themes.Theme.edge_color>`
+            Defaults to :attr:`pyvista.global_theme.show_edges
+            <pyvista.plotting.themes.Theme.show_edges>`.
+
+        edge_color : ColorLike, optional
             The solid color to give the edges when ``show_edges=True``.
             Either a string, RGB list, or hex color string.
 
@@ -2594,7 +2606,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             OpenGL will interpolate the mapped colors which can result in
             showing colors that are not present in the color map.
 
-        cmap : str | list, | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
+        cmap : str | list | LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``. See :ref:`named_colormaps` for supported
             colormaps.
@@ -3157,7 +3169,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapped colors which can result is showing colors that are
             not present in the color map.
 
-        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
+        cmap : str | list | LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``. See :ref:`named_colormaps` for supported
             colormaps.
@@ -3518,7 +3530,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if render_lines_as_tubes and show_edges:
             warnings.warn(
-                '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring `show_edges`.',
+                '`show_edges=True` not supported when `render_lines_as_tubes=True`. '
+                'Ignoring `show_edges`.',
                 UserWarning,
             )
             show_edges = False
@@ -3540,7 +3553,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 mesh = mesh.cast_to_polydata(deep=False)
         elif isinstance(mesh, pyvista.MultiBlock):
             if algo is not None:
-                msg = 'Algorithms with `MultiBlock` output type are not supported by `add_mesh` at this time.'
+                msg = (
+                    'Algorithms with `MultiBlock` output type are not supported by '
+                    '`add_mesh` at this time.'
+                )
                 raise TypeError(msg)
             actor, _ = self.add_composite(
                 mesh,
@@ -3723,7 +3739,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
-            msg = 'Empty meshes cannot be plotted. Input mesh has zero points. To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
+            msg = (
+                'Empty meshes cannot be plotted. Input mesh has zero points. '
+                'To allow plotting empty meshes, set `pv.global_theme.allow_empty_mesh = True`'
+            )
             raise ValueError(msg)
 
         # set main values
@@ -4036,7 +4055,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
 
-        cmap : str | list | pyvista.LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
+        cmap : str | list | LookupTable, default: :attr:`pyvista.plotting.themes.Theme.cmap`
             If a string, this is the name of the ``matplotlib`` colormap to use
             when mapping the ``scalars``. See :ref:`named_colormaps` for supported
             colormaps.
@@ -4244,7 +4263,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling = kwargs.pop('backface_culling', culling)
 
         if 'scalar' in kwargs:
-            msg = '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
+            msg = (
+                '`scalar` is an invalid keyword argument for `add_mesh`. '
+                'Perhaps you mean `scalars` with an s?'
+            )
             raise TypeError(msg)
         assert_empty_kwargs(**kwargs)
 
@@ -4363,10 +4385,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mapper = 'ugrid'
 
         if mapper == 'fixed_point' and not isinstance(volume, pyvista.ImageData):
-            msg = f'Type {type(volume)} not supported for volume rendering with the `"fixed_point"` mapper. Use `pyvista.ImageData`.'
+            msg = (
+                f'Type {type(volume)} not supported for volume rendering with the '
+                f'`"fixed_point"` mapper. Use `pyvista.ImageData`.'
+            )
             raise TypeError(msg)
         elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
-            msg = f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
+            msg = (
+                f'Type {type(volume)} not supported for volume rendering with the '
+                f'`{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
+            )
             raise TypeError(msg)
 
         volume = cast('pyvista.DataSet', volume)
@@ -4400,7 +4428,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 msg = '`add_volume` only supports scalars with 1 or 2 dimensions'
                 raise ValueError(msg)
             if scalars.shape[1] != 4 or scalars.dtype != np.uint8:
-                msg = f'`add_volume` only supports scalars with 2 dimension that have 4 components of datatype np.uint8, scalars have shape {scalars.shape} and datatype {scalars.dtype}'
+                msg = (
+                    f'`add_volume` only supports scalars with 2 dimension that have '
+                    f'4 components of datatype np.uint8, scalars have shape {scalars.shape} '
+                    f'and datatype {scalars.dtype}'
+                )
                 raise ValueError(msg)
             if opacity != 'linear':
                 opacity = 'linear'
@@ -4415,7 +4447,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'ugrid': UnstructuredGridVolumeRayCastMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
-            msg = f'Mapper ({mapper}) unknown. Available volume mappers include: {", ".join(mappers_lookup.keys())}'
+            msg = (
+                f'Mapper ({mapper}) unknown. Available volume mappers include: '
+                f'{", ".join(mappers_lookup.keys())}'
+            )
             raise TypeError(msg)
         self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
 
@@ -5047,7 +5082,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-            Defaults to :attr:`pyvista.global_theme.font.color <pyvista.plotting.themes._Font.color>`.
+            Defaults to
+            :attr:`pyvista.global_theme.font.color <pyvista.plotting.themes._Font.color>`.
 
         font : str, default: 'arial'
             Font name may be ``'courier'``, ``'times'``, or ``'arial'``.
@@ -5377,7 +5413,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False) -> Actor:
+    def add_lines(
+        self, lines, color='w', width=5, label=None, name=None, connected=False
+    ) -> Actor:
         """Add lines to the plotting object.
 
         Parameters
@@ -5697,7 +5735,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         hier = _vtk.vtkPointSetToLabelHierarchy()
         if not isinstance(labels, str):
             if algo is not None:
-                msg = 'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
+                msg = (
+                    'If using a vtkAlgorithm input, the labels must be a named array '
+                    'on the dataset.'
+                )
                 raise TypeError(msg)
             points = pyvista.PolyData(points.points)
             if len(points.points) != len(labels):
@@ -6143,7 +6184,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     # Save last image
                     if scale is not None:
                         warnings.warn(
-                            'This plotter is closed and cannot be scaled. Using the last saved image. Try using the `image_scale` property directly.',
+                            'This plotter is closed and cannot be scaled. '
+                            'Using the last saved image. '
+                            'Try using the `image_scale` property directly.',
                         )
                     return self._save_image(self.last_image, filename, return_img)
                 # Plotter hasn't been rendered or was improperly closed
@@ -7083,7 +7126,8 @@ class Plotter(BasePlotter):
             self.close()
             if screenshot:
                 warnings.warn(
-                    'A screenshot is unable to be taken as the render window is not current or rendering is suppressed.',
+                    'A screenshot is unable to be taken as the render window is not current or '
+                    'rendering is suppressed.',
                 )
         if _is_current:
             if pyvista.ON_SCREENSHOT:
@@ -7240,7 +7284,9 @@ class Plotter(BasePlotter):
         return actor
 
     @property
-    def meshes(self) -> list[pyvista.DataSet | pyvista.MultiBlock]:  # numpydoc ignore=RT01
+    def meshes(
+        self,
+    ) -> list[pyvista.DataSet | pyvista.MultiBlock]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns

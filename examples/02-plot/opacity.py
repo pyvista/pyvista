@@ -50,12 +50,18 @@ p.show()
 #
 # Opacity transfer functions are:
 #
-# - ``'linear'``: linearly vary (increase) opacity across the plotted scalar range from low to high
-# - ``'linear_r'``: linearly vary (increase) opacity across the plotted scalar range from high to low
-# - ``'geom'``: on a log scale, vary (increase) opacity across the plotted scalar range from low to high
-# - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted scalar range from high to low
-# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar range from low to high
-# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar range from high to low
+# - ``'linear'``: linearly vary (increase) opacity across the plotted scalar
+#   range from low to high
+# - ``'linear_r'``: linearly vary (increase) opacity across the plotted scalar
+#   range from high to low
+# - ``'geom'``: on a log scale, vary (increase) opacity across the plotted scalar
+#   range from low to high
+# - ``'geom_r'``: on a log scale, vary (increase) opacity across the plotted scalar
+#   range from high to low
+# - ``'sigmoid'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar
+#   range from low to high
+# - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar
+#   range from high to low
 
 # Show the linear opacity transfer function
 mesh.plot(opacity='linear')
