@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
@@ -15,7 +16,8 @@ from pyvista.core.utilities.misc import abstract_class
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):
+    @_deprecate_positional_args(allowed=['voi'])
+    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max

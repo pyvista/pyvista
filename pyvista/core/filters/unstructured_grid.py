@@ -59,11 +59,11 @@ class UnstructuredGridFilters(DataSetFilters):
     def clean(  # noqa: PLR0917
         self,
         tolerance=0,
-        remove_unused_points: bool = True,
-        produce_merge_map: bool = True,
-        average_point_data: bool = True,
+        remove_unused_points: bool = True,  # noqa: FBT001
+        produce_merge_map: bool = True,  # noqa: FBT001
+        average_point_data: bool = True,  # noqa: FBT001
         merging_array_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
