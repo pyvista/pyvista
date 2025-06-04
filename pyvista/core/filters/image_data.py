@@ -130,7 +130,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev)  # type: ignore[call-overload]
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
-        _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
         return _get_output(alg)
 
     @_deprecate_positional_args
@@ -215,7 +215,7 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
-        _update_alg(alg, progress_bar, 'Performing Median Smoothing')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
@@ -270,7 +270,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
-        _update_alg(alg, progress_bar, 'Extracting Subset')
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
@@ -376,7 +376,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetKernelSize(*kernel_size)
         alg.SetDilateValue(dilate_value)
         alg.SetErodeValue(erode_value)
-        _update_alg(alg, progress_bar, 'Performing Dilation and Erosion')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['threshold'])
@@ -502,7 +502,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SetReplaceOut(False)
         # run the algorithm
-        _update_alg(alg, progress_bar, 'Performing Image Thresholding')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
         output = _get_output(alg)
         if cast_dtype:
             self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
@@ -584,7 +584,7 @@ class ImageDataFilters(DataSetFilters):
 
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Fast Fourier Transform')
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -657,7 +657,9 @@ class ImageDataFilters(DataSetFilters):
         self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Performing Reverse Fast Fourier Transform.'
+        )
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -738,7 +740,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
-        _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Low Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -819,7 +821,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
-        _update_alg(alg, progress_bar, 'Performing High Pass Filter')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing High Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -1048,7 +1050,9 @@ class ImageDataFilters(DataSetFilters):
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         with pyvista.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+            _update_alg(
+                alg, progress_bar=progress_bar, message='Performing Labeled Surface Extraction'
+            )
         return wrap(alg.GetOutput())
 
     def contour_labels(  # type: ignore[misc]
@@ -1646,7 +1650,7 @@ class ImageDataFilters(DataSetFilters):
         # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         with pyvista.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar, 'Generating label contours')
+            _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
         output: pyvista.PolyData = _get_output(alg)
 
@@ -2533,7 +2537,7 @@ class ImageDataFilters(DataSetFilters):
             """
 
             def _update_and_get_output():
-                _update_alg(alg, progress_bar, 'Padding image')
+                _update_alg(alg, progress_bar=progress_bar, message='Padding image')
                 return _get_output(alg)
 
             # Set scalars since the filter only operates on the active scalars
@@ -2857,7 +2861,9 @@ class ImageDataFilters(DataSetFilters):
             msg = f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'  # type: ignore[unreachable]
             raise ValueError(msg)
 
-        _update_alg(alg, progress_bar, 'Identifying and Labelling Connected Regions')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Identifying and Labelling Connected Regions'
+        )
 
         output = _get_output(alg)
 

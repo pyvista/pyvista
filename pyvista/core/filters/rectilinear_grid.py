@@ -120,7 +120,7 @@ class RectilinearGridFilters:
             alg.SetTetraPerCell(tetra_per_cell)
 
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Converting to tetrahedra')
+        _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
         out = _get_output(alg)
 
         if pass_data:

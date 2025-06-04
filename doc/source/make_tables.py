@@ -1349,6 +1349,7 @@ class ColormapTable(DocTable):
         initial_cmap: str,
         n_samples: int,
         sort_by: Literal['hue', 'cam02ucs'],
+        *,
         pre_sort: bool = False,
     ):
         """Sort colormaps by color similarity.

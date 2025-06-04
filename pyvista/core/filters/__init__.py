@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from pyvista.core import _vtk_core as _vtk
 
 
-def _update_alg(alg, progress_bar: bool = False, message='') -> None:
+def _update_alg(alg, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
     if progress_bar:
         with ProgressMonitor(alg, message=message):

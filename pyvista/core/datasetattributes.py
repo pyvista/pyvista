@@ -12,6 +12,8 @@ import warnings
 import numpy as np
 import numpy.typing as npt
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk_core as _vtk
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
@@ -565,7 +567,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 narray = narray.tolist()
         return narray
 
-    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:
+    @_deprecate_positional_args(allowed=['data', 'name'])
+    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:  # noqa: FBT001
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -625,15 +628,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             msg = '`name` must be a string'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        vtk_arr = self._prepare_array(data, name, deep_copy)
+        vtk_arr = self._prepare_array(data=data, name=name, deep_copy=deep_copy)
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
+    @_deprecate_positional_args(allowed=['scalars', 'name'])
     def set_scalars(
         self: Self,
         scalars: ArrayLike[float],
         name: str = 'scalars',
-        deep_copy: bool = False,
+        deep_copy: bool = False,  # noqa: FBT001
     ) -> None:
         """Set the active scalars of the dataset with an array.
 
@@ -682,12 +686,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             my-scalars              int64      (8,)                 SCALARS
 
         """
-        vtk_arr = self._prepare_array(scalars, name, deep_copy)
+        vtk_arr = self._prepare_array(data=scalars, name=name, deep_copy=deep_copy)
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
+    @_deprecate_positional_args(allowed=['vectors', 'name'])
     def set_vectors(
-        self: Self, vectors: MatrixLike[float], name: str, deep_copy: bool = False
+        self: Self,
+        vectors: MatrixLike[float],
+        name: str,
+        deep_copy: bool = False,  # noqa: FBT001
     ) -> None:
         """Set the active vectors of this data attribute.
 
@@ -741,7 +749,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         # prepare the array and add an attribute so that we can track this as a vector
-        vtk_arr = self._prepare_array(vectors, name, deep_copy)
+        vtk_arr = self._prepare_array(data=vectors, name=name, deep_copy=deep_copy)
 
         n_comp = vtk_arr.GetNumberOfComponents()
         if n_comp != 3:
@@ -762,6 +770,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def _prepare_array(
         self: Self,
+        *,
         data: npt.ArrayLike,
         name: str,
         deep_copy: bool,
@@ -1080,10 +1089,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
+    @_deprecate_positional_args(allowed=['array_dict'])
     def update(
         self: Self,
         array_dict: dict[str, NumpyArray[float]] | DataSetAttributes,
-        copy: bool = True,
+        copy: bool = True,  # noqa: FBT001
     ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 
@@ -1126,10 +1136,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         for name, array in array_dict.items():
-            self._update_array(name, array, copy)
+            self._update_array(name=name, array=array, copy=copy)
 
     def _update_array(
         self: Self,
+        *,
         name: str,
         array: NumpyArray[float],
         copy: bool,

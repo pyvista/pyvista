@@ -577,7 +577,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
 
-        _update_alg(alg, progress_bar, 'Clipping by a Scalar')
+        _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = _get_output(alg)
 
         if inplace:
@@ -884,7 +884,7 @@ class DataSetFilters(DataObjectFilters):
             raise ValueError(msg)
 
         # Run the threshold
-        _update_alg(alg, progress_bar, 'Thresholding')
+        _update_alg(alg, progress_bar=progress_bar, message='Thresholding')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['percent'])
@@ -1068,7 +1068,7 @@ class DataSetFilters(DataObjectFilters):
         alg = _vtk.vtkOutlineFilter()
         alg.SetInputDataObject(self)
         alg.SetGenerateFaces(generate_faces)
-        _update_alg(alg, progress_bar, 'Producing an outline')
+        _update_alg(alg, progress_bar=progress_bar, message='Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 
     @_deprecate_positional_args
@@ -1107,7 +1107,7 @@ class DataSetFilters(DataObjectFilters):
         alg = _vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(self)
         alg.SetCornerFactor(factor)
-        _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
+        _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
     @_deprecate_positional_args
@@ -1164,7 +1164,7 @@ class DataSetFilters(DataObjectFilters):
             extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
             alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
-        _update_alg(alg, progress_bar, 'Extracting Geometry')
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting Geometry')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['isosurfaces', 'scalars'])
@@ -1345,7 +1345,7 @@ class DataSetFilters(DataObjectFilters):
             for i, val in enumerate(isosurfaces_):
                 alg.SetValue(i, val)
 
-        _update_alg(alg, progress_bar, 'Computing Contour')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Contour')
         output = _get_output(alg)
 
         # some of these filters fail to correctly name the array
@@ -1426,7 +1426,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetPoint1(*point_u)  # BOTTOM RIGHT CORNER
             alg.SetPoint2(*point_v)  # TOP LEFT CORNER
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Texturing Map to Plane')
+        _update_alg(alg, progress_bar=progress_bar, message='Texturing Map to Plane')
         output = _get_output(alg)
         if not inplace:
             return output
@@ -1501,7 +1501,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetCenter(*center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Mapping texture to sphere')
+        _update_alg(alg, progress_bar=progress_bar, message='Mapping texture to sphere')
         output = _get_output(alg)
         if not inplace:
             return output
@@ -1636,7 +1636,7 @@ class DataSetFilters(DataObjectFilters):
         # Make glyphing geometry if necessary
         if geom is None:
             arrow = _vtk.vtkArrowSource()
-            _update_alg(arrow, progress_bar, 'Making Arrow')
+            _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
             geoms: Sequence[_vtk.vtkDataSet | DataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
@@ -1787,7 +1787,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
-        _update_alg(alg, progress_bar, 'Computing Glyphs')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Glyphs')
 
         output = _get_output(alg)
 
@@ -2023,7 +2023,7 @@ class DataSetFilters(DataObjectFilters):
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
-                    _update_alg(remove, progress_bar, 'Removing Cells.')
+                    _update_alg(remove, progress_bar=progress_bar, message='Removing Cells.')
                     extracted = _get_output(remove)
                     extracted.clean(
                         point_merging=False,
@@ -2166,7 +2166,9 @@ class DataSetFilters(DataObjectFilters):
             )
             raise ValueError(msg)
 
-        _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Finding and Labeling Connected Regions.'
+        )
         output = _get_output(alg)
 
         # Process output
@@ -2424,7 +2426,7 @@ class DataSetFilters(DataObjectFilters):
         if normal is not None:
             alg.SetNormal(*normal)
             alg.SetUseNormal(True)
-        _update_alg(alg, progress_bar, 'Warping by Scalar')
+        _update_alg(alg, progress_bar=progress_bar, message='Warping by Scalar')
         output = _get_output(alg)
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
@@ -2509,7 +2511,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors_)
         alg.SetScaleFactor(factor)
-        _update_alg(alg, progress_bar, 'Warping by Vector')
+        _update_alg(alg, progress_bar=progress_bar, message='Warping by Vector')
         warped_mesh = _get_output(alg)
         if inplace:
             self.copy_from(warped_mesh, deep=False)
@@ -2575,7 +2577,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
-        _update_alg(alg, progress_bar, 'Computing 3D Triangulation')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing 3D Triangulation')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['surface'])
@@ -2673,7 +2675,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
         alg.SetInsideOut(inside_out)
-        _update_alg(alg, progress_bar, 'Selecting Enclosed Points')
+        _update_alg(alg, progress_bar=progress_bar, message='Selecting Enclosed Points')
         result = _get_output(alg)
         out = self.copy()
         bools = result['SelectedPoints'].astype(np.uint8)
@@ -2831,7 +2833,7 @@ class DataSetFilters(DataObjectFilters):
             raise ValueError(msg)
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
-        _update_alg(interpolator, progress_bar, 'Interpolating')
+        _update_alg(interpolator, progress_bar=progress_bar, message='Interpolating')
         return _get_output(interpolator)
 
     @_deprecate_positional_args(allowed=['vectors'])
@@ -3171,7 +3173,7 @@ class DataSetFilters(DataObjectFilters):
         else:
             alg.SetInterpolatorTypeToDataSetPointLocator()
         # run the algorithm
-        _update_alg(alg, progress_bar, 'Generating Streamlines')
+        _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['vectors'])
@@ -3351,7 +3353,11 @@ class DataSetFilters(DataObjectFilters):
             alg.SetInterpolatorTypeToDataSetPointLocator()
 
         # Run the algorithm
-        _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
+        _update_alg(
+            alg,
+            progress_bar=progress_bar,
+            message='Generating Evenly Spaced Streamlines on a 2D Dataset',
+        )
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['target_reduction'])
@@ -4123,7 +4129,7 @@ class DataSetFilters(DataObjectFilters):
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Cells')
+        _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
@@ -4207,7 +4213,7 @@ class DataSetFilters(DataObjectFilters):
         extract_sel = _vtk.vtkExtractSelection()
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
-        _update_alg(extract_sel, progress_bar, 'Extracting Points')
+        _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         return _get_output(extract_sel)
 
     def split_values(  # type: ignore[misc]
@@ -5101,7 +5107,7 @@ class DataSetFilters(DataObjectFilters):
         # available in 9.0.2
         # surf_filter.SetDelegation(delegation)
 
-        _update_alg(surf_filter, progress_bar, 'Extracting Surface')
+        _update_alg(surf_filter, progress_bar=progress_bar, message='Extracting Surface')
         return _get_output(surf_filter)
 
     @_deprecate_positional_args
@@ -5365,7 +5371,7 @@ class DataSetFilters(DataObjectFilters):
         if main_has_priority:
             append_filter.AddInputData(self)
 
-        _update_alg(append_filter, progress_bar, 'Merging')
+        _update_alg(append_filter, progress_bar=progress_bar, message='Merging')
         merged = _get_output(append_filter)
         if inplace:
             if type(self) is type(merged):
@@ -5558,7 +5564,7 @@ class DataSetFilters(DataObjectFilters):
             raise KeyError(msg)
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
-        _update_alg(alg, progress_bar, 'Computing Cell Quality')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Quality')
         return _get_output(alg)
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
@@ -5608,7 +5614,7 @@ class DataSetFilters(DataObjectFilters):
             raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
+        _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['scalars'])
@@ -5722,7 +5728,7 @@ class DataSetFilters(DataObjectFilters):
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars_)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Derivative')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['shrink_factor'])
@@ -5773,7 +5779,7 @@ class DataSetFilters(DataObjectFilters):
         alg = _vtk.vtkShrinkFilter()
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
-        _update_alg(alg, progress_bar, 'Shrinking Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Shrinking Mesh')
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
             return output.extract_surface()  # type: ignore[unreachable]
@@ -5847,7 +5853,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
-        _update_alg(alg, progress_bar, 'Tessellating Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Tessellating Mesh')
         return _get_output(alg)
 
     @_deprecate_positional_args
@@ -5900,7 +5906,7 @@ class DataSetFilters(DataObjectFilters):
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
-        _update_alg(alg, progress_bar, 'Integrating Variables')
+        _update_alg(alg, progress_bar=progress_bar, message='Integrating Variables')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['n_partitions'])
@@ -6561,7 +6567,7 @@ class DataSetFilters(DataObjectFilters):
         )
         for cell_type in valid_cell_types:
             alg.AddCellType(int(cell_type))
-        _update_alg(alg, progress_bar, 'Extracting cell types')
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting cell types')
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['scalars'])
@@ -6773,7 +6779,7 @@ class DataSetFilters(DataObjectFilters):
             alg.PassFieldDataOn()
             alg.PassCellDataOn()
             alg.PassPointDataOn()
-            _update_alg(alg, progress_bar, 'Packing labels')
+            _update_alg(alg, progress_bar=progress_bar, message='Packing labels')
             result = _get_output(alg)
 
             if output_scalars is not scalars:
@@ -7667,7 +7673,7 @@ class DataSetFilters(DataObjectFilters):
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
         poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
+        _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
 
         # Convert stencil to image
         stencil = _vtk.vtkImageStencil()
@@ -7675,7 +7681,7 @@ class DataSetFilters(DataObjectFilters):
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
         stencil.SetBackgroundValue(foreground_value)
-        _update_alg(stencil, progress_bar, 'Generating binary mask')
+        _update_alg(stencil, progress_bar=progress_bar, message='Generating binary mask')
         output_volume = _get_output(stencil)
 
         # Set the orientation of the output
@@ -7691,7 +7697,9 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, p
     distribution = _vtk.vtkLengthDistribution()
     distribution.SetInputData(poly)
     distribution.SetSampleSize(cell_length_sample_size)
-    _update_alg(distribution, progress_bar, 'Computing cell length distribution')
+    _update_alg(
+        distribution, progress_bar=progress_bar, message='Computing cell length distribution'
+    )
     return distribution.GetLengthQuantile(percentile)
 
 
