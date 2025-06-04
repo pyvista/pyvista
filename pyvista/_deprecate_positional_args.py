@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 import inspect
+import os
 from typing import Callable
 from typing import TypeVar
 from typing import overload
@@ -112,9 +113,9 @@ def _deprecate_positional_args(
             else:
                 offending_args = passed_positional_names
 
-            if 'self' in offending_args:
+            if has_self := 'self' in offending_args:
                 offending_args.remove('self')
-            if 'cls' in offending_args:
+            if has_cls := 'cls' in offending_args:
                 offending_args.remove('cls')
 
             if offending_args:
@@ -153,6 +154,29 @@ def _deprecate_positional_args(
                         raise TypeError(msg)
 
                     error_positional_args()
+
+            # Raise error post-deprecation
+            if version_info >= version:
+                # Construct expected positional args and signature
+                positional_args = allowed.copy()
+                insert0 = 'self' if has_self else 'cls' if has_cls else None
+                if insert0:
+                    positional_args.insert(0, insert0)
+                new_signature = f'{qualified_name()}({", ".join(positional_args)}, *, ...)'
+
+                # Get source file and line number
+                file = os.path.relpath(inspect.getfile(f), start=os.getcwd())  # noqa: PTH109
+                lineno = inspect.getsourcelines(f)[1]
+                location = f'{file}:{lineno}'
+
+                msg = (
+                    f'Positional arguments are no longer allowed in {qualified_name()!r}.\n'
+                    f'Update the function signature at:\n'
+                    f'{location} to:\n'
+                    f'    {new_signature}\n'
+                    f'and remove the {decorator_name!r} decorator.'
+                )
+                raise RuntimeError(msg)
             return f(*args, **kwargs)
 
         return inner_f
