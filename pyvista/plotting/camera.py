@@ -286,8 +286,8 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         (0.0039213485598532955, 3.9213485598532953)
 
         """
-        if self._renderer is None:  # type: ignore[unreachable]
-            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
+        if self._renderer is None:
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'  # type: ignore[unreachable]
             raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
