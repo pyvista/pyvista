@@ -787,7 +787,7 @@ def test_chart_2d(pl, chart_2d):
     ori = 'V'
 
     # Test constructor
-    chart = pv.Chart2D(size, loc, lx, ly, False)
+    chart = pv.Chart2D(size=size, loc=loc, x_label=lx, y_label=ly, grid=False)
     assert chart.size == size
     assert chart.loc == loc
     assert chart.x_label == lx
@@ -1016,7 +1016,7 @@ def test_chart_mpl(pl, chart_mpl):
 
     # Test constructor
     f, ax = plt.subplots()
-    chart = pv.ChartMPL(f, size, loc)
+    chart = pv.ChartMPL(f, size=size, loc=loc)
     assert chart.size == size
     assert chart.loc == loc
 

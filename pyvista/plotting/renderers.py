@@ -424,7 +424,9 @@ class Renderers:
         interactive_scene, interactive_charts = None, []
         if self.active_renderer.has_charts:
             interactive_scene = self.active_renderer._charts._scene
-            interactive_charts = self.active_renderer.set_chart_interaction(interactive, toggle)
+            interactive_charts = self.active_renderer.set_chart_interaction(
+                interactive, toggle=toggle
+            )
         # Disable chart interaction for other renderers
         for renderer in self:
             if renderer is not self.active_renderer:
