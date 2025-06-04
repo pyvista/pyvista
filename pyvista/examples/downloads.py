@@ -5022,7 +5022,7 @@ def download_louis_louvre(load=True):  # pragma: no cover
     >>> dataset = examples.download_louis_louvre()
     >>> pl = pv.Plotter(lighting=None)
     >>> _ = pl.add_mesh(dataset, smooth_shading=True)
-    >>> pl.add_light(pv.Light((10, -10, 10)))
+    >>> pl.add_light(pv.Light(position=(10, -10, 10)))
     >>> pl.camera_position = [
     ...     [-6.71, -14.55, 15.17],
     ...     [1.44, 2.54, 9.84],

@@ -2154,7 +2154,7 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
        >>> chart = pv.Chart2D()
        >>> x = np.linspace(0, 1, 100)
        >>> y = np.sin(6.5 * x - 1)
-       >>> _ = chart.line(x, y, 'y', 4)
+       >>> _ = chart.line(x, y, color='y', width=4)
        >>> chart.background_texture = examples.load_globe_texture()
        >>> chart.hide_axes()
        >>> chart.show()
@@ -3134,7 +3134,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
        >>> y = np.sin(x)
        >>> chart = pv.Chart2D()
        >>> _ = chart.scatter(x, y)
-       >>> _ = chart.line(x, y, 'r')
+       >>> _ = chart.line(x, y, color='r')
        >>> chart.show()
 
        Combine multiple types of plots in the same chart.
@@ -3876,7 +3876,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
            >>> x = np.linspace(0, 2 * np.pi, 20)
            >>> y = np.sin(x)
            >>> chart = pv.Chart2D()
-           >>> _ = chart.line(x, y, 'r')
+           >>> _ = chart.line(x, y, color='r')
            >>> chart.grid = False
            >>> chart.show()
 

@@ -199,7 +199,7 @@ class WidgetHelper:
         ...         )
         ...         - 0.3
         ...     )
-        ...     sphere = pv.Sphere(new_radius, new_center)
+        ...     sphere = pv.Sphere(radius=new_radius, center=new_center)
         ...     _ = plotter.add_mesh(sphere, name='Sphere')
         >>> _ = plotter.add_box_widget(callback=simulate)
         >>> plotter.show()

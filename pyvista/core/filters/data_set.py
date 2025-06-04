@@ -7382,7 +7382,7 @@ class DataSetFilters(DataObjectFilters):
         Alternatively, the intersecting parts of the mesh can be processed sequentially.
 
         >>> cylinder_1 = pv.Cylinder()
-        >>> cylinder_2 = pv.Cylinder((0, 0.75, 0))
+        >>> cylinder_2 = pv.Cylinder(center=(0, 0.75, 0))
 
         >>> reference_volume = pv.ImageData(
         ...     dimensions=(1, 100, 50),

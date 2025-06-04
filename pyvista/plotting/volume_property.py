@@ -71,7 +71,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     >>> import pyvista as pv
     >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
     >>> grid = pv.sample_function(
-    ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+    ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
     ... )
     >>> pl = pv.Plotter()
     >>> actor = pl.add_volume(grid, show_scalar_bar=False)
@@ -171,7 +171,7 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
         >>> grid = pv.sample_function(
-        ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+        ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
         ... )
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(grid, show_scalar_bar=False)
