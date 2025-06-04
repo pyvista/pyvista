@@ -52,7 +52,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 {}
 
 {}
-"""
+"""  # noqa: E501
 
 
 def _indent_paragraph(string: str, level: int) -> str:

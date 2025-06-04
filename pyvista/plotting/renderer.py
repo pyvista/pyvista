@@ -136,7 +136,9 @@ def make_legend_face(face) -> PolyData:
 
         # Scale so max bounds are [-0.5, 0.5] along x and y axes
         bnds = norm_poly.bounds
-        size = np.array((bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min))
+        size = np.array(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        )
         size[size < 1e-8] = 1  # Avoid division by zero
         max_xy_size = max(size[0:2])
         norm_poly.scale(1 / max_xy_size, inplace=True)
@@ -368,7 +370,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     def set_color_cycler(self, color_cycler) -> None:
         """Set or reset this renderer's color cycler.
 
-        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        This color cycler is iterated over by each sequential :meth:`~pyvista.Plotter.add_mesh`
         call to set the default color of the dataset being plotted.
 
         When setting, the value must be either a list of color-like objects,
@@ -377,15 +379,17 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all of the available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
 
         .. note::
-            If a mesh has scalar data, set ``color=True`` in the call to :meth:`~pyvista.Plotter.add_mesh`
-            to color the mesh with the next color in the cycler. Otherwise the mesh's
-            scalars are used to color the mesh by default.
+            If a mesh has scalar data, set ``color=True`` in the call to
+            :meth:`~pyvista.Plotter.add_mesh` to color the mesh with the
+            next color in the cycler. Otherwise, the mesh's scalars are used
+            to color the mesh by default.
 
         Parameters
         ----------
@@ -586,7 +590,9 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         if ignore_actors is None:
             ignore_actors = []
 
-        ignored_types = [actor_type for actor_type in ignore_actors if isinstance(actor_type, type)]
+        ignored_types = [
+            actor_type for actor_type in ignore_actors if isinstance(actor_type, type)
+        ]
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
@@ -2070,7 +2076,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
             # set the axes ranges
             if axes_ranges.shape != (6,):
-                msg = '`axes_ranges` must be passed as a (x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
+                msg = (
+                    '`axes_ranges` must be passed as a '
+                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
+                )
                 raise ValueError(msg)
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
@@ -3594,10 +3603,16 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (9, 3):  # pragma: no cover
+        if not (right is side is corner is None) and vtk_version_info < (
+            9,
+            3,
+        ):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            msg = '`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.'
+            msg = (
+                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
+                'Try installing VTK v9.3.0 or newer.'
+            )
             raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
@@ -3891,15 +3906,19 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        labels : list, optional
+        labels : list | dict, optional
             When set to ``None``, uses existing labels as specified by
 
             - :func:`add_mesh <Plotter.add_mesh>`
             - :func:`add_lines <Plotter.add_lines>`
             - :func:`add_points <Plotter.add_points>`
 
-            List containing one entry for each item to be added to the
-            legend. Each entry can contain one of the following:
+            For dict inputs, the keys are used as labels and the values are used
+            as the colors. Labels must be strings, and colors can be any
+            :class:`~pyvista.ColorLike`.
+
+            For list inputs, the list must contain one entry for each item to
+            be added to the legend. Each entry can contain one of the following:
 
             * Two strings ([label, color]), where ``label`` is the name of the
               item to add, and ``color`` is the color of the label to add.
@@ -3996,7 +4015,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()
 
-        Alternatively provide labels in the plotter.
+        Alternatively provide labels in the plotter as a list.
 
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
@@ -4005,6 +4024,15 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
         >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show()
+
+        Or use a dictionary to define them.
+
+        >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'red')
+        >>> _ = plotter.add_legend(labels, face='rectangle')
         >>> plotter.show()
 
         """
@@ -4030,6 +4058,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
+
+            if isinstance(labels, dict):
+                face = 'triangle' if face is None else face
+                labels = list(labels.items())
 
             for i, args in enumerate(labels):
                 face_ = None

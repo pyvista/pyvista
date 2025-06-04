@@ -676,7 +676,9 @@ def test_complex(plane, dtype_str):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
     real_type = np.float32 if dtype == np.complex64 else np.float64
-    data = np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    data = (
+        np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    )
     plane.point_data[name] = data
     assert np.array_equal(plane.point_data[name], data)
 
