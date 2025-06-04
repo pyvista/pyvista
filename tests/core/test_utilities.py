@@ -419,24 +419,24 @@ def test_is_inside_bounds_raises():
 
 
 def test_voxelize(uniform):
-    vox = pv.voxelize(uniform, 0.5)
+    vox = pv.voxelize(uniform, density=0.5)
     assert vox.n_cells
 
 
 def test_voxelize_non_uniform_density(uniform):
-    vox = pv.voxelize(uniform, [0.5, 0.3, 0.2])
+    vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
     assert vox.n_cells
-    vox = pv.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
+    vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
 def test_voxelize_invalid_density(rectilinear):
     # test error when density is not length-3
     with pytest.raises(ValueError, match='not enough values to unpack'):
-        pv.voxelize(rectilinear, [0.5, 0.3])
+        pv.voxelize(rectilinear, density=[0.5, 0.3])
     # test error when density is not an array-like
     with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize(rectilinear, {0.5, 0.3})
+        pv.voxelize(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
@@ -453,7 +453,7 @@ def test_voxelize_volume_default_density(uniform):
 
 def test_voxelize_volume_invalid_density(rectilinear):
     with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+        pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):

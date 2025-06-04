@@ -1876,7 +1876,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             arg2_is_seq = isinstance(args[2], (np.ndarray, Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
-                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
+                self._from_arrays(args[0], args[1], args[2], deep=deep, **kwargs)
                 self._check_for_consistency()
             else:
                 msg = 'All input types must be sequences.'
