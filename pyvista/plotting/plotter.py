@@ -4033,7 +4033,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling: CullingOptions | bool = False,
         multi_colors: bool = False,
         blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = 'composite',
-        mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart'] | None = None,
+        mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = None,
         scalar_bar_args: ScalarBarParams | None = None,
         show_scalar_bar: bool | None = None,
         annotations: dict[float, str] | None = None,
@@ -4188,8 +4188,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         mapper : str, optional
             Volume mapper to use given by name. Options include:
-            ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and
-            ``'smart'``.  If ``None`` the ``"volume_mapper"`` in the
+            ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, ``'smart'``,
+            and ``'ugrid'``.  If ``None`` the ``"volume_mapper"`` in the
             ``self._theme`` is used. If using ``'fixed_point'``,
             only ``ImageData`` types can be used.
 
@@ -4456,7 +4456,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Unstructured grid must be all tetrahedrals
             if not (volume.celltypes == pyvista.CellType.TETRA).all():
                 volume = volume.triangulate()
-            mapper = 'ugrid'  # type: ignore[assignment]
+            mapper = 'ugrid'
 
         if mapper == 'fixed_point' and not isinstance(volume, pyvista.ImageData):
             msg = (
@@ -4464,12 +4464,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'`"fixed_point"` mapper. Use `pyvista.ImageData`.'
             )
             raise TypeError(msg)
-        elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':  # type: ignore[comparison-overlap]
+        elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
             msg = (
                 f'Type {type(volume)} not supported for volume rendering with the '
                 f'`{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.'
             )
-        elif isinstance(volume, pyvista.UnstructuredGrid) and mapper != 'ugrid':
             raise TypeError(msg)
 
         volume = cast('pyvista.DataSet', volume)
