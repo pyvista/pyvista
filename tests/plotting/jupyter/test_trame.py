@@ -40,7 +40,8 @@ pytestmark = [
     pytest.mark.skipif(not has_trame, reason='Requires trame'),
     pytest.mark.skip_plotting,
     pytest.mark.filterwarnings(
-        r'ignore:It is recommended to use web\.AppKey instances for keys:aiohttp.web_exceptions.NotAppKeyWarning'
+        r'ignore:It is recommended to use web\.AppKey instances for '
+        r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
     ),
 ]
 
@@ -73,7 +74,9 @@ def test_base_viewer_ui():
 
 
 @pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
-@pytest.mark.filterwarnings('ignore:Suppress rendering on the plotter is changed to .*:UserWarning')
+@pytest.mark.filterwarnings(
+    'ignore:Suppress rendering on the plotter is changed to .*:UserWarning'
+)
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
@@ -271,7 +274,9 @@ def test_trame_closed_plotter():
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     pl.close()
-    with pytest.raises(RuntimeError, match='The render window for this plotter has been destroyed'):
+    with pytest.raises(
+        RuntimeError, match='The render window for this plotter has been destroyed'
+    ):
         PyVistaRemoteLocalView(pl)
 
 
