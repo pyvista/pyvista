@@ -403,7 +403,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetNonManifoldTraversal(non_manifold_traversal)
         alg.SetFeatureAngle(feature_angle)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Normals')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Normals')
         return _get_output(alg)
 
 

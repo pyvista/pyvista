@@ -1547,7 +1547,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 )
                 raise TypeError(msg)
 
-        super().save(filename, binary, texture=texture)
+        super().save(filename, binary=binary, texture=texture)
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01

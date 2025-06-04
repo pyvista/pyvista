@@ -85,7 +85,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.NonManifoldEdgesOff()
         featureEdges.ManifoldEdgesOff()
         featureEdges.SetFeatureAngle(angle)
-        _update_alg(featureEdges, progress_bar, 'Computing Edges')
+        _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
         orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
 
@@ -423,7 +423,7 @@ class PolyDataFilters(DataSetFilters):
         for mesh in meshes:
             append_filter.AddInputData(mesh)
 
-        _update_alg(append_filter, progress_bar, 'Append PolyData')
+        _update_alg(append_filter, progress_bar=progress_bar, message='Append PolyData')
         merged = _get_output(append_filter)
 
         if inplace:
@@ -1393,7 +1393,7 @@ class PolyDataFilters(DataSetFilters):
             else:
                 tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
-        _update_alg(tube, progress_bar, 'Creating Tube')
+        _update_alg(tube, progress_bar=progress_bar, message='Creating Tube')
 
         mesh = _get_output(tube)
         if inplace:
@@ -2350,7 +2350,7 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
         dijkstra.SetUseScalarWeights(use_scalar_weights)
-        _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
+        _update_alg(dijkstra, progress_bar=progress_bar, message='Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
@@ -2954,7 +2954,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetReverseNormals(reverse_normals)
         alg.SetReverseCells(reverse_cells)
-        _update_alg(alg, progress_bar)
+        _update_alg(alg, progress_bar=progress_bar)
         output = _get_output(alg)
         if inplace:
             self.copy_from(output, deep=False)

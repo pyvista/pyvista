@@ -5220,7 +5220,7 @@ class DataSetFilters(DataObjectFilters):
         featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
-        _update_alg(featureEdges, progress_bar, 'Extracting Feature Edges')
+        _update_alg(featureEdges, progress_bar=progress_bar, message='Extracting Feature Edges')
         output = _get_output(featureEdges)
         if clear_data:
             output.clear_data()

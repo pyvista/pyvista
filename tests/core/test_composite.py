@@ -440,7 +440,7 @@ def test_multi_block_io(
     multi = multiblock_all_with_nested_and_none
 
     # Save it out
-    multi.save(filename, binary)
+    multi.save(filename, binary=binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     foo = pv.read(filename)
@@ -459,7 +459,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir):
     for block in multi:
         assert block.array_names == array_names
     # Save it out
-    multi.save(filename, binary)
+    multi.save(filename, binary=binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     for block in foo:

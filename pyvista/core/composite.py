@@ -2228,7 +2228,7 @@ class MultiBlock(
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self, deep)
+        newobject.copy_meta_from(self, deep=deep)
         return newobject
 
     @_deprecate_positional_args(allowed=['to_copy'])
@@ -2342,7 +2342,7 @@ class MultiBlock(
                 if isinstance(block, MultiBlock):
                     field, scalars = block.set_active_scalars(
                         name,
-                        preference,
+                        preference=preference,
                         allow_missing=allow_missing,
                     )
                 else:
