@@ -50,6 +50,8 @@ p.show()
 
 # %%
 # Run the filter and produce a line plot.
-mesh.plot_over_circular_arc_normal(center, 100, normal, polar, angle, 'height')
+mesh.plot_over_circular_arc_normal(
+    center=center, resolution=100, normal=normal, polar=polar, angle=angle, scalars='height'
+)
 # %%
 # .. tags:: plot

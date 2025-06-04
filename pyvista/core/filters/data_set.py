@@ -3530,8 +3530,8 @@ class DataSetFilters(DataObjectFilters):
             self,
             pointa,
             pointb,
-            resolution,
-            tolerance,
+            resolution=resolution,
+            tolerance=tolerance,
             progress_bar=progress_bar,
         )
 

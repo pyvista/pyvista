@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import wraps
 import inspect
 import os
+from pathlib import Path
 from typing import Callable
 from typing import TypeVar
 from typing import overload
@@ -165,7 +166,7 @@ def _deprecate_positional_args(
                 new_signature = f'{qualified_name()}({", ".join(positional_args)}, *, ...)'
 
                 # Get source file and line number
-                file = os.path.relpath(inspect.getfile(f), start=os.getcwd())  # noqa: PTH109
+                file = Path(os.path.relpath(inspect.getfile(f), start=os.getcwd())).as_posix()  # noqa: PTH109
                 lineno = inspect.getsourcelines(f)[1]
                 location = f'{file}:{lineno}'
 

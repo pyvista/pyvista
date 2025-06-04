@@ -1565,7 +1565,7 @@ def test_sample_over_line():
     line = pv.Line([0, 0, 0], [0, 0, 10], 9)
     line[name] = np.linspace(0, 10, 10)
 
-    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2, progress_bar=True)
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], resolution=2, progress_bar=True)
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
