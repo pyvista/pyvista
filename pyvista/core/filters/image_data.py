@@ -43,8 +43,13 @@ if TYPE_CHECKING:
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
+    @_deprecate_positional_args
     def gaussian_smooth(
-        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar: bool = False
+        self,
+        radius_factor=1.5,
+        std_dev=2.0,
+        scalars=None,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Smooth the data with a Gaussian kernel.
 
@@ -128,12 +133,13 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
         return _get_output(alg)
 
+    @_deprecate_positional_args
     def median_smooth(
         self,
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Smooth data using a median filter.
 
@@ -212,8 +218,13 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
         return _get_output(alg)
 
+    @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(
-        self, voi, rate=(1, 1, 1), boundary: bool = False, progress_bar: bool = False
+        self,
+        voi,
+        rate=(1, 1, 1),
+        boundary: bool = False,  # noqa: FBT001
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Select piece (e.g., volume of interest).
 
@@ -273,13 +284,14 @@ class ImageDataFilters(DataSetFilters):
         fixed.copy_meta_from(result, deep=True)
         return fixed
 
+    @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(
         self,
         dilate_value=1.0,
         erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Dilates one value and erodes another.
 
@@ -375,7 +387,7 @@ class ImageDataFilters(DataSetFilters):
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -497,7 +509,8 @@ class ImageDataFilters(DataSetFilters):
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
-    def fft(self, output_scalars_name=None, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def fft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -580,7 +593,8 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def rfft(self, output_scalars_name=None, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def rfft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -660,7 +674,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -741,7 +755,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
@@ -865,17 +879,18 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast('pyvista.ImageData', wrap(alg.GetOutput()))
 
+    @_deprecate_positional_args
     def contour_labeled(  # noqa: PLR0917
         self,
         n_labels: int | None = None,
-        smoothing: bool = False,
+        smoothing: bool = False,  # noqa: FBT001
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: float = 1,
         output_mesh_type: Literal['quads', 'triangles'] = 'quads',
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
@@ -2065,6 +2080,7 @@ class ImageDataFilters(DataSetFilters):
 
     def _remesh_points_cells(  # type: ignore[misc]
         self: ImageData,
+        *,
         points_to_cells: bool,
         scalars: str | None,
         dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
