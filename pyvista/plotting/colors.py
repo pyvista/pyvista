@@ -352,7 +352,10 @@ COLOR_SCHEMES = {
     'warm': {'id': _vtk.vtkColorSeries.WARM, 'descr': 'dark red → yellow'},
     'cool': {'id': _vtk.vtkColorSeries.COOL, 'descr': 'green → blue → purple'},
     'blues': {'id': _vtk.vtkColorSeries.BLUES, 'descr': 'Different shades of blue'},
-    'wild_flower': {'id': _vtk.vtkColorSeries.WILD_FLOWER, 'descr': 'blue → purple → pink'},
+    'wild_flower': {
+        'id': _vtk.vtkColorSeries.WILD_FLOWER,
+        'descr': 'blue → purple → pink',
+    },
     'citrus': {'id': _vtk.vtkColorSeries.CITRUS, 'descr': 'green → yellow → orange'},
     'div_purple_orange11': {
         'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
@@ -548,7 +551,8 @@ COLOR_SCHEMES = {
     },
     'qual_accent': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
-        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray',
+        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, '
+        'brown, gray',
     },
     'qual_dark2': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
@@ -556,7 +560,8 @@ COLOR_SCHEMES = {
     },
     'qual_set3': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
-        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow',
+        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, '
+        'pink, gray, purple, light green, yellow',
     },
     'qual_set2': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
@@ -576,7 +581,8 @@ COLOR_SCHEMES = {
     },
     'qual_paired': {
         'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
-        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow',
+        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, '
+        'light purple, purple, light yellow',
     },
     'custom': {'id': _vtk.vtkColorSeries.CUSTOM, 'descr': None},
 }
@@ -1647,7 +1653,9 @@ class Color:
         arg = h
         h = self.strip_hex_prefix(h)
         try:
-            self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
+            self._from_rgba(
+                [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]
+            )
         except ValueError:
             msg = f'Invalid hex string: {arg}'
             raise ValueError(msg) from None
@@ -1748,7 +1756,12 @@ class Color:
         (1.0, 0.0, 0.0, 0.2)
 
         """
-        return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
+        return (
+            self._red / 255.0,
+            self._green / 255.0,
+            self._blue / 255.0,
+            self._opacity / 255.0,
+        )
 
     @property
     def float_rgb(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -2168,7 +2181,8 @@ def get_cycler(color_cycler):
         - One of the following string values:
             - ``'default'``: Use the default color cycler (matches matplotlib's default)
             - ``'matplotlib'``: Dynamically get matplotlib's current theme's color cycler.
-            - ``'all'``: Cycle through all available colors in ``pyvista.plotting.colors.hexcolors``
+            - ``'all'``: Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
         - A named color scheme from ``pyvista.plotting.colors.COLOR_SCHEMES``
 
     Returns

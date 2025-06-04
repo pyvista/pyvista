@@ -62,7 +62,8 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
     for img_fname in img_fnames:
         assert Path(img_fname).is_file()
 
-    # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
+    # test that the plot has the camera position updated with a checksum
+    # when the Plotter has an app instance
     assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
 
     for plotter in plotters:
