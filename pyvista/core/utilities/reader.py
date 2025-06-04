@@ -18,6 +18,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 from .fileio import _get_ext_force
@@ -2853,7 +2854,8 @@ class GaussianCubeReader(BaseReader):
     _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
 
-    def read(self, grid: bool = True):
+    @_deprecate_positional_args
+    def read(self, grid: bool = True):  # noqa: FBT001
         """Read the file and return the output.
 
         Parameters

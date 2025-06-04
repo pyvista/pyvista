@@ -146,7 +146,7 @@ def Cylinder(  # noqa: PLR0917
     radius: float = 0.5,
     height: float = 1.0,
     resolution: int = 100,
-    capping: bool = True,
+    capping: bool = True,  # noqa: FBT001
 ) -> PolyData:
     """Create the surface of a cylinder.
 
@@ -513,7 +513,7 @@ def SolidSphere(  # noqa: PLR0917
     phi_resolution: int = 30,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    radians: bool = False,
+    radians: bool = False,  # noqa: FBT001
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
 ) -> UnstructuredGrid:
@@ -667,7 +667,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     phi: VectorLike[float] | None = None,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    radians: bool = False,
+    radians: bool = False,  # noqa: FBT001
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
 ) -> UnstructuredGrid:
@@ -1163,7 +1163,7 @@ def Tube(  # noqa: PLR0917
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
-    capping: bool = False,
+    capping: bool = False,  # noqa: FBT001
 ) -> PolyData:
     """Create a tube.
 
@@ -1214,7 +1214,7 @@ def Cube(  # noqa: PLR0917
     y_length: float = 1.0,
     z_length: float = 1.0,
     bounds: VectorLike[float] | None = None,
-    clean: bool = True,
+    clean: bool = True,  # noqa: FBT001
     point_dtype: str = 'float32',
 ) -> PolyData:
     """Create a cube.
@@ -1302,10 +1302,11 @@ def Cube(  # noqa: PLR0917
     return cube
 
 
+@_deprecate_positional_args(allowed=['bounds'])
 def Box(
     bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     level: int = 0,
-    quads: bool = True,
+    quads: bool = True,  # noqa: FBT001
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
 
@@ -1345,7 +1346,7 @@ def Cone(  # noqa: PLR0917
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     height: float = 1.0,
     radius: float | None = None,
-    capping: bool = True,
+    capping: bool = True,  # noqa: FBT001
     angle: float | None = None,
     resolution: int = 6,
 ) -> PolyData:
@@ -1404,12 +1405,13 @@ def Cone(  # noqa: PLR0917
     return algo.output
 
 
+@_deprecate_positional_args
 def Polygon(
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     radius: float = 1.0,
     normal: VectorLike[float] = (0.0, 0.0, 1.0),
     n_sides: int = 6,
-    fill: bool = True,
+    fill: bool = True,  # noqa: FBT001
 ) -> PolyData:
     """Create a polygon.
 
@@ -1688,12 +1690,13 @@ def Wavelet(  # noqa: PLR0917
     return cast('pyvista.ImageData', wrap(wavelet_source.GetOutput()))
 
 
+@_deprecate_positional_args(allowed=['pointa', 'pointb', 'center'])
 def CircularArc(
     pointa: VectorLike[float],
     pointb: VectorLike[float],
     center: VectorLike[float],
     resolution: int = 100,
-    negative: bool = False,
+    negative: bool = False,  # noqa: FBT001
 ) -> PolyData:
     """Create a circular arc defined by two endpoints and a center.
 
@@ -2157,7 +2160,7 @@ def Superquadric(  # noqa: PLR0917
     phi_roundness: float = 1.0,
     theta_resolution: int = 16,
     phi_resolution: int = 16,
-    toroidal: bool = False,
+    toroidal: bool = False,  # noqa: FBT001
     thickness: float = 1 / 3,
 ) -> PolyData:
     """Create a superquadric.

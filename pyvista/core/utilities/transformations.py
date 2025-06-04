@@ -8,6 +8,7 @@ from typing import overload
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 
 if TYPE_CHECKING:
@@ -16,8 +17,12 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
+@_deprecate_positional_args(allowed=['axis', 'angle'])
 def axis_angle_rotation(
-    axis: VectorLike[float], angle: float, point: VectorLike[float] | None = None, deg: bool = True
+    axis: VectorLike[float],
+    angle: float,
+    point: VectorLike[float] | None = None,
+    deg: bool = True,  # noqa: FBT001
 ) -> NumpyArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
@@ -266,7 +271,9 @@ def apply_transformation_to_points(
 ) -> NumpyArray[float]: ...
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: bool = ...,  # noqa: FBT001
 ) -> NumpyArray[float] | None: ...
 def apply_transformation_to_points(
     transformation: NumpyArray[float],

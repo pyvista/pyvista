@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk
 from .actor import Actor
 from .axes_actor import AxesActor
@@ -33,12 +35,13 @@ class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
 
     """
 
+    @_deprecate_positional_args
     def __init__(
         self,
-        show_actor: bool = False,
+        show_actor: bool = False,  # noqa: FBT001
         actor_scale=1,
         line_width=1.0,
-        symmetric: bool = False,
+        symmetric: bool = False,  # noqa: FBT001
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()

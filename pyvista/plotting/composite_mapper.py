@@ -659,7 +659,7 @@ class CompositePolyDataMapper(
 
     def set_unique_colors(
         self,
-        color_cycler: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = True,
+        color_cycler: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = True,  # noqa: FBT001
     ):
         """Set each block of the dataset to a unique color.
 

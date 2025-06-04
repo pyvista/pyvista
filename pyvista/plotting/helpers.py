@@ -75,7 +75,7 @@ def plot_compare_four(  # noqa: PLR0917
     outline=None,
     outline_color='k',
     labels=('A', 'B', 'C', 'D'),
-    link: bool = True,
+    link: bool = True,  # noqa: FBT001
     notebook=None,
 ):
     """Plot a 2 by 2 comparison of data objects.
@@ -151,7 +151,8 @@ def plot_compare_four(  # noqa: PLR0917
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:
+@_deprecate_positional_args(allowed=['view'])
+def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:  # noqa: FBT001
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

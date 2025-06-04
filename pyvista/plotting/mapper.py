@@ -499,16 +499,16 @@ class _DataSetMapper(_BaseMapper):
         rgb=None,
         component=None,
         preference='point',
-        custom_opac: bool = False,
+        custom_opac: bool = False,  # noqa: FBT001
         annotations=None,
-        log_scale: bool = False,
+        log_scale: bool = False,  # noqa: FBT001
         nan_color=None,
         above_color=None,
         below_color=None,
         cmap=None,
-        flip_scalars: bool = False,
+        flip_scalars: bool = False,  # noqa: FBT001
         opacity=None,
-        categories: bool | int = False,
+        categories: bool | int = False,  # noqa: FBT001
         clim=None,
     ):
         """Set the scalars on this mapper.

@@ -391,7 +391,8 @@ class Renderers:
             raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
-    def set_chart_interaction(self, interactive, toggle: bool = False):
+    @_deprecate_positional_args(allowed=['interactive'])
+    def set_chart_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001
         """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
@@ -554,7 +555,7 @@ class Renderers:
         right=None,
         side=None,
         corner=None,
-        all_renderers: bool = True,
+        all_renderers: bool = True,  # noqa: FBT001
     ):
         """Set the background color.
 
@@ -627,7 +628,8 @@ class Renderers:
                 corner=corner,
             )
 
-    def set_color_cycler(self, color_cycler, all_renderers: bool = True):
+    @_deprecate_positional_args(allowed=['color_cycler'])
+    def set_color_cycler(self, color_cycler, all_renderers: bool = True):  # noqa: FBT001
         """Set or reset the color cycler.
 
         This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`

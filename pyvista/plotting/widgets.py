@@ -111,11 +111,11 @@ class WidgetHelper:
         callback,
         bounds=None,
         factor=1.25,
-        rotation_enabled: bool = True,
+        rotation_enabled: bool = True,  # noqa: FBT001
         color=None,
-        use_planes: bool = False,
-        outline_translation: bool = True,
-        pass_widget: bool = False,
+        use_planes: bool = False,  # noqa: FBT001
+        outline_translation: bool = True,  # noqa: FBT001
+        pass_widget: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
     ):
         """Add a box widget to the scene.
@@ -249,12 +249,12 @@ class WidgetHelper:
     def add_mesh_clip_box(  # noqa: PLR0917
         self,
         mesh,
-        invert: bool = False,
-        rotation_enabled: bool = True,
+        invert: bool = False,  # noqa: FBT001
+        rotation_enabled: bool = True,  # noqa: FBT001
         widget_color=None,
-        outline_translation: bool = True,
-        merge_points: bool = True,
-        crinkle: bool = False,
+        outline_translation: bool = True,  # noqa: FBT001
+        merge_points: bool = True,  # noqa: FBT001
+        crinkle: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
@@ -401,13 +401,13 @@ class WidgetHelper:
         factor=1.25,
         color=None,
         assign_to_axis=None,
-        tubing: bool = False,
-        outline_translation: bool = False,
-        origin_translation: bool = True,
-        implicit: bool = True,
-        pass_widget: bool = False,
-        test_callback: bool = True,
-        normal_rotation: bool = True,
+        tubing: bool = False,  # noqa: FBT001
+        outline_translation: bool = False,  # noqa: FBT001
+        origin_translation: bool = True,  # noqa: FBT001
+        implicit: bool = True,  # noqa: FBT001
+        pass_widget: bool = False,  # noqa: FBT001
+        test_callback: bool = True,  # noqa: FBT001
+        normal_rotation: bool = True,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         outline_opacity=None,
     ):
@@ -646,16 +646,16 @@ class WidgetHelper:
         self,
         mesh,
         normal='x',
-        invert: bool = False,
+        invert: bool = False,  # noqa: FBT001
         widget_color=None,
         value=0.0,
         assign_to_axis=None,
-        tubing: bool = False,
-        origin_translation: bool = True,
-        outline_translation: bool = False,
-        implicit: bool = True,
-        normal_rotation: bool = True,
-        crinkle: bool = False,
+        tubing: bool = False,  # noqa: FBT001
+        origin_translation: bool = True,  # noqa: FBT001
+        outline_translation: bool = False,  # noqa: FBT001
+        implicit: bool = True,  # noqa: FBT001
+        normal_rotation: bool = True,  # noqa: FBT001
+        crinkle: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
@@ -830,15 +830,15 @@ class WidgetHelper:
         self,
         volume,
         normal='x',
-        invert: bool = False,
+        invert: bool = False,  # noqa: FBT001
         widget_color=None,
         value=0.0,
         assign_to_axis=None,
-        tubing: bool = False,
-        origin_translation: bool = True,
-        outline_translation: bool = False,
-        implicit: bool = True,
-        normal_rotation: bool = True,
+        tubing: bool = False,  # noqa: FBT001
+        origin_translation: bool = True,  # noqa: FBT001
+        outline_translation: bool = False,  # noqa: FBT001
+        implicit: bool = True,  # noqa: FBT001
+        normal_rotation: bool = True,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
@@ -968,14 +968,14 @@ class WidgetHelper:
         self,
         mesh,
         normal='x',
-        generate_triangles: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001
         widget_color=None,
         assign_to_axis=None,
-        tubing: bool = False,
-        origin_translation: bool = True,
-        outline_translation: bool = False,
-        implicit: bool = True,
-        normal_rotation: bool = True,
+        tubing: bool = False,  # noqa: FBT001
+        origin_translation: bool = True,  # noqa: FBT001
+        outline_translation: bool = False,  # noqa: FBT001
+        implicit: bool = True,  # noqa: FBT001
+        normal_rotation: bool = True,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
@@ -1116,12 +1116,13 @@ class WidgetHelper:
 
         return self.add_mesh(alg, **kwargs)  # type: ignore[attr-defined]
 
+    @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_slice_orthogonal(
         self,
         mesh,
-        generate_triangles: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001
         widget_color=None,
-        tubing: bool = False,
+        tubing: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
@@ -1209,8 +1210,8 @@ class WidgetHelper:
         factor=1.25,
         resolution=100,
         color=None,
-        use_vertices: bool = False,
-        pass_widget: bool = False,
+        use_vertices: bool = False,  # noqa: FBT001
+        pass_widget: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
     ):
         """Add a line widget to the scene.
@@ -1443,7 +1444,7 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        pass_widget: bool = False,
+        pass_widget: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         style=None,
         title_height=0.03,
@@ -1653,14 +1654,14 @@ class WidgetHelper:
         self,
         mesh,
         scalars=None,
-        invert: bool = False,
+        invert: bool = False,  # noqa: FBT001
         widget_color=None,
         preference='cell',
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
-        continuous: bool = False,
-        all_scalars: bool = False,
+        continuous: bool = False,  # noqa: FBT001
+        all_scalars: bool = False,  # noqa: FBT001
         method='upper',
         **kwargs,
     ):
@@ -1811,9 +1812,9 @@ class WidgetHelper:
         self,
         mesh,
         scalars=None,
-        compute_normals: bool = False,
-        compute_gradients: bool = False,
-        compute_scalars: bool = True,
+        compute_normals: bool = False,  # noqa: FBT001
+        compute_gradients: bool = False,  # noqa: FBT001
+        compute_scalars: bool = True,  # noqa: FBT001
         preference='point',
         title=None,
         pointa=(0.4, 0.9),
@@ -1979,11 +1980,11 @@ class WidgetHelper:
         n_handles=5,
         resolution=25,
         color='yellow',
-        show_ribbon: bool = False,
+        show_ribbon: bool = False,  # noqa: FBT001
         ribbon_color='pink',
         ribbon_opacity=0.5,
-        pass_widget: bool = False,
-        closed: bool = False,
+        pass_widget: bool = False,  # noqa: FBT001
+        closed: bool = False,  # noqa: FBT001
         initial_points=None,
         interaction_event: InteractionEventType = 'end',
     ):
@@ -2119,15 +2120,15 @@ class WidgetHelper:
     def add_mesh_slice_spline(  # noqa: PLR0917
         self,
         mesh,
-        generate_triangles: bool = False,
+        generate_triangles: bool = False,  # noqa: FBT001
         n_handles=5,
         resolution=25,
         widget_color=None,
-        show_ribbon: bool = False,
+        show_ribbon: bool = False,  # noqa: FBT001
         ribbon_color='pink',
         ribbon_opacity=0.5,
         initial_points=None,
-        closed: bool = False,
+        closed: bool = False,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
@@ -2345,8 +2346,8 @@ class WidgetHelper:
         style='surface',
         selected_color='pink',
         indices=None,
-        pass_widget: bool = False,
-        test_callback: bool = True,
+        pass_widget: bool = False,  # noqa: FBT001
+        test_callback: bool = True,  # noqa: FBT001
         interaction_event: InteractionEventType = 'end',
     ):
         """Add one or many sphere widgets to a scene.
@@ -2493,10 +2494,10 @@ class WidgetHelper:
         self,
         actor,
         origin=None,
-        start: bool = True,
+        start: bool = True,  # noqa: FBT001
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,
+        always_visible: bool = True,  # noqa: FBT001
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -2586,7 +2587,7 @@ class WidgetHelper:
     def add_checkbox_button_widget(  # noqa: PLR0917
         self,
         callback,
-        value: bool = False,
+        value: bool = False,  # noqa: FBT001
         position=(10.0, 10.0),
         size=50,
         border_size=5,
@@ -2707,7 +2708,7 @@ class WidgetHelper:
         self,
         callback,
         radio_button_group,
-        value: bool = False,
+        value: bool = False,  # noqa: FBT001
         title=None,
         position=(10.0, 10.0),
         size=50,
@@ -2907,7 +2908,8 @@ class WidgetHelper:
                 title.VisibilityOff()
         self.radio_button_title_dict.clear()
 
-    def add_camera_orientation_widget(self, animate: bool = True, n_frames=20):
+    @_deprecate_positional_args
+    def add_camera_orientation_widget(self, animate: bool = True, n_frames=20):  # noqa: FBT001
         """Add a camera orientation widget to the active renderer.
 
         .. note::

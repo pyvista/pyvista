@@ -7,6 +7,7 @@ import shutil
 from typing import TYPE_CHECKING
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -84,7 +85,8 @@ def _process_events_before_scraping(plotter):
         plotter.update()
 
 
-def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:
+@_deprecate_positional_args(allowed=['image_path_iterator'])
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:  # noqa: FBT001
     """Generate images from the current plotters.
 
     The file names are taken from the ``image_path_iterator`` iterator.

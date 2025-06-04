@@ -46,12 +46,13 @@ def _padded_bins(mesh, density):
     ]
 
 
+@_deprecate_positional_args(allowed=['mesh'])
 def voxelize(
     mesh,
     density=None,
-    check_surface: bool = True,
-    enclosed: bool = False,
-    fit_bounds: bool = False,
+    check_surface: bool = True,  # noqa: FBT001
+    enclosed: bool = False,  # noqa: FBT001
+    fit_bounds: bool = False,  # noqa: FBT001
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -219,12 +220,13 @@ def voxelize(
     return ugrid.extract_points(mask)
 
 
+@_deprecate_positional_args(allowed=['mesh'])
 def voxelize_volume(
     mesh,
     density=None,
-    check_surface: bool = True,
-    enclosed: bool = False,
-    fit_bounds: bool = False,
+    check_surface: bool = True,  # noqa: FBT001
+    enclosed: bool = False,  # noqa: FBT001
+    fit_bounds: bool = False,  # noqa: FBT001
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
@@ -579,11 +581,12 @@ def spherical_to_cartesian(r, phi, theta):
     return x, y, z
 
 
+@_deprecate_positional_args(allowed=['datasets'])
 def merge(
     datasets,
-    merge_points: bool = True,
-    main_has_priority: bool = True,
-    progress_bar: bool = False,
+    merge_points: bool = True,  # noqa: FBT001
+    main_has_priority: bool = True,  # noqa: FBT001
+    progress_bar: bool = False,  # noqa: FBT001
 ):
     """Merge several datasets.
 
@@ -721,13 +724,13 @@ def sample_function(  # noqa: PLR0917
     function: _vtk.vtkImplicitFunction,
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
-    compute_normals: bool = False,
+    compute_normals: bool = False,  # noqa: FBT001
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
-    capping: bool = False,
+    capping: bool = False,  # noqa: FBT001
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
     normal_arr_name: str = 'normals',
-    progress_bar: bool = False,
+    progress_bar: bool = False,  # noqa: FBT001
 ):
     """Sample an implicit function over a structured point set.
 

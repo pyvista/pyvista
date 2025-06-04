@@ -981,8 +981,11 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleZoom(self)
 
+    @_deprecate_positional_args
     def enable_terrain_style(
-        self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True
+        self,
+        mouse_wheel_zooms: bool | float = True,  # noqa: FBT001
+        shift_pans: bool = True,  # noqa: FBT001
     ):
         """Set the interactive style to Terrain.
 

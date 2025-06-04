@@ -10,6 +10,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 from .helpers import view_vectors
@@ -795,8 +796,13 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         return new_camera
 
+    @_deprecate_positional_args
     def tight(
-        self, padding=0.0, adjust_render_window: bool = True, view='xy', negative: bool = False
+        self,
+        padding=0.0,
+        adjust_render_window: bool = True,  # noqa: FBT001
+        view='xy',
+        negative: bool = False,  # noqa: FBT001
     ):
         """Adjust the camera position so that the actors fill the entire renderer.
 

@@ -528,7 +528,7 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    @_deprecate_positional_args
+    @_deprecate_positional_args(allowed=['theme'])
     def __init__(  # noqa: PLR0917
         self,
         theme=None,
@@ -537,11 +537,11 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
         orientation=None,
         font_size=None,
         font_file=None,
-        shadow: bool = False,
+        shadow: bool = False,  # noqa: FBT001
         justification_horizontal=None,
         justification_vertical=None,
-        italic: bool = False,
-        bold: bool = False,
+        italic: bool = False,  # noqa: FBT001
+        bold: bool = False,  # noqa: FBT001
         background_color=None,
         background_opacity=None,
     ):

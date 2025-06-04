@@ -362,7 +362,7 @@ class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         height: float = 1.0,
         radius: float | None = None,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001
         angle: float | None = None,
         resolution: int = 6,
     ) -> None:
@@ -642,7 +642,7 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         radius: float = 0.5,
         height: float = 1.0,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001
         resolution: int = 100,
     ) -> None:
         """Initialize the cylinder source class."""
@@ -969,7 +969,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         height: float | None = None,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
-        process_empty_string: bool = True,
+        process_empty_string: bool = True,  # noqa: FBT001
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -2094,13 +2094,14 @@ class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
 
     """
 
+    @_deprecate_positional_args
     def __init__(
         self: PolygonSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         radius: float = 1.0,
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
         n_sides: int = 6,
-        fill: bool = True,
+        fill: bool = True,  # noqa: FBT001
     ) -> None:
         """Initialize the polygon source class."""
         super().__init__()
@@ -2789,11 +2790,12 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
         '_bounds',
     ]
 
+    @_deprecate_positional_args(allowed=['bounds'])
     def __init__(
         self: BoxSource,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         level: int = 0,
-        quads: bool = True,
+        quads: bool = True,  # noqa: FBT001
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -2933,7 +2935,7 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
         phi_roundness: float = 1.0,
         theta_resolution: int = 16,
         phi_resolution: int = 16,
-        toroidal: bool = False,
+        toroidal: bool = False,  # noqa: FBT001
         thickness: float = 1 / 3,
     ) -> None:
         """Initialize source."""

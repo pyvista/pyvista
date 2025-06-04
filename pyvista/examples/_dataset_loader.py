@@ -646,6 +646,7 @@ def _flatten_nested_sequence(nested: Sequence[_ScalarType | Sequence[_ScalarType
 
 def _download_dataset(
     dataset_loader: _SingleFileDownloadableDatasetLoader | _MultiFileDownloadableDatasetLoader,
+    *,
     load: bool = True,
     metafiles: bool = False,
 ):

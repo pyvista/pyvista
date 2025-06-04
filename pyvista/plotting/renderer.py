@@ -3654,8 +3654,12 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
+    @_deprecate_positional_args(allowed=['texture'])
     def set_environment_texture(
-        self, texture, is_srgb=False, resample: bool | float | None = None
+        self,
+        texture,
+        is_srgb=False,
+        resample: bool | float | None = None,  # noqa: FBT001
     ) -> None:
         """Set the environment texture used for image based lighting.
 

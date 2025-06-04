@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
@@ -20,11 +21,12 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
+@_deprecate_positional_args(allowed=['points'])
 def vtk_points(
     points: VectorLike[float] | MatrixLike[float],
-    deep: bool = True,
-    force_float: bool = False,
-    allow_empty: bool = True,
+    deep: bool = True,  # noqa: FBT001
+    force_float: bool = False,  # noqa: FBT001
+    allow_empty: bool = True,  # noqa: FBT001
 ) -> _vtk.vtkPoints:
     """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
 
@@ -153,8 +155,10 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     return poly
 
 
+@_deprecate_positional_args(allowed=['points'])
 def lines_from_points(
-    points: VectorLike[float] | MatrixLike[float], close: bool = False
+    points: VectorLike[float] | MatrixLike[float],
+    close: bool = False,  # noqa: FBT001
 ) -> PolyData:
     """Make a connected line set given an array of points.
 
@@ -193,9 +197,10 @@ def lines_from_points(
     return poly
 
 
+@_deprecate_positional_args(allowed=['points'])
 def fit_plane_to_points(
     points: MatrixLike[float],
-    return_meta: bool = False,
+    return_meta: bool = False,  # noqa: FBT001
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
 ) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:

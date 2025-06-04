@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import weakref
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk
 
 # The order of both the pre and post-passes matters.
@@ -200,7 +202,8 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):
+    @_deprecate_positional_args
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001
         """Enable the depth of field pass.
 
         Parameters

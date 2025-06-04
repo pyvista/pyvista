@@ -8,7 +8,7 @@ import os.path as op
 import sys
 
 
-def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:
+def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001
     """Determine the URL corresponding to a Python object.
 
     Parameters

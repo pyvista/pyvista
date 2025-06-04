@@ -468,7 +468,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002
+    @_deprecate_positional_args
+    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002, FBT001
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -1586,7 +1587,7 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
     @doc_subs
     def show(  # noqa: PLR0917
         self,
-        interactive: bool = True,
+        interactive: bool = True,  # noqa: FBT001
         off_screen=None,
         full_screen=None,
         screenshot=None,
@@ -3210,13 +3211,14 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         'chart_set_labels': 'plot.label = "My awesome plot"',
     }
 
+    @_deprecate_positional_args
     def __init__(
         self,
         size=(1, 1),
         loc=(0, 0),
         x_label='x',
         y_label='y',
-        grid: bool = True,
+        grid: bool = True,  # noqa: FBT001
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
@@ -4694,12 +4696,13 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         'chart_set_labels': 'plots[0].label = "My awesome plot"',
     }
 
+    @_deprecate_positional_args(allowed=['figure'])
     def __init__(
         self,
         figure=None,
         size=(1, 1),
         loc=(0, 0),
-        redraw_on_render: bool = True,
+        redraw_on_render: bool = True,  # noqa: FBT001
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -4974,7 +4977,8 @@ class Charts:
             self._scene.AddItem(chart)  # type: ignore[union-attr]
             chart._interactive = False  # Charts are not interactive by default
 
-    def set_interaction(self, interactive, toggle: bool = False):
+    @_deprecate_positional_args(allowed=['interactive'])
+    def set_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001
         """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``

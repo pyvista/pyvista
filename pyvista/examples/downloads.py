@@ -39,6 +39,7 @@ from pooch import Unzip
 from pooch.utils import get_logger
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -6052,8 +6053,9 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@_deprecate_positional_args
 def download_dicom_stack(
-    load: bool = True,
+    load: bool = True,  # noqa: FBT001
 ) -> pyvista.ImageData | str:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 

@@ -10,7 +10,7 @@ from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoade
 
 
 def _download_dataset_texture(
-    loader: _SingleFileDownloadableDatasetLoader, load: bool, texture: bool
+    loader: _SingleFileDownloadableDatasetLoader, *, load: bool, texture: bool
 ):
     dataset = _download_dataset(loader, load=load)
     if texture:

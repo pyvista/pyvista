@@ -8,6 +8,7 @@ from typing import ClassVar
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -342,7 +343,8 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
         pl.add_actor(self)
         pl.show(**kwargs)
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001
         """Create a copy of this actor.
 
         Parameters
