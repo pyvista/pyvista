@@ -481,7 +481,7 @@ class _DataSetMapper(_BaseMapper):
                     scalars_name not in self.dataset.cell_data
                     or scalars_name == pyvista.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.cell_data.set_array(scalars, scalars_name, False)
+                    self.dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
                 self.dataset.active_scalars_name = scalars_name
                 self.scalar_map_mode = 'cell'
             else:

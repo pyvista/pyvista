@@ -2302,7 +2302,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             ``deep=False``.
 
         """
-        lgrid = self.copy(deep)
+        lgrid = self.copy(deep=deep)
 
         # grab the vtk object
         vtk_cell_type = _vtk.numpy_to_vtk(self._get_cell_types_array(), deep=True)
@@ -3293,7 +3293,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             msg = 'Cannot save texture of a pointset.'
             raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
-        grid.save(filename, binary)
+        grid.save(filename, binary=binary)
 
     @_deprecate_positional_args(allowed=['ind'])
     def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001
