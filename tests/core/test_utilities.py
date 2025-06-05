@@ -2561,7 +2561,7 @@ def test_deprecate_positional_args_allowed():
     match = (
         "In decorator '_deprecate_positional_args' for function "
         "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
-        'A maximum of 5 positional arguments are allowed.\n'
+        'A maximum of 3 positional arguments are allowed.\n'
         "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
     )
     with pytest.raises(ValueError, match=re.escape(match)):
