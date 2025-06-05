@@ -714,7 +714,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return filename
 
     @_deprecate_positional_args(allowed=['filename'])
-    def export_gltf(
+    def export_gltf(  # noqa: PLR0917
         self,
         filename,
         inline_data=True,  # noqa: FBT002
@@ -2949,7 +2949,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         actor.SetProperty(prop)
 
         if label is not None:
-            self._add_legend_label(actor, label, None, prop.color)
+            self._add_legend_label(actor=actor, label=label, scalars=None, color=prop.color)
 
         # check if there are any consistent active scalars
         if color is not None:
@@ -3894,7 +3894,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # legend label
         if label is not None:
-            self._add_legend_label(actor, label, scalars, actor.prop.color)
+            self._add_legend_label(
+                actor=actor, label=label, scalars=scalars, color=actor.prop.color
+            )
 
         # by default reset the camera if the plotting window has been rendered
         if reset_camera is None:
@@ -3937,7 +3939,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color: Color):
+    def _add_legend_label(self, *, actor, label, scalars, color: Color):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             msg = 'Label must be a string'
@@ -5242,7 +5244,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = Path(pyvista.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    def open_gif(
+    @_deprecate_positional_args(allowed=['filename'])
+    def open_gif(  # noqa: PLR0917
         self,
         filename,
         loop=0,
@@ -5864,7 +5867,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         )
         return label_actor
 
-    def add_point_scalar_labels(
+    @_deprecate_positional_args(allowed=['points', 'labels'])
+    def add_point_scalar_labels(  # noqa: PLR0917
         self, points, labels, fmt=None, preamble='', **kwargs
     ) -> _vtk.vtkActor2D:
         """Label the points from a dataset with the values of their scalars.
@@ -6069,7 +6073,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return image if return_img else None
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True) -> None:  # noqa: FBT002
+    def save_graphic(  # noqa: PLR0917
+        self,
+        filename,
+        title='PyVista Export',
+        raster=True,  # noqa: FBT002
+        painter=True,  # noqa: FBT002
+    ) -> None:
         """Save a screenshot of the rendering window as a graphic file.
 
         This can be helpful for publication documents.
@@ -6150,7 +6160,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         writer.Update()
 
     @_deprecate_positional_args(allowed=['filename'])
-    def screenshot(
+    def screenshot(  # noqa: PLR0917
         self,
         filename=None,
         transparent_background=None,
@@ -6255,7 +6265,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderers.set_color_cycler``."""
         self.renderers.set_color_cycler(*args, **kwargs)
 
-    def generate_orbital_path(
+    def generate_orbital_path(  # noqa: PLR0917
         self, factor=3.0, n_points=20, viewup=None, shift=0.0
     ) -> pyvista.PolyData:
         """Generate an orbital path around the data scene.
@@ -6499,7 +6509,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self.renderers
 
     @_deprecate_positional_args(allowed=['image_path'])
-    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):  # noqa: FBT002
+    def add_background_image(  # noqa: PLR0917
+        self,
+        image_path,
+        scale=1.0,
+        auto_resize=True,  # noqa: FBT002
+        as_global=True,  # noqa: FBT002
+    ):
         """Add a background image to a plot.
 
         Parameters
@@ -7214,7 +7230,7 @@ class Plotter(BasePlotter):
         return return_values or None
 
     @_deprecate_positional_args(allowed=['title'])
-    def add_title(
+    def add_title(  # noqa: PLR0917
         self,
         title,
         font_size=18,

@@ -314,7 +314,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     }
 
     @_deprecate_positional_args(allowed=['parent'])
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         parent,
         border=True,  # noqa: FBT002
@@ -1137,7 +1137,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.Modified()
             del self.axes_widget
 
-    def add_orientation_widget(
+    @_deprecate_positional_args(allowed=['actor'])
+    def add_orientation_widget(  # noqa: PLR0917
         self,
         actor,
         interactive=None,
@@ -2918,7 +2919,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         return True
 
     @_deprecate_positional_args(allowed=['xscale', 'yscale', 'zscale'])
-    def set_scale(
+    def set_scale(  # noqa: PLR0917
         self,
         xscale=None,
         yscale=None,
@@ -3128,7 +3129,13 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.reset_camera(render=render, bounds=bounds)
 
     @_deprecate_positional_args(allowed=['vector', 'viewup'])
-    def view_vector(self, vector, viewup=None, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_vector(  # noqa: PLR0917
+        self,
+        vector,
+        viewup=None,
+        render=True,  # noqa: FBT002
+        bounds=None,
+    ) -> None:
         """Point the camera in the direction of the given vector.
 
         Parameters
@@ -3526,7 +3533,13 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self._render_passes.disable_shadow_pass()
 
     @_deprecate_positional_args
-    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True) -> None:  # noqa: FBT002
+    def enable_ssao(  # noqa: PLR0917
+        self,
+        radius=0.5,
+        bias=0.005,
+        kernel_size=256,
+        blur=True,  # noqa: FBT002
+    ) -> None:
         """Enable surface space ambient occlusion (SSAO).
 
         SSAO can approximate shadows more efficiently than ray-tracing
@@ -3596,7 +3609,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
-    def set_background(self, color, top=None, right=None, side=None, corner=None):
+    @_deprecate_positional_args(allowed=['color'])
+    def set_background(  # noqa: PLR0917
+        self, color, top=None, right=None, side=None, corner=None
+    ):
         """Set the background color of this renderer.
 
         Parameters

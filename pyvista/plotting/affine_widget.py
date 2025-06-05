@@ -82,7 +82,8 @@ def get_angle(v1, v2):
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
-def ray_plane_intersection(start_point, direction, plane_point, normal):
+@_deprecate_positional_args
+def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa: PLR0917
     """Compute the intersection between a ray and a plane.
 
     Parameters

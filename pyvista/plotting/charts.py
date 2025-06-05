@@ -2586,7 +2586,7 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
         'plot_init': 'chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y1', 'y2'])
+    @_deprecate_positional_args(allowed=['chart', 'x', 'y1', 'y2'], n_allowed=4)
     def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:  # noqa: PLR0917
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
@@ -3010,7 +3010,10 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
         'multiplot_init': 'chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    def __init__(self, chart, x, ys, colors=None, labels=None) -> None:
+    @_deprecate_positional_args(allowed=['chart', 'x', 'ys'])
+    def __init__(  # noqa: PLR0917
+        self, chart, x, ys, colors=None, labels=None
+    ) -> None:
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
         if not isinstance(ys[0], (Sequence, np.ndarray)):
@@ -3212,7 +3215,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
     }
 
     @_deprecate_positional_args
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         size=(1, 1),
         loc=(0, 0),
@@ -3496,7 +3499,10 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('line', x, y, color=color, width=width, style=style, label=label)
 
-    def area(self, x, y1, y2=None, color='b', label=''):
+    @_deprecate_positional_args(allowed=['x', 'y1', 'y2'])
+    def area(  # noqa: PLR0917
+        self, x, y1, y2=None, color='b', label=''
+    ):
         """Add an area plot to this chart.
 
         Parameters
@@ -3538,7 +3544,10 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('area', x, y1, y2, color=color, label=label)
 
-    def bar(self, x, y, color=None, orientation='V', label=None):
+    @_deprecate_positional_args(allowed=['x', 'y'])
+    def bar(  # noqa: PLR0917
+        self, x, y, color=None, orientation='V', label=None
+    ):
         """Add a bar plot to this chart.
 
         Parameters
@@ -3584,7 +3593,10 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('bar', x, y, color=color, orientation=orientation, label=label)
 
-    def stack(self, x, ys, colors=None, labels=None):
+    @_deprecate_positional_args(allowed=['x', 'ys'])
+    def stack(  # noqa: PLR0917
+        self, x, ys, colors=None, labels=None
+    ):
         """Add a stack plot to this chart.
 
         Parameters
@@ -4000,7 +4012,10 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
         'multiplot_init': 'chart.plot',
     }
 
-    def __init__(self, chart, data, colors=None, labels=None) -> None:
+    @_deprecate_positional_args(allowed=['chart', 'data'])
+    def __init__(  # noqa: PLR0917
+        self, chart, data, colors=None, labels=None
+    ) -> None:
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -4145,7 +4160,8 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
         'chart_set_labels': 'chart.plot.label = "Data label"',
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['data'])
+    def __init__(  # noqa: PLR0917
         self,
         data,
         colors=None,
@@ -4355,7 +4371,10 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         'multiplot_init': 'chart.plot',
     }
 
-    def __init__(self, chart, data, colors=None, labels=None) -> None:
+    @_deprecate_positional_args(allowed=['chart', 'data'])
+    def __init__(  # noqa: PLR0917
+        self, chart, data, colors=None, labels=None
+    ) -> None:
         """Initialize a new pie plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(data)
@@ -4471,7 +4490,8 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
         'chart_set_labels': 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['data'])
+    def __init__(  # noqa: PLR0917
         self,
         data,
         colors=None,
@@ -4697,7 +4717,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
     }
 
     @_deprecate_positional_args(allowed=['figure'])
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         figure=None,
         size=(1, 1),

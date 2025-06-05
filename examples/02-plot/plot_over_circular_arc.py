@@ -38,7 +38,9 @@ angle = 90.0
 
 # Preview how this circular arc intersects this mesh
 # with :func:`~pyvista.CircularArcFromNormal`.
-arc = pv.CircularArcFromNormal(center, 100, normal, polar, angle)
+arc = pv.CircularArcFromNormal(
+    center=center, resolution=100, normal=normal, polar=polar, angle=angle
+)
 
 p = pv.Plotter()
 p.add_mesh(mesh, style='wireframe', color='w')

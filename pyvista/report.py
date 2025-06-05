@@ -161,7 +161,14 @@ class Report(scooby.Report):
     """
 
     @_deprecate_positional_args
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):  # noqa: FBT002
+    def __init__(  # noqa: PLR0917
+        self,
+        additional=None,
+        ncol=3,
+        text_width=80,
+        sort=False,  # noqa: FBT002
+        gpu=True,  # noqa: FBT002
+    ):
         """Generate a :class:`scooby.Report` instance."""
         from vtkmodules.vtkRenderingCore import vtkRenderWindow
 

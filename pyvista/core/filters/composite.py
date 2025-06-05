@@ -173,7 +173,7 @@ class CompositeFilters(DataObjectFilters):
 
         skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
-        def apply_filter(function_, ids_, name_, block_):
+        def apply_filter(function_, ids_, name_, block_):  # noqa: PLR0917
             try:
                 function_ = (
                     getattr(block_, function_)

@@ -47,7 +47,7 @@ def _padded_bins(mesh, density):
 
 
 @_deprecate_positional_args(allowed=['mesh'])
-def voxelize(
+def voxelize(  # noqa: PLR0917
     mesh,
     density=None,
     check_surface: bool = True,  # noqa: FBT001, FBT002
@@ -221,7 +221,7 @@ def voxelize(
 
 
 @_deprecate_positional_args(allowed=['mesh'])
-def voxelize_volume(
+def voxelize_volume(  # noqa: PLR0917
     mesh,
     density=None,
     check_surface: bool = True,  # noqa: FBT001, FBT002
@@ -582,7 +582,7 @@ def spherical_to_cartesian(r, phi, theta):
 
 
 @_deprecate_positional_args(allowed=['datasets'])
-def merge(
+def merge(  # noqa: PLR0917
     datasets,
     merge_points: bool = True,  # noqa: FBT001, FBT002
     main_has_priority: bool = True,  # noqa: FBT001, FBT002

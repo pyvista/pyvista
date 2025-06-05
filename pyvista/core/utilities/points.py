@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @_deprecate_positional_args(allowed=['points'])
-def vtk_points(
+def vtk_points(  # noqa: PLR0917
     points: VectorLike[float] | MatrixLike[float],
     deep: bool = True,  # noqa: FBT001, FBT002
     force_float: bool = False,  # noqa: FBT001, FBT002
@@ -198,7 +198,7 @@ def lines_from_points(
 
 
 @_deprecate_positional_args(allowed=['points'])
-def fit_plane_to_points(
+def fit_plane_to_points(  # noqa: PLR0917
     points: MatrixLike[float],
     return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,

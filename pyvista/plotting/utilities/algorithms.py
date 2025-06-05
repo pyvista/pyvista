@@ -412,7 +412,7 @@ def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT00
 
 
 @_deprecate_positional_args(allowed=['inp'])
-def extract_surface_algorithm(
+def extract_surface_algorithm(  # noqa: PLR0917
     inp,
     pass_pointid: bool = False,  # noqa: FBT001, FBT002
     pass_cellid: bool = False,  # noqa: FBT001, FBT002

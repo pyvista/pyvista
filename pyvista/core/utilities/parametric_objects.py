@@ -79,7 +79,8 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     return spline.compute_arc_length()
 
 
-def KochanekSpline(
+@_deprecate_positional_args(allowed=['points'])
+def KochanekSpline(  # noqa: PLR0917
     points: VectorLike[float] | MatrixLike[float],
     tension: VectorLike[float] | None = None,
     bias: VectorLike[float] | None = None,
@@ -340,7 +341,7 @@ def ParametricCatalanMinimal(**kwargs) -> PolyData:
     return surf
 
 
-def ParametricConicSpiral(
+def ParametricConicSpiral(  # noqa: PLR0917
     a: float | None = None,
     b: float | None = None,
     c: float | None = None,
@@ -1129,7 +1130,8 @@ def ParametricRoman(radius: float | None = None, **kwargs) -> PolyData:
     return surf
 
 
-def ParametricSuperEllipsoid(
+@_deprecate_positional_args(allowed=['xradius', 'yradius', 'zradius'])
+def ParametricSuperEllipsoid(  # noqa: PLR0917
     xradius: float | None = None,
     yradius: float | None = None,
     zradius: float | None = None,

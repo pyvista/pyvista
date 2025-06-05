@@ -44,7 +44,7 @@ class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
     @_deprecate_positional_args
-    def gaussian_smooth(
+    def gaussian_smooth(  # noqa: PLR0917
         self,
         radius_factor=1.5,
         std_dev=2.0,
@@ -134,7 +134,7 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def median_smooth(
+    def median_smooth(  # noqa: PLR0917
         self,
         kernel_size=(3, 3, 3),
         scalars=None,
@@ -219,7 +219,7 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(
+    def extract_subset(  # noqa: PLR0917
         self,
         voi,
         rate=(1, 1, 1),
@@ -285,7 +285,7 @@ class ImageDataFilters(DataSetFilters):
         return fixed
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
-    def image_dilate_erode(
+    def image_dilate_erode(  # noqa: PLR0917
         self,
         dilate_value=1.0,
         erode_value=0.0,
@@ -1513,6 +1513,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _configure_boundaries(
             alg_: _vtk.vtkSurfaceNets3D,
+            *,
             array_: pyvista_ndarray,
             select_inputs_: int | VectorLike[int] | None,
             select_outputs_: int | VectorLike[int] | None,
@@ -1634,9 +1635,9 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
-                select_inputs,
-                select_outputs,
+                array_=cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
+                select_inputs_=select_inputs,
+                select_outputs_=select_outputs,
             )
         _configure_smoothing(
             alg,

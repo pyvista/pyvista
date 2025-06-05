@@ -304,7 +304,7 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
 
 @_deprecate_positional_args(allowed=['points', 'angle'])
-def axis_rotation(
+def axis_rotation(  # noqa: PLR0917
     points: NumpyArray[float],
     angle: float,
     inplace: bool = False,  # noqa: FBT001, FBT002

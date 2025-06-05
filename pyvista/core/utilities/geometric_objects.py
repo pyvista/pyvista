@@ -58,7 +58,8 @@ NORMALS = {
 NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
-def Capsule(
+@_deprecate_positional_args
+def Capsule(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     radius: float = 0.5,
@@ -1406,7 +1407,7 @@ def Cone(  # noqa: PLR0917
 
 
 @_deprecate_positional_args
-def Polygon(
+def Polygon(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     radius: float = 1.0,
     normal: VectorLike[float] = (0.0, 0.0, 1.0),
@@ -1691,7 +1692,7 @@ def Wavelet(  # noqa: PLR0917
 
 
 @_deprecate_positional_args(allowed=['pointa', 'pointb', 'center'])
-def CircularArc(
+def CircularArc(  # noqa: PLR0917
     pointa: VectorLike[float],
     pointb: VectorLike[float],
     center: VectorLike[float],
@@ -1778,7 +1779,8 @@ def CircularArc(
     return cast('pyvista.PolyData', arc)
 
 
-def CircularArcFromNormal(
+@_deprecate_positional_args
+def CircularArcFromNormal(  # noqa: PLR0917
     center: VectorLike[float],
     resolution: int = 100,
     normal: VectorLike[float] | None = None,
@@ -1823,7 +1825,9 @@ def CircularArcFromNormal(
     >>> import pyvista as pv
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pv.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> arc = pv.CircularArcFromNormal(
+    ...     center=[0, 0, 0], normal=normal, polar=polar
+    ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)

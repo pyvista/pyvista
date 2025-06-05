@@ -11,7 +11,7 @@ import warnings
 
 from typing_extensions import ParamSpec
 
-_MAX_POSITIONAL_ARGS = 5  # Should match value in pyproject.toml
+_MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
 
 P = ParamSpec('P')
@@ -24,18 +24,18 @@ def _deprecate_positional_args(
     *,
     version: tuple[int, int] = ...,
     allowed: list[str] | None = ...,
+    n_allowed: int = ...,
 ) -> Callable[P, T]: ...
 @overload
 def _deprecate_positional_args(
-    *,
-    version: tuple[int, int] = ...,
-    allowed: list[str] | None = ...,
+    *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...
 ) -> Callable[[Callable[P, T]], Callable[P, T]]: ...
 def _deprecate_positional_args(
     func: Callable[..., T] | None = None,
     *,
     version: tuple[int, int] = (0, 50),
     allowed: list[str] | None = None,
+    n_allowed: int = _MAX_POSITIONAL_ARGS,
 ) -> Callable[..., T] | Callable[[Callable[P, T]], Callable[P, T]]:
     """Use a decorator to deprecate positional arguments.
 
@@ -48,8 +48,11 @@ def _deprecate_positional_args(
         The version (major, minor) when positional arguments will result in RuntimeError.
 
     allowed : list[str], optional
-        List of argument names which are allowed to be positional. A maximum of 5 arguments
-        may be listed (as per ruff rule PLR0917, FBT001, FBT002, FBT002, FBT003).
+        List of argument names which are allowed to be positional. This value is limited
+        based on rule PLR0917.
+
+    n_allowed : int, optional
+        Override the number of allowed positional arguments to this value.
 
     """
 
@@ -72,12 +75,11 @@ def _deprecate_positional_args(
                 raise TypeError(msg)
 
             # Validate number of allowed args
-            n_allowed = len(allowed)
-            if n_allowed > _MAX_POSITIONAL_ARGS:
+            if len(allowed) > n_allowed:
                 msg = (
                     f'In decorator {decorator_name!r} for function {qualified_name()!r}:\n'
-                    f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed.\n'
-                    f'Got {n_allowed}: {allowed}'
+                    f'A maximum of {n_allowed} positional arguments are allowed.\n'
+                    f'Got {len(allowed)}: {allowed}'
                 )
                 raise ValueError(msg)
 

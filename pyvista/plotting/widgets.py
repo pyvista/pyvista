@@ -1117,7 +1117,7 @@ class WidgetHelper:
         return self.add_mesh(alg, **kwargs)  # type: ignore[attr-defined]
 
     @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_slice_orthogonal(
+    def add_mesh_slice_orthogonal(  # noqa: PLR0917
         self,
         mesh,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
@@ -1791,7 +1791,7 @@ class WidgetHelper:
         self.threshold_meshes.append(threshold_mesh)
 
         def callback(value):
-            _set_threshold_limit(alg, value, method, invert)
+            _set_threshold_limit(alg, value=value, method=method, invert=invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
 
@@ -2653,7 +2653,7 @@ class WidgetHelper:
             msg = 'Cannot add a widget to a closed plotter.'
             raise RuntimeError(msg)
 
-        def create_button(color1, color2, color3, dims=(size, size, 1)):
+        def create_button(color1, color2, color3, *, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
             color2 = np.array(Color(color2).int_rgb)
             color3 = np.array(Color(color3).int_rgb)
@@ -2819,7 +2819,7 @@ class WidgetHelper:
         color_off = Color(color_off)
         background_color = Color(background_color, default_color=self.background_color)  # type: ignore[attr-defined]
 
-        def create_radio_button(fg_color, bg_color, size=size, smooth=2):
+        def create_radio_button(fg_color, bg_color, size=size, smooth=2):  # noqa: PLR0917
             fg_color = np.array(fg_color.int_rgb)
             bg_color = np.array(bg_color.int_rgb)
 
@@ -2968,7 +2968,8 @@ class WidgetHelper:
             button_widget.Off()
         self.button_widgets.clear()
 
-    def add_logo_widget(
+    @_deprecate_positional_args(allowed=['logo'])
+    def add_logo_widget(  # noqa: PLR0917
         self,
         logo: pyvista.ImageData | str | pathlib.Path | None = None,
         position: VectorLike[float] = (0.75, 0.8),

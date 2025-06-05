@@ -66,7 +66,7 @@ class DataObjectFilters:
         progress_bar: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['trans'])
-    def transform(  # type: ignore[misc]
+    def transform(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -325,7 +325,7 @@ class DataObjectFilters:
         progress_bar: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['normal'])
-    def reflect(  # type: ignore[misc]
+    def reflect(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -401,7 +401,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_x(  # type: ignore[misc]
+    def rotate_x(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -483,7 +483,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_y(  # type: ignore[misc]
+    def rotate_y(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -564,7 +564,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_z(  # type: ignore[misc]
+    def rotate_z(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -648,7 +648,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['vector', 'angle'])
-    def rotate_vector(  # type: ignore[misc]
+    def rotate_vector(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         vector: VectorLike[float],
         angle: float,
@@ -734,7 +734,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['rotation'])
-    def rotate(  # type: ignore[misc]
+    def rotate(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
@@ -897,7 +897,7 @@ class DataObjectFilters:
         point: VectorLike[float] | None = ...,
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['xyz'])
-    def scale(  # type: ignore[misc]
+    def scale(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1219,7 +1219,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['normal'])
-    def flip_normal(  # type: ignore[misc]
+    def flip_normal(  # type: ignore[misc]  # noqa: PLR0917
         self: DataSet | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -1316,10 +1316,10 @@ class DataObjectFilters:
                 output.set_active_scalars(name, preference=association)
                 return output
 
-            def extract_crinkle_cells(dataset, a_, b_, active_scalars_info_):
+            def extract_crinkle_cells(dataset, a_, b_, active_scalars_info_):  # noqa: PLR0917
                 if b_ is None:
                     # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(
+                    def extract_cells_from_block(  # noqa: PLR0917
                         block_, clipped_a, clipped_b, active_scalars_info_
                     ):
                         return extract_cells(
@@ -1329,7 +1329,7 @@ class DataObjectFilters:
                         )
                 else:
                     # Extract cells when `return_clipped=True`
-                    def extract_cells_from_block(
+                    def extract_cells_from_block(  # noqa: PLR0917
                         block_, clipped_a, clipped_b, active_scalars_info_
                     ):
                         set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
@@ -1344,7 +1344,7 @@ class DataObjectFilters:
                         clipped_b = extract_cells(block_, array_b, active_scalars_info_)
                         return clipped_a, clipped_b
 
-                def extract_cells_from_multiblock(
+                def extract_cells_from_multiblock(  # noqa: PLR0917
                     multi_in, multi_a, multi_b, active_scalars_info_
                 ):
                     # Iterate though input and output multiblocks
@@ -1648,7 +1648,7 @@ class DataObjectFilters:
         return clipped
 
     @_deprecate_positional_args(allowed=['implicit_function'])
-    def slice_implicit(  # type: ignore[misc]
+    def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         implicit_function: _vtk.vtkImplicitFunction,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
@@ -1710,7 +1710,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args(allowed=['normal'])
-    def slice(  # type: ignore[misc]
+    def slice(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
@@ -2018,7 +2018,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args(allowed=['line'])
-    def slice_along_line(  # type: ignore[misc]
+    def slice_along_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         line: pyvista.PolyData,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
@@ -2285,7 +2285,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args
-    def compute_cell_sizes(  # type: ignore[misc]
+    def compute_cell_sizes(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         length: bool = True,  # noqa: FBT001, FBT002
         area: bool = True,  # noqa: FBT001, FBT002

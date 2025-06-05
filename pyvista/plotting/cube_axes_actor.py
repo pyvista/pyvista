@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-def make_axis_labels(vmin, vmax, n, fmt):
+@_deprecate_positional_args
+def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     """Create axis labels as a :vtk:`vtkStringArray`.
 
     Parameters
@@ -557,9 +558,12 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.x_axis_visibility:
             self.SetXTitle(self._x_title)
             if self._x_label_visibility:
+                vmin, vmax = self.x_axis_range
                 self.SetAxisLabels(
                     0,
-                    make_axis_labels(*self.x_axis_range, self.n_xlabels, self.x_label_format),
+                    make_axis_labels(
+                        vmin=vmin, vmax=vmax, n=self.n_xlabels, fmt=self.x_label_format
+                    ),
                 )
             else:
                 self.SetAxisLabels(0, self._empty_str)
@@ -572,9 +576,12 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.y_axis_visibility:
             self.SetYTitle(self._y_title)
             if self._y_label_visibility:
+                vmin, vmax = self.x_axis_range
                 self.SetAxisLabels(
                     1,
-                    make_axis_labels(*self.y_axis_range, self.n_ylabels, self.y_label_format),
+                    make_axis_labels(
+                        vmin=vmin, vmax=vmax, n=self.n_ylabels, fmt=self.y_label_format
+                    ),
                 )
             else:
                 self.SetAxisLabels(1, self._empty_str)
@@ -587,9 +594,12 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.z_axis_visibility:
             self.SetZTitle(self._z_title)
             if self._z_label_visibility:
+                vmin, vmax = self.x_axis_range
                 self.SetAxisLabels(
                     2,
-                    make_axis_labels(*self.z_axis_range, self.n_zlabels, self.z_label_format),
+                    make_axis_labels(
+                        vmin=vmin, vmax=vmax, n=self.n_zlabels, fmt=self.z_label_format
+                    ),
                 )
             else:
                 self.SetAxisLabels(2, self._empty_str)

@@ -797,7 +797,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         return new_camera
 
     @_deprecate_positional_args
-    def tight(
+    def tight(  # noqa: PLR0917
         self,
         padding=0.0,
         adjust_render_window: bool = True,  # noqa: FBT001, FBT002

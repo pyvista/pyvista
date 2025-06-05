@@ -544,7 +544,8 @@ class CompositePolyDataMapper(
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['dataset'])
+    def __init__(  # noqa: PLR0917
         self,
         dataset=None,
         theme=None,
@@ -811,10 +812,10 @@ class CompositePolyDataMapper(
         self._orig_scalars_name = scalars_name
 
         field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
-            scalars_name,
-            preference,
-            component,
-            rgb,
+            scalars_name=scalars_name,
+            preference=preference,
+            component=component,
+            rgb=rgb,
         )
 
         self.scalar_visibility = True

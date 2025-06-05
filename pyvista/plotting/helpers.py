@@ -61,7 +61,7 @@ def plot_arrows(cent, direction, **kwargs):
     return pyvista.plot([cent, direction], **kwargs)
 
 
-@_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'])
+@_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
 def plot_compare_four(  # noqa: PLR0917
     data_a,
     data_b,

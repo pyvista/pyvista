@@ -487,7 +487,7 @@ allow-dict-calls-with-keyword-arguments = true
 'tests*' = ['ANN']
 
 [tool.ruff.lint.pylint]
-max-positional-args = 5
+max-positional-args = 3
 
 [tool.ruff.lint.isort]
 combine-as-imports = true # Combines 'as' imports on the same line

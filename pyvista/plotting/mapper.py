@@ -423,14 +423,15 @@ class _DataSetMapper(_BaseMapper):
         if self.dataset is not None:
             self.dataset.point_data.pop('__rgba__', None)
             self._configure_scalars_mode(
-                self.lookup_table(self.dataset.active_scalars),
-                '__rgba__',
-                self.scalar_map_mode,
-                True,
+                scalars=self.lookup_table(self.dataset.active_scalars),
+                scalars_name='__rgba__',
+                preference=self.scalar_map_mode,
+                direct_scalars_color_mode=True,
             )
 
     def _configure_scalars_mode(
         self,
+        *,
         scalars,
         scalars_name,
         preference,
@@ -739,10 +740,10 @@ class _DataSetMapper(_BaseMapper):
             self.lookup_table.log_scale = log_scale
 
         self._configure_scalars_mode(
-            scalars,
-            scalars_name,
-            preference,
-            rgb or custom_opac,
+            scalars=scalars,
+            scalars_name=scalars_name,
+            preference=preference,
+            direct_scalars_color_mode=rgb or custom_opac,
         )
 
         if isinstance(self, PointGaussianMapper):
@@ -816,7 +817,10 @@ class _DataSetMapper(_BaseMapper):
             msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
             raise ValueError(msg)
 
-    def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
+    @_deprecate_positional_args(allowed=['opacity'])
+    def set_custom_opacity(  # noqa: PLR0917
+        self, opacity, color, n_colors, preference='point'
+    ):
         """Set custom opacity.
 
         Parameters
@@ -858,7 +862,9 @@ class _DataSetMapper(_BaseMapper):
 
         self.color_mode = 'direct'
         self.lookup_table.n_values = n_colors
-        self._configure_scalars_mode(rgba, '', preference, True)
+        self._configure_scalars_mode(
+            scalars=rgba, scalars_name='', preference=preference, direct_scalars_color_mode=True
+        )
 
     def __repr__(self):
         """Representation of the mapper."""

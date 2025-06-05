@@ -583,7 +583,7 @@ class PolyDataFilters(DataSetFilters):
         return merged
 
     @_deprecate_positional_args(allowed=['mesh'])
-    def intersection(
+    def intersection(  # noqa: PLR0917
         self,
         mesh,
         split_first: bool = True,  # noqa: FBT001, FBT002
@@ -1402,7 +1402,7 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     @_deprecate_positional_args(allowed=['nsub', 'subfilter'])
-    def subdivide(
+    def subdivide(  # noqa: PLR0917
         self,
         nsub,
         subfilter='linear',
@@ -2009,7 +2009,7 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     @_deprecate_positional_args(allowed=['normal'])
-    def clip_closed_surface(
+    def clip_closed_surface(  # noqa: PLR0917
         self,
         normal='x',
         origin=None,
@@ -2375,7 +2375,7 @@ class PolyDataFilters(DataSetFilters):
         return output
 
     @_deprecate_positional_args(allowed=['start_vertex', 'end_vertex'])
-    def geodesic_distance(
+    def geodesic_distance(  # noqa: PLR0917
         self,
         start_vertex,
         end_vertex,
@@ -2428,7 +2428,7 @@ class PolyDataFilters(DataSetFilters):
         return distance
 
     @_deprecate_positional_args(allowed=['origin', 'end_point'])
-    def ray_trace(
+    def ray_trace(  # noqa: PLR0917
         self,
         origin,
         end_point,
@@ -2522,7 +2522,7 @@ class PolyDataFilters(DataSetFilters):
         return intersection_points, intersection_cells
 
     @_deprecate_positional_args(allowed=['origins', 'directions'])
-    def multi_ray_trace(
+    def multi_ray_trace(  # noqa: PLR0917
         self,
         origins,
         directions,
@@ -2813,7 +2813,13 @@ class PolyDataFilters(DataSetFilters):
         return plotter.show()
 
     @_deprecate_positional_args(allowed=['remove', 'mode'])
-    def remove_points(self, remove, mode='any', keep_scalars: bool = True, inplace: bool = False):  # noqa: FBT001, FBT002
+    def remove_points(  # noqa: PLR0917
+        self,
+        remove,
+        mode='any',
+        keep_scalars: bool = True,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ):
         """Rebuild a mesh by removing points.
 
         Only valid for all-triangle meshes.
@@ -3448,7 +3454,13 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['vector'])
-    def extrude(self, vector, capping=None, inplace: bool = False, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def extrude(  # noqa: PLR0917
+        self,
+        vector,
+        capping=None,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ):
         """Sweep polygonal data creating a "skirt" from free edges.
 
         This will create a line from vertices.

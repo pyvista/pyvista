@@ -1482,7 +1482,8 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: DiscSource,
         center: VectorLike[float] | None = None,
         inner: float = 0.25,
@@ -2095,7 +2096,7 @@ class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
     """
 
     @_deprecate_positional_args
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self: PolygonSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         radius: float = 1.0,
@@ -2615,7 +2616,8 @@ class ArrowSource(_vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: ArrowSource,
         tip_length: float = 0.25,
         tip_radius: float = 0.1,

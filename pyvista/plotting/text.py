@@ -65,7 +65,10 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
+    @_deprecate_positional_args(allowed=['position', 'text'])
+    def __init__(  # noqa: PLR0917
+        self, position, text, prop=None, linear_font_scale_factor=None, name=None
+    ):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -194,7 +197,10 @@ class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None, name=None):
+    @_deprecate_positional_args(allowed=['text'])
+    def __init__(  # noqa: PLR0917
+        self, text=None, position=None, prop=None, name=None
+    ):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:

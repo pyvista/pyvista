@@ -36,7 +36,7 @@ class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
     """
 
     @_deprecate_positional_args
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         show_actor: bool = False,  # noqa: FBT001, FBT002
         actor_scale=1,

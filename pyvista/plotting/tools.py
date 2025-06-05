@@ -541,7 +541,12 @@ def normalize(x, minimum=None, maximum=None):
 
 
 @_deprecate_positional_args(allowed=['mapping', 'n_colors'])
-def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='linear'):  # noqa: FBT001, FBT002
+def opacity_transfer_function(  # noqa: PLR0917
+    mapping,
+    n_colors,
+    interpolate: bool = True,  # noqa: FBT001, FBT002
+    kind='linear',
+):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of

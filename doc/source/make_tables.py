@@ -1319,7 +1319,7 @@ class ColormapTable(DocTable):
         return ColormapTable.linear_regression(x, y)
 
     @staticmethod
-    def save_scatter_plot(x, y, cmap, img_path, y_lim=None):
+    def save_scatter_plot(x, y, cmap, img_path, y_lim=None):  # noqa: PLR0917
         width = 256
         height = 64
 
@@ -1346,10 +1346,10 @@ class ColormapTable(DocTable):
     @staticmethod
     def sort_data(
         data: list[_COLORMAP_INFO],
+        *,
         initial_cmap: str,
         n_samples: int,
         sort_by: Literal['hue', 'cam02ucs'],
-        *,
         pre_sort: bool = False,
     ):
         """Sort colormaps by color similarity.
@@ -1986,11 +1986,11 @@ class DatasetCard:
             n_arrays=n_arrays,
         )
         file_info_block = self._create_file_props_block(
-            self.loader,
-            file_size,
-            num_files,
-            file_ext,
-            reader_type,
+            loader=self.loader,
+            file_size=file_size,
+            num_files=num_files,
+            file_ext=file_ext,
+            reader_type=reader_type,
         )
         seealso_block = self._create_seealso_block(cross_references)
         footer_block = self._create_footer_block(datasource_links)
@@ -2346,7 +2346,7 @@ class DatasetCard:
         )
 
     @classmethod
-    def _create_file_props_block(cls, loader, file_size, num_files, file_ext, reader_type):
+    def _create_file_props_block(cls, *, loader, file_size, num_files, file_ext, reader_type):
         if isinstance(loader, _DatasetLoader):
             file_info_fields = [
                 ('File Size', file_size),

@@ -2647,6 +2647,7 @@ class MultiBlock(
 
     def _activate_plotting_scalars(
         self: MultiBlock,
+        *,
         scalars_name: str,
         preference: PointLiteral | CellLiteral,
         component: int | None,

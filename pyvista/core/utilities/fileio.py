@@ -164,7 +164,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
 
 @_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0911
+def read(  # noqa: PLR0911, PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,

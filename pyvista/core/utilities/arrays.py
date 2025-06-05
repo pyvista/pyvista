@@ -270,7 +270,7 @@ def convert_array(
     array_type: int | None = ...,
 ) -> None: ...
 @_deprecate_positional_args(allowed=['arr', 'name'])
-def convert_array(
+def convert_array(  # noqa: PLR0917
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
     deep: bool = False,  # noqa: FBT001, FBT002
@@ -332,8 +332,8 @@ def convert_array(
     return _vtk.vtk_to_numpy(arr)
 
 
-@_deprecate_positional_args(allowed=['mesh', 'name', 'preference'])
-def get_array(
+@_deprecate_positional_args(allowed=['mesh', 'name'])
+def get_array(  # noqa: PLR0917
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
@@ -408,8 +408,8 @@ def get_array(
         return out
 
 
-@_deprecate_positional_args(allowed=['mesh', 'name', 'preference'])
-def get_array_association(
+@_deprecate_positional_args(allowed=['mesh', 'name'])
+def get_array_association(  # noqa: PLR0917
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',

@@ -863,7 +863,7 @@ class DataSetFilters(DataObjectFilters):
         if value is None:
             value = self.get_data_range(scalars)
 
-        _set_threshold_limit(alg, value, method, invert)
+        _set_threshold_limit(alg, value=value, method=method, invert=invert)
 
         if component_mode == 'component':
             alg.SetComponentModeToUseSelected()
@@ -1442,7 +1442,7 @@ class DataSetFilters(DataObjectFilters):
         return self
 
     @_deprecate_positional_args
-    def texture_map_to_sphere(  # type: ignore[misc]
+    def texture_map_to_sphere(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         center: VectorLike[float] | None = None,
         prevent_seam: bool = True,  # noqa: FBT001, FBT002
@@ -2345,7 +2345,7 @@ class DataSetFilters(DataObjectFilters):
         return bodies
 
     @_deprecate_positional_args(allowed=['scalars'])
-    def warp_by_scalar(  # type: ignore[misc]
+    def warp_by_scalar(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         factor: float = 1.0,
@@ -2437,7 +2437,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args(allowed=['vectors'])
-    def warp_by_vector(  # type: ignore[misc]
+    def warp_by_vector(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         vectors: str | None = None,
         factor: float = 1.0,
@@ -2520,7 +2520,7 @@ class DataSetFilters(DataObjectFilters):
             return warped_mesh
 
     @_deprecate_positional_args
-    def delaunay_3d(  # type: ignore[misc]
+    def delaunay_3d(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         alpha: float = 0.0,
         tol: float = 0.001,
@@ -2581,7 +2581,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['surface'])
-    def select_enclosed_points(  # type: ignore[misc]
+    def select_enclosed_points(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         surface: PolyData,
         tolerance: float = 0.001,
@@ -3398,7 +3398,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args(allowed=['pointa', 'pointb'])
-    def sample_over_line(  # type: ignore[misc]
+    def sample_over_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3785,7 +3785,7 @@ class DataSetFilters(DataObjectFilters):
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArcFromNormal(
-            center,
+            center=center,
             resolution=resolution,
             normal=normal,
             polar=polar,
@@ -4140,7 +4140,7 @@ class DataSetFilters(DataObjectFilters):
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
-    def extract_points(  # type: ignore[misc]
+    def extract_points(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,  # noqa: FBT001, FBT002
@@ -4793,7 +4793,7 @@ class DataSetFilters(DataObjectFilters):
                     raise TypeError(msg)
 
         def _validate_values_and_ranges(
-            array_, values_, ranges_, num_components_, component_mode_
+            array_, *, values_, ranges_, num_components_, component_mode_
         ):
             # Make sure we have input values to extract
             is_multi_mode = component_mode_ == 'multi'
@@ -4883,10 +4883,10 @@ class DataSetFilters(DataObjectFilters):
         range_names, ranges = _get_inputs_from_dict(ranges)
         valid_values, valid_ranges = _validate_values_and_ranges(
             array,
-            values,
-            ranges,
-            num_components,
-            component_mode,
+            values_=values,
+            ranges_=ranges,
+            num_components_=num_components,
+            component_mode_=component_mode,
         )
 
         return (
@@ -5011,7 +5011,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args
-    def extract_surface(  # type: ignore[misc]
+    def extract_surface(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
@@ -6571,7 +6571,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['scalars'])
-    def sort_labels(  # type: ignore[misc]
+    def sort_labels(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
@@ -7690,7 +7690,7 @@ class DataSetFilters(DataObjectFilters):
         return output_volume
 
 
-def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):
     percentile = _validation.validate_number(
         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
     )
@@ -7703,7 +7703,7 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, p
     return distribution.GetLengthQuantile(percentile)
 
 
-def _set_threshold_limit(alg, value, method, invert):
+def _set_threshold_limit(alg, *, value, method, invert):
     """Set vtkThreshold limits and function.
 
     Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:

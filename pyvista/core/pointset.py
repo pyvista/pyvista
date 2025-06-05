@@ -1439,7 +1439,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.GetNumberOfPolys()
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(self, filename, binary: bool = True, texture=None, recompute_normals: bool = True):  # noqa: FBT001, FBT002
+    def save(  # noqa: PLR0917
+        self,
+        filename,
+        binary: bool = True,  # noqa: FBT001, FBT002
+        texture=None,
+        recompute_normals: bool = True,  # noqa: FBT001, FBT002
+    ):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh

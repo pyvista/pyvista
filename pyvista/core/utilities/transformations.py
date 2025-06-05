@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @_deprecate_positional_args(allowed=['axis', 'angle'])
-def axis_angle_rotation(
+def axis_angle_rotation(  # noqa: PLR0917
     axis: VectorLike[float],
     angle: float,
     point: VectorLike[float] | None = None,

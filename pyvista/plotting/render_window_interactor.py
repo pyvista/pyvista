@@ -89,7 +89,13 @@ class RenderWindowInteractor:
     """
 
     @_deprecate_positional_args(allowed=['plotter'])
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):  # noqa: FBT002
+    def __init__(  # noqa: PLR0917
+        self,
+        plotter,
+        desired_update_rate=30,
+        light_follow_camera=True,  # noqa: FBT002
+        interactor=None,
+    ):
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -375,7 +381,13 @@ class RenderWindowInteractor:
             callback(self._plotter.click_position)
 
     @_deprecate_positional_args(allowed=['callback', 'side'])
-    def track_click_position(self, callback=None, side='right', double=False, viewport=False):  # noqa: FBT002
+    def track_click_position(  # noqa: PLR0917,
+        self,
+        callback=None,
+        side='right',
+        double=False,  # noqa: FBT002
+        viewport=False,  # noqa: FBT002
+    ):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -730,7 +742,7 @@ class RenderWindowInteractor:
             'right': self.style.OnRightButtonUp,
         }
 
-        def _setup_callbacks(button, click, control, shift):
+        def _setup_callbacks(*, button, click, control, shift):
             """Return callbacks for press and release events.
 
             Callbacks are formed for a button and action for a click,

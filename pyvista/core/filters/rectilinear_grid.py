@@ -18,7 +18,7 @@ class RectilinearGridFilters:
     """An internal class to manage filters/algorithms for rectilinear grid datasets."""
 
     @_deprecate_positional_args(allowed=['tetra_per_cell'])
-    def to_tetrahedra(
+    def to_tetrahedra(  # noqa: PLR0917
         self,
         tetra_per_cell: int = 5,
         mixed: str | Sequence[int] | bool = False,  # noqa: FBT001, FBT002

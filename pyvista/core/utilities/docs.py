@@ -99,7 +99,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
-def pv_html_page_context(
+def pv_html_page_context(  # noqa: PLR0917
     app,
     pagename: str,
     templatename: str,

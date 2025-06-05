@@ -237,7 +237,10 @@ class RenderPasses:
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
 
-    def enable_ssao_pass(self, radius, bias, kernel_size, blur):
+    @_deprecate_positional_args
+    def enable_ssao_pass(  # noqa: PLR0917
+        self, radius, bias, kernel_size, blur
+    ):
         """Enable the screen space ambient occlusion pass.
 
         Parameters

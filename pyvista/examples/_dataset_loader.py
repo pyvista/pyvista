@@ -500,7 +500,7 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         path: str,
         read_func: Callable[[str], DatasetType] | None = None,

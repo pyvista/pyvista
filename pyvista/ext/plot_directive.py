@@ -423,7 +423,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _run_code(code, code_path, ns=None, function_name=None):
+def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a
@@ -487,16 +487,16 @@ def render_figures(
     code_cleanup = config.pyvista_plot_cleanup
 
     if code_setup:
-        _run_code(code_setup, code_path, ns, function_name)
+        _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
 
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
             _run_code(
-                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
-                code_path,
-                ns,
-                function_name,
+                code=doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_path=code_path,
+                ns=ns,
+                function_name=function_name,
             )
 
             images = []
@@ -535,7 +535,7 @@ def render_figures(
             results.append((code_piece, images))
     finally:
         if code_cleanup:
-            _run_code(code_cleanup, code_path, ns, function_name)
+            _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 
     return results
 
