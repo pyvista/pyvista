@@ -3829,9 +3829,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif custom_opac:  # no scalars but custom opacity
             self.mapper.set_custom_opacity(
                 opacity,
-                color,
-                n_colors,
-                preference,
+                color=color,
+                n_colors=n_colors,
+                preference=preference,
             )
             self.mapper.scalar_visibility = True
         else:

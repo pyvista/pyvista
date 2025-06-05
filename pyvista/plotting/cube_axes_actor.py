@@ -576,7 +576,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.y_axis_visibility:
             self.SetYTitle(self._y_title)
             if self._y_label_visibility:
-                vmin, vmax = self.x_axis_range
+                vmin, vmax = self.y_axis_range
                 self.SetAxisLabels(
                     1,
                     make_axis_labels(
@@ -594,7 +594,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.z_axis_visibility:
             self.SetZTitle(self._z_title)
             if self._z_label_visibility:
-                vmin, vmax = self.x_axis_range
+                vmin, vmax = self.z_axis_range
                 self.SetAxisLabels(
                     2,
                     make_axis_labels(
