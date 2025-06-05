@@ -1083,7 +1083,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item) -> bool:  # noqa: N802
+        def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
             return True
 
@@ -1096,7 +1096,7 @@ class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, painter) -> bool:
+    def paint(self, _) -> bool:
         return True
 
 
@@ -1160,7 +1160,7 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
         """Get a reference to the :vtk:`vtkRenderer` in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
-    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
+    def _render_event(self, *_, plotter_render: bool = False, **__) -> None:
         """Update the chart right before it will be rendered."""
         # Only resize on real VTK render events (plotter.render calls will afterwards invoke a
         # proper render event)
@@ -4827,7 +4827,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
             img_data = pyvista.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
+    def _render_event(self, *_, plotter_render: bool = False, **__) -> None:
         # Redraw figure when geometry has changed (self._resize call
         # already updated figure dimensions in that case) OR the
         # plotter's render method was called and redraw_on_render is

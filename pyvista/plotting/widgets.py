@@ -555,8 +555,8 @@ class WidgetHelper:
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
 
-            _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
-            _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
+            _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)  # noqa: ARG005
+            _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)  # noqa: ARG005
 
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(_vtk.vtkCommand.StartInteractionEvent, _start_interact)
@@ -830,9 +830,9 @@ class WidgetHelper:
         self,
         volume,
         normal='x',
-        invert: bool = False,  # noqa: FBT001, FBT002
+        invert: bool = False,  # noqa: ARG002, FBT001, FBT002
         widget_color=None,
-        value=0.0,
+        value=0.0,  # noqa: ARG002
         assign_to_axis=None,
         tubing: bool = False,  # noqa: FBT001, FBT002
         origin_translation: bool = True,  # noqa: FBT001, FBT002

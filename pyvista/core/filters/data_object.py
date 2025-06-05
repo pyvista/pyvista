@@ -1316,12 +1316,10 @@ class DataObjectFilters:
                 output.set_active_scalars(name, preference=association)
                 return output
 
-            def extract_crinkle_cells(dataset, a_, b_, active_scalars_info_):  # noqa: PLR0917
+            def extract_crinkle_cells(dataset, a_, b_, _):
                 if b_ is None:
                     # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(  # noqa: PLR0917
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
+                    def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                         return extract_cells(
                             block_,
                             np.unique(clipped_a.cell_data[CELL_IDS_KEY]),

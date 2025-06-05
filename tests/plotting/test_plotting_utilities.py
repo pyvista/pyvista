@@ -47,14 +47,15 @@ def test_ray_trace_plot():
     assert np.any(ind)
 
 
-@pytest.mark.skip_plotting
-def test_plot_curvature(skip_check_gc):
+@pytest.mark.usefixtures('skip_check_gc')
+def test_plot_curvature():
     sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
 @pytest.mark.skip_plotting
-def test_plot_curvature_pointset(skip_check_gc):
+@pytest.mark.usefixtures('skip_check_gc')
+def test_plot_curvature_pointset():
     grid = examples.load_structured()
     grid.plot_curvature(off_screen=True)
 

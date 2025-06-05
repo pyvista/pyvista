@@ -322,6 +322,7 @@ extend-select = [
   'A',
   'AIR',
   'ANN',
+  'ARG',
   'ASYNC',
   'ASYNC1',
   'B',
