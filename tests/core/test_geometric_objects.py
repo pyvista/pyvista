@@ -398,15 +398,15 @@ def test_line():
     line = pv.Line(pointa, pointb)
     assert line.n_points == 2
     assert line.n_cells == 1
-    line = pv.Line(pointa, pointb, 10)
+    line = pv.Line(pointa, pointb, resolution=10)
     assert line.n_points == 11
     assert line.n_cells == 1
 
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.Line(pointa, pointb, -1)
+        pv.Line(pointa, pointb, resolution=-1)
 
     with pytest.raises(TypeError):
-        pv.Line(pointa, pointb, 0.1)  # from vtk
+        pv.Line(pointa, pointb, resolution=0.1)  # from vtk
 
     with pytest.raises(TypeError):
         pv.Line((0, 0), pointb)
@@ -747,7 +747,7 @@ def test_rectangle_not_enough_points():
 def test_circle():
     radius = 1.0
 
-    mesh = pv.Circle(radius)
+    mesh = pv.Circle(radius=radius)
     assert mesh.n_points
     assert mesh.n_cells
     diameter = np.max(mesh.points[:, 0]) - np.min(mesh.points[:, 0])
