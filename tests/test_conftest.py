@@ -127,7 +127,7 @@ def test_warning_vtk(
         msg = "`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here."
         warnings.warn(msg, DeprecationWarning)
 
-    """
+    """  # noqa: E501
     monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 0) if not greater else (9, 1))
 
     p = pytester.makepyfile(tests)
@@ -474,7 +474,8 @@ def test_skip_windows(
     results.stdout.re_match_lines(
         [
             r'.*Marker `skip_windows` called with incorrect arguments\.',
-            r".*Signature should be: @pytest\.mark\.skip_windows\(reason: str = 'Test fails on Windows'\)",
+            r".*Signature should be: @pytest\.mark\.skip_windows\(reason: str = 'Test fails on "
+            r"Windows'\)",
         ]
     )
 

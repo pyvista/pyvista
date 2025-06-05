@@ -11,7 +11,10 @@ from trame.widgets.vtk import VtkRemoteLocalView
 from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
-CLOSED_PLOTTER_ERROR = 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
+CLOSED_PLOTTER_ERROR = (
+    'The render window for this plotter has been destroyed. '
+    'Do not call `show()` for the plotter before passing to trame.'
+)
 
 
 def get_server(*args, **kwargs):  # numpydoc ignore=RT01
