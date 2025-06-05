@@ -1084,7 +1084,8 @@ def Plane(  # noqa: PLR0917
     translate(surf, center, direction)
     return surf
 
-@_deprecate_positional_args(allowed=['pointa','pointb'])
+
+@_deprecate_positional_args(allowed=['pointa', 'pointb'])
 def Line(
     pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
     pointb: VectorLike[float] = (0.5, 0.0, 0.0),
@@ -2074,6 +2075,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     cells = np.array([[4, 0, 1, 2, 3]])
     return wrap(pyvista.PolyData(points, cells))
 
+
 @_deprecate_positional_args
 def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     """Create a single PolyData circle defined by radius in the XY plane.
@@ -2112,7 +2114,8 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
     return wrap(pyvista.PolyData(points, cells))
 
-@_deprecate_positional_args(allowed=['semi_major_axis','semi_minor_axis'])
+
+@_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
 def Ellipse(
     semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, resolution: int = 100
 ) -> PolyData:

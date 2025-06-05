@@ -306,7 +306,12 @@ class AffineWidget3D:
         if self._selected_actor:
             index = self._circles.index(self._selected_actor)
             to_widget = np.array(ren.camera.position - self._origin)
-            point = ray_plane_intersection(point, to_widget, self._origin, self.axes[index])
+            point = ray_plane_intersection(
+                start_point=point,
+                direction=to_widget,
+                plane_point=self._origin,
+                normal=self.axes[index],
+            )
         return point
 
     def _get_world_coord_trans(self, interactor):
