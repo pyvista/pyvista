@@ -436,78 +436,78 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Return 0.0 since a PointSet has no volume."""
         return 0.0
 
-    def contour(self, *args, **kwargs):
+    def contour(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         msg = 'Contour and other dimension reducing filters are not supported on PointSets'
         raise PointSetNotSupported(msg)
 
-    def cell_data_to_point_data(self, *args, **kwargs):
+    def cell_data_to_point_data(self, *args, **kwargs):  # noqa: ARG002
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def point_data_to_cell_data(self, *args, **kwargs):
+    def point_data_to_cell_data(self, *args, **kwargs):  # noqa: ARG002
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def triangulate(self, *args, **kwargs):
+    def triangulate(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def decimate_boundary(self, *args, **kwargs):
+    def decimate_boundary(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def find_cells_along_line(self, *args, **kwargs):
+    def find_cells_along_line(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def tessellate(self, *args, **kwargs):
+    def tessellate(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def slice(self, *args, **kwargs):
+    def slice(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_axis(self, *args, **kwargs):
+    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_line(self, *args, **kwargs):
+    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_implicit(self, *args, **kwargs):
+    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_orthogonal(self, *args, **kwargs):
+    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def shrink(self, *args, **kwargs):
+    def shrink(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def separate_cells(self, *args, **kwargs):
+    def separate_cells(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def remove_cells(self, *args, **kwargs):
+    def remove_cells(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def point_is_inside_cell(self, *args, **kwargs):
+    def point_is_inside_cell(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def extract_surface(self, *args, **kwargs):
+    def extract_surface(self, *args, **kwargs):  # noqa: ARG002
         """Raise extract surface are not supported."""
         raise PointSetCellOperationError
 
-    def extract_geometry(self, *args, **kwargs):
+    def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
         """Raise extract geometry are not supported."""
         raise PointSetCellOperationError
 
@@ -1730,7 +1730,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 class PointGrid(_PointSet):
     """Class in common with structured and unstructured grids."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
         """Initialize the point grid."""
         super().__init__()
 
@@ -2961,7 +2961,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ]
     ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}  # type: ignore[assignment]
 
-    def __init__(self, *args, deep: bool = False, **kwargs):
+    def __init__(self, *args, deep: bool = False, **kwargs):  # noqa: ARG002
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
