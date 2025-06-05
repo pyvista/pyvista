@@ -2514,8 +2514,8 @@ def test_deprecate_positional_args_error_messages():
     def foo(bar): ...
 
     match = (
-        "Argument 'bar' must be passed as a keyword argument\n"
-        "to function 'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
+        "Argument 'bar' must be passed as a keyword argument to function "
+        "'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
         'From version 0.50, passing this as a positional argument will result in a TypeError.'
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
@@ -2526,8 +2526,8 @@ def test_deprecate_positional_args_error_messages():
     def foo(bar, baz): ...
 
     match = (
-        "Arguments 'bar', 'baz' must be passed as keyword arguments\n"
-        "to function 'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
+        "Arguments 'bar', 'baz' must be passed as keyword arguments to function "
+        "'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
         'From version 1.2, passing these as positional arguments will result in a TypeError.'
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
@@ -2561,7 +2561,7 @@ def test_deprecate_positional_args_allowed():
     match = (
         "In decorator '_deprecate_positional_args' for function "
         "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
-        'A maximum of 3 positional arguments are allowed.\n'
+        f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed.\n'
         "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
     )
     with pytest.raises(ValueError, match=re.escape(match)):

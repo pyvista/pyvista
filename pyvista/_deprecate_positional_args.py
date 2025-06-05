@@ -57,6 +57,8 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
+        from pyvista._version import version_info
+
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
@@ -105,7 +107,6 @@ def _deprecate_positional_args(
 
         @wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
-            from pyvista._version import version_info
             from pyvista.core.errors import PyVistaDeprecationWarning
 
             passed_positional_names = param_names[: len(args)]
@@ -136,15 +137,23 @@ def _deprecate_positional_args(
                     # Print warning
                     version_str = '.'.join(map(str, version))
                     arg_list = ', '.join(f'{a!r}' for a in offending_args)
+                    stack_level = 3
+
+                    def call_site() -> str:
+                        # Get location where the function is called
+                        frame = inspect.stack()[stack_level]
+                        file = Path(os.path.relpath(frame.filename, start=os.getcwd())).as_posix()  # noqa: PTH109
+                        return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
                         msg = (
-                            f'Argument{s} {arg_list} must be passed as{a}keyword argument{s}\n'
+                            f'\n{call_site()}\n'
+                            f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
                             f'to function {qualified_name()!r}.\n'
                             f'From version {version_str}, passing {this} as{a}positional '
                             f'argument{s} will result in a TypeError.'
                         )
-                        warnings.warn(msg, PyVistaDeprecationWarning)
+                        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=stack_level)
 
                     warn_positional_args()
                 else:
