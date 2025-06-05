@@ -63,9 +63,33 @@ def _deprecate_positional_args(
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
         decorator_name = _deprecate_positional_args.__name__
-
         sig = inspect.signature(f)
         param_names = list(sig.parameters)
+
+        # Raise error post-deprecation
+        if version_info >= version:
+            # Construct expected positional args and signature
+            positional_args = (
+                ['self'] if 'self' in param_names else ['cls'] if 'cls' in param_names else []
+            )
+            if allowed is not None:
+                for name in allowed:
+                    positional_args.append(name)  # noqa: PERF402
+            new_signature = f'{qualified_name()}({", ".join(positional_args)}, *, ...)'
+
+            # Get source file and line number
+            file = Path(os.path.relpath(inspect.getfile(f), start=os.getcwd())).as_posix()  # noqa: PTH109
+            lineno = inspect.getsourcelines(f)[1]
+            location = f'{file}:{lineno}'
+
+            msg = (
+                f'Positional arguments are no longer allowed in {qualified_name()!r}.\n'
+                f'Update the function signature at:\n'
+                f'{location} to:\n'
+                f'    {new_signature}\n'
+                f'and remove the {decorator_name!r} decorator.'
+            )
+            raise RuntimeError(msg)
 
         if allowed is not None:
             # Validate input type
@@ -117,9 +141,9 @@ def _deprecate_positional_args(
             else:
                 offending_args = passed_positional_names
 
-            if has_self := 'self' in offending_args:
+            if 'self' in offending_args:
                 offending_args.remove('self')
-            if has_cls := 'cls' in offending_args:
+            if 'cls' in offending_args:
                 offending_args.remove('cls')
 
             if offending_args:
@@ -166,29 +190,6 @@ def _deprecate_positional_args(
                         raise TypeError(msg)
 
                     error_positional_args()
-
-            # Raise error post-deprecation
-            if version_info >= version:
-                # Construct expected positional args and signature
-                positional_args = ['self'] if has_self else ['cls'] if has_cls else []
-                if allowed is not None:
-                    for name in allowed:
-                        positional_args.append(name)  # noqa: PERF402
-                new_signature = f'{qualified_name()}({", ".join(positional_args)}, *, ...)'
-
-                # Get source file and line number
-                file = Path(os.path.relpath(inspect.getfile(f), start=os.getcwd())).as_posix()  # noqa: PTH109
-                lineno = inspect.getsourcelines(f)[1]
-                location = f'{file}:{lineno}'
-
-                msg = (
-                    f'Positional arguments are no longer allowed in {qualified_name()!r}.\n'
-                    f'Update the function signature at:\n'
-                    f'{location} to:\n'
-                    f'    {new_signature}\n'
-                    f'and remove the {decorator_name!r} decorator.'
-                )
-                raise RuntimeError(msg)
             return f(*args, **kwargs)
 
         return inner_f
