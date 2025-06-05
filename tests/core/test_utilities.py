@@ -2625,6 +2625,24 @@ def test_deprecate_positional_args_allowed():
         def foo(a, *, b): ...
 
 
+def test_deprecate_positional_args_n_allowed():
+    n_allowed = 4
+    assert n_allowed > _MAX_POSITIONAL_ARGS
+
+    @_deprecate_positional_args(allowed=['a', 'b', 'c', 'd'], n_allowed=4)
+    def foo(a, b, c, d, e=True): ...
+
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_n_allowed.<locals>.foo':\n"
+        '`n_allowed` must be greater than 3 for it to be useful.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['a', 'b', 'c'], n_allowed=_MAX_POSITIONAL_ARGS)
+        def foo(a, b, c): ...
+
+
 def test_deprecate_positional_args_class_methods():
     # Test that 'cls' and 'self' args do not cause problems
     class Foo:

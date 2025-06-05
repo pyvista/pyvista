@@ -37,7 +37,7 @@ def _deprecate_positional_args(
     *,
     version: tuple[int, int] = (0, 50),
     allowed: list[str] | None = None,
-    n_allowed: int = _MAX_POSITIONAL_ARGS,
+    n_allowed: int | None = None,
 ) -> Callable[..., T] | Callable[[Callable[P, T]], Callable[P, T]]:
     """Use a decorator to deprecate positional arguments.
 
@@ -68,6 +68,18 @@ def _deprecate_positional_args(
         sig = inspect.signature(f)
         param_names = list(sig.parameters)
 
+        # Validate n_allowed itself
+        if n_allowed:
+            if n_allowed <= _MAX_POSITIONAL_ARGS:
+                msg = (
+                    f'In decorator {decorator_name!r} for function {qualified_name()!r}:\n'
+                    f'`n_allowed` must be greater than {_MAX_POSITIONAL_ARGS} for it to be useful.'
+                )
+                raise ValueError(msg)
+            n_allowed_ = n_allowed
+        else:
+            n_allowed_ = _MAX_POSITIONAL_ARGS
+
         if allowed is not None:
             # Validate input type
             if not isinstance(allowed, list):
@@ -78,10 +90,10 @@ def _deprecate_positional_args(
                 raise TypeError(msg)
 
             # Validate number of allowed args
-            if len(allowed) > n_allowed:
+            if len(allowed) > n_allowed_:
                 msg = (
                     f'In decorator {decorator_name!r} for function {qualified_name()!r}:\n'
-                    f'A maximum of {n_allowed} positional arguments are allowed.\n'
+                    f'A maximum of {n_allowed_} positional arguments are allowed.\n'
                     f'Got {len(allowed)}: {allowed}'
                 )
                 raise ValueError(msg)
@@ -128,7 +140,7 @@ def _deprecate_positional_args(
             msg = (
                 f'Function {qualified_name()!r} has {actual_n_allowed} positional arguments, '
                 f'which is less than or equal to the\nmaximum number of allowed positional '
-                f'arguments ({n_allowed}).\nThis decorator is not necessary and can be removed.'
+                f'arguments ({n_allowed_}).\nThis decorator is not necessary and can be removed.'
             )
             raise RuntimeError(msg)
 
