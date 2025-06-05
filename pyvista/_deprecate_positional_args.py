@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 import inspect
+from inspect import Parameter
 import os
 from pathlib import Path
 from typing import Callable
@@ -84,7 +85,7 @@ def _deprecate_positional_args(
                 )
                 raise ValueError(msg)
 
-            # Validate `allowed` against actual parameter names
+            # Validate allowed against actual parameter names
             for name in allowed:
                 if name not in param_names:
                     msg = (
@@ -94,7 +95,7 @@ def _deprecate_positional_args(
                     )
                     raise ValueError(msg)
 
-            # Check that `allowed` appears in the same order as in the signature
+            # Check that allowed args appears in the same order as in the signature
             sig_allowed = [name for name in param_names if name in allowed]
             if sig_allowed != allowed:
                 msg = (
@@ -106,12 +107,29 @@ def _deprecate_positional_args(
 
             # Check that allowed args are not already kwonly
             for name in allowed:
-                if sig.parameters[name].kind == inspect.Parameter.KEYWORD_ONLY:
+                if sig.parameters[name].kind == Parameter.KEYWORD_ONLY:
                     msg = (
                         f'Parameter {name!r} in decorator {decorator_name!r} is already '
                         f'keyword-only\nand should be removed from the allowed list.'
                     )
                     raise ValueError(msg)
+
+        # Check if the decorator is even needed at all
+        n_positional = 0
+        for name in param_names:
+            if name not in ['cls', 'self'] and sig.parameters[name].kind in [
+                Parameter.POSITIONAL_ONLY,
+                Parameter.POSITIONAL_OR_KEYWORD,
+            ]:
+                n_positional += 1
+        actual_n_allowed = len(allowed) if allowed else 0
+        if n_positional <= actual_n_allowed:
+            msg = (
+                f'Function {qualified_name()!r} has {actual_n_allowed} positional arguments, '
+                f'which is less than or equal to the\nmaximum number of allowed positional '
+                f'arguments ({n_allowed}).\nThis decorator is not necessary and can be removed.'
+            )
+            raise RuntimeError(msg)
 
         # Raise error post-deprecation
         if version_info >= version:

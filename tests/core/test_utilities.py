@@ -2552,9 +2552,9 @@ def test_deprecate_positional_args_post_deprecation():
 def test_deprecate_positional_args_allowed():
     # Test single allowed
     @_deprecate_positional_args(allowed=['bar'])
-    def foo(bar): ...
+    def foo(bar, baz): ...
 
-    foo(True)
+    foo(True, baz=True)
 
     # Too many allowed args
     match = (
@@ -2612,17 +2612,51 @@ def test_deprecate_positional_args_allowed():
         def foo(a, *, b): ...
 
 
-def test_deprecate_positional_class_methods():
+def test_deprecate_positional_args_class_methods():
     # Test that 'cls' and 'self' args do not cause problems
-    @_deprecate_positional_args
     class Foo:
         @classmethod
-        def foo_classmethod(cls, *, bar=None): ...
-        def foo_method(self, *, bar=None): ...
+        @_deprecate_positional_args
+        def foo_classmethod(cls, bar=None): ...
+
+        @_deprecate_positional_args
+        def foo_method(self, bar=None): ...
 
     obj = Foo()
     obj.foo_method()
     obj.foo_classmethod()
+
+
+def test_deprecate_positional_args_decorator_not_needed():
+    match = (
+        "Function 'test_deprecate_positional_args_decorator_not_needed.<locals>.Foo.foo' has 0 "
+        'positional arguments, which is less than or equal to the\nmaximum number of allowed '
+        f'positional arguments ({_MAX_POSITIONAL_ARGS}).\n'
+        f'This decorator is not necessary and can be removed.'
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @classmethod
+            @_deprecate_positional_args
+            def foo(cls, *, bar=None): ...
+
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @_deprecate_positional_args
+            def foo(self, *, bar=None): ...
+
+    match = (
+        f"Function 'test_deprecate_positional_args_decorator_not_needed.<locals>.foo' has 3 "
+        f'positional arguments, which is less than or equal to the\nmaximum number of allowed '
+        f'positional arguments ({_MAX_POSITIONAL_ARGS}).\n'
+        f'This decorator is not necessary and can be removed.'
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['a', 'b', 'c'])
+        def foo(a, b, c): ...
 
 
 @pytest.mark.skipif(
