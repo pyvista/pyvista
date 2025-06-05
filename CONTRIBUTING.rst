@@ -575,6 +575,22 @@ custom pytest marker ``needs_vtk_version``, enabling the following usage (note t
     def test():
         """Test is skipped with a custom message"""
 
+VTK Dev Wheel Testing
+^^^^^^^^^^^^^^^^^^^^^
+Most unit testing is run with stable VTK releases. However, it is sometimes useful to
+run tests with the latest VTK dev wheels. To install these locally, run
+
+.. code-block:: shell
+
+    pip install vtk --upgrade --pre --extra-index-url https://wheels.vtk.org
+
+For CI on GitHub, the ``vtk-dev-testing`` label can be used to enable unit testing with
+the VTK dev wheels. The tests only run when the label is applied.
+
+.. note::
+
+    The PR either needs a new commit, e.g. updating the branch from ``main``, or to be
+    closed/re-opened to rerun the CI with the label applied.
 
 Docstring Testing
 ~~~~~~~~~~~~~~~~~
