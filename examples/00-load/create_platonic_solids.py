@@ -4,7 +4,7 @@
 Platonic Solids
 ~~~~~~~~~~~~~~~
 
-PyVista wraps the ``vtk.vtkPlatonicSolidSource`` filter as
+PyVista wraps the :vtk:`vtkPlatonicSolidSource` filter as
 :func:`pyvista.PlatonicSolid`.
 """
 
@@ -48,7 +48,9 @@ centers = [
     (-1, 2, 0),
 ]
 
-solids = [pv.PlatonicSolid(kind, radius=0.4, center=center) for kind, center in zip(kinds, centers)]
+solids = [
+    pv.PlatonicSolid(kind, radius=0.4, center=center) for kind, center in zip(kinds, centers)
+]
 
 # download and align teapotahedron
 teapot = examples.download_teapot()

@@ -54,7 +54,7 @@ jupyter = [
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
   'matplotlib<3.10.2',
-  'numpy<2.2.0',
+  'numpy<2.3.0',
   'pillow<11.3.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
@@ -108,6 +108,7 @@ test = [
 ]
 
 docs = [
+  'atsphinx-mini18n==0.4.1',
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
@@ -146,6 +147,7 @@ docs = [
   'trame-vuetify==3.0.1',
   'trame==3.9.0',
   'trimesh==4.6.8',
+  'vtk-xref==0.1.0',
   { include-group = 'pinned' },
 ]
 
@@ -216,6 +218,7 @@ doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error',
 
+  'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning',                                                              # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
@@ -298,7 +301,7 @@ exclude = [ # don't report on objects that match any of these regex
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
 indent-width = 4
-line-length = 100
+line-length = 99
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -329,23 +332,19 @@ extend-select = [
   'F',
   'FA',
   'FLY',
+  'FURB',
   'I',
   'ICN',
   'INP',
   'INT',
   'ISC',
   'LOG',
+  'N',
   'NPY',
   'PERF',
   'PGH',
   'PIE',
-  'PLC',
-  'PLR0402',
-  'PLR1711',
-  'PLR1714',
-  'PLR1730',
-  'PLR5501',
-  'PLW0127',
+  'PL',
   'PT',
   'PTH',
   'PYI',
@@ -355,15 +354,14 @@ extend-select = [
   'RUF',
   'SIM',
   'T10',
+  'T20',
   'TCH',
-  'TRY201',
-  'TRY203',
-  'TRY300',
+  'TID',
+  'TRY',
   'UP',
   'W',
   'YTT',
 ]
-external = ['E131']
 fixable = ['ALL']
 ignore = [
   'ANN002',  # Missing annotations for `*args`
@@ -379,16 +377,18 @@ ignore = [
   'D213',    # Incompatible with D212
   'D402',    # First line should not be the function's signature
   'D416',    # Section name ends in colon
-  'E203',    # whitespace before ':'
-  'E266',    # too many leading '#' for block comment
   'E402',    # module level import not at top of file
-  'E501',    # line length too long
   'E722',
   'E731',    # do not assign a lambda expression, use a def
   'E741',    # ambiguous variable name
   'F403',    # 'from module import *' used; unable to detect undefined names
   'ISC001',  # May cause conflicts when used with the formatter
+  'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
+  'PLR0912', # Too many branches
+  'PLR0913', # Too many arguments in function definition
+  'PLR0915', # Too many statements
+  'PLR2004', # Magic value used in comparison
   'Q0',      # Quotes (temporary)
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
   'RET506',  # https://github.com/pyvista/pyvista/pull/5911
@@ -396,6 +396,7 @@ ignore = [
   'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
   'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
   'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
+  'TRY301',  # https://github.com/pyvista/pyvista/pull/7572
 ]
 unfixable = ['F401']
 
@@ -404,22 +405,27 @@ allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
 '__init__.py' = ['PLC0414']
-'doc/source/make_tables.py' = ['D101', 'D102']
-'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115']
+'doc/source/make_tables.py' = ['D101', 'D102', 'T20']
+'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115', 'T20']
 'examples/**' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
 ]
-'examples_trame/*' = ['D100', 'D103']
+'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
+'examples_trame/*' = ['D100', 'D103', 'T20']
 'examples_trame/tests*' = ['D']
 'pyvista/core/_vtk_core*' = ['PLC0414']
 'pyvista/core/filters/*' = ['PYI019']
+'pyvista/core/utilities/geometric_objects.py' = ['N802']
+'pyvista/core/utilities/parametric_objects.py' = ['N802']
+'pyvista/examples/cells.py' = ['N802']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
+'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D', 'INP']
+'tests/*' = ['D', 'INP', 'T20']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list
@@ -438,7 +444,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/utilities/helpers.py' = ['ANN']
 'pyvista/core/utilities/image_sources.py' = ['ANN']
 'pyvista/core/utilities/observers.py' = ['ANN']
-'pyvista/core/utilities/reader.py' = ['ANN']
+'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
 
 # ANN ignores for `pyvista/plotting`
 'pyvista/plotting*' = ['ANN']

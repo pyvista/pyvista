@@ -1375,7 +1375,7 @@ def parametric_keywords(
 
     Parameters
     ----------
-    parametric_function : vtk.vtkParametricFunction
+    parametric_function : :vtk:`vtkParametricFunction`
         Parametric function to generate mesh from.
 
     min_u : float, optional
@@ -1434,7 +1434,7 @@ def surface_from_para(
 
     Parameters
     ----------
-    parametric_function : vtk.vtkParametricFunction
+    parametric_function : :vtk:`vtkParametricFunction`
         Parametric function to generate mesh from.
 
     u_res : int, default: 100
@@ -1452,7 +1452,8 @@ def surface_from_para(
 
     texture_coordinates : bool, default: False
         The generation of texture coordinates.
-        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
+        This is off by default. Note that this is only applicable
+        to parametric surfaces whose parametric dimension is 2.
         Note that texturing may fail in some cases.
 
     Returns

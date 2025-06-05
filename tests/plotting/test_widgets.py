@@ -26,26 +26,26 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_plotting
 
 
-def r_mat_to_euler_angles(R):
+def r_mat_to_euler_angles(r):
     """Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
 
     Returns the angles in radians.
     """
     # Check for gimbal lock: singular cases
-    if abs(R[2, 0]) == 1:
+    if abs(r[2, 0]) == 1:
         # Gimbal lock exists
         yaw = 0  # Set yaw to 0 and compute the others
-        if R[2, 0] == -1:  # Directly looking up
+        if r[2, 0] == -1:  # Directly looking up
             pitch = np.pi / 2
-            roll = yaw + np.arctan2(R[0, 1], R[0, 2])
+            roll = yaw + np.arctan2(r[0, 1], r[0, 2])
         else:  # Directly looking down
             pitch = -np.pi / 2
-            roll = -yaw + np.arctan2(-R[0, 1], -R[0, 2])
+            roll = -yaw + np.arctan2(-r[0, 1], -r[0, 2])
     else:
         # Not at the singularities
-        pitch = -np.arcsin(R[2, 0])
-        roll = np.arctan2(R[2, 1] / np.cos(pitch), R[2, 2] / np.cos(pitch))
-        yaw = np.arctan2(R[1, 0] / np.cos(pitch), R[0, 0] / np.cos(pitch))
+        pitch = -np.arcsin(r[2, 0])
+        roll = np.arctan2(r[2, 1] / np.cos(pitch), r[2, 2] / np.cos(pitch))
+        yaw = np.arctan2(r[1, 0] / np.cos(pitch), r[0, 0] / np.cos(pitch))
 
     if np.isclose(roll, np.pi):
         roll = 0
@@ -419,7 +419,11 @@ def test_widget_radio_button_click(uniform):
     size = 50
     position = (10.0, 10.0)
     b = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=False, size=size, position=position
+        callback=func,
+        radio_button_group='group',
+        value=False,
+        size=size,
+        position=position,
     )
     p.show(auto_close=False)
     # Test switching logic
@@ -462,7 +466,11 @@ def test_widget_radio_button_multiple_switch(uniform):
     b1_position = (10.0, 10.0)
     b2_position = (10.0, 70.0)
     b1 = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=True, size=size, position=b1_position
+        callback=func,
+        radio_button_group='group',
+        value=True,
+        size=size,
+        position=b1_position,
     )
     b2 = p.add_radio_button_widget(
         callback=func, radio_button_group='group', size=size, position=b2_position
@@ -750,7 +758,11 @@ def test_affine_widget(sphere):
 
     # test change axes
     axes = np.array(
-        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]],
+        [
+            [0.70710678, 0.70710678, 0.0],
+            [-0.70710678, 0.70710678, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
     )
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
@@ -827,7 +839,9 @@ def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_opacity=outline_opacity)
+    plane_widget = p.add_plane_widget(
+        callback=func, implicit=True, outline_opacity=outline_opacity
+    )
     assert plane_widget.GetOutlineProperty().GetOpacity() == float(outline_opacity)
     p.close()
 
@@ -933,7 +947,7 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-class Test_event_parser:
+class TestEventParser:
     """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
 
     @pytest.fixture

@@ -265,7 +265,11 @@ def setup(app):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
-    return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+        'version': pyvista.__version__,
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -279,7 +283,7 @@ def _contains_doctest(text):
         pass
     else:
         return False
-    r = re.compile(r'^\s*>>>', re.M)
+    r = re.compile(r'^\s*>>>', re.MULTILINE)
     m = r.search(text)
     return bool(m)
 
@@ -313,15 +317,15 @@ def _split_code_at_show(text):
         part.append(line)
 
         # check if show(...) or plot(...) is within the line
-        line = _strip_comments(line)
+        line_no_comments = _strip_comments(line)
         if within_plot:  # allow for multi-line plot(...
-            if _strip_comments(line).endswith(')'):
+            if line_no_comments.endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
                 within_plot = False
 
-        elif _show_or_plot_in_string(line):
-            if _strip_comments(line).endswith(')'):
+        elif _show_or_plot_in_string(line_no_comments):
+            if line_no_comments.endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
             else:  # allow for multi-line plot(...
@@ -464,8 +468,8 @@ def render_figures(
     rendered.
     """
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
-    # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
-    # and its options properly parsed.
+    # The doctest parser will present the code-block once again with the ```pyvista-plot::``
+    # directive and its options properly parsed.
     if _contains_pyvista_plot(code):
         is_doctest = True
         code_pieces = [code]
@@ -664,7 +668,9 @@ def run(arguments, content, options, state_machine, state, lineno):
             errors.append([sm])
 
     # Properly indent the caption
-    caption = '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    caption = (
+        '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    )
 
     # generate output restructuredtext
     total_lines = []
@@ -682,8 +688,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         else:
             source_code = ''
 
-        if nofigs:
-            images = []
+        images_input = [] if nofigs else images
 
         opts = [
             f':{key}: {val}'
@@ -696,11 +701,11 @@ def run(arguments, content, options, state_machine, state, lineno):
             dest_dir=dest_dir_link,
             build_dir=build_dir_link,
             source_link=None,
-            multi_image=len(images) > 1,
+            multi_image=len(images_input) > 1,
             options=opts,
-            images=images,
+            images=images_input,
             source_code=source_code,
-            html_show_formats=config.pyvista_plot_html_show_formats and len(images),
+            html_show_formats=config.pyvista_plot_html_show_formats and len(images_input),
             caption=caption,
         )
 
@@ -721,7 +726,9 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # copy script (if necessary)
     Path(dest_dir, output_base + source_ext).write_text(
-        doctest.script_from_examples(code) if source_file_name == rst_file and is_doctest else code,
+        doctest.script_from_examples(code)
+        if source_file_name == rst_file and is_doctest
+        else code,
         encoding='utf-8',
     )
 

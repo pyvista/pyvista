@@ -258,7 +258,7 @@ def load_structured():
 def _structured_load_func():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)
+    x, y = np.meshgrid(x, y)  # type: ignore[assignment]
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)

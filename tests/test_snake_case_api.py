@@ -114,7 +114,11 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         kwargs['chart'] = pv.charts.Chart2D()
         kwargs['x'] = (0, 0, 0)
         kwargs['y1'] = (1, 0, 0)
-    elif vtk_subclass in [pv.charts.BarPlot, pv.charts.LinePlot2D, pv.charts.ScatterPlot2D]:
+    elif vtk_subclass in [
+        pv.charts.BarPlot,
+        pv.charts.LinePlot2D,
+        pv.charts.ScatterPlot2D,
+    ]:
         kwargs['chart'] = pv.charts.Chart2D()
         kwargs['x'] = (0, 0, 0)
         kwargs['y'] = (1, 0, 0)
@@ -134,6 +138,10 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         vtk_attr_camel_case = 'GetName'
         vtk_attr_snake_case = 'name'
         kwargs['array'] = pv.vtk_points(np.eye(3)).GetData()
+    elif issubclass(
+        vtk_subclass, pv.plotting.render_window_interactor.InteractorStyleCaptureMixin
+    ):
+        kwargs['render_window_interactor'] = pv.Plotter().iren
 
     instance = try_init_object(vtk_subclass, kwargs)
 
@@ -148,13 +156,17 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         except PyVistaAttributeError as e:
             # Test passes, we want an error to be raised
             # Confirm error message is correct
-            match = f"The attribute '{vtk_attr_snake_case}' is defined by VTK and is not part of the PyVista API"
+            match = (
+                f"The attribute '{vtk_attr_snake_case}' is defined by VTK and is not part of "
+                f'the PyVista API'
+            )
             assert match in repr(e)  # noqa: PT017
         else:
             if DisableVtkSnakeCase not in vtk_subclass.__mro__:
                 msg = (
                     f'The class {vtk_subclass.__name__!r} in {vtk_subclass.__module__!r}\n'
-                    f'must inherit from {DisableVtkSnakeCase.__name__!r} in {DisableVtkSnakeCase.__module__!r}'
+                    f'must inherit from {DisableVtkSnakeCase.__name__!r} in '
+                    f'{DisableVtkSnakeCase.__module__!r}'
                 )
             else:
                 msg = f'{PyVistaAttributeError.__name__} was NOT raised (but was expected).'

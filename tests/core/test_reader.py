@@ -52,7 +52,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
     ):
         pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
@@ -1039,7 +1039,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
 @pytest.mark.needs_vtk_version(
@@ -1376,7 +1376,10 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.read_pickle({})
 
-    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    match = (
+        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
+        "Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 
