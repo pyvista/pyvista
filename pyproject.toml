@@ -108,6 +108,7 @@ test = [
 ]
 
 docs = [
+  'atsphinx-mini18n==0.4.1',
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
@@ -318,6 +319,7 @@ extend-select = [
   'A',
   'AIR',
   'ANN',
+  'ARG',
   'ASYNC',
   'ASYNC1',
   'B',

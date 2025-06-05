@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import sys
 
+from atsphinx.mini18n import get_template_dir
+
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
@@ -78,6 +80,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -375,7 +378,7 @@ linkcheck_timeout = 500
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates']
+templates_path = ['_templates', get_template_dir()]
 
 # Autosummary configuration
 autosummary_context = {
@@ -442,7 +445,7 @@ from sphinx_gallery.sorting import FileNameSortKey
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):
+    def __call__(self, gallery_conf, fname):  # noqa: ARG002
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
@@ -715,6 +718,20 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
+
+# atsphinx.mini18n options ---------------------------------------------------------
+html_sidebars = {
+    '**': [
+        'navbar-logo.html',
+        'icon-links.html',
+        'mini18n/snippets/select-lang.html',
+        'search-button-field.html',
+        'sbt-sidebar-nav.html',
+    ],
+}
+mini18n_default_language = language
+mini18n_support_languages = ['en', 'ja']
+locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
 def setup(app):  # noqa: D103
