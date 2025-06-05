@@ -3517,7 +3517,7 @@ class PolyDataFilters(DataSetFilters):
         Extrude a half circle arc.
 
         >>> import pyvista as pv
-        >>> arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+        >>> arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
         >>> mesh.plot(color='lightblue')
 

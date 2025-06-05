@@ -601,7 +601,7 @@ def test_circular_arc():
     center = [0, 0, 0]
     resolution = 100
 
-    mesh = pv.CircularArc(pointa, pointb, center, resolution=resolution)
+    mesh = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
     distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi / 2.0
@@ -609,7 +609,9 @@ def test_circular_arc():
 
     # pointa and pointb are not equidistant from center
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh = pv.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], resolution=100)
+        mesh = pv.CircularArc(
+            pointa=[-1, 0, 0], pointb=[-0.99, 0.001, 0], center=[0, 0, 0], resolution=100
+        )
 
 
 def test_circular_arc_from_normal():

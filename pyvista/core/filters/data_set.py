@@ -3702,7 +3702,9 @@ class DataSetFilters(DataObjectFilters):
         if resolution is None:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
-        circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
+        circular_arc = pyvista.CircularArc(
+            pointa=pointa, pointb=pointb, center=center, resolution=resolution
+        )
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     @_deprecate_positional_args

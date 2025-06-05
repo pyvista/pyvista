@@ -502,8 +502,12 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert merged.active_scalars_name is None
 
     # test merge with lines
-    arc_1 = pv.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
-    arc_2 = pv.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
+    arc_1 = pv.CircularArc(
+        pointa=[0, 0, 0], pointb=[10, 10, 0], center=[10, 0, 0], negative=False, resolution=3
+    )
+    arc_2 = pv.CircularArc(
+        pointa=[10, 10, 0], pointb=[20, 0, 0], center=[10, 0, 0], negative=False, resolution=3
+    )
     merged = arc_1 + arc_2
     assert merged.n_lines == 2
     assert merged.active_scalars_name == 'Distance'
@@ -1155,7 +1159,7 @@ def test_is_all_triangles():
 
 
 def test_extrude():
-    arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
@@ -1167,7 +1171,7 @@ def test_extrude():
 
 
 def test_extrude_capping_warnings():
-    arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude([0, 0, 1])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
