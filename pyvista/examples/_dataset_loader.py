@@ -170,7 +170,9 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         name_iter = [name] if isinstance(name, str) else name
         url = self.base_url
         base_url_iter = [url] if isinstance(url, str) else url
-        url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
+        url_raw = [
+            os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)
+        ]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
     @property
@@ -276,17 +278,20 @@ class _DatasetLoader:
         cell_types: dict[pv.CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
-            if isinstance(data, pv.Texture):
-                data = cast('pv.ImageData', pv.wrap(data.GetInput()))
+            dataset = (
+                cast('pv.ImageData', pv.wrap(data.GetInput()))
+                if isinstance(data, pv.Texture)
+                else data
+            )
             try:
-                if isinstance(data, pv.ExplicitStructuredGrid):
+                if isinstance(dataset, pv.ExplicitStructuredGrid):
                     # extract_cells_by_type does not support this datatype
                     # so get cells manually
-                    cells = (c.type for c in data.cell)
+                    cells = (c.type for c in dataset.cell)
                     [cell_types.update({cell_type: None}) for cell_type in cells]
                 else:
                     for cell_type in pv.CellType:
-                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
+                        extracted = dataset.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
                         if extracted.n_cells > 0:
                             cell_types[cell_type] = None
             except AttributeError:
@@ -706,7 +711,8 @@ def _load_as_multiblock(
         )
         paths = [Path(path) for path in paths]
         names = [
-            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name for path in paths
+            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
+            for path in paths
         ]
 
     for file, name in zip(files, names):
@@ -716,7 +722,10 @@ def _load_as_multiblock(
         assert isinstance(
             loaded,
             (pv.MultiBlock, pv.DataSet),
-        ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
+        ), (
+            f'Only MultiBlock or DataSet objects can be loaded as a MultiBlock. '
+            f"Got {type(loaded)}.'"
+        )
         multi.append(loaded, name)
     return multi
 

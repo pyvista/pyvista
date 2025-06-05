@@ -220,7 +220,9 @@ class CellQualityMeasuresTable(DocTable):
         # Get all cell example functions,
         # i.e. items from examples.cells that start with a capital letter
         cell_funcs = [
-            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+            name
+            for name, obj in inspect.getmembers(cells, inspect.isfunction)
+            if name[0].isupper()
         ]
 
         # Init dict with all measures as keys
@@ -263,8 +265,8 @@ class CellQualityInfoTable(DocTable):
 
     @property
     @final
-    def path(cls):
-        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{cls.cell_type.name}.rst'
+    def path(self):
+        return f'{CELL_QUALITY_DIR}/cell_quality_info_table_{self.cell_type.name}.rst'
 
     header = _aligned_dedent(
         """
@@ -603,7 +605,7 @@ class ColorTable(DocTable):
         |     - .. raw:: html
         |
         |          <span style='width:100%; height:100%; display:block; background-color: {};'>&nbsp;</span>
-        """,
+        """,  # noqa: E501
     )
 
     @classmethod
@@ -693,7 +695,7 @@ class ColorClassification(StrEnum):
     MAGENTA = auto()
 
 
-def classify_color(color: Color) -> ColorClassification:
+def classify_color(color: Color) -> ColorClassification:  # noqa: PLR0911
     """Classify color based on its Hue, Lightness, and Saturation (HLS)."""
     hue, lightness, saturation = color._float_hls
 
@@ -731,8 +733,8 @@ def classify_color(color: Color) -> ColorClassification:
         return ColorClassification.MAGENTA
     else:
         msg = (
-            f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
-            f'Double-check classifier logic.'
+            f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, '
+            f'was not categorized.\nDouble-check classifier logic.'
         )
         raise RuntimeError(msg)
 
@@ -744,8 +746,8 @@ class ColorClassificationTable(ColorTable):
 
     @property
     @final
-    def path(cls):
-        return f'{COLORS_TABLE_DIR}/color_table_{cls.classification.name}.rst'
+    def path(self):
+        return f'{COLORS_TABLE_DIR}/color_table_{self.classification.name}.rst'
 
     @classmethod
     def fetch_data(cls):
@@ -1158,8 +1160,8 @@ class ColormapTable(DocTable):
 
     @property
     @final
-    def path(cls):
-        kind = cls.kind
+    def path(self):
+        kind = self.kind
         name = kind.name if isinstance(kind, ColormapKind) else kind
         return f'{COLORMAP_TABLE_DIR}/colormap_table_{name}.rst'
 
@@ -1235,7 +1237,7 @@ class ColormapTable(DocTable):
         r2_deltaL = cls.generate_img_lightness(cmap, img_path_lightness)
 
         img_path_deltaE = img_path_swatch.replace('.png', '_deltaE.png')
-        r2_deltaE = cls.generate_img_deltaE(cmap, img_path_deltaE)
+        r2_deltaE = cls.generate_img_delta_e(cmap, img_path_deltaE)
 
         # Perceptually uniform if constant delta in lightness and color
         r2_threshold = 0.99
@@ -1298,8 +1300,8 @@ class ColormapTable(DocTable):
         return ColormapTable.linear_regression(x, cumulative_abs_delta_lightness)
 
     @staticmethod
-    def generate_img_deltaE(cmap, img_path):
-        def delta_E_CIE2000(rgb):
+    def generate_img_delta_e(cmap, img_path):
+        def delta_e_cie2000(rgb):
             # Compute ΔE between adjacent colors
             import colour
 
@@ -1310,7 +1312,7 @@ class ColormapTable(DocTable):
         x = np.linspace(0.0, 1.0, cmap.N)
 
         rgb = cmap(x)[:, :3]
-        delta_e = delta_E_CIE2000(rgb)
+        delta_e = delta_e_cie2000(rgb)
         y = np.concatenate([[0], np.cumsum(delta_e)])
 
         ColormapTable.save_scatter_plot(x, y, cmap, img_path)
@@ -1488,7 +1490,9 @@ class ColormapTable(DocTable):
 
         # Sort colormaps based on selected method
         weights = np.ones((n_samples,))
-        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index, weights)
+        sorted_groups, order = sort_color_groups_by_similarity(
+            grouped_colors, start_index, weights
+        )
         return [data[i] for i in order]
 
 
@@ -1766,7 +1770,7 @@ class DatasetCard:
         |   {}
         |
         |
-        """,
+        """,  # noqa: E501
     )
 
     HEADER_FOOTER_INDENT_LEVEL = 1
@@ -2106,10 +2110,11 @@ class DatasetCard:
     @staticmethod
     def _generate_cross_references(dataset_name: str, index_name: str, header_name):
         def find_seealso_refs(func: FunctionType) -> list[str]:
-            """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
+            # Find and return the :ref: references from the .. seealso:: directive
+            # in the docstring of a function.
             if not callable(func):
                 msg = 'Input must be a callable function.'
-                raise ValueError(msg)
+                raise TypeError(msg)
 
             # Get the docstring of the function
             docstring = func.__doc__
@@ -2166,7 +2171,8 @@ class DatasetCard:
             keep_refs.append(ref)
 
         assert self_ref_count == 1, (
-            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding entry in the Dataset Gallery.\n"
+            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding "
+            f'entry in the Dataset Gallery.\n'
             f'A reference link should be included in a see also directive, e.g.:\n'
             f'\n'
             f'    .. seealso::\n'
@@ -2258,7 +2264,7 @@ class DatasetCard:
 
     @staticmethod
     def _generate_field_block(fields: list[tuple[str, str | None]], indent_level: int = 0):
-        """Generate a grid for each field and combine the grids into an indented multi-line rst block.
+        """Generate a grid for each field and combine them into an indented multi-line rst block.
 
         Any fields with a `None` value are completely excluded from the block.
         """
@@ -2418,7 +2424,9 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_reader_type(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
+    def generate_reader_type(
+        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+    ):
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_type is None:
@@ -2615,7 +2623,7 @@ class DatasetCardFetcher:
 
     @classmethod
     def generate_alphabet_index(cls, dataset_names):
-        """Generate single-letter index buttons which link to the datasets by their first letter."""
+        """Generate single-letter index buttons to link to the datasets by their first letter."""
 
         def _generate_button(string, ref):
             return _indent_multi_line_string(
@@ -2898,10 +2906,10 @@ class DatasetGalleryCarousel(DocTable):
 
     @property
     @final
-    def path(cls):
-        assert isinstance(cls.name, str), 'Table name must be defined.'
-        assert cls.name.endswith('_carousel'), 'Table name must end with "_carousel".'
-        return f'{DATASET_GALLERY_DIR}/{cls.name}.rst'
+    def path(self):
+        assert isinstance(self.name, str), 'Table name must be defined.'
+        assert self.name.endswith('_carousel'), 'Table name must end with "_carousel".'
+        return f'{DATASET_GALLERY_DIR}/{self.name}.rst'
 
     @classmethod
     def fetch_data(cls):
@@ -2960,7 +2968,7 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
     name = 'all_datasets_carousel'
 
     @_classproperty
-    def doc(cls):
+    def doc(cls):  # noqa: N805
         return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
     @classmethod
@@ -2977,7 +2985,10 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
     name = 'builtin_carousel'
-    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
+    doc = (
+        'Built-in datasets that ship with pyvista. Available through '
+        ':mod:`examples <pyvista.examples.examples>` module.'
+    )
     badge = ModuleBadge('Built-in', ref='modules_gallery')
 
     @classmethod
@@ -3073,7 +3084,10 @@ class PointCloudCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of point cloud cards."""
 
     name = 'pointcloud_carousel'
-    doc = 'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
+    doc = (
+        'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or '
+        ':class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
+    )
     badge = SpecialDataTypeBadge('Point Cloud', ref='pointcloud_surfacemesh_gallery')
 
     @classmethod

@@ -28,7 +28,7 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
+class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
     """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
@@ -927,7 +927,10 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             self.apply_cmap(self._cmap, value)  # type: ignore[arg-type]
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            msg = (
+                'Number of values cannot be set when the values array has been manually set. '
+                'Reassign the values array if you wish to change the number of values.'
+            )
             raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
@@ -1076,7 +1079,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Parameters
         ----------
         clamping : bool, optional
-            When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
+            When zero range clamping is False, values returns 0.0 when a value is requested
+            outside of the points specified.
 
             .. versionadded:: 0.44
 

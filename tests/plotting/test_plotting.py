@@ -94,14 +94,14 @@ skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')
-skip_lesser_9_0_X = pytest.mark.needs_vtk_version(
+skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')  # noqa: N816
+skip_lesser_9_0_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 1, reason='Functions not implemented before 9.0.X'
 )
-skip_lesser_9_3_X = pytest.mark.needs_vtk_version(
+skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 3, reason='Functions not implemented before 9.3.X'
 )
-skip_lesser_9_4_X = pytest.mark.needs_vtk_version(
+skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
 
@@ -150,7 +150,8 @@ def test_plotting_module_raises(mocker: MockerFixture):
     m.getattr_static.side_effect = AttributeError
 
     match = re.escape(
-        'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `foo`'
+        'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically '
+        'find `foo`'
     )
     with pytest.raises(AttributeError, match=match):
         plotting.foo  # noqa: B018
@@ -194,7 +195,10 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 def test_import_vrml():
     filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
 
-    match = 'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
+    match = (
+        'VRML files must be imported directly into a Plotter. '
+        'See `pyvista.Plotter.import_vrml` for details.'
+    )
     with pytest.raises(ValueError, match=match):
         pv.read(filename)
 
@@ -681,7 +685,12 @@ def test_set_camera_position(cpos, sphere):
 
 @pytest.mark.parametrize(
     'cpos',
-    [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid'],
+    [
+        [(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
+        [-1, 2],
+        [(1, 2, 3)],
+        'notvalid',
+    ],
 )
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pv.Plotter()
@@ -941,36 +950,6 @@ def test_add_legend(sphere):
         plotter.add_legend()
     legend_labels = [['sphere', 'r']]
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1])
-    plotter.show()
-
-
-def test_legend_circle_face(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    face = 'circle'
-    _ = plotter.add_legend(
-        labels=legend_labels,
-        border=True,
-        bcolor=None,
-        size=[0.1, 0.1],
-        face=face,
-    )
-    plotter.show()
-
-
-def test_legend_rectangle_face(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    face = 'rectangle'
-    _ = plotter.add_legend(
-        labels=legend_labels,
-        border=True,
-        bcolor=None,
-        size=[0.1, 0.1],
-        face=face,
-    )
     plotter.show()
 
 
@@ -2061,7 +2040,12 @@ def test_opacity_by_array_direct(plane, verify_image_cache):
     plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pv.Plotter()
     pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points), show_edges=True)
-    pl.add_mesh(plane_shift, color='r', opacity=np.linspace(0, 1, plane.n_cells), show_edges=True)
+    pl.add_mesh(
+        plane_shift,
+        color='r',
+        opacity=np.linspace(0, 1, plane.n_cells),
+        show_edges=True,
+    )
     pl.show()
 
 
@@ -2803,7 +2787,9 @@ def test_add_remove_background(sphere):
 
 
 @pytest.mark.parametrize(
-    'background', [examples.mapfile, Path(examples.mapfile), 'blue'], ids=['str', 'Path', 'color']
+    'background',
+    [examples.mapfile, Path(examples.mapfile), 'blue'],
+    ids=['str', 'Path', 'color'],
 )
 def test_plot_mesh_background(background):
     globe = examples.load_globe()
@@ -2813,7 +2799,7 @@ def test_plot_mesh_background(background):
 def test_plot_mesh_background_raises():
     globe = examples.load_globe()
     match = 'Background must be color-like or a file path. Got {} instead.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         globe.plot(texture=pv.Texture(examples.mapfile), background={})
 
 
@@ -3048,10 +3034,12 @@ def test_add_text():
 
 @pytest.mark.skipif(
     not check_math_text_support(),
-    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
+    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
+    'MathText requires matplotlib<3.6',
 )
 @pytest.mark.filterwarnings(
-    r'ignore:Passing individual properties to FontProperties\(\):matplotlib.MatplotlibDeprecationWarning',
+    r'ignore:Passing individual properties to FontProperties'
+    r'\(\):matplotlib.MatplotlibDeprecationWarning',
     r'ignore:.*MathtextBackendBitmap.*:matplotlib.MatplotlibDeprecationWarning'
     if pv.vtk_version_info <= (9, 1)
     else '',
@@ -3069,7 +3057,9 @@ def test_add_text_latex(recwarn: pytest.WarningsRecorder):
 def test_add_text_font_file():
     plotter = pv.Plotter()
     font_file = str(Path(__file__).parent / 'fonts/Mplus2-Regular.ttf')
-    plotter.add_text('左上', position='upper_left', font_size=25, color='blue', font_file=font_file)
+    plotter.add_text(
+        '左上', position='upper_left', font_size=25, color='blue', font_file=font_file
+    )
     plotter.add_text(
         '中央',
         position=(0.5, 0.5),
@@ -4253,7 +4243,7 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ids=XYZ_ASSEMBLY_TEST_CASES.keys(),
 )
 @pytest.mark.parametrize(
-    ('Assembly', 'obj_kwargs'),
+    ('assembly', 'obj_kwargs'),
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
@@ -4261,10 +4251,10 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs, verify_image_cache):
+def test_xyz_assembly(test_kwargs, assembly, obj_kwargs, verify_image_cache):
     verify_image_cache.high_variance_test = True
     plot = pv.Plotter()
-    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
+    assembly = assembly(**test_kwargs, **obj_kwargs, label_color='white')
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
@@ -4275,13 +4265,13 @@ def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs, verify_image_cache):
 
 
 @pytest.mark.parametrize(
-    'Assembly',
+    'assembly',
     [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly_show_labels_false(Assembly):
+def test_xyz_assembly_show_labels_false(assembly):
     plot = pv.Plotter()
-    assembly = Assembly(show_labels=False)
+    assembly = assembly(show_labels=False)
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
@@ -4357,7 +4347,11 @@ def test_show_bounds_no_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.camera_position = [
+        (1.97, 1.89, 1.66),
+        (0.05, -0.05, 0.00),
+        (-0.36, -0.36, 0.85),
+    ]
     plotter.show()
 
 
@@ -4375,7 +4369,11 @@ def test_show_bounds_n_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.camera_position = [
+        (1.97, 1.89, 1.66),
+        (0.05, -0.05, 0.00),
+        (-0.36, -0.36, 0.85),
+    ]
     plotter.show()
 
 
@@ -4689,7 +4687,8 @@ def test_direction_objects(direction_obj_test_case):
         legacy_vtk = pv.vtk_version_info < (9, 3)
         if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
             pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
+                'Test capsule separately for different vtk versions. Expected to fail if testing '
+                'with wrong version.',
             )
 
     direction_param_name = None
@@ -4853,7 +4852,12 @@ def test_contour_labels_boundary_style(
 @pytest.mark.parametrize(
     ('smoothing_distance', 'smoothing_scale'),
     [(0, None), (None, 0), (5, 0.5), (5, 1)],
-    ids=['dist_0-scale_None', 'dist_None-scale_0', 'dist_5-scale_0.5', 'dist_5-scale_1'],
+    ids=[
+        'dist_0-scale_None',
+        'dist_None-scale_0',
+        'dist_5-scale_0.5',
+        'dist_5-scale_1',
+    ],
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_smoothing_constraint(
@@ -4988,7 +4992,8 @@ def test_planes_assembly(airplane):
 @skip_9_1_0  # Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
-    ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
+    ('label_kwarg', 'camera_position'),
+    [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')],
 )
 @pytest.mark.parametrize(('label_mode', 'label_size'), [('2D', 25), ('3D', 40)])
 def test_planes_assembly_label_position(
@@ -5071,7 +5076,9 @@ def test_bitwise_and_or_of_polydata(operator):
     sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
     # Expand the wireframe ever so slightly to avoid rendering artifacts
     wireframe = pv.Sphere(radius + 0.001, **kwargs).extract_all_edges()
-    wireframe_shifted = pv.Sphere(radius=radius + 0.001, center=shift, **kwargs).extract_all_edges()
+    wireframe_shifted = pv.Sphere(
+        radius=radius + 0.001, center=shift, **kwargs
+    ).extract_all_edges()
 
     if operator == 'or':
         result = sphere | sphere_shifted

@@ -22,7 +22,11 @@ _GRID_TEMPLATE_NO_IMAGE = """
 
     .. grid-item::
 
-{}{}{}
+{}
+
+{}
+
+{}
 """
 
 _GRID_TEMPLATE_WITH_IMAGE = """
@@ -43,8 +47,12 @@ _GRID_TEMPLATE_WITH_IMAGE = """
     .. grid-item::
         :columns: 12 8 8 8
 
-{}{}{}
-"""
+{}
+
+{}
+
+{}
+"""  # noqa: E501
 
 
 def _indent_paragraph(string: str, level: int) -> str:
@@ -85,8 +93,8 @@ def _generate_faces_badge(num_faces: int) -> str:
 class _CellTypeTuple(NamedTuple):
     value: int
     cell_class: type[_vtk.vtkCell] | None = None
-    short_doc: str | None = None
-    long_doc: str | None = None
+    short_doc: str = ''
+    long_doc: str = ''
     example: str | None = None
     points_override: Literal['variable', 'n/a'] | None = None
     edges_override: Literal['variable', 'n/a'] | None = None
@@ -877,6 +885,9 @@ class CellType(IntEnum):
 
     .. seealso::
 
+        `VTK Book: Cell Types <https://book.vtk.org/en/latest/VTKBook/05Chapter5.html#cell-types>`_
+            VTK reference about cell types.
+
         `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
             List of all cell types defined in VTK.
 
@@ -931,8 +942,8 @@ class CellType(IntEnum):
         cls: type[CellType],
         value: int,
         _cell_class: type[_vtk.vtkCell] | None = None,
-        _short_doc: str | None = None,
-        _long_doc: str | None = None,
+        _short_doc: str = '',
+        _long_doc: str = '',
         _example: str | None = None,
         _points_override: Literal['variable', 'n/a'] | None = None,
         _edges_override: Literal['variable', 'n/a'] | None = None,
@@ -993,8 +1004,12 @@ class CellType(IntEnum):
         self._value_ = value
         self.__doc__ = ''
 
+        _short_doc = textwrap.dedent(_short_doc).strip()
+        _long_doc = textwrap.dedent(_long_doc).strip()
+
         # Generate cell type documentation if specified
         if _cell_class or _short_doc or _long_doc or _example:
+            badges = ''
             if _cell_class:
                 cell = _cell_class()
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
@@ -1010,28 +1025,21 @@ class CellType(IntEnum):
                 faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
                 faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
 
-                badges = (
-                    _indent_paragraph(
-                        f'{linear_badge} {primary_badge} {dimension_badge}\n'
-                        f'{points_badge} {edges_badge} {faces_badge}',
-                        level=2,
-                    )
-                    + '\n\n'
+                badges = _indent_paragraph(
+                    f'{linear_badge} {primary_badge} {dimension_badge}\n'
+                    f'{points_badge} {edges_badge} {faces_badge}',
+                    level=2,
                 )
-            else:
-                badges = ''
 
-            _short_doc = '' if _short_doc is None else _indent_paragraph(_short_doc, level=2)
+                # Add additional references to VTK docs
+                cell_class_ref = f':vtk:`{_cell_class.__name__}`'
+                see_also = f'See also {cell_class_ref}.'
+                _long_doc += f'\n\n{see_also}'
 
-            _long_doc = (
-                ''
-                if _long_doc is None
-                else _indent_paragraph(
-                    _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
-                )
+            _short_doc = _indent_paragraph(_short_doc, level=2)
+            _long_doc = _indent_paragraph(
+                _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
             )
-            if _short_doc and _long_doc:
-                _short_doc += '\n\n'
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)

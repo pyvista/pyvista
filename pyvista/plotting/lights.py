@@ -25,7 +25,8 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from .colors import Color
 
 if TYPE_CHECKING:
-    from ..core._typing_core import TransformLike
+    from pyvista.core._typing_core import TransformLike
+
     from ._typing import ColorLike
 
 

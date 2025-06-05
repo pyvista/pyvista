@@ -108,7 +108,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                 f'Reading file returned data of `{type(data).__name__}`, '
                 f'but `{type(self).__name__}` was expected.'
             )
-            raise ValueError(msg)
+            raise TypeError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -170,15 +170,18 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
                     index_fmt = _format_nested_index(index)
                     warnings.warn(
-                        f"Nested MultiBlock at index {index_fmt} with name '{name}' has field data which will not be saved.\n"
+                        f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                        f'has field data which will not be saved.\n'
                         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-                        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+                        'Use `move_nested_field_data_to_root` to store the field data '
+                        'with the root MultiBlock before saving.'
                     )
 
         def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
             if not np.allclose(mesh.direction_matrix, np.eye(3)):
                 warnings.warn(
-                    'The direction matrix for ImageData will not be saved using the legacy `.vtk` format.\n'
+                    'The direction matrix for ImageData will not be saved using the '
+                    'legacy `.vtk` format.\n'
                     'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
                     'Use the `.vti` extension instead (XML format).'
                 )
@@ -587,7 +590,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         Returns
         -------
         UserDict
-            JSON-serialized dict-like object which is subclassed from :py:class:`collections.UserDict`.
+            JSON-serialized dict-like object which is subclassed from
+            :py:class:`collections.UserDict`.
 
         Examples
         --------
@@ -657,7 +661,10 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         elif isinstance(dict_, UserDict):
             self._user_dict.data = dict_.data
         else:
-            msg = f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.'  # type: ignore[unreachable]
+            msg = (  # type: ignore[unreachable]
+                f'User dict can only be set with type {dict} or {UserDict}.\n'
+                f'Got {type(dict_)} instead.'
+            )
             raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:
@@ -794,11 +801,12 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         return serialized
 
     def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
-        """Support pickle by serializing the VTK object data to something which can be pickled natively.
+        """Support pickle by serializing the VTK object data.
 
-        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
-        - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
-        - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
+        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT`
+        (case-insensitive).
+        - If ``'xml'``, the data is serialized as an XML-formatted string.
+        - If ``'legacy'``, the data is serialized to bytes in VTK's binary format.
 
         .. note::
 
@@ -815,8 +823,9 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         state = self.__dict__.copy()
 
         if pyvista.PICKLE_FORMAT.lower() == 'xml':
-            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
-            # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
+            # not pass all settings down to the sub-writers. Until this is fixed, use the
+            # dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             writers = {
                 _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
@@ -852,8 +861,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         state['vtk_serialized'] = to_serialize
 
-        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
-        # processes
+        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT`
+        # is not shared between processes
         state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
@@ -909,8 +918,9 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         self.__dict__.update(state)
 
         if pickle_format.lower() == 'xml':
-            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
-            # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a
+            # bug where it does not pass all settings down to the sub-readers.
+            # Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             readers = {
                 _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,

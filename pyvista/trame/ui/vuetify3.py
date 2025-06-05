@@ -201,7 +201,8 @@ class Viewer(BaseViewer):
                 checkbox(
                     model=(self.SERVER_RENDERING, default_server_rendering),
                     icons=('mdi-dns', 'mdi-open-in-app'),
-                    tooltip=f"Toggle rendering mode ({{{{ {self.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
+                    tooltip=f'Toggle rendering mode '
+                    f"({{{{ {self.SERVER_RENDERING} ? 'remote' : 'local' }}}})",
                 )
             with vuetify.VRow(
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
@@ -211,7 +212,8 @@ class Viewer(BaseViewer):
                 checkbox(
                     model=(self.PARALLEL, False),
                     icons=('mdi-camera-off', 'mdi-camera-switch'),
-                    tooltip=f"Toggle parallel projection ({{{{ {self.PARALLEL} ? 'on' : 'off' }}}})",
+                    tooltip=f'Toggle parallel projection '
+                    f"({{{{ {self.PARALLEL} ? 'on' : 'off' }}}})",
                 )
 
                 def attach_screenshot():
@@ -219,7 +221,9 @@ class Viewer(BaseViewer):
 
                 button(
                     # Must use single-quote string for JS here
-                    click=f"utils.download('screenshot.png', trigger('{server.trigger_name(attach_screenshot)}'), 'image/png')",
+                    click="utils.download('screenshot.png', "
+                    f"trigger('{server.trigger_name(attach_screenshot)}'), "
+                    "'image/png')",
                     icon='mdi-file-png-box',
                     tooltip='Save screenshot',
                 )
@@ -229,7 +233,9 @@ class Viewer(BaseViewer):
 
             button(
                 # Must use single-quote string for JS here
-                click=f"utils.download('scene-export.html', trigger('{server.trigger_name(attach_export)}'), 'application/octet-stream')",
+                click="utils.download('scene-export.html', "
+                f"trigger('{server.trigger_name(attach_export)}'), "
+                "'application/octet-stream')",
                 icon='mdi-download',
                 tooltip='Export scene as HTML',
             )

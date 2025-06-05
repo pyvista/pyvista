@@ -36,7 +36,7 @@ def test_track_click_position_raises(callback):
     match = re.escape(
         'Invalid callback provided, it should be either ``None`` or a callable.',
     )
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         pl.track_click_position(callback=callback)
 
 
@@ -55,7 +55,8 @@ def test_process_events_raises(mocker: MockerFixture):
     m.GetInitialized.return_value = False
 
     with pytest.raises(
-        RuntimeError, match='Render window interactor must be initialized before processing events.'
+        RuntimeError,
+        match='Render window interactor must be initialized before processing events.',
     ):
         pl.iren.process_events()
 
@@ -213,7 +214,8 @@ def test_track_click_position():
 )
 @pytest.mark.needs_vtk_version(
     (9, 2),
-    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.',
+    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents '
+    'until VTK9.2.',
 )
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,

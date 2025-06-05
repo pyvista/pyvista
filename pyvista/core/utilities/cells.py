@@ -110,7 +110,7 @@ def numpy_to_idarr(
 
 
 def create_mixed_cells(mixed_cell_dict, nr_points=None):
-    """Generate the required cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
+    """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
     This function generates all required cell arrays according to a given cell
     dictionary. The given cell-dictionary should contain a proper
@@ -183,7 +183,10 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             or (cells_arr.ndim == 1 and cells_arr.size % nr_points_per_elem != 0)
             or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
         ):
-            msg = f'Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type'
+            msg = (
+                f'Expected an np.ndarray of size [N, {nr_points_per_elem}] or '
+                f'[N*{nr_points_per_elem}] with an integral type'
+            )
             raise ValueError(msg)
 
         if np.any(cells_arr < 0):
@@ -194,14 +197,19 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             msg = f'Non-valid index (>={nr_points}) given for cells of type {elem_t}'
             raise ValueError(msg)
 
-        if cells_arr.ndim == 1:  # Flattened array present
-            cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
+        # Ensure array is not flat
+        cells_arr_not_flat = (
+            cells_arr.reshape([-1, nr_points_per_elem]) if cells_arr.ndim == 1 else cells_arr
+        )
 
-        nr_elems = cells_arr.shape[0]
+        nr_elems = cells_arr_not_flat.shape[0]
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr],
+                [
+                    np.ones_like(cells_arr_not_flat[..., :1]) * nr_points_per_elem,
+                    cells_arr_not_flat,
+                ],
                 axis=-1,
             ).reshape([-1]),
         )
@@ -245,7 +253,7 @@ def get_mixed_cells(vtkobj):
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
         msg = 'Expected a pyvista object'
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
@@ -280,7 +288,9 @@ def get_mixed_cells(vtkobj):
         mask = cell_types == cell_type
         current_cell_starts = cell_starts[mask]
 
-        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(
+        cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[
+            np.newaxis
+        ].astype(
             cell_starts.dtype,
         )
 

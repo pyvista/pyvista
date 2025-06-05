@@ -534,14 +534,16 @@ def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
     m().SetActiveScalars.return_value = -1
 
     match = re.escape(
-        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the active scalars'
+        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the '
+        f'active scalars'
     )
     with pytest.raises(ValueError, match=match):
         sphere.set_active_scalars(f)
 
 
 def active_component_consistency_check(grid, component_type, field_association='point'):
-    """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
+    # Tests if the active component (scalars, vectors, tensors) actually reflects
+    # the underlying VTK dataset
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
 
@@ -717,8 +719,8 @@ def test_rename_array_doesnt_delete():
     was_deleted = [False]
 
     def on_delete(*_):
-        # Would be easier to throw an exception here but even though the exception gets printed to stderr
-        # pytest reports the test passing. See #5246 .
+        # Would be easier to throw an exception here but even though the exception gets printed to
+        # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
 
     mesh.point_data['orig'].VTKObject.AddObserver('DeleteEvent', on_delete)
@@ -1326,7 +1328,7 @@ ids = list(map(type, grids))
 ids_cells = list(map(type, grids_cells))
 
 
-def test_raises_cell_neighbors_ExplicitStructuredGrid(datasets_vtk9):
+def test_raises_cell_neighbors_explicit_structured_grid(datasets_vtk9):
     for dataset in datasets_vtk9:  # noqa: F402
         with pytest.raises(TypeError):
             _ = dataset.cell_neighbors(0)

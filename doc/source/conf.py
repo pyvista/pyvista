@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import sys
 
+from atsphinx.mini18n import get_template_dir
+
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
@@ -21,7 +23,7 @@ faulthandler.enable()
 # Note that `import make_tables` below imports pyvista.
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
-sys.path.insert(0, str(Path().resolve()))
+sys.path.insert(0, str(Path().cwd()))
 import make_external_gallery
 import make_tables
 
@@ -57,7 +59,8 @@ import warnings
 warnings.filterwarnings(
     'ignore',
     category=UserWarning,
-    message='Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.',
+    message='Matplotlib is currently using agg, which is a non-GUI backend, '
+    'so cannot show the figure.',
 )
 
 # Prevent deprecated features from being used in examples
@@ -77,6 +80,7 @@ sys.path.append(str(Path('./_ext').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'atsphinx.mini18n',
     'enum_tools.autoenum',
     'jupyter_sphinx',
     'notfound.extension',
@@ -86,7 +90,7 @@ extensions = [
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
+    'sphinx.ext.linkcode',  # Adds [Source] button to each API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.duration',
@@ -374,7 +378,7 @@ linkcheck_timeout = 500
 # class method or attribute and should be used with the production
 # documentation, but local builds and PR commits can get away without this as
 # it takes ~4x as long to generate the documentation.
-templates_path = ['_templates']
+templates_path = ['_templates', get_template_dir()]
 
 # Autosummary configuration
 autosummary_context = {
@@ -647,7 +651,8 @@ latex_documents = [
 
 # -- Options for gettext output -------------------------------------------
 
-# To specify names to enable gettext extracting and translation applying for i18n additionally. You can specify below names:
+# To specify names to enable gettext extracting and translation applying for i18n additionally.
+# You can specify below names:
 gettext_additional_targets = ['raw']
 
 # -- Options for manual page output ---------------------------------------
@@ -677,7 +682,7 @@ texinfo_documents = [
 # -- Custom 404 page
 
 notfound_context = {
-    'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
+    'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',  # noqa: E501
 }
 notfound_urls_prefix = None
 
@@ -713,6 +718,20 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'
+
+# atsphinx.mini18n options ---------------------------------------------------------
+html_sidebars = {
+    '**': [
+        'navbar-logo.html',
+        'icon-links.html',
+        'mini18n/snippets/select-lang.html',
+        'search-button-field.html',
+        'sbt-sidebar-nav.html',
+    ],
+}
+mini18n_default_language = language
+mini18n_support_languages = ['en', 'ja']
+locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
 def setup(app):  # noqa: D103
