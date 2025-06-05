@@ -70,7 +70,7 @@ def _deprecate_positional_args(
             # Validate input type
             if not isinstance(allowed, list):
                 msg = (  # type: ignore[unreachable]
-                    f'In decorator {decorator_name} for function {qualified_name()!r}:\n'
+                    f'In decorator {decorator_name!r} for function {qualified_name()!r}:\n'
                     f'Allowed arguments must be a list, got {type(allowed)}.'
                 )
                 raise TypeError(msg)
@@ -103,6 +103,15 @@ def _deprecate_positional_args(
                     f'Expected order: {sig_allowed}.'
                 )
                 raise ValueError(msg)
+
+            # Check that allowed args are not already kwonly
+            for name in allowed:
+                if sig.parameters[name].kind == inspect.Parameter.KEYWORD_ONLY:
+                    msg = (
+                        f'Parameter {name!r} in decorator {decorator_name!r} is already '
+                        f'keyword-only\nand should be removed from the allowed list.'
+                    )
+                    raise ValueError(msg)
 
         # Raise error post-deprecation
         if version_info >= version:

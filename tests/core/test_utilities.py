@@ -2579,6 +2579,16 @@ def test_deprecate_positional_args_allowed():
         @_deprecate_positional_args(allowed=['invalid'])
         def foo(bar): ...
 
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
+        "Allowed arguments must be a list, got <class 'str'>."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed='invalid')
+        def foo(bar): ...
+
     # Test invalid order
     match = (
         "The `allowed` list ['b', 'a'] in decorator '_deprecate_positional_args' "
@@ -2590,6 +2600,16 @@ def test_deprecate_positional_args_allowed():
 
         @_deprecate_positional_args(allowed=['b', 'a'])
         def foo(a, b, c): ...
+
+    # Test not already kwonly
+    match = (
+        "Parameter 'b' in decorator '_deprecate_positional_args' is already keyword-only\n"
+        'and should be removed from the allowed list.'
+    )
+    with pytest.raises(ValueError, match=match):
+
+        @_deprecate_positional_args(allowed=['a', 'b'])
+        def foo(a, *, b): ...
 
 
 def test_deprecate_positional_class_methods():
