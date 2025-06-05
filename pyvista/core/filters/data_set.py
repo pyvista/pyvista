@@ -1105,10 +1105,12 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Splat points into a volume using a Gaussian distribution.
 
-        This filter uses the ``vtkGaussianSplatter`` to splat points into a volume
+        This filter uses :vtk:`vtkGaussianSplatter` to splat points into a volume
         dataset. Each point is surrounded with a Gaussian distribution function
         weighted by input scalar data. The distribution function is volumetrically
         sampled to create a structured dataset.
+
+        .. versionadded:: 0.46
 
         Parameters
         ----------
