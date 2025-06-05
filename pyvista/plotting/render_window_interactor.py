@@ -778,28 +778,28 @@ class RenderWindowInteractor:
             return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
-            'left',
-            left,
-            control_left,
-            shift_left,
+            button='left',
+            click=left,
+            control=control_left,
+            shift=shift_left,
         )
         self.style.add_observer('LeftButtonPressEvent', _left_button_press_callback)
         self.style.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
-            'middle',
-            middle,
-            control_middle,
-            shift_middle,
+            button='middle',
+            click=middle,
+            control=control_middle,
+            shift=shift_middle,
         )
         self.style.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
         self.style.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
-            'right',
-            right,
-            control_right,
-            shift_right,
+            button='right',
+            click=right,
+            control=control_right,
+            shift=shift_right,
         )
         self.style.add_observer('RightButtonPressEvent', _right_button_press_callback)
         self.style.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
