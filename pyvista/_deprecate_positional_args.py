@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import wraps
 import inspect
 from inspect import Parameter
+from inspect import Signature
 import os
 from pathlib import Path
 from typing import Callable
@@ -134,13 +135,30 @@ def _deprecate_positional_args(
         # Raise error post-deprecation
         if version_info >= version:
             # Construct expected positional args and signature
-            positional_args = (
-                ['self'] if 'self' in param_names else ['cls'] if 'cls' in param_names else []
-            )
-            if allowed is not None:
-                for name in allowed:
-                    positional_args.append(name)  # noqa: PERF402
-            new_signature = f'{qualified_name()}({", ".join(positional_args)}, *, ...)'
+            new_parameters = []
+            max_args_to_print = actual_n_allowed + 2
+            cls_or_self = 'cls' in param_names or 'self' in param_names
+            max_args_to_print = (max_args_to_print + 1) if cls_or_self else max_args_to_print
+            has_too_many_to_print = False
+            for i, name in enumerate(param_names):
+                if i > max_args_to_print:
+                    has_too_many_to_print = True
+                    break
+                if name in ['cls', 'self', *(allowed if allowed else [])]:
+                    current_kind = sig.parameters[name].kind
+                    new_kind = (
+                        current_kind
+                        if current_kind != Parameter.KEYWORD_ONLY
+                        else Parameter.KEYWORD_ONLY
+                    )
+                    new_parameters.append(Parameter(name, kind=new_kind))
+                else:
+                    new_parameters.append(Parameter(name, kind=Parameter.KEYWORD_ONLY))
+
+            signature_string = f'{qualified_name()}{Signature(new_parameters)}'
+            if has_too_many_to_print:
+                # Replace ending bracket with ellipses
+                signature_string = f'{signature_string[:-1]}, ...)'
 
             # Get source file and line number
             file = Path(os.path.relpath(inspect.getfile(f), start=os.getcwd())).as_posix()  # noqa: PTH109
@@ -150,8 +168,8 @@ def _deprecate_positional_args(
             msg = (
                 f'Positional arguments are no longer allowed in {qualified_name()!r}.\n'
                 f'Update the function signature at:\n'
-                f'{location} to:\n'
-                f'    {new_signature}\n'
+                f'{location} to enforce keyword-only args:\n'
+                f'    {signature_string}\n'
                 f'and remove the {decorator_name!r} decorator.'
             )
             raise RuntimeError(msg)

@@ -2539,14 +2539,27 @@ def test_deprecate_positional_args_post_deprecation():
         r'Positional arguments are no longer allowed in '
         r"'test_deprecate_positional_args_post_deprecation.<locals>.foo'\.\n"
         r'Update the function signature at:\n'
-        r'.*test_utilities\.py:\d+ to:\n'
-        r'    test_deprecate_positional_args_post_deprecation.<locals>.foo\(bar, \*, \.\.\.\)\n'
+        r'.*test_utilities\.py:\d+ to enforce keyword-only args:\n'
+        r'    test_deprecate_positional_args_post_deprecation.<locals>.foo\(bar, \*, baz\)\n'
         r"and remove the '_deprecate_positional_args' decorator\."
     )
     with pytest.raises(RuntimeError, match=match):
 
         @_deprecate_positional_args(allowed=['bar'], version=(0, 46))
         def foo(bar, baz): ...
+
+    match = 'foo(*, bar, baz, ham, ...)'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(version=(0, 46))
+        def foo(bar, baz, ham, eggs): ...
+
+    match = 'foo(self, *, bar, baz, ham, ...)'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @_deprecate_positional_args(version=(0, 46))
+            def foo(self, bar, baz, ham, eggs): ...
 
 
 def test_deprecate_positional_args_allowed():
