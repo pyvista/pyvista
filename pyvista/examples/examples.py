@@ -258,7 +258,7 @@ def load_structured():
 def _structured_load_func():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)
+    x, y = np.meshgrid(x, y)  # type: ignore[assignment]
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
@@ -616,7 +616,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
     >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
-    See :ref:`plot_atomic_orbitals_example` for additional examples using
+    See :ref:`atomic_orbitals_example` for additional examples using
     this function.
 
     .. seealso::

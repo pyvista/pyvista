@@ -146,13 +146,13 @@ def test_get_array_raises():
 
 def test_raise_not_matching_raises():
     with pytest.raises(
-        ValueError, match=re.escape('Number of scalars (1) must match number of rows (0).')
+        ValueError,
+        match=re.escape('Number of scalars (1) must match number of rows (0).'),
     ):
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
 def test_version():
-    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -162,6 +162,7 @@ def test_version():
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
+    assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= (0, 0, 0)
 
@@ -176,7 +177,7 @@ def test_createvectorpolydata_error():
         vector_poly_data([0, 1, 2], vec)
 
 
-def test_createvectorpolydata_1D():
+def test_createvectorpolydata_1d():
     orig = np.random.default_rng().random(3)
     vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
@@ -207,7 +208,14 @@ def test_get_ext(path, target_ext):
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_read(tmpdir, use_pathlib):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
     if use_pathlib:
         fnames = [Path(fname) for fname in fnames]
     types = (
@@ -244,7 +252,14 @@ def test_read(tmpdir, use_pathlib):
 
 
 def test_read_force_ext(tmpdir):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
     types = (
         pv.PolyData,
         pv.PolyData,
@@ -390,7 +405,9 @@ def test_is_inside_bounds_raises():
     with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
         is_inside_bounds(point=np.array([0]), bounds=(0, 1, 3, 4, 5))
 
-    with pytest.raises(TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")):
+    with pytest.raises(
+        TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")
+    ):
         is_inside_bounds(point=None, bounds=(0,))
 
 
@@ -470,6 +487,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():
@@ -637,8 +655,8 @@ def test_annotated_int_enum_from_any_raises(value):
         BAR = (0, 'foo')
 
     with pytest.raises(
-        ValueError,
-        match=re.escape(f'{Foo.__name__} has no value matching {value}'),
+        TypeError,
+        match=re.escape(f'Invalid type {type(value)} for class {Foo.__name__}'),
     ):
         Foo.from_any(value)
 
@@ -654,10 +672,10 @@ def test_lines_segments_from_points(points):
 
 def test_cells_dict_utils():
     # No pyvista object
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
@@ -686,7 +704,9 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
     mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pv.StructuredGrid(x2, y2, z2)
@@ -916,7 +936,11 @@ def test_copy_vtk_array():
 def test_cartesian_to_spherical():
     def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi)),
+            (
+                r * np.sin(phi) * np.cos(theta),
+                r * np.sin(phi) * np.sin(theta),
+                r * np.cos(phi),
+            ),
         ).T
 
     points = np.random.default_rng().random((1000, 3))
@@ -948,6 +972,13 @@ def test_linkcode_resolve():
     # test property
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
     assert 'dataset.py' in link
+
+    # test wrapped function
+    link = linkcode_resolve(
+        'py',
+        {'module': 'pyvista', 'fullname': 'pyvista.plotting.plotter.Plotter.add_ruler'},
+    )
+    assert 'renderer.py' in link
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
@@ -1111,7 +1142,9 @@ def test_fit_line_to_points():
     assert np.allclose(direction, np.abs(pv.principal_axes(fitted_line.points)[0]))
     assert np.allclose(length, fitted_line.length)
 
-    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution, return_meta=False)
+    fitted_line = fit_line_to_points(
+        expected_line.points, resolution=resolution, return_meta=False
+    )
     assert np.allclose(fitted_line.bounds, expected_line.bounds)
 
 
@@ -1149,7 +1182,8 @@ is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac, reason='Different results for some tests.'
+    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
@@ -1374,7 +1408,8 @@ def test_transform_reflect(transform, reflect_args):
 
 
 @pytest.mark.parametrize(
-    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+    ('method', 'vector'),
+    [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))],
 )
 def test_transform_flip_xyz(transform, method, vector):
     getattr(transform, method)()
@@ -1532,10 +1567,20 @@ class CasesTransformApply:
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
-        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+        return (
+            pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
+            True,
+            pv.PolyData,
+            np.float32,
+        )
 
     def case_polydata_float(self):
-        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+        return (
+            pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
+            True,
+            pv.PolyData,
+            float,
+        )
 
     def case_multiblock_float(self):
         return (
@@ -1726,7 +1771,9 @@ def transformed_actor():
 
 @pytest.mark.parametrize('override_mode', ['pre', 'post'])
 @pytest.mark.parametrize('object_mode', ['pre', 'post'])
-def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
+def test_transform_multiply_mode_override(
+    transform, transformed_actor, object_mode, override_mode
+):
     # This test validates multiply mode by performing the same transformations
     # applied by `Prop3D` objects and comparing the results
     transform.multiply_mode = object_mode
@@ -1853,7 +1900,12 @@ def test_transform_radd():
 
 @pytest.mark.parametrize(
     'other',
-    [SCALE, (SCALE, SCALE, SCALE), Transform().scale(SCALE), Transform().scale(SCALE).matrix],
+    [
+        SCALE,
+        (SCALE, SCALE, SCALE),
+        Transform().scale(SCALE),
+        Transform().scale(SCALE).matrix,
+    ],
 )
 def test_transform_mul_other(other):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
@@ -1932,7 +1984,8 @@ def test_transform_rmul_raises():
 def test_transform_mul_raises():
     match = (
         "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
-        'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+        'The right-side argument must be a single number or a length-3 vector '
+        'or have 3x3 or 4x4 shape.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() * (1, 2, 3, 4)
@@ -1996,7 +2049,9 @@ SHEAR[2, 1] = values[2]
 @pytest.mark.parametrize('do_reflection', [True, False])
 @pytest.mark.parametrize('do_rotate', [True, False])
 @pytest.mark.parametrize('do_translate', [True, False])
-def test_transform_decompose(transform, do_shear, do_scale, do_reflection, do_rotate, do_translate):
+def test_transform_decompose(
+    transform, do_shear, do_scale, do_reflection, do_rotate, do_translate
+):
     if do_shear:
         transform.compose(SHEAR)
     if do_scale:
@@ -2109,7 +2164,7 @@ def test_classproperty():
     @no_new_attr
     class Foo:
         @_classproperty
-        def prop(cls):
+        def prop(cls):  # noqa: N805
             return magic_number
 
     assert Foo.prop == magic_number
@@ -2251,7 +2306,10 @@ def test_state_manager_invalid_type_arg(arg):
     else:
         cls = _create_state_manager_subclass(arg)
 
-    match = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+    match = (
+        'Type argument for subclasses must be a single non-empty Literal with all '
+        'state options provided.'
+    )
     with pytest.raises(TypeError, match=match):
         cls()
 
@@ -2265,7 +2323,8 @@ def test_state_manager_sub_subclass():
 
 
 @pytest.mark.parametrize(
-    'cell_type', [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE']
+    'cell_type',
+    [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE'],
 )
 def test_cell_quality_info(cell_type):
     measure = 'area'
@@ -2279,7 +2338,9 @@ CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in 
 
 
 def _compute_unit_cell_quality(
-    info: CellQualityInfo, null_value=-42.42, coincident: Literal['all', 'single', False] = False
+    info: CellQualityInfo,
+    null_value=-42.42,
+    coincident: Literal['all', 'single', False] = False,
 ):
     example_name = _CELL_TYPE_INFO[info.cell_type.name].example
     cell_mesh = getattr(ex.cells, example_name)()
@@ -2407,7 +2468,8 @@ def test_cell_quality_info_raises():
 
     match = re.escape(
         "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"
-        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', 'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
+        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', "
+        "'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')

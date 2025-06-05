@@ -66,7 +66,8 @@ jobs:
 
       - name: Install PyVista and dependencies
         run: |
-          pip install -e .[docs]
+          pip install --upgrade pip
+          pip install . --group docs
 
       - name: PyVista Report
         run: |
@@ -106,8 +107,8 @@ jobs:
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
-      - name: Test Documentation Images
-        run: pytest tests/doc/tst_doc_images.py
+      - name: Test Documentation
+        run: pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -122,6 +123,21 @@ jobs:
         with:
           name: doc-debug-images
           path: _doc_debug_images
+
+      - uses: actions/checkout@v4
+        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
+        with:
+          repository: pyvista/pyvista-doc-translations
+          path: pyvista-doc-translations
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Build I18N Documentation
+        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
+        run: |
+          make -C doc mini18n-html
+          find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
+          rm -rf doc/_build/mini18n-html
 
       - name: Upload HTML documentation
         if: always()

@@ -26,7 +26,7 @@ def vtk_points(
     force_float: bool = False,
     allow_empty: bool = True,
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a ``vtkPoints`` object.
+    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------
@@ -52,8 +52,8 @@ def vtk_points(
 
     Returns
     -------
-    vtk.vtkPoints
-        The vtkPoints object.
+    :vtk:`vtkPoints`
+        The :vtk:`vtkPoints` object.
 
     Examples
     --------
@@ -188,7 +188,7 @@ def lines_from_points(
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
+        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)  # type: ignore[assignment]
     poly.lines = cells
     return poly
 

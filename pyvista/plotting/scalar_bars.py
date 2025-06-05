@@ -46,8 +46,8 @@ class ScalarBars:
         lines.append('Scalar Bar Title     Interactive')
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
-            title = f'"{title}"'
-            lines.append(f'{title:20} {interactive!s:5}')
+            title_quotes = f'"{title}"'
+            lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(
@@ -199,7 +199,7 @@ class ScalarBars:
         title : str, default: ""
             Title of the scalar bar.  Default is rendered as an empty title.
 
-        mapper : vtkMapper, optional
+        mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar.  Defaults to the last
             mapper created by the plotter.
 
@@ -323,13 +323,17 @@ class ScalarBars:
 
         Returns
         -------
-        vtk.vtkScalarBarActor
+        :vtk:`vtkScalarBarActor`
             Scalar bar actor.
 
         Notes
         -----
         Setting ``title_font_size``, or ``label_font_size`` disables
         automatic font sizing for both the title and label.
+
+        See Also
+        --------
+        :ref:`scalar_bar_example`
 
         Examples
         --------

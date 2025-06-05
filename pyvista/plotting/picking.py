@@ -16,6 +16,8 @@ from pyvista.core.utilities.misc import try_callback
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
+from .mapper import _mapper_get_data_set_input
+from .mapper import _mapper_has_data_set_input
 from .opts import ElementType
 from .opts import PickerType
 
@@ -52,7 +54,7 @@ class RectangleSelection:
 
     Parameters
     ----------
-    frustum : _vtk.vtkPlanes
+    frustum : :vtk:`vtkPlanes`
         Frustum that defines the selection.
     viewport : tuple[float, float, float, float]
         The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
@@ -200,7 +202,9 @@ class PointPickingElementHandler:
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_edges > 1:
             ei = (
-                cell.cast_to_unstructured_grid().extract_all_edges().find_closest_cell(picked_point)
+                cell.cast_to_unstructured_grid()
+                .extract_all_edges()
+                .find_closest_cell(picked_point)
             )
             edge = cell.edges[ei].cast_to_unstructured_grid()
             edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
@@ -367,7 +371,10 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            msg = (
+                'Picking is already enabled, please disable previous picking '
+                'with `disable_picking()`.'
+            )
             raise PyVistaPickingError(msg)
 
     def enable_point_picking(
@@ -418,12 +425,12 @@ class PickingInterface:  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         show_message : bool | str, default: True
             Show the message about how to use the point picking
@@ -817,12 +824,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
@@ -855,7 +862,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         # only allow certain pickers to be used for surface picking
         #  the picker class needs to have `GetDataSet()`
         picker = PickerType.from_any(picker)
-        valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
+        valid_pickers = [
+            PickerType.POINT,
+            PickerType.CELL,
+            PickerType.HARDWARE,
+            PickerType.VOLUME,
+        ]
         if picker not in valid_pickers:
             msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
             raise ValueError(msg)
@@ -966,12 +978,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
 
         **kwargs : dict, optional
@@ -980,7 +992,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        vtk.vtkPropPicker
+        :vtk:`vtkPropPicker`
             Property picker.
 
         Examples
@@ -1144,10 +1156,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             for actor in renderer.actors.values():
                 if (
                     (mapper := actor.GetMapper())
-                    and hasattr(mapper, 'GetInputAsDataSet')
+                    and _mapper_has_data_set_input(mapper)
                     and actor.GetPickable()
                 ):
-                    input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    input_mesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
@@ -1284,9 +1296,10 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            'Display representations other than `surface` will result in incorrect results.',
+                            'Display representations other than `surface` will result '
+                            'in incorrect results.',
                         )
-                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
                     smesh['original_cell_ids'] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
@@ -1482,16 +1495,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
             the picked path is interactively displayed.
+
+        See Also
+        --------
+        :ref:`element_picking_example`
 
         """
         mode = ElementType.from_any(mode)

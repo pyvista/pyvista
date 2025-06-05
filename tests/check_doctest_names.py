@@ -83,9 +83,9 @@ def discover_modules(entry=pyvista, recurse=True):
     next_entries = {entry}
     while next_entries:
         next_modules = {}
-        for entry in next_entries:
-            for attr_short_name in dir(entry):
-                attr = getattr(entry, attr_short_name)
+        for ent in next_entries:
+            for attr_short_name in dir(ent):
+                attr = getattr(ent, attr_short_name)
                 if not isinstance(attr, ModuleType):
                     continue
 

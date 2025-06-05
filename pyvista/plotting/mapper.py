@@ -56,7 +56,12 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         >>> import pyvista as pv
         >>> mapper = pv.DataSetMapper(dataset=pv.Cube())
         >>> mapper.bounds
-        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -233,7 +238,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         >>> mapper.interpolate_before_map = True
         >>> pl.show()
 
-        See :ref:`interpolate_before_mapping_example` for additional
+        See :ref:`interpolate_before_map_example` for additional
         explanation regarding this attribute.
 
         """
@@ -367,7 +372,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
 
 @no_new_attr
 class _DataSetMapper(_BaseMapper):
-    """Base wrapper for _vtk.vtkDataSetMapper.
+    """Base wrapper for :vtk:`vtkDataSetMapper`.
 
     Parameters
     ----------
@@ -394,7 +399,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast('Optional[pyvista.DataSet]', wrap(self.GetInputAsDataSet()))
+        return cast('Optional[pyvista.DataSet]', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
     def dataset(
@@ -743,7 +748,10 @@ class _DataSetMapper(_BaseMapper):
 
     @property
     def cmap(self) -> str | None:  # numpydoc ignore=RT01
-        """Colormap assigned to this mapper."""
+        """Colormap assigned to this mapper.
+
+        See :ref:`named_colormaps` for supported colormaps.
+        """
         return self._cmap
 
     @property
@@ -839,7 +847,9 @@ class _DataSetMapper(_BaseMapper):
             )
             raise ValueError(msg)
 
-        default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
+        default_color = (
+            self._theme.color if self._theme is not None else pyvista.global_theme.color
+        )
 
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
@@ -867,7 +877,7 @@ class _DataSetMapper(_BaseMapper):
 
 
 class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
-    """Wrap _vtk.vtkDataSetMapper.
+    """Wrap :vtk:`vtkDataSetMapper`.
 
     Parameters
     ----------
@@ -901,7 +911,7 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
 
 @no_new_attr
 class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
-    """Wrap vtkPointGaussianMapper.
+    """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
     ----------
@@ -1074,8 +1084,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        # GetInputAsDataSet unavailable on volume mappers
-        return wrap(self.GetDataSetInput())
+        return wrap(_mapper_get_data_set_input(self))
 
     @dataset.setter
     def dataset(
@@ -1116,12 +1125,18 @@ class _BaseVolumeMapper(_BaseMapper):
         * ``"additive"``
 
         Also accepts integer values corresponding to
-        ``vtk.vtkVolumeMapper.BlendModes``. For example
-        ``vtk.vtkVolumeMapper.COMPOSITE_BLEND``.
+        :vtk:`vtkVolumeMapper.BlendModes`. For example
+        :vtk:`vtkVolumeMapper.COMPOSITE_BLEND`.
 
         """
         value = self.GetBlendMode()
-        mode = {0: 'composite', 1: 'maximum', 2: 'minimum', 3: 'average', 4: 'additive'}.get(value)
+        mode = {
+            0: 'composite',
+            1: 'maximum',
+            2: 'minimum',
+            3: 'average',
+            4: 'additive',
+        }.get(value)
         if mode is None:  # pragma: no cover
             msg = f'Unsupported blend mode return value {value}'
             raise NotImplementedError(msg)
@@ -1160,7 +1175,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
-    """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1169,7 +1184,7 @@ class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeR
 
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
-    """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1178,7 +1193,7 @@ class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
-    """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1187,7 +1202,7 @@ class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRay
 
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
-    """Wrap _vtk.vtkSmartVolumeMapper."""
+    """Wrap :vtk:`vtkSmartVolumeMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1199,9 +1214,31 @@ class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
-    """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`."""
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
+
+
+def _mapper_has_data_set_input(mapper):
+    """Check if mapper has a data set input using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
+    return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
+
+
+def _mapper_get_data_set_input(mapper):
+    """Get data set input from mapper using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
+    return (
+        mapper.GetDataSetInput()
+        if hasattr(mapper, 'GetDataSetInput')
+        else mapper.GetInputAsDataSet()
+    )

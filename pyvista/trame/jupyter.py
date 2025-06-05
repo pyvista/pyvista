@@ -37,7 +37,8 @@ You can use the following snippet to launch the server:
 """
 JUPYTER_SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
-Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the `'trame'`, `'server'`, or `'client'` Jupyter backends.
+Prior to plotting, please make sure to run `set_jupyter_backend('trame')` when using the
+`'trame'`, `'server'`, or `'client'` Jupyter backends.
 
     import pyvista as pv
     pyvista.set_jupyter_backend('trame')
@@ -124,7 +125,10 @@ class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
         border = 'border: 1px solid rgb(221,221,221);'
-        value = f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; height: {height}; {border}"></iframe>'
+        value = (
+            f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; '
+            f'height: {height}; {border}"></iframe>'
+        )
         super().__init__(value, **kwargs)
         self._src = src
 
@@ -152,7 +156,9 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
 
     wslink_backend : str, optional
         The wslink backend that the server should use
-        ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
+        ``aiohttp`` by default, ``jupyter`` if the
+        `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_
+        is used.
 
     **kwargs : dict, optional
         Any additional keyword arguments to pass to ``pyvista.trame.views.get_server``.
@@ -222,9 +228,8 @@ def build_url(
         if server_proxy_prefix is None:
             server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
-        src = (
-            f'{server_proxy_prefix if server_proxy_prefix else ""}{_server.port}/index.html{params}'
-        )
+        prefix = server_proxy_prefix if server_proxy_prefix else ''
+        src = f'{prefix}{_server.port}/index.html{params}'
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'
     logger.debug(src)
@@ -450,11 +455,12 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     try:
         import nest_asyncio
     except ImportError:
-        msg = """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
-
-    from pyvista.trame.jupyter import launch_server
-    await launch_server().ready
-"""
+        msg = (
+            'Please install `nest_asyncio` to automagically launch the trame server '
+            'without await. Or, to avoid `nest_asynctio` run:\n\n'
+            'from pyvista.trame.jupyter import launch_server\n'
+            'await launch_server().ready'
+        )
         raise ImportError(msg)
 
     async def launch_it():

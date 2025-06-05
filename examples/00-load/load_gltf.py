@@ -1,5 +1,5 @@
 """
-.. _load_gltf:
+.. _load_gltf_example:
 
 Working with glTF Files
 ~~~~~~~~~~~~~~~~~~~~~~~

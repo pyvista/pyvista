@@ -32,12 +32,6 @@ This module can be used for scientific plotting for presentations and
 research papers as well as a supporting module for other mesh
 dependent Python modules.
 
-.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
-   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
-
-Share this project on X: |tweet|
-
-
 .. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
@@ -214,15 +208,14 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 #. Click ``Request language`` and fill form.
 #. Wait acceptance by transifex pyvista translation maintainers.
 #. (After acceptance) Translate on transifex.
-#. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
+#. We can host the translated document using `atsphinx-mini18n`_.
 #. Translation is backed up in `pyvista-doc-translations`_.
 
 Details can be found here: https://help.transifex.com/en/
 
 .. _`pyvista translation page`: https://app.transifex.com/signin/?next=/tkoyama010/pyvista-doc/
 .. _Transifex: https://app.transifex.com/signin/?next=/home/
-.. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
-.. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
+.. _atsphinx-mini18n: https://atsphinx.github.io/mini18n/en/
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
 
 

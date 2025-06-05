@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:
-    """Return the numpy datatype responding to ``vtk.vtkIdTypeArray``."""
+    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`."""
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
     if VTK_ID_TYPE_SIZE == 4:
         return np.int32
@@ -43,7 +43,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
 
 
 class Cell(DataObject, _vtk.vtkGenericCell):
-    """Wrapping of vtkCell.
+    """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
     be useful when walking through a cell's individual faces or investigating
@@ -51,8 +51,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     Parameters
     ----------
-    vtk_cell : vtk.vtkCell, optional
-        The vtk object to wrap as Cell, that must be of ``vtk.vtkCell`` type.
+    vtk_cell : :vtk:`vtkCell`, optional
+        The vtk object to wrap as Cell, that must be of :vtk:`vtkCell` type.
 
     cell_type : int, optional
         VTK cell type. Determined from ``vtk_cell`` if not input.
@@ -513,7 +513,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
-        BoundsTuple(x_min=0.0, x_max=0.05405950918793678, y_min=0.0, y_max=0.011239604093134403, z_min=0.49706897139549255, z_max=0.5)
+        BoundsTuple(x_min = 0.0,
+                    x_max = 0.05405950918793678,
+                    y_min = 0.0,
+                    y_max = 0.011239604093134403,
+                    z_min = 0.49706897139549255,
+                    z_max = 0.5)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -611,7 +616,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
 
 class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
-    """PyVista wrapping of vtkCellArray.
+    """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
     a numpy array or list.
@@ -622,7 +627,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
     Parameters
     ----------
     cells : np.ndarray or list, optional
-        Import an array of data with the legacy vtkCellArray layout, e.g.
+        Import an array of data with the legacy :vtk:`vtkCellArray` layout, e.g.
         ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
         Where n0 is the number of points in cell 0, and pX_Y is the Y'th
         point in cell X.
@@ -655,7 +660,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         n_cells: int | None = None,
         deep: bool | None = None,
     ) -> None:
-        """Initialize a vtkCellArray."""
+        """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
         self.__offsets: _vtk.vtkIdTypeArray | None = None
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
@@ -784,7 +789,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
 
     @property
     def regular_cells(self: Self) -> NumpyArray[int]:
-        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
+        """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces.
 
         Returns
         -------
@@ -809,7 +814,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
@@ -836,7 +841,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
 
         Returns
         -------
@@ -867,7 +872,7 @@ def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
-    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
+    """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells

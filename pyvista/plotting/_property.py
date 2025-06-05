@@ -1,4 +1,4 @@
-"""Wrapper for vtkProperty."""
+"""Wrapper for :vtk:`vtkProperty`."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from .opts import InterpolationType
 
 @no_new_attr
 class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
-    """Wrap vtkProperty and expose it pythonically.
+    """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.
 
@@ -86,10 +86,14 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
-    render_points_as_spheres : bool, default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+    render_points_as_spheres : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+
         Render points as spheres rather than dots.
 
-    render_lines_as_tubes : bool, default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+    render_lines_as_tubes : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+
         Show lines as thick tubes rather than flat lines.  Control
         the width with ``line_width``.
 
@@ -248,7 +252,8 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
             import warnings
 
             warnings.warn(
-                '`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+                '`edge_opacity` cannot be used under VTK v9.3.0. '
+                'Try installing VTK v9.3.0 or newer.',
                 UserWarning,
             )
         if edge_opacity is None:
@@ -862,6 +867,11 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
+
+        See Also
+        --------
+        :ref:`create_truss_example`
+            Example that uses ``render_lines_as_tubes``.
 
         Examples
         --------
