@@ -180,16 +180,7 @@ def _deprecate_positional_args(
                         warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=stack_level)
 
                     warn_positional_args()
-                else:
-                    # Raise error
-                    def error_positional_args() -> None:
-                        msg = (
-                            f'Argument{s} {", ".join(offending_args)} must be passed as{a}keyword '
-                            f'argument{s}'
-                        )
-                        raise TypeError(msg)
 
-                    error_positional_args()
             return f(*args, **kwargs)
 
         return inner_f
