@@ -1008,7 +1008,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @pytest.mark.skip_plotting
-def test_chart_mpl(pl, chart_mpl):
+def test_chart_mpl(pl):
     import matplotlib.pyplot as plt
 
     size = (0.5, 0.5)

@@ -2079,7 +2079,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if render_event:
             for renderer in self.renderers:
-                renderer.AddObserver(_vtk.vtkCommand.RenderEvent, lambda *args: callback(self))
+                renderer.AddObserver(_vtk.vtkCommand.RenderEvent, lambda *_: callback(self))
         else:
             self._on_render_callbacks.add(callback)
 
@@ -2107,14 +2107,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.clear_events_for_key(*args, **kwargs)  # type: ignore[has-type]
 
-    def store_mouse_position(self, *args):
+    def store_mouse_position(self, *args):  # noqa: ARG002
         """Store mouse position."""
         if not hasattr(self, 'iren'):
             msg = 'This plotting window is not interactive.'
             raise AttributeError(msg)
         self.mouse_position = self.iren.get_event_position()  # type: ignore[has-type]
 
-    def store_click_position(self, *args):
+    def store_click_position(self, *args):  # noqa: ARG002
         """Store click position in viewport coordinates."""
         if not hasattr(self, 'iren'):
             msg = 'This plotting window is not interactive.'
@@ -2279,7 +2279,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.key_press_event."""
         self.iren.key_press_event(*args, **kwargs)  # type: ignore[has-type]
 
-    def left_button_down(self, *args):
+    def left_button_down(self, *args):  # noqa: ARG002
         """Register the event for a left button down click."""
         attr = (
             'GetOffScreenFramebuffer'
