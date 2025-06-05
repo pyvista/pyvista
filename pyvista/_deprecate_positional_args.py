@@ -171,7 +171,7 @@ def _deprecate_positional_args(
 
                     def warn_positional_args() -> None:
                         msg = (
-                            f'\n{call_site()}\n'
+                            f'\n{call_site()}: '
                             f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
                             f'to function {qualified_name()!r}.\n'
                             f'From version {version_str}, passing {this} as{a}positional '
