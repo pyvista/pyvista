@@ -503,7 +503,7 @@ class Renderers:
             self.active_renderer.layer = 2
             view_port = self.active_renderer.GetViewport()
 
-        renderer = BackgroundRenderer(self._plotter, image_path, scale, view_port)
+        renderer = BackgroundRenderer(self._plotter, image_path, scale=scale, view_port=view_port)
         renderer.layer = 1
         self._background_renderers[self.active_index] = renderer
         return renderer
