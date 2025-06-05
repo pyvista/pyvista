@@ -3588,7 +3588,9 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
+        self._render_passes.enable_ssao_pass(
+            radius=radius, bias=bias, kernel_size=kernel_size, blur=blur
+        )
 
     def disable_ssao(self) -> None:
         """Disable surface space ambient occlusion (SSAO)."""
