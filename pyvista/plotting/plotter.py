@@ -111,7 +111,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
-    from pyvista.plotting._typing import BackfaceParams
+    from pyvista.plotting._typing import BackfaceArgs
     from pyvista.plotting._typing import CameraOptions
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
@@ -120,8 +120,8 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import FontFamilyOptions
     from pyvista.plotting._typing import LightingOptions
     from pyvista.plotting._typing import OpacityOptions
-    from pyvista.plotting._typing import ScalarBarParams
-    from pyvista.plotting._typing import SilhouetteParams
+    from pyvista.plotting._typing import ScalarBarArgs
+    from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
     from pyvista.plotting.text import HorizontalOptions
@@ -2561,7 +2561,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
-        scalar_bar_args: ScalarBarParams | None = None,
+        scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
         multi_colors: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = False,
         name: str | None = None,
@@ -3094,7 +3094,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap: ColormapOptions | list[str] | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,
-        scalar_bar_args: ScalarBarParams | None = None,
+        scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
         multi_colors: bool = False,
         name: str | None = None,
@@ -3112,7 +3112,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         culling: CullingOptions | bool | None = None,
         rgb: bool | None = None,
         categories: bool = False,
-        silhouette: SilhouetteParams | bool | None = None,
+        silhouette: SilhouetteArgs | bool | None = None,
         use_transparency: bool = False,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
@@ -3128,7 +3128,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         component: int | None = None,
         emissive: bool | None = None,
         copy_mesh: bool = False,
-        backface_params: BackfaceParams | Property | None = None,
+        backface_params: BackfaceArgs | Property | None = None,
         show_vertices: bool | None = None,
         edge_opacity: float | None = None,
         **kwargs,
@@ -3736,7 +3736,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh)
             silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
 
-        scalar_bar_args = cast('ScalarBarParams', scalar_bar_args)
+        scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Make sure scalars components are not vectors/tuples
@@ -4034,7 +4034,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         multi_colors: bool = False,
         blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = 'composite',
         mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = None,
-        scalar_bar_args: ScalarBarParams | None = None,
+        scalar_bar_args: ScalarBarArgs | None = None,
         show_scalar_bar: bool | None = None,
         annotations: dict[float, str] | None = None,
         pickable: bool = True,

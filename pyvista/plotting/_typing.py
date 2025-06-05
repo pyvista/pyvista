@@ -79,7 +79,7 @@ LightingOptions = Literal['light kit', 'three lights', 'none']
 CameraOptions = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
 
 
-class BackfaceParams(TypedDict, total=False):
+class BackfaceArgs(TypedDict, total=False):
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
@@ -102,7 +102,7 @@ class BackfaceParams(TypedDict, total=False):
     edge_opacity: float
 
 
-class ScalarBarParams(TypedDict, total=False):
+class ScalarBarArgs(TypedDict, total=False):
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
@@ -133,7 +133,7 @@ class ScalarBarParams(TypedDict, total=False):
     unconstrained_font_size: bool
 
 
-class SilhouetteParams(TypedDict, total=False):
+class SilhouetteArgs(TypedDict, total=False):
     color: ColorLike
     line_width: float
     opacity: float
