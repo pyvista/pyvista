@@ -737,7 +737,7 @@ def test_stackplot(chart_2d, stack_plot):
     l = ['Foo', 'Spam', 'Bla']
 
     # Test multi comp constructor
-    plot = charts.StackPlot(chart_2d, x, ys, c, l)
+    plot = charts.StackPlot(chart_2d, x, ys, colors=c, labels=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
@@ -745,7 +745,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.StackPlot(chart_2d, x, ys[0], c[0], l[0])
+    plot = charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l[0])
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys[0])
@@ -754,12 +754,12 @@ def test_stackplot(chart_2d, stack_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(TypeError):
-        charts.StackPlot(chart_2d, x, ys, c[0], l)
+        charts.StackPlot(chart_2d, x, ys, colors=c[0], labels=l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys[0], c, l[0])
+        charts.StackPlot(chart_2d, x, ys[0], colors=c, labels=l[0])
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys[0], c[0], l)
+        charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l)
 
     # Test remaining properties
     stack_plot.update(x, ys)
@@ -884,7 +884,7 @@ def test_chart_2d(pl, chart_2d):
     assert b in chart_2d.plots('bar')
     assert chart_2d.GetPlotIndex(b) >= 0
 
-    s = chart_2d.stack(x, ys, cs, [lx, ly])
+    s = chart_2d.stack(x, ys, colors=cs, labels=[lx, ly])
     assert np.allclose(s.x, x)
     assert np.allclose(s.ys, ys)
     assert s.color_scheme == cs
@@ -945,7 +945,7 @@ def test_chart_box(pl, chart_box, box_plot):
     ls = ['Datalabel']
 
     # Test constructor
-    chart = pv.ChartBox(data, cs, ls, size, loc)
+    chart = pv.ChartBox(data, colors=cs, labels=ls, size=size, loc=loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -981,7 +981,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     ls = ['Tic', 'Tac', 'Toe']
 
     # Test constructor
-    chart = pv.ChartPie(data, cs, ls, size, loc)
+    chart = pv.ChartPie(data, colors=cs, labels=ls, size=size, loc=loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)

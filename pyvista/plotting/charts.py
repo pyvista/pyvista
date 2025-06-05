@@ -4177,7 +4177,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
             if loc is None:
                 loc = (0, 0)
         super().__init__(size, loc)
-        self._plot = BoxPlot(self, data, colors, labels)
+        self._plot = BoxPlot(self, data, colors=colors, labels=labels)
         self.SetPlot(self._plot)
         self.SetColumnVisibilityAll(True)
         self.legend_visible = True
@@ -4511,9 +4511,9 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
             # SetPlot method is not available for older VTK versions,
             # so fallback to using a wrapper object.
             self.AddPlot(0)
-            self._plot = PiePlot(self, data, colors, labels, _wrap=self.GetPlot(0))  # type: ignore[call-arg]
+            self._plot = PiePlot(self, data, colors=colors, labels=labels, _wrap=self.GetPlot(0))  # type: ignore[call-arg]
         else:
-            self._plot = PiePlot(self, data, colors, labels)
+            self._plot = PiePlot(self, data, colors=colors, labels=labels)
             self.SetPlot(self._plot)
         self.legend_visible = True
 
