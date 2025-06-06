@@ -51,6 +51,7 @@ jobs:
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          lookup-only: true
 
       - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
         if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
