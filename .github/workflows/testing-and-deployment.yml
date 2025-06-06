@@ -39,26 +39,33 @@ permissions:
 jobs:
   cache-vtk-data:
     runs-on: ubuntu-22.04
+    outputs:
+      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
     steps:
-      - name: Create example data path
-        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
-
       - name: Get vtk-data commit
         run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
 
-      - name: Create the example data cache
-        id: cache-vtk-data
-        uses: actions/cache@v4
+      - name: Test if the example data cache exists
+        id: restore-cache-vtk-data
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
 
       - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
-        if: steps.cache-vtk-data.outputs.cache-hit != 'true'
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: pyvista/vtk-data
           path: ${{ env.PYVISTA_USERDATA_PATH }}
+
+      - name: Create the example data cache
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        id: save-cache-vtk-data
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
 
   macOS:
     name: Mac OS Unit Testing
@@ -73,6 +80,7 @@ jobs:
           - { os: macos-latest, python-version: "3.13" }
 
     runs-on: ${{ matrix.config.os }}
+    needs: cache-vtk-data
 
     steps:
       - uses: actions/checkout@v4
@@ -86,14 +94,11 @@ jobs:
           if: env.USE_CACHE == 'true'
           cache: "pip"
 
-      - name: Create example data path
-        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
-
-      - name: Cache example data
-        uses: actions/cache@v4
+      - name: Restore example data cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: vtk-data-${{ hashFiles('pyvista/examples/**') }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
 
       - name: Install PyVista test dependencies
         run: |
