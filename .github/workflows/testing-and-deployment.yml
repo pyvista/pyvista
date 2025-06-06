@@ -31,7 +31,8 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
+  CACHE_FOLDER_NAME: vtk-data
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/${{ github.env.CACHE_FOLDER_NAME }}
 
 permissions:
   id-token: none
@@ -49,7 +50,7 @@ jobs:
         id: restore-cache-vtk-data
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
@@ -58,14 +59,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: pyvista/vtk-data
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
 
       - name: Create the example data cache
         if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
         id: save-cache-vtk-data
         uses: actions/cache/save@v4
         with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: vtk-data-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true
 
@@ -99,7 +100,7 @@ jobs:
       - name: Restore example data cache
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -172,7 +173,7 @@ jobs:
       - name: Cache example data
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
@@ -354,13 +355,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Create example data path
-        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
-
       - name: Cache example data
         uses: actions/cache/restore@v4
         with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
