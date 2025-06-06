@@ -128,6 +128,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
+    needs: cache-vtk-data
 
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
@@ -166,14 +167,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Create example data path
-        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
-
       - name: Cache example data
         uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: vtk-data-${{ hashFiles('pyvista/examples/**') }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
 
       - name: Build wheel and install pyvista
         run: |
@@ -334,6 +332,7 @@ jobs:
   windows:
     name: Windows Unit Testing
     runs-on: windows-latest
+    needs: cache-vtk-data
     env:
       CI_WINDOWS: true
       PYVISTA_USERDATA_PATH: ${{ github.workspace }}\vtk-data
@@ -359,7 +358,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: vtk-data-${{ hashFiles('pyvista/examples/**') }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.1
