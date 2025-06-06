@@ -37,6 +37,29 @@ permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Create example data path
+        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
+
+      - name: Get vtk-data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+
+      - name: Create the example data cache
+        id: cache-vtk-data
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+
+      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
+        if: steps.cache-vtk-data.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: pyvista/vtk-data
+          path: ${{ env.PYVISTA_USERDATA_PATH }}
+
   macOS:
     name: Mac OS Unit Testing
     strategy:
