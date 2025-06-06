@@ -298,11 +298,21 @@ nitpick_ignore_regex = [
     (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
     (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
     (r'py:.*', '.*lookup_table_ndarray'),
-    (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', '.*colors.Colormap'),
     (r'py:.*', 'colors.ListedColormap'),
     (r'py:.*', '.*CellQualityInfo'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'ScalarBarArgs'),
+    (r'py:.*', 'SilhouetteArgs'),
+    (r'py:.*', 'BackfaceArgs'),
+    (r'py:.*', 'CullingOptions'),
+    (r'py:.*', 'OpacityOptions'),
+    (r'py:.*', 'StyleOptions'),
+    (r'py:.*', 'FontFamilyOptions'),
+    (r'py:.*', 'HorizontalOptions'),
+    (r'py:.*', 'VerticalOptions'),
+    (r'py:.*', 'JupyterBackendOptions'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
@@ -322,6 +332,10 @@ nitpick_ignore_regex = [
     #
     # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
+    (r'py:.*', 'EmbeddableWidget'),
+    (r'py:.*', 'Widget'),
+    (r'py:.*', 'IFrame'),
+    (r'py:.*', 'Image'),
     (r'py:.*', 'meshio.*'),
     (r'py:.*', '.*Mesh'),
     (r'py:.*', '.*Trimesh'),
@@ -445,7 +459,7 @@ from sphinx_gallery.sorting import FileNameSortKey
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):
+    def __call__(self, gallery_conf, fname):  # noqa: ARG002
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.

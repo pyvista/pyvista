@@ -907,7 +907,7 @@ def test_translate_should_not_fail_given_none(grid):
     assert grid.bounds == bounds
 
 
-def test_translate_should_fail_bad_points_or_transform(grid):
+def test_translate_should_fail_bad_points_or_transform():
     points = np.random.default_rng().random((10, 2))
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))

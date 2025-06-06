@@ -1544,7 +1544,7 @@ def test_active_t_coords_deprecated(mesh):
             raise RuntimeError(msg)
 
 
-def test_active_array_info_deprecated(mesh):
+def test_active_array_info_deprecated():
     match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')

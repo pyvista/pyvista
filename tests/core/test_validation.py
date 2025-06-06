@@ -338,8 +338,7 @@ def test_validate_arrayN(reshape):  # noqa: N802
         validate_arrayN(((1, 2), (3, 4)), name='_input')
 
 
-@pytest.mark.parametrize('reshape', [True, False])
-def test_validate_arrayN_unsigned(reshape):  # noqa: N802
+def test_validate_arrayN_unsigned():  # noqa: N802
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_unsigned(0.0)
     assert arr.shape == (1,)
