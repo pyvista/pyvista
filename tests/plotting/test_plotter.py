@@ -710,7 +710,7 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
 
-    with pytest.raises(TypeError, match='not supported for plotting in PyVista'):
+    with pytest.raises(TypeError, match='volume must be an instance of any type'):
         pl.add_volume(pv.Table())
 
 
