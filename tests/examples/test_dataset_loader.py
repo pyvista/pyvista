@@ -43,7 +43,7 @@ class DatasetLoaderTestCase:
 def _generate_dataset_loader_test_cases_from_module(
     module: ModuleType,
 ) -> list[DatasetLoaderTestCase]:
-    """Generate test cases by module with all dataset functions and their respective file loaders."""
+    # Generate test cases by module with all dataset functions and their respective file loaders.
     test_cases_dict: dict = {}
 
     def add_to_dict(func: str, dataset_function: Callable[[], Any]):
@@ -106,15 +106,19 @@ def _generate_dataset_loader_test_cases_from_module(
 def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
     if test_case.dataset_function is None:
         return (
-            f"A file loader:\n\t'{test_case.dataset_loader[0]}'\n\t{test_case.dataset_loader[1]}\n"
+            f"A file loader:\n\t'{test_case.dataset_loader[0]}'"
+            f'\n\t{test_case.dataset_loader[1]}\n'
             f'was found but is missing a corresponding download function.\n\n'
-            f"Expected to find a function named:\n\t'download_{test_case.dataset_name}'\nGot: {test_case.dataset_function}"
+            f'Expected to find a function named:'
+            f"\n\t'download_{test_case.dataset_name}'\nGot: {test_case.dataset_function}"
         )
     elif test_case.dataset_loader is None:
         return (
-            f"A download function:\n\t'{test_case.dataset_function[0]}'\n\t{test_case.dataset_function[1]}\n"
+            f"A download function:\n\t'{test_case.dataset_function[0]}'"
+            f'\n\t{test_case.dataset_function[1]}\n'
             f'was found but is missing a corresponding file loader.\n\n'
-            f"Expected to find a loader named:\n\t'_dataset_{test_case.dataset_name}'\nGot: {test_case.dataset_loader}"
+            f'Expected to find a loader named:'
+            f"\n\t'_dataset_{test_case.dataset_name}'\nGot: {test_case.dataset_loader}"
         )
     else:
         return None
@@ -148,7 +152,10 @@ def examples_local_repository_tmp_dir(tmp_path):
 
     # create a zipped copy of the datasets and include the zip with repository
     shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(os.path.join(tmp_path, 'archive.zip'), os.path.join(repository_path, 'archive.zip'))
+    shutil.move(
+        os.path.join(tmp_path, 'archive.zip'),
+        os.path.join(repository_path, 'archive.zip'),
+    )
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher
@@ -172,12 +179,13 @@ def examples_local_repository_tmp_dir(tmp_path):
     [os.remove(file) for file in cached_paths if os.path.isfile(file)]
 
 
+@pytest.mark.usefixtures('examples_local_repository_tmp_dir')
 @pytest.mark.parametrize('use_archive', [True, False])
 @pytest.mark.parametrize(
     'file_loader',
     [_SingleFileDatasetLoader, _DownloadableFile, _SingleFileDownloadableDatasetLoader],
 )
-def test_single_file_loader(file_loader, use_archive, examples_local_repository_tmp_dir):
+def test_single_file_loader(file_loader, use_archive):
     basename = 'pyvista_logo.png'
     if use_archive and isinstance(file_loader, _Downloadable):
         file_loader = file_loader('archive.zip', target_file=basename)
@@ -243,7 +251,8 @@ def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
-def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
+@pytest.mark.usefixtures('examples_local_repository_tmp_dir')
+def test_multi_file_loader(load_func):
     basename_loaded1 = 'airplane.ply'
     basename_loaded2 = 'hexbeam.vtk'
     basename_not_loaded = 'pyvista_logo.png'
@@ -374,7 +383,11 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert loader.source_name == 'cow.vtp'
     assert loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp'
     assert loader.source_url_blob == 'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp'
-    assert loader.unique_cell_types == (pv.CellType.TRIANGLE, pv.CellType.POLYGON, pv.CellType.QUAD)
+    assert loader.unique_cell_types == (
+        pv.CellType.TRIANGLE,
+        pv.CellType.POLYGON,
+        pv.CellType.QUAD,
+    )
 
 
 @pytest.fixture
@@ -537,7 +550,11 @@ def test_dataset_loader_from_nested_files_and_directory(
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones
     def files_func():
-        return dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
+        return (
+            dataset_loader_one_file,
+            dataset_loader_two_files_one_loadable,
+            dataset_loader_dicom,
+        )
 
     loader = _MultiFileDownloadableDatasetLoader(files_func, load_func=_load_as_multiblock)
     loader.download()
@@ -636,7 +653,7 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     )
 
 
-def test_load_dataset_no_reader(dataset_loader_one_file):
+def test_load_dataset_no_reader():
     # Test using dataset with .npy file
     dataset = downloads._dataset_cloud_dark_matter
 

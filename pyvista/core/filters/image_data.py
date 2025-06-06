@@ -69,8 +69,10 @@ class ImageDataFilters(DataSetFilters):
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
-        re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,8 +309,10 @@ class ImageDataFilters(DataSetFilters):
         Notes
         -----
         This filter only supports point data. For inputs with cell data, consider
-        re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -889,7 +893,7 @@ class ImageDataFilters(DataSetFilters):
             .. code-block:: python
 
                 image.contour_labels(
-                    boundary_style='strict_external',  # old filter strictly computes external polygons
+                    boundary_style='strict_external',  # old filter strictly uses external polygons
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
@@ -957,8 +961,10 @@ class ImageDataFilters(DataSetFilters):
 
         """
         warnings.warn(
-            'This filter produces unexpected results and is deprecated. Use `contour_labels` instead.'
-            '\nRefer to the documentation for `contour_labeled` for details on how to transition to the new filter.'
+            'This filter produces unexpected results and is deprecated. '
+            'Use `contour_labels` instead.'
+            '\nRefer to the documentation for `contour_labeled` for details on how to '
+            'transition to the new filter.'
             '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
             PyVistaDeprecationWarning,
         )
@@ -979,7 +985,9 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                msg = f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                msg = (
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                )
                 raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
@@ -1575,7 +1583,9 @@ class ImageDataFilters(DataSetFilters):
             name='boundary_style',
         )
         _validation.check_contains(
-            [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
+            [None, 'quads', 'triangles'],
+            must_contain=output_mesh_type,
+            name='output_mesh_type',
         )
 
         alg_input = _get_alg_input(self, scalars)
@@ -1741,8 +1751,9 @@ class ImageDataFilters(DataSetFilters):
             By default, all point data arrays at the input are passed through as cell
             data at the output.
 
-        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"], default: 'preserve'
+        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
+            ``'preserve'`` is used by default.
 
             - Can be specified as a sequence of 3 boolean to allow modification on a per
                 dimension basis.
@@ -1872,7 +1883,10 @@ class ImageDataFilters(DataSetFilters):
         if scalars is not None:
             field = self.get_array_association(scalars, preference='point')
             if field != FieldAssociation.POINT:
-                msg = f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead."
+                msg = (
+                    f"Scalars '{scalars}' must be associated with point data. "
+                    f'Got {field.name.lower()} data instead.'
+                )
                 raise ValueError(msg)
         return self._remesh_points_cells(
             points_to_cells=True,
@@ -1938,8 +1952,9 @@ class ImageDataFilters(DataSetFilters):
             By default, all cell data arrays at the input are passed through as point
             data at the output.
 
-        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"], default: 'preserve'
+        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
+            ``'preserve'`` is used by default.
 
             - Can be specified as a sequence of 3 boolean to allow modification on a per
                 dimension basis.
@@ -2027,7 +2042,10 @@ class ImageDataFilters(DataSetFilters):
         if scalars is not None:
             field = self.get_array_association(scalars, preference='cell')
             if field != FieldAssociation.CELL:
-                msg = f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead."
+                msg = (
+                    f"Scalars '{scalars}' must be associated with cell data. "
+                    f'Got {field.name.lower()} data instead.'
+                )
                 raise ValueError(msg)
         return self._remesh_points_cells(
             points_to_cells=False,
@@ -2214,8 +2232,9 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
 
-        dimensionality : VectorLike[bool], Literal[1, 2, 3, "1D", "2D", "3D", "preserve"], default: 'preserve'
+        dimensionality : VectorLike[bool], Literal[1, 2, 3, "1D", "2D", "3D", "preserve"]
             Control which dimensions will be padded by the filter.
+            ``'preserve'`` is used by default.
 
             - Can be specified as a sequence of 3 boolean to apply padding on a per
                 dimension basis.
@@ -2345,13 +2364,15 @@ class ImageDataFilters(DataSetFilters):
         if pad_singleton_dims is not None:
             if pad_singleton_dims:
                 warnings.warn(
-                    'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead',
+                    'Use of `pad_singleton_dims=True` is deprecated. '
+                    'Use `dimensionality="3D"` instead',
                     PyVistaDeprecationWarning,
                 )
                 dimensionality = '3D'
             else:
                 warnings.warn(
-                    'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead',
+                    'Use of `pad_singleton_dims=False` is deprecated. '
+                    'Use `dimensionality="preserve"` instead',
                     PyVistaDeprecationWarning,
                 )
                 dimensionality = 'preserve'
@@ -2366,7 +2387,10 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
         if field != FieldAssociation.POINT:
-            msg = f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead."
+            msg = (
+                f"Scalars '{scalars}' must be associated with point data. "
+                f'Got {field.name.lower()} data instead.'
+            )
             raise ValueError(msg)
 
         # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
@@ -2457,7 +2481,10 @@ class ImageDataFilters(DataSetFilters):
                 for array_name in array_names:
                     array = data[array_name]
                     if not np.array_equal(val, val.astype(array.dtype)):
-                        msg = f"Pad value {pad_value} with dtype '{val.dtype.name}' is not compatible with dtype '{array.dtype}' of array {array_name}."
+                        msg = (
+                            f"Pad value {pad_value} with dtype '{val.dtype.name}' is not "
+                            f"compatible with dtype '{array.dtype}' of array {array_name}."
+                        )
                         raise TypeError(msg)
                     if (n_comp := _get_num_components(data[array_name])) != num_input_components:
                         msg = (
@@ -2562,11 +2589,12 @@ class ImageDataFilters(DataSetFilters):
             Scalars to use to filter points. If ``None`` is provided, the scalars is
             automatically set, if possible.
 
-        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float], default: 'auto'
+        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float]
             Points whose scalars value is within ``'scalar_range'`` are considered for
             connectivity. The bounds are inclusive.
 
-            - ``'auto'``: includes the full data range, similarly to :meth:`~pyvista.DataSetFilters.connectivity`.
+            - ``'auto'``: (default) includes the full data range, similarly to
+              :meth:`~pyvista.DataSetFilters.connectivity`.
             - ``'foreground'``: includes the full data range except the smallest value.
             - ``'vtk_default'``: default to [``0.5``, :const:`~vtk.VTK_DOUBLE_MAX`].
             - ``VectorLike[float]``: explicitly set the range.
@@ -2782,7 +2810,8 @@ class ImageDataFilters(DataSetFilters):
             alg.SetSeedData(point_seeds)
         else:
             msg = (  # type: ignore[unreachable]
-                f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
+                f'Invalid `extraction_mode` "{extraction_mode}", '
+                f'use "all", "largest", or "seeded".'
             )
             raise ValueError(msg)
 
@@ -2965,8 +2994,9 @@ class ImageDataFilters(DataSetFilters):
                     3: '(>1, >1, >1)',
                 }[target_dimensionality]
                 msg = (
-                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
-                    f' A {operation_mask} ImageData with dims {desired_dimensions} cannot be obtained.'
+                    f'The operation requires to {operator.__name__} at least {operation_size} '
+                    f'dimension(s) to {self.dimensions}. A {operation_mask} ImageData with dims '  # type: ignore[attr-defined]
+                    f'{desired_dimensions} cannot be obtained.'
                 )
                 raise ValueError(msg)
 
@@ -2975,8 +3005,9 @@ class ImageDataFilters(DataSetFilters):
 
         if not (dimensions_result >= 1).all():
             msg = (
-                f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
-                f' would result in {dimensions_result} which contains <= 0 dimensions.'
+                f'The mask {operation_mask}, size {operation_size}, and '
+                f'operation {operator.__name__} would result in {dimensions_result} '
+                f'which contains <= 0 dimensions.'
             )
             raise ValueError(msg)
 
@@ -3031,7 +3062,7 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman', default: 'nearest'
+        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman'
             Interpolation mode to use. By default, ``'nearest'`` is used which
             duplicates (if upsampling) or removes (if downsampling) values but
             does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
@@ -3423,8 +3454,8 @@ class ImageDataFilters(DataSetFilters):
         else:
             if dimensions is not None or sample_rate is not None:
                 msg = (
-                    'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
-                    '`reference_image` must define the geometry exclusively.'
+                    'Cannot specify a reference image along with `dimensions` or `sample_rate` '
+                    'parameters.\n`reference_image` must define the geometry exclusively.'
                 )
                 raise ValueError(msg)
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
@@ -3437,8 +3468,8 @@ class ImageDataFilters(DataSetFilters):
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
                 msg = (
-                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
-                    '`sample_rate` must define the sampling geometry exclusively.'
+                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` '
+                    'parameters.\n`sample_rate` must define the sampling geometry exclusively.'
                 )
                 raise ValueError(msg)
             # Set reference dimensions from the sample rate
@@ -3537,13 +3568,18 @@ class ImageDataFilters(DataSetFilters):
                 # Compute spacing to match bounds of input and dimensions of output
                 bnds = input_image.bounds
                 size = np.array(
-                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                    (
+                        bnds.x_max - bnds.x_min,
+                        bnds.y_max - bnds.y_min,
+                        bnds.z_max - bnds.z_min,
+                    )
                 )
                 if processing_cell_scalars:
                     new_spacing = (size + input_image.spacing) / output_dimensions
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
-                        # Ignore division by zero, this is fixed with singleton_dims on the next line
+                        # Ignore division by zero, this is fixed with
+                        # singleton_dims on the next line
                         new_spacing = size / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
@@ -3702,7 +3738,8 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a CT image. Here we load :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+        Load a CT image. Here we load
+        :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -3852,7 +3889,8 @@ class ImageDataFilters(DataSetFilters):
 
         # Generate output array
         input_array = cast(
-            'pyvista.pyvista_ndarray', get_array(self, name=array_name, preference=association)
+            'pyvista.pyvista_ndarray',
+            get_array(self, name=array_name, preference=association),
         )
         array_out = np.full_like(input_array, fill_value=fill_value)
         replacement_values = (

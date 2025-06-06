@@ -97,11 +97,18 @@ def test_init_from_arrays(faces_is_cell_array):
 
 @pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
-    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]])
+    vertices = np.array(
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]]
+    )
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]],  # [quad, triangle, triangle, vertex]
+        [
+            [4, 0, 1, 2, 3],
+            [3, 0, 1, 4],
+            [3, 1, 2, 4],
+            [1, 5],
+        ],  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
     if faces_is_cell_array:
         faces = pv.CellArray(faces)
@@ -782,8 +789,8 @@ def test_compute_normals(sphere):
 
 def test_compute_normals_raises(sphere):
     msg = (
-        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
-        'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
+        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)'
+        '\nand/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
     )
 
     point_cloud = pv.PolyData(sphere.points)
@@ -895,7 +902,13 @@ def test_clip_plane(sphere):
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False, progress_bar=True)
+    sphere.clip(
+        origin=[0, 0, 0],
+        normal=[0, 0, -1],
+        inplace=True,
+        invert=False,
+        progress_bar=True,
+    )
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
@@ -1131,7 +1144,9 @@ def test_is_all_triangles():
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
     # mesh faces
-    faces = np.hstack([[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]])  # [square, triangle, triangle]
+    faces = np.hstack(
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]
+    )  # [square, triangle, triangle]
 
     mesh = pv.PolyData(vertices, faces)
     assert not mesh.is_all_triangles
@@ -1224,7 +1239,7 @@ def default_n_faces():
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
-def test_n_faces(default_n_faces):
+def test_n_faces():
     if pv._version.version_info[:2] > (0, 46):
         msg = 'Convert non-strict n_faces use to error'
         raise RuntimeError(msg)
@@ -1254,7 +1269,7 @@ def test_n_faces(default_n_faces):
     assert nf1 == nf
 
 
-def test_opt_in_n_faces_strict(default_n_faces):
+def test_opt_in_n_faces_strict():
     pv.PolyData.use_strict_n_faces(True)
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],

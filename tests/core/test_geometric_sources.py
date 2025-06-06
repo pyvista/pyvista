@@ -652,7 +652,10 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 
-    match = "Geometry 'foo' is not valid. Geometry must be one of: \n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    match = (
+        "Geometry 'foo' is not valid. Geometry must be one of: "
+        "\n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = 'foo'
 
@@ -772,7 +775,10 @@ def test_orthogonal_planes_source_names():
     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
     assert planes_source.names == ('a', 'b', 'c')
 
-    match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
+    match = (
+        "names must be an instance of any type (<class 'tuple'>, <class 'list'>). "
+        "Got <class 'str'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.names = 'abc'
 

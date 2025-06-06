@@ -42,7 +42,7 @@ class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
 
     def edge_mask(self, angle, progress_bar: bool = False):
-        """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
+        """Return a mask of the points of a surface mesh with a surface angle greater than angle.
 
         Parameters
         ----------
@@ -92,7 +92,10 @@ class PolyDataFilters(DataSetFilters):
     def _boolean(self, btype, other_mesh, tolerance, progress_bar: bool = False):
         """Perform boolean operation."""
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
-            msg = 'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.'
+            msg = (
+                'The input mesh contains identical points to the surface being operated on. '
+                'Unable to perform boolean operations on an identical surface.'
+            )
             raise ValueError(msg)
         if not isinstance(other_mesh, pyvista.PolyData):
             msg = 'Input mesh must be PolyData.'
@@ -261,7 +264,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
-        bool_inter = self._boolean('intersection', other_mesh, tolerance, progress_bar=progress_bar)
+        bool_inter = self._boolean(
+            'intersection', other_mesh, tolerance, progress_bar=progress_bar
+        )
 
         # check if a polydata is completely contained within another
         if bool_inter.is_empty:
@@ -444,15 +449,17 @@ class PolyDataFilters(DataSetFilters):
            similarly possible.
 
         .. versionchanged:: 0.39.0
-            Before version ``0.39.0``, if all input datasets were of type :class:`pyvista.PolyData`,
-            the VTK :vtk:`vtkAppendPolyData` and :vtk:`vtkCleanPolyData` filters were used to perform merging.
-            Otherwise, :func:`DataSetFilters.merge`, which uses the VTK :vtk:`vtkAppendFilter` filter,
-            was called.
-            To enhance performance and coherence with merging operations available for other datasets in pyvista,
-            the merging operation has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge` only,
-            irrespectively of input datasets types.
-            This induced that points ordering can be altered compared to previous pyvista versions when
-            merging only PolyData together.
+            Before version ``0.39.0``, if all input datasets were of type
+            :class:`pyvista.PolyData`, the VTK :vtk:`vtkAppendPolyData` and
+            :vtk:`vtkCleanPolyData` filters were used to perform merging.
+            Otherwise, :func:`DataSetFilters.merge`, which uses the VTK
+            :vtk:`vtkAppendFilter` filter, was called.
+            To enhance performance and coherence with merging operations
+            available for other datasets in pyvista, the merging operation
+            has been delegated in ``0.39.0`` to :func:`DataSetFilters.merge`
+            only, irrespectively of input datasets types.
+            This induced that points ordering can be altered compared to
+            previous pyvista versions when merging only PolyData together.
             To obtain similar results as before ``0.39.0`` for multiple PolyData, combine
             :func:`PolyDataFilters.append_polydata` and :func:`PolyDataFilters.clean`.
 
@@ -568,7 +575,11 @@ class PolyDataFilters(DataSetFilters):
         return merged
 
     def intersection(
-        self, mesh, split_first: bool = True, split_second: bool = True, progress_bar: bool = False
+        self,
+        mesh,
+        split_first: bool = True,
+        split_second: bool = True,
+        progress_bar: bool = False,
     ):
         """Compute the intersection between two meshes.
 
@@ -1371,7 +1382,11 @@ class PolyDataFilters(DataSetFilters):
         return mesh
 
     def subdivide(
-        self, nsub, subfilter='linear', inplace: bool = False, progress_bar: bool = False
+        self,
+        nsub,
+        subfilter='linear',
+        inplace: bool = False,
+        progress_bar: bool = False,
     ):
         """Increase the number of triangles in a single, connected triangular mesh.
 
@@ -1603,8 +1618,8 @@ class PolyDataFilters(DataSetFilters):
         """Reduce the number of triangles in a triangular mesh using :vtk:`vtkQuadricDecimation`.
 
         .. versionchanged:: 0.45
-          ``scalars``, ``vectors``, ``normals``, ``tcoords`` and ``tensors`` are now disabled by default.
-          They can be enabled all together using ``enable_all_attribute_error``.
+          ``scalars``, ``vectors``, ``normals``, ``tcoords`` and ``tensors`` are now disabled by
+          default. They can be enabled all together using ``enable_all_attribute_error``.
 
 
         Parameters
@@ -1820,8 +1835,10 @@ class PolyDataFilters(DataSetFilters):
 
         .. warning::
 
-           - Normals can only be computed for polygons and triangle strips. Point clouds are not supported.
-           - Triangle strips are broken up into triangle polygons. You may want to restrip the triangles.
+           - Normals can only be computed for polygons and triangle strips.
+             Point clouds are not supported.
+           - Triangle strips are broken up into triangle polygons.
+             You may want to restrip the triangles.
            - Previous arrays named ``"Normals"`` will be overwritten.
 
         Parameters
@@ -1876,7 +1893,8 @@ class PolyDataFilters(DataSetFilters):
         Raises
         ------
         TypeError
-            If the mesh contains only ``LINE`` or ``VERTEX`` cell types. Normals cannot be computed for these cells.
+            If the mesh contains only ``LINE`` or ``VERTEX`` cell types.
+            Normals cannot be computed for these cells.
 
         Returns
         -------
@@ -1944,7 +1962,8 @@ class PolyDataFilters(DataSetFilters):
         except KeyError:
             if (self.n_verts + self.n_lines) == self.n_cells:  # type: ignore[attr-defined]
                 msg = (
-                    'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
+                    'Normals cannot be computed for PolyData containing only vertex cells '
+                    '(e.g. point clouds)\n'
                     'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
                 )
                 raise TypeError(msg)
@@ -2376,8 +2395,13 @@ class PolyDataFilters(DataSetFilters):
         del sizes
         return distance
 
-    def ray_trace(
-        self, origin, end_point, first_point: bool = False, plot: bool = False, off_screen=None
+    def ray_trace(  # type: ignore[misc]
+        self: PolyData,
+        origin,
+        end_point,
+        first_point: bool = False,
+        plot: bool = False,
+        off_screen=None,
     ):
         """Perform a single ray trace calculation.
 
@@ -2437,7 +2461,7 @@ class PolyDataFilters(DataSetFilters):
         """
         points = _vtk.vtkPoints()
         cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)  # type: ignore[attr-defined]
+        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
@@ -2462,8 +2486,8 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection_points, intersection_cells
 
-    def multi_ray_trace(
-        self,
+    def multi_ray_trace(  # type:ignore[misc]
+        self: PolyData,
         origins,
         directions,
         first_point: bool = False,
@@ -2534,7 +2558,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
+        if not self.is_all_triangles:
             msg = 'Input mesh for multi_ray_trace must be all triangles.'
             raise NotAllTrianglesError(msg)
 
@@ -2545,7 +2569,8 @@ class PolyDataFilters(DataSetFilters):
                 raise ImportError
         except ImportError:
             msg = (
-                'To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n'
+                'To use multi_ray_trace please install trimesh, embree (v2.17.7) '
+                'and pyembree/embreex with:\n'
                 '\tconda install embree=2 trimesh pyembree\nOR\n'
                 '\tpip install trimesh embreex'
             )
@@ -2553,7 +2578,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2578,14 +2603,14 @@ class PolyDataFilters(DataSetFilters):
                 keepdims=True,
             )
 
-            origin_to_centre_vectors = self.center - origins_retry  # type: ignore[attr-defined] # shape (n_retry, 3)
+            origin_to_centre_vectors = self.center - origins_retry  # shape (n_retry, 3)
             origin_to_centre_lengths = np.linalg.norm(
                 origin_to_centre_vectors,
                 axis=-1,
                 keepdims=True,
             )
             second_points = origins_retry + unit_directions * (
-                origin_to_centre_lengths + self.length  # type: ignore[attr-defined]
+                origin_to_centre_lengths + self.length
             )
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
@@ -2607,7 +2632,11 @@ class PolyDataFilters(DataSetFilters):
         return locations, index_ray, index_tri
 
     def plot_boundaries(  # type: ignore[misc]
-        self: PolyData, edge_color='red', line_width=None, progress_bar: bool = False, **kwargs
+        self: PolyData,
+        edge_color='red',
+        line_width=None,
+        progress_bar: bool = False,
+        **kwargs,
     ):
         """Plot boundaries of a mesh.
 
@@ -2919,8 +2948,9 @@ class PolyDataFilters(DataSetFilters):
 
         .. warning::
 
-            This filter does not produce the correct output for :attr:`~pyvista.CellType.TRIANGLE_STRIP`
-            cells, see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
+            This filter does not produce the correct output for
+            :attr:`~pyvista.CellType.TRIANGLE_STRIP` cells,
+            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
             Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
             first.
 
@@ -2977,7 +3007,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         return self._reverse_sense(
-            reverse_cells=True, reverse_normals=False, inplace=inplace, progress_bar=progress_bar
+            reverse_cells=True,
+            reverse_normals=False,
+            inplace=inplace,
+            progress_bar=progress_bar,
         )
 
     def flip_normal_vectors(  # type: ignore[misc]
@@ -3050,7 +3083,10 @@ class PolyDataFilters(DataSetFilters):
 
         """
         return self._reverse_sense(
-            reverse_cells=False, reverse_normals=True, inplace=inplace, progress_bar=progress_bar
+            reverse_cells=False,
+            reverse_normals=True,
+            inplace=inplace,
+            progress_bar=progress_bar,
         )
 
     def delaunay_2d(
@@ -3468,7 +3504,7 @@ class PolyDataFilters(DataSetFilters):
         rotation_axis=(0, 0, 1),
         progress_bar: bool = False,
     ):
-        """Sweep polygonal data creating "skirt" from free edges and lines, and lines from vertices.
+        """Sweep polygonal data creating "skirt" from free edges/lines, and lines from vertices.
 
         This takes polygonal data as input and generates polygonal
         data on output. The input dataset is swept around the axis

@@ -534,14 +534,16 @@ def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
     m().SetActiveScalars.return_value = -1
 
     match = re.escape(
-        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the active scalars'
+        f'Data field "{f}" with type (FieldAssociation.POINT) could not be set as the '
+        f'active scalars'
     )
     with pytest.raises(ValueError, match=match):
         sphere.set_active_scalars(f)
 
 
 def active_component_consistency_check(grid, component_type, field_association='point'):
-    """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
+    # Tests if the active component (scalars, vectors, tensors) actually reflects
+    # the underlying VTK dataset
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
 
@@ -717,8 +719,8 @@ def test_rename_array_doesnt_delete():
     was_deleted = [False]
 
     def on_delete(*_):
-        # Would be easier to throw an exception here but even though the exception gets printed to stderr
-        # pytest reports the test passing. See #5246 .
+        # Would be easier to throw an exception here but even though the exception gets printed to
+        # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
 
     mesh.point_data['orig'].VTKObject.AddObserver('DeleteEvent', on_delete)
@@ -1542,7 +1544,7 @@ def test_active_t_coords_deprecated(mesh):
             raise RuntimeError(msg)
 
 
-def test_active_array_info_deprecated(mesh):
+def test_active_array_info_deprecated():
     match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')

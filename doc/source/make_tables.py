@@ -221,7 +221,9 @@ class CellQualityMeasuresTable(DocTable):
         # Get all cell example functions,
         # i.e. items from examples.cells that start with a capital letter
         cell_funcs = [
-            name for name, obj in inspect.getmembers(cells, inspect.isfunction) if name[0].isupper()
+            name
+            for name, obj in inspect.getmembers(cells, inspect.isfunction)
+            if name[0].isupper()
         ]
 
         # Init dict with all measures as keys
@@ -238,13 +240,13 @@ class CellQualityMeasuresTable(DocTable):
         return [(measures, measure) for measure in measures.keys()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header.format(
             *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
         )
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, _, row_data):
         measures, measure = row_data
 
         success = ':material-regular:`check;2em;sd-text-success`'
@@ -304,7 +306,7 @@ class CellQualityInfoTable(DocTable):
         return _CELL_QUALITY_LOOKUP[cls.cell_type].values()
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         name = cls.cell_type.name
         example = _CELL_TYPE_INFO[name].example
         return cls.header.format(
@@ -314,7 +316,7 @@ class CellQualityInfoTable(DocTable):
         )
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, _, row_data):
         def format_list(obj):
             if obj is None:
                 return 'None'
@@ -398,7 +400,7 @@ class LineStyleTable(DocTable):
         return [{'style': ls, **data} for (ls, data) in pv.charts.Pen.LINE_STYLES.items()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header
 
     @classmethod
@@ -464,7 +466,7 @@ class MarkerStyleTable(DocTable):
         ]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header
 
     @classmethod
@@ -530,7 +532,7 @@ class ColorSchemeTable(DocTable):
         return [{'scheme': cs, **data} for (cs, data) in pv.colors.COLOR_SCHEMES.items()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header
 
     @classmethod
@@ -604,7 +606,7 @@ class ColorTable(DocTable):
         |     - .. raw:: html
         |
         |          <span style='width:100%; height:100%; display:block; background-color: {};'>&nbsp;</span>
-        """,
+        """,  # noqa: E501
     )
 
     @classmethod
@@ -626,11 +628,11 @@ class ColorTable(DocTable):
         return colors_dict.values()
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header.format(cls.title)
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, _, row_data):
         name_template = "``'{}'``"
         names = [row_data['name']] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
@@ -732,8 +734,8 @@ def classify_color(color: Color) -> ColorClassification:  # noqa: PLR0911
         return ColorClassification.MAGENTA
     else:
         msg = (
-            f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
-            f'Double-check classifier logic.'
+            f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, '
+            f'was not categorized.\nDouble-check classifier logic.'
         )
         raise RuntimeError(msg)
 
@@ -1194,11 +1196,11 @@ class ColormapTable(DocTable):
         return data_out
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header.format(cls.title)
 
     @classmethod
-    def get_row(cls, i, colormap_info):
+    def get_row(cls, _, colormap_info):
         source_badge_mapping = {
             'cmcrameri': ':bdg-danger:`cmc`',
             'cmocean': ':bdg-primary:`cmo`',
@@ -1489,7 +1491,9 @@ class ColormapTable(DocTable):
 
         # Sort colormaps based on selected method
         weights = np.ones((n_samples,))
-        sorted_groups, order = sort_color_groups_by_similarity(grouped_colors, start_index, weights)
+        sorted_groups, order = sort_color_groups_by_similarity(
+            grouped_colors, start_index, weights
+        )
         return [data[i] for i in order]
 
 
@@ -1767,7 +1771,7 @@ class DatasetCard:
         |   {}
         |
         |
-        """,
+        """,  # noqa: E501
     )
 
     HEADER_FOOTER_INDENT_LEVEL = 1
@@ -2107,7 +2111,8 @@ class DatasetCard:
     @staticmethod
     def _generate_cross_references(dataset_name: str, index_name: str, header_name):
         def find_seealso_refs(func: FunctionType) -> list[str]:
-            """Find and return the :ref: references from the .. seealso:: directive in the docstring of a function."""
+            # Find and return the :ref: references from the .. seealso:: directive
+            # in the docstring of a function.
             if not callable(func):
                 msg = 'Input must be a callable function.'
                 raise TypeError(msg)
@@ -2167,7 +2172,8 @@ class DatasetCard:
             keep_refs.append(ref)
 
         assert self_ref_count == 1, (
-            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding entry in the Dataset Gallery.\n"
+            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding "
+            f'entry in the Dataset Gallery.\n'
             f'A reference link should be included in a see also directive, e.g.:\n'
             f'\n'
             f'    .. seealso::\n'
@@ -2259,7 +2265,7 @@ class DatasetCard:
 
     @staticmethod
     def _generate_field_block(fields: list[tuple[str, str | None]], indent_level: int = 0):
-        """Generate a grid for each field and combine the grids into an indented multi-line rst block.
+        """Generate a grid for each field and combine them into an indented multi-line rst block.
 
         Any fields with a `None` value are completely excluded from the block.
         """
@@ -2419,7 +2425,9 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_reader_type(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
+    def generate_reader_type(
+        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+    ):
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_type is None:
@@ -2617,7 +2625,7 @@ class DatasetCardFetcher:
 
     @classmethod
     def generate_alphabet_index(cls, dataset_names):
-        """Generate single-letter index buttons which link to the datasets by their first letter."""
+        """Generate single-letter index buttons to link to the datasets by their first letter."""
 
         def _generate_button(string, ref):
             return _indent_multi_line_string(
@@ -2979,7 +2987,10 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
     name = 'builtin_carousel'
-    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
+    doc = (
+        'Built-in datasets that ship with pyvista. Available through '
+        ':mod:`examples <pyvista.examples.examples>` module.'
+    )
     badge = ModuleBadge('Built-in', ref='modules_gallery')
 
     @classmethod
@@ -3075,7 +3086,10 @@ class PointCloudCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of point cloud cards."""
 
     name = 'pointcloud_carousel'
-    doc = 'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
+    doc = (
+        'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or '
+        ':class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
+    )
     badge = SpecialDataTypeBadge('Point Cloud', ref='pointcloud_surfacemesh_gallery')
 
     @classmethod

@@ -761,7 +761,10 @@ def test_transform_imagedata_warns_with_shear(uniform):
 
 
 def test_transform_filter_inplace_default_warns(cube):
-    expected_msg = 'The default value of `inplace` for the filter `PolyData.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `PolyData.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = cube.transform(np.eye(4))
 
@@ -904,7 +907,7 @@ def test_translate_should_not_fail_given_none(grid):
     assert grid.bounds == bounds
 
 
-def test_translate_should_fail_bad_points_or_transform(grid):
+def test_translate_should_fail_bad_points_or_transform():
     points = np.random.default_rng().random((10, 2))
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Union
 from typing import cast
 
+import matplotlib as mpl
 import numpy as np
 
 import pyvista
@@ -19,8 +19,6 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
-    from matplotlib import colors
-
     from ._typing import ColorLike
     from ._typing import ColormapOptions
 
@@ -106,7 +104,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     Parameters
     ----------
-    cmap : str | colors.Colormap, optional
+    cmap : str | matplotlib.colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
         See :ref:`named_colormaps` for supported colormaps.
@@ -206,7 +204,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """
 
     _nan_color_set = False
-    _cmap: colors.Colormap | colors.ListedColormap | None = None
+    _cmap: mpl.colors.Colormap | None = None
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
@@ -335,7 +333,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
+    def cmap(self) -> mpl.colors.Colormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
         See :ref:`named_colormaps` for supported colormaps.
@@ -749,7 +747,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     def apply_cmap(
         self,
-        cmap: ColormapOptions | list[str] | LookupTable,
+        cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
         n_values: int = 256,
         flip: bool = False,
     ):
@@ -760,7 +758,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Parameters
         ----------
-        cmap : str, list, colors.Colormap
+        cmap : str, list, matplotlib.colors.Colormap
             Colormap from Matplotlib, colorcet, or cmocean.
 
         n_values : int, default: 256
@@ -782,9 +780,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """
         if isinstance(cmap, list):
             n_values = len(cmap)
-
-        cmap = get_cmap_safe(cmap)  # type: ignore[arg-type]
-        values = cmap(np.linspace(0, 1, n_values)) * 255  # type: ignore[misc, operator]
+        cmap_obj = cmap if isinstance(cmap, mpl.colors.Colormap) else get_cmap_safe(cmap)
+        values = cmap_obj(np.linspace(0, 1, n_values)) * 255
 
         if flip:
             values = values[::-1]
@@ -796,7 +793,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if self._opacity_parm[0] is not None:
             self.apply_opacity(*self._opacity_parm)
 
-        self._cmap = cmap  # type: ignore[assignment]
+        self._cmap = cmap_obj
 
     def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
         """Assign custom opacity to this lookup table.
@@ -924,10 +921,13 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self.apply_cmap(self._cmap, value)  # type: ignore[arg-type]
+            self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            msg = (
+                'Number of values cannot be set when the values array has been manually set. '
+                'Reassign the values array if you wish to change the number of values.'
+            )
             raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
@@ -1011,7 +1011,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         mesh = pyvista.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
+        pl = pyvista.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
@@ -1076,7 +1076,8 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Parameters
         ----------
         clamping : bool, optional
-            When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
+            When zero range clamping is False, values returns 0.0 when a value is requested
+            outside of the points specified.
 
             .. versionadded:: 0.44
 
@@ -1146,7 +1147,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            'Union[tuple[float, float, float], tuple[float, float, float, float]]',
+            'tuple[float, float, float] | tuple[float, float, float, float]',
             tuple(color),
         )
 
