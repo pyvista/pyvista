@@ -18,7 +18,9 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import PointLiteral
 
 
-def algorithm_to_mesh_handler(mesh_or_algo, port=0):
+def algorithm_to_mesh_handler(
+    mesh_or_algo, port=0
+) -> tuple[pyvista.DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None]:
     """Handle :vtk:`vtkAlgorithms` where mesh objects are expected.
 
     This is a convenience method to handle :vtk:`vtkAlgorithms` when passed to methods

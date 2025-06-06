@@ -2428,8 +2428,8 @@ class PolyDataFilters(DataSetFilters):
         return distance
 
     @_deprecate_positional_args(allowed=['origin', 'end_point'])
-    def ray_trace(  # noqa: PLR0917
-        self,
+    def ray_trace(  # type: ignore[misc]  # noqa: PLR0917
+        self: PolyData,
         origin,
         end_point,
         first_point: bool = False,  # noqa: FBT001, FBT002
@@ -2494,7 +2494,7 @@ class PolyDataFilters(DataSetFilters):
         """
         points = _vtk.vtkPoints()
         cell_ids = _vtk.vtkIdList()
-        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)  # type: ignore[attr-defined]
+        self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
         has_intersection = intersection_points.shape[0] >= 1
@@ -2522,8 +2522,8 @@ class PolyDataFilters(DataSetFilters):
         return intersection_points, intersection_cells
 
     @_deprecate_positional_args(allowed=['origins', 'directions'])
-    def multi_ray_trace(  # noqa: PLR0917
-        self,
+    def multi_ray_trace(  # type:ignore[misc]  # noqa: PLR0917
+        self: PolyData,
         origins,
         directions,
         first_point: bool = False,  # noqa: FBT001, FBT002
@@ -2594,7 +2594,7 @@ class PolyDataFilters(DataSetFilters):
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
 
         """
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
+        if not self.is_all_triangles:
             msg = 'Input mesh for multi_ray_trace must be all triangles.'
             raise NotAllTrianglesError(msg)
 
@@ -2614,7 +2614,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2639,14 +2639,14 @@ class PolyDataFilters(DataSetFilters):
                 keepdims=True,
             )
 
-            origin_to_centre_vectors = self.center - origins_retry  # type: ignore[attr-defined] # shape (n_retry, 3)
+            origin_to_centre_vectors = self.center - origins_retry  # shape (n_retry, 3)
             origin_to_centre_lengths = np.linalg.norm(
                 origin_to_centre_vectors,
                 axis=-1,
                 keepdims=True,
             )
             second_points = origins_retry + unit_directions * (
-                origin_to_centre_lengths + self.length  # type: ignore[attr-defined]
+                origin_to_centre_lengths + self.length
             )
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):

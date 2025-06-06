@@ -1238,7 +1238,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
         pl.show(before_close_callback=before_close_callback)
 
     def copy(self) -> Property:

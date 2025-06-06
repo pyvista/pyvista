@@ -5,6 +5,7 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -27,6 +28,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
+
+HorizontalOptions = Literal['left', 'center', 'right']
+VerticalOptions = Literal['bottom', 'center', 'top']
 
 
 @no_new_attr

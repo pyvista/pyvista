@@ -127,12 +127,12 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
             image_names.append(fname)
         else:
             plotter.screenshot(fname)
-            if not dynamic or plotter.last_vtksz is None:  # type: ignore[has-type]
+            if not dynamic or plotter.last_vtksz is None:
                 image_names.append(fname)
             else:  # pragma: no cover
                 fname = fname[:-3] + 'vtksz'
                 with Path(fname).open('wb') as f:
-                    f.write(plotter.last_vtksz)  # type: ignore[has-type]
+                    f.write(plotter.last_vtksz)  # type: ignore[arg-type]
                     image_names.append(fname)
 
     pyvista.close_all()  # close and clear all plotters

@@ -6,11 +6,11 @@ from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import TypeIs
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -252,15 +252,7 @@ def wrap(  # noqa: PLR0911
     raise NotImplementedError(msg)
 
 
-@overload
-def is_pyvista_dataset(
-    obj: pyvista.DataSet | pyvista.MultiBlock,
-) -> Literal[True]: ...
-@overload
-def is_pyvista_dataset(
-    obj: Any,
-) -> Literal[False]: ...
-def is_pyvista_dataset(obj: Any) -> bool:
+def is_pyvista_dataset(obj: Any) -> TypeIs[pyvista.DataSet | pyvista.MultiBlock]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
