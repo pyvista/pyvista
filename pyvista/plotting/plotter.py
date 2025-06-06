@@ -299,7 +299,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         groups: Sequence[int] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
-        lighting: LightingOptions = 'light kit',
+        lighting: LightingOptions | None = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
         **kwargs,
@@ -6909,7 +6909,7 @@ class Plotter(BasePlotter):
         polygon_smoothing: bool = False,  # noqa: FBT001, FBT002
         splitting_position: float | None = None,
         title: str | None = None,
-        lighting: LightingOptions = 'light kit',
+        lighting: LightingOptions | None = 'light kit',
         theme: Theme | None = None,
         image_scale: int | None = None,
     ) -> None:

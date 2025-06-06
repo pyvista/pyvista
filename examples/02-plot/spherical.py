@@ -115,9 +115,7 @@ vectors = np.stack(
             phi=y_polar,
             r=wind_level,
             u=u_vec.transpose(inv_axes),
-            v=-v_vec.transpose(
-                inv_axes
-            ),  # Minus sign because y-vector in polar coords is required
+            v=-v_vec.transpose(inv_axes),  # Minus sign since y-vector in polar coords is required
             w=w_vec.transpose(inv_axes),
         )
     ],

@@ -240,13 +240,13 @@ add_cell_helper(
 # make irregular
 hex_grid = example_cells.Hexahedron()
 hex_grid.points += rng.random((8, 3)) * 0.4
-
 add_cell_helper(
     pl,
     text=f'HEXAHEDRON ({pv.CellType.HEXAHEDRON})',
     grid=hex_grid,
     subplot=(2, 3),
 )
+
 add_cell_helper(
     pl,
     text=f'WEDGE ({pv.CellType.WEDGE})',
