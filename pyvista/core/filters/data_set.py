@@ -1101,6 +1101,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         radius: float = 0.1,
+        dimensions: VectorLike[int] = (50, 50, 50),
         progress_bar: bool = False,
     ):
         """Splat points into a volume using a Gaussian distribution.
@@ -1115,9 +1116,13 @@ class DataSetFilters(DataObjectFilters):
         Parameters
         ----------
         radius : float, default: 0.1
-            Standard deviation of the Gaussian distribution in
-            world coordinates. This determines the "width" of the
-            splatter in terms of the distribution.
+            This value is expressed as a percentage of the length of the longest side of
+            the sampling volume. Smaller numbers greatly reduce execution time.
+
+        dimensions : VectorLike[int], default: (50, 50, 50)
+            Sampling dimensions of the structured point set. Higher values produce better
+            results but are much slower. This is the :attr:`~pyvista.ImageData.dimensions`
+            of the returned :class:`~pyvista.ImageData`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1127,6 +1132,11 @@ class DataSetFilters(DataObjectFilters):
         pyvista.ImageData
             Image data with scalar values representing the splatting
             of the points.
+
+        See Also
+        --------
+        voxelize_binary_mask
+            Alternative method for generating :class:`~pyvista.ImageData` from a dataset.
 
         Examples
         --------
@@ -1151,9 +1161,14 @@ class DataSetFilters(DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
+        from pyvista.core import _validation
+
+        radius = _validation.check_range(radius, [0.0, 1.0], name='radius')
+        dimensions = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()
         alg.SetInputDataObject(self)
         alg.SetRadius(radius)
+        alg.SetSampleDimensions(dimensions)
         _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
         return _get_output(alg)
 

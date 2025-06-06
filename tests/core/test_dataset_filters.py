@@ -504,7 +504,12 @@ def test_gaussian_splatting(dataset):
     output = dataset.gaussian_splatting(progress_bar=True)
     assert output is not None
     assert isinstance(output, pv.ImageData)
-
+    assert output.dimensions == (50, 50, 50)
+    
+    dimensions = (10, 11, 12)
+    output = dataset.gaussian_splatting(dimensions=dimensions)
+    assert output.dimensions == dimensions
+    
 
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
