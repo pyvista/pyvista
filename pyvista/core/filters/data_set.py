@@ -5314,6 +5314,12 @@ class DataSetFilters(DataObjectFilters):
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
+
+        # Update field data
+        priority = self if main_has_priority else grid
+        for array in merged.field_data:
+            merged.field_data[array] = priority.field_data[array]
+
         if inplace:
             if type(self) is type(merged):
                 self.deep_copy(merged)
