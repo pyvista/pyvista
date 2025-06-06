@@ -5316,7 +5316,9 @@ class DataSetFilters(DataObjectFilters):
         merged = _get_output(append_filter)
 
         # Update field data
-        priority = self if main_has_priority else grid
+        priority = (
+            grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
+        )
         for array in merged.field_data:
             merged.field_data[array] = priority.field_data[array]
 
