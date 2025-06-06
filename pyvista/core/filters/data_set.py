@@ -6884,7 +6884,7 @@ class DataSetFilters(DataObjectFilters):
 
         return_dict : bool, default: False
             Return a dictionary with a mapping from label values to the
-            colors applied by the filter. The colors have the same type as 
+            colors applied by the filter. The colors have the same type
             specified by ``color_type``.
 
             .. versionadded:: 0.46
