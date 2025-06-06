@@ -1110,7 +1110,8 @@ def test_download_head2():
 
 def test_download_frog_tissue():
     match = re.escape(
-        'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissues` instead.'
+        'This example is deprecated and will be removed in v0.47.0. '
+        'Use `load_frog_tissues` instead.'
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
         filename = examples.download_frog_tissue(load=False)
