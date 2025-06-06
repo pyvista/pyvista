@@ -5,12 +5,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from typing import TYPE_CHECKING
+from typing import Literal
 import warnings
 
 from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
+from typing_extensions import Concatenate
 
 try:
     from ipywidgets.widgets import HTML
@@ -23,6 +26,15 @@ from pyvista.trame.ui import UI_TITLE
 from pyvista.trame.ui import get_viewer
 from pyvista.trame.views import CLOSED_PLOTTER_ERROR
 from pyvista.trame.views import get_server
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from IPython.display import IFrame
+
+    from pyvista.jupyter import JupyterBackendOptions
+    from pyvista.plotting.plotter import Plotter
+    from pyvista.trame.ui.vuetify2 import Viewer
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
@@ -267,19 +279,20 @@ def initialize(
 
 
 def show_trame(
-    plotter,
-    mode=None,
-    name=None,
-    server_proxy_enabled=None,
-    server_proxy_prefix=None,
-    jupyter_extension_enabled=None,
-    collapse_menu=False,
-    add_menu=True,
-    add_menu_items=None,
-    default_server_rendering=True,
-    handler=None,
+    plotter: Plotter,
+    mode: JupyterBackendOptions | None = None,
+    name: str | None = None,
+    server_proxy_enabled: bool | None = None,
+    server_proxy_prefix: str | None = None,
+    jupyter_extension_enabled: bool | None = None,
+    collapse_menu: bool = False,
+    add_menu: bool = True,
+    add_menu_items: Callable[[Literal['trame', 'server', 'client'], bool, bool], None]
+    | None = None,
+    default_server_rendering: bool = True,
+    handler: Callable[Concatenate[Viewer, str, ...], IFrame] | None = None,
     **kwargs,
-):
+) -> EmbeddableWidget | IFrame | Widget:
     """Run and display the trame application in jupyter's event loop.
 
     Parameters
@@ -369,9 +382,9 @@ def show_trame(
     if plotter._window_size_unset:
         dw, dh = '99%', '600px'
     else:
-        dw, dh = plotter.window_size
-        dw = f'{dw}px'
-        dh = f'{dh}px'
+        width, height = plotter.window_size
+        dw = f'{width}px'
+        dh = f'{height}px'
     kwargs.setdefault('width', dw)
     kwargs.setdefault('height', dh)
 
