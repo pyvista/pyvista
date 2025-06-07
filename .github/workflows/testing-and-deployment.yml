@@ -32,7 +32,7 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
   CACHE_FOLDER_NAME: vtk-data
-  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/${{ github.env.CACHE_FOLDER_NAME }}
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
 
 permissions:
   id-token: none
@@ -103,6 +103,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Install PyVista test dependencies
         run: |
@@ -176,6 +177,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Build wheel and install pyvista
         run: |
@@ -361,6 +363,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.1
