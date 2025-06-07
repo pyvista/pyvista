@@ -519,6 +519,31 @@ def test_merge_not_main(hexbeam):
     assert grid.n_points < unmerged.n_points
 
 
+def test_merge_order():
+    key = 'data'
+    main = examples.cells.Quadrilateral()
+    main_array = [0, 0, 0, 0]
+    main.point_data[key] = main_array
+    main_celltype = main.celltypes[0]
+
+    other = examples.cells.Pixel()
+    other_array = [1, 1, 1, 1]
+    other.point_data[key] = other_array
+    other_celltype = other.celltypes[0]
+
+    merged = main.merge(other)
+    expected_array = main_array
+    actual_array = merged.point_data[key]
+    assert np.array_equal(actual_array, expected_array)
+
+    if pv.vtk_version_info >= (9, 5, 0):
+        expected_celltypes = [main_celltype, other_celltype]
+    else:
+        expected_celltypes = [other_celltype, main_celltype]
+    actual_celltypes = merged.celltypes
+    assert np.array_equal(actual_celltypes, expected_celltypes)
+
+
 def test_merge_list(hexbeam):
     grid_a = hexbeam.copy()
     grid_a.points[:, 0] += 1
