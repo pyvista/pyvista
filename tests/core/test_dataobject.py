@@ -278,7 +278,7 @@ def test_user_dict_persists_with_merge_filter():
     sphere2.user_dict['name'] = name2
 
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == name1
+    assert merged.user_dict['name'] == 'sphere1'
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):
