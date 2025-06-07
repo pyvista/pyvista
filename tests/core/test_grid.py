@@ -505,7 +505,7 @@ def test_merge(hexbeam):
     assert grid.n_points < unmerged.n_points
 
 
-@pytest.mark.skipif(pv.vtk_version_info > (9, 4, 2), reason='Main always has priority.')
+@pytest.mark.needs_vtk_version(9, 5, 0, reason='Main always has priority.')
 def test_merge_not_main(hexbeam):
     grid = hexbeam.copy()
     grid.points[:, 0] += 1

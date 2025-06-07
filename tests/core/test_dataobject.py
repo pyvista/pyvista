@@ -270,12 +270,10 @@ def test_user_dict_write_read(tmp_path, data_object, ext):
 
 def test_user_dict_persists_with_merge_filter():
     sphere1 = pv.Sphere()
-    name1 = 'sphere1'
-    sphere1.user_dict['name'] = name1
+    sphere1.user_dict['name'] = 'sphere1'
 
     sphere2 = pv.Sphere()
-    name2 = 'sphere2'
-    sphere2.user_dict['name'] = name2
+    sphere2.user_dict['name'] = 'sphere2'
 
     merged = sphere1 + sphere2
     assert merged.user_dict['name'] == 'sphere1'

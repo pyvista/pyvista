@@ -33,7 +33,6 @@ from tests.conftest import flaky_test
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 
