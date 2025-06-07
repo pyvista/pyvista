@@ -5272,7 +5272,7 @@ class DataSetFilters(DataObjectFilters):
             .. deprecated:: 0.45
 
                 This keyword will be removed in a future version. The main mesh
-                always has priority with VTK > 9.4.2.
+                always has priority with VTK 9.5.0 or later.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5300,18 +5300,19 @@ class DataSetFilters(DataObjectFilters):
         >>> merged.plot()
 
         """
-        vtk_greater_942 = _vtk.vtk_version_info > (9, 4, 2)
+        vtk_at_least_95 = _vtk.vtk_version_info >= (9, 5, 0)
         if main_has_priority is not None:
             msg = (
                 "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-                'The main mesh will always have priority in a future version.'
+                'The main mesh will always have priority in a future version, and this keyword '
+                'will be removed.'
             )
-            if main_has_priority is False and vtk_greater_942:
-                msg += '\nIts value cannot be False for vtk>9.4.2.'
+            if main_has_priority is False and vtk_at_least_95:
+                msg += '\nIts value cannot be False for vtk>=9.5.0.'
                 raise ValueError(msg)
             else:
                 warnings.warn(msg, pyvista.PyVistaDeprecationWarning)
-        elif not vtk_greater_942:
+        elif not vtk_at_least_95:
             # Set default for older VTK:
             main_has_priority = True
 
@@ -5319,11 +5320,11 @@ class DataSetFilters(DataObjectFilters):
         append_filter.SetMergePoints(merge_points)
         append_filter.SetTolerance(tolerance)
 
-        # For vtk 9.4.2 and earlier, the last appended mesh has priority.
+        # For vtk < 9.5, the last appended mesh has priority.
         # For newer vtk, the first appended mesh has priority. We apply
         # logic accordingly to ensure the main mesh is appended in the
         # correct order
-        append_main_first = (not main_has_priority) or vtk_greater_942
+        append_main_first = (not main_has_priority) or vtk_at_least_95
         if append_main_first:
             append_filter.AddInputData(self)
 
@@ -5340,12 +5341,13 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
 
-        # Update field data
-        priority = (
-            grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
-        )
-        for array in merged.field_data:
-            merged.field_data[array] = priority.field_data[array]
+        if not vtk_at_least_95:
+            # Update field data
+            priority = (
+                grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
+            )
+            for array in merged.field_data:
+                merged.field_data[array] = priority.field_data[array]
 
         if inplace:
             if type(self) is type(merged):

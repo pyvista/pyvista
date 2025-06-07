@@ -616,7 +616,19 @@ def test_merge_field_data(mesh, main_has_priority):
     other = mesh.copy()
     other.field_data[key] = data_other
 
-    merged = mesh.merge(other, main_has_priority=main_has_priority)
+    match = (
+        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+        'The main mesh will always have priority in a future version, and this '
+        'keyword will be removed.'
+    )
+    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
+        match += '\nIts value cannot be False for vtk>=9.5.0.'
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.merge(other, main_has_priority=main_has_priority)
+        return
+    else:
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
 
     actual = merged.field_data[key]
     expected = data_main if main_has_priority else data_other
