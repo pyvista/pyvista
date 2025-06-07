@@ -1164,11 +1164,11 @@ class DataSetFilters(DataObjectFilters):
         from pyvista.core import _validation
 
         _validation.check_range(radius, [0.0, 1.0], name='radius')
-        dimensions = _validation.validate_array3(dimensions, name='dimensions')
+        dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()
         alg.SetInputDataObject(self)
         alg.SetRadius(radius)
-        alg.SetSampleDimensions(list(dimensions))
+        alg.SetSampleDimensions(list(dimensions_))
         _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
         return _get_output(alg)
 
