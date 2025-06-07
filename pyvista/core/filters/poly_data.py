@@ -463,6 +463,18 @@ class PolyDataFilters(DataSetFilters):
             To obtain similar results as before ``0.39.0`` for multiple PolyData, combine
             :func:`PolyDataFilters.append_polydata` and :func:`PolyDataFilters.clean`.
 
+
+        .. warning::
+
+            The merge order of this filter depends on the installed version
+            of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
+            the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
+            This may be a breaking change for some applications. If only
+            merging two meshes, it may be possible to maintain _some_ backwards
+            compatibility by swapping the input order of the two meshes,
+            though this may also affect the merged arrays and is therefore
+            not fully backwards-compatible.
+
         .. seealso::
             :func:`PolyDataFilters.append_polydata`
 
