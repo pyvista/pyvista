@@ -8,6 +8,7 @@ See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived
 
 from __future__ import annotations
 
+import asyncio
 import io
 from typing import TYPE_CHECKING
 
@@ -30,10 +31,14 @@ class BaseViewer:
         Current Server for Trame Application.
     suppress_rendering : bool, default=False
         Whether to suppress rendering on the Plotter.
+    animation_delay : float, default=0.01
+        Delay in seconds between animation frames.
 
     """
 
-    def __init__(self, plotter, server=None, suppress_rendering=False):
+    def __init__(
+        self, plotter, server=None, suppress_rendering=False, animation_delay=0.01, animate=True
+    ):
         """Initialize Viewer."""
         self._html_views = set()
 
@@ -42,6 +47,7 @@ class BaseViewer:
         self.server = server
         self.plotter = plotter
         self.plotter.suppress_rendering = suppress_rendering
+        self.animation_delay = animation_delay
 
         # State variable names
         self.SHOW_UI = f'{plotter._id_name}_show_ui'
@@ -62,6 +68,9 @@ class BaseViewer:
         server.state[self.EDGES] = False
         server.state[self.AXIS] = False
         server.state[self.PARALLEL] = False
+
+        if animate:
+            server.controller.on_client_connected.add_task(self._animate)
 
     @property
     def views(self):  # numpydoc ignore=RT01
@@ -91,6 +100,11 @@ class BaseViewer:
         """
         for view in self._html_views:
             view.push_camera()
+
+    async def _animate(self, **_):
+        while True:
+            await asyncio.sleep(self.animation_delay)
+            self.update()
 
     def reset_camera(self, **kwargs):  # noqa: ARG002
         """Reset camera for all associated views.
