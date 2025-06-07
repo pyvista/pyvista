@@ -69,7 +69,7 @@ class DataSetFilters(DataObjectFilters):
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
-        two meshes. See the VTK class `:vtk:`vtkIterativeClosestPointTransform`.
+        two meshes. See the VTK class :vtk:`vtkIterativeClosestPointTransform`.
 
         Parameters
         ----------
