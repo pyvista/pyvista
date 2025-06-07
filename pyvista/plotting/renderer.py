@@ -4099,7 +4099,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
                     raise TypeError(msg)
 
                 legend_face = make_legend_face(face_ or face)
-                self._legend.SetEntry(i, legend_face, text, list(Color(color).float_rgb))
+                self._legend.SetEntry(i, legend_face, str(text), list(Color(color).float_rgb))
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
