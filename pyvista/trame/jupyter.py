@@ -254,6 +254,7 @@ def initialize(
     mode=None,
     default_server_rendering=True,
     collapse_menu=False,
+    animate=True,
     **kwargs,
 ):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
@@ -264,6 +265,7 @@ def initialize(
         plotter,
         server=server,
         suppress_rendering=mode == 'client',
+        animate=animate,
     )
 
     with viewer.make_layout(server, template_name=plotter._id_name) as layout:
@@ -291,6 +293,7 @@ def show_trame(
     | None = None,
     default_server_rendering: bool = True,
     handler: Callable[Concatenate[Viewer, str, ...], IFrame] | None = None,
+    animate: bool = True,
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget:
     """Run and display the trame application in jupyter's event loop.
@@ -364,6 +367,9 @@ def show_trame(
             )
             iframe
 
+    animate : bool, default: True
+        Whether to enable animation on the viewer.
+
     **kwargs : dict, optional
         Mostly ignored, though ``protocol`` and ``host`` can be use to
         override the iframe src url and ``height`` and ``width`` can be
@@ -418,6 +424,7 @@ def show_trame(
         collapse_menu=collapse_menu,
         add_menu=add_menu,
         add_menu_items=add_menu_items,
+        animate=animate,
     )
 
     if jupyter_extension_enabled:  # pragma: no cover
