@@ -1163,7 +1163,7 @@ class DataSetFilters(DataObjectFilters):
         """
         from pyvista.core import _validation
 
-        radius = _validation.check_range(radius, [0.0, 1.0], name='radius')
+        _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()
         alg.SetInputDataObject(self)
