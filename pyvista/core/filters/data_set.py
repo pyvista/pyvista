@@ -5254,7 +5254,7 @@ class DataSetFilters(DataObjectFilters):
             of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
             the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
             This may be a breaking change for some applications. If only
-            mergeing two meshes, it may be possible to maintain _some_ backwards
+            merging two meshes, it may be possible to maintain _some_ backwards
             compatibility by swapping the input order of the two meshes,
             though this may also affect the merged arrays and is therefore
             not fully backwards-compatible.
