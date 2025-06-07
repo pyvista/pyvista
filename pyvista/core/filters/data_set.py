@@ -1168,7 +1168,7 @@ class DataSetFilters(DataObjectFilters):
         alg = _vtk.vtkGaussianSplatter()
         alg.SetInputDataObject(self)
         alg.SetRadius(radius)
-        alg.SetSampleDimensions(dimensions)
+        alg.SetSampleDimensions(list(dimensions))
         _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
         return _get_output(alg)
 
