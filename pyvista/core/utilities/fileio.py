@@ -41,8 +41,14 @@ if TYPE_CHECKING:
 
 PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
-_VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
-_VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
+if TYPE_CHECKING:
+    _VTKWriterAlias = Union[
+        _vtk.vtkXMLPartitionedDataSetWriter,
+        _vtk.vtkXMLWriter,
+        _vtk.vtkDataWriter,
+        _vtk.vtkHDFWriter,
+    ]
+    _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')
 
