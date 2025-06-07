@@ -15,6 +15,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import BoundsTuple
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
@@ -168,7 +169,7 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
     @property
     def parts(self):
         collection = self.GetParts()
-        return tuple([collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())])
+        return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 
     @property
     def _label_actor_iterator(self) -> Iterator[Label]:
@@ -712,7 +713,8 @@ class AxesAssembly(_XYZAssembly):
     def z_color(self, color: ColorLike | Sequence[ColorLike]):
         self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
-    def set_actor_prop(
+    @_deprecate_positional_args(allowed=['name', 'value'])
+    def set_actor_prop(  # noqa: PLR0917
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],

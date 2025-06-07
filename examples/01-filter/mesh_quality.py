@@ -40,7 +40,7 @@ qual = mesh.cell_quality(measures)
 # for adding each mesh to each subplot.
 
 
-def add_mesh(plotter, mesh, scalars=None, cmap='bwr', show_edges=True):
+def add_mesh(plotter, mesh, *, scalars=None, cmap='bwr', show_edges=True):
     # Create a copy to avoid reusing the same mesh in different plots
     copied = mesh.copy(deep=False)
     plotter.add_mesh(copied, scalars=scalars, cmap=cmap, show_edges=show_edges)

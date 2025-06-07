@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import examples
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
@@ -216,7 +217,8 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
+@_deprecate_positional_args
+def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -337,8 +339,8 @@ def plot_ants_plane(notebook=None):
        Create plotting object.
 
        >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+       >>> _ = plotter.add_mesh(ant, color='r')
+       >>> _ = plotter.add_mesh(ant_copy, color='b')
 
        Add airplane mesh and make the color equal to the Y position.
 
@@ -378,8 +380,8 @@ def plot_ants_plane(notebook=None):
 
     # Create plotting object
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]

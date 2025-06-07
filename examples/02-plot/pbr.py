@@ -84,13 +84,13 @@ plotter.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, dif
 
 
 # set up lighting
-light = pv.Light((-2, 2, 0), (0, 0, 0), 'white')
+light = pv.Light(position=(-2, 2, 0), focal_point=(0, 0, 0), color='white')
 plotter.add_light(light)
 
-light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549))
+light = pv.Light(position=(2, 0, 0), focal_point=(0, 0, 0), color=(0.7, 0.0862, 0.0549))
 plotter.add_light(light)
 
-light = pv.Light((0, 0, 10), (0, 0, 0), 'white')
+light = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
 plotter.add_light(light)
 
 

@@ -13,6 +13,7 @@ import numpy as np
 from typing_extensions import TypeIs
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
@@ -294,8 +295,13 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     return plane
 
 
-def axis_rotation(
-    points: NumpyArray[float], angle: float, inplace: bool = False, deg: bool = True, axis='z'
+@_deprecate_positional_args(allowed=['points', 'angle'])
+def axis_rotation(  # noqa: PLR0917
+    points: NumpyArray[float],
+    angle: float,
+    inplace: bool = False,  # noqa: FBT001, FBT002
+    deg: bool = True,  # noqa: FBT001, FBT002
+    axis='z',
 ):
     """Rotate points by angle about an axis.
 

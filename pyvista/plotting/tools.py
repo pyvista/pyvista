@@ -14,6 +14,7 @@ import sys
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 from .colors import Color
@@ -123,7 +124,8 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
 
-def create_axes_marker(
+@_deprecate_positional_args
+def create_axes_marker(  # noqa: PLR0917
     label_color=None,
     x_color=None,
     y_color=None,
@@ -131,7 +133,7 @@ def create_axes_marker(
     xlabel='X',
     ylabel='Y',
     zlabel='Z',
-    labels_off: bool = False,
+    labels_off: bool = False,  # noqa: FBT001, FBT002
     line_width=2,
     cone_radius=0.4,
     shaft_length=0.8,
@@ -264,7 +266,8 @@ def create_axes_marker(
     return axes_actor
 
 
-def create_axes_orientation_box(
+@_deprecate_positional_args
+def create_axes_orientation_box(  # noqa: PLR0917
     line_width=1,
     text_scale=0.366667,
     edge_color='black',
@@ -277,11 +280,11 @@ def create_axes_orientation_box(
     x_face_color='red',
     y_face_color='green',
     z_face_color='blue',
-    color_box: bool = False,
+    color_box: bool = False,  # noqa: FBT001, FBT002
     label_color=None,
-    labels_off: bool = False,
+    labels_off: bool = False,  # noqa: FBT001, FBT002
     opacity=0.5,
-    show_text_edges: bool = False,
+    show_text_edges: bool = False,  # noqa: FBT001, FBT002
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -537,7 +540,13 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='linear'):
+@_deprecate_positional_args(allowed=['mapping', 'n_colors'])
+def opacity_transfer_function(  # noqa: PLR0917
+    mapping,
+    n_colors,
+    interpolate: bool = True,  # noqa: FBT001, FBT002
+    kind='linear',
+):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of

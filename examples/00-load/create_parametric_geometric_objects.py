@@ -193,7 +193,7 @@ pointb = [0, 1, 0]
 center = [0, 0, 0]
 resolution = 100
 
-arc = pv.CircularArc(pointa, pointb, center, resolution)
+arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
 
 pl = pv.Plotter()
 pl.add_mesh(arc, color='k', line_width=4)
@@ -211,7 +211,7 @@ pointb = [1, 0, 0]
 center = [0, 0, 0]
 resolution = 100
 
-arc = pv.CircularArc(pointa, pointb, center, resolution)
+arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=resolution)
 poly = arc.extrude([0, 0, 1])
 poly.plot(color='lightblue', cpos='iso', show_edges=True)
 # %%

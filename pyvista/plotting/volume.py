@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk
 from .prop3d import Prop3D
 
@@ -78,7 +80,8 @@ class Volume(Prop3D, _vtk.vtkVolume):
     def prop(self, obj: Property):
         self.SetProperty(obj)  # type: ignore[arg-type]
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Create a copy of this volume.
 
         Parameters

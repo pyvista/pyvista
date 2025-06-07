@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
@@ -68,7 +69,10 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
+    @_deprecate_positional_args(allowed=['position', 'text'])
+    def __init__(  # noqa: PLR0917
+        self, position, text, prop=None, linear_font_scale_factor=None, name=None
+    ):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -197,7 +201,10 @@ class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None, name=None):
+    @_deprecate_positional_args(allowed=['text'])
+    def __init__(  # noqa: PLR0917
+        self, text=None, position=None, prop=None, name=None
+    ):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -531,7 +538,8 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['theme'])
+    def __init__(  # noqa: PLR0917
         self,
         theme=None,
         color=None,
@@ -539,11 +547,11 @@ class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
         orientation=None,
         font_size=None,
         font_file=None,
-        shadow: bool = False,
+        shadow: bool = False,  # noqa: FBT001, FBT002
         justification_horizontal=None,
         justification_vertical=None,
-        italic: bool = False,
-        bold: bool = False,
+        italic: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = False,  # noqa: FBT001, FBT002
         background_color=None,
         background_opacity=None,
     ):

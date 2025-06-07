@@ -52,7 +52,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
 # Define a helper function to add pixel boxes to plotter.
 
 
-def draw_pixels(plotter, pixels, center, color):
+def draw_pixels(plotter, pixels, center, color):  # noqa: PLR0917
     bounds = [
         center[0] - 1.0,
         center[0] + 1.0,

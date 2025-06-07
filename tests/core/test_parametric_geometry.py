@@ -33,7 +33,9 @@ def test_kochanek_spline():
 
     n_points = 1000
     points = np.column_stack((x, y, z))
-    kochanek_spline = pv.KochanekSpline(points, tension, bias, continuity, n_points)
+    kochanek_spline = pv.KochanekSpline(
+        points, tension=tension, bias=bias, continuity=continuity, n_points=n_points
+    )
     assert kochanek_spline.n_points == n_points
 
     # test default
@@ -42,11 +44,17 @@ def test_kochanek_spline():
 
     # test invalid
     with pytest.raises(ValueError, match='tension'):
-        kochanek_spline = pv.KochanekSpline(points, [-2, 0, 0], bias, continuity, n_points)
+        kochanek_spline = pv.KochanekSpline(
+            points, tension=[-2, 0, 0], bias=bias, continuity=continuity, n_points=n_points
+        )
     with pytest.raises(ValueError, match='bias'):
-        kochanek_spline = pv.KochanekSpline(points, tension, [-2, 0, 0], continuity, n_points)
+        kochanek_spline = pv.KochanekSpline(
+            points, tension=tension, bias=[-2, 0, 0], continuity=continuity, n_points=n_points
+        )
     with pytest.raises(ValueError, match='continuity'):
-        kochanek_spline = pv.KochanekSpline(points, tension, bias, [-2, 0, 0], n_points)
+        kochanek_spline = pv.KochanekSpline(
+            points, tension=tension, bias=bias, continuity=[-2, 0, 0], n_points=n_points
+        )
 
 
 def test_parametric_bohemian_dome():

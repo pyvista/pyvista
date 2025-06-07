@@ -7,6 +7,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import try_callback
 
@@ -81,7 +82,8 @@ def get_angle(v1, v2):
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
-def ray_plane_intersection(start_point, direction, plane_point, normal):
+@_deprecate_positional_args
+def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa: PLR0917
     """Compute the intersection between a ray and a plane.
 
     Parameters
@@ -172,15 +174,16 @@ class AffineWidget3D:
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter', 'actor'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         actor,
         origin=None,
-        start: bool = True,
+        start: bool = True,  # noqa: FBT001, FBT002
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,
+        always_visible: bool = True,  # noqa: FBT001, FBT002
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -243,7 +246,7 @@ class AffineWidget3D:
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
             arrow = pyvista.Arrow(
-                (0, 0, 0),
+                start=(0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
                 tip_radius=0.05,
@@ -303,7 +306,12 @@ class AffineWidget3D:
         if self._selected_actor:
             index = self._circles.index(self._selected_actor)
             to_widget = np.array(ren.camera.position - self._origin)
-            point = ray_plane_intersection(point, to_widget, self._origin, self.axes[index])
+            point = ray_plane_intersection(
+                start_point=point,
+                direction=to_widget,
+                plane_point=self._origin,
+                normal=self.axes[index],
+            )
         return point
 
     def _get_world_coord_trans(self, interactor):

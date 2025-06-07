@@ -10,6 +10,7 @@ import weakref
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
 
@@ -329,7 +330,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined, index]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
-    def _init_click_picking_callback(self, left_clicking=False):
+    def _init_click_picking_callback(self, *, left_clicking=False):
         if left_clicking:
             self._picking_left_clicking_observer = self.iren.add_observer(  # type: ignore[attr-defined]
                 'LeftButtonPressEvent',
@@ -377,20 +378,21 @@ class PickingInterface:  # numpydoc ignore=PR01
             )
             raise PyVistaPickingError(msg)
 
-    def enable_point_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_point_picking(  # noqa: PLR0917
         self,
         callback=None,
         tolerance=0.025,
-        left_clicking=False,
+        left_clicking=False,  # noqa: FBT002
         picker=PickerType.POINT,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
-        show_point=True,
-        use_picker=False,
-        pickable_window=False,
-        clear_on_no_selection=True,
+        show_point=True,  # noqa: FBT002
+        use_picker=False,  # noqa: FBT002
+        pickable_window=False,  # noqa: FBT002
+        clear_on_no_selection=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -546,13 +548,14 @@ class PickingInterface:  # numpydoc ignore=PR01
                 name='_point_picking_message',
             )
 
-    def enable_rectangle_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_rectangle_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         style='wireframe',
         color='pink',
         **kwargs,
@@ -762,20 +765,21 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 renderer.remove_actor(self._picking_text, render=False)
         self._picking_text = None
 
-    def enable_surface_point_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_surface_point_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
-        show_point=True,
+        show_point=True,  # noqa: FBT002
         point_size=10,
         tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
+        pickable_window=False,  # noqa: FBT002
+        left_clicking=False,  # noqa: FBT002
         picker=PickerType.CELL,
-        use_picker=False,
-        clear_on_no_selection=True,
+        use_picker=False,  # noqa: FBT002
+        clear_on_no_selection=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking of a point on the surface of a mesh.
@@ -917,17 +921,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    def enable_mesh_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_mesh_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show=True,
-        show_message=True,
+        show=True,  # noqa: FBT002
+        show_message=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
         font_size=18,
-        left_clicking=False,
-        use_actor=False,
+        left_clicking=False,  # noqa: FBT002
+        use_actor=False,  # noqa: FBT002
         picker=PickerType.CELL,
         **kwargs,
     ):
@@ -1068,17 +1073,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             pickable_window=False,
         )
 
-    def enable_rectangle_through_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_rectangle_through_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show=True,
+        show=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         **kwargs,
     ):
         """Enable rectangle based cell picking through the scene.
@@ -1186,17 +1192,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    def enable_rectangle_visible_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_rectangle_visible_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show=True,
+        show=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         **kwargs,
     ):
         """Enable rectangle based cell picking on visible surfaces.
@@ -1329,18 +1336,19 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             color=color,
         )
 
-    def enable_cell_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_cell_picking(  # noqa: PLR0917
         self,
         callback=None,
-        through=True,
-        show=True,
-        show_message=True,
+        through=True,  # noqa: FBT002
+        show=True,  # noqa: FBT002
+        show_message=True,  # noqa: FBT002
         style='wireframe',
         line_width=5,
         color='pink',
         font_size=18,
-        start=False,
-        show_frustum=False,
+        start=False,  # noqa: FBT002
+        show_frustum=False,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking of cells with a rectangle selection tool.
@@ -1438,16 +1446,17 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    def enable_element_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_element_picking(  # noqa: PLR0917
         self,
         callback=None,
         mode='cell',
-        show=True,
-        show_message=True,
+        show=True,  # noqa: FBT002
+        show_message=True,  # noqa: FBT002
         font_size=18,
         tolerance=0.025,
-        pickable_window=False,
-        left_clicking=False,
+        pickable_window=False,  # noqa: FBT002
+        left_clicking=False,  # noqa: FBT002
         picker=PickerType.CELL,
         **kwargs,
     ):
@@ -1646,7 +1655,8 @@ class PickingHelper(PickingMethods):
         self.picked_geodesic = None
         self.picked_horizon = None
 
-    def fly_to_mouse_position(self, focus=False):
+    @_deprecate_positional_args
+    def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
         """Focus on last stored mouse position."""
         if self.mouse_position is None:  # type: ignore[attr-defined]
             self.store_mouse_position()  # type: ignore[attr-defined]
@@ -1679,15 +1689,16 @@ class PickingHelper(PickingMethods):
 
         self.track_click_position(callback=_the_callback, side='right')  # type: ignore[attr-defined]
 
-    def enable_path_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_path_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
-        show_path=True,
+        show_path=True,  # noqa: FBT002
         tolerance=0.025,
         **kwargs,
     ):
@@ -1787,17 +1798,18 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    def enable_geodesic_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_geodesic_picking(  # noqa: PLR0917
         self,
         callback=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
         tolerance=0.025,
-        show_path=True,
-        keep_order=True,
+        show_path=True,  # noqa: FBT002
+        keep_order=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable picking at geodesic paths.
@@ -1929,19 +1941,20 @@ class PickingHelper(PickingMethods):
             clear_on_no_selection=False,
         )
 
-    def enable_horizon_picking(
+    @_deprecate_positional_args(allowed=['callback'])
+    def enable_horizon_picking(  # noqa: PLR0917
         self,
         callback=None,
         normal=(0.0, 0.0, 1.0),
         width=None,
-        show_message=True,
+        show_message=True,  # noqa: FBT002
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
-        show_path=True,
+        show_path=True,  # noqa: FBT002
         opacity=0.75,
-        show_horizon=True,
+        show_horizon=True,  # noqa: FBT002
         **kwargs,
     ):
         """Enable horizon picking.

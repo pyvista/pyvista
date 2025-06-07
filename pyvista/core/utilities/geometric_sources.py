@@ -19,6 +19,7 @@ import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
@@ -129,7 +130,8 @@ if _vtk.vtk_version_info < (9, 3):
 
         _new_attr_exceptions: ClassVar[list[str]] = ['_direction', 'direction']
 
-        def __init__(
+        @_deprecate_positional_args
+        def __init__(  # noqa: PLR0917
             self: CapsuleSource,
             center: VectorLike[float] = (0.0, 0.0, 0.0),
             direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -353,13 +355,14 @@ class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: ConeSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         height: float = 1.0,
         radius: float | None = None,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001, FBT002
         angle: float | None = None,
         resolution: int = 6,
     ) -> None:
@@ -632,13 +635,14 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
         'direction',
     ]
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: CylinderSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         radius: float = 0.5,
         height: float = 1.0,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001, FBT002
         resolution: int = 100,
     ) -> None:
         """Initialize the cylinder source class."""
@@ -956,7 +960,8 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         '_modified',
     ]
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['string'])
+    def __init__(  # noqa: PLR0917
         self: Text3DSource,
         string: str | None = None,
         depth: float | None = None,
@@ -964,7 +969,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         height: float | None = None,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
-        process_empty_string: bool = True,
+        process_empty_string: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -1196,7 +1201,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center  # type: ignore[misc]
+        out.points -= out.center
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1205,7 +1210,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center  # type: ignore[misc]
+            out.points += self.center
 
 
 @no_new_attr
@@ -1252,7 +1257,8 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
         '_bounds',
     ]
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: CubeSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         x_length: float = 1.0,
@@ -1476,7 +1482,8 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: DiscSource,
         center: VectorLike[float] | None = None,
         inner: float = 0.25,
@@ -1815,7 +1822,8 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: SphereSource,
         radius: float = 0.5,
         center: VectorLike[float] | None = None,
@@ -2087,13 +2095,14 @@ class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: PolygonSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         radius: float = 1.0,
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
         n_sides: int = 6,
-        fill: bool = True,
+        fill: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the polygon source class."""
         super().__init__()
@@ -2375,7 +2384,8 @@ class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: PlaneSource,
         i_resolution: int = 10,
         j_resolution: int = 10,
@@ -2606,7 +2616,8 @@ class ArrowSource(_vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: ArrowSource,
         tip_length: float = 0.25,
         tip_radius: float = 0.1,
@@ -2781,11 +2792,12 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
         '_bounds',
     ]
 
+    @_deprecate_positional_args(allowed=['bounds'])
     def __init__(
         self: BoxSource,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         level: int = 0,
-        quads: bool = True,
+        quads: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -2915,7 +2927,8 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: SuperquadricSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: VectorLike[float] = (1.0, 1.0, 1.0),
@@ -2924,7 +2937,7 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
         phi_roundness: float = 1.0,
         theta_resolution: int = 16,
         phi_resolution: int = 16,
-        toroidal: bool = False,
+        toroidal: bool = False,  # noqa: FBT001, FBT002
         thickness: float = 1 / 3,
     ) -> None:
         """Initialize source."""
@@ -3664,7 +3677,7 @@ class AxesGeometrySource:
                 new_face = [3, point_id, point_id, point_id]
 
                 # Update mesh
-                part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[assignment]
+                part.points = np.append(part.points, flipped_point, axis=0)
                 part.faces = np.append(part.faces, new_face)
 
     def update(self: AxesGeometrySource) -> None:

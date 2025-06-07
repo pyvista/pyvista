@@ -970,13 +970,13 @@ def test_legend_invalid_face(sphere):
 
 def test_legend_subplots(sphere, cube):
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.add_mesh(sphere, 'blue', smooth_shading=True, label='Sphere')
+    plotter.add_mesh(sphere, color='blue', smooth_shading=True, label='Sphere')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
 
     plotter.subplot(0, 1)
-    plotter.add_mesh(cube, 'r', label='Cube')
+    plotter.add_mesh(cube, color='r', label='Cube')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
@@ -1637,9 +1637,9 @@ def test_camera(sphere):
     plotter.view_xz()
     plotter.view_yz()
     plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
-    plotter.view_xy(True)
-    plotter.view_xz(True)
-    plotter.view_yz(True)
+    plotter.view_xy(negative=True)
+    plotter.view_xz(negative=True)
+    plotter.view_yz(negative=True)
     plotter.show()
 
     plotter = pv.Plotter()
@@ -2411,7 +2411,7 @@ def test_add_remove_floor(sphere):
     pl.add_floor(color='b', line_width=2, lighting=True)
     pl.add_bounding_box()  # needed for update_bounds_axes
     assert len(pl.renderer._floors) == 1
-    pl.add_mesh(pv.Sphere(1.0))
+    pl.add_mesh(pv.Sphere(radius=1.0))
     pl.update_bounds_axes()
     assert len(pl.renderer._floors) == 1
     pl.show()
@@ -3527,7 +3527,7 @@ def test_charts_sin():
     y = np.sin(x)
     chart = pv.Chart2D()
     chart.scatter(x, y)
-    chart.line(x, y, 'r')
+    chart.line(x, y, color='r')
     chart.show()
 
 
@@ -5078,7 +5078,7 @@ def test_bitwise_and_or_of_polydata(operator):
     sphere = pv.Sphere(radius=radius, **kwargs)
     sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
     # Expand the wireframe ever so slightly to avoid rendering artifacts
-    wireframe = pv.Sphere(radius + 0.001, **kwargs).extract_all_edges()
+    wireframe = pv.Sphere(radius=radius + 0.001, **kwargs).extract_all_edges()
     wireframe_shifted = pv.Sphere(
         radius=radius + 0.001, center=shift, **kwargs
     ).extract_all_edges()

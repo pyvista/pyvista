@@ -9,6 +9,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
@@ -422,14 +423,15 @@ class _DataSetMapper(_BaseMapper):
         if self.dataset is not None:
             self.dataset.point_data.pop('__rgba__', None)
             self._configure_scalars_mode(
-                self.lookup_table(self.dataset.active_scalars),
-                '__rgba__',
-                self.scalar_map_mode,
-                True,
+                scalars=self.lookup_table(self.dataset.active_scalars),
+                scalars_name='__rgba__',
+                preference=self.scalar_map_mode,
+                direct_scalars_color_mode=True,
             )
 
     def _configure_scalars_mode(
         self,
+        *,
         scalars,
         scalars_name,
         preference,
@@ -472,7 +474,7 @@ class _DataSetMapper(_BaseMapper):
                     scalars_name not in self.dataset.point_data
                     or scalars_name == pyvista.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.point_data.set_array(scalars, scalars_name, False)
+                    self.dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
                 self.dataset.active_scalars_name = scalars_name
                 self.scalar_map_mode = 'point'
             elif use_cells:
@@ -480,7 +482,7 @@ class _DataSetMapper(_BaseMapper):
                     scalars_name not in self.dataset.cell_data
                     or scalars_name == pyvista.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.cell_data.set_array(scalars, scalars_name, False)
+                    self.dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
                 self.dataset.active_scalars_name = scalars_name
                 self.scalar_map_mode = 'cell'
             else:
@@ -488,7 +490,8 @@ class _DataSetMapper(_BaseMapper):
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
-    def set_scalars(
+    @_deprecate_positional_args(allowed=['scalars', 'scalars_name'])
+    def set_scalars(  # noqa: PLR0917
         self,
         scalars,
         scalars_name,
@@ -497,16 +500,16 @@ class _DataSetMapper(_BaseMapper):
         rgb=None,
         component=None,
         preference='point',
-        custom_opac: bool = False,
+        custom_opac: bool = False,  # noqa: FBT001, FBT002
         annotations=None,
-        log_scale: bool = False,
+        log_scale: bool = False,  # noqa: FBT001, FBT002
         nan_color=None,
         above_color=None,
         below_color=None,
         cmap=None,
-        flip_scalars: bool = False,
+        flip_scalars: bool = False,  # noqa: FBT001, FBT002
         opacity=None,
-        categories: bool | int = False,
+        categories: bool | int = False,  # noqa: FBT001, FBT002
         clim=None,
     ):
         """Set the scalars on this mapper.
@@ -737,10 +740,10 @@ class _DataSetMapper(_BaseMapper):
             self.lookup_table.log_scale = log_scale
 
         self._configure_scalars_mode(
-            scalars,
-            scalars_name,
-            preference,
-            rgb or custom_opac,
+            scalars=scalars,
+            scalars_name=scalars_name,
+            preference=preference,
+            direct_scalars_color_mode=rgb or custom_opac,
         )
 
         if isinstance(self, PointGaussianMapper):
@@ -814,7 +817,10 @@ class _DataSetMapper(_BaseMapper):
             msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
             raise ValueError(msg)
 
-    def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
+    @_deprecate_positional_args(allowed=['opacity'])
+    def set_custom_opacity(  # noqa: PLR0917
+        self, opacity, color, n_colors, preference='point'
+    ):
         """Set custom opacity.
 
         Parameters
@@ -856,7 +862,9 @@ class _DataSetMapper(_BaseMapper):
 
         self.color_mode = 'direct'
         self.lookup_table.n_values = n_colors
-        self._configure_scalars_mode(rgba, '', preference, True)
+        self._configure_scalars_mode(
+            scalars=rgba, scalars_name='', preference=preference, direct_scalars_color_mode=True
+        )
 
     def __repr__(self):
         """Representation of the mapper."""

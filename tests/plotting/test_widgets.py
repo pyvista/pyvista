@@ -584,7 +584,9 @@ def test_ray_plane_intersection():
 
     # Expected result
     expected_result = np.array([0, 0, 5])
-    result = ray_plane_intersection(start_point, direction, plane_point, normal)
+    result = ray_plane_intersection(
+        start_point=start_point, direction=direction, plane_point=plane_point, normal=normal
+    )
     np.testing.assert_array_almost_equal(result, expected_result)
 
 

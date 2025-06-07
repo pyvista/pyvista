@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .renderer import Renderer
 
@@ -25,7 +26,10 @@ class BackgroundRenderer(Renderer):
 
     """
 
-    def __init__(self, parent, image_path, scale=1, view_port=None):
+    @_deprecate_positional_args(allowed=['parent', 'image_path'])
+    def __init__(  # noqa: PLR0917
+        self, parent, image_path, scale=1, view_port=None
+    ):
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
         from . import _vtk

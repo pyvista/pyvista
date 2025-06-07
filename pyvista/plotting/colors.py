@@ -35,6 +35,7 @@ import numpy as np
 
 import pyvista
 from pyvista import _validation
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 
@@ -1488,7 +1489,8 @@ class Color:
         {'alpha', 'a', 'opacity'},  # 3
     )
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['color', 'opacity'])
+    def __init__(  # noqa: PLR0917
         self,
         color: ColorLike | None = None,
         opacity: float | str | None = None,

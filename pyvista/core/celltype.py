@@ -64,12 +64,12 @@ def _indent_paragraph(string: str, level: int) -> str:
 _BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
 
 
-def _generate_linear_badge(is_linear: bool) -> str:
+def _generate_linear_badge(is_linear: bool) -> str:  # noqa: FBT001
     text = 'Linear' if is_linear else 'Non-linear'
     return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
 
 
-def _generate_primary_badge(is_primary: bool) -> str:
+def _generate_primary_badge(is_primary: bool) -> str:  # noqa: FBT001
     text = 'Primary' if is_primary else 'Composite'
     return f':bdg-{_BADGE_COLORS["primary"]}:`{text}`'
 
