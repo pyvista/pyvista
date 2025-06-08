@@ -293,7 +293,7 @@ def show_trame(
     | None = None,
     default_server_rendering: bool = True,
     handler: Callable[Concatenate[Viewer, str, ...], IFrame] | None = None,
-    animate: bool = True,
+    animate: bool = False,
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget:
     """Run and display the trame application in jupyter's event loop.
@@ -367,7 +367,7 @@ def show_trame(
             )
             iframe
 
-    animate : bool, default: True
+    animate : bool, default: False
         Whether to enable animation on the viewer.
 
     **kwargs : dict, optional
