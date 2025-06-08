@@ -33,11 +33,13 @@ class BaseViewer:
         Whether to suppress rendering on the Plotter.
     animation_delay : float, default=0.01
         Delay in seconds between animation frames.
+    animate : bool, default=False
+        Whether to enable animation on the viewer.
 
     """
 
     def __init__(
-        self, plotter, server=None, suppress_rendering=False, animation_delay=0.01, animate=True
+        self, plotter, server=None, suppress_rendering=False, animation_delay=0.01, animate=False
     ):
         """Initialize Viewer."""
         self._html_views = set()

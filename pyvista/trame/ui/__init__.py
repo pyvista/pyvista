@@ -24,7 +24,7 @@ _VIEWERS: dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 
-def get_viewer(plotter, server=None, suppress_rendering=False, animate=True):
+def get_viewer(plotter, server=None, suppress_rendering=False, animate=False):
     """Get a Viewer instance for a given Plotter.
 
     There should be only one Viewer instance per plotter. A Viewer
@@ -41,7 +41,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False, animate=True):
     suppress_rendering : bool, default: False
         Suppress rendering on the plotter.
 
-    animate : bool, default: True
+    animate : bool, default: False
         Whether to enable animation on the viewer.
 
     Returns
@@ -81,7 +81,7 @@ def plotter_ui(
     default_server_rendering=True,
     collapse_menu=False,
     add_menu=True,
-    animate=True,
+    animate=False,
     **kwargs,
 ):
     """Create a UI view for the given Plotter.
@@ -110,7 +110,7 @@ def plotter_ui(
     add_menu : bool, default: True
         Add a UI controls VCard to the VContainer.
 
-    animate : bool, default: True
+    animate : bool, default: False
         Whether to enable animation on the viewer.
 
     **kwargs : dict, optional

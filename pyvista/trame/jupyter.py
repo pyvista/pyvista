@@ -254,7 +254,7 @@ def initialize(
     mode=None,
     default_server_rendering=True,
     collapse_menu=False,
-    animate=True,
+    animate=False,
     **kwargs,
 ):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
