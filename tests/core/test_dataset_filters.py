@@ -3917,6 +3917,28 @@ def test_color_labels_invalid_input(uniform):
         pv.Sphere().color_labels(scalars='Normals')
 
 
+@pytest.mark.parametrize('color_type', ['float_rgb', 'int_rgba'])
+def test_color_labels_return_dict(labeled_image, color_type):
+    expected_keys = np.unique(labeled_image.active_scalars)
+
+    input_colors = pv.plotting.colors.matplotlib_default_colors
+    input_keys = list(range(len(input_colors)))
+    assert set(expected_keys) < set(input_keys)
+
+    mapping_in = dict(zip(input_keys, input_colors))
+    colored_mesh, mapping_out = labeled_image.color_labels(
+        mapping_in, return_dict=True, color_type=color_type
+    )
+    assert isinstance(colored_mesh, type(labeled_image))
+    assert isinstance(mapping_out, dict)
+    assert set(mapping_out.keys()) < set(mapping_in.keys())
+
+    for key in expected_keys:
+        expected_color = getattr(pv.Color(mapping_in[key]), color_type)
+        actual_color = mapping_out[key]
+        assert actual_color == expected_color
+
+
 @pytest.fixture
 def frog_tissues_image():
     return examples.load_frog_tissues()

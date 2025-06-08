@@ -6776,6 +6776,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
+        return_dict: bool = False,
         inplace: bool = False,
     ):
         """Add RGB(A) scalars to labeled data.
@@ -6886,8 +6887,15 @@ class DataSetFilters(DataObjectFilters):
 
         output_scalars : str, optional
             Name of the color scalars array. By default, the output array
-            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            is the same as ``scalars`` with ``_rgb`` or ``_rgba`` appended
             depending on ``color_type``.
+
+        return_dict : bool, default: False
+            Return a dictionary with a mapping from label values to the
+            colors applied by the filter. The colors have the same type
+            specified by ``color_type``.
+
+            .. versionadded:: 0.46
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -6902,6 +6910,7 @@ class DataSetFilters(DataObjectFilters):
         Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
         to simplify the data.
 
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.load_channels()
@@ -6919,11 +6928,20 @@ class DataSetFilters(DataObjectFilters):
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels with the filter then plot them. Note that the
+        Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
 
-        >>> colored_labels = image_labels.color_labels()
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(return_dict=True)
+
+        Plot the labels. We define a helper function to include a legend with the plot.
+
+        >>> def labels_plotter(mesh, color_dict):
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(mesh)
+        ...     pl.add_legend(color_dict)
+        ...     return pl
+
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Since the labels are unsigned integers, the ``'index'`` coloring mode is used
         by default. Unlike the uniform sampling used by the plotter in the previous
@@ -6942,29 +6960,33 @@ class DataSetFilters(DataObjectFilters):
         Despite the changes to the dataset, the regions have the same coloring
         as before.
 
-        >>> colored_labels = subset_labels.color_labels()
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = subset_labels.color_labels(return_dict=True)
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Use the ``'cycle'`` coloring mode instead to map label values to colors
         sequentially.
 
-        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycle')
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = subset_labels.color_labels(
+        ...     coloring_mode='cycle', return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Map the colors explicitly using a dictionary.
 
-        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
-        >>> colored_labels = image_labels.color_labels(colors)
-        >>> colored_labels.plot()
+        >>> color_dict = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'gold'}
+        >>> colored_labels = image_labels.color_labels(color_dict)
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Omit the background value from the mapping and specify float colors. When
         floats are specified, values without a mapping are assigned ``nan`` values
         and are not plotted by default.
 
-        >>> colors.pop(0)
+        >>> color_dict.pop(0)
         'black'
-        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
-        >>> colored_labels.plot()
+        >>> colored_labels = image_labels.color_labels(
+        ...     color_dict, color_type='float_rgba'
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Modify the scalars and make two of the labels negative.
 
@@ -6979,14 +7001,18 @@ class DataSetFilters(DataObjectFilters):
         color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
         colored with the third-last and fourth-last color in the colormap, respectively.
 
-        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(
+        ...     negative_indexing=True, return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         If ``negative_indexing`` is disabled, the coloring defaults to the
         ``'cycle'`` coloring mode instead.
 
-        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(
+        ...     negative_indexing=False, return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
 
@@ -7161,13 +7187,20 @@ class DataSetFilters(DataObjectFilters):
         colors_out = np.full(
             (len(array), num_components), default_channel_value, dtype=color_dtype
         )
+        mapping = {}
         for label, color in items:
-            colors_out[array == label, :] = color
+            mask = array == label
+            if np.any(mask):
+                colors_out[mask, :] = color
+                if return_dict:
+                    mapping[label] = color
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
         data[colors_name] = colors_out
         output_mesh.set_active_scalars(colors_name)
 
+        if return_dict:
+            return output_mesh, mapping
         return output_mesh
 
     def voxelize_binary_mask(  # type: ignore[misc]
