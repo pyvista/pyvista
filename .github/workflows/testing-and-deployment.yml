@@ -258,7 +258,7 @@ jobs:
 
       - name: Install VTK dev wheel
         run: |
-          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+          pip install vtk==9.4.20250331.dev0 --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
