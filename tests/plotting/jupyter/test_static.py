@@ -39,7 +39,7 @@ def test_validate_jupyter_backend_raises(mocker: MockerFixture):
 @pytest.mark.parametrize('backend', [None, 'none'])
 def test_set_jupyter_backend_none(backend):
     pv.set_jupyter_backend(backend)
-    assert pv.global_theme.jupyter_backend is None
+    assert pv.global_theme.jupyter_backend == 'none'
 
 
 @skip_no_ipython

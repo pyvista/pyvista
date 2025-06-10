@@ -587,6 +587,23 @@ def test_merge_main_has_priority(input_, main_has_priority):
     assert merged.active_scalars_name == 'present_in_both'
 
 
+@pytest.mark.parametrize('main_has_priority', [True, False])
+@pytest.mark.parametrize('mesh', [pv.UnstructuredGrid(), pv.PolyData()])
+def test_merge_field_data(mesh, main_has_priority):
+    key = 'data'
+    data_main = [1, 2, 3]
+    data_other = [4, 5, 6]
+    mesh.field_data[key] = data_main
+    other = mesh.copy()
+    other.field_data[key] = data_other
+
+    merged = mesh.merge(other, main_has_priority=main_has_priority)
+
+    actual = merged.field_data[key]
+    expected = data_main if main_has_priority else data_other
+    assert np.array_equal(actual, expected)
+
+
 def test_add(sphere, sphere_shifted):
     merged = sphere + sphere_shifted
     assert isinstance(merged, pv.PolyData)
@@ -1239,7 +1256,7 @@ def default_n_faces():
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
-def test_n_faces(default_n_faces):
+def test_n_faces():
     if pv._version.version_info[:2] > (0, 46):
         msg = 'Convert non-strict n_faces use to error'
         raise RuntimeError(msg)
@@ -1269,7 +1286,7 @@ def test_n_faces(default_n_faces):
     assert nf1 == nf
 
 
-def test_opt_in_n_faces_strict(default_n_faces):
+def test_opt_in_n_faces_strict():
     pv.PolyData.use_strict_n_faces(True)
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],

@@ -620,7 +620,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_helper(picker, *args):
+        def _end_pick_helper(picker, *_):
             renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
             x0 = int(renderer.GetPickX1())
             x1 = int(renderer.GetPickX2())
@@ -1015,7 +1015,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):
+        def end_pick_call_back(*args):  # noqa: ARG001
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
@@ -1607,7 +1607,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01
+        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
             selector = _vtk.vtkOpenGLHardwareSelector()
@@ -1671,7 +1671,7 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        def _the_callback(*args):
+        def _the_callback(*_):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)  # type: ignore[attr-defined]
             if callable(callback):

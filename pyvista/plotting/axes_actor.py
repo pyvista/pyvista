@@ -20,7 +20,7 @@ class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
-    options, refer to `:vtk:`vtkAxesActor`.
+    options, refer to :vtk:`vtkAxesActor`.
 
     See Also
     --------

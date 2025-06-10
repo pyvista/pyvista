@@ -247,9 +247,10 @@ LEGEND_FACES = {
 }
 
 
+@pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('face', LEGEND_FACES.values(), ids=LEGEND_FACES.keys())
-def test_legend_face(face, verify_image_cache):
+def test_legend_face(face):
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(center=(0.5, -0.5, 1)), color='r', label='Sphere')
     pl.add_mesh(pv.Cube(), color='w', label='Cube')
@@ -258,7 +259,8 @@ def test_legend_face(face, verify_image_cache):
     pl.show()
 
 
-def test_legend_from_glyph(sphere, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_from_glyph(sphere):
     pl = pv.Plotter()
     x = sphere.face_normals[:, 0] ** 2
     y = sphere.face_normals[:, 1] ** 2
@@ -273,8 +275,9 @@ def test_legend_from_glyph(sphere, verify_image_cache):
     pl.add_legend(size=(0.5, 0.5))
 
 
+@pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
+def test_legend_from_multiple_glyph(random_hills):
     pl = pv.Plotter()
 
     random_hills['Normals2'] = -1 * random_hills['Normals'].copy()
@@ -291,7 +294,8 @@ def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
     pl.show()
 
 
-def test_legend_using_add_legend(random_hills, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_using_add_legend(random_hills):
     pl = pv.Plotter()
 
     arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
@@ -306,8 +310,9 @@ def test_legend_using_add_legend(random_hills, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
+def test_legend_using_add_legend_with_glyph(random_hills):
     pl = pv.Plotter()
 
     arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
@@ -326,8 +331,9 @@ def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
+def test_legend_using_add_legend_only_labels(random_hills):
     pl = pv.Plotter()
 
     arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
@@ -341,9 +347,10 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
-def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
+def test_legend_using_add_legend_dict(use_dict_labels):
     sphere_label = 'sphere'
     sphere_color = 'r'
     sphere_kwargs = dict(color=sphere_color)
@@ -369,7 +376,8 @@ def test_legend_using_add_legend_dict(use_dict_labels, verify_image_cache):
     pl.show()
 
 
-def test_legend_add_entry_warning(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_legend_add_entry_warning():
     pl = pv.Plotter()
     legend_entries = [{'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'non_used_arg': 'asdf'}]
 
@@ -599,7 +607,7 @@ def test_show_bounds_grid_raises(grid):
         pl.renderer.show_bounds(grid=grid)
 
 
-def test_show_bounds_grid_value_raises(grid):
+def test_show_bounds_grid_value_raises():
     pl = pv.Plotter()
     with pytest.raises(
         ValueError, match=re.escape('`grid` must be either "front", "back, or, "all", not foo')

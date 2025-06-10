@@ -34,7 +34,7 @@ jobs:
             Examples-Data-
 
       - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@v4.1
+        uses: pyvista/setup-headless-display-action@v4.2
 
       - name: Test Package Docstrings
         run: tox run -f doctest --colored=yes

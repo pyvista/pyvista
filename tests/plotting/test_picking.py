@@ -25,7 +25,7 @@ def test_single_cell_picking():
         def __init__(self):
             self.called = False
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args, **kwargs):  # noqa: ARG002
             self.called = True
 
     plotter = pv.Plotter(
@@ -357,7 +357,7 @@ def test_path_picking():
     pl.add_mesh(sphere)
     pl.enable_path_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
     )
     # simulate the pick
     renderer = pl.renderer
@@ -379,7 +379,7 @@ def test_geodesic_picking():
     pl.add_mesh(sphere)
     pl.enable_geodesic_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
         show_path=True,
         keep_order=True,
     )
@@ -406,7 +406,7 @@ def test_horizon_picking():
     pl.add_mesh(sphere)
     pl.enable_horizon_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
         show_horizon=True,
     )
     # simulate the pick
@@ -424,7 +424,8 @@ def test_horizon_picking():
     pl.close()
 
 
-def test_fly_to_right_click(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_right_click(sphere):
     point = []
 
     def callback(click_point):
@@ -444,7 +445,8 @@ def test_fly_to_right_click(verify_image_cache, sphere):
     pl.close()
 
 
-def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_right_click_multi_render(sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     point = []
 
@@ -464,7 +466,8 @@ def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
     pl.close()
 
 
-def test_fly_to_mouse_position(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_mouse_position(sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -485,7 +488,7 @@ def test_block_picking(multiblock_poly):
 
     picked_blocks = []
 
-    def turn_blue(index, dataset):
+    def turn_blue(index, dataset):  # noqa: ARG001
         mapper.block_attr[index].color = 'blue'
         picked_blocks.append(index)
 
