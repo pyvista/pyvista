@@ -47,7 +47,9 @@ def skip_check_gc(check_gc):
 @pytest.fixture
 def _gc_collect():
     gc.collect()
-    return {id(o) for o in gc.get_objects() if _is_vtk(o)}
+    yield (before := {id(o) for o in gc.get_objects() if _is_vtk(o)})
+
+    [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
 
 
 @pytest.fixture(autouse=True)
