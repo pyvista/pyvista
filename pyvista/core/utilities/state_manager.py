@@ -90,7 +90,10 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
                         args = get_args(literal)
                         if len(args) >= 1:
                             return args
-        msg = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+        msg = (
+            'Type argument for subclasses must be a single non-empty Literal with all state '
+            'options provided.'
+        )
         raise TypeError(msg)
 
     def __init__(self) -> None:
@@ -236,7 +239,7 @@ vtk_verbosity = _VTKVerbosity()
 _VtkSnakeCaseOptions = Literal['allow', 'warning', 'error']
 
 
-class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):
+class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
     """Context manager to control access to VTK's pythonic snake_case API.
 
     VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead

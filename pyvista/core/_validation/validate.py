@@ -570,10 +570,16 @@ def validate_rotation(
     if must_have_handedness is not None:
         det = np.linalg.det(rotation_matrix)
         if must_have_handedness == 'right' and not det > 0:
-            msg = f'{name} has incorrect handedness. Expected a right-handed rotation, but got a left-handed rotation instead.'
+            msg = (
+                f'{name} has incorrect handedness. Expected a right-handed rotation, but got a '
+                f'left-handed rotation instead.'
+            )
             raise ValueError(msg)
         elif must_have_handedness == 'left' and not det < 0:
-            msg = f'{name} has incorrect handedness. Expected a left-handed rotation, but got a right-handed rotation instead.'
+            msg = (
+                f'{name} has incorrect handedness. Expected a left-handed rotation, but got a '
+                f'right-handed rotation instead.'
+            )
             raise ValueError(msg)
 
     return rotation_matrix
@@ -848,7 +854,7 @@ def validate_data_range(rng: VectorLike[float], /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(
+def validate_arrayNx3(  # noqa: N802
     arr: VectorLike[float] | MatrixLike[float], /, *, reshape: bool = True, **kwargs
 ):
     """Validate an array is numeric and has shape Nx3.
@@ -921,7 +927,7 @@ def validate_arrayNx3(
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):
+def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):  # noqa: N802
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -994,7 +1000,7 @@ def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, 
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_unsigned(
+def validate_arrayN_unsigned(  # noqa: N802
     arr: VectorLike[float], /, *, reshape: bool = True, **kwargs
 ) -> NumpyArray[int]:
     """Validate a numeric 1D array of non-negative (unsigned) integers.

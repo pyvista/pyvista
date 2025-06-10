@@ -100,7 +100,7 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
     """
 
-    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202
+    def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202, ARG001, N807
         if cls is cls_:
             msg = f'{cls.__name__} is an abstract class and may not be instantiated.'
             raise TypeError(msg)
@@ -244,7 +244,7 @@ def threaded(fn):  # noqa: ANN001, ANN201
     return wrapper
 
 
-class conditional_decorator:
+class conditional_decorator:  # noqa: N801
     """Conditional decorator for methods.
 
     Parameters
@@ -273,7 +273,10 @@ class conditional_decorator:
 def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
-        msg = f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        msg = (
+            f'The value {float(value)} for `{parm_name}` is outside the '
+            f'acceptable range {tuple(rng)}.'
+        )
         raise ValueError(msg)
 
 
@@ -282,7 +285,7 @@ def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     if not hasattr(cls, '_new_attr_exceptions'):
         cls._new_attr_exceptions = []
 
-    def __setattr__(self, name, value):  # noqa: ANN001, ANN202
+    def __setattr__(self, name, value):  # noqa: ANN001, ANN202, N807
         """Do not allow setting attributes."""
         if (
             hasattr(self, name)
@@ -328,7 +331,7 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
     return x
 
 
-class _classproperty(property):
+class _classproperty(property):  # noqa: N801
     """Read-only class property decorator.
 
     Use this decaorator as an alternative to chaining `@classmethod`

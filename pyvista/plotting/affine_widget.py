@@ -209,7 +209,7 @@ class AffineWidget3D:
         self._arrows = []  # type: ignore[var-annotated]
         self._circles = []  # type: ignore[var-annotated]
         self._pressing_down = False
-        origin = origin if origin else actor.center
+        origin = origin or actor.center
         self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (
@@ -231,8 +231,8 @@ class AffineWidget3D:
             try:
                 _validate_axes(axes)
             except ValueError:
-                for actor in self._arrows + self._circles:
-                    self._pl.remove_actor(actor)
+                for actor_ in self._arrows + self._circles:
+                    self._pl.remove_actor(actor_)
                 raise
             self.axes = axes
 
@@ -249,7 +249,9 @@ class AffineWidget3D:
                 tip_radius=0.05,
                 shaft_radius=self._line_radius,
             )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
+            self._arrows.append(
+                self._pl.add_mesh(arrow, color=color, lighting=False, render=False)
+            )
             axis_circ = self._circ.copy()
             if ii == 0:
                 axis_circ = axis_circ.rotate_y(-90)

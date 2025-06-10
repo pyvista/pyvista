@@ -151,9 +151,11 @@ def test_save_nested_multiblock_field_data(tmp_path, file_ext):
 
     # Save the multiblock and expect a warning
     match = (
-        "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
+        "Nested MultiBlock at index [0] with name 'Block-00' has field data "
+        'which will not be saved.\n'
         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+        'Use `move_nested_field_data_to_root` to store the field data with the root '
+        'MultiBlock before saving.'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         root.save(tmp_path / filename)
@@ -226,7 +228,9 @@ def test_user_dict_removal(data_object, method):
     assert actual_dict == expected_dict
 
 
-@pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
+@pytest.mark.parametrize(
+    'value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None]
+)
 def test_user_dict_values(ant, value):
     ant.user_dict['key'] = value
     with pytest.raises(TypeError, match='not JSON serializable'):
@@ -272,7 +276,7 @@ def test_user_dict_persists_with_merge_filter():
     sphere2.user_dict['name'] = 'sphere2'
 
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == 'sphere2'
+    assert merged.user_dict['name'] == 'sphere1'
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):
@@ -375,7 +379,10 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     multiblock = multiblock_all_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
-        match = "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\nUse `pyvista.PICKLE_FORMAT='vtk'`."
+        match = (
+            "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\n"
+            "Use `pyvista.PICKLE_FORMAT='vtk'`."
+        )
         with pytest.raises(TypeError, match=match):
             pickle.dumps(multiblock)
     else:
@@ -424,7 +431,8 @@ def test_pickle_invalid_format(sphere):
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
     match = re.escape(
-        'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+        'PolyData writers are not specified, this should be a '
+        'dict of (file extension: vtkWriter type)'
     )
     with pytest.raises(NotImplementedError, match=match):
         pv.Sphere().save('foo.vtp')

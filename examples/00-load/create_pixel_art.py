@@ -42,9 +42,8 @@ alien = []
 for line in alien_str.splitlines()[1:]:  # skip first linebreak
     if not line:
         continue
-    if len(line) < 20:
-        line += (20 - len(line)) * ' '
-    alien.append([line[i : i + 2] == '% ' for i in range(0, len(line), 2)])
+    long_line = line + (20 - len(line)) * ' ' if len(line) < 20 else line
+    alien.append([long_line[i : i + 2] == '% ' for i in range(0, len(long_line), 2)])
 
 
 # %%

@@ -104,7 +104,8 @@ def test_add_1d():
 @pytest.mark.parametrize('val', [1, True, None])
 def test_raises(val):
     match = re.escape(
-        f'pyvista_ndarray got an invalid type {type(val)}. Expected an Iterable or vtk.vtkAbstractArray'
+        f'pyvista_ndarray got an invalid type {type(val)}. '
+        f'Expected an Iterable or vtk.vtkAbstractArray'
     )
     with pytest.raises(TypeError, match=match):
         pyvista_ndarray(val)

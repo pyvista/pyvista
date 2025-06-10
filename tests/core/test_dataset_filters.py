@@ -44,7 +44,10 @@ def n_numbers(draw, n):
     numbers = []
     for _ in range(n):
         number = draw(
-            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
+            one_of(
+                floats(),
+                integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min),
+            )
         )
         numbers.append(number)
     return numbers
@@ -63,9 +66,8 @@ def aprox_le(a, b, rtol=1e-5, atol=1e-8):
 
 
 class GetOutput:
-    """Helper class to patch ``pv.core.filters._get_output`` which captures the raw VTK algorithm objects at the time
-    ``_get_output`` is invoked.
-    """
+    # Helper class to patch ``pv.core.filters._get_output`` which captures the raw
+    # VTK algorithm objects at the time ``_get_output`` is invoked.
 
     def __init__(self):
         self._mock = Mock()
@@ -119,7 +121,9 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
         pv.Sphere().warp_by_vector()
 
 
-@given(strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point']))
+@given(
+    strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point'])
+)
 def test_interpolate_raises(strategy):
     with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
         pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
@@ -152,7 +156,9 @@ def test_clip_scalar_filter(datasets, both, invert):
             expect_les = (invert, not invert)
         else:
             clps = (
-                dataset.clip_scalar(scalars='to_clip', value=clip_value, both=False, invert=invert),
+                dataset.clip_scalar(
+                    scalars='to_clip', value=clip_value, both=False, invert=invert
+                ),
             )
             assert len(clps) == 1
             expect_les = (invert,)
@@ -509,7 +515,7 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
-def test_delaunay_2d_unstructured(datasets):
+def test_delaunay_2d_unstructured():
     mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_points
@@ -617,7 +623,9 @@ def test_glyph(datasets, sphere):
     assert sphere.glyph(scale=False, progress_bar=True)
     assert sphere.glyph(scale='arr', progress_bar=True)
     assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, progress_bar=True)
-    assert sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True)
+    assert sphere.glyph(
+        scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True
+    )
     assert sphere.glyph(
         scale='arr',
         orient='Normals',
@@ -810,7 +818,8 @@ def test_glyph_settings(sphere):
         alg = InterrogateVTKGlyph3D(go.latest_algorithm)
         assert alg.input_active_scalars_info.name == 'arr_both'
         assert alg.input_active_vectors_info.name == 'vectors_both'
-        # Test the length of the field and not the FieldAssociation, because the vtkGlyph3D filter takes POINT data
+        # Test the length of the field and not the FieldAssociation
+        # because the vtkGlyph3D filter takes POINT data
         assert len(alg.input_data_object.active_scalars) == sphere.n_cells
         assert len(alg.input_data_object.active_scalars) == sphere.n_cells
 
@@ -1466,7 +1475,9 @@ def test_streamlines_from_source(uniform_vec):
 
 
 def test_streamlines_from_source_structured_grids():
-    x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
     mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pv.StructuredGrid(x2, y2, z2)
@@ -1478,7 +1489,7 @@ def test_streamlines_from_source_structured_grids():
     assert all([stream.n_points, stream.n_cells])
 
 
-def mesh_2D_velocity():
+def mesh_2d_velocity():
     mesh = pv.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
     velocity[:, 0] = 1
@@ -1487,45 +1498,45 @@ def mesh_2D_velocity():
     return mesh
 
 
-def test_streamlines_evenly_spaced_2D():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_sep_dist_ratio():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_sep_dist_ratio():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(separating_distance_ratio=0.1, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_start_position():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_start_position():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(start_position=(-0.1, 0.1, 0.0), progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_vectors():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_vectors():
+    mesh = mesh_2d_velocity()
     mesh.set_active_vectors(None)
     streams = mesh.streamlines_evenly_spaced_2D(vectors='velocity', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_integrator_type():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_integrator_type():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(integrator_type=4, progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_interpolator_type():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_interpolator_type():
+    mesh = mesh_2d_velocity()
     streams = mesh.streamlines_evenly_spaced_2D(interpolator_type='cell', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
-def test_streamlines_evenly_spaced_2D_errors():
-    mesh = mesh_2D_velocity()
+def test_streamlines_evenly_spaced_2d_errors():
+    mesh = mesh_2d_velocity()
 
     with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(integrator_type=45)
@@ -1541,7 +1552,7 @@ def test_streamlines_evenly_spaced_2D_errors():
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
-    mesh = mesh_2D_velocity()
+    mesh = mesh_2d_velocity()
     mesh.translate((0, 0, 1), inplace=True)  # move to z=1, xy plane
     streams = mesh.streamlines_evenly_spaced_2D(progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
@@ -1849,7 +1860,7 @@ def grid4x4():
 
 
 @pytest.fixture
-def extracted_with_adjacent_False(grid4x4):
+def extracted_with_adjacent_false(grid4x4):
     """Return expected output for adjacent_cells=False and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0]
@@ -1864,7 +1875,7 @@ def extracted_with_adjacent_False(grid4x4):
 
 
 @pytest.fixture
-def extracted_with_adjacent_True(grid4x4):
+def extracted_with_adjacent_true(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0, 1, 3, 4]
@@ -1879,7 +1890,7 @@ def extracted_with_adjacent_True(grid4x4):
 
 
 @pytest.fixture
-def extracted_with_include_cells_False(grid4x4):
+def extracted_with_include_cells_false(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=False"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0, 0, 0, 0]
@@ -1897,8 +1908,8 @@ def extracted_with_include_cells_False(grid4x4):
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+def test_extract_points_adjacent_cells_true(dataset_filter, extracted_with_adjacent_true):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
 
     # extract sub-surface with adjacent cells
     sub_surf_adj = dataset_filter(
@@ -1918,8 +1929,8 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
+def test_extract_points_adjacent_cells_false(dataset_filter, extracted_with_adjacent_false):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_false
     # extract sub-surface without adjacent cells
     sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
 
@@ -1933,12 +1944,11 @@ def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adja
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
 )
-def test_extract_points_include_cells_False(
+def test_extract_points_include_cells_false(
     dataset_filter,
-    grid4x4,
-    extracted_with_include_cells_False,
+    extracted_with_include_cells_false,
 ):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_false
     # extract sub-surface without cells
     sub_surf_nocells = dataset_filter(
         input_surf,
@@ -1952,8 +1962,8 @@ def test_extract_points_include_cells_False(
     assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
 
 
-def test_extract_points_default(extracted_with_adjacent_True):
-    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+def test_extract_points_default(extracted_with_adjacent_true):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_true
     # test adjacent_cells=True and include_cells=True by default
     sub_surf_adj = input_surf.extract_points(input_point_ids)
 
@@ -1966,12 +1976,12 @@ def test_extract_points_default(extracted_with_adjacent_True):
 def test_extract_values_preference(
     preference,
     adjacent_fixture,
-    extracted_with_adjacent_True,
-    extracted_with_adjacent_False,
+    extracted_with_adjacent_true,
+    extracted_with_adjacent_false,
 ):
     # test points are extracted with point data (with adjacent = False by default)
     # test cells are extracted with cell data
-    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    fixture = extracted_with_adjacent_true if adjacent_fixture else extracted_with_adjacent_false
     input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
 
     func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
@@ -2200,7 +2210,10 @@ def test_extract_values_split_ranges_values(labeled_data):
 # Include swapped [name, value] or [value, name] inputs
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
-values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
+values_dict_ranges_dict = (
+    dict(values=dict(val=0), ranges={(0, 0): 'rng'}),
+    ['val', 'rng'],
+)
 values_component_dict = (
     dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
     [
@@ -2451,7 +2464,10 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(TypeError, match=match):
         grid4x4.extract_values({0: 1})
 
-    match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    match = (
+        "Invalid component index '1' specified for scalars with 1 component(s). "
+        'Value must be one of: (0,).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(component_mode=1)
 
@@ -2471,7 +2487,10 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(ValueError, match=match):
         grid4x4.extract_values(values=[[[0]]], component_mode='multi')
 
-    match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    match = (
+        "Invalid component index '2' specified for scalars with 1 component(s). "
+        'Value must be one of: (0,).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(component_mode=2)
 
@@ -2800,7 +2819,9 @@ def test_median_smooth_constant_data():
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_smoothed = volume.median_smooth()
-    assert np.array_equal(volume.point_data['point_data'], volume_smoothed.point_data['point_data'])
+    assert np.array_equal(
+        volume.point_data['point_data'], volume_smoothed.point_data['point_data']
+    )
 
 
 def test_median_smooth_outlier():
@@ -3014,10 +3035,7 @@ def structured_grids_split_disconnected():
     return voi_1, voi_2
 
 
-def test_concatenate_structured(
-    structured_grids_split_coincident,
-    structured_grids_split_disconnected,
-):
+def test_concatenate_structured(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     joined = voi_1.concatenate(voi_2, axis=1)
     assert structured.points == pytest.approx(joined.points)
@@ -3498,7 +3516,9 @@ def test_align_xyz_two_axis_directions(planar_mesh):
     axis_0_direction = [-1, 0, 0]
     axis_1_direction = [0, -1, 0]
     _, matrix = planar_mesh.align_xyz(
-        axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
+        axis_0_direction=axis_0_direction,
+        axis_1_direction=axis_1_direction,
+        return_matrix=True,
     )
     axes = matrix[:3, :3]
     assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
@@ -3506,7 +3526,9 @@ def test_align_xyz_two_axis_directions(planar_mesh):
     axis_1_direction = [0, -1, 0]
     axis_2_direction = [0, 0, -1]
     _, matrix = planar_mesh.align_xyz(
-        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+        axis_1_direction=axis_1_direction,
+        axis_2_direction=axis_2_direction,
+        return_matrix=True,
     )
     axes = matrix[:3, :3]
     assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
@@ -3523,7 +3545,10 @@ def test_align_xyz_three_axis_directions(planar_mesh):
     axes = matrix[:3, :3]
     assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
 
-    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    match = (
+        'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a '
+        'left-handed transformation.'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = planar_mesh.align_xyz(
             axis_0_direction='x',
@@ -3588,7 +3613,12 @@ def test_subdivide_tetra(tetbeam):
 def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
-    hex_cells = combined.extract_cells_by_type([pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID])
+    hex_cells = combined.extract_cells_by_type(
+        [
+            pv.CellType.HEXAHEDRON,
+            pv.CellType.BEZIER_PYRAMID,
+        ]
+    )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
@@ -3715,7 +3745,8 @@ def test_color_labels(uniform, coloring_mode):
     if coloring_mode == 'index':
         # Test invalid input
         match = (
-            "Index coloring mode cannot be used with scalars 'Spatial Point Data'. Scalars must be positive integers \n"
+            "Index coloring mode cannot be used with scalars 'Spatial Point Data'. "
+            'Scalars must be positive integers \n'
             'and the max value (729.0) must be less than the number of colors (256).'
         )
         with pytest.raises(ValueError, match=re.escape(match)):
@@ -3744,7 +3775,14 @@ def test_color_labels(uniform, coloring_mode):
 
 
 VIRIDIS_RGB = [pv.Color(c).int_rgb for c in pv.get_cmap_safe('viridis').colors]
-COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
+COLORS_DICT = {
+    0: 'red',
+    1: (0, 0, 0),
+    2: 'blue',
+    3: (1.0, 1.0, 1.0),
+    4: 'orange',
+    5: 'green',
+}
 COLORS_DICT_RGB = [pv.Color(c).int_rgb for c in COLORS_DICT.values()]
 RED_RGB = pv.Color('red').int_rgb
 
@@ -3791,7 +3829,7 @@ def test_color_labels_color_type_partial_dict(labeled_image, color_type):
 
 
 @pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba'])
-def test_color_labels_color_type_cmap(labeled_image, color_type):
+def test_color_labels_color_type_cmap(color_type):
     labels = pv.ImageData(dimensions=(256, 1, 1))
     labels['256'] = range(256)
     colored = labels.color_labels('viridis', color_type=color_type)
@@ -3807,9 +3845,10 @@ LABEL_DATA = [-1, -2, 1]
 
 
 @pytest.mark.parametrize(
-    ('negative_indexing', 'cmap_index'), [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))]
+    ('negative_indexing', 'cmap_index'),
+    [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))],
 )
-def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+def test_color_labels_negative_index(negative_indexing, cmap_index):
     labels = pv.ImageData(dimensions=(3, 1, 1))
     labels['data'] = LABEL_DATA
     colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
@@ -3873,9 +3912,34 @@ def test_color_labels_invalid_input(uniform):
     with pytest.raises(ValueError, match=match):
         uniform.color_labels(coloring_mode='cycle', negative_indexing=True)
 
-    match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
+    match = (
+        'Multi-component scalars are not supported for coloring. '
+        'Scalar array Normals must be one-dimensional.'
+    )
     with pytest.raises(ValueError, match=match):
         pv.Sphere().color_labels(scalars='Normals')
+
+
+@pytest.mark.parametrize('color_type', ['float_rgb', 'int_rgba'])
+def test_color_labels_return_dict(labeled_image, color_type):
+    expected_keys = np.unique(labeled_image.active_scalars)
+
+    input_colors = pv.plotting.colors.matplotlib_default_colors
+    input_keys = list(range(len(input_colors)))
+    assert set(expected_keys) < set(input_keys)
+
+    mapping_in = dict(zip(input_keys, input_colors))
+    colored_mesh, mapping_out = labeled_image.color_labels(
+        mapping_in, return_dict=True, color_type=color_type
+    )
+    assert isinstance(colored_mesh, type(labeled_image))
+    assert isinstance(mapping_out, dict)
+    assert set(mapping_out.keys()) < set(mapping_in.keys())
+
+    for key in expected_keys:
+        expected_color = getattr(pv.Color(mapping_in[key]), color_type)
+        actual_color = mapping_out[key]
+        assert actual_color == expected_color
 
 
 @pytest.fixture
@@ -3902,7 +3966,7 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
+def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
@@ -3962,7 +4026,12 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
 
 @pytest.mark.parametrize(
     'rounding_func',
-    [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
+    [
+        np.round,
+        np.ceil,
+        np.floor,
+        lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])],
+    ],
 )
 def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
@@ -4063,6 +4132,9 @@ def test_voxelize_binary_mask_raises(sphere):
         'cell_length_sample_size',
     ]:
         kwargs = {parameter: 0}  # Give parameter any value for test
-        match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+        match = (
+            'Cannot specify a reference volume with other geometry parameters. '
+            '`reference_volume` must define the geometry exclusively.'
+        )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)

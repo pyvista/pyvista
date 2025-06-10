@@ -523,7 +523,10 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
 
     # Do test
     output = multi.transform(
-        transform, inplace=inplace, transform_all_input_vectors=False, progress_bar=False
+        transform,
+        inplace=inplace,
+        transform_all_input_vectors=False,
+        progress_bar=False,
     )
     bounds_after = np.array(output.bounds)
     n_blocks_after = output.n_blocks
@@ -557,9 +560,9 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
     for i, block in enumerate(multi_copy):
         assert pv.is_pyvista_dataset(block) or block is None
         if isinstance(multi[i], MultiBlock):
-            assert (multi[i] is multi_copy[i]) != recursive
+            assert (multi[i] is block) != recursive
         else:
-            assert multi_copy[i] is multi[i]
+            assert block is multi[i]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -1004,7 +1007,10 @@ def test_multiblock_partitioned_zip(container):
 
 
 def test_transform_filter_inplace_default_warns(multiblock_poly):
-    expected_msg = 'The default value of `inplace` for the filter `MultiBlock.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `MultiBlock.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = multiblock_poly.transform(np.eye(4))
 
@@ -1068,7 +1074,9 @@ def test_recursive_iterator_contents(
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('names', node_type=node_type)
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks', node_type=node_type)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(
+        'blocks', node_type=node_type
+    )
     assert all(isinstance(item, expected_types) for item in iterator)
 
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('items', node_type=node_type)
@@ -1236,10 +1244,13 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
 
     # Test block name key overrides root user dict key
     root = _make_nested_multiblock(
-        root_user_dict={NAME1: VALUE1}, nested1_user_dict={NAME2: VALUE2}, nested1_block_name=NAME1
+        root_user_dict={NAME1: VALUE1},
+        nested1_user_dict={NAME2: VALUE2},
+        nested1_block_name=NAME1,
     )
     match = (
-        "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'name1'.\n"
+        'The root user dict cannot be updated with data from nested MultiBlock '
+        "at index [0] with name 'name1'.\n"
         "The key 'name1' already exists in the root user dict and would be overwritten."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1251,7 +1262,8 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
         root_user_dict={NAME1: VALUE1}, nested1_user_dict={NAME1: VALUE1}
     )
     match = (
-        "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'Block-00'.\n"
+        'The root user dict cannot be updated with data from nested MultiBlock '
+        "at index [0] with name 'Block-00'.\n"
         "The key 'name1' already exists in the root user dict and would be overwritten."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1324,7 +1336,8 @@ def test_flatten(multiblock_all_with_nested_and_none):
 
     match = (
         "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
-        "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
+        "with the same name already exists. Use `name_mode='reset'` "
+        'or `check_duplicate_keys=False`.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = root_multi.flatten()
@@ -1408,14 +1421,20 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
-    match = "The filter 'resample'\ncould not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
+    match = (
+        "The filter 'resample'\ncould not be applied to the block at index 1 with name "
+        "'Block-01' and type RectilinearGrid."
+    )
     with pytest.raises(RuntimeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             'resample',
         )
     # Test with nested index
     multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
-    match = "The filter 'resample'\ncould not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
+    match = (
+        "The filter 'resample'\ncould not be applied to the nested block at index [0][1] "
+        "with name 'Block-01' and type RectilinearGrid."
+    )
     with pytest.raises(RuntimeError, match=re.escape(match)):
         multi.generic_filter(
             'resample',
