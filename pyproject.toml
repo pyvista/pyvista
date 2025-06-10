@@ -85,6 +85,7 @@ test = [
   'pandas<=2.3.0',
   'pyanalyze<=0.13.1',
   'pytest-cov<6.2.0',
+  'pytest-durations<1.5.3',
   'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
