@@ -70,12 +70,9 @@ jobs:
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
-      - name: Test Core API
-        run: pytest -v --ignore=tests/plotting
-
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: pytest -v --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -168,9 +165,6 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
-      - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
-
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
         with:
@@ -183,7 +177,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -336,12 +330,9 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting
-
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: python -m pytest -v --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
