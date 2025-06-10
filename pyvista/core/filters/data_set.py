@@ -1117,7 +1117,8 @@ class DataSetFilters(DataObjectFilters):
         ----------
         radius : float, default: 0.1
             This value is expressed as a percentage of the length of the longest side of
-            the sampling volume. Smaller numbers greatly reduce execution time.
+            the sampling volume. This determines the "width" of the splatter in
+            terms of the distribution. Smaller numbers greatly reduce execution time.
 
         dimensions : VectorLike[int], default: (50, 50, 50)
             Sampling dimensions of the structured point set. Higher values produce better
