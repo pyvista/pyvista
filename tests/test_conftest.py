@@ -63,7 +63,7 @@ def results_parser(monkeypatch: pytest.MonkeyPatch):
     Results can be passed to the `RunResultsReport` class to better interact
     with them.
     """
-    monkeypatch.setenv('PYTEST_ADDOPTS', '-v', prepend=' ')
+    monkeypatch.setenv('PYTEST_ADDOPTS', '-v')
     regex = re.compile(
         r'.*(?P<name>test_[\w\[\]]*) (?P<status>\w*) .*\[.*%\]$',
     )
@@ -74,15 +74,12 @@ def results_parser(monkeypatch: pytest.MonkeyPatch):
 def _load_current_config(
     pytestconfig: pytest.Config,
     pytester: pytest.Pytester,
-    monkeypatch: pytest.MonkeyPatch,
 ):
     with (pytestconfig.rootpath / 'pyproject.toml').open('r') as file:
         toml = pytester.makepyprojecttoml(file.read())
 
     with (pytestconfig.rootpath / 'tests/conftest.py').open('r') as file:
         conftest = pytester.makeconftest(file.read())
-
-    monkeypatch.setenv('PYTEST_ADDOPTS', '-p no:pytest-retry', prepend=' ')
 
     yield
     toml.unlink()

@@ -55,7 +55,7 @@ def test_skip_plotting_mark(
     mock.return_value = support_plotting
 
     p = pytester.makepyfile(tests)
-    results = pytester.runpytest(p, '-p no:pytest-retry')
+    results = pytester.runpytest(p)
 
     results.assert_outcomes(
         skipped=0 if support_plotting else 1,
