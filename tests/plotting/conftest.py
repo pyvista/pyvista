@@ -44,11 +44,16 @@ def skip_check_gc(check_gc):
     check_gc.skip = True
 
 
-@pytest.fixture(autouse=True)
-def check_gc():
-    """Ensure that all VTK objects are garbage-collected by Python."""
+@pytest.fixture
+def _gc_collect():
     gc.collect()
-    before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
+    return {id(o) for o in gc.get_objects() if _is_vtk(o)}
+
+
+@pytest.fixture(autouse=True)
+def check_gc(_gc_collect: set[int]):
+    """Ensure that all VTK objects are garbage-collected by Python."""
+    before = _gc_collect
 
     class GcHandler:
         def __init__(self) -> None:
