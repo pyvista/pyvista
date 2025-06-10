@@ -3935,7 +3935,7 @@ class PolyDataFilters(DataSetFilters):
         Due to the nature of the :vtk:`vtkCollisionDetectionFilter`,
         repeated uses of this method will be slower that using the
         :vtk:`vtkCollisionDetectionFilter` directly. The first
-        update of the filter creates two instances of `:vtk:`vtkOBBTree`,
+        update of the filter creates two instances of :vtk:`vtkOBBTree`,
         which can be subsequently updated by modifying the transform or
         matrix of the input meshes.
 
