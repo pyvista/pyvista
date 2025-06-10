@@ -1596,3 +1596,13 @@ def test_exodus_blocks():
 
     number_method = e_reader.face_sets._construct_result_method('GetNumberOf', 's')
     assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
+
+
+def test_xgmml_reader():
+    filename = examples.download_fsm(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.XGMLReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
