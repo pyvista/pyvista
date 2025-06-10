@@ -40,6 +40,7 @@ jobs:
     name: Linux Unit Testing
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         include:
           - vtk-version: "9.4.20250331.dev0"
@@ -59,17 +60,17 @@ jobs:
           python-version: 3.13
           cache: "pip"
 
+      - name: Install Testing Requirements
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
+
       - name: Set up vtk
         run: pip install vtk==${{ matrix.vtk-version }} --extra-index-url https://wheels.vtk.org
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
         run: python -c "import pyvista; print(pyvista.Report());"
-
-      - name: Install Testing Requirements
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
