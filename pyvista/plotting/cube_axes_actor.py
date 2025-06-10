@@ -55,7 +55,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
-    user-friendly interface to use `:vtk:`vtkCubeAxesActor`.
+    user-friendly interface to use :vtk:`vtkCubeAxesActor`.
 
     Parameters
     ----------

@@ -28,7 +28,6 @@ downloading, reading, and processing files with a generic mapping:
 
 """
 
-# ruff: noqa: PTH112, PTH113, PTH117, PTH118, PTH202
 # mypy: disable-error-code="redundant-expr"
 from __future__ import annotations
 

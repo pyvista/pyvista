@@ -1,6 +1,5 @@
 """Generate tables that can be included in the documentation."""
 
-# ruff: noqa: PTH103, PTH113, PTH118, PTH123
 from __future__ import annotations
 
 from abc import abstractmethod

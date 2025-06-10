@@ -407,7 +407,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return Texture(self.to_image().copy())  # type: ignore[abstract]
 
     def to_skybox(self):
-        """Return the texture as a ``:vtk:`vtkSkybox``` if cube mapping is enabled.
+        """Return the texture as a :vtk:`vtkSkybox` if cube mapping is enabled.
 
         Returns
         -------

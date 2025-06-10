@@ -1,4 +1,3 @@
-# ruff: noqa: PTH102, PTH107, PTH112, PTH113, PTH117, PTH118, PTH119
 from __future__ import annotations
 
 from dataclasses import dataclass
