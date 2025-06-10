@@ -297,7 +297,9 @@ jobs:
             Examples-1-
 
       - name: Install Testing Requirements
-        run: pip install .[test]
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
 
       - name: Install VTK dev wheel
         run: |
@@ -366,7 +368,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v4.1
+        uses: pyvista/setup-headless-display-action@v4.2
 
       - name: Install PyVista test dependencies
         run: |
