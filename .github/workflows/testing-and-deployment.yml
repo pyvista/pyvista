@@ -273,6 +273,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
       matrix:
@@ -289,12 +290,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: actions/cache@v4
+      - name: Cache example data
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Install Testing Requirements
         run: |
@@ -306,7 +308,7 @@ jobs:
           pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
