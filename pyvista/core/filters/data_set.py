@@ -1183,7 +1183,8 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetRadius(radius)
         alg.SetSampleDimensions(list(dimensions_))
-        _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
+        message = 'Splatting Points with Gaussian Distribution'
+        _update_alg(alg, progress_bar=progress_bar, message=message)
         return _get_output(alg)
 
     @_deprecate_positional_args
