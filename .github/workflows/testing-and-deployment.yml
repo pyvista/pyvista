@@ -32,7 +32,7 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
   CACHE_FOLDER_NAME: vtk-data
-  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/${{ env.CACHE_FOLDER_NAME }}
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
 
 permissions:
   id-token: none
