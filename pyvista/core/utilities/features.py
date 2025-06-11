@@ -597,7 +597,7 @@ def merge(
         of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
         the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
         This may be a breaking change for some applications. If only
-        merging two meshes, it may be possible to maintain _some_ backwards
+        merging two meshes, it may be possible to maintain `some` backwards
         compatibility by swapping the input order of the two meshes,
         though this may also affect the merged arrays and is therefore
         not fully backwards-compatible.
@@ -614,7 +614,7 @@ def merge(
         When this parameter is ``True`` and ``merge_points=True``, the arrays
         of the merging grids will be overwritten by the original main mesh.
 
-        .. deprecated:: 0.45
+        .. deprecated:: 0.46
 
             This keyword will be removed in a future version. The main mesh
             always has priority with VTK 9.5.0 or later.
