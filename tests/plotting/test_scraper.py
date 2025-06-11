@@ -13,6 +13,11 @@ from pyvista.plotting.utilities.sphinx_gallery import Scraper
 pytestmark = pytest.mark.skip_plotting
 
 
+@pytest.fixture(autouse=True)
+def skip_check_gc(skip_check_gc):
+    """GC check not needed."""
+
+
 class QApplication:
     def __init__(self, *args):
         pass

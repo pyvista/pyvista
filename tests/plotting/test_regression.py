@@ -20,6 +20,11 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_plotting
 
 
+@pytest.fixture(autouse=True)
+def skip_check_gc(skip_check_gc):
+    """GC check not needed."""
+
+
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(ndim=st.integers().filter(lambda x: x != 3))
 def test_wrap_image_array_raises_ndim(mocker: MockerFixture, ndim):

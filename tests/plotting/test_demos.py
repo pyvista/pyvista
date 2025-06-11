@@ -13,6 +13,11 @@ skip_no_plotting = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(autouse=True)
+def skip_check_gc(skip_check_gc):
+    """GC check not needed."""
+
+
 @skip_no_plotting
 def test_plot_glyphs():
     demos.plot_glyphs(2)

@@ -36,6 +36,11 @@ if importlib.util.find_spec('cmcrameri'):
     COLORMAPS.append('batlow')
 
 
+@pytest.fixture(autouse=True)
+def skip_check_gc(skip_check_gc):
+    """GC check not needed."""
+
+
 @pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
