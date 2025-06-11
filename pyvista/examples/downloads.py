@@ -86,7 +86,7 @@ if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
         warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
         USER_DATA_PATH = default_user_data_path
     else:
-        USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
+        USER_DATA_PATH = Path(os.environ['PYVISTA_USERDATA_PATH']).resolve()
 else:
     # use default pooch path
     USER_DATA_PATH = default_user_data_path
