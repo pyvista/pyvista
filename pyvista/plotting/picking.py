@@ -1622,7 +1622,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     selection = selector.Select()
                     break
             else:
-                return  # Exit if no viewport is found
+                return  # Exit if no viewport is found  # pragma: no cover
 
             for ii in range(selection.GetNumberOfNodes()):
                 node = selection.GetNode(ii)
