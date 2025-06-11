@@ -1609,7 +1609,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
-            w, h = self.window_size    # type: ignore[attr-defined]
+            w, h = self.window_size  # type: ignore[attr-defined]
             xn, yn = x / w, y / h
 
             # Find the renderer that contains the mouse
