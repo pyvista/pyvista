@@ -64,8 +64,12 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
-      - name: Run tests
-        run: tox run -e py${{ matrix.config.python-version }} --colored=yes
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.config.python-version }}-core --colored=yes
+
+      - name: Plotting Testing (uses GL)
+        if: always()
+        run: tox run -e py${{ matrix.config.python-version }}-plotting --colored=yes
 
       - name: Upload Generated Images
         if: always()
@@ -105,6 +109,8 @@ jobs:
             vtk-version: "latest"
             numpy-version: "nightly"
     name: Linux Unit Testing - Python ${{ matrix.python-version }} - VTK ${{ matrix.vtk-version }} - Numpy ${{ matrix.numpy-version }}
+    env:
+      TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -132,9 +138,12 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Run tests
-        run: |
-          xvfb-run -a tox run -e py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}-cov --colored=yes
+      - name: Core Testing (no GL)
+        run: tox run -e ${{env.TOX_FACTOR}}-cov-core --colored=yes # zizmor: ignore[template-injection]
+
+      - name: Plotting Testing (uses GL)
+        if: always()
+        run: xvfb-run -a tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes # zizmor: ignore[template-injection]
 
       - name: Upload Generated Images
         if: always()
@@ -272,8 +281,12 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Run tests
-        run: tox run -e py${{ matrix.python-version }} --colored=yes
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core --colored=yes
+
+      - name: Plotting Testing (uses GL)
+        if: always()
+        run: tox run -e py${{ matrix.python-version }}-plotting --colored=yes
 
       - name: Upload Generated Images
         if: always()
