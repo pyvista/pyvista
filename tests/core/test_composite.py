@@ -440,6 +440,11 @@ def test_multi_block_io(
     multi = multiblock_all_with_nested_and_none
 
     # Save it out
+    if extension == '.vtkhdf' and binary is False:
+        match = '.vtkhdf files can only be written in binary format'
+        with pytest.raises(ValueError, match=match):
+            multi.save(filename, binary)
+        return
     multi.save(filename, binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
