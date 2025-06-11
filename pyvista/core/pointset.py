@@ -86,7 +86,6 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    # TODO: can we put the vtkhdf writer here?
     _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
         '.xyz': _vtk.vtkSimplePointsWriter,
     }
