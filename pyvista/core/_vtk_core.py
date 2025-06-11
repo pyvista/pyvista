@@ -484,6 +484,7 @@ from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
+from vtkmodules.vtkImagingHybrid import vtkGaussianSplatter as vtkGaussianSplatter
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction as vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import (
     vtkSurfaceReconstructionFilter as vtkSurfaceReconstructionFilter,
