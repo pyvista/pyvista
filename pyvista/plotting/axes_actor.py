@@ -15,13 +15,12 @@ from .actor_properties import ActorProperties
 
 
 class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
-    """Axes actor wrapper for vtkAxesActor.
+    """Axes actor wrapper for :vtk:`vtkAxesActor`.
 
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
-    options, refer to `vtkAxesActor Details
-    <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
+    options, refer to :vtk:`vtkAxesActor`.
 
     See Also
     --------
@@ -459,7 +458,7 @@ class AxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     def labels(self, labels: list[str] | tuple[str]):
         if not isinstance(labels, (list, tuple)):
             msg = f'Labels must be a list or tuple. Got {labels} instead.'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         if len(labels) != 3:
             msg = f'Labels must be a list or tuple with three items. Got {labels} instead.'

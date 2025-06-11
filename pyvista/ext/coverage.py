@@ -77,8 +77,8 @@ class CoverageBuilder(Builder):
     def init(self) -> None:
         self.c_sourcefiles: list[str] = []
         for pattern in self.config.coverage_c_path:
-            pattern = str(Path(self.srcdir) / pattern)
-            self.c_sourcefiles.extend(Path(self.srcdir).glob(pattern))
+            full_pattern = str(Path(self.srcdir) / pattern)
+            self.c_sourcefiles.extend(Path(self.srcdir).glob(full_pattern))
 
         self.c_regexes: list[tuple[str, Pattern]] = []
         for name, exp in self.config.coverage_c_regexes.items():
@@ -111,7 +111,7 @@ class CoverageBuilder(Builder):
     def get_outdated_docs(self) -> str:
         return 'coverage overview'
 
-    def write(self, *ignored: Any) -> None:
+    def write(self, *ignored: Any) -> None:  # noqa: ARG002
         self.py_undoc: dict[str, dict[str, Any]] = {}
         self.build_py_coverage()
         self.write_py_coverage()

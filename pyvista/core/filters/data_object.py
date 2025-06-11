@@ -97,12 +97,14 @@ class DataObjectFilters:
             If present, any shear component is removed by the filter.
 
         .. note::
-            Transforming :class:`~pyvista.ImageData` modifies its :class:`~pyvista.ImageData.origin`,
-            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
-            properties.
+            Transforming :class:`~pyvista.ImageData` modifies its
+            :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and
+            :class:`~pyvista.ImageData.direction_matrix` properties.
 
         .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+            `inplace` was previously defaulted to `True`. In the future this will change
+            to `False`.
 
         Parameters
         ----------
@@ -172,7 +174,8 @@ class DataObjectFilters:
                 raise RuntimeError(msg)
 
             msg = (
-                f'The default value of `inplace` for the filter `{self.__class__.__name__}.transform` will change in the future. '
+                f'The default value of `inplace` for the filter '
+                f'`{self.__class__.__name__}.transform` will change in the future. '
                 'Previously it defaulted to `True`, but will change to `False`. '
                 'Explicitly set `inplace` to `True` or `False` to silence this warning.'
             )
@@ -1299,12 +1302,10 @@ class DataObjectFilters:
                 output.set_active_scalars(name, preference=association)
                 return output
 
-            def extract_crinkle_cells(dataset, a_, b_, active_scalars_info_):
+            def extract_crinkle_cells(dataset, a_, b_, _):
                 if b_ is None:
                     # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
+                    def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                         return extract_cells(
                             block_,
                             np.unique(clipped_a.cell_data[CELL_IDS_KEY]),
@@ -1327,7 +1328,9 @@ class DataObjectFilters:
                         clipped_b = extract_cells(block_, array_b, active_scalars_info_)
                         return clipped_a, clipped_b
 
-                def extract_cells_from_multiblock(multi_in, multi_a, multi_b, active_scalars_info_):
+                def extract_cells_from_multiblock(
+                    multi_in, multi_a, multi_b, active_scalars_info_
+                ):
                     # Iterate though input and output multiblocks
                     # `multi_b` may be None depending on `return_clipped`
                     self_iter = multi_in.recursive_iterator('all', **ITER_KWARGS)
@@ -1637,7 +1640,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        implicit_function : vtk.vtkImplicitFunction
+        implicit_function : :vtk:`vtkImplicitFunction`
             Specify the implicit function to perform the cutting.
 
         generate_triangles : bool, default: False
@@ -1934,7 +1937,11 @@ class DataObjectFilters:
         # parse axis input
         XYZLiteral = Literal['x', 'y', 'z']
         labels: list[XYZLiteral] = ['x', 'y', 'z']
-        label_to_index: dict[Literal['x', 'y', 'z'], Literal[0, 1, 2]] = {'x': 0, 'y': 1, 'z': 2}
+        label_to_index: dict[Literal['x', 'y', 'z'], Literal[0, 1, 2]] = {
+            'x': 0,
+            'y': 1,
+            'z': 2,
+        }
         if isinstance(axis, int):
             ax_index = axis
             ax_label = labels[ax_index]
@@ -1953,7 +1960,9 @@ class DataObjectFilters:
             center = self.center
         if tolerance is None:
             tolerance = (bounds[ax_index * 2 + 1] - bounds[ax_index * 2]) * 0.01
-        rng = np.linspace(bounds[ax_index * 2] + tolerance, bounds[ax_index * 2 + 1] - tolerance, n)
+        rng = np.linspace(
+            bounds[ax_index * 2] + tolerance, bounds[ax_index * 2 + 1] - tolerance, n
+        )
         center = list(center)
         # Make each of the slices
         output = pyvista.MultiBlock()
@@ -2577,7 +2586,9 @@ class DataObjectFilters:
         )
 
     def triangulate(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType, inplace: bool = False, progress_bar: bool = False
+        self: _DataSetOrMultiBlockType,
+        inplace: bool = False,
+        progress_bar: bool = False,
     ):
         """Return an all triangle mesh.
 
@@ -2649,7 +2660,7 @@ class DataObjectFilters:
         with a value of 1 meaning successful sampling. And a value of 0 means
         unsuccessful.
 
-        This uses :class:`vtk.vtkResampleWithDataSet`.
+        This uses :vtk:`vtkResampleWithDataSet`.
 
         Parameters
         ----------
@@ -2676,15 +2687,15 @@ class DataObjectFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        locator : vtkAbstractCellLocator or str or None, default: 'static_cell'
+        locator : :vtk:`vtkAbstractCellLocator` or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
             operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
-                * 'cell' - vtkCellLocator
-                * 'cell_tree' - vtkCellTreeLocator
-                * 'obb_tree' - vtkOBBTree
-                * 'static_cell' - vtkStaticCellLocator
+                * 'cell' - :vtk:`vtkCellLocator`
+                * 'cell_tree' - :vtk:`vtkCellTreeLocator`
+                * 'obb_tree' - :vtk:`vtkOBBTree`
+                * 'static_cell' - :vtk:`vtkStaticCellLocator`
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
@@ -2738,7 +2749,9 @@ class DataObjectFilters:
 
         """
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
-        alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
+        alg.SetInputData(
+            self
+        )  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetSourceData(wrap(target))
         alg.SetPassCellArrays(pass_cell_data)
@@ -2889,9 +2902,9 @@ class DataObjectFilters:
             measures_requested = measures_available_names
         else:
             measures = [quality_measure] if isinstance(quality_measure, str) else quality_measure
-            for quality_measure in measures:
+            for measure in measures:
                 _validation.check_contains(
-                    measures_available_names, must_contain=quality_measure, name='quality_measure'
+                    measures_available_names, must_contain=measure, name='quality_measure'
                 )
             measures_requested = cast('list[_CellQualityLiteral]', measures)
 
@@ -2961,7 +2974,7 @@ class DataObjectFilters:
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
-    """Return a dict with snake case quality measure keys and vtkCellQuality attribute setter names."""
+    """Return snake case quality measure keys and vtkCellQuality attribute setter names."""
     # Get possible quality measures dynamically
     str_start = 'SetQualityMeasureTo'
     measures = {}

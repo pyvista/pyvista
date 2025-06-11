@@ -231,8 +231,8 @@ class AffineWidget3D:
             try:
                 _validate_axes(axes)
             except ValueError:
-                for actor in self._arrows + self._circles:
-                    self._pl.remove_actor(actor)
+                for actor_ in self._arrows + self._circles:
+                    self._pl.remove_actor(actor_)
                 raise
             self.axes = axes
 
@@ -249,7 +249,9 @@ class AffineWidget3D:
                 tip_radius=0.05,
                 shaft_radius=self._line_radius,
             )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
+            self._arrows.append(
+                self._pl.add_mesh(arrow, color=color, lighting=False, render=False)
+            )
             axis_circ = self._circ.copy()
             if ii == 0:
                 axis_circ = axis_circ.rotate_y(-90)
@@ -453,7 +455,7 @@ class AffineWidget3D:
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
-        self._axes_inv = np.linalg.inv(self._axes)
+        self._axes_inv = np.linalg.inv(self._axes)  # type: ignore[assignment]
         for actor in self._arrows + self._circles:
             matrix = actor.user_matrix
             # Be sure to use the inverse here

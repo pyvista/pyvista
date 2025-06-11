@@ -1,4 +1,4 @@
-"""Filters module with a class of common filters that can be applied to any vtkDataSet."""
+"""Filters module with a class of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ if TYPE_CHECKING:
 
 @abstract_class
 class DataSetFilters(DataObjectFilters):
-    """A set of common filters that can be applied to any vtkDataSet."""
+    """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     def align(  # type: ignore[misc]
         self: _DataSetType,
@@ -69,8 +69,7 @@ class DataSetFilters(DataObjectFilters):
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
-        two meshes.  See the VTK class `vtkIterativeClosestPointTransform
-        <https://vtk.org/doc/nightly/html/classvtkIterativeClosestPointTransform.html>`_
+        two meshes. See the VTK class :vtk:`vtkIterativeClosestPointTransform`.
 
         Parameters
         ----------
@@ -374,7 +373,10 @@ class DataSetFilters(DataObjectFilters):
             if np.dot(axes[2], axis_2_direction) >= 0:
                 pass  # nothing to do, sign is correct
             elif axis_0_direction is not None and axis_1_direction is not None:
-                msg = f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
+                msg = (
+                    f'Invalid `axis_2_direction` {axis_2_direction}. '
+                    f'This direction results in a left-handed transformation.'
+                )
                 raise ValueError(msg)
             else:
                 axes[2] *= -1
@@ -579,7 +581,8 @@ class DataSetFilters(DataObjectFilters):
         if both:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):
-                # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
+                # For some reason vtkClipPolyData with SetGenerateClippedOutput on
+                # leaves unreferenced vertices
                 result0, result1 = (r.clean() for r in (result0, result1))  # type: ignore[unreachable]
             return result0, result1
         return result0
@@ -679,9 +682,9 @@ class DataSetFilters(DataObjectFilters):
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ):
-        """Apply a ``vtkThreshold`` filter to the input dataset.
+        """Apply a :vtk:`vtkThreshold` filter to the input dataset.
 
-        This filter will apply a ``vtkThreshold`` filter to the input
+        This filter will apply a :vtk:`vtkThreshold` filter to the input
         dataset and return the resulting object. This extracts cells
         where the scalar value in each cell satisfies the threshold
         criterion.  If ``scalars`` is ``None``, the input's active
@@ -770,7 +773,7 @@ class DataSetFilters(DataObjectFilters):
         :meth:`~pyvista.ImageDataFilters.image_threshold`
             Similar method for thresholding :class:`~pyvista.ImageData`.
         :meth:`~pyvista.ImageDataFilters.select_values`
-            Threshold-like filter for :class:`~pyvista.ImageData` to keep some values and replace others.
+            Threshold-like filter for ``ImageData`` to keep some values and replace others.
 
         Returns
         -------
@@ -1093,6 +1096,82 @@ class DataSetFilters(DataObjectFilters):
         alg.SetCornerFactor(factor)
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
+
+    def gaussian_splatting(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        radius: float = 0.1,
+        dimensions: VectorLike[int] = (50, 50, 50),
+        progress_bar: bool = False,
+    ):
+        """Splat points into a volume using a Gaussian distribution.
+
+        This filter uses :vtk:`vtkGaussianSplatter` to splat points into a volume
+        dataset. Each point is surrounded with a Gaussian distribution function
+        weighted by input scalar data. The distribution function is volumetrically
+        sampled to create a structured dataset.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        radius : float, default: 0.1
+            This value is expressed as a percentage of the length of the longest side of
+            the sampling volume. This determines the "width" of the splatter in
+            terms of the distribution. Smaller numbers greatly reduce execution time.
+
+        dimensions : VectorLike[int], default: (50, 50, 50)
+            Sampling dimensions of the structured point set. Higher values produce better
+            results but are much slower. This is the :attr:`~pyvista.ImageData.dimensions`
+            of the returned :class:`~pyvista.ImageData`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image data with scalar values representing the splatting
+            of the points.
+
+        See Also
+        --------
+        voxelize_binary_mask
+            Alternative method for generating :class:`~pyvista.ImageData` from a dataset.
+
+        Examples
+        --------
+        Create an image data volume from a point cloud using gaussian splatter.
+
+        >>> import pyvista as pv
+
+        Load the Stanford Bunny mesh.
+
+        >>> bunny = pv.examples.download_bunny()
+
+        Apply Gaussian splatter to generate a volumetric representation.
+
+        >>> volume = bunny.gaussian_splatting(radius=0.01)
+
+        Threshold the volume to filter out low-density regions.
+
+        >>> threshed = volume.threshold(0.05)
+
+        Visualize the thresholded volume with semi-transparency and no scalar bar.
+
+        >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
+
+        """
+        from pyvista.core import _validation
+
+        _validation.check_range(radius, [0.0, 1.0], name='radius')
+        dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
+        alg = _vtk.vtkGaussianSplatter()
+        alg.SetInputDataObject(self)
+        alg.SetRadius(radius)
+        alg.SetSampleDimensions(list(dimensions_))
+        _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
+        return _get_output(alg)
 
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
@@ -1534,7 +1613,7 @@ class DataSetFilters(DataObjectFilters):
         factor : float, default: 1.0
             Scale factor applied to scaling array.
 
-        geom : vtk.vtkDataSet or tuple(vtk.vtkDataSet), optional
+        geom : :vtk:`vtkDataSet` | tuple[:vtk:`vtkDataSet`], optional
             The geometry to use for the glyph. If missing, an arrow glyph
             is used. If a sequence, the datasets inside define a table of
             geometries to choose from based on scalars or vectors. In this
@@ -1628,7 +1707,8 @@ class DataSetFilters(DataObjectFilters):
             indices = np.arange(len(geoms))
         elif not isinstance(indices, (np.ndarray, Sequence)):
             msg = (  # type: ignore[unreachable]
-                'If "geom" is a sequence then "indices" must also be a sequence of the same length.'
+                'If "geom" is a sequence then "indices" must also be a '
+                'sequence of the same length.'
             )
             raise TypeError(msg)
         if len(indices) != len(geoms) and len(geoms) != 1:
@@ -1647,7 +1727,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms):
-                alg.SetSourceData(index, subgeom)
+                alg.SetSourceData(index, subgeom)  # type: ignore[call-overload]
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -1666,7 +1746,9 @@ class DataSetFilters(DataObjectFilters):
                 warnings.warn('No data to use for scale. scale will be set to False.')
                 do_scale = False
             except AmbiguousDataError as err:
-                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
+                warnings.warn(
+                    f'{err}\nIt is unclear which one to use. scale will be set to False.'
+                )
                 do_scale = False
             else:
                 do_scale = True
@@ -1694,7 +1776,9 @@ class DataSetFilters(DataObjectFilters):
             try:
                 set_default_active_vectors(dataset)
             except MissingDataError:
-                warnings.warn('No vector-like data to use for orient. orient will be set to False.')
+                warnings.warn(
+                    'No vector-like data to use for orient. orient will be set to False.'
+                )
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
@@ -1735,8 +1819,8 @@ class DataSetFilters(DataObjectFilters):
             )
             set_actives_on_source_data = True
 
-        # upstream operations (cell to point conversion, point merging) may have unset the correct active
-        # scalars/vectors, so set them again
+        # upstream operations (cell to point conversion, point merging) may have unset
+        # the correct active scalars/vectors, so set them again
         if set_actives_on_source_data:
             if scale:
                 source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
@@ -1858,7 +1942,8 @@ class DataSetFilters(DataObjectFilters):
             .. note::
                This filter requires point scalars to determine region
                connectivity. If cell scalars are provided, they are first
-               converted to point scalars with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`
+               converted to point scalars with
+               :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`
                before applying the filter. The converted point scalars are
                removed from the output after applying the filter.
 
@@ -2025,7 +2110,10 @@ class DataSetFilters(DataObjectFilters):
                 msg = 'Scalar range must have two elements defining the min and max.'
                 raise ValueError(msg)
             if scalar_range[0] > scalar_range[1]:
-                msg = f'Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}'
+                msg = (
+                    f'Lower value of scalar range {scalar_range[0]} cannot be greater '
+                    f'than the upper value {scalar_range[0]}'
+                )
                 raise ValueError(msg)
 
             # Input will be modified, so copy first
@@ -2128,7 +2216,11 @@ class DataSetFilters(DataObjectFilters):
             alg.SetClosestPoint(*closest_point)
 
         else:
-            msg = f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"  # type: ignore[unreachable]
+            msg = (  # type: ignore[unreachable]
+                f"Invalid value for `extraction_mode` '{extraction_mode}'. "
+                f"Expected one of the following: 'all', 'largest', 'specified', "
+                f"'cell_seed', 'point_seed', or 'closest'"
+            )
             raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
@@ -2546,9 +2638,9 @@ class DataSetFilters(DataObjectFilters):
 
         This evaluates all the input points to determine whether they are in an
         enclosed surface. The filter produces a (0,1) mask
-        (in the form of a vtkDataArray) that indicates whether points are
+        (in the form of a :vtk:`vtkDataArray`) that indicates whether points are
         outside (mask value=0) or inside (mask value=1) a provided surface.
-        (The name of the output vtkDataArray is ``"SelectedPoints"``.)
+        (The name of the output :vtk:`vtkDataArray` is ``"SelectedPoints"``.)
 
         This filter produces and output data array, but does not modify the
         input dataset. If you wish to extract cells or poinrs, various
@@ -2747,7 +2839,8 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
-        # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
+        # I believe the locator and the interpolator call `GetPoints` and not all mesh types
+        # have that method
         target_ = wrap(target)
         target_ = (
             target_.cast_to_unstructured_grid()
@@ -2997,7 +3090,7 @@ class DataSetFilters(DataObjectFilters):
 
         compute_vorticity : bool, default: True
             Vorticity computation at streamline points. Necessary for generating
-            proper stream-ribbons using the ``vtkRibbonFilter``.
+            proper stream-ribbons using the :vtk:`vtkRibbonFilter`.
 
         rotation_scale : float, default: 1.0
             This can be used to scale the rate with which the streamribbons
@@ -3125,7 +3218,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar, 'Generating Streamlines')
         return _get_output(alg)
 
-    def streamlines_evenly_spaced_2D(  # type: ignore[misc]
+    def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
         vectors: str | None = None,
         start_position: VectorLike[float] | None = None,
@@ -3206,7 +3299,7 @@ class DataSetFilters(DataObjectFilters):
 
         compute_vorticity : bool, default: True
             Vorticity computation at streamline points. Necessary for generating
-            proper stream-ribbons using the ``vtkRibbonFilter``.
+            proper stream-ribbons using the :vtk:`vtkRibbonFilter`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3872,7 +3965,7 @@ class DataSetFilters(DataObjectFilters):
         fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
-        """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
+        """Sample a dataset along a circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
         distance from Point A and the Y-axis is the variable of
@@ -4466,7 +4559,7 @@ class DataSetFilters(DataObjectFilters):
         See Also
         --------
         split_values
-            Wrapper around this filter to split values and return a :class:`~pyvista.MultiBlock` by default.
+            Wrapper around this filter to split values and return a :class:`~pyvista.MultiBlock`.
         :meth:`~pyvista.ImageDataFilters.select_values`
             Similar filter specialized for :class:`~pyvista.ImageData`.
         extract_points
@@ -4673,14 +4766,26 @@ class DataSetFilters(DataObjectFilters):
         def _validate_component_mode(array_, component_mode_):
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
-            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in ['0', '1', '2']:
+            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in [
+                '0',
+                '1',
+                '2',
+            ]:
                 component_mode_ = int(component_mode_)
                 if component_mode_ > num_components - 1 or component_mode_ < 0:
-                    msg = f"Invalid component index '{component_mode_}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}."
+                    msg = (
+                        f"Invalid component index '{component_mode_}' specified for "
+                        f'scalars with {num_components} component(s). '
+                        f'Value must be one of: {tuple(range(num_components))}.'
+                    )
                     raise ValueError(msg)
                 array_ = array_[:, component_mode_] if num_components > 1 else array_
                 component_logic_function = None
-            elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'multi']:
+            elif isinstance(component_mode_, str) and component_mode_ in [
+                'any',
+                'all',
+                'multi',
+            ]:
                 if array_.ndim == 1:
                     component_logic_function = None
                 elif component_mode_ == 'any':
@@ -4688,7 +4793,10 @@ class DataSetFilters(DataObjectFilters):
                 elif component_mode_ in ['all', 'multi']:
                     component_logic_function = functools.partial(np.all, axis=1)
             else:
-                msg = f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'multi'."
+                msg = (
+                    f"Invalid component '{component_mode_}'. "
+                    f"Must be an integer, 'any', 'all', or 'multi'."
+                )
                 raise ValueError(msg)
             return array_, num_components, component_logic_function
 
@@ -4707,7 +4815,9 @@ class DataSetFilters(DataObjectFilters):
                     msg = "Invalid dict mapping. The dict's keys or values must contain strings."
                     raise TypeError(msg)
 
-        def _validate_values_and_ranges(array_, values_, ranges_, num_components_, component_mode_):
+        def _validate_values_and_ranges(
+            array_, values_, ranges_, num_components_, component_mode_
+        ):
             # Make sure we have input values to extract
             is_multi_mode = component_mode_ == 'multi'
             if values_ is None:
@@ -4715,7 +4825,10 @@ class DataSetFilters(DataObjectFilters):
                     msg = 'No ranges or values were specified. At least one must be specified.'
                     raise TypeError(msg)
                 elif is_multi_mode:
-                    msg = f"Ranges cannot be extracted using component mode '{component_mode_}'. Expected {None}, got {ranges_}."
+                    msg = (
+                        f"Ranges cannot be extracted using component mode '{component_mode_}'. "
+                        f'Expected {None}, got {ranges_}.'
+                    )
                     raise TypeError(msg)
             elif (
                 isinstance(values_, str) and values_ == '_unique'
@@ -4728,10 +4841,16 @@ class DataSetFilters(DataObjectFilters):
                 if is_multi_mode:
                     values_ = np.atleast_2d(values_)
                     if values_.ndim > 2:
-                        msg = f'Component values cannot be more than 2 dimensions. Got {values_.ndim}.'
+                        msg = (
+                            f'Component values cannot be more than 2 dimensions. '
+                            f'Got {values_.ndim}.'
+                        )
                         raise ValueError(msg)
                     if values_.shape[1] != num_components_:
-                        msg = f'Num components in values array ({values_.shape[1]}) must match num components in data array ({num_components_}).'
+                        msg = (
+                            f'Num components in values array ({values_.shape[1]}) must match '
+                            f'num components in data array ({num_components_}).'
+                        )
                         raise ValueError(msg)
                 else:
                     values_ = np.atleast_1d(values_)
@@ -4761,7 +4880,10 @@ class DataSetFilters(DataObjectFilters):
                 not_valid = np.invert(is_valid_range)
                 if np.any(not_valid):
                     invalid_ranges = ranges_[not_valid]
-                    msg = f'Invalid range {invalid_ranges[0]} specified. Lower value cannot be greater than upper value.'
+                    msg = (
+                        f'Invalid range {invalid_ranges[0]} specified. '
+                        f'Lower value cannot be greater than upper value.'
+                    )
                     raise ValueError(msg)
             return values_, ranges_
 
@@ -4802,7 +4924,14 @@ class DataSetFilters(DataObjectFilters):
         )
 
     def _split_values(  # type:ignore[misc]
-        self: _DataSetType, *, method, values, ranges, value_names, range_names, **kwargs
+        self: _DataSetType,
+        *,
+        method,
+        values,
+        ranges,
+        value_names,
+        range_names,
+        **kwargs,
     ):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
@@ -5196,7 +5325,7 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        grid : vtk.vtkUnstructuredGrid | list[vtk.vtkUnstructuredGrid], optional
+        grid : :vtk:`vtkUnstructuredGrid` | list[:vtk:`vtkUnstructuredGrid`], optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True
@@ -5253,14 +5382,22 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
-            for grid in grids:
-                append_filter.AddInputData(grid)
+            for grid_ in grids:
+                append_filter.AddInputData(grid_)
 
         if main_has_priority:
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
+
+        # Update field data
+        priority = (
+            grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
+        )
+        for array in merged.field_data:
+            merged.field_data[array] = priority.field_data[array]
+
         if inplace:
             if type(self) is type(merged):
                 self.deep_copy(merged)
@@ -5517,7 +5654,7 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Compute derivative-based quantities of point/cell scalar field.
 
-        Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
+        Utilize :vtk:`vtkGradientFilter` to compute derivative-based quantities,
         such as gradient, divergence, vorticity, and Q-criterion, of the
         selected point or cell scalar field.
 
@@ -5681,7 +5818,7 @@ class DataSetFilters(DataObjectFilters):
         as attributes in the input mesh's point data. The attribute's copy
         flags are honored, except for normals.
 
-        For more details see `vtkTessellatorFilter <https://vtk.org/doc/nightly/html/classvtkTessellatorFilter.html#details>`_.
+        For more details see :vtk:`vtkTessellatorFilter`.
 
         Parameters
         ----------
@@ -5745,8 +5882,7 @@ class DataSetFilters(DataObjectFilters):
 
         Area or volume is also provided in point data.
 
-        This filter uses the VTK `vtkIntegrateAttributes
-        <https://vtk.org/doc/nightly/html/classvtkIntegrateAttributes.html>`_
+        This filter uses the VTK :vtk:`vtkIntegrateAttributes`
         and requires VTK v9.1.0 or newer.
 
         Parameters
@@ -5806,8 +5942,7 @@ class DataSetFilters(DataObjectFilters):
         is specified for ``n_partitions``, then the load balancing simply
         uses the power-of-two greater than the requested value
 
-        For more details, see `vtkRedistributeDataSetFilter
-        <https://vtk.org/doc/nightly/html/classvtkRedistributeDataSetFilter.html>`_.
+        For more details, see :vtk:`vtkRedistributeDataSetFilter`.
 
         Parameters
         ----------
@@ -6261,7 +6396,7 @@ class DataSetFilters(DataObjectFilters):
             else:
                 matrix = cast('NumpyArray[float]', matrix)
                 inverse_matrix = cast('NumpyArray[float]', inverse_matrix)
-                axes = matrix[:3, :3]  # principal axes
+                axes = matrix[:3, :3]  # type: ignore[assignment]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box
@@ -6376,7 +6511,9 @@ class DataSetFilters(DataObjectFilters):
         return self.shrink(1.0)
 
     def extract_cells_by_type(  # type: ignore[misc]
-        self: _DataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
+        self: _DataSetType,
+        cell_types: int | VectorLike[int],
+        progress_bar: bool = False,
     ):
         """Extract cells of a specified type.
 
@@ -6563,8 +6700,8 @@ class DataSetFilters(DataObjectFilters):
 
         Notes
         -----
-        This filter uses ``vtkPackLabels`` as the underlying method which
-        requires VTK version 9.3 or higher. If ``vtkPackLabels`` is not
+        This filter uses :vtk:`vtkPackLabels` as the underlying method which
+        requires VTK version 9.3 or higher. If :vtk:`vtkPackLabels` is not
         available, packing is done with ``NumPy`` instead which may be
         slower. For best performance, consider upgrading VTK.
 
@@ -6675,7 +6812,8 @@ class DataSetFilters(DataObjectFilters):
         else:  # Use numpy
             # Get mapping from input ID to output ID
             arr = cast(
-                'pyvista.pyvista_ndarray', get_array(self, scalars, preference=preference, err=True)
+                'pyvista.pyvista_ndarray',
+                get_array(self, scalars, preference=preference, err=True),
             )
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
             if sort:
@@ -6714,6 +6852,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
+        return_dict: bool = False,
         inplace: bool = False,
     ):
         """Add RGB(A) scalars to labeled data.
@@ -6756,7 +6895,7 @@ class DataSetFilters(DataObjectFilters):
             Label data based on its connectivity.
 
         pyvista.ImageDataFilters.contour_labels
-            Generate contours from labeled image data. The contours may be colored with this filter.
+            Generate contours from labeled images. The contours may be colored with this filter.
 
         pack_labels
             Make labeled data contiguous. May be used as a pre-processing step before
@@ -6767,14 +6906,14 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
             Color(s) to use. Specify a dictionary to explicitly control the mapping
             from label values to colors. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
             control the mapping. A single color is also supported to color the entire
             mesh with one color.
 
-            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            By default,the ``'glasbey_category10'`` categorical colormap is used
             where the first 10 colors are the same default colors used by ``matplotlib``.
             See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
             for more information.
@@ -6824,8 +6963,15 @@ class DataSetFilters(DataObjectFilters):
 
         output_scalars : str, optional
             Name of the color scalars array. By default, the output array
-            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            is the same as ``scalars`` with ``_rgb`` or ``_rgba`` appended
             depending on ``color_type``.
+
+        return_dict : bool, default: False
+            Return a dictionary with a mapping from label values to the
+            colors applied by the filter. The colors have the same type
+            specified by ``color_type``.
+
+            .. versionadded:: 0.46
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -6840,6 +6986,7 @@ class DataSetFilters(DataObjectFilters):
         Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
         to simplify the data.
 
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.load_channels()
@@ -6857,11 +7004,20 @@ class DataSetFilters(DataObjectFilters):
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels with the filter then plot them. Note that the
+        Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
 
-        >>> colored_labels = image_labels.color_labels()
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(return_dict=True)
+
+        Plot the labels. We define a helper function to include a legend with the plot.
+
+        >>> def labels_plotter(mesh, color_dict):
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(mesh)
+        ...     pl.add_legend(color_dict)
+        ...     return pl
+
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Since the labels are unsigned integers, the ``'index'`` coloring mode is used
         by default. Unlike the uniform sampling used by the plotter in the previous
@@ -6880,29 +7036,33 @@ class DataSetFilters(DataObjectFilters):
         Despite the changes to the dataset, the regions have the same coloring
         as before.
 
-        >>> colored_labels = subset_labels.color_labels()
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = subset_labels.color_labels(return_dict=True)
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Use the ``'cycle'`` coloring mode instead to map label values to colors
         sequentially.
 
-        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycle')
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = subset_labels.color_labels(
+        ...     coloring_mode='cycle', return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Map the colors explicitly using a dictionary.
 
-        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
-        >>> colored_labels = image_labels.color_labels(colors)
-        >>> colored_labels.plot()
+        >>> color_dict = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'gold'}
+        >>> colored_labels = image_labels.color_labels(color_dict)
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Omit the background value from the mapping and specify float colors. When
         floats are specified, values without a mapping are assigned ``nan`` values
         and are not plotted by default.
 
-        >>> colors.pop(0)
+        >>> color_dict.pop(0)
         'black'
-        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
-        >>> colored_labels.plot()
+        >>> colored_labels = image_labels.color_labels(
+        ...     color_dict, color_type='float_rgba'
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Modify the scalars and make two of the labels negative.
 
@@ -6917,14 +7077,18 @@ class DataSetFilters(DataObjectFilters):
         color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
         colored with the third-last and fourth-last color in the colormap, respectively.
 
-        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(
+        ...     negative_indexing=True, return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         If ``negative_indexing`` is disabled, the coloring defaults to the
         ``'cycle'`` coloring mode instead.
 
-        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(
+        ...     negative_indexing=False, return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
 
@@ -6964,7 +7128,9 @@ class DataSetFilters(DataObjectFilters):
         from pyvista.core._validation.validate import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
 
-        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
+        def _local_validate_color_sequence(
+            seq: ColorLike | Sequence[ColorLike],
+        ) -> Sequence[Color]:
             try:
                 return _validate_color_sequence(seq)
             except ValueError:
@@ -7013,13 +7179,18 @@ class DataSetFilters(DataObjectFilters):
             if coloring_mode is not None:
                 msg = 'Coloring mode cannot be set when a color dictionary is specified.'
                 raise TypeError(msg)
-            colors_ = _local_validate_color_sequence(cast('list[ColorLike]', list(colors.values())))
+            colors_ = _local_validate_color_sequence(
+                cast('list[ColorLike]', list(colors.values()))
+            )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
             items = zip(colors.keys(), color_rgb_sequence)
 
         else:
             if array.ndim > 1:
-                msg = f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                msg = (
+                    f'Multi-component scalars are not supported for coloring. '
+                    f'Scalar array {scalars} must be one-dimensional.'
+                )
                 raise ValueError(msg)
             _is_rgb_sequence = False
             if isinstance(colors, str):
@@ -7029,8 +7200,11 @@ class DataSetFilters(DataObjectFilters):
                     pass
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
-                        msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
-                        raise ValueError(msg)
+                        msg = (
+                            f"Colormap '{colors}' must be a ListedColormap, "
+                            f'got {cmap.__class__.__name__} instead.'
+                        )
+                        raise TypeError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast('list[list[float]]', cmap.colors)
                     if color_type == 'float_rgb':
@@ -7061,8 +7235,10 @@ class DataSetFilters(DataObjectFilters):
             if coloring_mode == 'index':
                 if not np.all(_is_index_like(array, max_value=n_colors)):
                     msg = (
-                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
-                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                        f"Index coloring mode cannot be used with scalars '{name}'. "
+                        f'Scalars must be positive integers \n'
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less '
+                        f'than the number of colors ({n_colors}).'
                     )
                     raise ValueError(msg)
                 keys: Iterable[float]
@@ -7071,7 +7247,7 @@ class DataSetFilters(DataObjectFilters):
                 keys_ = np.arange(n_colors)
                 values_ = color_rgb_sequence
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))  # type: ignore[assignment]
                     values_.extend(values_[::-1])
                 keys = keys_
                 values = values_
@@ -7084,14 +7260,23 @@ class DataSetFilters(DataObjectFilters):
 
             items = zip(keys, values)
 
-        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
+        colors_out = np.full(
+            (len(array), num_components), default_channel_value, dtype=color_dtype
+        )
+        mapping = {}
         for label, color in items:
-            colors_out[array == label, :] = color
+            mask = array == label
+            if np.any(mask):
+                colors_out[mask, :] = color
+                if return_dict:
+                    mapping[label] = color
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
         data[colors_name] = colors_out
         output_mesh.set_active_scalars(colors_name)
 
+        if return_dict:
+            return output_mesh, mapping
         return output_mesh
 
     def voxelize_binary_mask(  # type: ignore[misc]
@@ -7113,8 +7298,7 @@ class DataSetFilters(DataObjectFilters):
         input surface are labelled with ``foreground_value`` and ``background_value``,
         respectively.
 
-        This filter implements `vtkPolyDataToImageStencil
-        <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+        This filter implements :vtk:`vtkPolyDataToImageStencil`. This
         algorithm operates as follows:
 
         * The algorithm iterates through the z-slice of the ``reference_volume``.
@@ -7151,7 +7335,8 @@ class DataSetFilters(DataObjectFilters):
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
 
         .. note::
-            This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+            This filter returns voxels represented as point data, not
+            :attr:`~pyvista.CellType.VOXEL` cells.
             This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
@@ -7414,9 +7599,14 @@ class DataSetFilters(DataObjectFilters):
                 or cell_length_percentile is not None
                 or cell_length_sample_size is not None
             ):
-                msg = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                msg = (
+                    'Cannot specify a reference volume with other geometry parameters. '
+                    '`reference_volume` must define the geometry exclusively.'
+                )
                 raise TypeError(msg)
-            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            _validation.check_instance(
+                reference_volume, pyvista.ImageData, name='reference volume'
+            )
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
             poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)
@@ -7478,7 +7668,10 @@ class DataSetFilters(DataObjectFilters):
                 initial_dimensions[initial_dimensions < 1] = 1
                 dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
             elif rounding_func is not None:
-                msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+                msg = (
+                    'Rounding func cannot be set when dimensions is specified. '
+                    'Set one or the other.'
+                )
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
@@ -7567,11 +7760,17 @@ def _set_threshold_limit(alg, value, method, invert):
     # Check value
     if isinstance(value, (np.ndarray, Sequence)):
         if len(value) != 2:
-            msg = f'Value range must be length one for a float value or two for min/max; not ({value}).'
+            msg = (
+                f'Value range must be length one for a float value '
+                f'or two for min/max; not ({value}).'
+            )
             raise ValueError(msg)
         # Check range
         if value[0] > value[1]:
-            msg = 'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
+            msg = (
+                'Value sequence is invalid, please use (min, max). '
+                'The provided first value is greater than the second.'
+            )
             raise ValueError(msg)
     elif isinstance(value, Iterable):
         msg = 'Value must either be a single scalar or a sequence.'

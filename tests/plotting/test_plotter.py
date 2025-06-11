@@ -127,7 +127,9 @@ def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
     pl = pv.Plotter()
     with pytest.raises(
         TypeError,
-        match=re.escape('Smooth shading is not currently supported when a vtkAlgorithm is passed.'),
+        match=re.escape(
+            'Smooth shading is not currently supported when a vtkAlgorithm is passed.'
+        ),
     ):
         pl.add_mesh('foo', smooth_shading=True)
 
@@ -164,7 +166,8 @@ def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
 def test_plotter_add_volume_scalar_raises():
     pl = pv.Plotter()
     match = re.escape(
-        '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?'
+        '`scalar` is an invalid keyword argument for `add_mesh`. '
+        'Perhaps you mean `scalars` with an s?'
     )
     with pytest.raises(TypeError, match=match):
         pl.add_volume(pv.Sphere(), scalar='foo')
@@ -188,7 +191,8 @@ def test_plotter_add_volume_mapper_raises():
     im = pv.ImageData(dimensions=(10, 10, 10))
     im.point_data['foo'] = 1
     match = re.escape(
-        'Mapper (foo) unknown. Available volume mappers include: fixed_point, gpu, open_gl, smart, ugrid'
+        'Mapper (foo) unknown. Available volume mappers include: '
+        'fixed_point, gpu, open_gl, smart, ugrid'
     )
     with pytest.raises(TypeError, match=match):
         pl.add_volume(im, mapper='foo')
@@ -340,7 +344,8 @@ def test_save_graphic_raises():
 
     pl = pv.Plotter()
     match = re.escape(
-        'Extension (.not_supported) is an invalid choice.\n\nValid options include: .svg, .eps, .ps, .pdf, .tex'
+        'Extension (.not_supported) is an invalid choice.\n\nValid options include: '
+        '.svg, .eps, .ps, .pdf, .tex'
     )
     with pytest.raises(ValueError, match=match):
         pl.save_graphic(filename='foo.not_supported')
@@ -351,7 +356,8 @@ def test_add_background_image_raises():
     pl.add_background_image(pv.examples.mapfile)
 
     match = re.escape(
-        'A background image already exists.  Remove it with ``remove_background_image`` before adding one'
+        'A background image already exists.  Remove it with ``remove_background_image`` '
+        'before adding one'
     )
     with pytest.raises(RuntimeError, match=match):
         pl.add_background_image(pv.examples.mapfile)
@@ -529,7 +535,7 @@ def test_remove_scalars_single(sphere, hexbeam):
 
 
 def test_active_scalars_remain(sphere, hexbeam):
-    """Ensure active scalars remain active despite plotting different scalars when copy_mesh=True."""
+    # Ensure active scalars remain active despite plotting different scalars when copy_mesh=True.
     sphere.clear_data()
     hexbeam.clear_data()
     point_data_name = 'point_data'
@@ -601,7 +607,7 @@ def test_deep_clean(cube):
     assert cube == cube_orig
 
 
-def test_disable_depth_of_field(sphere):
+def test_disable_depth_of_field():
     pl = pv.Plotter()
     pl.enable_depth_of_field()
     assert pl.renderer.GetPass() is not None
@@ -609,7 +615,7 @@ def test_disable_depth_of_field(sphere):
     assert pl.renderer.GetPass() is None
 
 
-def test_remove_blurring(sphere):
+def test_remove_blurring():
     pl = pv.Plotter()
     pl.add_blurring()
     assert pl.renderer.GetPass() is not None
@@ -641,7 +647,7 @@ def test_clear_actors(cube, sphere):
     assert len(pl.renderer.actors) == 0
 
 
-def test_anti_aliasing_multiplot(sphere):
+def test_anti_aliasing_multiplot():
     pl = pv.Plotter(shape=(1, 2))
     pl.enable_anti_aliasing('ssaa', all_renderers=False)
     assert 'vtkSSAAPass' in pl.renderers[0]._render_passes._passes
@@ -704,7 +710,7 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
 
-    with pytest.raises(TypeError, match='not supported for plotting in PyVista'):
+    with pytest.raises(TypeError, match='volume must be an instance of any type'):
         pl.add_volume(pv.Table())
 
 
@@ -810,7 +816,8 @@ def test_plotter_update_coordinates(sphere):
             raise RuntimeError(msg)
 
 
-def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
+@pytest.mark.usefixtures('global_variables_reset')
+def test_only_screenshots_flag(sphere, tmpdir):
     pv.FIGURE_PATH = str(tmpdir)
     pv.ON_SCREENSHOT = True
 

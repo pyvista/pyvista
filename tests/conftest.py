@@ -63,7 +63,10 @@ def flaky_test(
                 func_name = test_function.__name__
                 module_name = test_function.__module__
                 error_name = e.__class__.__name__
-                msg = f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}'
+                msg = (
+                    f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - '
+                    f'{module_name}::{func_name} - {error_name}'
+                )
                 if i == times - 1:
                     print(msg)
                     raise  # Re-raise the last failure if all retries fail
@@ -287,7 +290,8 @@ def pytest_configure(config: pytest.Config):
 
     if pyvista.vtk_version_info < (9, 1):
         warnings.append(
-            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
+            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin '
+            r'.{1}bool.*:DeprecationWarning'
         )
 
 
@@ -312,7 +316,10 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     try:
         bounds = sig.bind(*item_mark.args, **item_mark.kwargs)
     except TypeError as e:
-        msg = f'Marker `{item_mark.name}` called with incorrect arguments.\nSignature should be: @pytest.mark.{item_mark.name}{sig}'
+        msg = (
+            f'Marker `{item_mark.name}` called with incorrect arguments.\n'
+            f'Signature should be: @pytest.mark.{item_mark.name}{sig}'
+        )
         raise ValueError(msg) from e
     else:
         bounds.apply_defaults()
@@ -340,7 +347,10 @@ def _get_min_max_vtk_version(
 
     # Distinguish scenarios from positional arguments
     if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['at_least'] is not None):
-        msg = f'Cannot specify both *args and `at_least` keyword argument to `{item_mark.name}` marker.'
+        msg = (
+            f'Cannot specify both *args and `at_least` keyword argument to '
+            f'`{item_mark.name}` marker.'
+        )
         raise ValueError(msg)
 
     if len(args) > 0:
@@ -351,7 +361,10 @@ def _get_min_max_vtk_version(
     _max = bounds.arguments['less_than']
 
     if _max is None and _min is None:
-        msg = f'Need to specify either `at_least` or `less_than` keyword arguments to `{item_mark.name}` marker.'
+        msg = (
+            f'Need to specify either `at_least` or `less_than` keyword arguments to '
+            f'`{item_mark.name}` marker.'
+        )
         raise ValueError(msg)
 
     return _pad_version(_min), _pad_version(_max), bounds
@@ -491,7 +504,7 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
 
-def pytest_report_header(config):
+def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}

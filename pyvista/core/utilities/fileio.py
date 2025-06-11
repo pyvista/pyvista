@@ -137,15 +137,16 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
     Parameters
     ----------
-    vtk_writer : vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
-        The vtk writer instance to be configured.
+    vtk_writer
+        The vtk writer instance to be configured. Must be one of :vtk:`vtkDataWriter`,
+        :vtk:`vtkPLYWriter`, :vtk:`vtkSTLWriter`, :vtk:`vtkXMLWriter`.
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
         ``False``, the writer is set to write files in ASCII format.
 
     Returns
     -------
-    vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
+    :vtk:`vtkDataWriter` | :vtk:`vtkPLYWriter` | :vtk:`vtkSTLWriter` | :vtk:`vtkXMLWriter`
         The configured vtk writer instance.
 
     """
@@ -166,7 +167,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     return vtk_writer
 
 
-def read(
+def read(  # noqa: PLR0911
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
@@ -272,7 +273,10 @@ def read(
     if ext.lower() in ['.grdecl']:
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
-        msg = 'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
+        msg = (
+            'VRML files must be imported directly into a Plotter. '
+            'See `pyvista.Plotter.import_vrml` for details.'
+        )
         raise ValueError(msg)
     if ext in PICKLE_EXT:
         return read_pickle(filename)
@@ -299,14 +303,16 @@ def read(
         mesh = reader.read()
         if observer.has_event_occurred():
             warnings.warn(
-                f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error'
-                'while reading the file.\n'
+                f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
+                'raised an error while reading the file.\n'
                 f'\t"{observer.get_message()}"',
             )
         return mesh
 
 
-def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequence[object]]) -> None:
+def _apply_attrs_to_reader(
+    reader: BaseReader, attrs: dict[str, object | Sequence[object]]
+) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
     Parameters
@@ -326,7 +332,7 @@ def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequenc
         attr = getattr(reader.reader, name)
         if args is not None:
             if not isinstance(args, (list, tuple)):
-                args = [args]
+                args = [args]  # noqa: PLW2901
             attr(*args)
         else:
             attr()
@@ -463,8 +469,8 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            msg = f'Could not parse sideset ID/name: {sideset}'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            msg = f'Could not parse sideset ID/name: {sideset} with type {type(sideset)}'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -473,7 +479,9 @@ def read_exodus(
 
 
 def read_grdecl(
-    filename: str | Path, elevation: bool = True, other_keywords: Sequence[str] | None = None
+    filename: str | Path,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
 
@@ -614,18 +622,18 @@ def read_grdecl(
         includes = []
 
         for line in f:
-            line = line.strip()
+            line_ = line.strip()
 
-            if line.startswith('MAPUNITS'):
+            if line_.startswith('MAPUNITS'):
                 keywords['MAPUNITS'] = read_keyword(f, split=False).replace("'", '').strip()
 
-            elif line.startswith('MAPAXES'):
+            elif line_.startswith('MAPAXES'):
                 keywords['MAPAXES'] = read_keyword(f, converter=float)
 
-            elif line.startswith('GRIDUNIT'):
+            elif line_.startswith('GRIDUNIT'):
                 keywords['GRIDUNIT'] = read_keyword(f, split=False).replace("'", '').strip()
 
-            elif line.startswith('SPECGRID'):
+            elif line_.startswith('SPECGRID'):
                 data = read_keyword(f)
                 keywords['SPECGRID'] = [
                     int(data[0]),
@@ -635,11 +643,11 @@ def read_grdecl(
                     data[4].strip(),
                 ]
 
-            elif line.startswith('INCLUDE'):
+            elif line_.startswith('INCLUDE'):
                 filename = read_keyword(f, split=False)
                 includes.append(filename.replace("'", ''))
 
-            elif line.startswith(keys):
+            elif line_.startswith(keys):
                 key = line.split()[0]
                 data = read_keyword(f)
 
@@ -648,8 +656,8 @@ def read_grdecl(
 
                     for x in data:
                         if '*' in x:
-                            size, x = x.split('*')
-                            keywords[key] += int(size) * [float(x)]  # type: ignore[operator]
+                            size, new_x = x.split('*')
+                            keywords[key] += int(size) * [float(new_x)]  # type: ignore[operator]
 
                         else:
                             keywords[key].append(float(x))  # type: ignore[union-attr]
@@ -717,12 +725,14 @@ def read_grdecl(
 
                 if not cond1:
                     warnings.warn(
-                        'Unable to convert relative coordinates with different grid and map units. Skipping conversion.'
+                        'Unable to convert relative coordinates with different '
+                        'grid and map units. Skipping conversion.'
                     )
 
             except KeyError:
                 warnings.warn(
-                    "Unable to convert relative coordinates without keyword 'MAPUNITS'. Skipping conversion."
+                    "Unable to convert relative coordinates without keyword 'MAPUNITS'. "
+                    'Skipping conversion.'
                 )
                 cond1 = False
 
@@ -731,7 +741,8 @@ def read_grdecl(
 
             except KeyError:
                 warnings.warn(
-                    "Unable to convert relative coordinates without keyword 'MAPAXES'. Skipping conversion."
+                    "Unable to convert relative coordinates without keyword 'MAPAXES'. "
+                    'Skipping conversion.'
                 )
                 origin = None
 
@@ -845,7 +856,10 @@ def read_pickle(filename: str | Path) -> DataObject:
             mesh = pickle.load(f)
 
         if not isinstance(mesh, pyvista.DataObject):
-            msg = f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
+            msg = (
+                f'Pickled object must be an instance of {pyvista.DataObject}. '
+                f'Got {mesh.__class__} instead.'
+            )
             raise TypeError(msg)
         return mesh
     msg = f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
@@ -896,7 +910,9 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
     if not isinstance(mesh, pyvista.DataObject):
-        msg = f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'  # type: ignore[unreachable]
+        msg = (  # type: ignore[unreachable]
+            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+        )
         raise TypeError(msg)
 
     with open(filename_str, 'wb') as f:  # noqa: PTH123

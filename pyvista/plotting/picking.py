@@ -54,7 +54,7 @@ class RectangleSelection:
 
     Parameters
     ----------
-    frustum : _vtk.vtkPlanes
+    frustum : :vtk:`vtkPlanes`
         Frustum that defines the selection.
     viewport : tuple[float, float, float, float]
         The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
@@ -202,7 +202,9 @@ class PointPickingElementHandler:
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_edges > 1:
             ei = (
-                cell.cast_to_unstructured_grid().extract_all_edges().find_closest_cell(picked_point)
+                cell.cast_to_unstructured_grid()
+                .extract_all_edges()
+                .find_closest_cell(picked_point)
             )
             edge = cell.edges[ei].cast_to_unstructured_grid()
             edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
@@ -369,7 +371,10 @@ class PickingInterface:  # numpydoc ignore=PR01
 
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
-            msg = 'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+            msg = (
+                'Picking is already enabled, please disable previous picking '
+                'with `disable_picking()`.'
+            )
             raise PyVistaPickingError(msg)
 
     def enable_point_picking(
@@ -420,12 +425,12 @@ class PickingInterface:  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         show_message : bool | str, default: True
             Show the message about how to use the point picking
@@ -615,7 +620,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_helper(picker, *args):
+        def _end_pick_helper(picker, *_):
             renderer = picker.GetRenderer()  # TODO: double check this is poked renderer
             x0 = int(renderer.GetPickX1())
             x1 = int(renderer.GetPickX2())
@@ -819,12 +824,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         use_picker : bool, default: False
             When ``True``, the callback will also be passed the picker.
@@ -857,7 +862,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         # only allow certain pickers to be used for surface picking
         #  the picker class needs to have `GetDataSet()`
         picker = PickerType.from_any(picker)
-        valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
+        valid_pickers = [
+            PickerType.POINT,
+            PickerType.CELL,
+            PickerType.HARDWARE,
+            PickerType.VOLUME,
+        ]
         if picker not in valid_pickers:
             msg = f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
             raise ValueError(msg)
@@ -968,12 +978,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
 
         **kwargs : dict, optional
@@ -982,7 +992,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         Returns
         -------
-        vtk.vtkPropPicker
+        :vtk:`vtkPropPicker`
             Property picker.
 
         Examples
@@ -1005,7 +1015,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):
+        def end_pick_call_back(*args):  # noqa: ARG001
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
@@ -1286,7 +1296,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            'Display representations other than `surface` will result in incorrect results.',
+                            'Display representations other than `surface` will result '
+                            'in incorrect results.',
                         )
                     smesh = pyvista.wrap(_mapper_get_data_set_input(actor.GetMapper()))
                     smesh = smesh.copy()
@@ -1484,12 +1495,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         picker : str | PickerType, optional
             Choice of VTK picker class type:
 
-                * ``'hardware'``: Uses ``vtkHardwarePicker`` which is more
+                * ``'hardware'``: Uses :vtk:`vtkHardwarePicker` which is more
                   performant for large geometries (default).
-                * ``'cell'``: Uses ``vtkCellPicker``.
-                * ``'point'``: Uses ``vtkPointPicker`` which will snap to
+                * ``'cell'``: Uses :vtk:`vtkCellPicker`.
+                * ``'point'``: Uses :vtk:`vtkPointPicker` which will snap to
                   points on the surface of the mesh.
-                * ``'volume'``: Uses ``vtkVolumePicker``.
+                * ``'volume'``: Uses :vtk:`vtkVolumePicker`.
 
         **kwargs : dict, optional
             All remaining keyword arguments are used to control how
@@ -1596,7 +1607,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01
+        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
             selector = _vtk.vtkOpenGLHardwareSelector()
@@ -1660,7 +1671,7 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        def _the_callback(*args):
+        def _the_callback(*_):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)  # type: ignore[attr-defined]
             if callable(callback):
