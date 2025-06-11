@@ -1608,12 +1608,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
-            x, y = self.mouse_position
-            w, h = self.window_size
+            x, y = self.mouse_position  # type: ignore[attr-defined]
+            w, h = self.window_size    # type: ignore[attr-defined]
             xn, yn = x / w, y / h
 
             # Find the renderer that contains the mouse
-            for renderer in self.renderers:
+            for renderer in self.renderers:  # type: ignore[attr-defined]
                 vx0, vy0, vx1, vy1 = renderer.GetViewport()
                 if vx0 <= xn <= vx1 and vy0 <= yn <= vy1:
                     selector = _vtk.vtkOpenGLHardwareSelector()
