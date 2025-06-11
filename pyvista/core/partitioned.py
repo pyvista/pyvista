@@ -41,7 +41,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
 
         if _vtk.vtk_version_info >= (9, 4):
-            _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
+            _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
