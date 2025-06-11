@@ -501,7 +501,7 @@ class PolyDataFilters(DataSetFilters):
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
-            .. deprecated:: 0.45
+            .. deprecated:: 0.46
 
                 This keyword will be removed in a future version. The main mesh
                 always has priority with VTK 9.5.0 or later.
