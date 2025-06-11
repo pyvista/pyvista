@@ -177,6 +177,41 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                         'with the root MultiBlock before saving.'
                     )
 
+        def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
+            if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+                if mesh.is_nested:
+                    msg = (
+                        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                        '\nUpgrade to VTK>=9.5 for this functionality.'
+                    )
+                    raise TypeError(msg)
+                if type(None) in mesh.block_types:
+                    msg = (
+                        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                        '\nUpgrade to VTK>=9.5 for this functionality.'
+                    )
+                    raise TypeError(msg)
+
+            supported_block_types = [
+                pyvista.PolyData,
+                pyvista.UnstructuredGrid,
+                type(None),
+                pyvista.MultiBlock,
+                pyvista.PartitionedDataSet,
+            ]
+            for id_, name, block in mesh.recursive_iterator('all'):
+                if type(block) not in supported_block_types:
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(id_)
+                    msg = (
+                        f"Block at index {index_fmt} with name '{name}' has type "
+                        f'{block.__class__.__name__!r} '
+                        f'which cannot be saved to the .vtkhdf format.\n'
+                        f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
+                    )
+                    raise TypeError(msg)
+
         def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
             if not np.allclose(mesh.direction_matrix, np.eye(3)):
                 warnings.warn(
@@ -228,6 +263,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         # warn if data will be lost
         if isinstance(self, pyvista.MultiBlock):
             _warn_multiblock_nested_field_data(self)
+            if file_ext == '.vtkhdf':
+                _check_multiblock_hdf_types(self)
         if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
             _warn_imagedata_direction_matrix(self)
 
