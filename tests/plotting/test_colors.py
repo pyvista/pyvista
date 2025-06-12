@@ -37,8 +37,9 @@ if importlib.util.find_spec('cmcrameri'):
 
 
 @pytest.fixture
-def skip_check_gc_(skip_check_gc, request):  # noqa: ARG001
-    if request.node.get_closest_marker('skip_check_gc'):
+def skip_check_gc(check_gc, request):  # noqa: ARG001
+    # Override `check_gc` so it does nothing at setup and teardown
+    if request.node.get_closest_marker('check_gc'):
         return
 
 
@@ -213,7 +214,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
-@pytest.mark.usefixtures('skip_check_gc_')
+@pytest.mark.usefixtures('skip_check_gc')
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
@@ -225,7 +226,7 @@ def test_css4_colors(css4_color):
         assert alt_name in pv.plotting.colors._CSS_COLORS
 
 
-@pytest.mark.usefixtures('skip_check_gc_')
+@pytest.mark.usefixtures('skip_check_gc')
 def test_tab_colors(tab_color):
     # Test value
     name, value = tab_color
@@ -235,7 +236,7 @@ def test_tab_colors(tab_color):
     assert name in pv.plotting.colors._TABLEAU_COLORS
 
 
-@pytest.mark.usefixtures('skip_check_gc_')
+@pytest.mark.usefixtures('skip_check_gc')
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
 
@@ -262,7 +263,7 @@ def test_vtk_colors(vtk_color):
     assert value.lower() == expected_hex
 
 
-@pytest.mark.usefixtures('skip_check_gc_')
+@pytest.mark.usefixtures('skip_check_gc')
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
