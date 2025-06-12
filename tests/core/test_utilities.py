@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import json
 import os
 from pathlib import Path
@@ -9,44 +10,68 @@ import pickle
 import platform
 import re
 import shutil
+from typing import TYPE_CHECKING
+from typing import Literal
+from typing import TypeVar
+from typing import get_args
 from unittest import mock
 import warnings
 
+from hypothesis import given
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
+from scipy.spatial.transform import Rotation
 import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista.core import _vtk_core as _vtk
+from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
+from pyvista.core.utilities import line_segments_from_points
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
+from pyvista.core.utilities import vector_poly_data
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import has_duplicates
+from pyvista.core.utilities.arrays import parse_field_choice
 from pyvista.core.utilities.arrays import raise_has_duplicates
+from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
+from pyvista.core.utilities.cell_quality import _CELL_QUALITY_INFO
+from pyvista.core.utilities.cell_quality import CellQualityInfo
 from pyvista.core.utilities.docs import linkcode_resolve
+from pyvista.core.utilities.features import create_grid
+from pyvista.core.utilities.features import sample_function
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
-from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.utilities.observers import ProgressMonitor
+from pyvista.core.utilities.state_manager import _StateManager
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -54,8 +79,80 @@ def transform():
     return Transform()
 
 
+def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
+    with monkeypatch.context() as m:
+        m.setattr(os, 'name', 'nt')
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.int64)
+
+        with pytest.raises(
+            ValueError,
+            match='This function on Windows only supports int32 or smaller',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=np.uint64)
+
+        with pytest.raises(
+            ValueError,
+            match='Invalid output_type 1',
+        ):
+            sample_function(vtk.vtkPlane(), output_type=1)
+
+
+def test_progress_monitor_raises(mocker: MockerFixture):
+    from pyvista.core.utilities import observers
+
+    m = mocker.patch.object(observers, 'importlib')
+    m.util.find_spec.return_value = False
+
+    with pytest.raises(
+        ImportError,
+        match='Please install `tqdm` to monitor algorithms.',
+    ):
+        ProgressMonitor('algo')
+
+
+def test_create_grid_raises():
+    with pytest.raises(NotImplementedError, match='Please specify dimensions.'):
+        create_grid(pv.Sphere(), dimensions=None)
+
+
+def test_parse_field_choice_raises():
+    with pytest.raises(ValueError, match=re.escape('Data field (foo) not supported.')):
+        parse_field_choice('foo')
+
+    with pytest.raises(TypeError, match=re.escape('Data field (1) not supported.')):
+        parse_field_choice(1)
+
+
+def test_convert_array_raises():
+    with pytest.raises(TypeError, match=re.escape("Invalid input array type (<class 'int'>).")):
+        convert_array(1)
+
+
+def test_get_array_raises():
+    with pytest.raises(
+        KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
+    ):
+        get_array(vtk.vtkTable(), 'foo', err=True)
+
+    with pytest.raises(
+        KeyError, match=re.escape("'Data array (foo) not present in this dataset.'")
+    ):
+        get_array_association(vtk.vtkTable(), 'foo', err=True)
+
+
+def test_raise_not_matching_raises():
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Number of scalars (1) must match number of rows (0).'),
+    ):
+        raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
+
+
 def test_version():
-    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -65,18 +162,22 @@ def test_version():
         ver.GetVTKMinorVersion(),
         ver.GetVTKBuildVersion(),
     )
+    assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= (0, 0, 0)
 
 
 def test_createvectorpolydata_error():
     orig = np.random.default_rng().random((3, 1))
+    with pytest.raises(ValueError, match='orig array must be 3D'):
+        vector_poly_data(orig, [0, 1, 2])
+
     vec = np.random.default_rng().random((3, 1))
-    with pytest.raises(ValueError):  # noqa: PT011
-        vector_poly_data(orig, vec)
+    with pytest.raises(ValueError, match='vec array must be 3D'):
+        vector_poly_data([0, 1, 2], vec)
 
 
-def test_createvectorpolydata_1D():
+def test_createvectorpolydata_1d():
     orig = np.random.default_rng().random(3)
     vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
@@ -107,7 +208,14 @@ def test_get_ext(path, target_ext):
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_read(tmpdir, use_pathlib):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
     if use_pathlib:
         fnames = [Path(fname) for fname in fnames]
     types = (
@@ -144,7 +252,14 @@ def test_read(tmpdir, use_pathlib):
 
 
 def test_read_force_ext(tmpdir):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
     types = (
         pv.PolyData,
         pv.PolyData,
@@ -169,7 +284,7 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
-def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
     mock_show_progress.assert_called_once()
@@ -283,6 +398,19 @@ def test_is_inside_bounds():
     assert not is_inside_bounds((12, 12, 12), bnds)
 
 
+def test_is_inside_bounds_raises():
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0,))
+
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0, 1, 3, 4, 5))
+
+    with pytest.raises(
+        TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")
+    ):
+        is_inside_bounds(point=None, bounds=(0,))
+
+
 def test_voxelize(uniform):
     vox = pv.voxelize(uniform, 0.5)
     assert vox.n_cells
@@ -321,7 +449,7 @@ def test_voxelize_volume_invalid_density(rectilinear):
         pv.voxelize_volume(rectilinear, {0.5, 0.3})
 
 
-def test_voxelize_volume_no_face_mesh(rectilinear):
+def test_voxelize_volume_no_face_mesh():
     with pytest.raises(ValueError, match='must have faces'):
         pv.voxelize_volume(pv.PolyData())
 
@@ -359,6 +487,7 @@ def test_report():
     report = pv.Report(gpu=False)
     assert report is not None
     assert 'GPU Details : None' in report.__repr__()
+    assert re.search(r'Render Window : vtk\w+RenderWindow', report.__repr__())
 
 
 def test_line_segments_from_points():
@@ -507,18 +636,46 @@ def test_observer():
         obs.observe(alg)
 
 
+@pytest.mark.parametrize('point', [1, object(), None])
+def test_valid_vector_raises(point):
+    with pytest.raises(TypeError, match='foo must be a length three iterable of floats.'):
+        check_valid_vector(point=point, name='foo')
+
+
 def test_check_valid_vector():
     with pytest.raises(ValueError, match='length three'):
         check_valid_vector([0, 1])
+
     check_valid_vector([0, 1, 2])
+
+
+@pytest.mark.parametrize('value', [object(), None, [], ()])
+def test_annotated_int_enum_from_any_raises(value):
+    class Foo(AnnotatedIntEnum):
+        BAR = (0, 'foo')
+
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Invalid type {type(value)} for class {Foo.__name__}'),
+    ):
+        Foo.from_any(value)
+
+
+@given(points=st.lists(st.integers()).filter(lambda x: bool(len(x) % 2)))
+def test_lines_segments_from_points(points):
+    with pytest.raises(
+        ValueError,
+        match='An even number of points must be given to define each segment.',
+    ):
+        line_segments_from_points(points=points)
 
 
 def test_cells_dict_utils():
     # No pyvista object
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
@@ -547,7 +704,9 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
     mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pv.StructuredGrid(x2, y2, z2)
@@ -783,7 +942,11 @@ def test_copy_vtk_array():
 def test_cartesian_to_spherical():
     def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi)),
+            (
+                r * np.sin(phi) * np.cos(theta),
+                r * np.sin(phi) * np.sin(theta),
+                r * np.cos(phi),
+            ),
         ).T
 
     points = np.random.default_rng().random((1000, 3))
@@ -815,6 +978,13 @@ def test_linkcode_resolve():
     # test property
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
     assert 'dataset.py' in link
+
+    # test wrapped function
+    link = linkcode_resolve(
+        'py',
+        {'module': 'pyvista', 'fullname': 'pyvista.plotting.plotter.Plotter.add_ruler'},
+    )
+    assert 'renderer.py' in link
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
@@ -978,7 +1148,9 @@ def test_fit_line_to_points():
     assert np.allclose(direction, np.abs(pv.principal_axes(fitted_line.points)[0]))
     assert np.allclose(length, fitted_line.length)
 
-    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution, return_meta=False)
+    fitted_line = fit_line_to_points(
+        expected_line.points, resolution=resolution, return_meta=False
+    )
     assert np.allclose(fitted_line.bounds, expected_line.bounds)
 
 
@@ -1016,7 +1188,8 @@ is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac, reason='Different results for some tests.'
+    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
@@ -1241,7 +1414,8 @@ def test_transform_reflect(transform, reflect_args):
 
 
 @pytest.mark.parametrize(
-    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+    ('method', 'vector'),
+    [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))],
 )
 def test_transform_flip_xyz(transform, method, vector):
     getattr(transform, method)()
@@ -1399,10 +1573,20 @@ class CasesTransformApply:
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
-        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+        return (
+            pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
+            True,
+            pv.PolyData,
+            np.float32,
+        )
 
     def case_polydata_float(self):
-        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+        return (
+            pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
+            True,
+            pv.PolyData,
+            float,
+        )
 
     def case_multiblock_float(self):
         return (
@@ -1428,7 +1612,7 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
         )
 
     points_in_array = np.array(_get_points_from_object(obj))
-    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
+    out = transform.scale(SCALE).apply(obj, copy=copy)
 
     if not copy and return_self:
         assert out is obj
@@ -1445,6 +1629,117 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     inverted_points = _get_points_from_object(inverted)
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted
+
+
+@pytest.fixture
+def scale_transform():
+    return Transform() * SCALE
+
+
+@pytest.fixture
+def translate_transform():
+    return Transform() + VECTOR
+
+
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_points])
+@pytest.mark.parametrize('transformation', ['scale', 'translate'])
+def test_transform_apply_to_points(scale_transform, translate_transform, method, transformation):
+    array = np.array((0.0, 0.0, 1.0))
+
+    if transformation == 'scale':
+        trans = scale_transform
+        expected = array * SCALE
+    else:
+        trans = translate_transform
+        expected = array + VECTOR
+
+    if method == pv.Transform.apply:
+        transformed = method(trans, array, 'points')
+    else:
+        transformed = method(trans, array)
+    assert np.allclose(transformed, expected)
+
+
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_vectors])
+@pytest.mark.parametrize('transformation', ['scale', 'translate'])
+def test_transform_apply_to_vectors(scale_transform, translate_transform, method, transformation):
+    array = np.array((0.0, 0.0, 1.0))
+
+    if transformation == 'scale':
+        trans = scale_transform
+        expected = array * SCALE
+    else:
+        trans = translate_transform
+        expected = array
+
+    if method == pv.Transform.apply:
+        transformed = method(trans, array, 'vectors')
+    else:
+        transformed = method(trans, array)
+    assert np.allclose(transformed, expected)
+
+
+@pytest.mark.parametrize('mode', ['active_vectors', 'all_vectors'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_dataset])
+def test_transform_apply_to_dataset(scale_transform, mode, method):
+    vector = np.array(VECTOR, dtype=float)
+    mesh = pv.PolyData(vector)
+    mesh['vector'] = [vector]
+
+    expected = mesh['vector']
+    if mode == 'all_vectors':
+        expected = expected * SCALE
+
+    transformed = method(scale_transform, mesh, mode)
+    assert np.allclose(transformed['vector'], expected)
+
+
+@pytest.mark.parametrize('mode', ['replace', 'pre-multiply', 'post-multiply'])
+@pytest.mark.parametrize('method', [pv.Transform.apply, pv.Transform.apply_to_actor])
+def test_transform_apply_to_actor(scale_transform, translate_transform, mode, method):
+    expected_matrix = scale_transform.matrix
+    actor = pv.Actor()
+
+    transformed = method(scale_transform, actor, mode)
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+    # Transform again
+    transformed = method(translate_transform, transformed, mode)
+    if mode == 'replace':
+        expected_matrix = translate_transform.matrix
+    else:
+        expected_matrix = scale_transform.compose(
+            translate_transform, multiply_mode=mode.split('-')[0]
+        ).matrix
+    assert np.allclose(transformed.user_matrix, expected_matrix)
+
+
+def test_transform_apply_invalid_mode():
+    mesh = pv.PolyData()
+    array = np.ndarray(())
+    actor = pv.Actor()
+    trans = pv.Transform()
+
+    match = (
+        "Transformation mode 'points' is not supported for datasets. Mode must be one of\n"
+        "['active_vectors', 'all_vectors', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(mesh, 'points')
+
+    match = (
+        "Transformation mode 'all_vectors' is not supported for arrays. Mode must be one of\n"
+        "['points', 'vectors', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(array, 'all_vectors')
+
+    match = (
+        "Transformation mode 'vectors' is not supported for actors. Mode must be one of\n"
+        "['replace', 'pre-multiply', 'post-multiply', None]"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        trans.apply(actor, 'vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
@@ -1482,7 +1777,9 @@ def transformed_actor():
 
 @pytest.mark.parametrize('override_mode', ['pre', 'post'])
 @pytest.mark.parametrize('object_mode', ['pre', 'post'])
-def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
+def test_transform_multiply_mode_override(
+    transform, transformed_actor, object_mode, override_mode
+):
     # This test validates multiply mode by performing the same transformations
     # applied by `Prop3D` objects and comparing the results
     transform.multiply_mode = object_mode
@@ -1533,6 +1830,12 @@ def test_transform_identity(transform):
 def test_transform_init():
     matrix = np.diag((SCALE, SCALE, SCALE, 1))
     transform = Transform(matrix)
+    assert np.allclose(transform.matrix, matrix)
+
+    transform = Transform(matrix.tolist())
+    assert np.allclose(transform.matrix, matrix)
+
+    transform = Transform(matrix.tolist())
     assert np.array_equal(transform.matrix, matrix)
 
 
@@ -1603,7 +1906,12 @@ def test_transform_radd():
 
 @pytest.mark.parametrize(
     'other',
-    [SCALE, (SCALE, SCALE, SCALE), Transform().scale(SCALE), Transform().scale(SCALE).matrix],
+    [
+        SCALE,
+        (SCALE, SCALE, SCALE),
+        Transform().scale(SCALE),
+        Transform().scale(SCALE).matrix,
+    ],
 )
 def test_transform_mul_other(other):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
@@ -1682,7 +1990,8 @@ def test_transform_rmul_raises():
 def test_transform_mul_raises():
     match = (
         "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
-        'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+        'The right-side argument must be a single number or a length-3 vector '
+        'or have 3x3 or 4x4 shape.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() * (1, 2, 3, 4)
@@ -1746,7 +2055,9 @@ SHEAR[2, 1] = values[2]
 @pytest.mark.parametrize('do_reflection', [True, False])
 @pytest.mark.parametrize('do_rotate', [True, False])
 @pytest.mark.parametrize('do_translate', [True, False])
-def test_transform_decompose(transform, do_shear, do_scale, do_reflection, do_rotate, do_translate):
+def test_transform_decompose(
+    transform, do_shear, do_scale, do_reflection, do_rotate, do_translate
+):
     if do_shear:
         transform.compose(SHEAR)
     if do_scale:
@@ -1801,6 +2112,25 @@ def test_transform_decompose_dtype(dtype, homogeneous):
 
 
 @pytest.mark.parametrize(
+    ('representation', 'args', 'expected_type', 'expected_shape'),
+    [
+        (None, (), Rotation, None),
+        ('quat', (), np.ndarray, (4,)),
+        ('matrix', (), np.ndarray, (3, 3)),
+        ('rotvec', (), np.ndarray, (3,)),
+        ('mrp', (), np.ndarray, (3,)),
+        ('euler', ('xyz',), np.ndarray, (3,)),
+        ('davenport', (np.eye(3), 'extrinsic'), np.ndarray, (3,)),
+    ],
+)
+def test_transform_as_rotation(representation, args, expected_type, expected_shape):
+    out = pv.Transform().as_rotation(representation, *args)
+    assert isinstance(out, expected_type)
+    if expected_shape:
+        assert out.shape == expected_shape
+
+
+@pytest.mark.parametrize(
     ('event', 'expected'),
     [
         ('end', vtk.vtkCommand.EndInteractionEvent),
@@ -1840,7 +2170,7 @@ def test_classproperty():
     @no_new_attr
     class Foo:
         @_classproperty
-        def prop(cls):
+        def prop(cls):  # noqa: N805
             return magic_number
 
     assert Foo.prop == magic_number
@@ -1850,3 +2180,319 @@ def test_classproperty():
         Foo.prop()
     with pytest.raises(TypeError, match='object is not callable'):
         Foo().prop()
+
+
+@pytest.fixture
+def modifies_verbosity():
+    initial_verbosity = vtk.vtkLogger.GetCurrentVerbosityCutoff()
+    yield
+    vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
+
+
+@pytest.mark.usefixtures('modifies_verbosity')
+@pytest.mark.parametrize(
+    'verbosity',
+    [
+        'off',
+        'error',
+        'warning',
+        'info',
+        'max',
+    ],
+)
+def test_vtk_verbosity_context(verbosity):
+    initial_verbosity = vtk.vtkLogger.VERBOSITY_OFF
+    _vtk.vtkLogger.SetStderrVerbosity(initial_verbosity)
+    with pv.vtk_verbosity(verbosity):
+        ...
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == initial_verbosity
+
+
+@pytest.mark.usefixtures('modifies_verbosity')
+def test_vtk_verbosity_nested_context():
+    LEVEL1 = 'off'
+    LEVEL2 = 'error'
+    LEVEL3 = 'warning'
+    with pv.vtk_verbosity(LEVEL1):
+        with pv.vtk_verbosity(LEVEL2):
+            with pv.vtk_verbosity(LEVEL3):
+                assert pv.vtk_verbosity() == LEVEL3
+            assert pv.vtk_verbosity() == LEVEL2
+        assert pv.vtk_verbosity() == LEVEL1
+
+
+@pytest.mark.usefixtures('modifies_verbosity')
+def test_vtk_verbosity_no_context():
+    match = re.escape('State must be set before using it as a context manager.')
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity:
+            ...
+
+    # Use context normally
+    with pv.vtk_verbosity('off'):
+        ...
+
+    # Test again to check reset after use
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity:
+            ...
+
+
+@pytest.mark.usefixtures('modifies_verbosity')
+def test_vtk_verbosity_set_get():
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() != _vtk.vtkLogger.VERBOSITY_OFF
+    pv.vtk_verbosity('off')
+    assert pv.vtk_verbosity() == 'off'
+    assert _vtk.vtkLogger.GetCurrentVerbosityCutoff() == _vtk.vtkLogger.VERBOSITY_OFF
+
+    # Set this to an invalid state with vtk methods
+    _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_1)
+    with pytest.raises(ValueError, match="state '1' is not valid"):
+        pv.vtk_verbosity()
+
+
+@pytest.mark.parametrize('value', ['str', 'invalid'])
+def test_vtk_verbosity_invalid_input(value):
+    match = re.escape("state must be one of: \n\t('off', 'error', 'warning', 'info', 'max')")
+    with pytest.raises(ValueError, match=match):
+        with pv.vtk_verbosity(value):
+            ...
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_vtk_snake_case():
+    assert pv.vtk_snake_case() == 'error'
+    match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
+
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        _ = pv.PolyData().information
+
+    pv.vtk_snake_case('allow')
+    assert pv.vtk_snake_case() == 'allow'
+    _ = pv.PolyData().information
+
+    with pv.vtk_snake_case('warning'):
+        with pytest.warns(RuntimeWarning, match=match):
+            _ = pv.PolyData().information
+
+
+T = TypeVar('T')
+
+
+def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
+    if arg2 is not None:
+
+        class MyState(_StateManager[arg1, arg2]):
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+    else:
+
+        class MyState(_StateManager[arg1]):
+            @property
+            def _state(self): ...
+
+            @_state.setter
+            def _state(self, state): ...
+
+    if sub_subclass:
+
+        class MyState2(MyState): ...
+
+        return MyState2
+    return MyState
+
+
+@pytest.mark.parametrize('arg', [T, int, Literal, TypeVar, [int, float], [[int], [float]]])
+def test_state_manager_invalid_type_arg(arg):
+    if isinstance(arg, Iterable):
+        cls = _create_state_manager_subclass(*arg)
+    else:
+        cls = _create_state_manager_subclass(arg)
+
+    match = (
+        'Type argument for subclasses must be a single non-empty Literal with all '
+        'state options provided.'
+    )
+    with pytest.raises(TypeError, match=match):
+        cls()
+
+
+def test_state_manager_sub_subclass():
+    options = Literal['on', 'off']
+    cls = _create_state_manager_subclass(options, sub_subclass=True)
+    manager = cls()
+    manager('on')
+    assert manager._valid_states == get_args(options)
+
+
+@pytest.mark.parametrize(
+    'cell_type',
+    [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE'],
+)
+def test_cell_quality_info(cell_type):
+    measure = 'area'
+    info = pv.cell_quality_info(cell_type, measure)
+    assert isinstance(info, CellQualityInfo)
+    assert info.cell_type == pv.CellType.TRIANGLE
+    assert info.quality_measure == measure
+
+
+CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in _CELL_QUALITY_INFO]
+
+
+def _compute_unit_cell_quality(
+    info: CellQualityInfo,
+    null_value=-42.42,
+    coincident: Literal['all', 'single', False] = False,
+):
+    example_name = _CELL_TYPE_INFO[info.cell_type.name].example
+    cell_mesh = getattr(ex.cells, example_name)()
+    if coincident == 'all':
+        cell_mesh.points[:] = 0.0
+    elif coincident == 'single':
+        cell_mesh.points[1] = cell_mesh.points[0]
+    qual = cell_mesh.cell_quality(info.quality_measure, null_value=null_value)
+    return qual.active_scalars[0]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_valid_measures(info):
+    # Ensure the computed measure is not null
+    null_value = -1
+    qual_value = _compute_unit_cell_quality(info, null_value)
+    if np.isclose(qual_value, null_value):
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
+
+def xfail_wedge_negative_volume(info):
+    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
+        pytest.xfail(
+            'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
+        )
+
+
+def xfail_distortion_returns_one(info):
+    if (
+        info.cell_type in [pv.CellType.TRIANGLE, pv.CellType.TETRA]
+        and info.quality_measure == 'distortion'
+    ):
+        pytest.xfail(
+            'Distortion always returns one, see https://gitlab.kitware.com/vtk/vtk/-/issues/19646.'
+        )
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_unit_cell_value(info):
+    """Test that the actual computed measure for a unit cell matches the reported value."""
+    xfail_wedge_negative_volume(info)
+
+    unit_cell_value = info.unit_cell_value
+    qual_value = _compute_unit_cell_quality(info)
+    assert np.isclose(qual_value, unit_cell_value)
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_acceptable_range(info):
+    """Test that the unit cell value is within the acceptable range."""
+    # Some cells / measures have bugs and return invalid values and are expected to fail
+    xfail_wedge_negative_volume(info)
+
+    acceptable_range = info.acceptable_range
+    unit_cell_value = info.unit_cell_value
+
+    assert unit_cell_value >= acceptable_range[0]
+    assert unit_cell_value <= acceptable_range[1]
+
+
+def _replace_range_infinity(rng):
+    rng = list(rng)
+    lower, upper = rng
+    if lower == -float('inf'):
+        rng[0] = np.finfo(lower).min
+    if upper == float('inf'):
+        rng[1] = np.finfo(upper).max
+    return rng
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_normal_range(info):
+    """Test that the normal range is broader than the acceptable range."""
+    acceptable_range = _replace_range_infinity(info.acceptable_range)
+    normal_range = _replace_range_infinity(info.normal_range)
+
+    assert normal_range[0] <= acceptable_range[0]
+    assert normal_range[1] >= acceptable_range[1]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_full_range(info):
+    """Test that the full range is broader than the normal range."""
+    normal_range = _replace_range_infinity(info.normal_range)
+    full_range = _replace_range_infinity(info.full_range)
+
+    assert full_range[0] <= normal_range[0]
+    assert full_range[1] >= normal_range[1]
+
+
+@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_degenerate_cell(info):
+    # Some cells / measures have bugs and return invalid values and are expected to fail
+    xfail_distortion_returns_one(info)
+
+    # Compare non-generate cell with degenerate cell with coincident point(s)
+    unit_cell_quality = _compute_unit_cell_quality(info, coincident=False)
+    all_coincident_quality = _compute_unit_cell_quality(info, coincident='all')
+    single_coincident_quality = _compute_unit_cell_quality(info, coincident='single')
+
+    # Quality must differ in at least one of the degeneracy cases
+    assert (not np.isclose(unit_cell_quality, all_coincident_quality)) or (
+        not np.isclose(unit_cell_quality, single_coincident_quality)
+    )
+
+
+@pytest.mark.needs_vtk_version(9, 2)
+def test_cell_quality_info_raises():
+    match = re.escape(
+        "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"
+        "['TRIANGLE', 'QUAD', 'TETRA', 'HEXAHEDRON', 'PYRAMID', 'WEDGE']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE, 'area')
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.QUADRATIC_EDGE.name, 'area')
+
+    match = re.escape(
+        "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"
+        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', "
+        "'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
+    )
+    with pytest.raises(ValueError, match=match):
+        pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
+
+
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute():
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'GetCells')
+    assert _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
+
+    assert _vtk.is_vtk_attribute(pv.ImageData(), 'cells')
+    assert not _vtk.is_vtk_attribute(pv.UnstructuredGrid(), 'cells')
+
+    assert not _vtk.is_vtk_attribute(pv.ImageData, 'foo')
+
+
+@pytest.mark.parametrize('obj', [pv.ImageData(), pv.ImageData])
+@pytest.mark.needs_vtk_version(9, 4)
+def test_is_vtk_attribute_input_type(obj):
+    assert _vtk.is_vtk_attribute(obj, 'GetDimensions')

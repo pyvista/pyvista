@@ -112,12 +112,15 @@ class Renderers:
 
         else:
             if not isinstance(shape, (np.ndarray, Sequence)):
-                raise TypeError('"shape" should be a list, tuple or string descriptor')
+                msg = '"shape" should be a list, tuple or string descriptor'
+                raise TypeError(msg)
             if len(shape) != 2:
-                raise ValueError('"shape" must have length 2.')
+                msg = '"shape" must have length 2.'
+                raise ValueError(msg)
             shape = np.asarray(shape)
             if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
-                raise ValueError('"shape" must contain only positive integers.')
+                msg = '"shape" must contain only positive integers.'
+                raise ValueError(msg)
             # always assign shape as a tuple of native ints
             self._shape = tuple(size.item() for size in shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
@@ -134,17 +137,19 @@ class Renderers:
             row_weights = np.abs(np.asanyarray(row_weights).ravel())
             col_weights = np.abs(np.asanyarray(col_weights).ravel())
             if row_weights.size != shape[0]:
-                raise ValueError(
+                msg = (
                     f'"row_weights" must have {shape[0]} items '
                     f'for {shape[0]} rows of subplots, not '
-                    f'{row_weights.size}.',
+                    f'{row_weights.size}.'
                 )
+                raise ValueError(msg)
             if col_weights.size != shape[1]:
-                raise ValueError(
+                msg = (
                     f'"col_weights" must have {shape[1]} items '
                     f'for {shape[1]} columns of subplots, not '
-                    f'{col_weights.size}.',
+                    f'{col_weights.size}.'
                 )
+                raise ValueError(msg)
             row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
             col_off = np.cumsum(col_weights) / np.sum(col_weights)
@@ -156,17 +161,18 @@ class Renderers:
 
             if groups is not None:
                 if not isinstance(groups, Sequence):
-                    raise TypeError(
-                        f'"groups" should be a list or tuple, not {type(groups).__name__}.',
-                    )
+                    msg = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+                    raise TypeError(msg)
                 for group in groups:
                     if not isinstance(group, Sequence):
-                        raise TypeError(
+                        msg = (
                             'Each group entry should be a list or '
-                            f'tuple, not {type(group).__name__}.',
+                            f'tuple, not {type(group).__name__}.'
                         )
+                        raise TypeError(msg)
                     if len(group) != 2:
-                        raise ValueError('Each group entry must have length 2.')
+                        msg = 'Each group entry must have length 2.'
+                        raise ValueError(msg)
 
                     rows = group[0]
                     if isinstance(rows, slice):
@@ -183,10 +189,9 @@ class Renderers:
                         range(norm_group[1], norm_group[3] + 1),
                     ):
                         if self.loc_to_group((i, j)) is not None:
-                            raise ValueError(
-                                f'Groups cannot overlap. Overlap found at position {(i, j)}.',
-                            )
-                    self.groups = np.concatenate(
+                            msg = f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                            raise ValueError(msg)
+                    self.groups = np.concatenate(  # type: ignore[assignment]
                         (self.groups, np.array([norm_group], dtype=int)),
                         axis=0,
                     )
@@ -271,17 +276,21 @@ class Renderers:
         if isinstance(loc, (int, np.integer)):
             return loc
         elif isinstance(loc, (np.ndarray, Sequence)):
-            if not len(loc) == 2:
-                raise ValueError('"loc" must contain two items')
+            if len(loc) != 2:
+                msg = '"loc" must contain two items'
+                raise ValueError(msg)
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
-                raise IndexError(f'Row index is out of range ({self.shape[0]})')
+                msg = f'Row index is out of range ({self.shape[0]})'
+                raise IndexError(msg)
             if index_column < 0 or index_column >= self.shape[1]:  # type: ignore[misc]
-                raise IndexError(f'Column index is out of range ({self.shape[1]})')  # type: ignore[misc]
+                msg = f'Column index is out of range ({self.shape[1]})'  # type: ignore[misc]
+                raise IndexError(msg)
             return self._render_idxs[index_row, index_column]
         else:
-            raise TypeError('"loc" must be an integer or a sequence.')
+            msg = '"loc" must be an integer or a sequence.'
+            raise TypeError(msg)
 
     def __getitem__(self, index):
         """Return a renderer based on an index."""
@@ -322,12 +331,14 @@ class Renderers:
 
         """
         if not isinstance(index, (int, np.integer)):
-            raise TypeError('"index" must be a scalar integer.')
+            msg = '"index" must be a scalar integer.'
+            raise TypeError(msg)
         if len(self.shape) == 1:
             return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
-            raise IndexError(f'Index ({index}) is out of range.')
+            msg = f'Index ({index}) is out of range.'
+            raise IndexError(msg)
         return args[0]
 
     @property
@@ -371,9 +382,11 @@ class Renderers:
             return
 
         if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError(f'Row index is out of range ({self.shape[0]})')
+            msg = f'Row index is out of range ({self.shape[0]})'
+            raise IndexError(msg)
         if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError(f'Column index is out of range ({self.shape[1]})')
+            msg = f'Column index is out of range ({self.shape[1]})'
+            raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
     def set_chart_interaction(self, interactive, toggle: bool = False):
@@ -614,7 +627,7 @@ class Renderers:
     def set_color_cycler(self, color_cycler, all_renderers: bool = True):
         """Set or reset the color cycler.
 
-        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`
         call to set the default color of the dataset being plotted.
 
         When setting, the value must be either a list of color-like objects,
@@ -623,7 +636,8 @@ class Renderers:
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
@@ -641,6 +655,10 @@ class Renderers:
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
+
+        See Also
+        --------
+        :ref:`color_cycler_example`
 
         Examples
         --------
@@ -682,7 +700,8 @@ class Renderers:
         """
         renderer = self._background_renderers[self.active_index]
         if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
+            msg = 'No background image to remove at this subplot'
+            raise RuntimeError(msg)
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 

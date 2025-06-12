@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import os
+import re
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import pytest
 import vtk
 
@@ -12,12 +17,30 @@ import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
-from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
 @pytest.fixture
 def default_theme():
     return pv.plotting.themes.Theme()
+
+
+@pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
+def test_theme_trame_raises(default_theme: pv.themes.Theme, trame):
+    with pytest.raises(TypeError, match='Configuration type must be `_TrameConfig`.'):
+        default_theme.trame = trame
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(image_scale=st.integers().filter(lambda x: x < 1))
+def test_theme_image_scale_raises(default_theme: pv.themes.Theme, image_scale):
+    with pytest.raises(ValueError, match='Scale factor must be a positive integer.'):
+        default_theme.image_scale = image_scale
+
+
+@pytest.mark.parametrize('lighting_params', [1, None, object(), True, pv.Sphere()])
+def test_theme_lightning_params_raises(default_theme: pv.themes.Theme, lighting_params):
+    with pytest.raises(TypeError, match='Configuration type must be `_LightingConfig`.'):
+        default_theme.lighting_params = lighting_params
 
 
 @pytest.mark.parametrize(
@@ -62,7 +85,7 @@ def test_depth_silhouette_eq(default_theme):
     assert my_theme.silhouette != 1
 
 
-def test_depth_silhouette_opacity_outside_clamp(default_theme):
+def test_depth_silhouette_opacity_outside_clamp():
     my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
@@ -341,10 +364,15 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a color map'):
+    match = "Invalid colormap 'not a color map'"
+    with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
-    with pytest.raises(ValueError, match='Invalid color map'):
+    match = (
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>). "
+        "Got <class 'NoneType'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
 
 
@@ -476,7 +504,8 @@ def test_plotter_set_theme():
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -489,7 +518,8 @@ def test_load_theme(tmpdir, default_theme):
 
 
 @pytest.mark.filterwarnings(
-    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
 )
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
@@ -518,7 +548,7 @@ def test_anti_aliasing(default_theme):
         default_theme.anti_aliasing = 42
 
 
-@pytest.mark.skipif(uses_egl(), reason='Requires non-OSMesa/EGL VTK build.')
+@pytest.mark.skip_egl('Requires non-OSMesa/EGL VTK build.')
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'
@@ -560,7 +590,8 @@ def test_below_range_color(default_theme):
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
-def test_user_logo(default_theme, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_user_logo(default_theme):
     default_theme.logo_file = download_file('vtk.png')
     pl = pv.Plotter()
     pl.add_logo_widget()

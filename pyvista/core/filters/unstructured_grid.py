@@ -70,8 +70,7 @@ class UnstructuredGridFilters(DataSetFilters):
         modify the topology of the input dataset, nor change the types of
         cells. It may however, renumber the cell connectivity ids.
 
-        This filter implements `vtkStaticCleanUnstructuredGrid
-        <https://vtk.org/doc/nightly/html/classvtkStaticCleanUnstructuredGrid.html>`_
+        This filter implements :vtk:`vtkStaticCleanUnstructuredGrid`.
 
         Parameters
         ----------
@@ -142,7 +141,8 @@ class UnstructuredGridFilters(DataSetFilters):
         try:
             from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
         except ImportError:  # pragma no cover
-            raise VTKVersionError('UnstructuredGrid.clean requires VTK >= 9.2.2') from None
+            msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
+            raise VTKVersionError(msg) from None
 
         alg = vtkStaticCleanUnstructuredGrid()
         # https://github.com/pyvista/pyvista/pull/6337

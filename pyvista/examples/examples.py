@@ -258,7 +258,7 @@ def load_structured():
 def _structured_load_func():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)
+    x, y = np.meshgrid(x, y)  # type: ignore[assignment]
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
@@ -616,7 +616,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
     >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
     >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
-    See :ref:`plot_atomic_orbitals_example` for additional examples using
+    See :ref:`atomic_orbitals_example` for additional examples using
     this function.
 
     .. seealso::
@@ -636,16 +636,18 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
         from sympy.abc import theta
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
-        raise ImportError(
-            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',
-        ) from None
+        msg = '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+        raise ImportError(msg) from None
 
     if n < 1:
-        raise ValueError('`n` must be at least 1')
+        msg = '`n` must be at least 1'
+        raise ValueError(msg)
     if l not in range(n):
-        raise ValueError(f'`l` must be one of: {list(range(n))}')
+        msg = f'`l` must be one of: {list(range(n))}'
+        raise ValueError(msg)
     if m not in range(-l, l + 1):
-        raise ValueError(f'`m` must be one of: {list(range(-l, l + 1))}')
+        msg = f'`m` must be one of: {list(range(-l, l + 1))}'
+        raise ValueError(msg)
 
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
 

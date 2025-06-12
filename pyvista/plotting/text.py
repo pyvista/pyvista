@@ -5,6 +5,7 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import pyvista
 from pyvista.core import _validation
@@ -27,12 +28,16 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
 
+HorizontalOptions = Literal['left', 'center', 'right']
+VerticalOptions = Literal['bottom', 'center', 'top']
+
 
 @no_new_attr
-class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
+class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
-    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+    This is an annotation object that manages four text actors / mappers to provide
+    annotation in the four corners of a viewport.
 
     Parameters
     ----------
@@ -161,7 +166,7 @@ class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(_NameMixin, _vtk.vtkTextActor):
+class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -265,8 +270,9 @@ class Label(_Prop3DMixin, Text):
     In addition, this class supports an additional :attr:`relative_position` attribute.
     In general, it is recommended to simply use :attr:`~pyvista.Prop3D.position` when positioning a
     :class:`Label` by itself. However, if the position of the label depends on the
-    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and :attr:`relative_position`
-    may be used together. In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
+    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and
+    :attr:`relative_position` may be used together.
+    In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
     should be kept in-sync. See the examples below.
 
     Parameters
@@ -454,7 +460,7 @@ class Label(_Prop3DMixin, Text):
 
 
 @no_new_attr
-class TextProperty(_vtk.vtkTextProperty):
+class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters
@@ -758,7 +764,8 @@ class TextProperty(_vtk.vtkTextProperty):
         path = pathlib.Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
-            raise FileNotFoundError(f'Unable to locate {path}')
+            msg = f'Unable to locate {path}'
+            raise FileNotFoundError(msg)
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
 
@@ -787,10 +794,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'right':
             self.SetJustificationToRight()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".',
+                'Should be either "left", "center" or "right".'
             )
+            raise ValueError(msg)
 
     @property
     def justification_vertical(self) -> str:
@@ -817,10 +825,11 @@ class TextProperty(_vtk.vtkTextProperty):
         elif justification.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".',
+                'Should be either "bottom", "center" or "top".'
             )
+            raise ValueError(msg)
 
     @property
     def italic(self) -> bool:

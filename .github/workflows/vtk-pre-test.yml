@@ -23,11 +23,13 @@ jobs:
     # only for pull requests, run only when 'vtk_master' label exists
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master') }}
     name: Linux VTK Master Testing
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9, "3.10", "3.11", "3.12"]
+        python-version: [3.9, "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,16 +50,18 @@ jobs:
             Examples-1-
 
       - name: Install PyVista Testing Requirements
-        run: pip install .[test]
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         with:
-          packages: libgl1-mesa-glx xvfb
+          packages: xvfb
           version: 3.0
 
       - name: Install nightly VTK
         run: |
-          pip install vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista -v tests/core tests/examples

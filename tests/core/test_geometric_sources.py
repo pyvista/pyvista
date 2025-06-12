@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import re
 
+from hypothesis import given
+from hypothesis.strategies import integers
+from hypothesis.strategies import lists
 import numpy as np
 import pytest
 import vtk
@@ -21,18 +24,18 @@ def cube_faces_source():
     return pv.CubeFacesSource()
 
 
+@pytest.mark.needs_vtk_version(less_than=(9, 3))
 def test_capsule_source():
-    if pv.vtk_version_info < (9, 3):
-        algo = pv.CapsuleSource()
-        assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-        assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
-        assert algo.radius == 0.5
-        assert algo.cylinder_length == 1.0
-        assert algo.theta_resolution == 30
-        assert algo.phi_resolution == 30
-        direction = np.random.default_rng().random(3)
-        algo.direction = direction
-        assert np.array_equal(algo.direction, direction)
+    algo = pv.CapsuleSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+    assert algo.radius == 0.5
+    assert algo.cylinder_length == 1.0
+    assert algo.theta_resolution == 30
+    assert algo.phi_resolution == 30
+    direction = np.random.default_rng().random(3)
+    algo.direction = direction
+    assert np.array_equal(algo.direction, direction)
 
 
 def test_cone_source():
@@ -49,6 +52,25 @@ def test_cone_source():
     assert algo.angle == 0.0
     algo = pv.ConeSource(radius=0.0)
     assert algo.radius == 0.0
+
+
+def test_text_3d_raises():
+    match = re.escape(
+        f'Attribute "foo" does not exist and cannot be added to type {pv.Text3DSource.__name__}'
+    )
+    with pytest.raises(AttributeError, match=match):
+        pv.Text3DSource().foo = 1
+
+
+@given(bounds=lists(integers()).filter(lambda x: len(x) != 6))
+def test_box_source_bounds_raises(bounds):
+    b = pv.BoxSource()
+    match = re.escape(
+        'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+    )
+
+    with pytest.raises(TypeError, match=match):
+        b.bounds = bounds
 
 
 def test_cylinder_source():
@@ -618,11 +640,22 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.tip_type = pv.ParametricKlein()
     assert axes_geometry_source.tip_type == 'custom'
 
-    match = 'Custom axes part must be 3D. Got bounds: BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=0.0, z_max=0.0).'
+    match = (
+        'Custom axes part must be 3D. Got bounds:\n'
+        'BoundsTuple(x_min = -0.5,\n'
+        '            x_max =  0.5,\n'
+        '            y_min = -0.5,\n'
+        '            y_max =  0.5,\n'
+        '            z_min =  0.0,\n'
+        '            z_max =  0.0).'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 
-    match = "Geometry 'foo' is not valid. Geometry must be one of: \n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    match = (
+        "Geometry 'foo' is not valid. Geometry must be one of: "
+        "\n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = 'foo'
 
@@ -742,7 +775,10 @@ def test_orthogonal_planes_source_names():
     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
     assert planes_source.names == ('a', 'b', 'c')
 
-    match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
+    match = (
+        "names must be an instance of any type (<class 'tuple'>, <class 'list'>). "
+        "Got <class 'str'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.names = 'abc'
 

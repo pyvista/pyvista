@@ -78,6 +78,8 @@ class BlockAttributes:
     Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
 
+    >>> pl.show()
+
     """
 
     def __init__(self, block, attr):
@@ -261,7 +263,7 @@ class BlockAttributes:
         )
 
 
-class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
+class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplayAttributes):
     """Block attributes.
 
     Parameters
@@ -310,6 +312,8 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     Opacity:   0.1
     Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
+
+    >>> pl.show()
 
     """
 
@@ -477,11 +481,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             else:
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
-            raise KeyError(f'Invalid block key: {index}') from None
+            msg = f'Invalid block key: {index}'
+            raise KeyError(msg) from None
         if block is None and index > len(self) - 1:
-            raise KeyError(
-                f'index {index} is out of bounds. There are only {len(self)} blocks.',
-            ) from None
+            msg = f'index {index} is out of bounds. There are only {len(self)} blocks.'
+            raise KeyError(msg) from None
         return block
 
     def __getitem__(self, index):
@@ -683,6 +687,8 @@ class CompositePolyDataMapper(
         Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
+
+        >>> pl.show()
 
         """
         self.scalar_visibility = False

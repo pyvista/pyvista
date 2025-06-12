@@ -46,8 +46,8 @@ class ScalarBars:
         lines.append('Scalar Bar Title     Interactive')
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
-            title = f'"{title}"'
-            lines.append(f'{title:20} {interactive!s:5}')
+            title_quotes = f'"{title}"'
+            lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(
@@ -115,10 +115,11 @@ class ScalarBars:
         if title is None:
             if len(self) > 1:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
-                raise ValueError(
+                msg = (
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}',
+                    f'scalar bar from one of the following:\n{titles}'
                 )
+                raise ValueError(msg)
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))
 
@@ -198,7 +199,7 @@ class ScalarBars:
         title : str, default: ""
             Title of the scalar bar.  Default is rendered as an empty title.
 
-        mapper : vtkMapper, optional
+        mapper : :vtk:`vtkMapper`, optional
             Mapper used for the scalar bar.  Defaults to the last
             mapper created by the plotter.
 
@@ -322,13 +323,17 @@ class ScalarBars:
 
         Returns
         -------
-        vtk.vtkScalarBarActor
+        :vtk:`vtkScalarBarActor`
             Scalar bar actor.
 
         Notes
         -----
         Setting ``title_font_size``, or ``label_font_size`` disables
         automatic font sizing for both the title and label.
+
+        See Also
+        --------
+        :ref:`scalar_bar_example`
 
         Examples
         --------
@@ -353,7 +358,8 @@ class ScalarBars:
 
         """
         if mapper is None:
-            raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
+            msg = 'Mapper cannot be ``None`` when creating a scalar bar'
+            raise ValueError(msg)
 
         if theme is None:
             theme = pyvista.global_theme
@@ -400,7 +406,8 @@ class ScalarBars:
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
             if not self._plotter._scalar_bar_slots:
-                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+                msg = f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.'
+                raise RuntimeError(msg)
 
             slot = min(self._plotter._scalar_bar_slots)
             self._plotter._scalar_bar_slots.remove(slot)

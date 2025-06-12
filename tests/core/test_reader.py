@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import pickle
 import re
+from typing import TYPE_CHECKING
 
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
+from hypothesis import strategies as st
 import numpy as np
 import pytest
 
@@ -13,6 +17,9 @@ from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.examples.downloads import download_file
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 HAS_IMAGEIO = True
 try:
     import imageio
@@ -20,7 +27,35 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+def test_read_raises():
+    with pytest.raises(
+        ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
+    ):
+        pv.read(Path('foo.vtp'), force_ext='foo', file_format='foo')
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(npoints=st.integers().filter(lambda x: x < 2))
+def test_read_texture_raises(mocker: MockerFixture, npoints):
+    from pyvista.core.utilities import fileio
+
+    m = mocker.patch.object(fileio, 'read')
+    m().n_points = npoints
+
+    m = mocker.patch.object(fileio, '_try_imageio_imread')
+    m.return_value = None
+
+    pv.read_texture(file := Path('foo.vtp'))
+    m.assert_called_once_with(file.expanduser().resolve())
+
+
+@pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
+def test_read_exodus_raises(sideset):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
+    ):
+        pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
 
 
 def test_get_reader_fail(tmp_path):
@@ -280,7 +315,7 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
-def test_dcmreader(tmpdir):
+def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pv.get_reader(directory)
@@ -529,7 +564,7 @@ def test_pvdreader_no_time_group():
         assert dataset.part == i
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
@@ -563,11 +598,8 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
-    # vtk < 9.1.0 does not support
-    if pv.vtk_version_info < (9, 1, 0):
-        pytest.xfail('OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
-
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
     reader.set_active_time_point(1)
@@ -638,8 +670,8 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info > (9, 3),
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 3),
     reason='polyhedra decomposition was removed after 9.3',
 )
 def test_openfoam_decompose_polyhedra():
@@ -993,9 +1025,8 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
 )
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
@@ -1008,12 +1039,11 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3, 0),
-    reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 3, 0, reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.'
 )
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
@@ -1037,9 +1067,8 @@ def test_gambitreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
 )
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
@@ -1073,9 +1102,8 @@ def test_gesignareader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
 )
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
@@ -1268,20 +1296,66 @@ def test_nek5000_reader():
         nek_reader.enable_point_array(name)
         assert nek_reader.point_array_status(name)
 
+    # check default clean grid option
+    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # check default spectral element IDs
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+
     # check read() method produces the correct dataset
+    nek_reader.set_active_time_point(0)
     nek_data = nek_reader.read()
     assert isinstance(nek_data, pv.UnstructuredGrid), 'Check read type is valid'
     assert all(
         key in nek_data.point_data.keys() for key in ['Pressure', 'Velocity', 'Velocity Magnitude']
     )
 
+    # test merge points routines
+    assert nek_data.n_points == 8 * 8 * 16 * 16, 'Check n_points without merging points'
+    assert 'spectral element id' not in nek_data.cell_data
+
+    # check that different arrays are returned when the time is changed
+    # after an initial read() call
+    nek_reader.set_active_time_point(1)
+    nek_data1 = nek_reader.read()
+    for scalar in nek_data.point_data.keys():
+        assert not np.array_equal(nek_data.point_data[scalar], nek_data1.point_data[scalar])
+
+    # Note that for some reason merging points after an initial read()
+    # has no effect so re-creating reader
+    nek_reader = pv.get_reader(filename)
+
+    # check enable merge points
+    nek_reader.enable_merge_points()
+    assert nek_reader.reader.GetCleanGrid() == 1
+
+    # positively check disable merge points
+    nek_reader.disable_merge_points()
+    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # re-enable
+    nek_reader.enable_merge_points()
+
+    # check enabling of spectral element IDs
+    nek_reader.enable_spectral_element_ids()
+    assert nek_reader.reader.GetSpectralElementIds() == 1
+
+    # positively check disable spectral element IDs
+    nek_reader.disable_spectral_element_ids()
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+    nek_reader.enable_spectral_element_ids()
+
+    nek_data = nek_reader.read()
+    assert nek_data.n_points == (7 * 16 + 1) * (7 * 16 + 1), 'Check n_points with merging points'
+    assert 'spectral element id' in nek_data.cell_data
+
 
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
 )
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+@pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
+def test_read_write_pickle(tmp_path, data_object, ext):
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
     new_data_object = pv.read(filepath)
@@ -1302,7 +1376,10 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.read_pickle({})
 
-    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    match = (
+        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
+        "Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 

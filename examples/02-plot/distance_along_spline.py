@@ -1,5 +1,5 @@
 """
-.. _distance_labels_example:
+.. _distance_along_spline_example:
 
 Label based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,7 +39,8 @@ spline.point_data
 # %%
 # Determine the coordinates matching distance along a spline
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Here we write a simple function that gets the closest point matching a distance along a spline and then generate labels for those points.
+# Here we write a simple function that gets the closest point matching a distance along a spline
+# and then generate labels for those points.
 
 
 def get_point_along_spline(distance):

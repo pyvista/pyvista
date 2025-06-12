@@ -1,4 +1,4 @@
-"""Wrapper for vtkProperty."""
+"""Wrapper for :vtk:`vtkProperty`."""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from .opts import InterpolationType
 
 
 @no_new_attr
-class Property(_vtk.vtkProperty):
-    """Wrap vtkProperty and expose it pythonically.
+class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
+    """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.
 
@@ -86,10 +86,14 @@ class Property(_vtk.vtkProperty):
         The solid color to give the edges when ``show_edges=True``.
         Either a string, RGB list, or hex color string.
 
-    render_points_as_spheres : bool, default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+    render_points_as_spheres : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_points_as_spheres`
+
         Render points as spheres rather than dots.
 
-    render_lines_as_tubes : bool, default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+    render_lines_as_tubes : bool, \
+        default: :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`
+
         Show lines as thick tubes rather than flat lines.  Control
         the width with ``line_width``.
 
@@ -248,7 +252,8 @@ class Property(_vtk.vtkProperty):
             import warnings
 
             warnings.warn(
-                '`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+                '`edge_opacity` cannot be used under VTK v9.3.0. '
+                'Try installing VTK v9.3.0 or newer.',
                 UserWarning,
             )
         if edge_opacity is None:
@@ -303,12 +308,13 @@ class Property(_vtk.vtkProperty):
         elif new_style == 'surface':
             self.SetRepresentationToSurface()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
-                '\t"points"\n',
+                '\t"points"\n'
             )
+            raise ValueError(msg)
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
@@ -862,6 +868,11 @@ class Property(_vtk.vtkProperty):
         Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
 
+        See Also
+        --------
+        :ref:`create_truss_example`
+            Example that uses ``render_lines_as_tubes``.
+
         Examples
         --------
         Get the default line rendering and visualize it.
@@ -1030,9 +1041,8 @@ class Property(_vtk.vtkProperty):
             self.FrontfaceCullingOff()
             self.BackfaceCullingOff()
         else:
-            raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"',
-            )
+            msg = f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"'
+            raise ValueError(msg)
 
     @property
     def ambient_color(self) -> Color:  # numpydoc ignore=RT01
@@ -1176,7 +1186,8 @@ class Property(_vtk.vtkProperty):
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         return self.GetAnisotropy()
 
     @anisotropy.setter
@@ -1184,7 +1195,8 @@ class Property(_vtk.vtkProperty):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
 
@@ -1224,7 +1236,7 @@ class Property(_vtk.vtkProperty):
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
         pl.show(before_close_callback=before_close_callback)
 
     def copy(self) -> Property:

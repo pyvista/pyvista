@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
@@ -14,8 +15,13 @@ from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
 
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
-def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
+
+def prepare_smooth_shading(
+    mesh: pyvista.DataSet, scalars, texture, split_sharp_edges, feature_angle, preference
+) -> tuple[pyvista.PolyData, NumpyArray[float]]:
     """Prepare a dataset for smooth shading.
 
     VTK requires datasets with Phong shading to have active normals.
@@ -98,7 +104,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         ind = mesh[indices_array]
         scalars = np.asarray(scalars)[ind]
 
-    return mesh, scalars
+    return mesh, scalars  # type: ignore[return-value]
 
 
 def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):
@@ -159,9 +165,8 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             opacity = opacity_transfer_function(opacity, n_colors)
         else:
             if scalars.shape[0] != opacity.shape[0]:
-                raise ValueError(
-                    'Opacity array and scalars array must have the same number of elements.',
-                )
+                msg = 'Opacity array and scalars array must have the same number of elements.'
+                raise ValueError(msg)
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
@@ -261,9 +266,8 @@ def _common_arg_parser(
         interpolation = theme.lighting_params.interpolation
 
     if 'scalar' in kwargs:
-        raise TypeError(
-            '`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?',
-        )
+        msg = '`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?'
+        raise TypeError(msg)
 
     assert_empty_kwargs(**kwargs)
     return (

@@ -25,17 +25,17 @@ class RenderPasses:
 
     Notes
     -----
-    Passes are organized here as "primary" (vtkOpenGLRenderPass) that act
-    within the renderer and "post-processing" (vtkImageProcessingPass) passes,
+    Passes are organized here as "primary" (:vtk:`vtkOpenGLRenderPass`) that act
+    within the renderer and "post-processing" (:vtk:`vtkImageProcessingPass`) passes,
     which act on the image generated from the renderer.
 
-    The primary passes are added as part of a vtk.vtkRenderPassCollection or
+    The primary passes are added as part of a :vtk:`vtkRenderPassCollection` or
     are "stacked", while the post-processing passes are added as a final pass
     to the rendered image.
 
     Parameters
     ----------
-    renderer : vtk.vtkRenderer
+    renderer : :vtk:`vtkRenderer`
         Renderer to initialize render passes for.
 
     """
@@ -135,7 +135,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkEDLShading
+        :vtk:`vtkEDLShading`
             The enabled EDL pass.
 
         """
@@ -153,13 +153,13 @@ class RenderPasses:
         self._edl_pass = None
 
     def add_blur_pass(self):
-        """Add a vtkGaussianBlurPass pass.
+        """Add a :vtk:`vtkGaussianBlurPass` pass.
 
-        This is a vtkImageProcessingPass and delegates to the last pass.
+        This is a :vtk:`vtkImageProcessingPass` and delegates to the last pass.
 
         Returns
         -------
-        vtk.vtkGaussianBlurPass
+        :vtk:`vtkGaussianBlurPass`
             The added Gaussian blur pass.
 
         """
@@ -169,7 +169,7 @@ class RenderPasses:
         return blur_pass
 
     def remove_blur_pass(self):
-        """Remove a single vtkGaussianBlurPass pass."""
+        """Remove a single :vtk:`vtkGaussianBlurPass` pass."""
         if self._blur_passes:
             # order of the blur passes does not matter
             self._remove_pass(self._blur_passes.pop())
@@ -179,7 +179,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkShadowMapPass
+        :vtk:`vtkShadowMapPass`
             The enabled shadow pass.
 
         """
@@ -211,7 +211,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkDepthOfFieldPass
+        :vtk:`vtkDepthOfFieldPass`
             The enabled depth of field pass.
 
         """
@@ -219,7 +219,8 @@ class RenderPasses:
             return None
 
         if self._ssao_pass is not None:
-            raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
+            msg = 'Depth of field pass is incompatible with the SSAO pass.'
+            raise RuntimeError(msg)
 
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
@@ -249,12 +250,13 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkSSAOPass
+        :vtk:`vtkSSAOPass`
             The enabled screen space ambient occlusion pass.
 
         """
         if self._dof_pass is not None:
-            raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
+            msg = 'SSAO pass is incompatible with the depth of field pass.'
+            raise RuntimeError(msg)
 
         if self._ssao_pass is not None:
             return None
@@ -278,7 +280,7 @@ class RenderPasses:
 
         Returns
         -------
-        vtk.vtkSSAAPass
+        :vtk:`vtkSSAAPass`
             The enabled super-sample anti-aliasing pass.
 
         """
@@ -298,7 +300,8 @@ class RenderPasses:
     def _update_passes(self):
         """Reassemble pass delegation."""
         if self._renderer is None:  # pragma: no cover
-            raise RuntimeError('The renderer has been closed.')
+            msg = 'The renderer has been closed.'
+            raise RuntimeError(msg)
 
         current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:

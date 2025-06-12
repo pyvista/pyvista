@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -21,47 +22,105 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import VTKVersionError
 from pyvista import examples
 from pyvista.core import _vtk_core
+from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 
 
-def test_clip_filter(datasets):
+@pytest.mark.parametrize('return_clipped', [True, False])
+def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     """This tests the clip filter on all datatypes available filters"""
-    for i, dataset in enumerate(datasets):
-        clp = dataset.clip(normal=normals[i], invert=True)
-        assert clp is not None
-        if isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
-        else:
-            assert isinstance(clp, pv.UnstructuredGrid)
+    # Remove None blocks in the root block but keep the none block in the nested MultiBlock
+    multi = multiblock_all_with_nested_and_none
+    for i, block in enumerate(multi):
+        if block is None:
+            del multi[i]
+    assert None not in multi
+    assert None in multi.recursive_iterator()
 
-    # clip with get_clipped=True
-    for i, dataset in enumerate(datasets):
-        clp1, clp2 = dataset.clip(normal=normals[i], invert=True, return_clipped=True)
-        for clp in (clp1, clp2):
+    for dataset in multi:
+        clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
+        assert clips is not None
+
+        if return_clipped:
+            assert isinstance(clips, tuple)
+            assert len(clips) == 2
+        else:
+            assert isinstance(clips, pv.DataObject)
+            # Make dataset iterable
+            clips = [clips]
+
+        for clip in clips:
             if isinstance(dataset, pv.PolyData):
-                assert isinstance(clp, pv.PolyData)
+                assert isinstance(clip, pv.PolyData)
+            elif isinstance(dataset, pv.MultiBlock):
+                assert isinstance(clip, pv.MultiBlock)
+                assert clip.n_blocks == dataset.n_blocks
             else:
-                assert isinstance(clp, pv.UnstructuredGrid)
+                assert isinstance(clip, pv.UnstructuredGrid)
+
+
+def test_clip_filter_normal(datasets):
+    # Test no errors are raised
+    for i, dataset in enumerate(datasets):
+        dataset.clip(normal=normals[i], invert=True)
+
+
+@pytest.mark.parametrize('dataset', [pv.PolyData(), pv.MultiBlock()])
+def test_clip_filter_empty_inputs(dataset):
+    dataset.clip('x')
+
+
+def test_clip_filter_crinkle_disjoint(uniform):
+    def assert_array_names(clipped):
+        assert cell_ids in clipped.array_names
+        assert 'vtkOriginalPointIds' not in clipped.array_names
+        assert 'vtkOriginalCellIds' not in clipped.array_names
 
     # crinkle clip
-    mesh = pv.Wavelet()
-    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
+    cell_ids = 'cell_ids'
+    clp = uniform.clip(normal=(1, 1, 1), crinkle=True)
+    assert_array_names(clp)
+
     assert clp is not None
-    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = uniform.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
-    set_a = set(clp1.cell_data['cell_ids'])
-    set_b = set(clp2.cell_data['cell_ids'])
+    assert_array_names(clp1)
+    assert_array_names(clp2)
+    set_a = set(clp1.cell_data[cell_ids])
+    set_b = set(clp2.cell_data[cell_ids])
     assert set_a.isdisjoint(set_b)
-    assert set_a.union(set_b) == set(range(mesh.n_cells))
+    assert set_a.union(set_b) == set(range(uniform.n_cells))
+
+
+@pytest.mark.parametrize('has_active_scalars', [True, False])
+def test_clip_filter_crinkle_active_scalars(uniform, has_active_scalars):
+    if not has_active_scalars:
+        uniform.set_active_scalars(None)
+        assert uniform.active_scalars is None
+    else:
+        assert uniform.active_scalars is not None
+
+    scalars_before = uniform.active_scalars_name
+    uniform.clip('x', crinkle=True)
+    scalars_after = uniform.active_scalars_name
+    assert scalars_before == scalars_after
 
 
 def test_clip_filter_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.clip(normal=normals[0], invert=False)
     assert output.n_blocks == multiblock_all.n_blocks
+
+
+def test_transform_raises(sphere):
+    matrix = np.diag((1, 1, 1, 0))
+    match = re.escape('Transform element (3,3), the inverse scale term, is zero')
+    with pytest.raises(ValueError, match=match):
+        sphere.transform(matrix, inplace=False)
 
 
 def test_clip_box(datasets):
@@ -444,10 +503,83 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    qual = mesh.compute_cell_quality(progress_bar=True)
-    assert 'CellQuality' in qual.array_names
-    with pytest.raises(KeyError):
-        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        qual = mesh.compute_cell_quality(progress_bar=True)
+        assert 'CellQuality' in qual.array_names
+        with pytest.raises(KeyError):
+            qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+
+
+SHAPE = 'shape'
+CELL_QUALITY = 'CellQuality'
+AREA = 'area'
+VOLUME = 'volume'
+
+
+def test_cell_quality():
+    mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
+    qual = mesh.cell_quality(SHAPE, progress_bar=True)
+    assert SHAPE in qual.array_names
+
+    expected_names = [SHAPE, AREA]
+    qual = mesh.cell_quality(expected_names, progress_bar=True)
+    assert qual.array_names == expected_names
+
+    with pytest.raises(ValueError, match="quality_measure 'foo' is not valid"):
+        mesh.cell_quality(quality_measure='foo', progress_bar=True)
+
+
+def test_cell_quality_measures(ant):
+    # Get quality measures from type hints
+    hinted_measures = list(get_args(_CellQualityLiteral))
+    if pv.vtk_version_info < (9, 2):
+        # This measure was removed from VTK's API
+        hinted_measures.insert(1, 'aspect_beta')
+
+    # Get quality measures from the VTK class
+    actual_measures = list(_get_cell_quality_measures().keys())
+    msg = 'VTK API has changed. Update type hints and docstring for `cell_quality`.'
+    assert actual_measures == hinted_measures, msg
+
+    # Test 'all' measure keys
+    qual = ant.cell_quality('all')
+    assert qual.array_names == actual_measures
+
+
+@pytest.mark.parametrize(
+    'cell_mesh',
+    [
+        examples.cells.Triangle(),
+        examples.cells.Quadrilateral(),
+        examples.cells.Hexahedron(),
+        examples.cells.Tetrahedron(),
+    ],
+)
+@pytest.mark.parametrize('measure', ['relative_size_squared', 'shape_and_size'])
+def test_cell_quality_size_measures(cell_mesh, measure):
+    quality = cell_mesh.cell_quality(measure)
+    assert np.isclose(quality[measure][0], 1.0)
+
+
+def test_cell_quality_all_valid(ant):
+    qual = ant.cell_quality('all_valid')
+    assert AREA in qual.array_names
+    assert SHAPE in qual.array_names
+    assert VOLUME not in qual.array_names
+
+
+def test_cell_quality_composite(multiblock_all_with_nested_and_none):
+    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+    for block in qual.recursive_iterator(skip_none=True):
+        assert SHAPE in block.array_names
+
+
+def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
+    iter_in = multiblock_all_with_nested_and_none.recursive_iterator()
+    qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
+    iter_out = qual.recursive_iterator()
+    for block_in, block_out in zip(iter_in, iter_out):
+        assert type(block_in) is type(block_out)
 
 
 @pytest.mark.parametrize(
@@ -629,7 +761,10 @@ def test_transform_imagedata_warns_with_shear(uniform):
 
 
 def test_transform_filter_inplace_default_warns(cube):
-    expected_msg = 'The default value of `inplace` for the filter `PolyData.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `PolyData.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = cube.transform(np.eye(4))
 
@@ -772,7 +907,7 @@ def test_translate_should_not_fail_given_none(grid):
     assert grid.bounds == bounds
 
 
-def test_translate_should_fail_bad_points_or_transform(grid):
+def test_translate_should_fail_bad_points_or_transform():
     points = np.random.default_rng().random((10, 2))
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))

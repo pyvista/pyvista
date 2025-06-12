@@ -97,16 +97,20 @@ class CompositeFilters(DataObjectFilters):
         >>> unstructured = examples.load_tetbeam()
         >>> multi = pv.MultiBlock([volume, poly, unstructured])
 
-        >>> type(multi[0]), type(multi[1]), type(multi[2])
-        (<class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+        >>> [type(block) for block in multi]  # doctest: +NORMALIZE_WHITESPACE
+        [<class 'pyvista.core.grid.ImageData'>,
+         <class 'pyvista.core.pointset.PolyData'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>]
 
         Use the generic filter to apply :meth:`~pyvista.DataSet.cast_to_unstructured_grid`
         to all blocks.
 
         >>> filtered = multi.generic_filter('cast_to_unstructured_grid')
 
-        >>> type(filtered[0]), type(filtered[1]), type(filtered[2])
-        (<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+        >>> [type(block) for block in filtered]  # doctest: +NORMALIZE_WHITESPACE
+        [<class 'pyvista.core.pointset.UnstructuredGrid'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>]
 
         Use the :meth:`~pyvista.DataSetFilters.partition` filter on all blocks.
         Any arguments can be specified as though the filter is being used directly.
@@ -142,7 +146,8 @@ class CompositeFilters(DataObjectFilters):
         :class:`~pyvista.ImageData`.
 
         >>> multi.generic_filter('resample', 0.5)  # doctest:+SKIP
-        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type PolyData.
+        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with
+        name 'Block-01' and type PolyData.
 
         Use a custom function instead to apply the generic filter conditionally. Here we
         filter the image blocks but simply pass-through a copy of any other blocks.
@@ -186,10 +191,11 @@ class CompositeFilters(DataObjectFilters):
                     nested = ' '
                 else:
                     nested = ' nested '
-                    index = ''.join([f'[{id_}]' for id_ in ids_])
+                    index = _format_nested_index(ids)
                 msg = (
                     f"The filter '{func_name}'\n"
-                    f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                    f'could not be applied to the{nested}block at index {index} with '
+                    f"name '{name_}' and type {obj_name}."
                 )
                 raise RuntimeError(msg) from e
             return output_
@@ -275,13 +281,16 @@ class CompositeFilters(DataObjectFilters):
         """
         alg = _vtk.vtkAppendFilter()
         for block in self:  # type: ignore[attr-defined]
-            if isinstance(block, _vtk.vtkMultiBlockDataSet):
-                block = CompositeFilters.combine(
+            single_block = (
+                CompositeFilters.combine(
                     block,  # type: ignore[arg-type]
                     merge_points=merge_points,
                     tolerance=tolerance,
                 )
-            alg.AddInputData(block)
+                if isinstance(block, _vtk.vtkMultiBlockDataSet)
+                else block
+            )
+            alg.AddInputData(single_block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
         alg.Update()
@@ -364,10 +373,11 @@ class CompositeFilters(DataObjectFilters):
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
-            raise RuntimeError(
+            msg = (
                 'This multiblock contains non-PolyData datasets. Convert all the '
-                'datasets to PolyData with `as_polydata`',
+                'datasets to PolyData with `as_polydata`'
             )
+            raise RuntimeError(msg)
 
         # track original point indices
         if split_vertices and track_vertices:
@@ -387,3 +397,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+
+def _format_nested_index(index: tuple[int, ...]) -> str:
+    return ''.join([f'[{ind}]' for ind in index])

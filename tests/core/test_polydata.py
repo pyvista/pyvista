@@ -97,11 +97,18 @@ def test_init_from_arrays(faces_is_cell_array):
 
 @pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
-    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]])
+    vertices = np.array(
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]]
+    )
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]],  # [quad, triangle, triangle, vertex]
+        [
+            [4, 0, 1, 2, 3],
+            [3, 0, 1, 4],
+            [3, 1, 2, 4],
+            [1, 5],
+        ],  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
     if faces_is_cell_array:
         faces = pv.CellArray(faces)
@@ -550,8 +557,11 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_main_has_priority(input_):
+@pytest.mark.parametrize(
+    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
+)
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
@@ -571,13 +581,27 @@ def test_merge_main_has_priority(input_):
             for j in (this.points == point).all(-1).nonzero()
         )
 
-    merged = mesh.merge(other, main_has_priority=True)
-    assert matching_point_data(merged, mesh, 'present_in_both')
+    merged = mesh.merge(other, main_has_priority=main_has_priority)
+    expected_to_match = mesh if main_has_priority else other
+    assert matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
-    merged = mesh.merge(other, main_has_priority=False)
-    assert matching_point_data(merged, other, 'present_in_both')
-    assert merged.active_scalars_name == 'present_in_both'
+
+@pytest.mark.parametrize('main_has_priority', [True, False])
+@pytest.mark.parametrize('mesh', [pv.UnstructuredGrid(), pv.PolyData()])
+def test_merge_field_data(mesh, main_has_priority):
+    key = 'data'
+    data_main = [1, 2, 3]
+    data_other = [4, 5, 6]
+    mesh.field_data[key] = data_main
+    other = mesh.copy()
+    other.field_data[key] = data_other
+
+    merged = mesh.merge(other, main_has_priority=main_has_priority)
+
+    actual = merged.field_data[key]
+    expected = data_main if main_has_priority else data_other
+    assert np.array_equal(actual, expected)
 
 
 def test_add(sphere, sphere_shifted):
@@ -682,6 +706,24 @@ def test_triangulate_filter(plane):
     assert not plane.extract_all_edges().is_all_triangles
 
 
+@pytest.mark.parametrize('pass_lines', [True, False])
+def test_triangulate_filter_pass_lines(sphere: pv.PolyData, plane: pv.PolyData, pass_lines: bool):
+    merge: pv.PolyData = plane + (lines := sphere.extract_all_edges())
+    tri: pv.PolyData = merge.triangulate(pass_lines=pass_lines, inplace=False)
+
+    assert tri.n_lines == (lines.n_cells if pass_lines else 0)
+    assert tri.is_all_triangles if not pass_lines else (not tri.is_all_triangles)
+
+
+@pytest.mark.parametrize('pass_verts', [True, False])
+def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
+    merge: pv.PolyData = plane + (verts := pv.PolyData([0.0, 1.0, 2.0]))
+    tri: pv.PolyData = merge.triangulate(pass_verts=pass_verts, inplace=False)
+
+    assert tri.n_verts == (verts.n_cells if pass_verts else 0)
+    assert tri.is_all_triangles if not pass_verts else (not tri.is_all_triangles)
+
+
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
@@ -764,8 +806,8 @@ def test_compute_normals(sphere):
 
 def test_compute_normals_raises(sphere):
     msg = (
-        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
-        'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
+        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)'
+        '\nand/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
     )
 
     point_cloud = pv.PolyData(sphere.points)
@@ -877,7 +919,13 @@ def test_clip_plane(sphere):
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False, progress_bar=True)
+    sphere.clip(
+        origin=[0, 0, 0],
+        normal=[0, 0, -1],
+        inplace=True,
+        invert=False,
+        progress_bar=True,
+    )
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
@@ -1113,7 +1161,9 @@ def test_is_all_triangles():
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
     # mesh faces
-    faces = np.hstack([[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]])  # [square, triangle, triangle]
+    faces = np.hstack(
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]
+    )  # [square, triangle, triangle]
 
     mesh = pv.PolyData(vertices, faces)
     assert not mesh.is_all_triangles
@@ -1206,12 +1256,14 @@ def default_n_faces():
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
-def test_n_faces(default_n_faces):
+def test_n_faces():
     if pv._version.version_info[:2] > (0, 46):
-        raise RuntimeError('Convert non-strict n_faces use to error')
+        msg = 'Convert non-strict n_faces use to error'
+        raise RuntimeError(msg)
 
     if pv._version.version_info[:2] > (0, 49):
-        raise RuntimeError('Convert default n_faces behavior to strict')
+        msg = 'Convert default n_faces behavior to strict'
+        raise RuntimeError(msg)
 
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1234,7 +1286,7 @@ def test_n_faces(default_n_faces):
     assert nf1 == nf
 
 
-def test_opt_in_n_faces_strict(default_n_faces):
+def test_opt_in_n_faces_strict():
     pv.PolyData.use_strict_n_faces(True)
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1335,9 +1387,11 @@ def test_n_faces_etc_deprecated(cells: str):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
+            msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
+            msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

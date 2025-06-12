@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkRenderer."""
+"""Module containing pyvista implementation of :vtk:`vtkRenderer`."""
 
 from __future__ import annotations
 
@@ -43,7 +43,8 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
-    from ..core.pointset import PolyData
+    from pyvista.core.pointset import PolyData
+
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 
@@ -85,7 +86,8 @@ def map_loc_to_pos(loc, size, border=0.05):
 
     """
     if not isinstance(size, Sequence) or len(size) != 2:
-        raise ValueError(f'`size` must be a list of length 2. Passed value is {size}')
+        msg = f'`size` must be a list of length 2. Passed value is {size}'
+        raise ValueError(msg)
 
     if 'right' in loc:
         x = 1 - size[1] - border
@@ -125,10 +127,31 @@ def make_legend_face(face) -> PolyData:
         If the provided face value is invalid.
 
     """
+
+    def normalize(poly):
+        norm_poly = poly.copy()  # Avoid mutating input
+
+        # Center data
+        norm_poly.points -= np.array(norm_poly.center)
+
+        # Scale so max bounds are [-0.5, 0.5] along x and y axes
+        bnds = norm_poly.bounds
+        size = np.array(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        )
+        size[size < 1e-8] = 1  # Avoid division by zero
+        max_xy_size = max(size[0:2])
+        norm_poly.scale(1 / max_xy_size, inplace=True)
+
+        # Add final offset to align the symbol with the adjacent text
+        y_offset = 0.6  # determined experimentally
+        norm_poly.points += (0, y_offset, 0)
+        return norm_poly
+
     if face is None or face == 'none':
         legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
     elif face in ['-', 'line']:
-        legendface = _line_for_legend()
+        legendface = pyvista.Rectangle().scale((1, 0.2, 1))
     elif face in ['^', 'triangle']:
         legendface = pyvista.Triangle()
     elif face in ['o', 'circle']:
@@ -138,14 +161,24 @@ def make_legend_face(face) -> PolyData:
     elif isinstance(face, pyvista.PolyData):
         legendface = face
     else:
-        raise ValueError(
+        msg = (
             f'Invalid face "{face}".  Must be one of the following:\n'
             '\t"triangle"\n'
             '\t"circle"\n'
             '\t"rectangle"\n'
             '\t"none"\n'
-            '\tpyvista.PolyData',
+            '\tpyvista.PolyData'
         )
+        raise ValueError(msg)
+
+    # Normalize the geometry
+    legendface = normalize(legendface)
+
+    # Add points to each corner of the normalized geom to define the full extent of the geometry.
+    # This is needed for asymmetric shapes (like a line) because otherwise the legend actor
+    # will do its own scaling and skew the shape
+    rect = normalize(pyvista.Rectangle())
+    legendface.points = np.append(legendface.points, rect.points, axis=0)  # type: ignore[assignment]
     return legendface
 
 
@@ -264,7 +297,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.vtkOpenGLRenderer):
+class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -337,7 +370,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def set_color_cycler(self, color_cycler) -> None:
         """Set or reset this renderer's color cycler.
 
-        This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
+        This color cycler is iterated over by each sequential :meth:`~pyvista.Plotter.add_mesh`
         call to set the default color of the dataset being plotted.
 
         When setting, the value must be either a list of color-like objects,
@@ -346,15 +379,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             * ``'default'`` - Use the default color cycler (matches matplotlib's default)
             * ``'matplotlib`` - Dynamically get matplotlib's current theme's color cycler.
-            * ``'all'`` - Cycle through all of the available colors in ``pyvista.plotting.colors.hexcolors``
+            * ``'all'`` - Cycle through all of the available colors in
+              ``pyvista.plotting.colors.hexcolors``
 
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
 
         .. note::
-            If a mesh has scalar data, set ``color=True`` in the call to :meth:`~pyvista.Plotter.add_mesh`
-            to color the mesh with the next color in the cycler. Otherwise the mesh's
-            scalars are used to color the mesh by default.
+            If a mesh has scalar data, set ``color=True`` in the call to
+            :meth:`~pyvista.Plotter.add_mesh` to color the mesh with the
+            next color in the cycler. Otherwise, the mesh's scalars are used
+            to color the mesh by default.
 
         Parameters
         ----------
@@ -430,11 +465,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
             if camera_location not in self.CAMERA_STR_ATTR_MAP:
-                raise InvalidCameraError(
+                msg = (
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
-                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}',
+                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
                 )
+                raise InvalidCameraError(msg)
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
@@ -485,8 +521,78 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of all actors present in the rendering window."""
+        """Return the bounds of all VISIBLE actors present in the rendering window.
+
+        Actors with :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled are `not` included in the bounds.
+
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
+
+        """
+        bounds = self.ComputeVisiblePropBounds()
+        return _fixup_bounds(bounds)
+
+    def compute_bounds(
+        self,
+        *,
+        force_visibility: bool = False,
+        force_use_bounds: bool = False,
+        ignore_actors: Sequence[str | _vtk.vtkProp | type[_vtk.vtkProp]] | None = None,
+    ) -> BoundsTuple:
+        """Return the bounds of actors present in the renderer.
+
+        By default, only visible actors are included in the bounds computation.
+        Optionally, the bounds of all actors may be computed, regardless if they
+        have their :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled. Specific actors may also be removed from the computation.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        force_visibility : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.visibility` disabled in the
+            computation. By default, invisible actors are excluded.
+
+        force_use_bounds : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.use_bounds` disabled in the
+            computation. By default, actors with use bounds disabled are excluded.
+
+        ignore_actors : sequence[str | :vtk:`vtkProp` | type[:vtk:`vtkProp`]]
+            List of actors to ignore. The bounds of any actors included will be ignored.
+            Specify actors by name, type, or by instance.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of selected actors in the active renderer.
+
+        See Also
+        --------
+        bounds
+            Bounds of all specified actors.
+
+        """
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        if ignore_actors is None:
+            ignore_actors = []
+
+        ignored_types = [
+            actor_type for actor_type in ignore_actors if isinstance(actor_type, type)
+        ]
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
@@ -496,21 +602,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for ax in range(3):
                 update_axis(ax)
 
-        for actor in self._actors:
-            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+        for name, actor in self._actors.items():
+            if not actor.GetUseBounds() and not force_use_bounds:
                 continue
-            if (
-                hasattr(actor, 'GetBounds')
-                and actor.GetBounds() is not None
-                and id(actor) != id(self.bounding_box_actor)
+            if not actor.GetVisibility() and not force_visibility:
+                continue
+            if (  # Check if the actor should be ignored
+                name in ignore_actors
+                or actor in ignore_actors
+                or any(isinstance(actor, actor_type) for actor_type in ignored_types)
             ):
-                _update_bounds(actor.GetBounds())
+                continue
+            if hasattr(actor, 'GetBounds') and (actor_bounds := actor.GetBounds()) is not None:
+                _update_bounds(actor_bounds)
 
-        if np.any(np.abs(the_bounds)):
-            the_bounds[the_bounds == np.inf] = -1.0
-            the_bounds[the_bounds == -np.inf] = 1.0
-
-        return BoundsTuple(*the_bounds.tolist())
+        return _fixup_bounds(the_bounds)
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -608,7 +714,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if not isinstance(aa_type, str):
-            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+            msg = f'`aa_type` must be a string, not {type(aa_type)}'
+            raise TypeError(msg)
         aa_type = aa_type.lower()
 
         if aa_type == 'fxaa':
@@ -627,7 +734,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._render_passes.enable_ssaa_pass()
 
         else:
-            raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
+            msg = f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"'
+            raise ValueError(msg)
 
     def disable_anti_aliasing(self) -> None:
         """Disable all anti-aliasing."""
@@ -658,7 +766,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor2D
+        :vtk:`vtkActor2D`
             Border actor.
 
         """
@@ -731,9 +839,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
 
-            raise VTKVersionError(
-                'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.',
-            )
+            msg = 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
@@ -814,11 +921,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if self.has_charts:
-            cast(Charts, self._charts).remove_chart(chart_or_index)
+            cast('Charts', self._charts).remove_chart(chart_or_index)
 
     @property
-    def actors(self):  # numpydoc ignore=RT01
-        """Return a dictionary of actors assigned to this renderer."""
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
+        """Return a dictionary of actors assigned to this renderer.
+
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
+
+        """
         return dict(self._actors.items())
 
     def add_actor(
@@ -837,8 +952,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor | vtk.vtkMapper | pyvista.Actor
-            The actor to be added. Can be either ``vtkActor`` or ``vtkMapper``.
+        actor : :vtk:`vtkActor` | :vtk:`vtkMapper` | Actor
+            The actor to be added. Can be either :vtk:`vtkActor` or :vtk:`vtkMapper`.
 
         reset_camera : bool, default: False
             Resets the camera when ``True``.
@@ -866,7 +981,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        actor : vtk.vtkActor or pyvista.Actor
+        actor : :vtk:`vtkActor` | Actor
             The actor.
 
         actor_properties : vtk.Properties
@@ -912,7 +1027,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 with contextlib.suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
             else:
-                raise ValueError(f'Culling option ({culling}) not understood.')
+                msg = f'Culling option ({culling}) not understood.'
+                raise ValueError(msg)
 
         self.Modified()
 
@@ -963,8 +1079,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        :vtk:`vtkAxesActor`
             Actor of the axes.
+
+        See Also
+        --------
+        add_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -991,6 +1114,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return self._marker_actor
 
+    def _delete_axes_widget(self):
+        """Remove and delete the current axes widget."""
+        if hasattr(self, 'axes_widget'):
+            self.axes_actor = None
+            # HACK: set the viewport to a tiny value to hide the widget first
+            # This is due to an issue with a blue box appearing after removal
+            # Tracked in https://gitlab.kitware.com/vtk/vtk/-/issues/19592
+            self.axes_widget.SetViewport(0.0, 0.0, 0.0001, 0.0001)
+            if self.axes_widget.GetEnabled():
+                self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
+
     def add_orientation_widget(
         self,
         actor,
@@ -1005,7 +1141,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : vtk.vtkActor | pyvista.DataSet
+        actor : :vtk:`vtkActor` | DataSet
             The mesh or actor to use as the marker.
 
         interactive : bool, optional
@@ -1026,13 +1162,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkOrientationMarkerWidget
+        :vtk:`vtkOrientationMarkerWidget`
             Orientation marker widget.
 
         See Also
         --------
         add_axes
-            Add an axes orientation widget.
+            Add arrow-style axes as an orientation widget.
+
+        add_box_axes
+            Add an axes box as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1054,11 +1199,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        if hasattr(self, 'axes_widget'):
-            # Delete the old one
-            self.axes_widget.EnabledOff()  # type: ignore[has-type]
-            self.Modified()
-            del self.axes_widget  # type: ignore[has-type]
+        self._delete_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -1148,7 +1289,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         AxesActor
             Axes actor of the added widget.
 
-
         See Also
         --------
         show_axes
@@ -1156,6 +1296,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         add_axes_at_origin
             Add an :class:`pyvista.AxesActor` to the origin of a scene.
+
+        add_box_axes
+            Add an axes box as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        add_orientation_widget
+            Add any actor as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1185,10 +1337,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self._delete_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1273,8 +1422,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkOrientationMarkerWidget
+        :vtk:`vtkOrientationMarkerWidget`
             Orientation marker widget.
+
+        See Also
+        --------
+        add_axes
+            Add arrow-style axes as an orientation widget.
+
+        add_box_axes
+            Add an axes box as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1391,8 +1554,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAnnotatedCubeActor
+        :vtk:`vtkAnnotatedCubeActor`
             Axes actor.
+
+        See Also
+        --------
+        add_axes
+            Add arrow-style axes as an orientation widget.
+
+        add_north_arrow_widget
+            Add north arrow as an orientation widget.
+
+        add_orientation_widget
+            Add any actor as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------
@@ -1407,10 +1584,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-            self.Modified()
-            del self.axes_widget
+        self._delete_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -1680,7 +1854,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             annotations. Defaults no padding.
 
         use_3d_text : bool, default: True
-            Use ``vtkTextActor3D`` for titles and labels.
+            Use :vtk:`vtkTextActor3D` for titles and labels.
 
         render : bool, optional
             If the render window is being shown, trigger a render
@@ -1693,6 +1867,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         -------
         pyvista.CubeAxesActor
             Bounds actor.
+
+        See Also
+        --------
+        show_grid
+        remove_bounds_axes
+        update_bounds_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+        :ref:`bounds_example`
+            Additional examples using this method.
 
         Examples
         --------
@@ -1815,7 +2000,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if grid:
             grid = 'back' if grid is True else grid
             if not isinstance(grid, str):
-                raise TypeError(f'`grid` must be a str, not {type(grid)}')
+                msg = f'`grid` must be a str, not {type(grid)}'
+                raise TypeError(msg)
             grid = grid.lower()
             if grid in ('front', 'frontface'):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
@@ -1824,7 +2010,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             elif grid in ('back', True):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
             else:
-                raise ValueError(f'`grid` must be either "front", "back, or, "all", not {grid}')
+                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
+                raise ValueError(msg)
             # Only show user desired grid lines
             cube_axes_actor.SetDrawXGridlines(show_xaxis)
             cube_axes_actor.SetDrawYGridlines(show_yaxis)
@@ -1847,12 +2034,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             elif location in ('furthest', 'back'):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError(
+                msg = (
                     f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".',
+                    ' "outer", "default", "closest", "front", "furthest", or "back".'
                 )
+                raise ValueError(msg)
         elif location is not None:
-            raise TypeError('location must be a string')
+            msg = 'location must be a string'
+            raise TypeError(msg)
 
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
@@ -1869,7 +2058,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 bounds[::2] -= cushion
                 bounds[1::2] += cushion
         else:
-            raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
+            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
+            raise ValueError(msg)
         cube_axes_actor.bounds = bounds
 
         # set axes ranges if input
@@ -1877,16 +2067,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if isinstance(axes_ranges, (Sequence, np.ndarray)):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
-                raise TypeError('Input axes_ranges must be a numeric sequence.')
+                msg = 'Input axes_ranges must be a numeric sequence.'
+                raise TypeError(msg)
 
             if not np.issubdtype(axes_ranges.dtype, np.number):
-                raise TypeError('All of the elements of axes_ranges must be numbers.')
+                msg = 'All of the elements of axes_ranges must be numbers.'
+                raise TypeError(msg)
 
             # set the axes ranges
             if axes_ranges.shape != (6,):
-                raise ValueError(
-                    '`axes_ranges` must be passed as a (x_min, x_max, y_min, y_max, z_min, z_max) sequence.',
+                msg = (
+                    '`axes_ranges` must be passed as a '
+                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
                 )
+                raise ValueError(msg)
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
             cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
@@ -1958,6 +2152,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         -------
         pyvista.CubeAxesActor
             Bounds actor.
+
+        See Also
+        --------
+        show_bounds
+        remove_bounds_axes
+        update_bounds_axes
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+        :ref:`bounds_example`
+            Additional examples using this method.
 
         Examples
         --------
@@ -2056,7 +2261,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the bounding box.
 
         See Also
@@ -2196,7 +2401,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the floor.
 
         Examples
@@ -2248,7 +2453,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             i_size = ranges[2]
             j_size = ranges[1]
         else:
-            raise NotImplementedError(f'Face ({face}) not implemented')
+            msg = f'Face ({face}) not implemented'
+            raise NotImplementedError(msg)
         floor = pyvista.Plane(
             center=center,
             direction=normal,
@@ -2352,7 +2558,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        light : vtk.vtkLight or pyvista.Light
+        light : :vtk:`vtkLight` | Light
             Light to add.
 
         """
@@ -2361,7 +2567,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             light = pyvista.Light.from_vtk(light)
 
         if not isinstance(light, pyvista.Light):
-            raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
+            msg = f'Expected Light instance, got {type(light).__name__} instead.'
+            raise TypeError(msg)
         self._lights.append(light)
         self.AddLight(light)
         self.Modified()
@@ -2407,7 +2614,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.Modified()
 
     def clear(self) -> None:
-        """Remove all actors and properties."""
+        """Remove all actors and properties.
+
+        See Also
+        --------
+        :ref:`clear_example`
+
+        """
         self.clear_actors()
         if self._charts is not None:
             self._charts.deep_clean()
@@ -2614,9 +2827,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        actor : str, vtk.vtkActor, list or tuple
+        actor : str | :vtk:`vtkActor` | list | tuple
             If the type is ``str``, removes the previously added actor
-            with the given name. If the type is ``vtk.vtkActor``,
+            with the given name. If the type is :vtk:`vtkActor`,
             removes the actor if it's previously added to the
             Renderer. If ``list`` or ``tuple``, removes iteratively
             each actor.
@@ -3122,7 +3335,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blur_example` for a full example using this method.
+        See :ref:`blurring_example` for a full example using this method.
 
         """
         self._render_passes.add_blur_pass()
@@ -3204,7 +3417,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkOpenGLRenderer
+        :vtk:`vtkOpenGLRenderer`
             VTK renderer with eye dome lighting pass.
 
         Examples
@@ -3300,6 +3513,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
 
+        See Also
+        --------
+        :ref:`ssao_example`
+
         Examples
         --------
         Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
@@ -3386,12 +3603,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (9, 3):  # pragma: no cover
+        if not (right is side is corner is None) and vtk_version_info < (
+            9,
+            3,
+        ):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+            msg = (
+                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
+                'Try installing VTK v9.3.0 or newer.'
             )
+            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3399,7 +3621,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             or (side is not None and top is right is corner is None)
             or (corner is not None and top is right is side is None)
         ):  # pragma: no cover
-            raise ValueError('You can only set one argument in top, right, side, corner.')
+            msg = 'You can only set one argument in top, right, side, corner.'
+            raise ValueError(msg)
         if top is not None:
             self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
@@ -3423,14 +3646,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture, is_srgb=False) -> None:
+    def set_environment_texture(
+        self, texture, is_srgb=False, resample: bool | float | None = None
+    ) -> None:
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
         it is not a cubemap, the texture is supposed to represent an
         equirectangular projection. If used with raytracing backends,
         the texture must be an equirectangular projection and must be
-        constructed with a valid ``vtk.vtkImageData``.
+        constructed with a valid :vtk:`vtkImageData`.
 
         Parameters
         ----------
@@ -3441,6 +3666,24 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the texture is in sRGB color space, set the color flag on the
             texture or set this parameter to ``True``. Textures are assumed
             to be in linear color space by default.
+
+        resample : bool | float, optional
+            Resample the environment texture. Set this to a float to set the
+            sampling rate explicitly or set to ``True`` to downsample the
+            texture to 1/16th of its original resolution. By default, the
+            theme value for ``resample_environment_texture`` is used, which
+            is ``False`` for the standard theme.
+
+            Downsampling the texture can substantially improve performance for
+            some environments, e.g. headless setups or if GPU support is limited.
+
+            .. note::
+
+                This will resample the texture used for image-based lighting only,
+                e.g. the texture used for rendering reflective surfaces. It
+                does `not` resample the background texture.
+
+            .. versionadded:: 0.45
 
         Examples
         --------
@@ -3467,7 +3710,30 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
-        self.SetEnvironmentTexture(texture, is_srgb)
+
+        if resample is None:
+            resample = pyvista.global_theme.resample_environment_texture
+
+        if resample:
+            resample = 1 / 16 if resample is True else resample
+
+            # Copy the texture
+            # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
+            texture_copy = pyvista.Texture()  # type: ignore[abstract]
+            texture_copy.cube_map = texture.cube_map
+            texture_copy.SetMipmap(texture.GetMipmap())
+            texture_copy.SetInterpolate(texture.GetInterpolate())
+
+            # Resample the texture's images
+            for i in range(6 if texture_copy.cube_map else 1):
+                texture_copy.SetInputDataObject(
+                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
+                )
+            self.SetEnvironmentTexture(texture_copy, is_srgb)
+        else:
+            self.SetEnvironmentTexture(texture, is_srgb)
+
+        self.SetBackgroundTexture(texture)
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3488,15 +3754,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.UseImageBasedLightingOff()
         self.SetEnvironmentTexture(None)
+        self.SetBackgroundTexture(None)  # type: ignore[arg-type]
         self.Modified()
 
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        if hasattr(self, 'axes_widget'):
-            self.hide_axes()  # Necessary to avoid segfault
-            self.axes_actor = None
-            del self.axes_widget
+        self._delete_axes_widget()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -3642,15 +3906,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Parameters
         ----------
-        labels : list, optional
+        labels : list | dict, optional
             When set to ``None``, uses existing labels as specified by
 
             - :func:`add_mesh <Plotter.add_mesh>`
             - :func:`add_lines <Plotter.add_lines>`
             - :func:`add_points <Plotter.add_points>`
 
-            List containing one entry for each item to be added to the
-            legend. Each entry can contain one of the following:
+            For dict inputs, the keys are used as labels and the values are used
+            as the colors. Labels must be strings, and colors can be any
+            :class:`~pyvista.ColorLike`.
+
+            For list inputs, the list must contain one entry for each item to
+            be added to the legend. Each entry can contain one of the following:
 
             * Two strings ([label, color]), where ``label`` is the name of the
               item to add, and ``color`` is the color of the label to add.
@@ -3726,8 +3994,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkLegendBoxActor
+        :vtk:`vtkLegendBoxActor`
             Actor for the legend.
+
+        See Also
+        --------
+        :ref:`legend_example`
 
         Examples
         --------
@@ -3743,7 +4015,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()
 
-        Alternatively provide labels in the plotter.
+        Alternatively provide labels in the plotter as a list.
 
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
@@ -3754,6 +4026,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = plotter.add_legend(legend_entries)
         >>> plotter.show()
 
+        Or use a dictionary to define them.
+
+        >>> labels = {'Grey Stuff': 'grey', 'Red Stuff': 'red'}
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True)
+        >>> _ = plotter.add_mesh(cube, 'red')
+        >>> _ = plotter.add_legend(labels, face='rectangle')
+        >>> plotter.show()
+
         """
         if self.legend is not None:
             self.remove_legend()
@@ -3762,21 +4043,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise ValueError(
+                msg = (
                     'No labels input.\n\n'
                     'Add labels to individual items when adding them to'
                     'the plotting object with the "label=" parameter.  '
-                    'or enter them as the "labels" parameter.',
+                    'or enter them as the "labels" parameter.'
                 )
+                raise ValueError(msg)
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is not None:
-                    vtk_object = make_legend_face(face)
-                self._legend.SetEntry(i, vtk_object, text, list(color.float_rgb))
+                vtk_object_input = make_legend_face(face) if face is not None else vtk_object
+                self._legend.SetEntry(i, vtk_object_input, text, list(color.float_rgb))
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
+
+            if isinstance(labels, dict):
+                face = 'triangle' if face is None else face
+                labels = list(labels.items())
 
             for i, args in enumerate(labels):
                 face_ = None
@@ -3810,17 +4095,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         color = None
 
                 else:
-                    raise ValueError(
-                        f'The object passed to the legend ({type(args)}) is not valid.',
-                    )
+                    msg = f'The object passed to the legend ({type(args)}) is not valid.'
+                    raise TypeError(msg)
 
                 legend_face = make_legend_face(face_ or face)
-                self._legend.SetEntry(i, legend_face, text, list(Color(color).float_rgb))
+                self._legend.SetEntry(i, legend_face, str(text), list(Color(color).float_rgb))
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
                 allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
-                raise ValueError(f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}')
+                msg = f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
+                raise ValueError(msg)
             x, y, size = map_loc_to_pos(loc, size, border=0.05)
             self._legend.SetPosition(x, y)
             self._legend.SetPosition2(size[0], size[1])
@@ -3969,7 +4254,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
+        :vtk:`vtkActor`
             VTK actor of the ruler.
 
         Examples
@@ -4149,8 +4434,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkActor
-            The actor for the added ``vtkLegendScaleActor``.
+        :vtk:`vtkActor`
+            The actor for the added :vtk:`vtkLegendScaleActor`.
 
         Warnings
         --------
@@ -4176,7 +4461,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
         if xy_label_mode:
-            legend_scale.SetLabelModeToXYCoordinates()
+            if pyvista.vtk_version_info >= (9, 4):
+                legend_scale.SetLabelModeToCoordinates()
+            else:
+                legend_scale.SetLabelModeToXYCoordinates()
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
@@ -4223,20 +4511,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
 
-def _line_for_legend():
-    """Create a simple line-like rectangle for the legend."""
-    points = [
-        [0, 0, 0],
-        [0.4, 0, 0],
-        [0.4, 0.07, 0],
-        [0, 0.07, 0],
-        [
-            0.5,
-            0,
-            0,
-        ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
-    ]
-    legendface = pyvista.PolyData()
-    legendface.points = np.array(points)  # type: ignore[assignment]
-    legendface.faces = [4, 0, 1, 2, 3]  # type: ignore[assignment]
-    return legendface
+def _fixup_bounds(bounds) -> BoundsTuple:
+    the_bounds = np.asarray(bounds)
+    if np.any(the_bounds[::2] > the_bounds[1::2]):
+        the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    return BoundsTuple(*the_bounds.tolist())

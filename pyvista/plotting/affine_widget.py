@@ -35,11 +35,13 @@ def _validate_axes(axes):
     """
     axes = np.array(axes)
     if axes.shape != (3, 3):
-        raise ValueError('`axes` must be a (3, 3) array.')
+        msg = '`axes` must be a (3, 3) array.'
+        raise ValueError(msg)
 
     axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
     if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
-        raise ValueError('`axes` do not follow the right hand rule.')
+        msg = '`axes` do not follow the right hand rule.'
+        raise ValueError(msg)
 
     return axes
 
@@ -47,7 +49,8 @@ def _validate_axes(axes):
 def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
     if func and not callable(func):
-        raise TypeError(f'`{name}` must be a callable, not {type(func)}.')
+        msg = f'`{name}` must be a callable, not {type(func)}.'
+        raise TypeError(msg)
     return func
 
 
@@ -186,7 +189,8 @@ class AffineWidget3D:
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
         if pyvista.vtk_version_info < (9, 2):
-            raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
+            msg = 'AfflineWidget3D requires VTK v9.2.0 or newer.'
+            raise VTKVersionError(msg)
 
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
@@ -227,8 +231,8 @@ class AffineWidget3D:
             try:
                 _validate_axes(axes)
             except ValueError:
-                for actor in self._arrows + self._circles:
-                    self._pl.remove_actor(actor)
+                for actor_ in self._arrows + self._circles:
+                    self._pl.remove_actor(actor_)
                 raise
             self.axes = axes
 
@@ -245,7 +249,9 @@ class AffineWidget3D:
                 tip_radius=0.05,
                 shaft_radius=self._line_radius,
             )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
+            self._arrows.append(
+                self._pl.add_mesh(arrow, color=color, lighting=False, render=False)
+            )
             axis_circ = self._circ.copy()
             if ii == 0:
                 axis_circ = axis_circ.rotate_y(-90)
@@ -288,7 +294,7 @@ class AffineWidget3D:
         independent.
 
         """
-        x, y = interactor.GetLastEventPosition()
+        x, y = interactor.GetEventPosition()
         coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToDisplay()
         coordinate.SetValue(x, y, 0)
@@ -308,7 +314,7 @@ class AffineWidget3D:
         translation.
 
         """
-        x, y = interactor.GetLastEventPosition()
+        x, y = interactor.GetEventPosition()
         ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
 
         # Get normalized view coordinates (-1, 1)
@@ -449,7 +455,7 @@ class AffineWidget3D:
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
-        self._axes_inv = np.linalg.inv(self._axes)
+        self._axes_inv = np.linalg.inv(self._axes)  # type: ignore[assignment]
         for actor in self._arrows + self._circles:
             matrix = actor.user_matrix
             # Be sure to use the inverse here
@@ -469,7 +475,7 @@ class AffineWidget3D:
             Widget origin.
 
         """
-        return cast(tuple[float, float, float], tuple(self._origin))
+        return cast('tuple[float, float, float]', tuple(self._origin))
 
     @origin.setter
     def origin(self, value):

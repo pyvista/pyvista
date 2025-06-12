@@ -64,6 +64,9 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     while hasattr(obj, 'fget'):
         obj = obj.fget
 
+    # deal with wrapped object
+    while hasattr(obj, '__wrapped__'):
+        obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
     except Exception:  # pragma: no cover
@@ -97,13 +100,13 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
 
 def pv_html_page_context(
-    app,
+    app,  # noqa: ARG001
     pagename: str,
-    templatename: str,
+    templatename: str,  # noqa: ARG001
     context,
-    doctree,
+    doctree,  # noqa: ARG001
 ) -> None:  # pragma: no cover
-    """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
+    """Add a function for returning an "edit this page" link pointing to `main`.
 
     This is specific to PyVista to ensure that the "edit this page" link always
     goes to the right page, specifically for:

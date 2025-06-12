@@ -16,5 +16,6 @@ vscode:
 
 tasks:
   - init: |
-      pip install -e .[dev] --no-cache-dir
+      pip install --upgrade pip
+      pip install -e . --group dev --no-cache-dir
       pre-commit install --install-hooks

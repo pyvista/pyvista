@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import itertools
-import platform
 import weakref
 
 import numpy as np
@@ -15,11 +14,6 @@ from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
-
 
 @pytest.fixture(autouse=True)
 def skip_check_gc(skip_check_gc):
@@ -27,8 +21,7 @@ def skip_check_gc(skip_check_gc):
 
 
 # skip all tests if VTK<9.2.0
-if pv.vtk_version_info < (9, 2):
-    pytestmark = pytest.mark.skip
+pytestmark = pytest.mark.needs_vtk_version(9, 2)
 
 
 def vtk_array_to_tuple(arr):
@@ -181,7 +174,7 @@ def test_wrapping():
     assert pen.GetWidth() == width
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_brush():
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     t_masonry = examples.download_masonry_texture()
@@ -226,6 +219,8 @@ def test_axis_init():
     assert np.allclose(axis.range, r_fix)
     assert axis.behavior == 'fixed'
     assert axis.grid
+    assert isinstance(axis.pen, charts.Pen)
+    assert isinstance(axis.grid_pen, charts.Pen)
 
 
 def test_axis_label(axis):
@@ -268,7 +263,9 @@ def test_axis_margin(axis):
 @pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
-    chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
+    # We have to call show to update all chart properties
+    # (calls Update and Paint methods of chart/plot objects).
+    chart_2d.show()
     assert axis.log_scale
     assert axis.GetLogScaleActive()
 
@@ -276,8 +273,9 @@ def test_axis_scale(chart_2d, axis):
     chart_2d.show()
     assert not axis.log_scale
     assert not axis.GetLogScaleActive()
-    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions" warning to be printed.
-    # Should be fixed on VTK side, but tricky without breaking stuff (see !8828 for reference).
+    # Note: following lines cause "vtkMath::Jacobi: Error extracting eigenfunctions"
+    # warning to be printed. Should be fixed on VTK side, but tricky without breaking
+    # stuff (see !8828 for reference).
     chart_2d.line([0, 1], [-10, 10])  # Plot for which log scale cannot be enabled
     axis.log_scale = True
     chart_2d.show()
@@ -402,7 +400,9 @@ def test_axis_label_font_size(chart_2d):
         pytest.param(
             'chart_mpl',
             marks=pytest.mark.filterwarnings(
-                r'ignore:No artists with labels found to put in legend\.  Note that artists whose label start with an underscore are ignored when legend\(\) is called with no argument\.:UserWarning'
+                r'ignore:No artists with labels found to put in legend\.  Note that artists '
+                r'whose label start with an underscore are ignored when legend\(\) is called '
+                r'with no argument\.:UserWarning'
             ),
         ),
     ],
@@ -452,7 +452,10 @@ def test_chart_common(pl, chart_f, request):
 
     # Check is_within
     assert chart._is_within(
-        ((chart.loc[0] + chart.size[0] / 2) * w, (chart.loc[1] + chart.size[1] / 2) * h),
+        (
+            (chart.loc[0] + chart.size[0] / 2) * w,
+            (chart.loc[1] + chart.size[1] / 2) * h,
+        ),
     )
     assert not chart._is_within(((chart.loc[0] + chart.size[0] / 2) * w, chart.loc[1] * h - 5))
     assert not chart._is_within((chart.loc[0] * w - 5, (chart.loc[1] + chart.size[1] / 2) * h))
@@ -707,7 +710,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         charts.BarPlot(chart_2d, x, y, c[0], ori, l)
     # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
@@ -750,7 +753,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         charts.StackPlot(chart_2d, x, ys, c[0], l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
@@ -1005,7 +1008,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 
 @pytest.mark.skip_plotting
-def test_chart_mpl(pl, chart_mpl):
+def test_chart_mpl(pl):
     import matplotlib.pyplot as plt
 
     size = (0.5, 0.5)
@@ -1227,7 +1230,7 @@ def test_chart_interaction():
     assert pl.iren._context_style.GetScene() is None
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy

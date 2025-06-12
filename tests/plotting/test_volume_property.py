@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import gc
+
 import pytest
 
 import pyvista as pv
@@ -11,12 +13,26 @@ def vol_prop():
     return VolumeProperty()
 
 
-def test_volume_lookup_table(vol_prop, skip_check_gc):
+@pytest.mark.parametrize('lut', ['foo', None, True, object(), []])
+def test_apply_lookup_table_raises(vol_prop: VolumeProperty, lut):
+    with pytest.raises(TypeError, match='`lookup_table` must be a `pyvista.LookupTable`'):
+        vol_prop.apply_lookup_table(lut)
+
+
+@pytest.mark.usefixtures('skip_check_gc')
+def test_volume_lookup_table(vol_prop):
+    assert vol_prop._lookup_table is None
+    vol_prop.reapply_lookup_table()
+
     lut = pv.LookupTable(cmap='bwr')
     lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
     orig = vol_prop.GetRGBTransferFunction()
     vol_prop.apply_lookup_table(lut)
     assert vol_prop.GetRGBTransferFunction() is not orig
+
+    assert vol_prop._lookup_table is not None
+    vol_prop.reapply_lookup_table()
+    assert vol_prop._lookup_table is lut
 
 
 def test_interpolation_type(vol_prop):
@@ -24,6 +40,9 @@ def test_interpolation_type(vol_prop):
 
     for interpolation_type in ['nearest', 'linear']:
         vol_prop.interpolation_type = interpolation_type
+        assert vol_prop.interpolation_type == interpolation_type
+
+        vol_prop = VolumeProperty(interpolation_type=interpolation_type)
         assert vol_prop.interpolation_type == interpolation_type
 
     with pytest.raises(ValueError, match='must be either'):
@@ -50,6 +69,9 @@ def test_volume_property_ambient(vol_prop):
     assert isinstance(vol_prop.ambient, float)
     value = 0.45
     vol_prop.ambient = value
+    assert vol_prop.ambient == value
+
+    vol_prop = VolumeProperty(ambient=value)
     assert vol_prop.ambient == value
 
 
@@ -83,3 +105,16 @@ def test_volume_property_copy(vol_prop):
 def test_volume_property_repr(vol_prop):
     assert 'Interpolation type:' in repr(vol_prop)
     assert 'nearest' in repr(vol_prop)
+
+
+def test_volume_property_del(vol_prop):
+    # Create a mock lookup table
+    lut = pv.LookupTable(cmap='bwr')
+    vol_prop.apply_lookup_table(lut)
+
+    # Ensure observer is set
+    assert vol_prop._lookup_table_observer_id is not None
+
+    # Delete the volume property and ensure cleanup
+    del vol_prop
+    gc.collect()  # Force garbage collection

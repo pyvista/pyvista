@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_contour_banded_raise(sphere):
@@ -44,6 +51,61 @@ def test_contour_banded_points(sphere):
     )
     assert out['data'].min() <= rng[0]
     assert out['data'].max() >= rng[1]
+
+
+@pytest.mark.parametrize(
+    'other_mesh',
+    [
+        pv.UnstructuredGrid(),
+        pv.ImageData(),
+        pv.StructuredGrid(),
+    ],
+    ids=['ugrid', 'image', 'structured'],
+)
+def test_boolean_raises(other_mesh):
+    with pytest.raises(TypeError, match='Input mesh must be PolyData.'):
+        pv.Sphere()._boolean('union', other_mesh=other_mesh, tolerance=0.0, progress_bar=False)
+
+
+def test_clean_raises(mocker: MockerFixture):
+    from pyvista.core.filters import poly_data
+
+    m = mocker.patch.object(poly_data, '_get_output')
+    m.return_value = pv.PolyData()
+
+    sp = pv.Sphere()
+    with pytest.raises(ValueError, match='Clean tolerance is too high. Empty mesh returned.'):
+        sp.clean()
+
+
+def test_flip_normals_raises():
+    plane = pv.Plane()
+    with (
+        pytest.raises(
+            NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'
+        ),
+        pytest.warns(PyVistaDeprecationWarning),
+    ):
+        plane.flip_normals()
+
+
+def test_contour_banded_raises(mocker: MockerFixture):
+    from pyvista.core.filters import poly_data
+
+    m = mocker.patch.object(poly_data, 'get_array')
+    m.return_value = None
+
+    sp = pv.Sphere()
+
+    with pytest.raises(ValueError, match='No arrays present to contour.'):
+        sp.contour_banded(1)
+
+    m.return_value = 'foo'
+    m = mocker.patch.object(poly_data, 'get_array_association')
+    m.return_value = 'foo'
+
+    with pytest.raises(ValueError, match='Only point data can be contoured.'):
+        sp.contour_banded(1)
 
 
 def test_boolean_intersect_edge_case():
@@ -95,9 +157,8 @@ def test_triangulate_contours():
         assert cell.type == pv.CellType.TRIANGLE
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader'
 )
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()

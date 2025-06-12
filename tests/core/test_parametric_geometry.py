@@ -49,121 +49,129 @@ def test_kochanek_spline():
         kochanek_spline = pv.KochanekSpline(points, tension, bias, [-2, 0, 0], n_points)
 
 
-def test_ParametricBohemianDome():
+def test_parametric_bohemian_dome():
     geom = pv.ParametricBohemianDome(direction=[0, 0, 1], a=0.5, b=1.5, c=1.0)
     assert geom.n_points
 
 
-def test_ParametricBour():
+def test_parametric_bour():
     geom = pv.ParametricBour()
     assert geom.n_points
 
 
-def test_ParametricBoy():
+def test_parametric_boy():
     geom = pv.ParametricBoy()
     assert geom.n_points
 
 
-def test_ParametricCatalanMinimal():
+def test_parametric_catalan_minimal():
     geom = pv.ParametricCatalanMinimal()
     assert geom.n_points
 
 
-def test_ParametricConicSpiral():
+def test_parametric_conic_spiral():
     geom = pv.ParametricConicSpiral()
     assert geom.n_points
 
 
-def test_ParametricCrossCap():
+def test_parametric_cross_cap():
     geom = pv.ParametricCrossCap()
     assert geom.n_points
 
 
-def test_ParametricDini():
+def test_parametric_dini():
     geom = pv.ParametricDini()
     assert geom.n_points
 
 
-def test_ParametricEllipsoid():
+def test_parametric_ellipsoid():
     geom = pv.ParametricEllipsoid()
     assert geom.n_points
 
 
-def test_ParametricEnneper():
+def test_parametric_enneper():
     geom = pv.ParametricEnneper()
     assert geom.n_points
 
 
-def test_ParametricFigure8Klein():
+def test_parametric_figure8_klein():
     geom = pv.ParametricFigure8Klein()
     assert geom.n_points
 
 
-def test_ParametricHenneberg():
+def test_parametric_henneberg():
     geom = pv.ParametricHenneberg()
     assert geom.n_points
 
 
-def test_ParametricKlein():
+def test_parametric_klein():
     geom = pv.ParametricKlein()
     assert geom.n_points
 
 
-def test_ParametricKuen():
+def test_parametric_kuen():
     geom = pv.ParametricKuen()
     assert geom.n_points
 
 
-def test_ParametricMobius():
+def test_parametric_mobius():
     geom = pv.ParametricMobius()
     assert geom.n_points
 
 
-def test_ParametricPluckerConoid():
+def test_parametric_plucker_conoid():
     geom = pv.ParametricPluckerConoid()
     assert geom.n_points
 
 
-def test_ParametricPseudosphere():
+def test_parametric_pseudosphere():
     geom = pv.ParametricPseudosphere()
     assert geom.n_points
 
 
-def test_ParametricRandomHills():
+def test_parametric_random_hills():
     geom = pv.ParametricRandomHills()
     assert geom.n_points
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(numberofhills=30)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(hillxvariance=30)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(hillyvariance=2.5)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(hillamplitude=2.5)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(randomseed=1)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(xvariancescalefactor=13)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(yvariancescalefactor=13)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(amplitudescalefactor=13)
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated parameter')
+            msg = 'Remove this deprecated parameter'
+            raise RuntimeError(msg)
     geom = pv.ParametricRandomHills(
         number_of_hills=30,
         hill_x_variance=30,
@@ -177,22 +185,22 @@ def test_ParametricRandomHills():
     assert geom.n_points
 
 
-def test_ParametricRoman():
+def test_parametric_roman():
     geom = pv.ParametricRoman()
     assert geom.n_points
 
 
-def test_ParametricSuperEllipsoid():
+def test_parametric_super_ellipsoid():
     geom = pv.ParametricSuperEllipsoid()
     assert geom.n_points
 
 
-def test_ParametricSuperToroid():
+def test_parametric_super_toroid():
     geom = pv.ParametricSuperToroid()
     assert geom.n_points
 
 
-def test_ParametricTorus():
+def test_parametric_torus():
     geom = pv.ParametricTorus()
     assert geom.n_points
 

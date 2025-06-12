@@ -33,7 +33,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
-    from .. import _vtk_core as _vtk
+    from pyvista.core import _vtk_core as _vtk
 
 
 def _update_alg(alg, progress_bar: bool = False, message='') -> None:
@@ -54,8 +54,8 @@ def _get_output(
     active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = cast(pyvista.DataObject, wrap(algorithm.GetInputDataObject(iport, iconnection)))
-    data = cast(pyvista.DataObject, wrap(algorithm.GetOutputDataObject(oport)))
+    ido = cast('pyvista.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
+    data = cast('pyvista.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:
@@ -71,7 +71,8 @@ def _get_output(
 from .composite import CompositeFilters
 from .data_object import DataObjectFilters
 
-# Re-export submodules to maintain the same import paths before filters.py was split into submodules
+# Re-export submodules to maintain the same import paths
+# before filters.py was split into submodules
 from .data_set import DataSetFilters
 from .image_data import ImageDataFilters
 from .poly_data import PolyDataFilters

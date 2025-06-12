@@ -51,7 +51,7 @@ class VTKVersionError(RuntimeError):
         RuntimeError.__init__(self, message)
 
 
-class PointSetNotSupported(TypeError):
+class PointSetNotSupported(TypeError):  # noqa: N818
     """Requested filter or property is not supported by the PointSet class.
 
     Parameters
@@ -105,7 +105,7 @@ class PointSetDimensionReductionError(PointSetNotSupported):
         PointSetNotSupported.__init__(self, message)
 
 
-class PartitionedDataSetsNotSupported(TypeError):
+class PartitionedDataSetsNotSupported(TypeError):  # noqa: N818
     """Requested filter or property is not supported by the PartitionedDataSets class.
 
     Parameters
@@ -183,6 +183,23 @@ class PyVistaPipelineError(RuntimeError):
         message='VTK pipeline issue detected by PyVista.',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
+class PyVistaAttributeError(AttributeError):
+    """Exception when accessing an attribute that is not part of the PyVista API.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self,
+        message='The attribute is not part of the PyVista API',
+    ) -> None:  # numpydoc ignore=PR01,RT01
         super().__init__(message)
 
 

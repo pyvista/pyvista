@@ -149,7 +149,8 @@ def Cylinder(
     """Create the surface of a cylinder.
 
     .. warning::
-       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
+       :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
@@ -293,7 +294,7 @@ def CylinderStructured(
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
-    zz = np.full((X.size, z_resolution), dz)
+    zz = np.full((X.size, z_resolution), dz)  # type:ignore[assignment]
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
 
@@ -383,7 +384,8 @@ def Arrow(
     if isinstance(scale, (float, int)):
         surf.points *= scale  # type: ignore[misc]
     elif scale is not None:
-        raise TypeError("Scale must be either float, int or 'auto'.")
+        msg = "Scale must be either float, int or 'auto'."  # type: ignore[unreachable]
+        raise TypeError(msg)
 
     translate(surf, start, direction)
     return surf
@@ -457,6 +459,7 @@ def Sphere(
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
 
     Examples
     --------
@@ -783,21 +786,27 @@ def SolidSphereGeneric(
     nphi = len(phi)
 
     if nr < 2:
-        raise ValueError('radius resolution must be 2 or more')
+        msg = 'radius resolution must be 2 or more'
+        raise ValueError(msg)
     if ntheta < 2:
-        raise ValueError('theta resolution must be 2 or more')
+        msg = 'theta resolution must be 2 or more'
+        raise ValueError(msg)
     if nphi < 2:
-        raise ValueError('phi resolution must be 2 or more')
+        msg = 'phi resolution must be 2 or more'
+        raise ValueError(msg)
 
     def _is_sorted(a: NumpyArray[float]) -> np.bool_:
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
-        raise ValueError('radius is not monotonically increasing')
+        msg = 'radius is not monotonically increasing'
+        raise ValueError(msg)
     if not _is_sorted(theta):
-        raise ValueError('theta is not monotonically increasing')
+        msg = 'theta is not monotonically increasing'
+        raise ValueError(msg)
     if not _is_sorted(phi):
-        raise ValueError('phi is not monotonically increasing')
+        msg = 'phi is not monotonically increasing'
+        raise ValueError(msg)
 
     def _greater_than_equal_or_close(value1: float, value2: float, atol: float) -> bool | np.bool_:
         return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
@@ -806,18 +815,22 @@ def SolidSphereGeneric(
         return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
 
     if not _greater_than_equal_or_close(radius[0], 0.0, tol_radius):
-        raise ValueError('minimum radius cannot be negative')
+        msg = 'minimum radius cannot be negative'
+        raise ValueError(msg)
 
     # range of theta cannot be greater than 360 degrees
     if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle_):
         max_angle = '2 * np.pi' if radians else '360 degrees'
-        raise ValueError(f'max theta and min theta must be within {max_angle}')
+        msg = f'max theta and min theta must be within {max_angle}'
+        raise ValueError(msg)
 
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle_):
-        raise ValueError('minimum phi cannot be negative')
+        msg = 'minimum phi cannot be negative'
+        raise ValueError(msg)
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle_):
         max_angle = 'np.pi' if radians else '180 degrees'
-        raise ValueError(f'maximum phi cannot be > {max_angle}')
+        msg = f'maximum phi cannot be > {max_angle}'
+        raise ValueError(msg)
 
     def _spherical_to_cartesian(
         r: float | VectorLike[float],
@@ -936,10 +949,10 @@ def SolidSphereGeneric(
             cells.append(5)
             cells.extend(
                 [
-                    _index(0, iphi, itheta),
-                    _index(0, iphi, itheta + 1),
-                    _index(0, iphi + 1, itheta + 1),
-                    _index(0, iphi + 1, itheta),
+                    _index(0, iphi, itheta),  # type:ignore[arg-type]
+                    _index(0, iphi, itheta + 1),  # type:ignore[arg-type]
+                    _index(0, iphi + 1, itheta + 1),  # type:ignore[arg-type]
+                    _index(0, iphi + 1, itheta),  # type:ignore[arg-type]
                     0,
                 ],
             )
@@ -990,14 +1003,14 @@ def SolidSphereGeneric(
         cells.append(8)
         cells.extend(
             [
-                _index(ir, iphi, itheta),
-                _index(ir, iphi + 1, itheta),
-                _index(ir, iphi + 1, itheta + 1),
-                _index(ir, iphi, itheta + 1),
-                _index(ir + 1, iphi, itheta),
-                _index(ir + 1, iphi + 1, itheta),
-                _index(ir + 1, iphi + 1, itheta + 1),
-                _index(ir + 1, iphi, itheta + 1),
+                _index(ir, iphi, itheta),  # type:ignore[arg-type]
+                _index(ir, iphi + 1, itheta),  # type:ignore[arg-type]
+                _index(ir, iphi + 1, itheta + 1),  # type:ignore[arg-type]
+                _index(ir, iphi, itheta + 1),  # type:ignore[arg-type]
+                _index(ir + 1, iphi, itheta),  # type:ignore[arg-type]
+                _index(ir + 1, iphi + 1, itheta),  # type:ignore[arg-type]
+                _index(ir + 1, iphi + 1, itheta + 1),  # type:ignore[arg-type]
+                _index(ir + 1, iphi, itheta + 1),  # type:ignore[arg-type]
             ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
@@ -1201,10 +1214,10 @@ def Cube(
     arguments are ignored.
 
     .. versionchanged:: 0.33.0
-        The cube is created using ``vtk.vtkCubeSource``. For
+        The cube is created using :vtk:`vtkCubeSource`. For
         compatibility with :func:`pyvista.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
-        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        :func:`~pyvista.PlatonicSolid`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
         The cube points are also cleaned by default now, leaving only
         the 8 corners and a watertight (manifold) mesh.
@@ -1271,6 +1284,10 @@ def Cube(
     # clean duplicate points
     if clean:
         cube.clean(inplace=True)
+
+        # Fix incorrect default point normals
+        del cube.point_data['Normals']
+        cube = cube.compute_normals(point_normals=True, cell_normals=False)
 
     return cube
 
@@ -1654,7 +1671,7 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast(pyvista.ImageData, wrap(wavelet_source.GetOutput()))
+    return cast('pyvista.ImageData', wrap(wavelet_source.GetOutput()))
 
 
 def CircularArc(
@@ -1717,13 +1734,14 @@ def CircularArc(
         np.linalg.norm(np.array(pointa) - np.array(center)),
         np.linalg.norm(np.array(pointb) - np.array(center)),
     ):
-        raise ValueError('pointa and pointb are not equidistant from center')
+        msg = 'pointa and pointb are not equidistant from center'
+        raise ValueError(msg)
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
-    pointb = list(pointb)
-    pointb[0] -= 1e-10
-    pointb[1] -= 1e-10
+    pointb = list(pointb)  # type: ignore[assignment]
+    pointb[0] -= 1e-10  # type: ignore[index]
+    pointb[1] -= 1e-10  # type: ignore[index]
 
     arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
@@ -1740,7 +1758,7 @@ def CircularArc(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast(pyvista.PolyData, arc)
+    return cast('pyvista.PolyData', arc)
 
 
 def CircularArcFromNormal(
@@ -1820,7 +1838,7 @@ def CircularArcFromNormal(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, angle_, resolution + 1)
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast(pyvista.PolyData, arc)
+    return cast('pyvista.PolyData', arc)
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
@@ -1862,7 +1880,8 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
         ]
 
     if len(points) != 5:
-        raise TypeError('Points must be given as length 5 np.ndarray or list.')
+        msg = 'Points must be given as length 5 np.ndarray or list.'
+        raise TypeError(msg)
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1912,7 +1931,8 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
         points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
 
     if len(points) != 3:
-        raise TypeError('Points must be given as length 3 np.ndarray or list')
+        msg = 'Points must be given as length 3 np.ndarray or list'
+        raise TypeError(msg)
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1950,7 +1970,8 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     if len(points) != 3:
-        raise TypeError('Points must be given as length 3 np.ndarray or list')
+        msg = 'Points must be given as length 3 np.ndarray or list'
+        raise TypeError(msg)
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -1967,7 +1988,8 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     mag_12 = np.linalg.norm(vec_12)
 
     if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
-        raise ValueError('Unable to build a rectangle with less than three different points')
+        msg = 'Unable to build a rectangle with less than three different points'
+        raise ValueError(msg)
 
     scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
     scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
@@ -1979,7 +2001,8 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         if np.isclose(val, 0)
     ]
     if len(null_scalar_products) == 0:
-        raise ValueError('The three points should defined orthogonal vectors')
+        msg = 'The three points should defined orthogonal vectors'
+        raise ValueError(msg)
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
@@ -2022,7 +2045,8 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
-        raise TypeError('Points must be given as length 4 np.ndarray or list')
+        msg = 'Points must be given as length 4 np.ndarray or list'
+        raise TypeError(msg)
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -2071,7 +2095,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
 def Ellipse(
     semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, resolution: int = 100
 ) -> PolyData:
-    """Create a single PolyData ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
+    """Create a single ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
 
     Parameters
     ----------
@@ -2233,7 +2257,7 @@ def PlatonicSolid(
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')
@@ -2278,7 +2302,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Tetrahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
@@ -2312,7 +2336,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     >>> tetra = pv.Octahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
@@ -2345,7 +2369,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     >>> tetra = pv.Dodecahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
@@ -2379,7 +2403,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Icosahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

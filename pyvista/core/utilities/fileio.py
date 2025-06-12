@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     import imageio
     import meshio
 
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
@@ -77,13 +77,15 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
 
     """
     supported = {'vtk', 'xml', 'legacy'}
-    format_ = cast(Literal['vtk', 'xml', 'legacy'], format.lower())
+    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
     if format_ not in supported:
-        raise ValueError(
-            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
+        msg = (
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
+        raise ValueError(msg)
     if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
-        raise ValueError("'vtk' pickle format requires VTK >= 9.3")
+        msg = "'vtk' pickle format requires VTK >= 9.3"
+        raise ValueError(msg)
 
     pyvista.PICKLE_FORMAT = format_
 
@@ -129,15 +131,16 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
     Parameters
     ----------
-    vtk_writer : vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
-        The vtk writer instance to be configured.
+    vtk_writer
+        The vtk writer instance to be configured. Must be one of :vtk:`vtkDataWriter`,
+        :vtk:`vtkPLYWriter`, :vtk:`vtkSTLWriter`, :vtk:`vtkXMLWriter`.
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
         ``False``, the writer is set to write files in ASCII format.
 
     Returns
     -------
-    vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
+    :vtk:`vtkDataWriter` | :vtk:`vtkPLYWriter` | :vtk:`vtkSTLWriter` | :vtk:`vtkXMLWriter`
         The configured vtk writer instance.
 
     """
@@ -158,7 +161,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     return vtk_writer
 
 
-def read(
+def read(  # noqa: PLR0911
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
@@ -239,7 +242,8 @@ def read(
 
     """
     if file_format is not None and force_ext is not None:
-        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
+        msg = 'Only one of `file_format` and `force_ext` may be specified.'
+        raise ValueError(msg)
 
     if isinstance(filename, Sequence) and not isinstance(filename, str):
         multi = pyvista.MultiBlock()
@@ -250,7 +254,8 @@ def read(
 
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
-        raise FileNotFoundError(f'File ({filename}) not found')
+        msg = f'File ({filename}) not found'
+        raise FileNotFoundError(msg)
 
     # Read file using meshio.read if file_format is present
     if file_format:
@@ -262,9 +267,11 @@ def read(
     if ext.lower() in ['.grdecl']:
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
-        raise ValueError(
-            'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
+        msg = (
+            'VRML files must be imported directly into a Plotter. '
+            'See `pyvista.Plotter.import_vrml` for details.'
         )
+        raise ValueError(msg)
     if ext in PICKLE_EXT:
         return read_pickle(filename)
 
@@ -273,13 +280,15 @@ def read(
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise OSError('This file was not able to be automatically read by pyvista.')
+            msg = 'This file was not able to be automatically read by pyvista.'
+            raise OSError(msg)
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
         except ReadError:
-            raise OSError('This file was not able to be automatically read by pyvista.')
+            msg = 'This file was not able to be automatically read by pyvista.'
+            raise OSError(msg)
     else:
         observer = Observer()
         observer.observe(reader.reader)
@@ -288,14 +297,16 @@ def read(
         mesh = reader.read()
         if observer.has_event_occurred():
             warnings.warn(
-                f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error'
-                'while reading the file.\n'
+                f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
+                'raised an error while reading the file.\n'
                 f'\t"{observer.get_message()}"',
             )
         return mesh
 
 
-def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequence[object]]) -> None:
+def _apply_attrs_to_reader(
+    reader: BaseReader, attrs: dict[str, object | Sequence[object]]
+) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
     Parameters
@@ -315,7 +326,7 @@ def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequenc
         attr = getattr(reader.reader, name)
         if args is not None:
             if not isinstance(args, (list, tuple)):
-                args = [args]
+                args = [args]  # noqa: PLW2901
             attr(*args)
         else:
             attr()
@@ -360,7 +371,8 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:
 
         image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
-            raise ValueError('Problem reading the image with VTK.')
+            msg = 'Problem reading the image with VTK.'
+            raise ValueError(msg)
         return pyvista.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
@@ -451,16 +463,19 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
+            msg = f'Could not parse sideset ID/name: {sideset} with type {type(sideset)}'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return cast(pyvista.DataSet, wrap(reader.GetOutput()))
+    return cast('pyvista.DataSet', wrap(reader.GetOutput()))
 
 
 def read_grdecl(
-    filename: str | Path, elevation: bool = True, other_keywords: Sequence[str] | None = None
+    filename: str | Path,
+    elevation: bool = True,
+    other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
 
@@ -601,18 +616,18 @@ def read_grdecl(
         includes = []
 
         for line in f:
-            line = line.strip()
+            line_ = line.strip()
 
-            if line.startswith('MAPUNITS'):
+            if line_.startswith('MAPUNITS'):
                 keywords['MAPUNITS'] = read_keyword(f, split=False).replace("'", '').strip()
 
-            elif line.startswith('MAPAXES'):
+            elif line_.startswith('MAPAXES'):
                 keywords['MAPAXES'] = read_keyword(f, converter=float)
 
-            elif line.startswith('GRIDUNIT'):
+            elif line_.startswith('GRIDUNIT'):
                 keywords['GRIDUNIT'] = read_keyword(f, split=False).replace("'", '').strip()
 
-            elif line.startswith('SPECGRID'):
+            elif line_.startswith('SPECGRID'):
                 data = read_keyword(f)
                 keywords['SPECGRID'] = [
                     int(data[0]),
@@ -622,11 +637,11 @@ def read_grdecl(
                     data[4].strip(),
                 ]
 
-            elif line.startswith('INCLUDE'):
+            elif line_.startswith('INCLUDE'):
                 filename = read_keyword(f, split=False)
                 includes.append(filename.replace("'", ''))
 
-            elif line.startswith(keys):
+            elif line_.startswith(keys):
                 key = line.split()[0]
                 data = read_keyword(f)
 
@@ -635,8 +650,8 @@ def read_grdecl(
 
                     for x in data:
                         if '*' in x:
-                            size, x = x.split('*')
-                            keywords[key] += int(size) * [float(x)]  # type: ignore[operator]
+                            size, new_x = x.split('*')
+                            keywords[key] += int(size) * [float(new_x)]  # type: ignore[operator]
 
                         else:
                             keywords[key].append(float(x))  # type: ignore[union-attr]
@@ -686,10 +701,12 @@ def read_grdecl(
         cylindric = keywords['SPECGRID'][4] == 'T'
 
         if cylindric:
-            raise TypeError('Cylindric grids are not supported.')
+            msg = 'Cylindric grids are not supported.'
+            raise TypeError(msg)
 
     except KeyError:
-        raise ValueError("Unable to generate grid without keyword 'SPECGRID'.")
+        msg = "Unable to generate grid without keyword 'SPECGRID'."
+        raise ValueError(msg)
 
     relative = False
 
@@ -702,12 +719,14 @@ def read_grdecl(
 
                 if not cond1:
                     warnings.warn(
-                        'Unable to convert relative coordinates with different grid and map units. Skipping conversion.'
+                        'Unable to convert relative coordinates with different '
+                        'grid and map units. Skipping conversion.'
                     )
 
             except KeyError:
                 warnings.warn(
-                    "Unable to convert relative coordinates without keyword 'MAPUNITS'. Skipping conversion."
+                    "Unable to convert relative coordinates without keyword 'MAPUNITS'. "
+                    'Skipping conversion.'
                 )
                 cond1 = False
 
@@ -716,7 +735,8 @@ def read_grdecl(
 
             except KeyError:
                 warnings.warn(
-                    "Unable to convert relative coordinates without keyword 'MAPAXES'. Skipping conversion."
+                    "Unable to convert relative coordinates without keyword 'MAPAXES'. "
+                    'Skipping conversion.'
                 )
                 origin = None
 
@@ -830,13 +850,14 @@ def read_pickle(filename: str | Path) -> DataObject:
             mesh = pickle.load(f)
 
         if not isinstance(mesh, pyvista.DataObject):
-            raise TypeError(
-                f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
+            msg = (
+                f'Pickled object must be an instance of {pyvista.DataObject}. '
+                f'Got {mesh.__class__} instead.'
             )
+            raise TypeError(msg)
         return mesh
-    raise ValueError(
-        f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
-    )
+    msg = f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
+    raise ValueError(msg)
 
 
 def save_pickle(filename: str | Path, mesh: DataObject) -> None:
@@ -883,9 +904,10 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
     if not isinstance(mesh, pyvista.DataObject):
-        raise TypeError(
+        msg = (  # type: ignore[unreachable]
             f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
         )
+        raise TypeError(msg)
 
     with open(filename_str, 'wb') as f:  # noqa: PTH123
         pickle.dump(mesh, f)
@@ -938,6 +960,13 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
     except ImportError:  # pragma: no cover
         from meshio._vtk_common import meshio_to_vtk_type
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+
+    if len(mesh.cells) == 0:
+        # Empty mesh
+        grid = pyvista.UnstructuredGrid()
+        if mesh.points.size > 0:
+            grid.points = mesh.points
+        return grid
 
     # Extract cells from meshio.Mesh object
     cells = []
@@ -1036,7 +1065,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         import meshio
 
     except ImportError:  # pragma: no cover
-        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
+        msg = 'To use this feature install meshio with:\n\npip install meshio'
+        raise ImportError(msg)
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
@@ -1051,31 +1081,32 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         if 'vtkGhostType' in mesh.cell_data
         else mesh
     )
+    if mesh.is_empty:
+        return meshio.Mesh(mesh.points, [])
 
     vtk_celltypes = mesh.celltypes
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+    def split(arr: VectorLike[int]) -> list[VectorLike[int]]:
+        i = 0
+        offsets: list[int] = [0]
 
-    if polyhedral_cells is not None:
-        locations = pyvista.convert_array(mesh.GetFaceLocations())
-        polyhedral_cell_faces = []
+        while i < len(arr):
+            offsets.append(int(arr[i]) + 1)
+            i += offsets[-1]
 
-        for location in locations:
-            if location == -1:
-                continue
+        offsets_ = np.cumsum(offsets)
 
-            n_faces = polyhedral_cells[location]
-            i = location + 1
-            faces: list[MatrixLike[int]] = []
+        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:])]
 
-            while len(faces) < n_faces:
-                n_vertices = polyhedral_cells[i]
-                faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
-                i += n_vertices + 1
+    polyhedron_faces = split(mesh.polyhedron_faces)
 
-            polyhedral_cell_faces.append(faces)
+    if polyhedron_faces:
+        polyhedron_locations = split(mesh.polyhedron_face_locations)
+        polyhedral_cell_faces: list[list[VectorLike[int]]] = [
+            [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
+        ]
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
@@ -1102,15 +1133,23 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     else:
         cells = []
         offset = mesh.offset
-        polyhedron_count = 0
 
-        for i1, i2, vtk_celltype in zip(offset[:-1], offset[1:], vtk_celltypes):
+        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
             cell = connectivity[i1:i2]
 
             if vtk_celltype == pyvista.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
-                cell = polyhedral_cell_faces[polyhedron_count]
-                polyhedron_count += 1
+                cell = polyhedral_cell_faces[i]
+
+            # Handle the missing voxel key (11) in vtk_to_meshio_type
+            elif vtk_celltype == pyvista.CellType.VOXEL:
+                celltype = 'hexahedron'
+                cell = cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+
+            # Handle the missing "pixel" key in meshio._mesh.topological_dimension
+            elif vtk_celltype == pyvista.CellType.PIXEL:
+                celltype = 'quad'
+                cell = cell[[0, 1, 3, 2]]
 
             else:
                 celltype = (
@@ -1169,7 +1208,8 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
+        msg = 'To use this feature install meshio with:\n\npip install meshio'
+        raise ImportError(msg)
 
     # Make sure relative paths will work
     filename = Path(filename).expanduser().resolve()
@@ -1243,10 +1283,11 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
     try:
         from imageio.v2 import imread
     except ModuleNotFoundError:  # pragma: no cover
-        raise ModuleNotFoundError(
+        msg = (
             'Problem reading the image with VTK. Install imageio to try to read the '
             'file using imageio with:\n\n'
-            '   pip install imageio',
-        ) from None
+            '   pip install imageio'
+        )
+        raise ModuleNotFoundError(msg) from None
 
     return imread(filename)
