@@ -360,7 +360,7 @@ def test_trame_export_html(tmpdir):
     assert Path(filename).is_file()
 
 
-@pytest.mark.skip_check_gc
+# @pytest.mark.skip_check_gc
 def test_export_single(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-single'))
     data = examples.load_airplane()
@@ -372,7 +372,8 @@ def test_export_single(tmpdir):
     assert Path(f'{filename}').is_file()
 
 
-@pytest.mark.skip_check_gc
+#
+# @pytest.mark.skip_check_gc
 def test_export_multi(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-multi'))
     multi = pv.MultiBlock()
@@ -390,7 +391,7 @@ def test_export_multi(tmpdir):
     assert Path(f'{filename}').is_file()
 
 
-@pytest.mark.skip_check_gc
+# @pytest.mark.skip_check_gc
 def test_export_texture(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-texture'))
     data = examples.load_globe()
@@ -403,7 +404,7 @@ def test_export_texture(tmpdir):
     assert Path(f'{filename}').is_file()
 
 
-@pytest.mark.skip_check_gc
+# @pytest.mark.skip_check_gc
 def test_export_verts(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-verts'))
     data = pv.PolyData(np.random.default_rng().random((100, 3)))
@@ -415,7 +416,7 @@ def test_export_verts(tmpdir):
     assert Path(f'{filename}').is_file()
 
 
-@pytest.mark.skip_check_gc
+# @pytest.mark.skip_check_gc
 def test_export_color(tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-color'))
     data = examples.load_airplane()
@@ -427,7 +428,7 @@ def test_export_color(tmpdir):
     assert Path(f'{filename}').is_file()
 
 
-@pytest.mark.skip_check_gc
+# @pytest.mark.skip_check_gc
 def test_embeddable_widget():
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(pv.Sphere())
