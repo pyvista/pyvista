@@ -3963,7 +3963,7 @@ def frog_tissues_contour(frog_tissues_image):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
-    mask = frog_tissues_contour.voxelize_binary_mask(
+    mask = frog_tissues_contour._voxelize_as_image_points(
         reference_volume=frog_tissues_image, progress_bar=True
     )
 
@@ -3976,42 +3976,48 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
-    mask = frog_tissues_contour.voxelize_binary_mask()
+    mask = frog_tissues_contour._voxelize_as_image_points()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
-    mask = sphere.voxelize_binary_mask(dimensions=dims)
+    mask = sphere._voxelize_as_image_points(dimensions=dims)
     assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
     assert mask.dimensions == dims
 
 
 def test_voxelize_binary_mask_spacing(ant):
     # Test default
-    mask_no_input = ant.voxelize_binary_mask()
+    mask_no_input = ant._voxelize_as_image_points()
     if pv.vtk_version_info < (9, 2):
-        expected_mask = ant.voxelize_binary_mask(spacing=ant.length / 100)
+        expected_mask = ant._voxelize_as_image_points(spacing=ant.length / 100)
     else:
-        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+        expected_mask = ant._voxelize_as_image_points(cell_length_percentile=0.1)
     assert mask_no_input.spacing == expected_mask.spacing
 
     # Test cell length
     if pv.vtk_version_info < (9, 2):
         match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
         with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+            ant._voxelize_as_image_points(cell_length_percentile=0.2)
     else:
-        mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
-        mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+        mask_percentile_20 = ant._voxelize_as_image_points(cell_length_percentile=0.2)
+        mask_percentile_50 = ant._voxelize_as_image_points(cell_length_percentile=0.5)
         assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
 
     # Test mesh length
-    mask_fraction_200 = ant.voxelize_binary_mask(spacing=ant.length / 200)
-    mask_fraction_500 = ant.voxelize_binary_mask(spacing=ant.length / 500)
+    mask_fraction_200 = ant._voxelize_as_image_points(spacing=ant.length / 200)
+    mask_fraction_500 = ant._voxelize_as_image_points(spacing=ant.length / 500)
     assert np.all(np.array(mask_fraction_200.spacing) > mask_fraction_500.spacing)
     # Check spacing matches mesh length. Use atol since spacing is approximate.
     assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
+
+    match = 'Spacing and cell length options cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        ant._voxelize_as_image_points(spacing=0.1, cell_length_percentile=0.1)
+    with pytest.raises(TypeError, match=match):
+        ant._voxelize_as_image_points(spacing=0.1, cell_length_sample_size=ant.n_cells)
 
 
 # This test is flaky because of random sampling that cannot be controlled.
@@ -4022,14 +4028,14 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
     if pv.vtk_version_info < (9, 2):
         match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
         with pytest.raises(TypeError, match=match):
-            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+            ant._voxelize_as_image_points(cell_length_percentile=0.2)
     else:
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
+        mask_samples_1 = ant._voxelize_as_image_points(cell_length_sample_size=100)
+        mask_samples_2 = ant._voxelize_as_image_points(cell_length_sample_size=200)
         assert mask_samples_1.spacing != mask_samples_2.spacing
 
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        mask_samples_1 = ant._voxelize_as_image_points(cell_length_sample_size=ant.n_cells)
+        mask_samples_2 = ant._voxelize_as_image_points(cell_length_sample_size=ant.n_cells)
         assert mask_samples_1.spacing == mask_samples_2.spacing
 
 
@@ -4044,7 +4050,7 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
 )
 def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
-    mask = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
+    mask = sphere._voxelize_as_image_points(spacing=spacing, rounding_func=rounding_func)
     assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
     if rounding_func == np.round:
         assert np.any(mask.spacing > spacing)
@@ -4061,7 +4067,9 @@ def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
 @pytest.mark.parametrize('foreground', [1, 2.1])
 @pytest.mark.parametrize('background', [-1, 0])
 def test_voxelize_binary_mask_foreground_background(sphere, foreground, background):
-    mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
+    mask = sphere._voxelize_as_image_points(
+        foreground_value=foreground, background_value=background
+    )
     unique, counts = np.unique(mask['mask'], return_counts=True)
     assert np.array_equal(unique, [background, foreground])
     # Test we have more foreground than background (not always true, but is true for a sphere mesh)
@@ -4084,13 +4092,13 @@ def test_voxelize_binary_mask_foreground_background(sphere, foreground, backgrou
 def test_voxelize_binary_mask_input(hexbeam):
     # Test unstructured grid works
     assert isinstance(hexbeam, pv.UnstructuredGrid)
-    mask = hexbeam.voxelize_binary_mask()
+    mask = hexbeam._voxelize_as_image_points()
     assert mask.n_points
 
     # Test point cloud does not
     mesh = pv.PolyData(hexbeam.points)
     with pytest.raises(ValueError, match='Input mesh must have faces for voxelization'):
-        mesh.voxelize_binary_mask()
+        mesh._voxelize_as_image_points()
 
 
 @pytest.fixture
@@ -4112,7 +4120,7 @@ def oriented_polydata(oriented_image):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
-    mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
+    mask = oriented_polydata._voxelize_as_image_points(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds
     mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
     assert mask_as_surface.bounds == oriented_polydata.bounds
@@ -4121,17 +4129,17 @@ def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
 def test_voxelize_binary_mask_raises(sphere):
     match = 'Spacing and dimensions cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+        sphere._voxelize_as_image_points(dimensions=(1, 2, 3), spacing=(4, 5, 6))
 
     match = 'Spacing and cell length options cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(spacing=(4, 5, 6), cell_length_percentile=0.2)
+        sphere._voxelize_as_image_points(spacing=(4, 5, 6), cell_length_percentile=0.2)
     with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=sphere.n_cells)
+        sphere._voxelize_as_image_points(spacing=0.1, cell_length_sample_size=sphere.n_cells)
 
     match = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
     with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), rounding_func=np.round)
+        sphere._voxelize_as_image_points(dimensions=(1, 2, 3), rounding_func=np.round)
 
     for parameter in [
         'dimensions',
@@ -4146,4 +4154,88 @@ def test_voxelize_binary_mask_raises(sphere):
             '`reference_volume` must define the geometry exclusively.'
         )
         with pytest.raises(TypeError, match=match):
-            sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+            sphere._voxelize_as_image_points(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_rectilinear(ant):
+    vox = ant.voxelize_as('rectilinear', 'cells')
+    assert isinstance(vox, pv.RectilinearGrid)
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = ant.voxelize_as('rectilinear', 'cells', dimensions=dims)
+    assert np.array_equal(vox.dimensions, dims)
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    single_cell_dims = np.array((2, 2, 2))
+    vox = ant.voxelize_as('rectilinear', 'cells', spacing=size)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test reference volume - specify both dimensions and spacing
+    reference_volume = pv.ImageData(dimensions=single_cell_dims - 1, spacing=size)
+    vox = ant.voxelize_as('rectilinear', 'cells', reference_volume=reference_volume)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test scalar values
+    foreground = 2
+    background = 3
+    vox = ant.voxelize_as(
+        'rectilinear', 'cells', foreground_value=foreground, background_value=background
+    )
+    assert 'mask' in vox.cell_data
+    assert vox.array_names == ['mask']
+    values = np.unique(vox['mask'])
+    assert np.array_equal(values, [foreground, background])
+
+    # Test other keywords
+    if pv.vtk_version_info >= (9, 2):
+        vox = ant.voxelize_as('rectilinear', 'cells', cell_length_percentile=0.5)
+        assert vox.n_cells
+        vox = ant.voxelize_as('rectilinear', 'cells', cell_length_sample_size=ant.n_cells)
+        assert vox.n_cells
+    assert vox.n_cells
+    vox = ant.voxelize_as('rectilinear', 'cells', progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize_as('rectilinear', 'cells', spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize_as('rectilinear', 'cells', spacing={0.5, 0.3})
+
+
+def test_voxelize(ant):
+    vox = ant.voxelize_as('unstructured', 'cells')
+    assert isinstance(vox, pv.UnstructuredGrid)
+    assert vox.array_names == []
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = pv.Cube().voxelize_as('unstructured', 'cells', dimensions=dims)
+    assert np.array_equal(vox.n_points, np.prod(dims))
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    vox = ant.voxelize_as('unstructured', 'cells', spacing=size)
+    assert np.allclose(vox.n_cells, 1)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test other keywords
+    if pv.vtk_version_info >= (9, 2):
+        vox = ant.voxelize_as('unstructured', 'cells', cell_length_percentile=0.5)
+        assert vox.n_cells
+        vox = ant.voxelize_as('unstructured', 'cells', cell_length_sample_size=ant.n_cells)
+        assert vox.n_cells
+    vox = ant.voxelize_as('unstructured', 'cells', progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize_as('unstructured', 'cells', spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize_as('unstructured', 'cells', spacing={0.5, 0.3})
