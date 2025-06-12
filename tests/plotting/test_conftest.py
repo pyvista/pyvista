@@ -19,11 +19,6 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """GC check not needed."""
-
-
-@pytest.fixture(autouse=True)
 def _load_current_config(
     pytestconfig: pytest.Config,
     pytester: pytest.Pytester,

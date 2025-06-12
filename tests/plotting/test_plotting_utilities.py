@@ -16,11 +16,6 @@ from pyvista.report import GPUInfo
 HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """GC check not needed."""
-
-
 @pytest.mark.skip_plotting
 def test_gpuinfo():
     gpuinfo = GPUInfo()

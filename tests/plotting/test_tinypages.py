@@ -22,11 +22,6 @@ if not system_supports_plotting():
 ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 
 
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """GC check not needed."""
-
-
 @flaky_test(exceptions=(AssertionError,))
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)

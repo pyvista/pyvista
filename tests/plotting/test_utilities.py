@@ -16,11 +16,6 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """GC check not needed."""
-
-
 @pytest.mark.skip_windows
 @pytest.mark.skip_mac
 def test_start_xvfb():

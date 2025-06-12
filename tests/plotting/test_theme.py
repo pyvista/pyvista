@@ -19,11 +19,6 @@ from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
 
 
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """GC check not needed."""
-
-
 @pytest.fixture
 def default_theme():
     return pv.plotting.themes.Theme()
