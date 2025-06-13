@@ -11,6 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Union
 from typing import cast
 import warnings
 
@@ -54,6 +55,22 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+
+    _PolyDataWriterAlias = Union[
+        _vtk.vtkPLYWriter,
+        _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkSTLWriter,
+        _vtk.vtkPolyDataWriter,
+        _vtk.vtkHoudiniPolyDataWriter,
+        _vtk.vtkOBJWriter,
+        _vtk.vtkIVWriter,
+        _vtk.vtkHDFWriter,
+    ]
+
+    _UnstructuredGridWriterAlias = Union[
+        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
+    ]
+
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -744,17 +761,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     _WRITERS: ClassVar[
         dict[
             str,
-            (
-                type[
-                    _vtk.vtkPLYWriter
-                    | _vtk.vtkXMLPolyDataWriter
-                    | _vtk.vtkSTLWriter
-                    | _vtk.vtkPolyDataWriter
-                    | _vtk.vtkHoudiniPolyDataWriter
-                    | _vtk.vtkOBJWriter
-                    | _vtk.vtkIVWriter
-                ]
-            ),
+            (type[_PolyDataWriterAlias]),
         ]
     ] = {  # type: ignore[assignment]
         '.ply': _vtk.vtkPLYWriter,
@@ -765,6 +772,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.obj': _vtk.vtkOBJWriter,
         '.iv': _vtk.vtkIVWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
     @_deprecate_positional_args(allowed=['var_inp', 'faces'])
     def __init__(  # noqa: PLR0917
@@ -1839,12 +1848,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[
         dict[
             str,
-            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+            type[_UnstructuredGridWriterAlias],
         ]
     ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""

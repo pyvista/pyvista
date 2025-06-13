@@ -2348,6 +2348,7 @@ class DataObjectFilters:
     def cell_centers(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         vertex: bool = True,  # noqa: FBT001, FBT002
+        pass_cell_data: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate points at the center of the cells in this dataset.
@@ -2358,6 +2359,9 @@ class DataObjectFilters:
         ----------
         vertex : bool, default: True
             Enable or disable the generation of vertex cells.
+
+        pass_cell_data : bool, default: True
+            If enabled, pass the input cell data through to the output.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2391,6 +2395,7 @@ class DataObjectFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
+        alg.SetCopyArrays(pass_cell_data)
         _update_alg(
             alg, progress_bar=progress_bar, message='Generating Points at the Center of the Cells'
         )
