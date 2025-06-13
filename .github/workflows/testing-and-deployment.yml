@@ -47,7 +47,7 @@ jobs:
           - { os: macos-latest, python-version: "3.13" }
 
     runs-on: ${{ matrix.config.os }}
-    name: Mac OS Unit Testing - Python ${{ matrix.config.python-version }}
+    name: Mac OS (py${{ matrix.config.python-version }})
 
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
           - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
-    name: Linux Unit Testing - Python ${{ matrix.python-version }} - VTK ${{ matrix.vtk-version }} - Numpy ${{ matrix.numpy-version }}
+    name: Linux (py${{ matrix.python-version }}, VTK ${{ matrix.vtk-version }}, Numpy ${{ matrix.numpy-version }})
     env:
       TOX_FACTOR: py${{matrix.python-version}}-numpy_${{matrix.numpy-version}}-vtk_${{matrix.vtk-version}}
     steps:
@@ -233,7 +233,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-    name: Windows Unit Testing - Python ${{ matrix.python-version }}
+    name: Windows (py${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v4
         with:
