@@ -7,10 +7,8 @@ import pytest
 
 import pyvista as pv
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """A large number of tests here fail gc."""
+# A large number of tests here fail gc
+pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture
