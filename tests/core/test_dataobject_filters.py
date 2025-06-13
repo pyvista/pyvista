@@ -328,6 +328,12 @@ def test_cell_centers(datasets):
         assert isinstance(result, pv.PolyData)
 
 
+def test_cell_centers_no_cell_data(cube):
+    # test passing cell data kwarg works
+    assert cube.cell_centers(pass_cell_data=True).cell_data
+    assert not cube.cell_centers(pass_cell_data=False).cell_data
+
+
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_cell_center_pointset(airplane):
     pointset = airplane.cast_to_pointset()
