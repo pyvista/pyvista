@@ -31,6 +31,7 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  LINUX_PLOTTING_ARGS: "-v --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache --generated_image_dir debug_images"
 
 permissions:
   id-token: none
@@ -66,6 +67,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install . --group test
+          pip install vtk==9.5.0rc3
 
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
@@ -113,7 +115,7 @@ jobs:
             vtk-version: "9.4.2"
             numpy-version: "latest"
           - python-version: "3.13"
-            vtk-version: "latest"
+            vtk-version: "9.5.0rc3"
             numpy-version: "nightly"
     steps:
       - uses: actions/checkout@v4
@@ -152,6 +154,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install . --group test
+          pip install vtk==${{ matrix.vtk-version }}
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
@@ -183,7 +186,17 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            --ignore=tests/core \
+            --ignore=tests/examples \
+            --ignore=tests/plotting/test_charts.py \
+            $LINUX_PLOTTING_ARGS
+
+      - name: Plotting Testing (charts only)
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            tests/plotting/test_charts.py $PYTEST_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
@@ -275,7 +288,17 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            --ignore=tests/core \
+            --ignore=tests/examples \
+            --ignore=tests/plotting/test_charts.py \
+            $LINUX_PLOTTING_ARGS
+
+      - name: Plotting Testing (charts only)
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            tests/plotting/test_charts.py $PYTEST_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
@@ -319,6 +342,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install . --group test
+          pip install vtk==9.5.0rc3
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
