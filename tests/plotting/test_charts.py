@@ -14,14 +14,10 @@ from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """A large number of tests here fail gc."""
-
-
-# skip all tests if VTK<9.2.0
-pytestmark = pytest.mark.needs_vtk_version(9, 2)
+pytestmark = [
+    pytest.mark.needs_vtk_version(9, 2),  # skip all tests if VTK<9.2.0
+    pytest.mark.skip_check_gc,  # A large number of tests here fail gc
+]
 
 
 def vtk_array_to_tuple(arr):
