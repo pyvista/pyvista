@@ -391,6 +391,11 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
+    if extension == '.vtkhdf' and not binary:
+        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+            hexbeam.save(filename, binary)
+        return
+
     hexbeam.save(filename, binary)
 
     grid = pv.UnstructuredGrid(filename)
@@ -1279,7 +1284,7 @@ def test_grid_extract_selection_points(struct_grid):
     assert sub_grid.n_cells > 1
 
 
-def test_gaussian_smooth(hexbeam):
+def test_gaussian_smooth():
     uniform = examples.load_uniform()
     active = uniform.active_scalars_name
     values = uniform.active_scalars

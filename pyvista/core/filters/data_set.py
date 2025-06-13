@@ -69,7 +69,7 @@ class DataSetFilters(DataObjectFilters):
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
-        two meshes. See the VTK class `:vtk:`vtkIterativeClosestPointTransform`.
+        two meshes. See the VTK class :vtk:`vtkIterativeClosestPointTransform`.
 
         Parameters
         ----------
@@ -1096,6 +1096,82 @@ class DataSetFilters(DataObjectFilters):
         alg.SetCornerFactor(factor)
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
+
+    def gaussian_splatting(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        radius: float = 0.1,
+        dimensions: VectorLike[int] = (50, 50, 50),
+        progress_bar: bool = False,
+    ):
+        """Splat points into a volume using a Gaussian distribution.
+
+        This filter uses :vtk:`vtkGaussianSplatter` to splat points into a volume
+        dataset. Each point is surrounded with a Gaussian distribution function
+        weighted by input scalar data. The distribution function is volumetrically
+        sampled to create a structured dataset.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        radius : float, default: 0.1
+            This value is expressed as a percentage of the length of the longest side of
+            the sampling volume. This determines the "width" of the splatter in
+            terms of the distribution. Smaller numbers greatly reduce execution time.
+
+        dimensions : VectorLike[int], default: (50, 50, 50)
+            Sampling dimensions of the structured point set. Higher values produce better
+            results but are much slower. This is the :attr:`~pyvista.ImageData.dimensions`
+            of the returned :class:`~pyvista.ImageData`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image data with scalar values representing the splatting
+            of the points.
+
+        See Also
+        --------
+        voxelize_binary_mask
+            Alternative method for generating :class:`~pyvista.ImageData` from a dataset.
+
+        Examples
+        --------
+        Create an image data volume from a point cloud using gaussian splatter.
+
+        >>> import pyvista as pv
+
+        Load the Stanford Bunny mesh.
+
+        >>> bunny = pv.examples.download_bunny()
+
+        Apply Gaussian splatter to generate a volumetric representation.
+
+        >>> volume = bunny.gaussian_splatting(radius=0.01)
+
+        Threshold the volume to filter out low-density regions.
+
+        >>> threshed = volume.threshold(0.05)
+
+        Visualize the thresholded volume with semi-transparency and no scalar bar.
+
+        >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
+
+        """
+        from pyvista.core import _validation
+
+        _validation.check_range(radius, [0.0, 1.0], name='radius')
+        dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
+        alg = _vtk.vtkGaussianSplatter()
+        alg.SetInputDataObject(self)
+        alg.SetRadius(radius)
+        alg.SetSampleDimensions(list(dimensions_))
+        _update_alg(alg, progress_bar, 'Splatting Points with Gaussian Distribution')
+        return _get_output(alg)
 
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
@@ -5314,6 +5390,14 @@ class DataSetFilters(DataObjectFilters):
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
+
+        # Update field data
+        priority = (
+            grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
+        )
+        for array in merged.field_data:
+            merged.field_data[array] = priority.field_data[array]
+
         if inplace:
             if type(self) is type(merged):
                 self.deep_copy(merged)
@@ -6768,6 +6852,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
+        return_dict: bool = False,
         inplace: bool = False,
     ):
         """Add RGB(A) scalars to labeled data.
@@ -6878,8 +6963,15 @@ class DataSetFilters(DataObjectFilters):
 
         output_scalars : str, optional
             Name of the color scalars array. By default, the output array
-            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            is the same as ``scalars`` with ``_rgb`` or ``_rgba`` appended
             depending on ``color_type``.
+
+        return_dict : bool, default: False
+            Return a dictionary with a mapping from label values to the
+            colors applied by the filter. The colors have the same type
+            specified by ``color_type``.
+
+            .. versionadded:: 0.46
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -6894,6 +6986,7 @@ class DataSetFilters(DataObjectFilters):
         Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
         to simplify the data.
 
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> import numpy as np
         >>> image_labels = examples.load_channels()
@@ -6911,11 +7004,20 @@ class DataSetFilters(DataObjectFilters):
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels with the filter then plot them. Note that the
+        Color the labels with the filter. Note that the
         ``'glasbey_category10'`` color map is used by default.
 
-        >>> colored_labels = image_labels.color_labels()
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(return_dict=True)
+
+        Plot the labels. We define a helper function to include a legend with the plot.
+
+        >>> def labels_plotter(mesh, color_dict):
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(mesh)
+        ...     pl.add_legend(color_dict)
+        ...     return pl
+
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Since the labels are unsigned integers, the ``'index'`` coloring mode is used
         by default. Unlike the uniform sampling used by the plotter in the previous
@@ -6934,29 +7036,33 @@ class DataSetFilters(DataObjectFilters):
         Despite the changes to the dataset, the regions have the same coloring
         as before.
 
-        >>> colored_labels = subset_labels.color_labels()
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = subset_labels.color_labels(return_dict=True)
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Use the ``'cycle'`` coloring mode instead to map label values to colors
         sequentially.
 
-        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycle')
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = subset_labels.color_labels(
+        ...     coloring_mode='cycle', return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Map the colors explicitly using a dictionary.
 
-        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
-        >>> colored_labels = image_labels.color_labels(colors)
-        >>> colored_labels.plot()
+        >>> color_dict = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'gold'}
+        >>> colored_labels = image_labels.color_labels(color_dict)
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Omit the background value from the mapping and specify float colors. When
         floats are specified, values without a mapping are assigned ``nan`` values
         and are not plotted by default.
 
-        >>> colors.pop(0)
+        >>> color_dict.pop(0)
         'black'
-        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
-        >>> colored_labels.plot()
+        >>> colored_labels = image_labels.color_labels(
+        ...     color_dict, color_type='float_rgba'
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Modify the scalars and make two of the labels negative.
 
@@ -6971,14 +7077,18 @@ class DataSetFilters(DataObjectFilters):
         color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
         colored with the third-last and fourth-last color in the colormap, respectively.
 
-        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(
+        ...     negative_indexing=True, return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         If ``negative_indexing`` is disabled, the coloring defaults to the
         ``'cycle'`` coloring mode instead.
 
-        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
-        >>> colored_labels.plot()
+        >>> colored_labels, color_dict = image_labels.color_labels(
+        ...     negative_indexing=False, return_dict=True
+        ... )
+        >>> labels_plotter(colored_labels, color_dict).show()
 
         Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
 
@@ -7153,13 +7263,20 @@ class DataSetFilters(DataObjectFilters):
         colors_out = np.full(
             (len(array), num_components), default_channel_value, dtype=color_dtype
         )
+        mapping = {}
         for label, color in items:
-            colors_out[array == label, :] = color
+            mask = array == label
+            if np.any(mask):
+                colors_out[mask, :] = color
+                if return_dict:
+                    mapping[label] = color
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
         data[colors_name] = colors_out
         output_mesh.set_active_scalars(colors_name)
 
+        if return_dict:
+            return output_mesh, mapping
         return output_mesh
 
     def voxelize_binary_mask(  # type: ignore[misc]

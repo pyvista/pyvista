@@ -235,6 +235,7 @@ log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
+  'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
@@ -319,6 +320,7 @@ extend-select = [
   'A',
   'AIR',
   'ANN',
+  'ARG',
   'ASYNC',
   'ASYNC1',
   'B',
@@ -404,36 +406,42 @@ unfixable = ['F401']
 allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
+# TODO: Add annotations to any files with 'ANN' ignores listed below
 '__init__.py' = ['PLC0414']
-'doc/source/make_tables.py' = ['D101', 'D102', 'T20']
-'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115', 'T20']
-'examples/**' = [
-  'B015', # https://github.com/pyvista/pyvista/pull/6014
-  'B018', # https://github.com/pyvista/pyvista/pull/6019
+'doc/*' = ['ANN', 'INP']
+'doc/source/make_tables.py' = [
+  'D101',
+  'D102',
+  'PTH103',
+  'PTH113',
+  'PTH118',
+  'PTH123',
+  'T20',
+]
+'examples*' = ['ANN', 'INP']
+'examples/*' = [
+  'B015',   # https://github.com/pyvista/pyvista/pull/6014
+  'B018',   # https://github.com/pyvista/pyvista/pull/6019
+  'D102',
+  'D103',
+  'D205',
+  'D212',
+  'D400',
+  'D415',
+  'SIM115',
+  'T20',
 ]
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
 'examples_trame/*' = ['D100', 'D103', 'T20']
-'examples_trame/tests*' = ['D']
-'pyvista/core/_vtk_core*' = ['PLC0414']
-'pyvista/core/filters/*' = ['PYI019']
-'pyvista/core/utilities/geometric_objects.py' = ['N802']
-'pyvista/core/utilities/parametric_objects.py' = ['N802']
-'pyvista/examples/cells.py' = ['N802']
-'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
-'pyvista/plotting/_typing.py' = ['PLC0414']
-'pyvista/plotting/_vtk.py' = ['PLC0414']
-'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
-'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
-'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D', 'INP', 'T20']
-
-# ANN ignores for `pyvista/core`
-# TODO: Add annotations to any files listed below and remove it from this list
+'examples_trame/tests/*' = ['D']
+'pyvista/__init__.py' = ['ANN']
+'pyvista/_plot.py' = ['ANN']
+'pyvista/conftest.py' = ['ANN']
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']
-'pyvista/core/_vtk_core.py' = ['ANN']
+'pyvista/core/_vtk_core.py' = ['ANN', 'PLC0414']
 'pyvista/core/errors.py' = ['ANN']
-'pyvista/core/filters**' = ['ANN']
+'pyvista/core/filters/*' = ['ANN', 'PYI019']
 'pyvista/core/objects.py' = ['ANN']
 'pyvista/core/partitioned.py' = ['ANN']
 'pyvista/core/pointset.py' = ['ANN']
@@ -441,29 +449,78 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/utilities/cells.py' = ['ANN']
 'pyvista/core/utilities/docs.py' = ['ANN']
 'pyvista/core/utilities/features.py' = ['ANN']
+'pyvista/core/utilities/geometric_objects.py' = ['N802']
 'pyvista/core/utilities/helpers.py' = ['ANN']
 'pyvista/core/utilities/image_sources.py' = ['ANN']
 'pyvista/core/utilities/observers.py' = ['ANN']
+'pyvista/core/utilities/parametric_objects.py' = ['N802']
 'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
-
-# ANN ignores for `pyvista/plotting`
-'pyvista/plotting*' = ['ANN']
-
-# All other ANN ignores
-'doc*' = ['ANN', 'INP']
-'examples*' = ['ANN', 'INP']
-'pyvista/__init__.py' = ['ANN']
-'pyvista/_plot.py' = ['ANN']
-'pyvista/conftest.py' = ['ANN']
-'pyvista/demos*' = ['ANN']
+'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
 'pyvista/examples*' = ['ANN']
-'pyvista/ext*' = ['ANN']
+'pyvista/examples/_dataset_loader.py' = [
+  'PTH112',
+  'PTH113',
+  'PTH117',
+  'PTH118',
+  'PTH202',
+]
+'pyvista/examples/cells.py' = ['N802']
+'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
 'pyvista/jupyter*' = ['ANN']
+'pyvista/plotting/_plotting.py' = ['ANN']
+'pyvista/plotting/_property.py' = ['ANN']
+'pyvista/plotting/_typing.py' = ['PLC0414']
+'pyvista/plotting/_vtk*.py' = ['PLC0414']
+'pyvista/plotting/actor.py' = ['ANN']
+'pyvista/plotting/actor_properties.py' = ['ANN']
+'pyvista/plotting/affine_widget.py' = ['ANN']
+'pyvista/plotting/axes.py' = ['ANN']
+'pyvista/plotting/axes_actor.py' = ['ANN']
+'pyvista/plotting/axes_assembly.py' = ['ANN']
+'pyvista/plotting/background_renderer.py' = ['ANN']
+'pyvista/plotting/camera.py' = ['ANN']
+'pyvista/plotting/charts.py' = ['ANN']
+'pyvista/plotting/colors.py' = ['ANN']
+'pyvista/plotting/composite_mapper.py' = ['ANN']
+'pyvista/plotting/cube_axes_actor.py' = ['ANN']
+'pyvista/plotting/errors.py' = ['ANN']
+'pyvista/plotting/helpers.py' = ['ANN']
+'pyvista/plotting/lights.py' = ['ANN']
+'pyvista/plotting/lookup_table.py' = ['ANN']
+'pyvista/plotting/mapper.py' = ['ANN']
+'pyvista/plotting/opts.py' = ['ANN']
+'pyvista/plotting/picking.py' = ['ANN']
+'pyvista/plotting/plotting/__init__.py' = ['ANN']
+'pyvista/plotting/prop3d.py' = ['ANN']
+'pyvista/plotting/prop_collection.py' = ['ANN']
+'pyvista/plotting/render_passes.py' = ['ANN']
+'pyvista/plotting/render_window_interactor.py' = ['ANN']
+'pyvista/plotting/renderer.py' = ['ANN']
+'pyvista/plotting/renderers.py' = ['ANN']
+'pyvista/plotting/scalar_bars.py' = ['ANN']
+'pyvista/plotting/text.py' = ['ANN']
+'pyvista/plotting/texture.py' = ['ANN']
+'pyvista/plotting/themes.py' = ['ANN']
+'pyvista/plotting/tools.py' = ['ANN']
+'pyvista/plotting/utilities/*.py' = ['ANN']
+'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
+'pyvista/plotting/volume.py' = ['ANN']
+'pyvista/plotting/volume_property.py' = ['ANN']
+'pyvista/plotting/widgets.py' = ['ANN']
 'pyvista/report.py' = ['ANN']
-'pyvista/trame*' = ['ANN']
-'pyvista/utilities/__init__.py' = ['ANN']
-'tests*' = ['ANN']
+'pyvista/trame/*' = ['ANN']
+'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
+'tests/*' = ['ANN', 'D', 'INP', 'T20']
+'tests/examples/test_dataset_loader.py' = [
+  'PTH102',
+  'PTH107',
+  'PTH112',
+  'PTH113',
+  'PTH117',
+  'PTH118',
+  'PTH119',
+]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true # Combines 'as' imports on the same line

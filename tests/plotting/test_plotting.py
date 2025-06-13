@@ -212,7 +212,7 @@ def test_import_vrml():
     pl.show()
 
 
-def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
+def test_export_vrml(tmpdir, sphere):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.wrl'))
 
     pl = pv.Plotter()
@@ -1068,7 +1068,8 @@ def test_add_point_labels_always_visible(always_visible):
 
 
 @pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
-def test_add_point_labels_shape(shape, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_add_point_labels_shape(shape):
     plotter = pv.Plotter()
     plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
     plotter.show()
@@ -1500,7 +1501,7 @@ def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
 
 
 # check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 def test_plot_rgb(composite, dtype):
@@ -1514,7 +1515,7 @@ def test_plot_rgb(composite, dtype):
 
 
 # check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 def test_plot_rgb_implicit(composite, scalars):
@@ -1805,7 +1806,8 @@ def test_link_views(sphere):
 
 
 @pytest.mark.skip_windows
-def test_link_views_camera_set(sphere, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_link_views_camera_set():
     p = pv.Plotter(shape=(1, 2))
     p.add_mesh(pv.Cone())
     assert not p.renderer.camera_set
@@ -3044,7 +3046,8 @@ def test_add_text():
     if pv.vtk_version_info <= (9, 1)
     else '',
 )
-def test_add_text_latex(recwarn: pytest.WarningsRecorder):
+@pytest.mark.usefixtures('recwarn')
+def test_add_text_latex():
     """Test LaTeX symbols.
 
     For VTK<=9.2.2, this requires matplotlib<3.6
@@ -3635,7 +3638,7 @@ def test_plotter_volume_lookup_table(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 def test_plotter_volume_lookup_table_reactive(uniform):
     """Ensure that changes to the underlying lookup table are reflected by the volume property."""
     uniform.set_active_scalars('Spatial Point Data')
@@ -4020,7 +4023,7 @@ def test_plot_volume_rgba(uniform):
     pl.show()
 
 
-def test_plot_window_size_context(sphere):
+def test_plot_window_size_context():
     pl = pv.Plotter()
     pl.add_mesh(pv.Cube())
     with pl.window_size_context((200, 200)):
@@ -4934,7 +4937,7 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.skip_check_gc  # gc fails, suspected memory leak with merge
 @pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_push(distance):
     source = pv.OrthogonalPlanesSource()
@@ -4980,7 +4983,7 @@ def test_cube_faces_source(name, value):
     )
 
 
-def test_planes_assembly(airplane):
+def test_planes_assembly():
     plot = pv.Plotter()
     actor = pv.PlanesAssembly()
     plot.add_actor(actor)
@@ -4997,7 +5000,7 @@ def test_planes_assembly(airplane):
 )
 @pytest.mark.parametrize(('label_mode', 'label_size'), [('2D', 25), ('3D', 40)])
 def test_planes_assembly_label_position(
-    plane, label_kwarg, camera_position, label_mode, label_size, label_offset
+    label_kwarg, camera_position, label_mode, label_size, label_offset
 ):
     plot = pv.Plotter()
 

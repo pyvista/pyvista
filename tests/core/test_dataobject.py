@@ -245,9 +245,16 @@ def test_user_dict_values(ant, value):
 
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
+    [
+        (pv.MultiBlock([examples.load_ant()]), '.vtm'),
+        (examples.load_ant(), '.vtp'),
+        (examples.load_ant(), '.vtkhdf'),
+    ],
 )
 def test_user_dict_write_read(tmp_path, data_object, ext):
+    if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
+        return  # can't use VTKHDF on VTK<9.4.0
+
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
     data_object.user_dict = dict_data
@@ -276,7 +283,7 @@ def test_user_dict_persists_with_merge_filter():
     sphere2.user_dict['name'] = 'sphere2'
 
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == 'sphere2'
+    assert merged.user_dict['name'] == 'sphere1'
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):

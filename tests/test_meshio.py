@@ -179,7 +179,7 @@ meshes = [
 
 
 @pytest.mark.parametrize('mesh_in', meshes)
-def test_meshio(mesh_in, tmpdir):
+def test_meshio(mesh_in):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
 

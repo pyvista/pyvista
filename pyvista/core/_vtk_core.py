@@ -484,6 +484,7 @@ from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
+from vtkmodules.vtkImagingHybrid import vtkGaussianSplatter as vtkGaussianSplatter
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction as vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import (
     vtkSurfaceReconstructionFilter as vtkSurfaceReconstructionFilter,
@@ -498,6 +499,10 @@ from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
+
+with contextlib.suppress(ImportError):  # Introduced VTK v9.4.0
+    from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
+
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader

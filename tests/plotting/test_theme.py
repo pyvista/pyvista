@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 
 from hypothesis import HealthCheck
 from hypothesis import given
@@ -84,7 +85,7 @@ def test_depth_silhouette_eq(default_theme):
     assert my_theme.silhouette != 1
 
 
-def test_depth_silhouette_opacity_outside_clamp(default_theme):
+def test_depth_silhouette_opacity_outside_clamp():
     my_theme = pv.plotting.themes.Theme()
     with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
@@ -363,10 +364,15 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match='not a color map'):
+    match = "Invalid colormap 'not a color map'"
+    with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
-    with pytest.raises(ValueError, match='Invalid color map'):
+    match = (
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>). "
+        "Got <class 'NoneType'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
 
 
@@ -584,7 +590,8 @@ def test_below_range_color(default_theme):
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
-def test_user_logo(default_theme, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_user_logo(default_theme):
     default_theme.logo_file = download_file('vtk.png')
     pl = pv.Plotter()
     pl.add_logo_widget()

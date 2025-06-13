@@ -53,7 +53,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
-    user-friendly interface to use `:vtk:`vtkCubeAxesActor`.
+    user-friendly interface to use :vtk:`vtkCubeAxesActor`.
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     @property
     def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
-        if pyvista.vtk_version_info >= (9, 3):
+        if (9, 3, 0) <= pyvista.vtk_version_info < (9, 5, 0):
             offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
             self.GetTitleOffset(offx, offy)  # type: ignore[call-overload]
             return offx, offy  # type: ignore[return-value]

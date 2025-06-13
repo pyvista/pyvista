@@ -38,7 +38,10 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     """
 
     if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}  # type: ignore[dict-item]
+        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
+
+        if _vtk.vtk_version_info >= (9, 4):
+            _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
@@ -121,7 +124,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             self[i + 1] = self[i]
         self[index] = dataset
 
-    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01
+    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01  # noqa: ARG002
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 

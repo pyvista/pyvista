@@ -11,10 +11,8 @@ from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """All the tests here fail gc."""
+# A large number of tests here fail gc
+pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture

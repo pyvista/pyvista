@@ -11,6 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Union
 from typing import cast
 import warnings
 
@@ -53,6 +54,22 @@ if TYPE_CHECKING:
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+
+    _PolyDataWriterAlias = Union[
+        _vtk.vtkPLYWriter,
+        _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkSTLWriter,
+        _vtk.vtkPolyDataWriter,
+        _vtk.vtkHoudiniPolyDataWriter,
+        _vtk.vtkOBJWriter,
+        _vtk.vtkIVWriter,
+        _vtk.vtkHDFWriter,
+    ]
+
+    _UnstructuredGridWriterAlias = Union[
+        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
+    ]
+
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -436,78 +453,78 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Return 0.0 since a PointSet has no volume."""
         return 0.0
 
-    def contour(self, *args, **kwargs):
+    def contour(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         msg = 'Contour and other dimension reducing filters are not supported on PointSets'
         raise PointSetNotSupported(msg)
 
-    def cell_data_to_point_data(self, *args, **kwargs):
+    def cell_data_to_point_data(self, *args, **kwargs):  # noqa: ARG002
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def point_data_to_cell_data(self, *args, **kwargs):
+    def point_data_to_cell_data(self, *args, **kwargs):  # noqa: ARG002
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def triangulate(self, *args, **kwargs):
+    def triangulate(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def decimate_boundary(self, *args, **kwargs):
+    def decimate_boundary(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def find_cells_along_line(self, *args, **kwargs):
+    def find_cells_along_line(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def tessellate(self, *args, **kwargs):
+    def tessellate(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def slice(self, *args, **kwargs):
+    def slice(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_axis(self, *args, **kwargs):
+    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_line(self, *args, **kwargs):
+    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_implicit(self, *args, **kwargs):
+    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_orthogonal(self, *args, **kwargs):
+    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def shrink(self, *args, **kwargs):
+    def shrink(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def separate_cells(self, *args, **kwargs):
+    def separate_cells(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def remove_cells(self, *args, **kwargs):
+    def remove_cells(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def point_is_inside_cell(self, *args, **kwargs):
+    def point_is_inside_cell(self, *args, **kwargs):  # noqa: ARG002
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def extract_surface(self, *args, **kwargs):
+    def extract_surface(self, *args, **kwargs):  # noqa: ARG002
         """Raise extract surface are not supported."""
         raise PointSetCellOperationError
 
-    def extract_geometry(self, *args, **kwargs):
+    def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
         """Raise extract geometry are not supported."""
         raise PointSetCellOperationError
 
@@ -736,17 +753,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     _WRITERS: ClassVar[
         dict[
             str,
-            (
-                type[
-                    _vtk.vtkPLYWriter
-                    | _vtk.vtkXMLPolyDataWriter
-                    | _vtk.vtkSTLWriter
-                    | _vtk.vtkPolyDataWriter
-                    | _vtk.vtkHoudiniPolyDataWriter
-                    | _vtk.vtkOBJWriter
-                    | _vtk.vtkIVWriter
-                ]
-            ),
+            (type[_PolyDataWriterAlias]),
         ]
     ] = {  # type: ignore[assignment]
         '.ply': _vtk.vtkPLYWriter,
@@ -757,6 +764,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.obj': _vtk.vtkOBJWriter,
         '.iv': _vtk.vtkIVWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
     def __init__(
         self,
@@ -1730,7 +1739,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 class PointGrid(_PointSet):
     """Class in common with structured and unstructured grids."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
         """Initialize the point grid."""
         super().__init__()
 
@@ -1819,12 +1828,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[
         dict[
             str,
-            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+            type[_UnstructuredGridWriterAlias],
         ]
     ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -2961,7 +2972,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ]
     ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}  # type: ignore[assignment]
 
-    def __init__(self, *args, deep: bool = False, **kwargs):
+    def __init__(self, *args, deep: bool = False, **kwargs):  # noqa: ARG002
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)

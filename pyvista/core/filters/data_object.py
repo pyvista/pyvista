@@ -1302,12 +1302,10 @@ class DataObjectFilters:
                 output.set_active_scalars(name, preference=association)
                 return output
 
-            def extract_crinkle_cells(dataset, a_, b_, active_scalars_info_):
+            def extract_crinkle_cells(dataset, a_, b_, _):
                 if b_ is None:
                     # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
+                    def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                         return extract_cells(
                             block_,
                             np.unique(clipped_a.cell_data[CELL_IDS_KEY]),
@@ -2321,7 +2319,10 @@ class DataObjectFilters:
         return _get_output(alg)
 
     def cell_centers(  # type: ignore[misc]
-        self: _DataSetOrMultiBlockType, vertex: bool = True, progress_bar: bool = False
+        self: _DataSetOrMultiBlockType,
+        vertex: bool = True,
+        pass_cell_data: bool = True,
+        progress_bar: bool = False,
     ):
         """Generate points at the center of the cells in this dataset.
 
@@ -2331,6 +2332,9 @@ class DataObjectFilters:
         ----------
         vertex : bool, default: True
             Enable or disable the generation of vertex cells.
+
+        pass_cell_data : bool, default: True
+            If enabled, pass the input cell data through to the output.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2364,6 +2368,7 @@ class DataObjectFilters:
         alg = _vtk.vtkCellCenters()
         alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
+        alg.SetCopyArrays(pass_cell_data)
         _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
 

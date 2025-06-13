@@ -130,7 +130,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
             else:  # pragma: no cover
                 fname = fname[:-3] + 'vtksz'
                 with Path(fname).open('wb') as f:
-                    f.write(plotter.last_vtksz)
+                    f.write(plotter.last_vtksz)  # type: ignore[arg-type]
                     image_names.append(fname)
 
     pyvista.close_all()  # close and clear all plotters
@@ -153,7 +153,7 @@ class Scraper:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
 
-    def __call__(self, block, block_vars, gallery_conf):
+    def __call__(self, block, block_vars, gallery_conf):  # noqa: ARG002
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.

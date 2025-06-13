@@ -1,4 +1,3 @@
-# ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -179,12 +178,13 @@ def examples_local_repository_tmp_dir(tmp_path):
     [os.remove(file) for file in cached_paths if os.path.isfile(file)]
 
 
+@pytest.mark.usefixtures('examples_local_repository_tmp_dir')
 @pytest.mark.parametrize('use_archive', [True, False])
 @pytest.mark.parametrize(
     'file_loader',
     [_SingleFileDatasetLoader, _DownloadableFile, _SingleFileDownloadableDatasetLoader],
 )
-def test_single_file_loader(file_loader, use_archive, examples_local_repository_tmp_dir):
+def test_single_file_loader(file_loader, use_archive):
     basename = 'pyvista_logo.png'
     if use_archive and isinstance(file_loader, _Downloadable):
         file_loader = file_loader('archive.zip', target_file=basename)
@@ -250,7 +250,8 @@ def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
-def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
+@pytest.mark.usefixtures('examples_local_repository_tmp_dir')
+def test_multi_file_loader(load_func):
     basename_loaded1 = 'airplane.ply'
     basename_loaded2 = 'hexbeam.vtk'
     basename_not_loaded = 'pyvista_logo.png'
@@ -651,7 +652,7 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     )
 
 
-def test_load_dataset_no_reader(dataset_loader_one_file):
+def test_load_dataset_no_reader():
     # Test using dataset with .npy file
     dataset = downloads._dataset_cloud_dark_matter
 

@@ -499,6 +499,18 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.parametrize('dataset', [examples.download_bunny()])
+def test_gaussian_splatting(dataset):
+    output = dataset.gaussian_splatting(progress_bar=True)
+    assert output is not None
+    assert isinstance(output, pv.ImageData)
+    assert output.dimensions == (50, 50, 50)
+
+    dimensions = (10, 11, 12)
+    output = dataset.gaussian_splatting(dimensions=dimensions)
+    assert output.dimensions == dimensions
+
+
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         geom = dataset.extract_geometry(progress_bar=True)
@@ -515,7 +527,7 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
-def test_delaunay_2d_unstructured(datasets):
+def test_delaunay_2d_unstructured():
     mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_points
@@ -1946,7 +1958,6 @@ def test_extract_points_adjacent_cells_false(dataset_filter, extracted_with_adja
 )
 def test_extract_points_include_cells_false(
     dataset_filter,
-    grid4x4,
     extracted_with_include_cells_false,
 ):
     input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_false
@@ -3036,10 +3047,7 @@ def structured_grids_split_disconnected():
     return voi_1, voi_2
 
 
-def test_concatenate_structured(
-    structured_grids_split_coincident,
-    structured_grids_split_disconnected,
-):
+def test_concatenate_structured(structured_grids_split_coincident):
     voi_1, voi_2, structured = structured_grids_split_coincident
     joined = voi_1.concatenate(voi_2, axis=1)
     assert structured.points == pytest.approx(joined.points)
@@ -3830,7 +3838,7 @@ def test_color_labels_color_type_partial_dict(labeled_image, color_type):
 
 
 @pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba'])
-def test_color_labels_color_type_cmap(labeled_image, color_type):
+def test_color_labels_color_type_cmap(color_type):
     labels = pv.ImageData(dimensions=(256, 1, 1))
     labels['256'] = range(256)
     colored = labels.color_labels('viridis', color_type=color_type)
@@ -3849,7 +3857,7 @@ LABEL_DATA = [-1, -2, 1]
     ('negative_indexing', 'cmap_index'),
     [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))],
 )
-def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+def test_color_labels_negative_index(negative_indexing, cmap_index):
     labels = pv.ImageData(dimensions=(3, 1, 1))
     labels['data'] = LABEL_DATA
     colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
@@ -3921,6 +3929,28 @@ def test_color_labels_invalid_input(uniform):
         pv.Sphere().color_labels(scalars='Normals')
 
 
+@pytest.mark.parametrize('color_type', ['float_rgb', 'int_rgba'])
+def test_color_labels_return_dict(labeled_image, color_type):
+    expected_keys = np.unique(labeled_image.active_scalars)
+
+    input_colors = pv.plotting.colors.matplotlib_default_colors
+    input_keys = list(range(len(input_colors)))
+    assert set(expected_keys) < set(input_keys)
+
+    mapping_in = dict(zip(input_keys, input_colors))
+    colored_mesh, mapping_out = labeled_image.color_labels(
+        mapping_in, return_dict=True, color_type=color_type
+    )
+    assert isinstance(colored_mesh, type(labeled_image))
+    assert isinstance(mapping_out, dict)
+    assert set(mapping_out.keys()) < set(mapping_in.keys())
+
+    for key in expected_keys:
+        expected_color = getattr(pv.Color(mapping_in[key]), color_type)
+        actual_color = mapping_out[key]
+        assert actual_color == expected_color
+
+
 @pytest.fixture
 def frog_tissues_image():
     return examples.load_frog_tissues()
@@ -3945,7 +3975,7 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
+def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     mask = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 

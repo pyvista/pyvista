@@ -132,6 +132,8 @@ class MultiBlock(
     plot = pyvista._plot.plot
 
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self: MultiBlock, *args, **kwargs) -> None:
         """Initialize multi block."""

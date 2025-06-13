@@ -1,6 +1,5 @@
 """Generate tables that can be included in the documentation."""
 
-# ruff: noqa:PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -239,13 +238,13 @@ class CellQualityMeasuresTable(DocTable):
         return [(measures, measure) for measure in measures.keys()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header.format(
             *[f':attr:`~pyvista.CellType.{cell_type.name}`' for cell_type in cls.cell_types]
         )
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, _, row_data):
         measures, measure = row_data
 
         success = ':material-regular:`check;2em;sd-text-success`'
@@ -305,7 +304,7 @@ class CellQualityInfoTable(DocTable):
         return _CELL_QUALITY_LOOKUP[cls.cell_type].values()
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         name = cls.cell_type.name
         example = _CELL_TYPE_INFO[name].example
         return cls.header.format(
@@ -315,7 +314,7 @@ class CellQualityInfoTable(DocTable):
         )
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, _, row_data):
         def format_list(obj):
             if obj is None:
                 return 'None'
@@ -399,7 +398,7 @@ class LineStyleTable(DocTable):
         return [{'style': ls, **data} for (ls, data) in pv.charts.Pen.LINE_STYLES.items()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header
 
     @classmethod
@@ -465,7 +464,7 @@ class MarkerStyleTable(DocTable):
         ]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header
 
     @classmethod
@@ -531,7 +530,7 @@ class ColorSchemeTable(DocTable):
         return [{'scheme': cs, **data} for (cs, data) in pv.colors.COLOR_SCHEMES.items()]
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header
 
     @classmethod
@@ -627,11 +626,11 @@ class ColorTable(DocTable):
         return colors_dict.values()
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header.format(cls.title)
 
     @classmethod
-    def get_row(cls, i, row_data):
+    def get_row(cls, _, row_data):
         name_template = "``'{}'``"
         names = [row_data['name']] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
@@ -1195,11 +1194,11 @@ class ColormapTable(DocTable):
         return data_out
 
     @classmethod
-    def get_header(cls, data):
+    def get_header(cls, _):
         return cls.header.format(cls.title)
 
     @classmethod
-    def get_row(cls, i, colormap_info):
+    def get_row(cls, _, colormap_info):
         source_badge_mapping = {
             'cmcrameri': ':bdg-danger:`cmc`',
             'cmocean': ':bdg-primary:`cmo`',
