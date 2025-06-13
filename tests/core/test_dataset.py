@@ -1364,6 +1364,14 @@ def test_point_cell_ids(grid: DataSet, i0):
         assert i0 not in grid.get_cell(c).point_ids
 
 
+def test_point_cell_ids_order():
+    resolution = 10
+    mesh = pv.Sphere(theta_resolution=resolution)
+    expected_ids = list(range(resolution))
+    actual_ids = mesh.point_cell_ids(0)
+    assert actual_ids == expected_ids
+
+
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_point_neighbors_ids(grid: DataSet, i0):
