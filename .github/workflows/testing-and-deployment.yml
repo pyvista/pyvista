@@ -71,8 +71,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.config.python-version }}
-          if: env.USE_CACHE == 'true'
-          cache: "pip"
+          cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Install PyVista test dependencies
         run: |
