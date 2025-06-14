@@ -98,6 +98,10 @@ class GPUInfo:
         content += '\n'
         return content
 
+    def __str__(self):
+        """Return string representation of GPUInfo."""
+        return f'GPUInfo(vendor={self.vendor}, renderer={self.renderer}, version={self.version})'
+
 
 class Report(scooby.Report):
     """Generate a PyVista software environment report.
