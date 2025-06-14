@@ -28,7 +28,6 @@ downloading, reading, and processing files with a generic mapping:
 
 """
 
-# ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 # mypy: disable-error-code="redundant-expr"
 from __future__ import annotations
 
@@ -170,9 +169,7 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         name_iter = [name] if isinstance(name, str) else name
         url = self.base_url
         base_url_iter = [url] if isinstance(url, str) else url
-        url_raw = [
-            os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)
-        ]
+        url_raw = list(map(os.path.join, base_url_iter, name_iter))
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
     @property

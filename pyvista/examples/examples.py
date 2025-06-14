@@ -10,6 +10,7 @@ Examples
 
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
 
@@ -473,7 +474,7 @@ def load_sphere_vectors():
 
 
 def _sphere_vectors_load_func() -> pyvista.PolyData:
-    sphere = pyvista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=math.pi)
 
     # make cool swirly pattern
     vectors = np.vstack(
