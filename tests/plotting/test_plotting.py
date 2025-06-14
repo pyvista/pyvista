@@ -3146,6 +3146,7 @@ def test_many_multi_pass():
     pl.add_blurring()
     pl.enable_shadows()
     pl.enable_eye_dome_lighting()
+    pl.show()
 
 
 def test_plot_composite_many_options(multiblock_poly):
