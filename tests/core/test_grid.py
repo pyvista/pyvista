@@ -396,7 +396,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
             hexbeam.save(filename, binary=binary)
         return
 
-    hexbeam.save(filename, binary)
+    hexbeam.save(filename, binary=binary)
 
     grid = pv.UnstructuredGrid(filename)
     assert grid.cells.shape == hexbeam.cells.shape
