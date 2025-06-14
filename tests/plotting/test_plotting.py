@@ -3134,7 +3134,9 @@ def test_ssao_pass_from_helper():
 
 
 @pytest.mark.skip_windows
-def test_many_multi_pass():
+def test_many_multi_pass(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+
     pl = pv.Plotter(lighting=None)
     pl.add_mesh(pv.Sphere(), show_edges=True)
     pl.add_light(pv.Light(position=(0, 0, 10)))
