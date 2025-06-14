@@ -75,7 +75,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --fail_unused_cache
 
       - name: Upload Generated Images
         if: always()
@@ -183,7 +183,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images --fail_unused_cache
 
       - name: Upload Generated Images
         if: always()
@@ -275,7 +275,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images --fail_unused_cache
 
       - name: Upload Generated Images
         if: always()
@@ -341,7 +341,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --fail_unused_cache
 
       - name: Upload Generated Images
         if: always()
