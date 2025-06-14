@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import MissingDataError
@@ -41,7 +42,8 @@ if TYPE_CHECKING:
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
 
-    def edge_mask(self, angle, progress_bar: bool = False):
+    @_deprecate_positional_args(allowed=['angle'])
+    def edge_mask(self, angle, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Return a mask of the points of a surface mesh with a surface angle greater than angle.
 
         Parameters
@@ -83,13 +85,13 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.NonManifoldEdgesOff()
         featureEdges.ManifoldEdgesOff()
         featureEdges.SetFeatureAngle(angle)
-        _update_alg(featureEdges, progress_bar, 'Computing Edges')
+        _update_alg(featureEdges, progress_bar=progress_bar, message='Computing Edges')
         edges = _get_output(featureEdges)
         orig_id = cast('NumpyArray[float]', pyvista.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
-    def _boolean(self, btype, other_mesh, tolerance, progress_bar: bool = False):
+    def _boolean(self, btype, other_mesh, *, tolerance, progress_bar: bool = False):
         """Perform boolean operation."""
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
             msg = (
@@ -118,11 +120,12 @@ class PolyDataFilters(DataSetFilters):
         bfilter.SetInputData(1, other_mesh)
         bfilter.ReorientDifferenceCellsOn()  # this is already default
         bfilter.SetTolerance(tolerance)
-        _update_alg(bfilter, progress_bar, 'Performing Boolean Operation')
+        _update_alg(bfilter, progress_bar=progress_bar, message='Performing Boolean Operation')
 
         return _get_output(bfilter)
 
-    def boolean_union(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):
+    @_deprecate_positional_args(allowed=['other_mesh'])
+    def boolean_union(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Perform a boolean union operation on two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -192,9 +195,10 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
-        return self._boolean('union', other_mesh, tolerance, progress_bar=progress_bar)
+        return self._boolean('union', other_mesh, tolerance=tolerance, progress_bar=progress_bar)
 
-    def boolean_intersection(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):
+    @_deprecate_positional_args(allowed=['other_mesh'])
+    def boolean_intersection(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Perform a boolean intersection operation on two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -265,7 +269,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         bool_inter = self._boolean(
-            'intersection', other_mesh, tolerance, progress_bar=progress_bar
+            'intersection', other_mesh, tolerance=tolerance, progress_bar=progress_bar
         )
 
         # check if a polydata is completely contained within another
@@ -278,7 +282,8 @@ class PolyDataFilters(DataSetFilters):
                 )
         return bool_inter
 
-    def boolean_difference(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):
+    @_deprecate_positional_args(allowed=['other_mesh'])
+    def boolean_difference(self, other_mesh, tolerance=1e-5, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Perform a boolean difference operation between two meshes.
 
         Essentially, boolean union, difference, and intersection are
@@ -339,7 +344,9 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`boolean_operations_example` for more examples using this filter.
 
         """
-        return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
+        return self._boolean(
+            'difference', other_mesh, tolerance=tolerance, progress_bar=progress_bar
+        )
 
     def __add__(self: PolyData, dataset):  # type: ignore[misc]
         """Merge these two meshes."""
@@ -416,7 +423,7 @@ class PolyDataFilters(DataSetFilters):
         for mesh in meshes:
             append_filter.AddInputData(mesh)
 
-        _update_alg(append_filter, progress_bar, 'Append PolyData')
+        _update_alg(append_filter, progress_bar=progress_bar, message='Append PolyData')
         merged = _get_output(append_filter)
 
         if inplace:
@@ -425,14 +432,15 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def merge(  # type: ignore[override, misc]
+    @_deprecate_positional_args(allowed=['dataset'])
+    def merge(  # type: ignore[override, misc]  # noqa: PLR0917
         self: PolyData,
         dataset,
-        merge_points: bool = True,
+        merge_points: bool = True,  # noqa: FBT001, FBT002
         tolerance=0.0,
-        inplace: bool = False,
-        main_has_priority: bool = True,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        main_has_priority: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Merge this mesh with one or more datasets.
 
@@ -574,12 +582,13 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def intersection(
+    @_deprecate_positional_args(allowed=['mesh'])
+    def intersection(  # noqa: PLR0917
         self,
         mesh,
-        split_first: bool = True,
-        split_second: bool = True,
-        progress_bar: bool = False,
+        split_first: bool = True,  # noqa: FBT001, FBT002
+        split_second: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute the intersection between two meshes.
 
@@ -650,7 +659,11 @@ class PolyDataFilters(DataSetFilters):
         intfilter.SetComputeIntersectionPointArray(True)
         intfilter.SetSplitFirstOutput(split_first)
         intfilter.SetSplitSecondOutput(split_second)
-        _update_alg(intfilter, progress_bar, 'Computing the intersection between two meshes')
+        _update_alg(
+            intfilter,
+            progress_bar=progress_bar,
+            message='Computing the intersection between two meshes',
+        )
 
         intersection = _get_output(intfilter, oport=0)
         first = _get_output(intfilter, oport=1)
@@ -658,7 +671,8 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection, first, second
 
-    def curvature(self, curv_type='mean', progress_bar: bool = False):
+    @_deprecate_positional_args(allowed=['curv_type'])
+    def curvature(self, curv_type='mean', progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Return the pointwise curvature of a mesh.
 
         See :ref:`connectivity_example` for more examples using this
@@ -713,7 +727,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             msg = '``curv_type`` must be either "Mean", "Gaussian", "Maximum", or "Minimum".'
             raise ValueError(msg)
-        _update_alg(curvefilter, progress_bar, 'Computing Curvature')
+        _update_alg(curvefilter, progress_bar=progress_bar, message='Computing Curvature')
 
         # Compute and return curvature
         curv = _get_output(curvefilter)
@@ -811,7 +825,7 @@ class PolyDataFilters(DataSetFilters):
         trifilter.SetInputData(self)
         trifilter.SetPassVerts(pass_verts)
         trifilter.SetPassLines(pass_lines)
-        _update_alg(trifilter, progress_bar, 'Computing Triangle Mesh')
+        _update_alg(trifilter, progress_bar=progress_bar, message='Computing Triangle Mesh')
 
         mesh = _get_output(trifilter)
         if inplace:
@@ -819,17 +833,18 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def smooth(
+    @_deprecate_positional_args
+    def smooth(  # noqa: PLR0917
         self,
         n_iter=20,
         relaxation_factor=0.01,
         convergence=0.0,
         edge_angle=15,
         feature_angle=45,
-        boundary_smoothing: bool = True,
-        feature_smoothing: bool = False,
-        inplace: bool = False,
-        progress_bar: bool = False,
+        boundary_smoothing: bool = True,  # noqa: FBT001, FBT002
+        feature_smoothing: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Adjust point coordinates using Laplacian smoothing.
 
@@ -882,7 +897,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(5)
-        >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
+        >>> smooth_cube = cube.smooth(n_iter=1000, feature_smoothing=False)
         >>> n_edge_cells = cube.extract_feature_edges().n_cells
         >>> n_smooth_cells = smooth_cube.extract_feature_edges().n_cells
         >>> f'Sharp Edges on Cube:        {n_edge_cells}'
@@ -903,7 +918,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetRelaxationFactor(relaxation_factor)
-        _update_alg(alg, progress_bar, 'Smoothing Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Smoothing Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -911,18 +926,19 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def smooth_taubin(
+    @_deprecate_positional_args
+    def smooth_taubin(  # noqa: PLR0917
         self,
         n_iter=20,
         pass_band=0.1,
         edge_angle=15.0,
         feature_angle=45.0,
-        boundary_smoothing: bool = True,
-        feature_smoothing: bool = False,
-        non_manifold_smoothing: bool = False,
-        normalize_coordinates: bool = False,
-        inplace: bool = False,
-        progress_bar: bool = False,
+        boundary_smoothing: bool = True,  # noqa: FBT001, FBT002
+        feature_smoothing: bool = False,  # noqa: FBT001, FBT002
+        non_manifold_smoothing: bool = False,  # noqa: FBT001, FBT002
+        normalize_coordinates: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Smooth a PolyData DataSet with Taubin smoothing.
 
@@ -1026,7 +1042,9 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.SetPassBand(pass_band)
         alg.SetNormalizeCoordinates(normalize_coordinates)
-        _update_alg(alg, progress_bar, 'Smoothing Mesh using Taubin Smoothing')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Smoothing Mesh using Taubin Smoothing'
+        )
 
         mesh = _get_output(alg)
         if inplace:
@@ -1034,18 +1052,19 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def decimate_pro(
+    @_deprecate_positional_args(allowed=['reduction'])
+    def decimate_pro(  # noqa: PLR0917
         self,
         reduction,
         feature_angle=45.0,
         split_angle=75.0,
-        splitting: bool = True,
-        pre_split_mesh: bool = False,
-        preserve_topology: bool = False,
-        boundary_vertex_deletion: bool = True,
+        splitting: bool = True,  # noqa: FBT001, FBT002
+        pre_split_mesh: bool = False,  # noqa: FBT001, FBT002
+        preserve_topology: bool = False,  # noqa: FBT001, FBT002
+        boundary_vertex_deletion: bool = True,  # noqa: FBT001, FBT002
         max_degree=None,
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Reduce the number of triangles in a triangular mesh.
 
@@ -1153,7 +1172,7 @@ class PolyDataFilters(DataSetFilters):
         if max_degree is not None:
             alg.SetDegree(max_degree)
 
-        _update_alg(alg, progress_bar, 'Decimating Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -1269,7 +1288,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(reduction)
         alg.SetMaximumError(maximum_error)
 
-        _update_alg(alg, progress_bar, 'Decimating Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -1278,17 +1297,18 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def tube(
+    @_deprecate_positional_args
+    def tube(  # noqa: PLR0917
         self,
         radius=None,
         scalars=None,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001, FBT002
         n_sides=20,
         radius_factor=10.0,
-        absolute: bool = False,
+        absolute: bool = False,  # noqa: FBT001, FBT002
         preference='point',
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate a tube around each input line.
 
@@ -1373,7 +1393,7 @@ class PolyDataFilters(DataSetFilters):
             else:
                 tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
-        _update_alg(tube, progress_bar, 'Creating Tube')
+        _update_alg(tube, progress_bar=progress_bar, message='Creating Tube')
 
         mesh = _get_output(tube)
         if inplace:
@@ -1381,12 +1401,13 @@ class PolyDataFilters(DataSetFilters):
             return poly_data
         return mesh
 
-    def subdivide(
+    @_deprecate_positional_args(allowed=['nsub', 'subfilter'])
+    def subdivide(  # noqa: PLR0917
         self,
         nsub,
         subfilter='linear',
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Increase the number of triangles in a single, connected triangular mesh.
 
@@ -1480,7 +1501,7 @@ class PolyDataFilters(DataSetFilters):
         sfilter.SetCheckForTriangles(False)  # we already check for this
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(self)
-        _update_alg(sfilter, progress_bar, 'Subdividing Mesh')
+        _update_alg(sfilter, progress_bar=progress_bar, message='Subdividing Mesh')
 
         submesh = _get_output(sfilter)
         if inplace:
@@ -1489,14 +1510,15 @@ class PolyDataFilters(DataSetFilters):
 
         return submesh
 
-    def subdivide_adaptive(
+    @_deprecate_positional_args
+    def subdivide_adaptive(  # noqa: PLR0917
         self,
         max_edge_len=None,
         max_tri_area=None,
         max_n_tris=None,
         max_n_passes=None,
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Increase the number of triangles in a triangular mesh based on edge and/or area metrics.
 
@@ -1585,7 +1607,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter.SetMaximumNumberOfPasses(max_n_passes)
 
         sfilter.SetInputData(self)
-        _update_alg(sfilter, progress_bar, 'Adaptively Subdividing Mesh')
+        _update_alg(sfilter, progress_bar=progress_bar, message='Adaptively Subdividing Mesh')
         submesh = _get_output(sfilter)
 
         if inplace:
@@ -1594,26 +1616,27 @@ class PolyDataFilters(DataSetFilters):
 
         return submesh
 
-    def decimate(
+    @_deprecate_positional_args(allowed=['target_reduction'])
+    def decimate(  # noqa: PLR0917
         self,
         target_reduction,
-        volume_preservation: bool = False,
-        attribute_error: bool | None = None,
-        scalars: bool | None = None,
-        vectors: bool | None = None,
-        normals: bool | None = None,
-        tcoords: bool | None = None,
-        tensors: bool | None = None,
+        volume_preservation: bool = False,  # noqa: FBT001, FBT002
+        attribute_error: bool | None = None,  # noqa: FBT001
+        scalars: bool | None = None,  # noqa: FBT001
+        vectors: bool | None = None,  # noqa: FBT001
+        normals: bool | None = None,  # noqa: FBT001
+        tcoords: bool | None = None,  # noqa: FBT001
+        tensors: bool | None = None,  # noqa: FBT001
         scalars_weight=0.1,
         vectors_weight=0.1,
         normals_weight=0.1,
         tcoords_weight=0.1,
         tensors_weight=0.1,
-        inplace: bool = False,
-        progress_bar: bool = False,
-        boundary_constraints: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        boundary_constraints: bool = False,  # noqa: FBT001, FBT002
         boundary_weight: float = 1.0,
-        enable_all_attribute_error: bool = False,
+        enable_all_attribute_error: bool = False,  # noqa: FBT001, FBT002
     ):
         """Reduce the number of triangles in a triangular mesh using :vtk:`vtkQuadricDecimation`.
 
@@ -1796,7 +1819,7 @@ class PolyDataFilters(DataSetFilters):
             alg.SetBoundaryWeightFactor(boundary_weight)
 
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Decimating Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Decimating Mesh')
 
         mesh = _get_output(alg)
         if inplace:
@@ -1805,18 +1828,19 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def compute_normals(
+    @_deprecate_positional_args
+    def compute_normals(  # noqa: PLR0917
         self,
-        cell_normals: bool = True,
-        point_normals: bool = True,
-        split_vertices: bool = False,
-        flip_normals: bool = False,
-        consistent_normals: bool = True,
-        auto_orient_normals: bool = False,
-        non_manifold_traversal: bool = True,
+        cell_normals: bool = True,  # noqa: FBT001, FBT002
+        point_normals: bool = True,  # noqa: FBT001, FBT002
+        split_vertices: bool = False,  # noqa: FBT001, FBT002
+        flip_normals: bool = False,  # noqa: FBT001, FBT002
+        consistent_normals: bool = True,  # noqa: FBT001, FBT002
+        auto_orient_normals: bool = False,  # noqa: FBT001, FBT002
+        non_manifold_traversal: bool = True,  # noqa: FBT001, FBT002
         feature_angle=30.0,
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute point and/or cell normals for a mesh.
 
@@ -1954,7 +1978,7 @@ class PolyDataFilters(DataSetFilters):
         normal.SetNonManifoldTraversal(non_manifold_traversal)
         normal.SetFeatureAngle(feature_angle)
         normal.SetInputData(self)
-        _update_alg(normal, progress_bar, 'Computing Normals')
+        _update_alg(normal, progress_bar=progress_bar, message='Computing Normals')
 
         mesh = _get_output(normal)
         try:
@@ -1984,13 +2008,14 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def clip_closed_surface(
+    @_deprecate_positional_args(allowed=['normal'])
+    def clip_closed_surface(  # noqa: PLR0917
         self,
         normal='x',
         origin=None,
         tolerance=1e-06,
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip a closed polydata surface with a plane.
 
@@ -2074,7 +2099,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetTolerance(tolerance)
         alg.SetClippingPlanes(collection)
-        _update_alg(alg, progress_bar, 'Clipping Closed Surface')
+        _update_alg(alg, progress_bar=progress_bar, message='Clipping Closed Surface')
         result = _get_output(alg)
 
         if inplace:
@@ -2083,8 +2108,12 @@ class PolyDataFilters(DataSetFilters):
         else:
             return result
 
+    @_deprecate_positional_args(allowed=['hole_size'])
     def fill_holes(
-        self, hole_size, inplace: bool = False, progress_bar: bool = False
+        self,
+        hole_size,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):  # pragma: no cover
         """Fill holes in a :class:`pyvista.PolyData` or :vtk:`vtkPolyData` object.
 
@@ -2132,7 +2161,7 @@ class PolyDataFilters(DataSetFilters):
         alg = _vtk.vtkFillHolesFilter()
         alg.SetHoleSize(hole_size)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Filling Holes')
+        _update_alg(alg, progress_bar=progress_bar, message='Filling Holes')
 
         mesh = _get_output(alg)
         if inplace:
@@ -2140,16 +2169,17 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
-        point_merging: bool = True,
+        point_merging: bool = True,  # noqa: FBT001, FBT002
         tolerance=None,
-        lines_to_points: bool = True,
-        polys_to_lines: bool = True,
-        strips_to_polys: bool = True,
-        inplace: bool = False,
-        absolute: bool = True,
-        progress_bar: bool = False,
+        lines_to_points: bool = True,  # noqa: FBT001, FBT002
+        polys_to_lines: bool = True,  # noqa: FBT001, FBT002
+        strips_to_polys: bool = True,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        absolute: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Clean the mesh.
@@ -2229,7 +2259,7 @@ class PolyDataFilters(DataSetFilters):
             else:
                 alg.SetTolerance(tolerance)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Cleaning')
+        _update_alg(alg, progress_bar=progress_bar, message='Cleaning')
         output = _get_output(alg)
 
         # Check output so no segfaults occur
@@ -2242,14 +2272,15 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def geodesic(
+    @_deprecate_positional_args(allowed=['start_vertex', 'end_vertex'])
+    def geodesic(  # noqa: PLR0917
         self,
         start_vertex,
         end_vertex,
-        inplace: bool = False,
-        keep_order: bool = True,
-        use_scalar_weights: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        keep_order: bool = True,  # noqa: FBT001, FBT002
+        use_scalar_weights: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
@@ -2319,7 +2350,7 @@ class PolyDataFilters(DataSetFilters):
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
         dijkstra.SetUseScalarWeights(use_scalar_weights)
-        _update_alg(dijkstra, progress_bar, 'Calculating the Geodesic Path')
+        _update_alg(dijkstra, progress_bar=progress_bar, message='Calculating the Geodesic Path')
         original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
@@ -2343,12 +2374,13 @@ class PolyDataFilters(DataSetFilters):
 
         return output
 
-    def geodesic_distance(
+    @_deprecate_positional_args(allowed=['start_vertex', 'end_vertex'])
+    def geodesic_distance(  # noqa: PLR0917
         self,
         start_vertex,
         end_vertex,
-        use_scalar_weights: bool = False,
-        progress_bar: bool = False,
+        use_scalar_weights: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Calculate the geodesic distance between two vertices using Dijkstra's algorithm.
 
@@ -2395,12 +2427,13 @@ class PolyDataFilters(DataSetFilters):
         del sizes
         return distance
 
-    def ray_trace(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['origin', 'end_point'])
+    def ray_trace(  # type: ignore[misc]  # noqa: PLR0917
         self: PolyData,
         origin,
         end_point,
-        first_point: bool = False,
-        plot: bool = False,
+        first_point: bool = False,  # noqa: FBT001, FBT002
+        plot: bool = False,  # noqa: FBT001, FBT002
         off_screen=None,
     ):
         """Perform a single ray trace calculation.
@@ -2478,20 +2511,23 @@ class PolyDataFilters(DataSetFilters):
             plotter = pyvista.Plotter(off_screen=off_screen)
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
-            plotter.add_lines(segment, 'b', label='Ray Segment')
-            plotter.add_mesh(intersection_points, 'r', point_size=10, label='Intersection Points')
-            plotter.add_legend()  # type: ignore[call-arg]
-            plotter.add_axes()  # type: ignore[call-arg]
+            plotter.add_lines(segment, color='b', label='Ray Segment')
+            plotter.add_mesh(
+                intersection_points, color='r', point_size=10, label='Intersection Points'
+            )
+            plotter.add_legend()
+            plotter.add_axes()
             plotter.show()
 
         return intersection_points, intersection_cells
 
-    def multi_ray_trace(  # type:ignore[misc]
+    @_deprecate_positional_args(allowed=['origins', 'directions'])
+    def multi_ray_trace(  # type:ignore[misc]  # noqa: PLR0917
         self: PolyData,
         origins,
         directions,
-        first_point: bool = False,
-        retry: bool = False,
+        first_point: bool = False,  # noqa: FBT001, FBT002
+        retry: bool = False,  # noqa: FBT001, FBT002
     ):  # pragma: no cover
         """Perform multiple ray trace calculations.
 
@@ -2631,11 +2667,12 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
+    @_deprecate_positional_args
     def plot_boundaries(  # type: ignore[misc]
         self: PolyData,
         edge_color='red',
         line_width=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
     ):
         """Plot boundaries of a mesh.
@@ -2685,13 +2722,14 @@ class PolyDataFilters(DataSetFilters):
         plotter.add_legend()  # type: ignore[call-arg]
         return plotter.show()
 
-    def plot_normals(  # type: ignore[misc]
+    @_deprecate_positional_args
+    def plot_normals(  # type: ignore[misc]  # noqa: PLR0917
         self: PolyData,
-        show_mesh: bool = True,
+        show_mesh: bool = True,  # noqa: FBT001, FBT002
         mag=1.0,
-        flip: bool = False,
+        flip: bool = False,  # noqa: FBT001, FBT002
         use_every=1,
-        faces: bool = False,
+        faces: bool = False,  # noqa: FBT001, FBT002
         color=None,
         **kwargs,
     ):
@@ -2774,7 +2812,14 @@ class PolyDataFilters(DataSetFilters):
 
         return plotter.show()
 
-    def remove_points(self, remove, mode='any', keep_scalars: bool = True, inplace: bool = False):
+    @_deprecate_positional_args(allowed=['remove', 'mode'])
+    def remove_points(  # noqa: PLR0917
+        self,
+        remove,
+        mode='any',
+        keep_scalars: bool = True,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
+    ):
         """Rebuild a mesh by removing points.
 
         Only valid for all-triangle meshes.
@@ -2915,7 +2960,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetReverseNormals(reverse_normals)
         alg.SetReverseCells(reverse_cells)
-        _update_alg(alg, progress_bar)
+        _update_alg(alg, progress_bar=progress_bar)
         output = _get_output(alg)
         if inplace:
             self.copy_from(output, deep=False)
@@ -3089,15 +3134,16 @@ class PolyDataFilters(DataSetFilters):
             progress_bar=progress_bar,
         )
 
-    def delaunay_2d(
+    @_deprecate_positional_args
+    def delaunay_2d(  # noqa: PLR0917
         self,
         tol=1e-05,
         alpha=0.0,
         offset=1.0,
-        bound: bool = False,
-        inplace: bool = False,
+        bound: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
         edge_source=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Apply a 2D Delaunay filter along the best fitting plane.
 
@@ -3187,7 +3233,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetBoundingTriangulation(bound)
         if edge_source is not None:
             alg.SetSourceData(edge_source)
-        _update_alg(alg, progress_bar, 'Computing 2D Triangulation')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing 2D Triangulation')
 
         # Sometimes lines are given in the output. The
         # `.triangulate()` filter cleans those
@@ -3197,7 +3243,8 @@ class PolyDataFilters(DataSetFilters):
             return self
         return mesh
 
-    def compute_arc_length(self, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def compute_arc_length(self, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Compute the arc length over the length of the probed line.
 
         It adds a new point-data array named ``"arc_length"`` with the
@@ -3237,10 +3284,11 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkAppendArcLength()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing the Arc Length')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing the Arc Length')
         return _get_output(alg)
 
-    def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace: bool = False):
+    @_deprecate_positional_args
+    def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace: bool = False):  # noqa: FBT001, FBT002
         """Project points of this mesh to a plane.
 
         Parameters
@@ -3291,16 +3339,17 @@ class PolyDataFilters(DataSetFilters):
         np.apply_along_axis(f, 1, mesh.points)
         return mesh
 
-    def ribbon(
+    @_deprecate_positional_args
+    def ribbon(  # noqa: PLR0917
         self,
         width=None,
         scalars=None,
         angle=0.0,
         factor=2.0,
         normal=None,
-        tcoords: bool | str = False,
+        tcoords: bool | str = False,  # noqa: FBT001, FBT002
         preference='points',
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create a ribbon of the lines in this dataset.
 
@@ -3401,10 +3450,17 @@ class PolyDataFilters(DataSetFilters):
                 alg.SetGenerateTCoordsToUseLength()
         else:
             alg.SetGenerateTCoordsToOff()
-        _update_alg(alg, progress_bar, 'Creating a Ribbon')
+        _update_alg(alg, progress_bar=progress_bar, message='Creating a Ribbon')
         return _get_output(alg)
 
-    def extrude(self, vector, capping=None, inplace: bool = False, progress_bar: bool = False):
+    @_deprecate_positional_args(allowed=['vector'])
+    def extrude(  # noqa: PLR0917
+        self,
+        vector,
+        capping=None,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
+    ):
         """Sweep polygonal data creating a "skirt" from free edges.
 
         This will create a line from vertices.
@@ -3461,7 +3517,7 @@ class PolyDataFilters(DataSetFilters):
         Extrude a half circle arc.
 
         >>> import pyvista as pv
-        >>> arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+        >>> arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
         >>> mesh.plot(color='lightblue')
 
@@ -3486,23 +3542,24 @@ class PolyDataFilters(DataSetFilters):
         alg.SetVector(*vector)
         alg.SetInputData(self)
         alg.SetCapping(capping)
-        _update_alg(alg, progress_bar, 'Extruding')
+        _update_alg(alg, progress_bar=progress_bar, message='Extruding')
         output = _get_output(alg)
         if inplace:
             self.copy_from(output, deep=False)  # type: ignore[attr-defined]
             return self
         return output
 
-    def extrude_rotate(
+    @_deprecate_positional_args
+    def extrude_rotate(  # noqa: PLR0917
         self,
         resolution=30,
-        inplace: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
         translation=0.0,
         dradius=0.0,
         angle=360.0,
         capping=None,
         rotation_axis=(0, 0, 1),
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Sweep polygonal data creating "skirt" from free edges/lines, and lines from vertices.
 
@@ -3655,21 +3712,22 @@ class PolyDataFilters(DataSetFilters):
             )
             raise VTKVersionError(msg)
 
-        _update_alg(alg, progress_bar, 'Extruding')
+        _update_alg(alg, progress_bar=progress_bar, message='Extruding')
         output = wrap(alg.GetOutput())
         if inplace:
             self.copy_from(output, deep=False)  # type: ignore[attr-defined]
             return self
         return output
 
-    def extrude_trim(
+    @_deprecate_positional_args(allowed=['direction', 'trim_surface'])
+    def extrude_trim(  # noqa: PLR0917
         self,
         direction,
         trim_surface,
         extrusion='boundary_edges',
         capping='intersection',
-        inplace: bool = False,
-        progress_bar: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Extrude polygonal data trimmed by a surface.
 
@@ -3768,21 +3826,22 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTrimSurfaceData(trim_surface)
         alg.SetExtrusionStrategy(extrusion)
         alg.SetCappingStrategy(capping)
-        _update_alg(alg, progress_bar, 'Extruding with trimming')
+        _update_alg(alg, progress_bar=progress_bar, message='Extruding with trimming')
         output = wrap(alg.GetOutput())
         if inplace:
             self.copy_from(output, deep=False)  # type: ignore[attr-defined]
             return self
         return output
 
-    def strip(
+    @_deprecate_positional_args
+    def strip(  # noqa: PLR0917
         self,
-        join: bool = False,
+        join: bool = False,  # noqa: FBT001, FBT002
         max_length=1000,
-        pass_cell_data: bool = False,
-        pass_cell_ids: bool = False,
-        pass_point_ids: bool = False,
-        progress_bar: bool = False,
+        pass_cell_data: bool = False,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = False,  # noqa: FBT001, FBT002
+        pass_point_ids: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Strip poly data cells.
 
@@ -3858,18 +3917,19 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassCellDataAsFieldData(pass_cell_data)
         alg.SetPassThroughCellIds(pass_cell_ids)
         alg.SetPassThroughPointIds(pass_point_ids)
-        _update_alg(alg, progress_bar, 'Stripping Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Stripping Mesh')
         return _get_output(alg)
 
-    def collision(
+    @_deprecate_positional_args(allowed=['other_mesh'])
+    def collision(  # noqa: PLR0917
         self,
         other_mesh,
         contact_mode=0,
         box_tolerance=0.001,
         cell_tolerance=0.0,
         n_cells_per_node=2,
-        generate_scalars: bool = False,
-        progress_bar: bool = False,
+        generate_scalars: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Perform collision determination between two polyhedral surfaces.
 
@@ -3953,7 +4013,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> mesh_a = pv.Sphere(radius=0.5)
-        >>> mesh_b = pv.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
+        >>> mesh_b = pv.Cube(center=(0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
         pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])
@@ -4012,7 +4072,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetNumberOfCellsPerNode(n_cells_per_node)
         alg.SetCollisionMode(contact_mode)
         alg.SetGenerateScalars(generate_scalars)
-        _update_alg(alg, progress_bar, 'Computing collisions')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing collisions')
 
         output = _get_output(alg)
 
@@ -4028,17 +4088,18 @@ class PolyDataFilters(DataSetFilters):
 
         return output, alg.GetNumberOfContacts()
 
-    def contour_banded(  # type: ignore[misc]
+    @_deprecate_positional_args(allowed=['n_contours'])
+    def contour_banded(  # type: ignore[misc]  # noqa: PLR0917
         self: PolyData,
         n_contours,
         rng=None,
         scalars=None,
         component=0,
         clip_tolerance=1e-6,
-        generate_contour_edges: bool = True,
+        generate_contour_edges: bool = True,  # noqa: FBT001, FBT002
         scalar_mode='value',
-        clipping: bool = True,
-        progress_bar: bool = False,
+        clipping: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate filled contours.
 
@@ -4180,7 +4241,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetGenerateContourEdges(generate_contour_edges)
         alg.SetClipTolerance(clip_tolerance)
         alg.SetComponent(component)
-        _update_alg(alg, progress_bar, 'Contouring Mesh')
+        _update_alg(alg, progress_bar=progress_bar, message='Contouring Mesh')
         mesh = _get_output(alg)
 
         # Must rename array as VTK sets the active scalars array name to a nullptr.
@@ -4200,7 +4261,8 @@ class PolyDataFilters(DataSetFilters):
             return mesh, wrap(alg.GetContourEdgesOutput())
         return mesh
 
-    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def reconstruct_surface(self, nbr_sz=None, sample_spacing=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Reconstruct a surface from the points in this dataset.
 
         This filter takes a list of points assumed to lie on the
@@ -4274,10 +4336,11 @@ class PolyDataFilters(DataSetFilters):
         mc.SetComputeGradients(False)
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
-        _update_alg(mc, progress_bar, 'Reconstructing surface')
+        _update_alg(mc, progress_bar=progress_bar, message='Reconstructing surface')
         return wrap(mc.GetOutput())
 
-    def triangulate_contours(self, display_errors: bool = False, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def triangulate_contours(self, display_errors: bool = False, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Triangulate and fill all 2D contours to create polygons.
 
         .. versionadded:: 0.44.0
@@ -4344,10 +4407,11 @@ class PolyDataFilters(DataSetFilters):
         alg = _vtk.vtkContourTriangulator()
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
-        _update_alg(alg, progress_bar, 'Triangulating Contours')
+        _update_alg(alg, progress_bar=progress_bar, message='Triangulating Contours')
         return _get_output(alg)
 
-    def protein_ribbon(self, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def protein_ribbon(self, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Generate protein ribbon.
 
         Parameters
@@ -4373,7 +4437,7 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkRibbonFilter()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Generating Protein Ribbons')
+        _update_alg(alg, progress_bar=progress_bar, message='Generating Protein Ribbons')
         return _get_output(alg)
 
     def ruled_surface(
@@ -4434,5 +4498,5 @@ class PolyDataFilters(DataSetFilters):
         if resolution is not None:
             _validation.validate_array(resolution, must_have_shape=2, must_have_dtype=int)
             alg.SetResolution(resolution)  # type: ignore[arg-type]
-        _update_alg(alg, progress_bar, 'Generating ruled surface')
+        _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
         return _get_output(alg)

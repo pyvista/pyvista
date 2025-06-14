@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 def handle_plotter(
     plotter: Plotter,
     backend: JupyterBackendOptions | None = None,
-    screenshot: str | Path | io.BytesIO | bool | None = None,
+    screenshot: str | Path | io.BytesIO | bool | None = None,  # noqa: FBT001
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
@@ -61,7 +61,8 @@ def handle_plotter(
 
 
 def show_static_image(
-    plotter: Plotter, screenshot: str | Path | io.BytesIO | bool | None
+    plotter: Plotter,
+    screenshot: str | Path | io.BytesIO | bool | None,  # noqa: FBT001
 ) -> Image:  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
