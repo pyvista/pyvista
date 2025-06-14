@@ -5295,7 +5295,7 @@ class DataSetFilters(DataObjectFilters):
             merge_points=True,
             tolerance=tolerance,
             inplace=inplace,
-            main_has_priority=True,
+            main_has_priority=None,
             progress_bar=progress_bar,
         )
 
@@ -5309,7 +5309,7 @@ class DataSetFilters(DataObjectFilters):
         merge_points: bool = True,
         tolerance: float = 0.0,
         inplace: bool = False,
-        main_has_priority: bool = True,
+        main_has_priority: bool | None = None,
         progress_bar: bool = False,
     ):
         """Join one or many other grids to this grid.
@@ -5322,6 +5322,18 @@ class DataSetFilters(DataObjectFilters):
            the default parameters. When the target mesh is already a
            :class:`pyvista.UnstructuredGrid`, in-place merging via
            ``+=`` is similarly possible.
+
+
+        .. warning::
+
+            The merge order of this filter depends on the installed version
+            of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
+            the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
+            This may be a breaking change for some applications. If only
+            merging two meshes, it may be possible to maintain `some` backwards
+            compatibility by swapping the input order of the two meshes,
+            though this may also affect the merged arrays and is therefore
+            not fully backwards-compatible.
 
         Parameters
         ----------
@@ -5344,6 +5356,11 @@ class DataSetFilters(DataObjectFilters):
             When this parameter is true and merge_points is true,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
+
+            .. deprecated:: 0.46
+
+                This keyword will be removed in a future version. The main mesh
+                always has priority with VTK 9.5.0 or later.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5371,11 +5388,32 @@ class DataSetFilters(DataObjectFilters):
         >>> merged.plot()
 
         """
+        vtk_at_least_95 = _vtk.vtk_version_info >= (9, 5, 0)
+        if main_has_priority is not None:
+            msg = (
+                "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+                'The main mesh will always have priority in a future version, and this keyword '
+                'will be removed.'
+            )
+            if main_has_priority is False and vtk_at_least_95:
+                msg += '\nIts value cannot be False for vtk>=9.5.0.'
+                raise ValueError(msg)
+            else:
+                warnings.warn(msg, pyvista.PyVistaDeprecationWarning)
+        elif not vtk_at_least_95:
+            # Set default for older VTK:
+            main_has_priority = True
+
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
         append_filter.SetTolerance(tolerance)
 
-        if not main_has_priority:
+        # For vtk < 9.5, the last appended mesh has priority.
+        # For newer vtk, the first appended mesh has priority. We apply
+        # logic accordingly to ensure the main mesh is appended in the
+        # correct order
+        append_main_first = (not main_has_priority) or vtk_at_least_95
+        if append_main_first:
             append_filter.AddInputData(self)
 
         if isinstance(grid, _vtk.vtkDataSet):
@@ -5385,18 +5423,19 @@ class DataSetFilters(DataObjectFilters):
             for grid_ in grids:
                 append_filter.AddInputData(grid_)
 
-        if main_has_priority:
+        if not append_main_first:
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar, 'Merging')
         merged = _get_output(append_filter)
 
-        # Update field data
-        priority = (
-            grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
-        )
-        for array in merged.field_data:
-            merged.field_data[array] = priority.field_data[array]
+        if not vtk_at_least_95:
+            # Update field data
+            priority = (
+                grid if (isinstance(grid, pyvista.DataObject) and not main_has_priority) else self
+            )
+            for array in merged.field_data:
+                merged.field_data[array] = priority.field_data[array]
 
         if inplace:
             if type(self) is type(merged):
