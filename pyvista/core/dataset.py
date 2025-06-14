@@ -2850,7 +2850,7 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-        if pyvista.vtk_version_info >= (9, 4, 0):
+        if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
             # Need to reverse the order
             return out[::-1]
         return out
