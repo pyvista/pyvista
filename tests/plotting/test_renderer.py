@@ -13,6 +13,11 @@ from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
+@pytest.fixture
+def plane2x2():
+    return pv.Plane(i_resolution=2, j_resolution=2)
+
+
 def test_show_bounds_axes_ranges():
     plotter = pv.Plotter()
 
@@ -277,33 +282,30 @@ def test_legend_from_glyph(sphere):
 
 @pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_legend_from_multiple_glyph():
-    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+def test_legend_from_multiple_glyph(plane2x2):
     pl = pv.Plotter()
+    plane2x2['Normals2'] = -1 * plane2x2['Normals'].copy()
 
-    mesh['Normals2'] = -1 * mesh['Normals'].copy()
-
-    arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    arrows2 = mesh.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
+    arrows2 = plane2x2.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
     pl.add_mesh(arrows2, color='red', label='label 2')
 
-    pl.add_mesh(mesh, color='white')
+    pl.add_mesh(plane2x2, color='white')
 
     pl.add_legend(size=(0.5, 0.5), bcolor='gray')
     pl.show()
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-def test_legend_using_add_legend():
-    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+def test_legend_using_add_legend(plane2x2):
     pl = pv.Plotter()
 
-    arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(mesh, color='white')
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
@@ -314,14 +316,13 @@ def test_legend_using_add_legend():
 
 @pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_legend_using_add_legend_with_glyph():
-    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+def test_legend_using_add_legend_with_glyph(plane2x2):
     pl = pv.Plotter()
 
-    arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(mesh, color='white')
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
@@ -336,14 +337,13 @@ def test_legend_using_add_legend_with_glyph():
 
 @pytest.mark.usefixtures('verify_image_cache')
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_legend_using_add_legend_only_labels():
-    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+def test_legend_using_add_legend_only_labels(plane2x2):
     pl = pv.Plotter()
 
-    arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    arrows = plane2x2.glyph(scale='Normals', orient='Normals', tolerance=0.05)
     pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(mesh, color='white')
+    pl.add_mesh(plane2x2, color='white')
 
     legend_entries = ['label 1', 'label 2']
 
