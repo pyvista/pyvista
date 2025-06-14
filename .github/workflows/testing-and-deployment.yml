@@ -31,6 +31,17 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  LINUX_PLOTTING_ARGS: >
+    -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
+    --fail_extra_image_cache --generated_image_dir debug_images
+  PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
+  PLOTTING_TEST_MODULES_NO_CHARTS: >
+    --ignore=tests/core
+    --ignore=tests/doc
+    --ignore=tests/examples
+    --ignore=tests/namespace
+    --ignore=tests/plotting/test_charts.py
+    --ignore=tests/typing
 
 permissions:
   id-token: none
@@ -182,7 +193,16 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            $PLOTTING_TEST_MODULES_NO_CHARTS \
+            $LINUX_PLOTTING_ARGS
+
+      - name: Plotting Testing (charts only)
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            $PLOTTING_TEST_MODULES_CHARTS \
+            $LINUX_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
@@ -274,7 +294,16 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            $PLOTTING_TEST_MODULES_NO_CHARTS \
+            $LINUX_PLOTTING_ARGS
+
+      - name: Plotting Testing (charts only)
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            $PLOTTING_TEST_MODULES_CHARTS \
+            $LINUX_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
