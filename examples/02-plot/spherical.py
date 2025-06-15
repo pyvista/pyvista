@@ -38,7 +38,7 @@ def _cell_bounds(points, bound_position=0.5):
     >>> a = np.arange(-1, 2.5, 0.5)
     >>> a
     array([-1. , -0.5,  0. ,  0.5,  1. ,  1.5,  2. ])
-    >>> cell_bounds(a)
+    >>> _cell_bounds(a)
     array([-1.25, -0.75, -0.25,  0.25,  0.75,  1.25,  1.75,  2.25])
 
     """
@@ -111,12 +111,12 @@ vectors = np.stack(
     [
         i.transpose(inv_axes).swapaxes(-2, -1).ravel('C')
         for i in pv.transform_vectors_sph_to_cart(
-            x,
-            y_polar,
-            wind_level,
-            u_vec.transpose(inv_axes),
-            -v_vec.transpose(inv_axes),  # Minus sign because y-vector in polar coords is required
-            w_vec.transpose(inv_axes),
+            theta=x,
+            phi=y_polar,
+            r=wind_level,
+            u=u_vec.transpose(inv_axes),
+            v=-v_vec.transpose(inv_axes),  # Minus sign since y-vector in polar coords is required
+            w=w_vec.transpose(inv_axes),
         )
     ],
     axis=1,

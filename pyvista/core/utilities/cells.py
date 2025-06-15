@@ -12,6 +12,7 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
@@ -45,20 +46,27 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 
 @overload
 def numpy_to_idarr(
-    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[True] = True
+    ind: int | ArrayLike[int],
+    deep: bool = ...,  # noqa: FBT001
+    return_ind: Literal[True] = True,  # noqa: FBT002
 ) -> _vtk.vtkIdTypeArray: ...
 @overload
 def numpy_to_idarr(
-    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[False] = False
+    ind: int | ArrayLike[int],
+    deep: bool = ...,  # noqa: FBT001
+    return_ind: Literal[False] = False,  # noqa: FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
 @overload
 def numpy_to_idarr(
-    ind: int | ArrayLike[int], deep: bool = ..., return_ind: bool = ...
+    ind: int | ArrayLike[int],
+    deep: bool = ...,  # noqa: FBT001
+    return_ind: bool = ...,  # noqa: FBT001
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
+@_deprecate_positional_args(allowed=['ind'])
 def numpy_to_idarr(
     ind: int | ArrayLike[int],
-    deep: bool = False,
-    return_ind: bool = False,
+    deep: bool = False,  # noqa: FBT001, FBT002
+    return_ind: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a numpy array to a :vtk:`vtkIdTypeArray`.
 

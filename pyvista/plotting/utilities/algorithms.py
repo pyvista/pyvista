@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -299,7 +300,8 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, point_ids: bool = True, cell_ids: bool = True):
+    @_deprecate_positional_args
+    def __init__(self, point_ids: bool = True, cell_ids: bool = True):  # noqa: FBT001, FBT002
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
@@ -388,7 +390,8 @@ class CrinkleAlgorithm(_vtk.DisableVtkSnakeCase, _vtk.VTKPythonAlgorithmBase):
         return 1
 
 
-def outline_algorithm(inp, generate_faces: bool = False):
+@_deprecate_positional_args(allowed=['inp'])
+def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT002
     """Add :vtk:`vtkOutlineFilter` to pipeline.
 
     Parameters
@@ -410,8 +413,12 @@ def outline_algorithm(inp, generate_faces: bool = False):
     return alg
 
 
-def extract_surface_algorithm(
-    inp, pass_pointid: bool = False, pass_cellid: bool = False, nonlinear_subdivision=1
+@_deprecate_positional_args(allowed=['inp'])
+def extract_surface_algorithm(  # noqa: PLR0917
+    inp,
+    pass_pointid: bool = False,  # noqa: FBT001, FBT002
+    pass_cellid: bool = False,  # noqa: FBT001, FBT002
+    nonlinear_subdivision=1,
 ):
     """Add :vtk:`vtkDataSetSurfaceFilter` to pipeline.
 
@@ -486,7 +493,8 @@ def pointset_to_polydata_algorithm(inp):
     return alg
 
 
-def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):
+@_deprecate_positional_args(allowed=['inp'])
+def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):  # noqa: FBT001, FBT002
     """Add a filter that adds point and/or cell IDs.
 
     Parameters
@@ -531,7 +539,8 @@ def crinkle_algorithm(clip, source):
     return alg
 
 
-def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
+@_deprecate_positional_args(allowed=['inp'])
+def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):  # noqa: FBT001, FBT002
     """Add a filter that converts cell data to point data.
 
     Parameters
@@ -553,7 +562,8 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
     return alg
 
 
-def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):
+@_deprecate_positional_args(allowed=['inp'])
+def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):  # noqa: FBT001, FBT002
     """Add a filter that converts point data to cell data.
 
     Parameters

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
@@ -172,7 +173,7 @@ class CompositeFilters(DataObjectFilters):
 
         skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
-        def apply_filter(function_, ids_, name_, block_):
+        def apply_filter(function_, ids_, name_, block_):  # noqa: PLR0917
             try:
                 function_ = (
                     getattr(block_, function_)
@@ -240,7 +241,8 @@ class CompositeFilters(DataObjectFilters):
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(self, merge_points: bool = False, tolerance=0.0):
+    @_deprecate_positional_args
+    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -296,11 +298,12 @@ class CompositeFilters(DataObjectFilters):
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
+    @_deprecate_positional_args
     def outline(  # type: ignore[misc]
         self: MultiBlock,
-        generate_faces: bool = False,
-        nested: bool = False,
-        progress_bar: bool = False,
+        generate_faces: bool = False,  # noqa: FBT001, FBT002
+        nested: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -330,8 +333,12 @@ class CompositeFilters(DataObjectFilters):
         box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
+    @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
-        self: MultiBlock, factor=0.2, nested: bool = False, progress_bar: bool = False
+        self: MultiBlock,
+        factor=0.2,
+        nested: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
@@ -358,18 +365,19 @@ class CompositeFilters(DataObjectFilters):
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    def _compute_normals(
+    @_deprecate_positional_args
+    def _compute_normals(  # noqa: PLR0917
         self,
-        cell_normals: bool = True,
-        point_normals: bool = True,
-        split_vertices: bool = False,
-        flip_normals: bool = False,
-        consistent_normals: bool = True,
-        auto_orient_normals: bool = False,
-        non_manifold_traversal: bool = True,
+        cell_normals: bool = True,  # noqa: FBT001, FBT002
+        point_normals: bool = True,  # noqa: FBT001, FBT002
+        split_vertices: bool = False,  # noqa: FBT001, FBT002
+        flip_normals: bool = False,  # noqa: FBT001, FBT002
+        consistent_normals: bool = True,  # noqa: FBT001, FBT002
+        auto_orient_normals: bool = False,  # noqa: FBT001, FBT002
+        non_manifold_traversal: bool = True,  # noqa: FBT001, FBT002
         feature_angle=30.0,
-        track_vertices: bool = False,
-        progress_bar: bool = False,
+        track_vertices: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
@@ -395,7 +403,7 @@ class CompositeFilters(DataObjectFilters):
         alg.SetNonManifoldTraversal(non_manifold_traversal)
         alg.SetFeatureAngle(feature_angle)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Normals')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Normals')
         return _get_output(alg)
 
 

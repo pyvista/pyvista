@@ -775,12 +775,12 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pv.axis_rotation(np.empty((3, 3)), 0, inplace=False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pv.axis_rotation(p, 1, False, axis='x')
+    p_out = pv.axis_rotation(p, 1, inplace=False, axis='x')
     assert not np.allclose(p, p_out)
 
 
