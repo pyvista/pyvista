@@ -934,6 +934,7 @@ def test_open_gif_invalid():
         plotter.open_gif('file.abs')
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.skipif(ffmpeg_failed, reason='Requires imageio-ffmpeg')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_make_movie(sphere, tmpdir, verify_image_cache):
@@ -2216,6 +2217,7 @@ def test_plot_sigmoid_opacity_transfer_functions(uniform, opacity):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_closing_and_mem_cleanup(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     verify_image_cache.skip = True
@@ -3192,6 +3194,7 @@ def test_ssao_pass_from_helper():
     ugrid.plot(ssao=True)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.skip_windows
 def test_many_multi_pass():
     pl = pv.Plotter(lighting=None)
@@ -4192,6 +4195,7 @@ def test_plot_cubemap_alone(cubemap, verify_image_cache):
     cubemap.plot()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of VTK.')
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True

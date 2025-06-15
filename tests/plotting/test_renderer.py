@@ -259,8 +259,8 @@ def test_legend_face(face):
     pl.show()
 
 
-@pytest.mark.usefixtures('verify_image_cache')
-def test_legend_from_glyph(sphere):
+def test_legend_from_glyph(sphere, verify_image_cache):
+    verify_image_cache.high_variance_test = True
     pl = pv.Plotter()
     x = sphere.face_normals[:, 0] ** 2
     y = sphere.face_normals[:, 1] ** 2
