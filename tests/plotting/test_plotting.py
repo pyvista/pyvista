@@ -304,7 +304,7 @@ def test_pbr(sphere, verify_image_cache):
 
 @pytest.mark.skip_windows
 @pytest.mark.parametrize('resample', [True, False])
-@pytest.mark.needs_vtk_version(9, 1)  # GC issue
+@pytest.mark.needs_vtk_version(9, 2)
 def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
     """Test set_environment_texture with a cubemap."""
     verify_image_cache.high_variance_test = True
