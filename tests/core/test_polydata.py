@@ -585,10 +585,29 @@ def test_merge_main_has_priority(input_, main_has_priority):
             for j in (this.points == point).all(-1).nonzero()
         )
 
-    merged = mesh.merge(other, main_has_priority=main_has_priority)
-    expected_to_match = mesh if main_has_priority else other
+    if pv.vtk_version_info > (9, 5, 0):
+        merged = mesh.merge(other)
+        expected_to_match = mesh
+    else:
+        with pytest.warns(pv.PyVistaDeprecationWarning):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
+        expected_to_match = mesh if main_has_priority else other
     assert matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
+
+
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
+    match = (
+        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+        'The main mesh will always have priority in a future version.'
+    )
+    if main_has_priority is False and pv.vtk_version_info > (9, 5, 0):
+        with pytest.raises(ValueError, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
+    else:
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
 
 
 @pytest.mark.parametrize('main_has_priority', [True, False])
@@ -601,7 +620,19 @@ def test_merge_field_data(mesh, main_has_priority):
     other = mesh.copy()
     other.field_data[key] = data_other
 
-    merged = mesh.merge(other, main_has_priority=main_has_priority)
+    match = (
+        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+        'The main mesh will always have priority in a future version, and this '
+        'keyword will be removed.'
+    )
+    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
+        match += '\nIts value cannot be False for vtk>=9.5.0.'
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.merge(other, main_has_priority=main_has_priority)
+        return
+    else:
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
 
     actual = merged.field_data[key]
     expected = data_main if main_has_priority else data_other

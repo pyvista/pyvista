@@ -439,7 +439,7 @@ class PolyDataFilters(DataSetFilters):
         merge_points: bool = True,  # noqa: FBT001, FBT002
         tolerance=0.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
-        main_has_priority: bool = True,  # noqa: FBT001, FBT002
+        main_has_priority: bool | None = None,  # noqa: FBT001
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Merge this mesh with one or more datasets.
@@ -471,6 +471,18 @@ class PolyDataFilters(DataSetFilters):
             To obtain similar results as before ``0.39.0`` for multiple PolyData, combine
             :func:`PolyDataFilters.append_polydata` and :func:`PolyDataFilters.clean`.
 
+
+        .. warning::
+
+            The merge order of this filter depends on the installed version
+            of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
+            the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
+            This may be a breaking change for some applications. If only
+            merging two meshes, it may be possible to maintain `some` backwards
+            compatibility by swapping the input order of the two meshes,
+            though this may also affect the merged arrays and is therefore
+            not fully backwards-compatible.
+
         .. seealso::
             :func:`PolyDataFilters.append_polydata`
 
@@ -496,6 +508,11 @@ class PolyDataFilters(DataSetFilters):
             When this parameter is ``True`` and ``merge_points=True``,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
+
+            .. deprecated:: 0.46
+
+                This keyword will be removed in a future version. The main mesh
+                always has priority with VTK 9.5.0 or later.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.

@@ -18,6 +18,7 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -31,7 +32,6 @@ from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-    import vtk
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -2064,10 +2064,17 @@ BIG_VOLUME = 2**3
 
 @pytest.fixture
 def labeled_data():
+    def append(mesh1, mesh2):
+        filter_ = vtk.vtkAppendFilter()
+        filter_.AddInputData(mesh1)
+        filter_.AddInputData(mesh2)
+        filter_.Update()
+        return pv.wrap(filter_.GetOutput())
+
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = (small_box + big_box).extract_geometry().connectivity()
+    labeled = append(big_box, small_box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2202,9 +2209,8 @@ def test_split_values_extract_values_component(
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
     assert expected_n_blocks == len(expected_volume)
-    assert all(
-        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
-    )
+    for block, volume in zip(multiblock, expected_volume):
+        assert np.isclose(block.volume, volume)
 
 
 def test_extract_values_split_ranges_values(labeled_data):
@@ -3661,12 +3667,8 @@ def test_merge_points():
     celltypes = [pv.CellType.LINE]
     points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
     pdata = pv.UnstructuredGrid(cells, celltypes, points)
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=1.0).n_points == 1
-    )
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
-    )
+    assert pdata.merge(pdata, merge_points=True, tolerance=1.0).n_points == 1
+    assert pdata.merge(pdata, merge_points=True, tolerance=0.1).n_points == 2
 
 
 @pytest.mark.parametrize('inplace', [True, False])
