@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import pickle
 import platform
 import re
 import shutil
+import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -28,6 +30,8 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
@@ -69,6 +73,9 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+
+with contextlib.suppress(ImportError):
+    import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -412,24 +419,24 @@ def test_is_inside_bounds_raises():
 
 
 def test_voxelize(uniform):
-    vox = pv.voxelize(uniform, 0.5)
+    vox = pv.voxelize(uniform, density=0.5)
     assert vox.n_cells
 
 
 def test_voxelize_non_uniform_density(uniform):
-    vox = pv.voxelize(uniform, [0.5, 0.3, 0.2])
+    vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
     assert vox.n_cells
-    vox = pv.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
+    vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
 def test_voxelize_invalid_density(rectilinear):
     # test error when density is not length-3
     with pytest.raises(ValueError, match='not enough values to unpack'):
-        pv.voxelize(rectilinear, [0.5, 0.3])
+        pv.voxelize(rectilinear, density=[0.5, 0.3])
     # test error when density is not an array-like
     with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize(rectilinear, {0.5, 0.3})
+        pv.voxelize(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
@@ -446,7 +453,7 @@ def test_voxelize_volume_default_density(uniform):
 
 def test_voxelize_volume_invalid_density(rectilinear):
     with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+        pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh():
@@ -542,7 +549,7 @@ def test_transform_vectors_sph_to_cart():
     lev = [1]  # elevation (radius)
     u, v = np.meshgrid(lon, lat, indexing='ij')
     w = u**2 - v**2
-    uu, vv, ww = pv.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
+    uu, vv, ww = pv.transform_vectors_sph_to_cart(theta=lon, phi=lat, r=lev, u=u, v=v, w=w)
     assert np.allclose(
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
@@ -862,7 +869,7 @@ def test_merge(sphere, cube, datasets):
     # check unstructured
     merged_ugrid = pv.merge(datasets, merge_points=False)
     assert isinstance(merged_ugrid, pv.UnstructuredGrid)
-    assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
+    assert merged_ugrid.n_points == sum(ds.n_points for ds in datasets)
     # check main has priority
     sphere_main = sphere.copy()
     sphere_other = sphere.copy()
@@ -2490,3 +2497,201 @@ def test_is_vtk_attribute():
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
     assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
+
+
+warnings.simplefilter('always')
+
+
+def test_deprecate_positional_args_error_messages():
+    # Test single arg
+    @_deprecate_positional_args
+    def foo(bar): ...
+
+    match = (
+        "Argument 'bar' must be passed as a keyword argument to function "
+        "'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
+        'From version 0.50, passing this as a positional argument will result in a TypeError.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True)
+
+    # Test many args
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    match = (
+        "Arguments 'bar', 'baz' must be passed as keyword arguments to function "
+        "'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
+        'From version 1.2, passing these as positional arguments will result in a TypeError.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True, True)
+
+
+def test_deprecate_positional_args_post_deprecation():
+    match = (
+        r'Positional arguments are no longer allowed in '
+        r"'test_deprecate_positional_args_post_deprecation.<locals>.foo'\.\n"
+        r'Update the function signature at:\n'
+        r'.*test_utilities\.py:\d+ to enforce keyword-only args:\n'
+        r'    test_deprecate_positional_args_post_deprecation.<locals>.foo\(bar, \*, baz\)\n'
+        r"and remove the '_deprecate_positional_args' decorator\."
+    )
+    with pytest.raises(RuntimeError, match=match):
+
+        @_deprecate_positional_args(allowed=['bar'], version=(0, 46))
+        def foo(bar, baz): ...
+
+    match = 'foo(*, bar, baz, ham, ...)'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(version=(0, 46))
+        def foo(bar, baz, ham, eggs): ...
+
+    match = 'foo(self, *, bar, baz, ham, ...)'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @_deprecate_positional_args(version=(0, 46))
+            def foo(self, bar, baz, ham, eggs): ...
+
+
+def test_deprecate_positional_args_allowed():
+    # Test single allowed
+    @_deprecate_positional_args(allowed=['bar'])
+    def foo(bar, baz): ...
+
+    foo(True, baz=True)
+
+    # Too many allowed args
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
+        f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed.\n'
+        "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['bar', 'baz', 'qux', 'ham', 'eggs', 'cats'])
+        def foo(bar, baz, qux, ham, eggs, cats): ...
+
+    # Test invalid allowed
+    match = (
+        "Allowed positional argument 'invalid' in decorator '_deprecate_positional_args'\n"
+        'is not a parameter of '
+        "function 'test_deprecate_positional_args_allowed.<locals>.foo'."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['invalid'])
+        def foo(bar): ...
+
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
+        "Allowed arguments must be a list, got <class 'str'>."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed='invalid')
+        def foo(bar): ...
+
+    # Test invalid order
+    match = (
+        "The `allowed` list ['b', 'a'] in decorator '_deprecate_positional_args' "
+        'is not in the\nsame order as the parameters in '
+        "'test_deprecate_positional_args_allowed.<locals>.foo'.\n"
+        "Expected order: ['a', 'b']."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['b', 'a'])
+        def foo(a, b, c): ...
+
+    # Test not already kwonly
+    match = (
+        "Parameter 'b' in decorator '_deprecate_positional_args' is already keyword-only\n"
+        'and should be removed from the allowed list.'
+    )
+    with pytest.raises(ValueError, match=match):
+
+        @_deprecate_positional_args(allowed=['a', 'b'])
+        def foo(a, *, b): ...
+
+
+def test_deprecate_positional_args_n_allowed():
+    n_allowed = 4
+    assert n_allowed > _MAX_POSITIONAL_ARGS
+
+    @_deprecate_positional_args(allowed=['a', 'b', 'c', 'd'], n_allowed=4)
+    def foo(a, b, c, d, e=True): ...
+
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_n_allowed.<locals>.foo':\n"
+        '`n_allowed` must be greater than 3 for it to be useful.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['a', 'b', 'c'], n_allowed=_MAX_POSITIONAL_ARGS)
+        def foo(a, b, c): ...
+
+
+def test_deprecate_positional_args_class_methods():
+    # Test that 'cls' and 'self' args do not cause problems
+    class Foo:
+        @classmethod
+        @_deprecate_positional_args
+        def foo_classmethod(cls, bar=None): ...
+
+        @_deprecate_positional_args
+        def foo_method(self, bar=None): ...
+
+    obj = Foo()
+    obj.foo_method()
+    obj.foo_classmethod()
+
+
+def test_deprecate_positional_args_decorator_not_needed():
+    match = (
+        "Function 'test_deprecate_positional_args_decorator_not_needed.<locals>.Foo.foo' has 0 "
+        'positional arguments, which is less than or equal to the\nmaximum number of allowed '
+        f'positional arguments ({_MAX_POSITIONAL_ARGS}).\n'
+        f'This decorator is not necessary and can be removed.'
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @classmethod
+            @_deprecate_positional_args
+            def foo(cls, *, bar=None): ...
+
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @_deprecate_positional_args
+            def foo(self, *, bar=None): ...
+
+    match = (
+        f"Function 'test_deprecate_positional_args_decorator_not_needed.<locals>.foo' has 3 "
+        f'positional arguments, which is less than or equal to the\nmaximum number of allowed '
+        f'positional arguments ({_MAX_POSITIONAL_ARGS}).\n'
+        f'This decorator is not necessary and can be removed.'
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['a', 'b', 'c'])
+        def foo(a, b, c): ...
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
+)
+def test_max_positional_args_matches_pyproject():
+    pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+    with pyproject_path.open('rb') as f:
+        pyproject_data = tomllib.load(f)
+    expected_value = pyproject_data['tool']['ruff']['lint']['pylint']['max-positional-args']
+
+    assert expected_value == _MAX_POSITIONAL_ARGS

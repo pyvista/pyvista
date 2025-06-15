@@ -1574,10 +1574,10 @@ def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
 
-    line = pv.Line([0, 0, 0], [0, 0, 10], 9)
+    line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
     line[name] = np.linspace(0, 10, 10)
 
-    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2, progress_bar=True)
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], resolution=2, progress_bar=True)
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
@@ -1630,7 +1630,7 @@ def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
 
-    line = pv.Line([0, 0, 0], [0, 0, 10], 9)
+    line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
     line[name] = np.linspace(0, 10, 10)
 
     sampled_multiple_lines = line.sample_over_multiple_lines(
@@ -1658,7 +1658,9 @@ def test_sample_over_circular_arc():
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
-    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2, progress_bar=True)
+    sampled_arc = uniform.sample_over_circular_arc(
+        pointa=pointa, pointb=pointb, center=center, resolution=2, progress_bar=True
+    )
 
     expected_result = zmin + (zmax - zmin) * np.sin([np.pi / 2.0, np.pi / 4.0, 0.0])
     assert np.allclose(sampled_arc[name], expected_result)
@@ -1667,9 +1669,9 @@ def test_sample_over_circular_arc():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc(
-        [3, 1, 1],
-        [-3, -1, -1],
-        [0, 0, 0],
+        pointa=[3, 1, 1],
+        pointb=[-3, -1, -1],
+        center=[0, 0, 0],
         progress_bar=True,
     )
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
@@ -1696,7 +1698,7 @@ def test_sample_over_circular_arc_normal():
     resolution = np.random.default_rng().integers(10000)
     center = [xmin, ymin, zmin]
     sampled_arc_normal = uniform.sample_over_circular_arc_normal(
-        center,
+        center=center,
         resolution=resolution,
         normal=normal,
         polar=polar,
@@ -1712,7 +1714,7 @@ def test_sample_over_circular_arc_normal():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc_normal(
-        [0, 0, 0],
+        center=[0, 0, 0],
         polar=[3, 1, 1],
         angle=180,
         progress_bar=True,
@@ -1733,9 +1735,9 @@ def test_plot_over_circular_arc(tmpdir):
     b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
     center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
-        a,
-        b,
-        center,
+        pointa=a,
+        pointb=b,
+        center=center,
         resolution=1000,
         show=False,
         fname=filename,
@@ -1746,9 +1748,9 @@ def test_plot_over_circular_arc(tmpdir):
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc(
-        a,
-        b,
-        center,
+        pointa=a,
+        pointb=b,
+        center=center,
         resolution=None,
         scalars='foo',
         title='My Stuff',
@@ -1760,9 +1762,9 @@ def test_plot_over_circular_arc(tmpdir):
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_circular_arc(
-            a,
-            b,
-            center,
+            pointa=a,
+            pointb=b,
+            center=center,
             resolution=None,
             scalars='invalid_array_name',
             title='My Stuff',
@@ -1782,7 +1784,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     angle = 90
     center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
-        center,
+        center=center,
         polar=polar,
         angle=angle,
         show=False,
@@ -1794,7 +1796,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc_normal(
-        center,
+        center=center,
         polar=polar,
         angle=angle,
         resolution=None,
@@ -1808,7 +1810,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_circular_arc_normal(
-            center,
+            center=center,
             polar=polar,
             angle=angle,
             resolution=None,
@@ -3307,7 +3309,14 @@ def test_extrude_trim_inplace():
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
     orig_n_faces = sphere.n_faces_strict
-    sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
+    sub = sphere.subdivide_adaptive(
+        max_edge_len=0.01,
+        max_tri_area=0.001,
+        max_n_tris=100000,
+        max_n_passes=2,
+        inplace=inplace,
+        progress_bar=True,
+    )
     assert sub.n_faces_strict > orig_n_faces
     if inplace:
         assert sphere.n_faces_strict == sub.n_faces_strict

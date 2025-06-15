@@ -450,9 +450,10 @@ def test_multi_block_io(
     if extension == '.vtkhdf' and binary is False:
         match = '.vtkhdf files can only be written in binary format'
         with pytest.raises(ValueError, match=match):
-            multi.save(filename, binary)
+            multi.save(filename, binary=binary)
         return
-    multi.save(filename, binary)
+    multi.save(filename, binary=binary)
+
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     foo = pv.read(filename)
@@ -519,7 +520,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir):
     for block in multi:
         assert block.array_names == array_names
     # Save it out
-    multi.save(filename, binary)
+    multi.save(filename, binary=binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     for block in foo:
