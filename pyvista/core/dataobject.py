@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -22,7 +23,6 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
-from .utilities.fileio import _VTKWriterAlias
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ._typing_core import NumpyArray
+    from .utilities.fileio import _VTKWriterAlias
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -115,10 +116,11 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
     def _post_file_load_processing(self: Self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
+    @_deprecate_positional_args(allowed=['filename'])
     def save(
         self: Self,
         filename: Path | str,
-        binary: bool = True,
+        binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this vtk object to file.
@@ -177,6 +179,41 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                         'with the root MultiBlock before saving.'
                     )
 
+        def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
+            if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+                if mesh.is_nested:
+                    msg = (
+                        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                        '\nUpgrade to VTK>=9.5 for this functionality.'
+                    )
+                    raise TypeError(msg)
+                if type(None) in mesh.block_types:
+                    msg = (
+                        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                        '\nUpgrade to VTK>=9.5 for this functionality.'
+                    )
+                    raise TypeError(msg)
+
+            supported_block_types = [
+                pyvista.PolyData,
+                pyvista.UnstructuredGrid,
+                type(None),
+                pyvista.MultiBlock,
+                pyvista.PartitionedDataSet,
+            ]
+            for id_, name, block in mesh.recursive_iterator('all'):
+                if type(block) not in supported_block_types:
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(id_)
+                    msg = (
+                        f"Block at index {index_fmt} with name '{name}' has type "
+                        f'{block.__class__.__name__!r} '
+                        f'which cannot be saved to the .vtkhdf format.\n'
+                        f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
+                    )
+                    raise TypeError(msg)
+
         def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
             if not np.allclose(mesh.direction_matrix, np.eye(3)):
                 warnings.warn(
@@ -218,12 +255,18 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         file_path = file_path.resolve()
         file_ext = file_path.suffix
 
+        if file_ext == '.vtkhdf' and binary is False:
+            msg = '.vtkhdf files can only be written in binary format.'
+            raise ValueError(msg)
+
         # store complex and bitarray types as field data
         self._store_metadata()
 
         # warn if data will be lost
         if isinstance(self, pyvista.MultiBlock):
             _warn_multiblock_nested_field_data(self)
+            if file_ext == '.vtkhdf':
+                _check_multiblock_hdf_types(self)
         if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
             _warn_imagedata_direction_matrix(self)
 
@@ -280,7 +323,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         msg = 'Called only by the inherited class'
         raise NotImplementedError(msg)
 
-    def head(self: Self, display: bool = True, html: bool | None = None) -> str:
+    @_deprecate_positional_args
+    def head(self: Self, display: bool = True, html: bool | None = None) -> str:  # noqa: FBT001, FBT002
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -368,7 +412,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         """
         # called only by the inherited class
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the object.
 
         Parameters
@@ -402,7 +447,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self, deep)
+        newobject.copy_meta_from(self, deep=deep)
         return newobject
 
     def __eq__(self: Self, other: object) -> bool:
@@ -439,7 +484,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         return True
 
-    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:
+    @_deprecate_positional_args(allowed=['array', 'name'])
+    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -774,7 +820,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         """
         self.CopyAttributes(dataset)
 
-    def __getstate__(  # type: ignore[return]
+    def __getstate__(  # type: ignore[return]  # noqa: RET503
         self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
@@ -784,7 +830,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         elif pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
         # Invalid format, use the setter to raise an error
-        pyvista.set_pickle_format(pickle_format)  # noqa:  RET503
+        pyvista.set_pickle_format(pickle_format)
 
     def _serialize_vtk_pickle_format(
         self: Self,

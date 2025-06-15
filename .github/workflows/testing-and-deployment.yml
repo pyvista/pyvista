@@ -30,6 +30,17 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  LINUX_PLOTTING_ARGS: >
+    -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
+    --fail_extra_image_cache --generated_image_dir debug_images
+  PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
+  PLOTTING_TEST_MODULES_NO_CHARTS: >
+    --ignore=tests/core
+    --ignore=tests/doc
+    --ignore=tests/examples
+    --ignore=tests/namespace
+    --ignore=tests/plotting/test_charts.py
+    --ignore=tests/typing
 
 permissions:
   id-token: none
@@ -58,8 +69,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.config.python-version }}
-          if: env.USE_CACHE == 'true'
-          cache: "pip"
+          cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -143,7 +153,11 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes # zizmor: ignore[template-injection]
+        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- --ignore=tests/plotting/test_charts.py # zizmor: ignore[template-injection]
+
+      - name: Plotting Testing (charts only)
+        if: always()
+        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- tests/plotting/test_charts.py # zizmor: ignore[template-injection]
 
       - name: Upload Generated Images
         if: always()
@@ -215,7 +229,11 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_main --colored=yes
+        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- --ignore=tests/plotting/test_charts.py # zizmor: ignore[template-injection]
+
+      - name: Plotting Testing (charts only)
+        if: always()
+        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- tests/plotting/test_charts.py # zizmor: ignore[template-injection]
 
       - name: Upload Generated Images
         if: always()
