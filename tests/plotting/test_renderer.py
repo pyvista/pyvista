@@ -273,6 +273,7 @@ def test_legend_from_glyph(sphere):
     pl.add_mesh(arrows, color='red', label='Magnitude')
     pl.add_mesh(sphere)
     pl.add_legend(size=(0.5, 0.5))
+    pl.show()
 
 
 @pytest.mark.usefixtures('verify_image_cache')

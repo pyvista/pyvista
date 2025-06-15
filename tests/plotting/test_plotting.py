@@ -114,6 +114,12 @@ def verify_image_cache_wrapper(verify_image_cache):
 
 
 @pytest.fixture
+def no_plot_expected(verify_image_cache_wrapper):
+    verify_image_cache_wrapper.expect_plot = False
+    return verify_image_cache_wrapper
+
+
+@pytest.fixture
 def multicomp_poly():
     """Create a dataset with vector values on points and cells."""
     data = pv.Plane(direction=(0, 0, -1))
@@ -133,6 +139,7 @@ def multicomp_poly():
     return data
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_pyvista_qt_raises():
     match = re.escape(QtDeprecationError.message.format(*[BackgroundPlotter.__name__] * 4))
     with pytest.raises(QtDeprecationError, match=match):
@@ -143,6 +150,7 @@ def test_pyvista_qt_raises():
         QtInteractor()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plotting_module_raises(mocker: MockerFixture):
     from pyvista.plotting import plotting
 
@@ -478,11 +486,13 @@ def test_add_title(verify_image_cache):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plot_invalid_style(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         pv.plot(sphere, style='not a style')
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.parametrize(
     ('interaction', 'kwargs'),
     [
@@ -506,6 +516,7 @@ def test_interactor_style(sphere, interaction, kwargs):
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_lighting_disable_3_lights():
     with pytest.raises(DeprecationError):
         pv.Plotter().disable_3_lights()
@@ -612,11 +623,13 @@ def test_lighting_init_none(sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_lighting_init_invalid():
     with pytest.raises(ValueError):  # noqa: PT011
         pv.Plotter(lighting='invalid')
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plotter_shape_invalid():
     # wrong size
     with pytest.raises(ValueError):  # noqa: PT011
@@ -683,6 +696,7 @@ def test_set_camera_position(cpos, sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.parametrize(
     'cpos',
     [
@@ -699,11 +713,13 @@ def test_set_camera_position_invalid(cpos, sphere):
         plotter.camera_position = cpos
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_parallel_projection():
     plotter = pv.Plotter()
     assert isinstance(plotter.parallel_projection, bool)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.parametrize('state', [True, False])
 def test_set_parallel_projection(state):
     plotter = pv.Plotter()
@@ -711,11 +727,13 @@ def test_set_parallel_projection(state):
     assert plotter.parallel_projection == state
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_parallel_scale():
     plotter = pv.Plotter()
     assert isinstance(plotter.parallel_scale, float)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.parametrize('value', [1, 1.5, 0.3, 10])
 def test_set_parallel_scale(value):
     plotter = pv.Plotter()
@@ -723,12 +741,14 @@ def test_set_parallel_scale(value):
     assert plotter.parallel_scale == value
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_set_parallel_scale_invalid():
     plotter = pv.Plotter()
     with pytest.raises(TypeError):
         plotter.parallel_scale = 'invalid'
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
@@ -876,12 +896,14 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plot_invalid_add_scalar_bar():
     plotter = pv.Plotter()
     with pytest.raises(AttributeError):
         plotter.add_scalar_bar()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_add_scalar_bar_with_unconstrained_font_size(sphere):
     sphere['test_scalars'] = sphere.points[:, 2]
     plotter = pv.Plotter()
@@ -897,12 +919,14 @@ def test_plot_list():
     pv.plot([sphere_a, sphere_b, sphere_c], color='tan')
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_add_lines_invalid():
     plotter = pv.Plotter()
     with pytest.raises(TypeError):
         plotter.add_lines(range(10))
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_open_gif_invalid():
     plotter = pv.Plotter()
@@ -953,6 +977,7 @@ def test_add_legend(sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_legend_invalid_face(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
@@ -1025,6 +1050,7 @@ def test_hide_axes_all():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_isometric_view_interactive(sphere):
     plotter_iso = pv.Plotter()
     plotter_iso.add_mesh(sphere)
@@ -1129,12 +1155,14 @@ def test_add_points():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_key_press_event():
     plotter = pv.Plotter()
     plotter.key_press_event(None, None)
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_enable_picking_gc():
     plotter = pv.Plotter()
     sphere = pv.Sphere()
@@ -1143,6 +1171,7 @@ def test_enable_picking_gc():
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_left_button_down():
     plotter = pv.Plotter()
 
@@ -1195,6 +1224,7 @@ def test_plot_clim(sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_invalid_n_arrays(sphere):
     plotter = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
@@ -1271,6 +1301,7 @@ def test_add_north_arrow():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_screenshot(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
@@ -1295,6 +1326,7 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_screenshot_scaled():
     # FYI: no regression tests because show() is not called
     factor = 2
@@ -1327,6 +1359,7 @@ def test_screenshot_scaled():
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_screenshot_altered_window_size(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
@@ -1359,6 +1392,7 @@ def test_screenshot_bytes():
     assert im.format == 'PNG'
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_screenshot_rendering(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(examples.load_airplane(), smooth_shading=True)
@@ -1368,6 +1402,7 @@ def test_screenshot_rendering(tmpdir):
     assert not plotter._first_time
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp' + ext))
@@ -1419,6 +1454,7 @@ def test_plot_texture():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
@@ -1609,6 +1645,7 @@ def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_vector_array_fail_with_incorrect_component(multicomp_poly):
     """Test failure modes of component argument."""
     p = pv.Plotter()
@@ -1700,6 +1737,7 @@ def test_multi_renderers_subplot_ind_1x2():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_multi_renderers_bad_indices():
     # Test bad indices
     plotter = pv.Plotter(shape=(1, 2))
@@ -1769,6 +1807,7 @@ def test_subplot_groups():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_subplot_groups_fail():
     # Test group overlap
     with pytest.raises(ValueError):  # noqa: PT011
@@ -2083,6 +2122,7 @@ def test_opacity_by_array_user_transform(uniform, verify_image_cache):
     p.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_opacity_mismatched_fail(uniform):
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['unc'] = opac
@@ -2115,6 +2155,7 @@ def test_opacity_by_array_preference():
     p.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.parametrize('mapping', [None, True, object()])
 def test_opacity_transfer_functions_raises(mapping):
     with pytest.raises(
@@ -2124,6 +2165,7 @@ def test_opacity_transfer_functions_raises(mapping):
         pv.opacity_transfer_function(mapping, n_colors=10)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_opacity_transfer_functions():
     n = 256
     mapping = pv.opacity_transfer_function('linear', n)
@@ -2228,6 +2270,7 @@ def test_user_annotations_scalar_bar_volume(uniform, verify_image_cache):
     p.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_user_matrix_volume(uniform):
     shear = np.eye(4)
     shear[0, 1] = 1
@@ -2244,6 +2287,7 @@ def test_user_matrix_volume(uniform):
         p.add_volume(uniform, user_matrix='invalid')
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_user_matrix_mesh(sphere):
     shear = np.eye(4)
     shear[0, 1] = 1
@@ -2271,6 +2315,7 @@ def test_user_matrix_silhouette(airplane):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
@@ -2281,6 +2326,7 @@ def test_scalar_bar_args_unmodified_add_mesh(sphere):
     assert sargs == sargs_copy
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_scalar_bar_args_unmodified_add_volume(uniform):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
@@ -2304,6 +2350,7 @@ def test_plot_string_array(verify_image_cache):
     p.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
     table = pv.Table(np.random.default_rng().random((50, 3)))
@@ -2314,6 +2361,7 @@ def test_fail_plot_table():
         plotter.add_mesh(table)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_bad_keyword_arguments():
     """Make sure bad keyword arguments raise an error"""
     mesh = examples.load_uniform()
@@ -2424,6 +2472,7 @@ def test_add_remove_floor(sphere):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_reset_camera_clipping_range(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -2444,6 +2493,7 @@ def test_reset_camera_clipping_range(sphere):
     assert pl.camera.clipping_range != (10, 100)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_index_vs_loc():
     # first: 2d grid
     pl = pv.Plotter(shape=(2, 3))
@@ -2501,6 +2551,7 @@ def test_interactive_update():
         p.show(auto_close=True, interactive_update=True)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_where_is():
     plotter = pv.Plotter(shape=(2, 2))
     plotter.subplot(0, 0)
@@ -2766,6 +2817,7 @@ def test_chart_matplotlib_plot(verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_get_charts():
     """Test that the get_charts method is retuning a list of charts"""
     chart = pv.Chart2D()
@@ -2798,6 +2850,7 @@ def test_plot_mesh_background(background):
     globe.plot(texture=pv.Texture(examples.mapfile), background=background)
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plot_mesh_background_raises():
     globe = examples.load_globe()
     match = 'Background must be color-like or a file path. Got {} instead.'
@@ -2874,6 +2927,7 @@ def test_disable_stereo_render():
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_orbit_on_path(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_edges=True)
@@ -2930,6 +2984,7 @@ def test_pointset_plot_as_points_vtk():
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
@@ -3009,6 +3064,7 @@ def test_plot_complex_value(plane, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_screenshot_notebook(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -3170,6 +3226,7 @@ def test_plot_composite_many_options(multiblock_poly):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_plot_composite_raise(sphere, multiblock_poly):
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='Must be a composite dataset'):
@@ -3352,6 +3409,7 @@ def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_export_obj(tmpdir, sphere):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.obj'))
 
@@ -4399,6 +4457,7 @@ def test_radial_gradient_background():
         plotter.set_background('white', top='black', right='black')
 
 
+@pytest.mark.usefixtures('no_plot_expected')
 def test_no_empty_meshes():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Empty meshes'):
