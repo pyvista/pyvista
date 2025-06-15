@@ -178,8 +178,8 @@ and plots the meshes with various colors.
 
     # Create plotter object
     plotter = pyvista.Plotter()
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position. Add a
     # scalar bar associated with this mesh
