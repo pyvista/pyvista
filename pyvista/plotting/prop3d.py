@@ -10,6 +10,7 @@ from typing import Literal
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -451,7 +452,11 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         return output
 
     @abstractmethod
-    def copy(self: Self, deep: bool = True) -> Self:  # numpydoc ignore=RT01
+    @_deprecate_positional_args
+    def copy(
+        self: Self,
+        deep: bool = True,  # noqa: FBT001, FBT002
+    ) -> Self:  # numpydoc ignore=RT01
         """Return a copy of this prop."""
         raise NotImplementedError  # pragma: no cover
 
