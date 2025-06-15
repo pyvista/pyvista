@@ -423,7 +423,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _run_code(code, code_path, ns=None, function_name=None):  # noqa: ARG001
+def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a
@@ -452,6 +452,7 @@ def _run_code(code, code_path, ns=None, function_name=None):  # noqa: ARG001
 
 
 def render_figures(
+    *,
     code,
     code_path,
     output_dir,
@@ -486,16 +487,16 @@ def render_figures(
     code_cleanup = config.pyvista_plot_cleanup
 
     if code_setup:
-        _run_code(code_setup, code_path, ns, function_name)
+        _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
 
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
             _run_code(
-                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
-                code_path,
-                ns,
-                function_name,
+                code=doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_path=code_path,
+                ns=ns,
+                function_name=function_name,
             )
 
             images = []
@@ -534,12 +535,12 @@ def render_figures(
             results.append((code_piece, images))
     finally:
         if code_cleanup:
-            _run_code(code_cleanup, code_path, ns, function_name)
+            _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 
     return results
 
 
-def run(arguments, content, options, state_machine, state, lineno):
+def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config
@@ -648,14 +649,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     else:
         try:
             results = render_figures(
-                code,
-                source_file_name,
-                build_dir,
-                output_base,
-                keep_context,
-                function_name,
-                config,
-                force_static,
+                code=code,
+                code_path=source_file_name,
+                output_dir=build_dir,
+                output_base=output_base,
+                context=keep_context,
+                function_name=function_name,
+                config=config,
+                force_static=force_static,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter
