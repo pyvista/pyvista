@@ -23,6 +23,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+import warnings
 
 import cmcrameri
 import cmocean
@@ -2607,9 +2608,10 @@ class DatasetCardFetcher:
                 try:
                     if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
-                except pv.VTKVersionError:
+                except pv.VTKVersionError as err:
                     # caused by 'download_can', this error is handled later
-                    pass
+                    msg = f'could not load {dataset_name} due to {err!r}'
+                    warnings.warn(msg, UserWarning)
                 else:
                     dataset_loader.load_and_store_dataset()
                     assert dataset_loader.dataset is not None

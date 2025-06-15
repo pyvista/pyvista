@@ -2114,7 +2114,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     .. versionadded:: 0.45.0
 
-    This reader requires vtk version >=9.3.0.
+    .. note::
+        This reader requires vtk version >=9.3.0.
 
     Examples
     --------
@@ -2584,6 +2585,9 @@ class AVSucdReader(BaseReader):
 class HDFReader(BaseReader):
     """HDFReader for .hdf files.
 
+    .. note::
+        This reader requires vtk version >=9.1.0.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2600,6 +2604,13 @@ class HDFReader(BaseReader):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
+
+    def __init__(self, path):
+        if pyvista.vtk_version_info < (9, 1, 0):
+            msg = f'{self.__class__.__name__} is only available for vtk>=9.1'
+            raise pyvista.VTKVersionError(msg)
+
+        super().__init__(path)
 
     @wraps(BaseReader.read)
     def read(self):
