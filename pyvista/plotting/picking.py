@@ -1610,7 +1610,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         """
         # use a weak reference to enable garbage collection
-        renderer_ = weakref.ref(self.renderer)  # type: ignore[attr-defined]
         self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
@@ -1619,10 +1618,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
-            selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetRenderer(renderer_())  # type: ignore[arg-type]
-            selector.SetArea(x, y, x, y)  # single pixel
-            selection = selector.Select()
+            w, h = self.window_size  # type: ignore[attr-defined]
+            xn, yn = x / w, y / h
+
+            # Find the renderer that contains the mouse
+            for renderer in self.renderers:  # type: ignore[attr-defined]
+                vx0, vy0, vx1, vy1 = renderer.GetViewport()
+                if vx0 <= xn <= vx1 and vy0 <= yn <= vy1:
+                    selector = _vtk.vtkOpenGLHardwareSelector()
+                    selector.SetRenderer(renderer)
+                    selector.SetArea(x, y, x, y)
+                    selection = selector.Select()
+                    break
+            else:
+                return  # Exit if no viewport is found  # pragma: no cover
 
             for ii in range(selection.GetNumberOfNodes()):
                 node = selection.GetNode(ii)
