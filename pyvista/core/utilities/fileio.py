@@ -273,7 +273,7 @@ def read(  # noqa: PLR0911, PLR0917
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
-    if ext.lower() in ['.grdecl']:
+    if ext.lower() == '.grdecl':
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
         msg = (
@@ -710,7 +710,7 @@ def read_grdecl(
         return keywords
 
     # Read keywords
-    other_keywords = other_keywords if other_keywords else []
+    other_keywords = other_keywords or []
     keywords = read_keywords(filename, other_keywords)
 
     try:
