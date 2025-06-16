@@ -30,11 +30,46 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  CACHE_FOLDER_NAME: vtk-data
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
 
 permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    name: Cache vtk-data Repo
+    runs-on: ubuntu-22.04
+    outputs:
+      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
+    steps:
+      - name: Get vtk-data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+
+      - name: Test if the example data cache exists
+        id: restore-cache-vtk-data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          lookup-only: true
+
+      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: pyvista/vtk-data
+          path: ${{ env.CACHE_FOLDER_NAME }}
+
+      - name: Create the example data cache
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        id: save-cache-vtk-data
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          enableCrossOsArchive: true
+
   macOS:
     strategy:
       fail-fast: false
@@ -79,6 +114,7 @@ jobs:
 
   Linux:
     runs-on: ubuntu-22.04
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
 
@@ -130,12 +166,13 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - uses: actions/cache@v4
+      - name: Cache example data
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Core Testing (no GL)
         run: tox run -e ${{env.TOX_FACTOR}}-cov-core --colored=yes # zizmor: ignore[template-injection]
@@ -183,6 +220,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
       matrix:
@@ -206,12 +244,13 @@ jobs:
           packages: xvfb
           version: 3.0
 
-      - uses: actions/cache@v4
+      - name: Cache example data
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.python-version }}-core-vtk_main --colored=yes
@@ -233,6 +272,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    needs: cache-vtk-data
     env:
       CI_WINDOWS: true
       PYVISTA_USERDATA_PATH: ${{ github.workspace }}\.pyvista_examples
@@ -251,22 +291,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.2
 
       - name: Install tox-uv
         run: uv pip install tox-uv
-
-      - name: Create example data path
-        run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
-
-      - name: Cache example data path
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PYVISTA_USERDATA_PATH }}
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
 
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.python-version }}-core --colored=yes

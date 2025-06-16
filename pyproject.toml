@@ -233,7 +233,7 @@ filterwarnings = [
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:invalid escape sequence.*:DeprecationWarning',                                                                 # trame-vuetify, VAlert class
   'ignore:invalid escape sequence.*:SyntaxWarning',                                                                      # trame-vuetify, VAlert class
-  'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
+  'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
