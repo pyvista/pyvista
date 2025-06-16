@@ -3123,7 +3123,7 @@ def test_ssao_pass():
     pl.enable_ssao()
     pl.show()
 
-    with pytest.raises(RuntimeError, match ='The renderer has been closed.'):
+    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
         pl.disable_ssao()
 
 
