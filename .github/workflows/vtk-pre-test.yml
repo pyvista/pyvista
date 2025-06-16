@@ -58,9 +58,12 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Run tests
-        run: |
-          xvfb-run -a tox run -e py${{matrix.python-version}}-vtk_main --colored=yes
+      - name: Core Testing (no GL)
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_main --colored=yes
+
+      - name: Plotting Testing (uses GL)
+        if: always()
+        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_main --colored=yes
 
       - name: Upload Generated Images
         if: always()
