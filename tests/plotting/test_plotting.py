@@ -3123,10 +3123,8 @@ def test_ssao_pass():
     pl.enable_ssao()
     pl.show()
 
-    # ensure this fails when ssao disabled
-    pl.disable_ssao()
-    with pytest.raises(RuntimeError, match='This plotter has been closed and cannot be shown.'):
-        pl.show()
+    with pytest.raises(RuntimeError, match ='The renderer has been closed.'):
+        pl.disable_ssao()
 
 
 @skip_mesa
