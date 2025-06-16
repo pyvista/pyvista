@@ -3115,21 +3115,11 @@ def test_ssaa_pass():
 
 
 @skip_windows_mesa
-def test_ssao_pass(verify_image_cache):
-    verify_image_cache.high_variance_test = True
-
+def test_ssao_pass():
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pv.Plotter()
     pl.add_mesh(ugrid)
-    pl.enable_ssao()
-    pl.show()
 
-
-@pytest.mark.skip_check_gc  # gc fails
-def test_disable_ssao_raises(verify_image_cache):
-    verify_image_cache.skip = True
-
-    pl = pv.Plotter()
     pl.enable_ssao()
     pl.show()
 
@@ -3140,8 +3130,7 @@ def test_disable_ssao_raises(verify_image_cache):
 
 
 @skip_mesa
-def test_ssao_pass_from_helper(verify_image_cache):
-    verify_image_cache.high_variance_test = True
+def test_ssao_pass_from_helper():
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
