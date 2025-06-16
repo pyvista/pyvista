@@ -303,7 +303,6 @@ def test_pbr(sphere, verify_image_cache):
 
 
 @pytest.mark.skip_windows
-@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 @pytest.mark.parametrize('resample', [True, False])
 @pytest.mark.needs_vtk_version(9, 1)  # GC issue
 def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
@@ -315,9 +314,6 @@ def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture, resample=resample)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
-
-    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pv.vtk_version_info > (9, 1)
     pl.show()
 
 
