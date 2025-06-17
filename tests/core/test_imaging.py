@@ -47,8 +47,8 @@ def test_sample_function(dtype):
     else:
         mesh = pv.sample_function(
             perlin,
-            bounds,
-            dim,
+            bounds=bounds,
+            dim=dim,
             compute_normals=False,
             output_type=dtype,
             scalar_arr_name=scalar_arr_name,

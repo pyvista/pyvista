@@ -18,6 +18,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 from .fileio import _get_ext_force
@@ -2113,7 +2114,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     .. versionadded:: 0.45.0
 
-    This reader requires vtk version >=9.3.0.
+    .. note::
+        This reader requires vtk version >=9.3.0.
 
     Examples
     --------
@@ -2583,6 +2585,9 @@ class AVSucdReader(BaseReader):
 class HDFReader(BaseReader):
     """HDFReader for .hdf files.
 
+    .. note::
+        This reader requires vtk version >=9.1.0.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2599,6 +2604,13 @@ class HDFReader(BaseReader):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
+
+    def __init__(self, path):
+        if pyvista.vtk_version_info < (9, 1, 0):
+            msg = f'{self.__class__.__name__} is only available for vtk>=9.1'
+            raise pyvista.VTKVersionError(msg)
+
+        super().__init__(path)
 
     @wraps(BaseReader.read)
     def read(self):
@@ -2673,11 +2685,11 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[union-attr]
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
-            self._data_object.point_data.active_scalars_name = 'frame0'
+        if 'frame0' in self._data_object.point_data:  # type: ignore[union-attr]
+            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[union-attr]
 
         img.close()
 
@@ -2853,7 +2865,8 @@ class GaussianCubeReader(BaseReader):
     _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
 
-    def read(self, grid: bool = True):
+    @_deprecate_positional_args
+    def read(self, grid: bool = True):  # noqa: FBT001, FBT002
         """Read the file and return the output.
 
         Parameters

@@ -213,6 +213,12 @@ the exception rather than the norm. A uniform code style is enforced
 by `ruff format <https://docs.astral.sh/ruff/formatter/#the-ruff-formatter>`_ to prevent energy wasted on
 style disagreements.
 
+Keyword-only arguments are generally preferred over positional keywords
+in function signatures (see `PEP 3102 <https://peps.python.org/pep-3102/>`_),
+and positional arguments should be limited to just one or two where possible.
+Boolean-type arguments should always be keyword-only. This is also
+enforced by ``ruff``.
+
 As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
 Please also take a look at `Docstrings <#docstrings>`_.
 

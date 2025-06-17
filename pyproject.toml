@@ -225,7 +225,7 @@ filterwarnings = [
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
-  'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
+  'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
@@ -315,6 +315,9 @@ docstring-code-line-length = 75
 quote-style = 'single'
 
 [tool.ruff.lint]
+explicit-preview-rules = true
+preview = true
+
 extend-safe-fixes = ['EM']
 extend-select = [
   'A',
@@ -333,6 +336,8 @@ extend-select = [
   'EM',
   'F',
   'FA',
+  'FBT001',
+  'FBT002',
   'FLY',
   'FURB',
   'I',
@@ -347,6 +352,7 @@ extend-select = [
   'PGH',
   'PIE',
   'PL',
+  'PLR0917',
   'PT',
   'PTH',
   'PYI',
@@ -509,9 +515,9 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/volume_property.py' = ['ANN']
 'pyvista/plotting/widgets.py' = ['ANN']
 'pyvista/report.py' = ['ANN']
-'pyvista/trame/*' = ['ANN']
+'pyvista/trame/*' = ['ANN', 'FBT', 'PLR0917']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
-'tests/*' = ['ANN', 'D', 'INP', 'T20']
+'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLR0917', 'T20']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',
@@ -521,6 +527,9 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH118',
   'PTH119',
 ]
+
+[tool.ruff.lint.pylint]
+max-positional-args = 3
 
 [tool.ruff.lint.isort]
 combine-as-imports = true # Combines 'as' imports on the same line

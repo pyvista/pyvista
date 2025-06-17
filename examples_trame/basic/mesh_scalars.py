@@ -45,7 +45,7 @@ def set_scalars(scalars=mesh.active_scalars_name, **kwargs):  # noqa: ARG001
 
 
 @state.change('log_scale')
-def set_log_scale(log_scale=False, **kwargs):  # noqa: ARG001
+def set_log_scale(*, log_scale=False, **kwargs):  # noqa: ARG001
     actor.mapper.lookup_table.log_scale = log_scale
     ctrl.view_update()
 

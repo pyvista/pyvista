@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -541,7 +542,7 @@ class DataSet(DataSetFilters, DataObject):
             _points = _points.GetData()
         except AttributeError:
             # create an empty array
-            vtkpts = vtk_points(np.empty((0, 3)), False)
+            vtkpts = vtk_points(np.empty((0, 3)), deep=False)
             self.SetPoints(vtkpts)
             _points = self.GetPoints().GetData()
         return pyvista_ndarray(_points, dataset=self)
@@ -573,7 +574,7 @@ class DataSet(DataSetFilters, DataObject):
             return
         # otherwise, wrap and use the array
         points, _ = _coerce_pointslike_arg(points, copy=False)
-        vtkpts = vtk_points(points, False)
+        vtkpts = vtk_points(points, deep=False)
         if not pdata:
             self.SetPoints(vtkpts)
         else:
@@ -985,7 +986,8 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:
+    @_deprecate_positional_args(allowed=['ido'])
+    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1668,7 +1670,8 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:
+    @_deprecate_positional_args(allowed=['mesh'])
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -1733,7 +1736,8 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:
+    @_deprecate_positional_args
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1773,7 +1777,8 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = out.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:
+    @_deprecate_positional_args
+    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1904,10 +1909,11 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
+    @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = False,
+        return_closest_point: bool = False,  # noqa: FBT001, FBT002
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
         """Find index of closest cell in this mesh to the given point.
 
@@ -2340,7 +2346,7 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()  # type: ignore[abstract]
+        cell = pyvista.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
@@ -2850,7 +2856,7 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-        if pyvista.vtk_version_info >= (9, 4, 0):
+        if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
             # Need to reverse the order
             return out[::-1]
         return out
