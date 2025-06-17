@@ -188,8 +188,6 @@ def _deprecate_positional_args(
 
         @wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
-            from pyvista.core.errors import PyVistaDeprecationWarning
-
             passed_positional_names = param_names[: len(args)]
 
             # Exclude allowed ones
@@ -227,6 +225,8 @@ def _deprecate_positional_args(
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
+                        from pyvista.core.errors import PyVistaDeprecationWarning
+
                         msg = (
                             f'\n{call_site()}: '
                             f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
