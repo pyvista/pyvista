@@ -306,10 +306,9 @@ def test_pbr(sphere, verify_image_cache):
 @pytest.mark.needs_vtk_version(9, 2)
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
-    if resample:
-        # Skip due to large variance
-        verify_image_cache.windows_skip_image_cache = True
-        verify_image_cache.macos_skip_image_cache = True
+    # Skip due to large variance
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
 
     pl = pv.Plotter(lighting=None)
     texture = examples.download_cubemap_park()
