@@ -11,7 +11,6 @@ import io
 import os
 import pathlib
 from pathlib import Path
-import platform
 import re
 import time
 from types import FunctionType
