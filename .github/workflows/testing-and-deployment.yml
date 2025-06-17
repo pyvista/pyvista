@@ -31,6 +31,8 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  CACHE_FOLDER_NAME: vtk-data
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
     -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
     --fail_extra_image_cache --generated_image_dir debug_images
@@ -47,6 +49,39 @@ permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    name: Cache vtk-data Repo
+    runs-on: ubuntu-22.04
+    outputs:
+      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
+    steps:
+      - name: Get vtk-data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+
+      - name: Test if the example data cache exists
+        id: restore-cache-vtk-data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          lookup-only: true
+
+      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: pyvista/vtk-data
+          path: ${{ env.CACHE_FOLDER_NAME }}
+
+      - name: Create the example data cache
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        id: save-cache-vtk-data
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          enableCrossOsArchive: true
+
   macOS:
     name: Mac OS Unit Testing
     strategy:
@@ -60,6 +95,7 @@ jobs:
           - { os: macos-latest, python-version: "3.13" }
 
     runs-on: ${{ matrix.config.os }}
+    needs: cache-vtk-data
 
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +108,14 @@ jobs:
           python-version: ${{ matrix.config.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
+      - name: Restore example data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+
       - name: Install PyVista test dependencies
         run: |
           pip install --upgrade pip
@@ -82,7 +126,7 @@ jobs:
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: pytest -v --ignore=tests/plotting
+        run: pytest -v --ignore=tests/plotting --test_downloads
 
       - name: Test Plotting
         if: always()
@@ -98,6 +142,7 @@ jobs:
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-22.04
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
 
@@ -138,12 +183,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: actions/cache@v4
+      - name: Cache example data
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Build wheel and install pyvista
         run: |
@@ -181,7 +227,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -249,6 +295,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
       matrix:
@@ -265,12 +312,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: actions/cache@v4
+      - name: Cache example data
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Install Testing Requirements
         run: |
@@ -282,7 +330,7 @@ jobs:
           pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -325,6 +373,7 @@ jobs:
   windows:
     name: Windows Unit Testing
     runs-on: windows-latest
+    needs: cache-vtk-data
     env:
       CI_WINDOWS: true
     strategy:
@@ -342,6 +391,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.2
 
@@ -354,21 +411,8 @@ jobs:
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
-      - name: Set example data path as env variable
-        run: |
-          chcp 65001 #set code page to utf-8
-          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
-
       - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting
+        run: python -m pytest -v --ignore=tests/plotting --test_downloads
 
       - name: Test Plotting
         if: always()
