@@ -11,6 +11,7 @@ import io
 import os
 import pathlib
 from pathlib import Path
+import platform
 import re
 import time
 from types import FunctionType
@@ -302,11 +303,15 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_windows
 @pytest.mark.parametrize('resample', [True, 0.5])
 @pytest.mark.needs_vtk_version(9, 2)
-def test_set_environment_texture_cubemap(resample):
+def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
+    if resample:
+        # Skip due to large variance
+        verify_image_cache.windows_skip_image_cache = True
+        verify_image_cache.macos_skip_image_cache = True
+
     pl = pv.Plotter(lighting=None)
     texture = examples.download_cubemap_park()
     pl.set_environment_texture(texture, is_srgb=True, resample=resample)
