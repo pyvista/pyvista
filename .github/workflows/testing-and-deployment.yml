@@ -83,6 +83,7 @@ jobs:
 
     runs-on: ${{ matrix.config.os }}
     name: Mac OS (py${{ matrix.config.python-version }})
+    needs: cache-vtk-data
 
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +95,14 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+
+      - name: Restore example data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -272,15 +281,14 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    name: Windows (py${{ matrix.python-version }})
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
-      PYVISTA_USERDATA_PATH: ${{ github.workspace }}\.pyvista_examples
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-    name: Windows (py${{ matrix.python-version }})
     steps:
       - uses: actions/checkout@v4
         with:
