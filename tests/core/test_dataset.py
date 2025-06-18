@@ -775,12 +775,12 @@ def test_set_cell_vectors(grid):
 
 def test_axis_rotation_invalid():
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pv.axis_rotation(np.empty((3, 3)), 0, inplace=False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pv.axis_rotation(p, 1, False, axis='x')
+    p_out = pv.axis_rotation(p, 1, inplace=False, axis='x')
     assert not np.allclose(p, p_out)
 
 
@@ -1362,6 +1362,14 @@ def test_point_cell_ids(grid: DataSet, i0):
     others = [i for i in range(grid.n_cells) if i not in cell_ids]
     for c in others:
         assert i0 not in grid.get_cell(c).point_ids
+
+
+def test_point_cell_ids_order():
+    resolution = 10
+    mesh = pv.Sphere(theta_resolution=resolution)
+    expected_ids = list(range(resolution))
+    actual_ids = mesh.point_cell_ids(0)
+    assert actual_ids == expected_ids
 
 
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)

@@ -29,7 +29,7 @@ from pyvista import examples
 
 # download the stanford bunny and rotate it into a good position
 mesh = examples.download_bunny()
-mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4, 4, 4)
+mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4)
 
 # We use a uniform grid here simply to create equidistantly spaced points for
 # our glyph filter
