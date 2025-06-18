@@ -3832,6 +3832,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         if hasattr(self, '_actors'):
             del self._actors
 
+        self._closed = True
+
     def on_plotter_render(self) -> None:
         """Notify renderer components of explicit plotter render call."""
         if self._charts is not None:

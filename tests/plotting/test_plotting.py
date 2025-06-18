@@ -3115,18 +3115,17 @@ def test_ssaa_pass():
 
 
 @skip_windows_mesa
-def test_ssao_pass():
+def test_ssao_pass(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pv.Plotter()
     pl.add_mesh(ugrid)
 
     pl.enable_ssao()
-    pl.show(auto_close=False)
+    pl.show()
 
-    # ensure this fails when ssao disabled
-    pl.disable_ssao()
-    with pytest.raises(RuntimeError):
-        pl.show()
+    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+        pl.disable_ssao()
 
 
 @skip_mesa
