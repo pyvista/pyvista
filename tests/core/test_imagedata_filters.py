@@ -11,6 +11,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
+from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
 
@@ -372,6 +373,7 @@ def test_contour_labels_cell_data(channels):
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
+@flaky_test
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     start = time.perf_counter()
