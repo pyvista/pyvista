@@ -585,7 +585,7 @@ def spherical_to_cartesian(r, phi, theta):
 def merge(  # noqa: PLR0917
     datasets,
     merge_points: bool = True,  # noqa: FBT001, FBT002
-    main_has_priority: bool = True,  # noqa: FBT001, FBT002
+    main_has_priority: bool | None = None,  # noqa: FBT001
     progress_bar: bool = False,  # noqa: FBT001, FBT002
 ):
     """Merge several datasets.
@@ -595,6 +595,17 @@ def merge(  # noqa: PLR0917
        :func:`PolyDataFilters.boolean_union` filter. This filter
        does not attempt to create a manifold mesh and will include
        internal surfaces when two meshes overlap.
+
+    .. warning::
+
+        The merge order of this filter depends on the installed version
+        of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
+        the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
+        This may be a breaking change for some applications. If only
+        merging two meshes, it may be possible to maintain `some` backwards
+        compatibility by swapping the input order of the two meshes,
+        though this may also affect the merged arrays and is therefore
+        not fully backwards-compatible.
 
     Parameters
     ----------
@@ -607,6 +618,11 @@ def merge(  # noqa: PLR0917
     main_has_priority : bool, default: True
         When this parameter is ``True`` and ``merge_points=True``, the arrays
         of the merging grids will be overwritten by the original main mesh.
+
+        .. deprecated:: 0.46
+
+            This keyword will be removed in a future version. The main mesh
+            always has priority with VTK 9.5.0 or later.
 
     progress_bar : bool, default: False
         Display a progress bar to indicate progress.
