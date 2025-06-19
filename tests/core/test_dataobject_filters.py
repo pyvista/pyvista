@@ -28,9 +28,6 @@ from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 
-# Run tests on a single worker to prevent crashes
-pytestmark = pytest.mark.xdist_group(name='core')
-
 
 @pytest.mark.parametrize('return_clipped', [True, False])
 def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
