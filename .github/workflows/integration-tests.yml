@@ -72,6 +72,7 @@ jobs:
         run: tox run -e integration-${{matrix.project}} --colored=yes
 
       - name: Run tests (geovista)
+        if: ${{matrix.project == 'geovista'}}
         run: xvfb-run -a tox run -e integration-${{matrix.project}} --colored=yes
 
       - uses: actions/cache@v4
