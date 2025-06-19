@@ -48,9 +48,10 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-# skip all tests if unable to render
-pytestmark = pytest.mark.skip_plotting
-
+pytestmark = [
+    pytest.mark.skip_plotting,  # Skip all tests if unable to render
+    pytest.mark.xdist_group(name='plotting'),  # Run tests on a single worker to prevent crashes
+]
 
 HAS_IMAGEIO = True
 try:
