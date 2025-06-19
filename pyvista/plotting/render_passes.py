@@ -305,7 +305,7 @@ class RenderPasses:
 
     def _update_passes(self):
         """Reassemble pass delegation."""
-        if self._renderer is None:  # pragma: no cover
+        if hasattr(self._renderer, '_closed') and self._renderer._closed:
             msg = 'The renderer has been closed.'
             raise RuntimeError(msg)
 
