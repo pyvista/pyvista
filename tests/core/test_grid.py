@@ -345,7 +345,7 @@ def test_cells_dict_variable_length():
 
 def test_cells_dict_empty_grid():
     grid = pv.UnstructuredGrid()
-    assert grid.cells_dict is None
+    assert grid.cells_dict == {}
 
 
 def test_cells_dict_alternating_cells():

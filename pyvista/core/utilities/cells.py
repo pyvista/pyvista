@@ -257,7 +257,7 @@ def get_mixed_cells(vtkobj):
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
-    return_dict = {}
+    return_dict = {}  # type: ignore[var-annotated]
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
         msg = 'Expected a pyvista object'
@@ -265,7 +265,7 @@ def get_mixed_cells(vtkobj):
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
-        return None
+        return return_dict
 
     cell_types = vtkobj.celltypes
     cells = vtkobj.cells
