@@ -54,16 +54,10 @@ jobs:
           persist-credentials: false
 
       - uses: pyvista/setup-headless-display-action@main
-        if: ${{matrix.project == 'pyvistaqt'}}
+        if: ${{matrix.project == 'pyvistaqt' || matrix.project == 'geovista'}}
         with:
-          qt: true
-          pyvista: false
-
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
-        if: ${{env.USE_CACHE == 'true' && matrix.project == 'geovista'}}
-        with:
-          packages: xvfb
-          version: 3.0
+          qt: ${{matrix.project == 'pyvistaqt'}}
+          pyvista: ${{matrix.project != 'pyvistaqt'}}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -73,8 +67,12 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - name: Run tests
+      - name: Run tests (no geovista)
+        if: ${{matrix.project != 'geovista'}}
         run: tox run -e integration-${{matrix.project}} --colored=yes
+
+      - name: Run tests (geovista)
+        run: xvfb-run -a tox run -e integration-${{matrix.project}} --colored=yes
 
       - uses: actions/cache@v4
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
