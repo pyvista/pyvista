@@ -38,12 +38,8 @@ env:
     --fail_extra_image_cache --generated_image_dir debug_images -n auto --dist=loadgroup
   PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
   PLOTTING_TEST_MODULES_NO_CHARTS: >
-    --ignore=tests/core
-    --ignore=tests/doc
-    --ignore=tests/examples
-    --ignore=tests/namespace
+    tests/plotting
     --ignore=tests/plotting/test_charts.py
-    --ignore=tests/typing
 
 permissions:
   id-token: none
