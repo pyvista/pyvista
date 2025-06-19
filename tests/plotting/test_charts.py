@@ -14,14 +14,10 @@ from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """A large number of tests here fail gc."""
-
-
-# skip all tests if VTK<9.2.0
-pytestmark = pytest.mark.needs_vtk_version(9, 2)
+pytestmark = [
+    pytest.mark.needs_vtk_version(9, 2),  # skip all tests if VTK<9.2.0
+    pytest.mark.skip_check_gc,  # A large number of tests here fail gc
+]
 
 
 def vtk_array_to_tuple(arr):
@@ -606,7 +602,7 @@ def test_lineplot2d(chart_2d, line_plot_2d):
     l = 'Line'
 
     # Test constructor
-    plot = charts.LinePlot2D(chart_2d, x, y, c, w, s, l)
+    plot = charts.LinePlot2D(chart_2d, x, y, color=c, width=w, style=s, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
@@ -633,7 +629,7 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     )
 
     # Test constructor
-    plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
+    plot = charts.ScatterPlot2D(chart_2d, x, y, color=c, size=sz, style=st, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
@@ -668,7 +664,7 @@ def test_areaplot(chart_2d, area_plot):
     l = 'Line'
 
     # Test constructor
-    plot = charts.AreaPlot(chart_2d, x, y1, y2, c, l)
+    plot = charts.AreaPlot(chart_2d, x, y1, y2, color=c, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y1, y1)
@@ -692,7 +688,7 @@ def test_barplot(chart_2d, bar_plot):
     assert ori_inv not in charts.BarPlot.ORIENTATIONS, 'New orientations added? Change this test.'
 
     # Test multi comp constructor
-    plot = charts.BarPlot(chart_2d, x, y, c, ori, l)
+    plot = charts.BarPlot(chart_2d, x, y, color=c, orientation=ori, label=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
@@ -701,7 +697,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.BarPlot(chart_2d, x, y[0], c[0], ori, l[0])
+    plot = charts.BarPlot(chart_2d, x, y[0], color=c[0], orientation=ori, label=l[0])
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y[0])
@@ -711,12 +707,12 @@ def test_barplot(chart_2d, bar_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(TypeError):
-        charts.BarPlot(chart_2d, x, y, c[0], ori, l)
+        charts.BarPlot(chart_2d, x, y, color=c[0], orientation=ori, label=l)
     # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.BarPlot(chart_2d, x, y[0], c, ori, l[0])
+        charts.BarPlot(chart_2d, x, y[0], color=c, orientation=ori, label=l[0])
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.BarPlot(chart_2d, x, y[0], c[0], ori, l)
+        charts.BarPlot(chart_2d, x, y[0], color=c[0], orientation=ori, label=l)
 
     # Test remaining properties
     bar_plot.update(x, y)
@@ -737,7 +733,7 @@ def test_stackplot(chart_2d, stack_plot):
     l = ['Foo', 'Spam', 'Bla']
 
     # Test multi comp constructor
-    plot = charts.StackPlot(chart_2d, x, ys, c, l)
+    plot = charts.StackPlot(chart_2d, x, ys, colors=c, labels=l)
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
@@ -745,7 +741,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.labels == l
 
     # Test single comp constructor
-    plot = charts.StackPlot(chart_2d, x, ys[0], c[0], l[0])
+    plot = charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l[0])
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys[0])
@@ -754,12 +750,12 @@ def test_stackplot(chart_2d, stack_plot):
 
     # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(TypeError):
-        charts.StackPlot(chart_2d, x, ys, c[0], l)
+        charts.StackPlot(chart_2d, x, ys, colors=c[0], labels=l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys[0], c, l[0])
+        charts.StackPlot(chart_2d, x, ys[0], colors=c, labels=l[0])
     with pytest.raises(ValueError):  # noqa: PT011
-        charts.StackPlot(chart_2d, x, ys[0], c[0], l)
+        charts.StackPlot(chart_2d, x, ys[0], colors=c[0], labels=l)
 
     # Test remaining properties
     stack_plot.update(x, ys)
@@ -787,7 +783,7 @@ def test_chart_2d(pl, chart_2d):
     ori = 'V'
 
     # Test constructor
-    chart = pv.Chart2D(size, loc, lx, ly, False)
+    chart = pv.Chart2D(size=size, loc=loc, x_label=lx, y_label=ly, grid=False)
     assert chart.size == size
     assert chart.loc == loc
     assert chart.x_label == lx
@@ -846,7 +842,7 @@ def test_chart_2d(pl, chart_2d):
     chart_2d.clear()
     assert len([*chart_2d.plots()]) == 0
 
-    s = chart_2d.scatter(x, y, col, sz, ms, lx)
+    s = chart_2d.scatter(x, y, color=col, size=sz, style=ms, label=lx)
     assert np.allclose(s.x, x)
     assert np.allclose(s.y, y)
     assert s.color == col
@@ -856,7 +852,7 @@ def test_chart_2d(pl, chart_2d):
     assert s in chart_2d.plots('scatter')
     assert chart_2d.GetPlotIndex(s) >= 0
 
-    l = chart_2d.line(x, y, col, w, ls, lx)
+    l = chart_2d.line(x, y, color=col, width=w, style=ls, label=lx)
     assert np.allclose(l.x, x)
     assert np.allclose(l.y, y)
     assert l.color == col
@@ -866,7 +862,7 @@ def test_chart_2d(pl, chart_2d):
     assert l in chart_2d.plots('line')
     assert chart_2d.GetPlotIndex(l) >= 0
 
-    a = chart_2d.area(x, -y, y, col, lx)
+    a = chart_2d.area(x, -y, y, color=col, label=lx)
     assert np.allclose(a.x, x)
     assert np.allclose(a.y1, -y)
     assert np.allclose(a.y2, y)
@@ -875,7 +871,7 @@ def test_chart_2d(pl, chart_2d):
     assert a in chart_2d.plots('area')
     assert chart_2d.GetPlotIndex(a) >= 0
 
-    b = chart_2d.bar(x, -y, col, ori, lx)
+    b = chart_2d.bar(x, -y, color=col, orientation=ori, label=lx)
     assert np.allclose(b.x, x)
     assert np.allclose(b.y, -y)
     assert b.color == col
@@ -884,7 +880,7 @@ def test_chart_2d(pl, chart_2d):
     assert b in chart_2d.plots('bar')
     assert chart_2d.GetPlotIndex(b) >= 0
 
-    s = chart_2d.stack(x, ys, cs, [lx, ly])
+    s = chart_2d.stack(x, ys, colors=cs, labels=[lx, ly])
     assert np.allclose(s.x, x)
     assert np.allclose(s.ys, ys)
     assert s.color_scheme == cs
@@ -945,7 +941,7 @@ def test_chart_box(pl, chart_box, box_plot):
     ls = ['Datalabel']
 
     # Test constructor
-    chart = pv.ChartBox(data, cs, ls, size, loc)
+    chart = pv.ChartBox(data, colors=cs, labels=ls, size=size, loc=loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -981,7 +977,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     ls = ['Tic', 'Tac', 'Toe']
 
     # Test constructor
-    chart = pv.ChartPie(data, cs, ls, size, loc)
+    chart = pv.ChartPie(data, colors=cs, labels=ls, size=size, loc=loc)
     assert np.allclose(chart.plot.data, data)
     assert chart.plot.color_scheme == cs
     assert tuple(chart.plot.labels) == tuple(ls)
@@ -1016,7 +1012,7 @@ def test_chart_mpl(pl):
 
     # Test constructor
     f, ax = plt.subplots()
-    chart = pv.ChartMPL(f, size, loc)
+    chart = pv.ChartMPL(f, size=size, loc=loc)
     assert chart.size == size
     assert chart.loc == loc
 

@@ -11,12 +11,14 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Union
 from typing import cast
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
 from .cell import CellArray
@@ -54,6 +56,22 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
+    _PolyDataWriterAlias = Union[
+        _vtk.vtkPLYWriter,
+        _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkSTLWriter,
+        _vtk.vtkPolyDataWriter,
+        _vtk.vtkHoudiniPolyDataWriter,
+        _vtk.vtkOBJWriter,
+        _vtk.vtkIVWriter,
+        _vtk.vtkHDFWriter,
+    ]
+
+    _UnstructuredGridWriterAlias = Union[
+        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
+    ]
+
+
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
     'be changing to `False` in future versions for point-based meshes (e.g., '
@@ -73,7 +91,8 @@ class _PointSet(DataSet):
         '.xyz': _vtk.vtkSimplePointsWriter,
     }
 
-    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
+    @_deprecate_positional_args
+    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:  # noqa: FBT001, FBT002
         """Return the coordinates for the center of mass of the mesh.
 
         Parameters
@@ -116,10 +135,11 @@ class _PointSet(DataSet):
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, cast('_vtk.vtkDataObject', to_copy))
 
+    @_deprecate_positional_args(allowed=['ind'])
     def remove_cells(
         self,
         ind: VectorLike[bool] | VectorLike[int],
-        inplace: bool = False,
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ) -> _PointSet:
         """Remove cells.
 
@@ -197,11 +217,12 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
+    @_deprecate_positional_args(allowed=['xyz'])
     def translate(
         self: Self,
         xyz: VectorLike[float],
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
+        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
+        inplace: bool = False,  # noqa: FBT001, FBT002
     ):
         """Translate the mesh.
 
@@ -315,7 +336,8 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             raise VTKVersionError(msg)
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:
+    @_deprecate_positional_args(allowed=['var_inp'])
+    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
         """Initialize the pointset."""
         super().__init__()
 
@@ -337,7 +359,8 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def cast_to_polydata(self, deep: bool = True):
+    @_deprecate_positional_args
+    def cast_to_polydata(self, deep: bool = True):  # noqa: FBT001, FBT002
         """Cast this dataset to polydata.
 
         Parameters
@@ -396,21 +419,23 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @wraps(PolyDataFilters.threshold)
+    @wraps(PolyDataFilters.threshold)  # type: ignore[has-type]
     def threshold(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
         """
-        return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
+        return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.threshold_percent)
+    @wraps(PolyDataFilters.threshold_percent)  # type:ignore[has-type]
     def threshold_percent(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
         """
-        return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
+        return (
+            self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
+        )
 
     @wraps(PolyDataFilters.explode)
     def explode(self, *args, **kwargs):  # numpydoc ignore=RT01
@@ -419,12 +444,12 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         The explode filter relies on cells.
 
         """
-        return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
+        return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @wraps(PolyDataFilters.delaunay_3d)
+    @wraps(PolyDataFilters.delaunay_3d)  # type: ignore[has-type]
     def delaunay_3d(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
-        return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
+        return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
     @property
     def area(self) -> float:  # numpydoc ignore=RT01
@@ -736,17 +761,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     _WRITERS: ClassVar[
         dict[
             str,
-            (
-                type[
-                    _vtk.vtkPLYWriter
-                    | _vtk.vtkXMLPolyDataWriter
-                    | _vtk.vtkSTLWriter
-                    | _vtk.vtkPolyDataWriter
-                    | _vtk.vtkHoudiniPolyDataWriter
-                    | _vtk.vtkOBJWriter
-                    | _vtk.vtkIVWriter
-                ]
-            ),
+            (type[_PolyDataWriterAlias]),
         ]
     ] = {  # type: ignore[assignment]
         '.ply': _vtk.vtkPLYWriter,
@@ -757,8 +772,11 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.obj': _vtk.vtkOBJWriter,
         '.iv': _vtk.vtkIVWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['var_inp', 'faces'])
+    def __init__(  # noqa: PLR0917
         self,
         var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
         faces: CellArrayLike | None = None,
@@ -767,9 +785,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         n_lines: int | None = None,
         strips: CellArrayLike | None = None,
         n_strips: int | None = None,
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
         force_ext: str | None = None,
-        force_float: bool = True,
+        force_float: bool = True,  # noqa: FBT001, FBT002
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
     ) -> None:
@@ -1074,11 +1092,15 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]) -> None:  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
-        self.faces = CellArray.from_regular_cells(faces)  # type: ignore[assignment]
+        self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
+    @_deprecate_positional_args(allowed=['points', 'faces'])
     def from_regular_faces(
-        cls, points: MatrixLike[float], faces: MatrixLike[int], deep: bool = False
+        cls,
+        points: MatrixLike[float],
+        faces: MatrixLike[int],
+        deep: bool = False,  # noqa: FBT001, FBT002
     ):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
 
@@ -1149,7 +1171,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @irregular_faces.setter
     def irregular_faces(self, faces: Sequence[VectorLike[int]]) -> None:  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
-        self.faces = CellArray.from_irregular_cells(faces)  # type: ignore[assignment]
+        self.faces = CellArray.from_irregular_cells(faces)
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
@@ -1353,7 +1375,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.GetNumberOfStrips()
 
     @staticmethod
-    def use_strict_n_faces(mode: bool) -> None:
+    def use_strict_n_faces(mode: bool) -> None:  # noqa: FBT001
         """Global opt-in to strict n_faces.
 
         Parameters
@@ -1425,7 +1447,14 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.GetNumberOfPolys()
 
-    def save(self, filename, binary: bool = True, texture=None, recompute_normals: bool = True):
+    @_deprecate_positional_args(allowed=['filename'])
+    def save(  # noqa: PLR0917
+        self,
+        filename,
+        binary: bool = True,  # noqa: FBT001, FBT002
+        texture=None,
+        recompute_normals: bool = True,  # noqa: FBT001, FBT002
+    ):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -1533,7 +1562,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 )
                 raise TypeError(msg)
 
-        super().save(filename, binary, texture=texture)
+        super().save(filename, binary=binary, texture=texture)
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01
@@ -1819,12 +1848,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[
         dict[
             str,
-            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+            type[_UnstructuredGridWriterAlias],
         ]
     ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -1855,7 +1886,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
-            self._from_cells_dict(args[0], args[1], deep)
+            self._from_cells_dict(args[0], args[1], deep=deep)
             self._check_for_consistency()
 
         elif len(args) == 3:
@@ -1864,7 +1895,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             arg2_is_seq = isinstance(args[2], (np.ndarray, Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
-                self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
+                self._from_arrays(args[0], args[1], args[2], deep=deep, **kwargs)
                 self._check_for_consistency()
             else:
                 msg = 'All input types must be sequences.'
@@ -1884,7 +1915,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_cells_dict(self, cells_dict, points, deep: bool = True):
+    def _from_cells_dict(self, cells_dict, points, *, deep: bool = True):
         if points.ndim != 2 or points.shape[-1] != 3:
             msg = 'Points array must be a [M, 3] array'
             raise ValueError(msg)
@@ -1898,6 +1929,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         cells,
         cell_type,
         points,
+        *,
         deep: bool = True,
         force_float: bool = True,
     ) -> None:
@@ -1981,7 +2013,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
 
-        points = vtk_points(points, deep, force_float)
+        points = vtk_points(points, deep=deep, force_float=force_float)
         self.SetPoints(points)
 
         self.SetCells(cell_type, vtkcells)
@@ -2263,7 +2295,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         carr = self._get_cells()
         return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
 
-    def linear_copy(self, deep: bool = False):
+    @_deprecate_positional_args
+    def linear_copy(self, deep: bool = False):  # noqa: FBT001, FBT002
         """Return a copy of the unstructured grid containing only linear cells.
 
         Converts the following cell types to their linear equivalents.
@@ -2286,7 +2319,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             ``deep=False``.
 
         """
-        lgrid = self.copy(deep)
+        lgrid = self.copy(deep=deep)
 
         # grab the vtk object
         vtk_cell_type = _vtk.numpy_to_vtk(self._get_cell_types_array(), deep=True)
@@ -2587,7 +2620,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, x, y, z, force_float: bool = True):
+    def _from_arrays(self, x, y, z, *, force_float: bool = True):
         """Create VTK structured grid directly from numpy arrays.
 
         Parameters
@@ -2757,7 +2790,8 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         return self.extract_subset(voi, rate, boundary=False)
 
-    def hide_cells(self, ind, inplace: bool = False):
+    @_deprecate_positional_args(allowed=['ind'])
+    def hide_cells(self, ind, inplace: bool = False):  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
         Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
@@ -3151,14 +3185,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
         tolerance=0,
-        remove_unused_points: bool = True,
-        produce_merge_map: bool = True,
-        average_point_data: bool = True,
+        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
+        produce_merge_map: bool = True,  # noqa: FBT001, FBT002
+        average_point_data: bool = True,  # noqa: FBT001, FBT002
         merging_array_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> ExplicitStructuredGrid:
         """Merge duplicate points and remove unused points in an ExplicitStructuredGrid.
 
@@ -3230,10 +3265,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         return grid
 
+    @_deprecate_positional_args(allowed=['filename'])
     def save(
         self,
         filename: Path | str,
-        binary: bool = True,
+        binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this VTK object to file.
@@ -3274,9 +3310,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             msg = 'Cannot save texture of a pointset.'
             raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
-        grid.save(filename, binary)
+        grid.save(filename, binary=binary)
 
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:
+    @_deprecate_positional_args(allowed=['ind'])
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -3319,7 +3356,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid.hide_cells(ind, inplace=True)
         return grid
 
-    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:
+    @_deprecate_positional_args
+    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -3687,7 +3725,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             indices.update(rel_func(i))
         return sorted(indices)
 
-    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:
+    @_deprecate_positional_args
+    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
@@ -3735,7 +3774,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             grid.compute_connectivity(inplace=True)
             return grid
 
-    def compute_connections(self, inplace: bool = False):
+    @_deprecate_positional_args
+    def compute_connections(self, inplace: bool = False):  # noqa: FBT001, FBT002
         """Compute an array with the number of connected cell faces.
 
         This method calculates the number of topological cell

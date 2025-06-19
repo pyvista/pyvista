@@ -8,6 +8,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -110,7 +111,13 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     return img_array.reshape(tgt_size)[::-1]
 
 
-def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):
+@_deprecate_positional_args(allowed=['render_window'])
+def image_from_window(  # noqa: PLR0917
+    render_window,
+    as_vtk: bool = False,  # noqa: FBT001, FBT002
+    ignore_alpha: bool = False,  # noqa: FBT001, FBT002
+    scale=1,
+):
     """Extract the image from the render window as an array.
 
     Parameters
@@ -158,7 +165,13 @@ def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = 
     return data
 
 
-def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
+@_deprecate_positional_args(allowed=['im1', 'im2'])
+def compare_images(  # noqa: PLR0917
+    im1,
+    im2,
+    threshold=1,
+    use_vtk: bool = True,  # noqa: FBT001, FBT002
+):
     """Compare two different images of the same size.
 
     Parameters
@@ -229,7 +242,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
             if img.render_window is None:
                 msg = 'Unable to extract image from Plotter as it has already been closed.'
                 raise RuntimeError(msg)
-            return image_from_window(img.render_window, True, ignore_alpha=True)
+            return image_from_window(img.render_window, as_vtk=True, ignore_alpha=True)
         else:
             msg = (
                 f'Unsupported data type {type(img)}.  Should be '

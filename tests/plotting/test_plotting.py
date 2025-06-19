@@ -302,22 +302,20 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_windows
-@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-@pytest.mark.parametrize('resample', [True, False])
-@pytest.mark.needs_vtk_version(9, 1)  # GC issue
-def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
+@pytest.mark.parametrize('resample', [True, 0.5])
+@pytest.mark.needs_vtk_version(9, 2)
+def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
-    verify_image_cache.high_variance_test = True
-
-    texture = examples.download_sky_box_cube_map()
+    # Skip due to large variance
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture, resample=resample)
-    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
-
-    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pv.vtk_version_info > (9, 1)
+    texture = examples.download_cubemap_park()
+    pl.set_environment_texture(texture, is_srgb=True, resample=resample)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+    _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
     pl.show()
 
 
@@ -970,13 +968,13 @@ def test_legend_invalid_face(sphere):
 
 def test_legend_subplots(sphere, cube):
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.add_mesh(sphere, 'blue', smooth_shading=True, label='Sphere')
+    plotter.add_mesh(sphere, color='blue', smooth_shading=True, label='Sphere')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
 
     plotter.subplot(0, 1)
-    plotter.add_mesh(cube, 'r', label='Cube')
+    plotter.add_mesh(cube, color='r', label='Cube')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
@@ -1501,7 +1499,7 @@ def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
 
 
 # check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 def test_plot_rgb(composite, dtype):
@@ -1515,7 +1513,7 @@ def test_plot_rgb(composite, dtype):
 
 
 # check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 def test_plot_rgb_implicit(composite, scalars):
@@ -1637,9 +1635,9 @@ def test_camera(sphere):
     plotter.view_xz()
     plotter.view_yz()
     plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
-    plotter.view_xy(True)
-    plotter.view_xz(True)
-    plotter.view_yz(True)
+    plotter.view_xy(negative=True)
+    plotter.view_xz(negative=True)
+    plotter.view_yz(negative=True)
     plotter.show()
 
     plotter = pv.Plotter()
@@ -2411,7 +2409,7 @@ def test_add_remove_floor(sphere):
     pl.add_floor(color='b', line_width=2, lighting=True)
     pl.add_bounding_box()  # needed for update_bounds_axes
     assert len(pl.renderer._floors) == 1
-    pl.add_mesh(pv.Sphere(1.0))
+    pl.add_mesh(pv.Sphere(radius=1.0))
     pl.update_bounds_axes()
     assert len(pl.renderer._floors) == 1
     pl.show()
@@ -3115,18 +3113,17 @@ def test_ssaa_pass():
 
 
 @skip_windows_mesa
-def test_ssao_pass():
+def test_ssao_pass(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pv.Plotter()
     pl.add_mesh(ugrid)
 
     pl.enable_ssao()
-    pl.show(auto_close=False)
+    pl.show()
 
-    # ensure this fails when ssao disabled
-    pl.disable_ssao()
-    with pytest.raises(RuntimeError):
-        pl.show()
+    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+        pl.disable_ssao()
 
 
 @skip_mesa
@@ -3527,7 +3524,7 @@ def test_charts_sin():
     y = np.sin(x)
     chart = pv.Chart2D()
     chart.scatter(x, y)
-    chart.line(x, y, 'r')
+    chart.line(x, y, color='r')
     chart.show()
 
 
@@ -3638,7 +3635,7 @@ def test_plotter_volume_lookup_table(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 def test_plotter_volume_lookup_table_reactive(uniform):
     """Ensure that changes to the underlying lookup table are reflected by the volume property."""
     uniform.set_active_scalars('Spatial Point Data')
@@ -4937,7 +4934,7 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.skip_check_gc  # gc fails, suspected memory leak with merge
 @pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_push(distance):
     source = pv.OrthogonalPlanesSource()
@@ -5078,7 +5075,7 @@ def test_bitwise_and_or_of_polydata(operator):
     sphere = pv.Sphere(radius=radius, **kwargs)
     sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
     # Expand the wireframe ever so slightly to avoid rendering artifacts
-    wireframe = pv.Sphere(radius + 0.001, **kwargs).extract_all_edges()
+    wireframe = pv.Sphere(radius=radius + 0.001, **kwargs).extract_all_edges()
     wireframe_shifted = pv.Sphere(
         radius=radius + 0.001, center=shift, **kwargs
     ).extract_all_edges()

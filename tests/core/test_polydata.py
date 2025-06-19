@@ -23,7 +23,7 @@ radius = 0.5
 @pytest.fixture
 def sphere():
     # this shadows the main sphere fixture from conftest!
-    return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
+    return pv.Sphere(radius=radius, theta_resolution=10, phi_resolution=10)
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def sphere_shifted():
 
 @pytest.fixture
 def sphere_dense():
-    return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
+    return pv.Sphere(radius=radius, theta_resolution=100, phi_resolution=100)
 
 
 @pytest.fixture
@@ -502,8 +502,12 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert merged.active_scalars_name is None
 
     # test merge with lines
-    arc_1 = pv.CircularArc([0, 0, 0], [10, 10, 0], [10, 0, 0], negative=False, resolution=3)
-    arc_2 = pv.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
+    arc_1 = pv.CircularArc(
+        pointa=[0, 0, 0], pointb=[10, 10, 0], center=[10, 0, 0], negative=False, resolution=3
+    )
+    arc_2 = pv.CircularArc(
+        pointa=[10, 10, 0], pointb=[20, 0, 0], center=[10, 0, 0], negative=False, resolution=3
+    )
     merged = arc_1 + arc_2
     assert merged.n_lines == 2
     assert merged.active_scalars_name == 'Distance'
@@ -650,8 +654,13 @@ def test_invalid_curvature(sphere):
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
-    sphere.save(filename, binary)
 
+    if extension == '.vtkhdf' and not binary:
+        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+            sphere.save(filename, binary=binary)
+        return
+
+    sphere.save(filename, binary=binary)
     if binary:
         if extension == '.vtp':
             with Path(filename).open() as f:
@@ -931,7 +940,7 @@ def test_clip_plane(sphere):
 
 
 def test_extract_largest(sphere):
-    mesh = sphere + pv.Sphere(0.1, theta_resolution=5, phi_resolution=5)
+    mesh = sphere + pv.Sphere(radius=0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces_strict == sphere.n_faces_strict
 
@@ -1018,7 +1027,7 @@ def test_center_of_mass(sphere):
     cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     assert len(cloud.center_of_mass()) == 3
     cloud['weights'] = np.random.default_rng().random(cloud.n_points)
-    center = cloud.center_of_mass(True)
+    center = cloud.center_of_mass(scalars_weight=True)
     assert len(center) == 3
 
 
@@ -1172,7 +1181,7 @@ def test_is_all_triangles():
 
 
 def test_extrude():
-    arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
     poly = arc.extrude([0, 0, 1], progress_bar=True, capping=True)
     assert poly.n_points
     assert poly.n_cells
@@ -1184,7 +1193,7 @@ def test_extrude():
 
 
 def test_extrude_capping_warnings():
-    arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[1, 0, 0], center=[0, 0, 0])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude([0, 0, 1])
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
