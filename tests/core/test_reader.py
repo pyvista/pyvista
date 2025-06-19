@@ -26,6 +26,9 @@ try:
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
+# Run tests on a single worker to prevent crashes
+pytestmark = pytest.mark.xdist_group(name='reader')
+
 
 def test_read_raises():
     with pytest.raises(
