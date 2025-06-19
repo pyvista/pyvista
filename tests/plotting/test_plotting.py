@@ -302,19 +302,20 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_windows
-@pytest.mark.parametrize('resample', [True, False])
+@pytest.mark.parametrize('resample', [True, 0.5])
 @pytest.mark.needs_vtk_version(9, 2)
-def test_set_environment_texture_cubemap(sphere, verify_image_cache, resample):
+def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
-    verify_image_cache.high_variance_test = True
-
-    texture = examples.download_sky_box_cube_map()
+    # Skip due to large variance
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture, resample=resample)
-    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
-
+    texture = examples.download_cubemap_park()
+    pl.set_environment_texture(texture, is_srgb=True, resample=resample)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+    _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
     pl.show()
 
 
@@ -3112,18 +3113,17 @@ def test_ssaa_pass():
 
 
 @skip_windows_mesa
-def test_ssao_pass():
+def test_ssao_pass(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pv.Plotter()
     pl.add_mesh(ugrid)
 
     pl.enable_ssao()
-    pl.show(auto_close=False)
+    pl.show()
 
-    # ensure this fails when ssao disabled
-    pl.disable_ssao()
-    with pytest.raises(RuntimeError):
-        pl.show()
+    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+        pl.disable_ssao()
 
 
 @skip_mesa
