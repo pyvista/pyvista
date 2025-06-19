@@ -11,33 +11,26 @@ import sys
 import pytest
 
 from pyvista.plotting import system_supports_plotting
-from tests.conftest import flaky_test
 
 pytest.importorskip('sphinx')
 
-pytestmark = [
-    # Run tests on a single worker to prevent crashes
-    pytest.mark.xdist_group(name='worker1')
-]
-
 # skip all tests if unable to render
 if not system_supports_plotting():
-    pytestmark.append(pytest.mark.skip(reason='Requires system to support plotting'))
+    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 
 
-@flaky_test(exceptions=(AssertionError,))
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
 def test_tinypages(tmp_path, ename, evalue):
-    # sanitise the environment namespace
+    # Build a clean env for the subprocess
+    env = os.environ.copy()
     for hook in ENVIRONMENT_HOOKS:
-        os.environ.pop(hook, None)
-
-    # configure the plot-directive environment variable hook for conf.py
-    os.environ[ename] = str(evalue)
+        env.pop(hook, None)
+        env[ename] = str(evalue)
+        env['MPLBACKEND'] = ''
 
     skip = False if ename != 'PLOT_SKIP' else evalue
     skip_optional = False if ename != 'PLOT_SKIP_OPTIONAL' else evalue
@@ -63,8 +56,9 @@ def test_tinypages(tmp_path, ename, evalue):
         stdout=PIPE,
         stderr=PIPE,
         universal_newlines=True,
-        env={**os.environ, 'MPLBACKEND': ''},
+        env=env,
         encoding='utf8',
+        cwd=tmp_path,
     )
     out, err = proc.communicate()
 

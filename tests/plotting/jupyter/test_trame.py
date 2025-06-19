@@ -44,7 +44,7 @@ pytestmark = [
         r'ignore:It is recommended to use web\.AppKey instances for '
         r'keys:aiohttp.web_exceptions.NotAppKeyWarning'
     ),
-    pytest.mark.xdist_group(name='worker1'),  # Run tests on a single worker to prevent crashes
+    # pytest.mark.xdist_group(name='worker1'),  # Run tests on a single worker to prevent crashes
 ]
 
 

@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
 pytestmark = [
     pytest.mark.skip_plotting,  # Skip all tests if unable to render
-    pytest.mark.xdist_group(name='worker1'),  # Run tests on a single worker to prevent crashes
+    # pytest.mark.xdist_group(name='worker1'),  # Run tests on a single worker to prevent crashes
 ]
 
 HAS_IMAGEIO = True

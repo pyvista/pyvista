@@ -20,6 +20,7 @@ from pyvista import examples
 from pyvista.core._vtk_core import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
+ORIGINAL_ENV = os.environ.copy()
 pyvista.OFF_SCREEN = True
 
 NUMPY_VERSION_INFO = VersionInfo(
@@ -85,6 +86,21 @@ def global_variables_reset():
     yield
     pyvista.ON_SCREENSHOT = tmp_screenshots
     pyvista.FIGURE_PATH = tmp_figurepath
+
+
+@pytest.fixture(autouse=True)
+def reset_os_environ():
+    def reset_env():
+        os.environ.clear()
+        os.environ.update(ORIGINAL_ENV)
+        os.environ.update(preserved)
+
+    # Determine which keys pytest or system has added that we should keep
+    preserved = {key: os.environ[key] for key in os.environ if key not in ORIGINAL_ENV}
+
+    reset_env()
+    yield
+    reset_env()
 
 
 @pytest.fixture(scope='session', autouse=True)

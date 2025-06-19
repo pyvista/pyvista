@@ -18,10 +18,6 @@ from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
 
-pytestmark = pytest.mark.xdist_group(
-    name='worker1'
-)  # Run tests on a single worker to prevent crashes
-
 
 @pytest.fixture
 def default_theme():
