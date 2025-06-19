@@ -308,7 +308,7 @@ def read(  # noqa: PLR0911, PLR0917
             msg = (
                 f'The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` '
                 'raised an error while reading the file.\n'
-                f'\t"{observer.get_message()}"',
+                f'\t"{observer.get_message()}"'
             )
             raise RuntimeError(msg)
         return mesh
