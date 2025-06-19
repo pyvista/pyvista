@@ -89,6 +89,17 @@ jobs:
       - name: Build Documentation
         run: tox run -e docs-build --colored=yes
 
+      - name: Dump Sphinx Warnings and Errors
+        if: always()
+        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+
+      - name: Dump VTK Warnings and Errors
+        if: always()
+        run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
+
+      - name: Test Documentation
+        run: tox r -e docs-test --colored=yes
+
       - name: Upload Images for Failed Tests
         if: always()
         uses: actions/upload-artifact@v4
