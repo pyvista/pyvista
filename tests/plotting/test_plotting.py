@@ -321,7 +321,7 @@ def cubemap_park(request):
 
 @pytest.mark.parametrize('resample', [True, 0.5])
 @pytest.mark.needs_vtk_version(9, 2)
-def test_set_environment_texture_cubemap(resample, verify_image_cache, cubemap_park, sphere):
+def test_set_environment_texture_cubemap(resample, verify_image_cache, cubemap_park):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
     verify_image_cache.windows_skip_image_cache = True
@@ -331,7 +331,7 @@ def test_set_environment_texture_cubemap(resample, verify_image_cache, cubemap_p
     pl.set_environment_texture(cubemap_park, is_srgb=True, resample=resample)
     pl.camera_position = 'xy'
     pl.camera.zoom(0.7)
-    _ = pl.add_mesh(sphere, pbr=True, roughness=0.1, metallic=0.5)
+    _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
     pl.show()
 
 
