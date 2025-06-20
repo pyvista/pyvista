@@ -881,11 +881,11 @@ def connected_datasets(request):
     add_xdist_group_marker(request, 'fileio')
     # This is similar to the datasets fixture, but the PolyData is fully connected
     return [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-        examples.load_hexbeam(),  # UnstructuredGrid
+        request.getfixturevalue('uniform'),  # ImageData
+        request.getfixturevalue('rectilinear'),  # RectilinearGrid
+        request.getfixturevalue('hexbeam'),  # UnstructuredGrid
         pv.Sphere(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        request.getfixturevalue('structured'),  # StructuredGrid
     ]
 
 
