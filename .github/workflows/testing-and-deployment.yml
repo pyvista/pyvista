@@ -121,7 +121,7 @@ jobs:
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: pytest -v --ignore=tests/plotting --test_downloads -n auto --dist=loadscope
+        run: pytest -v --ignore=tests/plotting --test_downloads -n auto --dist=loadgroup
 
       - name: Test Plotting
         if: always()
@@ -221,7 +221,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n auto --dist=loadscope
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n auto --dist=loadgroup
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -324,7 +324,7 @@ jobs:
           pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n auto --dist=loadscope
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n auto --dist=loadgroup
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
         if: always()
@@ -405,7 +405,7 @@ jobs:
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting --test_downloads -n auto --dist=loadscope
+        run: python -m pytest -v --ignore=tests/plotting --test_downloads -n auto --dist=loadgroup
 
       - name: Test Plotting
         if: always()
