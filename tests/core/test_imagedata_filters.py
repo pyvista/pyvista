@@ -167,8 +167,9 @@ def test_contour_labeled_with_invalid_scalars(frog_tissues):
 
 
 @pytest.fixture
-def channels():
+def channels(request):
     # ImageData with cell data
+    examples.load_explicit_structured(request, 'fileio')
     return examples.load_channels()
 
 

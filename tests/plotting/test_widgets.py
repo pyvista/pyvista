@@ -11,7 +11,6 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples
 from pyvista.core.errors import VTKVersionError
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
@@ -793,7 +792,7 @@ def test_affine_widget(sphere):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-def test_logo_widget():
+def test_logo_widget(vtk_logo, mapfile):
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
     pl.add_logo_widget()
@@ -806,12 +805,12 @@ def test_logo_widget():
 
     pl = pv.Plotter()
     # has a 2 x 1 aspect ratio
-    pl.add_logo_widget(examples.mapfile, position=(0.0, 0.0), size=(0.99, 0.495))
+    pl.add_logo_widget(mapfile, position=(0.0, 0.0), size=(0.99, 0.495))
     pl.show()
 
     pl = pv.Plotter()
     pl.add_logo_widget(
-        examples.download_vtk_logo().to_image(),
+        vtk_logo.to_image(),
         position=(0.0, 0.0),
         size=(0.8, 0.8),
     )

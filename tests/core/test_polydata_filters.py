@@ -157,11 +157,15 @@ def test_triangulate_contours():
         assert cell.type == pv.CellType.TRIANGLE
 
 
+@pytest.fixture
+def tgqp():
+    return examples.download_3gqp()
+
+
 @pytest.mark.needs_vtk_version(
     9, 1, 0, reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader'
 )
-def test_protein_ribbon():
-    tgqp = examples.download_3gqp()
+def test_protein_ribbon(tgqp):
     ribbon = tgqp.protein_ribbon()
     assert ribbon.n_cells
 

@@ -12,7 +12,6 @@ import vtk
 
 import pyvista as pv
 from pyvista import colors
-from pyvista.examples.downloads import download_file
 import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
@@ -591,8 +590,8 @@ def test_below_range_color(default_theme):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-def test_user_logo(default_theme):
-    default_theme.logo_file = download_file('vtk.png')
+def test_user_logo(default_theme, vtk_logo_filename):
+    default_theme.logo_file = vtk_logo_filename
     pl = pv.Plotter()
     pl.add_logo_widget()
     pl.show()

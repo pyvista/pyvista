@@ -8,7 +8,6 @@ import pandas as pd
 import pytest
 import vtk as _vtk
 
-from pyvista import examples
 from pyvista import pyvista_ndarray
 from pyvista import vtk_points
 
@@ -18,9 +17,8 @@ def pyvista_ndarray_1d():
     return pyvista_ndarray([1.0, 2.0, 3.0])
 
 
-def test_slices_are_associated():
-    dataset = examples.load_structured()
-    points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
+def test_slices_are_associated(structured):
+    points = pyvista_ndarray(structured.GetPoints().GetData(), dataset=structured)
 
     # check that slices of pyvista_ndarray are associated correctly
     assert points[1, :].VTKObject == points.VTKObject
@@ -28,8 +26,8 @@ def test_slices_are_associated():
     assert points[1, :].association == points.association
 
 
-def test_copies_are_not_associated():
-    dataset = examples.load_structured()
+def test_copies_are_not_associated(structured):
+    dataset = structured
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
     points_2 = points.copy()
 
@@ -40,8 +38,8 @@ def test_copies_are_not_associated():
     assert not np.shares_memory(points, points_2)
 
 
-def test_modifying_modifies_dataset():
-    dataset = examples.load_structured()
+def test_modifying_modifies_dataset(structured):
+    dataset = structured
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
 
     dataset_modified = mock.Mock()
@@ -68,9 +66,8 @@ def test_modifying_modifies_dataset():
 # TODO: This currently doesn't work for single element indexing operations!
 # in these cases, the __array_finalize__ method is not called
 @pytest.mark.skip
-def test_slices_are_associated_single_index():
-    dataset = examples.load_structured()
-    points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
+def test_slices_are_associated_single_index(structured):
+    points = pyvista_ndarray(structured.GetPoints().GetData(), dataset=structured)
 
     assert points[1, 1].VTKObject == points.VTKObject
     assert points[1, 1].dataset.Get() == points.dataset.Get()

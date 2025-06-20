@@ -10,7 +10,6 @@ import pytest
 from vtkmodules.vtkRenderingContext2D import vtkPen
 
 import pyvista as pv
-from pyvista import examples
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
@@ -171,10 +170,10 @@ def test_wrapping():
 
 
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-def test_brush():
+def test_brush(masonry_texture, puppy_texture):
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
-    t_masonry = examples.download_masonry_texture()
-    t_puppy = examples.download_puppy_texture()
+    t_masonry = masonry_texture
+    t_puppy = puppy_texture
 
     # Test constructor arguments
     brush = charts.Brush(color=c_red, texture=t_masonry)
@@ -1227,7 +1226,6 @@ def test_chart_interaction():
 
 
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-def test_get_background_texture(chart_2d):
-    t_puppy = examples.download_puppy_texture()
-    chart_2d.background_texture = t_puppy
-    assert chart_2d.background_texture == t_puppy
+def test_get_background_texture(chart_2d, puppy_texture):
+    chart_2d.background_texture = puppy_texture
+    assert chart_2d.background_texture == puppy_texture
