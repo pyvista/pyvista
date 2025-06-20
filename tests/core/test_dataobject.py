@@ -248,7 +248,7 @@ def test_user_dict_values(ant, value):
     [
         (pv.MultiBlock([examples.load_ant()]), '.vtm'),
         (examples.load_ant(), '.vtp'),
-        (examples.load_ant(), '.vtkhdf'),
+        (examples.tload_ant(), '.vtkhdf'),
     ],
 )
 def test_user_dict_write_read(tmp_path, data_object, ext):
