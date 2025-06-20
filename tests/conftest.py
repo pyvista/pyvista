@@ -245,13 +245,13 @@ def bunny_coarse():
 
 
 @pytest.fixture
-def datasets():
+def datasets(request):
     return [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        request.getfixturevalue('uniform'),  # ImageData
+        request.getfixturevalue('rectilinear'),  # RectilinearGrid
+        request.getfixturevalue('hexbeam'),  # UnstructuredGrid
+        request.getfixturevalue('airplane'),  # PolyData
+        request.getfixturevalue('structured'),  # StructuredGrid
     ]
 
 
