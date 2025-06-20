@@ -293,7 +293,7 @@ def test_download_filled_contours():
 
 
 def test_download_doorman():
-    data = examples.rman()
+    data = examples.download_doorman()
     assert data.n_cells
 
 
