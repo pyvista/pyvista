@@ -211,12 +211,6 @@ def cow(request):
 
 
 @pytest.fixture
-def grid(request):
-    add_xdist_group_marker(request, 'fileio')
-    return pyvista.UnstructuredGrid(examples.hexbeamfile)
-
-
-@pytest.fixture
 def tetbeam():
     return examples.load_tetbeam()
 
