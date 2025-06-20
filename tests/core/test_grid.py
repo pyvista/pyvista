@@ -362,10 +362,10 @@ def test_cells_dict_alternating_cells():
     assert np.all(cells_dict[CellType.TRIANGLE] == [0, 1, 2])
 
 
-def test_destructor(hexbeam):
-    ugrid = hexbeam
-    ref = weakref.ref(ugrid)
-    del ugrid
+def test_destructor():
+    grid = pv.UnstructuredGrid()
+    ref = weakref.ref(grid)
+    del grid
     assert ref() is None
 
 

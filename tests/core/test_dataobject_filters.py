@@ -839,15 +839,15 @@ def test_reflect_mesh_with_vectors(datasets):
 
 
 @pytest.mark.parametrize(
-    'dataset',
+    'fixture_name',
     [
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        'hexbeam',  # UnstructuredGrid
+        'airplane',  # PolyData
+        'structured',  # StructuredGrid
     ],
 )
-@pytest.mark.xdist_group('fileio')
-def test_reflect_inplace(dataset):
+def test_reflect_inplace(request, fixture_name):
+    dataset = request.getfixturevalue(fixture_name)
     orig = dataset.copy()
     dataset.reflect((1, 0, 0), inplace=True, progress_bar=True)
     assert dataset.n_cells == orig.n_cells
