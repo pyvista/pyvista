@@ -316,7 +316,7 @@ def cubemap_park():
 
 @pytest.mark.parametrize('resample', [True, 0.5])
 @pytest.mark.needs_vtk_version(9, 2)
-def test_set_environment_texture_cubemap(resample, verify_image_cache, cubemap_park, sphere):
+def test_set_environment_texture_cubemap(resample, verify_image_cache, cubemap_park):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
     verify_image_cache.windows_skip_image_cache = True
