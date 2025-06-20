@@ -40,6 +40,7 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.conftest import add_xdist_group_marker
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:
@@ -228,8 +229,14 @@ def test_export_vrml(tmpdir, sphere):
         pl_import.export_vrml(filename)
 
 
-def test_import_3ds():
-    filename = examples.download_3ds.download_iflamigm()
+@pytest.fixture
+def iflamigm(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_3ds.download_iflamigm()
+
+
+def test_import_3ds(iflamigm):
+    filename = iflamigm
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
@@ -250,9 +257,15 @@ def test_import_3ds():
     pl.show()
 
 
+@pytest.fixture
+def room_surface_mesh_filename(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_room_surface_mesh(load=False)
+
+
 @skip_9_0_X
-def test_import_obj():
-    download_obj_file = examples.download_room_surface_mesh(load=False)
+def test_import_obj(room_surface_mesh_filename):
+    download_obj_file = room_surface_mesh_filename
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
@@ -264,23 +277,20 @@ def test_import_obj():
 
 
 @skip_9_0_X
-def test_import_obj_with_texture():
-    filename = examples.download_doorman(load=False)
+def test_import_obj_with_texture(doorman_filename):
     pl = pv.Plotter()
-    pl.import_obj(filename)
+    pl.import_obj(doorman_filename)
     pl.show(cpos='xy')
 
 
 @pytest.mark.skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
-def test_pbr(sphere, verify_image_cache):
+def test_pbr(sphere, verify_image_cache, globe_texture):
     """Test PBR rendering"""
     verify_image_cache.high_variance_test = True
 
-    texture = examples.load_globe_texture()
-
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
+    pl.set_environment_texture(globe_texture)
     pl.add_light(pv.Light())
     pl.add_mesh(
         sphere,
@@ -303,31 +313,40 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
+@pytest.fixture
+def cubemap_park(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_cubemap_park()
+
+
 @pytest.mark.parametrize('resample', [True, 0.5])
 @pytest.mark.needs_vtk_version(9, 2)
-def test_set_environment_texture_cubemap(resample, verify_image_cache):
+def test_set_environment_texture_cubemap(resample, verify_image_cache, cubemap_park, sphere):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
     verify_image_cache.windows_skip_image_cache = True
     verify_image_cache.macos_skip_image_cache = True
 
     pl = pv.Plotter(lighting=None)
-    texture = examples.download_cubemap_park()
-    pl.set_environment_texture(texture, is_srgb=True, resample=resample)
+    pl.set_environment_texture(cubemap_park, is_srgb=True, resample=resample)
     pl.camera_position = 'xy'
     pl.camera.zoom(0.7)
-    _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
+    _ = pl.add_mesh(sphere, pbr=True, roughness=0.1, metallic=0.5)
     pl.show()
+
+
+@pytest.fixture
+def sky_box_cube_map(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_sky_box_cube_map()
 
 
 @pytest.mark.skip_windows
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-def test_remove_environment_texture_cubemap(sphere):
+def test_remove_environment_texture_cubemap(sphere, sky_box_cube_map):
     """Test remove_environment_texture with a cubemap."""
-    texture = examples.download_sky_box_cube_map()
-
     pl = pv.Plotter()
-    pl.set_environment_texture(texture)
+    pl.set_environment_texture(sky_box_cube_map)
     pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
     pl.remove_environment_texture()
     pl.show()
@@ -432,17 +451,17 @@ def test_plot_helper_two_volumes(uniform, verify_image_cache):
     )
 
 
-def test_plot_volume_ugrid(verify_image_cache):
+def test_plot_volume_ugrid(verify_image_cache, hexbeam, uniform, structured):
     verify_image_cache.windows_skip_image_cache = True
 
     # Handle UnsutructuredGrid directly
-    grid = examples.load_hexbeam()
+    grid = hexbeam
     pl = pv.Plotter()
     pl.add_volume(grid, scalars='sample_point_scalars')
     pl.show()
 
     # Handle 3D structured grid
-    grid = examples.load_uniform().cast_to_structured_grid()
+    grid = uniform.cast_to_structured_grid()
     pl = pv.Plotter()
     pl.add_volume(grid, scalars='Spatial Point Data')
     pl.show()
@@ -456,7 +475,7 @@ def test_plot_volume_ugrid(verify_image_cache):
     pl.close()
 
     # Make sure 2D StructuredGrid fails
-    mesh = examples.load_structured()  # wavy surface
+    mesh = structured  # wavy surface
     mesh['scalars'] = mesh.points[:, 1]
     pl = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
@@ -1358,9 +1377,9 @@ def test_screenshot_bytes():
     assert im.format == 'PNG'
 
 
-def test_screenshot_rendering(tmpdir):
+def test_screenshot_rendering(tmpdir, airplane):
     plotter = pv.Plotter()
-    plotter.add_mesh(examples.load_airplane(), smooth_shading=True)
+    plotter.add_mesh(airplane, smooth_shading=True)
     filename = str(tmpdir.mkdir('tmpdir').join('export-graphic.svg'))
     assert plotter._first_time
     plotter.save_graphic(filename)
@@ -1377,24 +1396,23 @@ def test_save_screenshot(tmpdir, sphere, ext):
     assert pathlib.Path(filename).stat().st_size
 
 
-def test_scalars_by_name(verify_image_cache):
+def test_scalars_by_name(verify_image_cache, uniform):
     verify_image_cache.windows_skip_image_cache = True
     plotter = pv.Plotter()
-    data = examples.load_uniform()
-    plotter.add_mesh(data, scalars='Spatial Cell Data')
+    plotter.add_mesh(uniform, scalars='Spatial Cell Data')
     plotter.show()
 
 
-def test_multi_block_plot(verify_image_cache):
+def test_multi_block_plot(verify_image_cache, rectilinear, uniform, airplane):
     verify_image_cache.windows_skip_image_cache = True
     multi = pv.MultiBlock()
-    multi.append(examples.load_rectilinear())
-    uni = examples.load_uniform()
+    multi.append(rectilinear)
+    uni = uniform
     arr = np.random.default_rng().random(uni.n_cells)
     uni.cell_data.set_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
-    multi.append(examples.load_airplane())
+    multi.append(airplane)
 
     # missing data should still plot
     multi.plot(scalars='Random Data')
@@ -1409,29 +1427,31 @@ def test_clear(sphere):
     plotter.show()
 
 
-def test_plot_texture():
+def test_plot_texture(globe, globe_texture):
     """Test adding a texture to a plot"""
-    globe = examples.load_globe()
-    texture = examples.load_globe_texture()
     plotter = pv.Plotter()
-    plotter.add_mesh(globe, texture=texture)
+    plotter.add_mesh(globe, texture=globe_texture)
     plotter.show()
 
 
+@pytest.fixture
+def mapfile(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.mapfile
+
+
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
-def test_plot_numpy_texture():
+def test_plot_numpy_texture(globe, mapfile):
     """Text adding a np.ndarray texture to a plot"""
-    globe = examples.load_globe()
-    texture_np = np.asarray(imageio.v2.imread(examples.mapfile))
+    texture_np = np.asarray(imageio.v2.imread(mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture_np)
 
 
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
-def test_read_texture_from_numpy():
+def test_read_texture_from_numpy(globe, mapfile):
     """Test adding a texture to a plot"""
-    globe = examples.load_globe()
-    texture = numpy_to_texture(imageio.v2.imread(examples.mapfile))
+    texture = numpy_to_texture(imageio.v2.imread(mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
@@ -1627,7 +1647,7 @@ def test_vector_array_fail_with_incorrect_component(multicomp_poly):
         p.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
 
 
-def test_camera(sphere):
+def test_camera(sphere, uniform):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.view_isometric()
@@ -1635,7 +1655,7 @@ def test_camera(sphere):
     plotter.view_xy()
     plotter.view_xz()
     plotter.view_yz()
-    plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
+    plotter.add_mesh(uniform, reset_camera=True, culling=True)
     plotter.view_xy(negative=True)
     plotter.view_xz(negative=True)
     plotter.view_yz(negative=True)
@@ -1876,8 +1896,8 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
-def test_image_properties():
-    mesh = examples.load_uniform()
+def test_image_properties(uniform):
+    mesh = uniform
     p = pv.Plotter()
     p.add_mesh(mesh)
     p.show(auto_close=False)  # DO NOT close plotter
@@ -1985,9 +2005,9 @@ def test_array_volume_rendering(uniform, verify_image_cache):
     pv.plot(arr, volume=True, opacity='linear')
 
 
-def test_plot_compare_four():
+def test_plot_compare_four(uniform):
     # Really just making sure no errors are thrown
-    mesh = examples.load_uniform()
+    mesh = uniform
     data_a = mesh.contour()
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
@@ -2001,8 +2021,8 @@ def test_plot_compare_four():
     )
 
 
-def test_plot_depth_peeling():
-    mesh = examples.load_airplane()
+def test_plot_depth_peeling(airplane):
+    mesh = airplane
     p = pv.Plotter()
     p.add_mesh(mesh)
     p.enable_depth_peeling()
@@ -2186,10 +2206,10 @@ def test_closing_and_mem_cleanup(verify_image_cache):
         pv.close_all()
 
 
-def test_above_below_scalar_range_annotations():
+def test_above_below_scalar_range_annotations(uniform):
     p = pv.Plotter()
     p.add_mesh(
-        examples.load_uniform(),
+        uniform,
         clim=[100, 500],
         cmap='viridis',
         below_color='blue',
@@ -2204,11 +2224,11 @@ def test_user_annotations_scalar_bar_mesh(uniform):
     p.show()
 
 
-def test_fixed_font_size_annotation_text_scaling_off():
+def test_fixed_font_size_annotation_text_scaling_off(uniform):
     p = pv.Plotter()
     sargs = {'title_font_size': 12, 'label_font_size': 10}
     p.add_mesh(
-        examples.load_uniform(),
+        uniform,
         clim=[100, 500],
         cmap='viridis',
         below_color='blue',
@@ -2290,9 +2310,9 @@ def test_scalar_bar_args_unmodified_add_volume(uniform):
     assert sargs == sargs_copy
 
 
-def test_plot_string_array(verify_image_cache):
+def test_plot_string_array(verify_image_cache, uniform):
     verify_image_cache.windows_skip_image_cache = True
-    mesh = examples.load_uniform()
+    mesh = uniform
     labels = np.empty(mesh.n_cells, dtype='<U10')
     labels[:] = 'High'
     labels[mesh['Spatial Cell Data'] < 300] = 'Medium'
@@ -2313,9 +2333,9 @@ def test_fail_plot_table():
         plotter.add_mesh(table)
 
 
-def test_bad_keyword_arguments():
+def test_bad_keyword_arguments(uniform):
     """Make sure bad keyword arguments raise an error"""
-    mesh = examples.load_uniform()
+    mesh = uniform
     with pytest.raises(TypeError):
         pv.plot(mesh, foo=5)
     with pytest.raises(TypeError):
@@ -2667,7 +2687,7 @@ def test_collision_plot(verify_image_cache):
 
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 @pytest.mark.needs_vtk_version(9, 2, 0)
-def test_chart_plot():
+def test_chart_plot(globe_texture):
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
     chart_bl = pv.Chart2D(size=(0.4, 0.4), loc=(0.05, 0.05))
@@ -2688,7 +2708,7 @@ def test_chart_plot():
 
     # Chart 2 (bottom right)
     chart_br = pv.Chart2D(size=(0.4, 0.4), loc=(0.55, 0.05))
-    chart_br.background_texture = examples.load_globe_texture()
+    chart_br.background_texture = globe_texture
     chart_br.active_border_color = 'r'
     chart_br.border_width = 5
     chart_br.border_style = '-.'
@@ -2792,13 +2812,11 @@ def test_add_remove_background(sphere):
     [examples.mapfile, Path(examples.mapfile), 'blue'],
     ids=['str', 'Path', 'color'],
 )
-def test_plot_mesh_background(background):
-    globe = examples.load_globe()
-    globe.plot(texture=pv.Texture(examples.mapfile), background=background)
+def test_plot_mesh_background(background, globe, mapfile):
+    globe.plot(texture=pv.Texture(mapfile), background=background)
 
 
-def test_plot_mesh_background_raises():
-    globe = examples.load_globe()
+def test_plot_mesh_background_raises(globe):
     match = 'Background must be color-like or a file path. Got {} instead.'
     with pytest.raises(TypeError, match=match):
         globe.plot(texture=pv.Texture(examples.mapfile), background={})
@@ -2810,8 +2828,12 @@ def test_plot_zoom(sphere):
     sphere.plot(zoom=2)
 
 
-def test_splitting():
-    nut = examples.load_nut()
+@pytest.fixture
+def nut():
+    return examples.load_nut()
+
+
+def test_splitting(nut):
     nut['sample_data'] = nut.points[:, 2]
 
     # feature angle of 50 will smooth the outer edges of the nut but not the inner.
@@ -3881,8 +3903,8 @@ def test_remove_vertices_actor(sphere):
 
 
 @pytest.mark.skip_windows
-def test_add_point_scalar_labels_fmt():
-    mesh = examples.load_uniform().slice()
+def test_add_point_scalar_labels_fmt(uniform):
+    mesh = uniform.slice()
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
     p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt='%.3f')
@@ -4403,17 +4425,21 @@ def test_no_empty_meshes():
         pl.add_mesh(pv.PolyData())
 
 
+@pytest.fixture
+def cow():
+    return examples.download_cow()
+
+
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing fatal exception: access violation')
-def test_voxelize_volume():
-    mesh = examples.download_cow()
+def test_voxelize_volume(cow):
     cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
 
     # Create an equal density voxel volume and plot the result.
-    vox = pv.voxelize_volume(mesh, density=0.15)
+    vox = pv.voxelize_volume(cow, density=0.15)
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
     # Create a voxel volume from unequal density dimensions and plot result.
-    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    vox = pv.voxelize_volume(cow, density=[0.15, 0.15, 0.5])
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
@@ -5048,11 +5074,6 @@ def test_planes_assembly_label_size(bounds, label_size):
     plot.show()
 
 
-@pytest.fixture
-def oblique_cone():
-    return pv.examples.download_oblique_cone()
-
-
 @pytest.mark.skip_mac(
     'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
@@ -5114,11 +5135,11 @@ def test_plot_wireframe_style():
 @pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 @pytest.mark.parametrize('return_clipped', ['return_clipped', None])
-def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
+def test_clip_multiblock_crinkle(return_clipped, as_multiblock, bunny_coarse):
     return_clipped = bool(return_clipped)
     as_multiblock = bool(as_multiblock)
 
-    mesh = examples.download_bunny_coarse()
+    mesh = bunny_coarse
     if as_multiblock:
         mesh = pv.MultiBlock([mesh])
 

@@ -10,9 +10,7 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
-from tests.conftest import add_xdist_group_marker
 
 
 @pytest.fixture
@@ -108,16 +106,10 @@ def test_multiple_lines_source():
         algo.points = points[0, :]
 
 
-@pytest.fixture
-def bunny(request):
-    add_xdist_group_marker(request, 'fileio')
-    return examples.download_bunny_coarse()
-
-
 @pytest.mark.parametrize('is_negative', [True, False])
 @pytest.mark.parametrize('delta', [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
-def test_translate_direction_collinear(is_negative, delta, bunny):
-    mesh_in = bunny
+def test_translate_direction_collinear(is_negative, delta, bunny_coarse):
+    mesh_in = bunny_coarse
     direction = np.array([0.0, 1.0, 0.0]) + delta
     if is_negative:
         direction *= -1

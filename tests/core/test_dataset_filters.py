@@ -3416,12 +3416,6 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
-@pytest.fixture
-def oblique_cone(request):
-    add_xdist_group_marker(request, 'fileio')
-    return examples.download_oblique_cone()
-
-
 def test_align_xyz(oblique_cone):
     mesh = oblique_cone
     aligned = mesh.align_xyz()

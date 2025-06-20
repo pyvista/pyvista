@@ -6,6 +6,7 @@ from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
+from pathlib import Path
 import platform
 import re
 from typing import Optional
@@ -174,6 +175,30 @@ def globe(request):
 
 
 @pytest.fixture
+def globe_texture(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.load_globe_texture()
+
+
+@pytest.fixture
+def mapfile(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.mapfile
+
+
+@pytest.fixture
+def vtk_logo(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_vtk_logo()
+
+
+@pytest.fixture
+def vtk_logo_file(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_file('vtk.png')
+
+
+@pytest.fixture
 def hexbeam(request):
     add_xdist_group_marker(request, 'fileio')
     return examples.load_hexbeam()
@@ -186,8 +211,7 @@ def grid(request):
 
 
 @pytest.fixture
-def tetbeam(request):
-    add_xdist_group_marker(request, 'fileio')
+def tetbeam():
     return examples.load_tetbeam()
 
 
@@ -213,14 +237,12 @@ def plane():
 
 
 @pytest.fixture
-def spline(request):
-    add_xdist_group_marker(request, 'fileio')
+def spline():
     return examples.load_spline()
 
 
 @pytest.fixture
-def random_hills(request):
-    add_xdist_group_marker(request, 'fileio')
+def random_hills():
     return examples.load_random_hills()
 
 
@@ -228,6 +250,34 @@ def random_hills(request):
 def tri_cylinder():
     """Triangulated cylinder"""
     return pyvista.Cylinder().triangulate()
+
+
+@pytest.fixture
+def masonry_texture():
+    return examples.download_masonry_texture()
+
+
+@pytest.fixture
+def puppy_texture():
+    return examples.download_puppy_texture()
+
+
+@pytest.fixture
+def doorman_filename(request):
+    add_xdist_group_marker(request, 'fileio')
+    return Path(examples.download_doorman(load=False))
+
+
+@pytest.fixture
+def oblique_cone(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_oblique_cone()
+
+
+@pytest.fixture
+def bunny_coarse(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_bunny_coarse()
 
 
 @pytest.fixture
