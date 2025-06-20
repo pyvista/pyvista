@@ -11,6 +11,8 @@ from tests.examples.test_dataset_loader import DatasetLoaderTestCase
 from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
 from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
 
+pytestmark = pytest.mark.xdist_group('fileio')
+
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""

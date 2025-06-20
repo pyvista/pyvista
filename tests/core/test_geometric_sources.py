@@ -12,6 +12,7 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
+from tests.conftest import add_xdist_group_marker
 
 
 @pytest.fixture
@@ -108,7 +109,8 @@ def test_multiple_lines_source():
 
 
 @pytest.fixture
-def bunny():
+def bunny(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.download_bunny_coarse()
 
 

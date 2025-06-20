@@ -564,6 +564,7 @@ def test_merge_active_scalars(input_):
 @pytest.mark.parametrize(
     'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
 )
+@pytest.mark.xdist_group('fileio')
 @pytest.mark.parametrize('main_has_priority', [True, False])
 def test_merge_main_has_priority(input_, main_has_priority):
     mesh = input_.copy()
@@ -1186,8 +1187,8 @@ def test_strips():
     assert n_strips_test.n_strips == len(strips)
 
 
-def test_ribbon_filter():
-    line = examples.load_spline().compute_arc_length(progress_bar=True)
+def test_ribbon_filter(spline):
+    line = spline.compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     assert ribbon.n_points
 

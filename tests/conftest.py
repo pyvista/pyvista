@@ -30,6 +30,10 @@ NUMPY_VERSION_INFO = VersionInfo(
 )
 
 
+def add_xdist_group_marker(request, group: str):
+    request.node.add_marker(pytest.mark.xdist_group(group))
+
+
 def flaky_test(
     test_function=None, *, times: int = 3, exceptions: tuple[Exception, ...] = (AssertionError,)
 ):
@@ -134,47 +138,56 @@ def cube():
 
 
 @pytest.fixture
-def airplane():
+def airplane(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_airplane()
 
 
 @pytest.fixture
-def rectilinear():
+def rectilinear(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_rectilinear()
 
 
 @pytest.fixture
-def sphere():
+def sphere(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_sphere()
 
 
 @pytest.fixture
-def uniform():
+def uniform(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_uniform()
 
 
 @pytest.fixture
-def ant():
+def ant(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_ant()
 
 
 @pytest.fixture
-def globe():
+def globe(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_globe()
 
 
 @pytest.fixture
-def hexbeam():
+def hexbeam(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_hexbeam()
 
 
 @pytest.fixture
-def grid():
+def grid(request):
+    add_xdist_group_marker(request, 'fileio')
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
 @pytest.fixture
-def tetbeam():
+def tetbeam(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_tetbeam()
 
 
@@ -189,17 +202,25 @@ def struct_grid():
 
 
 @pytest.fixture
+def structured():
+    # No need to mark xdist_group since this does not load from file
+    return examples.load_structured()
+
+
+@pytest.fixture
 def plane():
     return pyvista.Plane(direction=(0, 0, -1))
 
 
 @pytest.fixture
-def spline():
+def spline(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_spline()
 
 
 @pytest.fixture
-def random_hills():
+def random_hills(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_random_hills()
 
 
@@ -210,7 +231,8 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def datasets(request):
+    add_xdist_group_marker(request, 'fileio')
     return [
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
@@ -247,7 +269,8 @@ def multiblock_poly():
 
 
 @pytest.fixture
-def datasets_vtk9():
+def datasets_vtk9(request):
+    add_xdist_group_marker(request, 'fileio')
     return [
         examples.load_explicit_structured(),
     ]

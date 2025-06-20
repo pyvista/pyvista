@@ -11,13 +11,15 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
+from tests.conftest import add_xdist_group_marker
 from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
 
 
 @pytest.fixture
-def beach():
+def beach(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.download_beach()
 
 
@@ -50,7 +52,8 @@ def three_dimensionality_image():
 
 
 @pytest.fixture
-def frog_tissues():
+def frog_tissues(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_frog_tissues()
 
 
@@ -167,8 +170,9 @@ def test_contour_labeled_with_invalid_scalars(frog_tissues):
 
 
 @pytest.fixture
-def channels():
+def channels(request):
     # ImageData with cell data
+    examples.load_explicit_structured(request, 'fileio')
     return examples.load_channels()
 
 

@@ -9,6 +9,8 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 
+pytestmark = pytest.mark.xdist_group('fileio')
+
 empty = pv.UnstructuredGrid()
 cow = examples.download_cow().cast_to_unstructured_grid()
 points_only = cow.copy()

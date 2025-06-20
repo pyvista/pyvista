@@ -20,6 +20,8 @@ from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
 
+pytestmark = pytest.mark.xdist_group('fileio')
+
 grids = [
     load_hexbeam(),
     load_airplane(),

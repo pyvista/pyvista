@@ -23,7 +23,7 @@ from pyvista import examples
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
-pytestmark = pytest.mark.needs_download
+pytestmark = [pytest.mark.needs_download, pytest.mark.xdist_group('fileio')]
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
@@ -293,7 +293,7 @@ def test_download_filled_contours():
 
 
 def test_download_doorman():
-    data = examples.download_doorman()
+    data = examples.rman()
     assert data.n_cells
 
 

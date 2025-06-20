@@ -11,7 +11,6 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
-from pyvista import examples
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
@@ -22,6 +21,8 @@ from pyvista.examples import load_rectilinear
 from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
+
+pytestmark = pytest.mark.xdist_group('fileio')
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -812,8 +813,8 @@ def test_clear_data():
     assert grid.n_arrays == 0
 
 
-def test_scalars_dict_update():
-    mesh = examples.load_uniform()
+def test_scalars_dict_update(uniform):
+    mesh = uniform.copy()
     n = len(mesh.point_data)
     arrays = {
         'foo': np.arange(mesh.n_points),
@@ -826,7 +827,7 @@ def test_scalars_dict_update():
 
     # Test update from Table
     table = pv.Table(arrays)
-    mesh = examples.load_uniform()
+    mesh = uniform.copy()
     mesh.point_data.update(table)
     assert 'foo' in mesh.array_names
     assert 'rand' in mesh.array_names
@@ -1534,12 +1535,8 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert len(ids) > 0
 
 
-@pytest.fixture
-def mesh():
-    return examples.load_globe()
-
-
-def test_active_t_coords_deprecated(mesh):
+def test_active_t_coords_deprecated(globe):
+    mesh = globe
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.active_t_coords
         if pv._version.version_info[:2] > (0, 46):
