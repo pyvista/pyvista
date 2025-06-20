@@ -2229,6 +2229,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         type in an ordered fashion.  Note that this function only
         works with element types of fixed sizes.
 
+        .. versionchanged:: 0.46
+
+            An empty dict ``{}`` is returned instead of ``None`` if
+            the input is empty.
+
         Returns
         -------
         dict

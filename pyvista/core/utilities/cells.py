@@ -240,6 +240,11 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
     arrays of size [N, D], where N is the number of cells and D is the
     size of the cells for the given type (e.g. 3 for triangles).
 
+    .. versionchanged:: 0.46
+
+        An empty dict ``{}`` is returned instead of ``None`` if the input
+        is empty.
+
     Parameters
     ----------
     vtkobj : pyvista.UnstructuredGrid

@@ -510,14 +510,43 @@ def test_merge(hexbeam):
     assert grid.n_points < unmerged.n_points
 
 
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 5, 0), reason='Main always has priority for vtk >= 9.5.'
+)
 def test_merge_not_main(hexbeam):
     grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
 
     grid.merge(hexbeam, inplace=True, merge_points=True)
     assert grid.n_points > hexbeam.n_points
     assert grid.n_points < unmerged.n_points
+
+
+def test_merge_order():
+    key = 'data'
+    main = examples.cells.Quadrilateral()
+    main_array = [0, 0, 0, 0]
+    main.point_data[key] = main_array
+    main_celltype = main.celltypes[0]
+
+    other = examples.cells.Pixel()
+    other_array = [1, 1, 1, 1]
+    other.point_data[key] = other_array
+    other_celltype = other.celltypes[0]
+
+    merged = main.merge(other)
+    expected_array = main_array
+    actual_array = merged.point_data[key]
+    assert np.array_equal(actual_array, expected_array)
+
+    if pv.vtk_version_info >= (9, 5, 0):
+        expected_celltypes = [main_celltype, other_celltype]
+    else:
+        expected_celltypes = [other_celltype, main_celltype]
+    actual_celltypes = merged.celltypes
+    assert np.array_equal(actual_celltypes, expected_celltypes)
 
 
 def test_merge_list(hexbeam):
