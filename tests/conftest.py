@@ -179,6 +179,7 @@ def cow():
     return examples.download_cow()
 
 
+@pytest.fixture
 def tetbeam():
     return examples.load_tetbeam()
 
