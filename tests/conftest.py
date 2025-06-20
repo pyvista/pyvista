@@ -193,7 +193,7 @@ def vtk_logo(request):
 
 
 @pytest.fixture
-def vtk_logo_file(request):
+def vtk_logo_filename(request):
     add_xdist_group_marker(request, 'fileio')
     return examples.download_file('vtk.png')
 
@@ -202,6 +202,12 @@ def vtk_logo_file(request):
 def hexbeam(request):
     add_xdist_group_marker(request, 'fileio')
     return examples.load_hexbeam()
+
+
+@pytest.fixture
+def cow(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_cow()
 
 
 @pytest.fixture
