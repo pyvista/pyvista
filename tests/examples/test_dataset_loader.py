@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 from types import FunctionType
 from types import ModuleType
+from types import NoneType
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -14,6 +15,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+import pyvista.examples as ex
 from pyvista.examples import downloads
 from pyvista.examples import examples
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -121,6 +123,87 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
         )
     else:
         return None
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'test_case' in metafunc.fixturenames:
+        # Generate a separate test case for each dataset
+        cases_examples = _generate_dataset_loader_test_cases_from_module(pv.examples.examples)
+        cases_downloads = _generate_dataset_loader_test_cases_from_module(pv.examples.downloads)
+        cases_planets = _generate_dataset_loader_test_cases_from_module(pv.examples.planets)
+        # Exclude `load` functions
+        cases_planets = [
+            case for case in cases_planets if case.dataset_function[0].startswith('download')
+        ]
+        test_cases = [*cases_examples, *cases_downloads, *cases_planets]
+        ids = [case.dataset_name for case in test_cases]
+        metafunc.parametrize('test_case', test_cases, ids=ids)
+
+
+_NON_DETERMINISTIC_DATASETS = [
+    '3gqp',
+    'biplane',
+    'damavand_volcano',
+    'embryo',
+    'notch_stress',
+    'particles',
+    'frog_tissue',
+]
+_DEPRECATED_DATASETS = ['can', 'osmnx_graph']
+
+
+@pytest.mark.needs_download
+def test_load_all_datasets(test_case: DatasetLoaderTestCase):
+    if test_case.dataset_name in _DEPRECATED_DATASETS:
+        pytest.skip('Dataset is deprecated.')
+
+    dataset1, paths = ex.load(test_case.dataset_name, return_paths=True)
+    dataset2 = ex.load(test_case.dataset_function[1])
+
+    assert paths is None or isinstance(paths, (Path, tuple))
+    if paths is not None:
+        paths_iter = [paths] if isinstance(paths, Path) else paths
+        assert [p.is_dir() or p.is_file() for p in paths_iter]
+
+    if test_case.dataset_name in _NON_DETERMINISTIC_DATASETS:
+        # Skip equality check for these datasets since they return a different mesh when
+        # loaded multiple times, see https://github.com/pyvista/pyvista/issues/7634
+        return
+
+    if isinstance(dataset1, np.ndarray):
+        assert np.array_equal(dataset1, dataset2, equal_nan=True)
+    else:
+        assert dataset1 == dataset2
+
+
+@pytest.mark.parametrize(
+    ('name', 'mesh_type', 'path_type'),
+    [
+        ('structured', pv.StructuredGrid, NoneType),
+        ('ant', pv.PolyData, Path),
+        ('frog', pv.ImageData, tuple),
+    ],
+)
+def test_load_builit_in(name, mesh_type, path_type):
+    mesh = ex.load(name)
+    assert isinstance(mesh, mesh_type)
+    mesh, paths = ex.load(name, return_paths=True)
+    assert isinstance(paths, path_type)
+
+
+def test_load_raises():
+    match = "Example 'cow' requires download."
+    with pytest.raises(ValueError, match=match):
+        ex.load('cow', allow_download=False)
+
+    match = "Example 'download_cow' requires download."
+    with pytest.raises(ValueError, match=match):
+        ex.load(downloads.download_cow, allow_download=False)
+
+    match = "Example 'download_cow' requires download."
+    with pytest.raises(ValueError, match=match):
+        ex.load(downloads.download_cow, allow_download=False)
 
 
 @pytest.fixture
