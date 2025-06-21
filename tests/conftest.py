@@ -153,11 +153,6 @@ def hexbeam():
 
 
 @pytest.fixture
-def grid():
-    return pyvista.UnstructuredGrid(examples.hexbeamfile)
-
-
-@pytest.fixture
 def tetbeam():
     return examples.load_tetbeam()
 
