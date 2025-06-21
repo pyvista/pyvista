@@ -85,7 +85,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
-      - uses: pyvista/setup-headless-display-action@main
+      - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
         with:
           qt: true
           pyvista: false
@@ -104,7 +104,7 @@ jobs:
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:
-      - uses: pyvista/setup-headless-display-action@main
+      - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
