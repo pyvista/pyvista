@@ -143,6 +143,7 @@ def pytest_generate_tests(metafunc):
 _NON_DETERMINISTIC_DATASETS = [
     '3gqp',
     'biplane',
+    'caffeine',
     'damavand_volcano',
     'embryo',
     'notch_stress',
@@ -157,8 +158,11 @@ def test_load_all_datasets(test_case: DatasetLoaderTestCase):
     if test_case.dataset_name in _DEPRECATED_DATASETS:
         pytest.skip('Dataset is deprecated.')
 
-    dataset1, paths = ex.load(test_case.dataset_name, return_paths=True)
-    dataset2 = ex.load(test_case.dataset_function[1])
+    try:
+        dataset1, paths = ex.load(test_case.dataset_name, return_paths=True)
+        dataset2 = ex.load(test_case.dataset_function[1])
+    except (pv.VTKVersionError, ImportError):
+        pytest.skip('VTK version not supported.')
 
     assert paths is None or isinstance(paths, (Path, tuple))
     if paths is not None:
