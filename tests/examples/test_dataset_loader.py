@@ -7,7 +7,6 @@ from pathlib import Path
 import shutil
 from types import FunctionType
 from types import ModuleType
-from types import NoneType
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -180,7 +179,7 @@ def test_load_all_datasets(test_case: DatasetLoaderTestCase):
 @pytest.mark.parametrize(
     ('name', 'mesh_type', 'path_type'),
     [
-        ('structured', pv.StructuredGrid, NoneType),
+        ('structured', pv.StructuredGrid, type(None)),
         ('ant', pv.PolyData, Path),
         ('frog', pv.ImageData, tuple),
     ],
