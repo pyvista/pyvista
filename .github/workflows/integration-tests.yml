@@ -104,17 +104,13 @@ jobs:
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
-        if: env.USE_CACHE == 'true'
-        with:
-          packages: xvfb
-          version: 3.0
+      - uses: pyvista/setup-headless-display-action@main
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
         run: pip install -ve . # pyvista
@@ -124,8 +120,8 @@ jobs:
       - name: Download cartopy assets
         run: |
           mkdir -p ${CARTOPY_SHARE_DIR}
-          python -m cartopy.feature.download physical --output ${CARTOPY_SHARE_DIR} --no-warn
-      - run: pytest
+          cartopy_feature_download physical --output ${CARTOPY_SHARE_DIR} --no-warn
+      - run: xvfb-run -a pytest
         working-directory: geovista
 
   trame:
