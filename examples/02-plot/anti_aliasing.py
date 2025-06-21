@@ -159,6 +159,5 @@ pl.show()
 #     Render time for ssaa  : 51.450 ms
 #
 
-#
 # %%
 # .. tags:: plot
