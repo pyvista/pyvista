@@ -43,7 +43,7 @@ def test_get_cmap_safe(cmap):
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
 def test_color_scheme_to_cycler_raises(scheme):
-    with pytest.raises(ValueError, match=f'Color scheme not understood: {scheme}'):
+    with pytest.raises(TypeError, match=f'Color scheme not understood: {scheme}'):
         color_scheme_to_cycler(scheme=scheme)
 
 
@@ -141,7 +141,7 @@ def test_color_invalid_opacity(opacity):
         {'invalid_name': 100},
     ],
 )
-def test_color_invalid_color(color):
+def test_color_invalid_values(color):
     match = (
         'Must be a string, rgb(a) sequence, or hex color string.  For example:'
         "\n\t\tcolor='white'"
@@ -152,6 +152,12 @@ def test_color_invalid_color(color):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Color(color)
+
+
+def test_color_invalid_type():
+    match = 'color must be an instance of'
+    with pytest.raises(TypeError, match=match):
+        pv.Color(range(3))
 
 
 @pytest.mark.parametrize('delimiter', ['-', '_', ' '])
@@ -201,6 +207,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
+@pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
@@ -212,6 +219,7 @@ def test_css4_colors(css4_color):
         assert alt_name in pv.plotting.colors._CSS_COLORS
 
 
+@pytest.mark.skip_check_gc
 def test_tab_colors(tab_color):
     # Test value
     name, value = tab_color
@@ -221,6 +229,7 @@ def test_tab_colors(tab_color):
     assert name in pv.plotting.colors._TABLEAU_COLORS
 
 
+@pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
 
@@ -247,6 +256,7 @@ def test_vtk_colors(vtk_color):
     assert value.lower() == expected_hex
 
 
+@pytest.mark.skip_check_gc
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)

@@ -11,10 +11,8 @@ from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
 
-
-@pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
-    """All the tests here fail gc."""
+# A large number of tests here fail gc
+pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture
@@ -177,7 +175,7 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.z_label == new_labels[2]
 
     match = 'Labels must be a list or tuple. Got abc instead.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         axes_actor.labels = 'abc'
 
     match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."

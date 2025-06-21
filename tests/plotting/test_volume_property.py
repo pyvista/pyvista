@@ -19,7 +19,8 @@ def test_apply_lookup_table_raises(vol_prop: VolumeProperty, lut):
         vol_prop.apply_lookup_table(lut)
 
 
-def test_volume_lookup_table(vol_prop, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_volume_lookup_table(vol_prop):
     assert vol_prop._lookup_table is None
     vol_prop.reapply_lookup_table()
 

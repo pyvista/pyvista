@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -108,11 +109,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     """
 
+    @_deprecate_positional_args(allowed=['vtk_cell', 'cell_type'])
     def __init__(
         self: Self,
         vtk_cell: _vtk.vtkCell | None = None,
         cell_type: CellType | None = None,
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the cell."""
         super().__init__()
@@ -513,7 +515,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
-        BoundsTuple(x_min=0.0, x_max=0.05405950918793678, y_min=0.0, y_max=0.011239604093134403, z_min=0.49706897139549255, z_max=0.5)
+        BoundsTuple(x_min = 0.0,
+                    x_max = 0.05405950918793678,
+                    y_min = 0.0,
+                    y_max = 0.011239604093134403,
+                    z_min = 0.49706897139549255,
+                    z_max = 0.5)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -572,7 +579,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the cell.
 
         Parameters
@@ -649,11 +657,12 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
 
     """
 
+    @_deprecate_positional_args(allowed=['cells'])
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
         n_cells: int | None = None,
-        deep: bool | None = None,
+        deep: bool | None = None,  # noqa: FBT001
     ) -> None:
         """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
@@ -741,6 +750,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         self: Self,
         offsets: MatrixLike[int],
         connectivity: MatrixLike[int],
+        *,
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
@@ -754,10 +764,11 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         self.__connectivity = vtk_connectivity
 
     @staticmethod
+    @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
     def from_arrays(
         offsets: MatrixLike[int],
         connectivity: MatrixLike[int],
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
 
@@ -784,7 +795,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
 
     @property
     def regular_cells(self: Self) -> NumpyArray[int]:
-        """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
+        """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces.
 
         Returns
         -------
@@ -801,15 +812,18 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         return _get_regular_cells(self)
 
     @classmethod
+    @_deprecate_positional_args(allowed=['cells'])
     def from_regular_cells(
-        cls: type[CellArray], cells: MatrixLike[int], deep: bool = False
+        cls: type[CellArray],
+        cells: MatrixLike[int],
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
@@ -836,7 +850,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+            Cell array of shape (n_cells, cell_size) where all cells have the same `cell_size`.
 
         Returns
         -------
@@ -867,7 +881,7 @@ def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
-    """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
+    """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells

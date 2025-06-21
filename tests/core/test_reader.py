@@ -52,7 +52,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
     ):
         pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
@@ -315,7 +315,7 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
-def test_dcmreader(tmpdir):
+def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pv.get_reader(directory)
@@ -974,6 +974,12 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+def test_hdf_reader_raises(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0))
+    with pytest.raises(pv.VTKVersionError):
+        pv.HDFReader('foo')
+
+
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -1039,7 +1045,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
 @pytest.mark.needs_vtk_version(
@@ -1355,7 +1361,7 @@ def test_nek5000_reader():
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
 )
 @pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+def test_read_write_pickle(tmp_path, data_object, ext):
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
     new_data_object = pv.read(filepath)
@@ -1376,7 +1382,10 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.read_pickle({})
 
-    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    match = (
+        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
+        "Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 

@@ -28,7 +28,7 @@ from scipy.linalg import eigh
 import pyvista as pv
 
 
-def analytical_integral_rppd(p, q, r, a, b, c):
+def analytical_integral_rppd(p, q, r, *, a, b, c):
     """Return the analytical value of the RPPD integral.
 
     This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).
@@ -82,7 +82,7 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     return cijkl, cij
 
 
-def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
+def get_first_N_above_thresh(*, N, freqs, thresh, decimals=3):
     """Return first N unique frequencies with amplitude above threshold based on first decimals."""
     unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
     nonzero = unique_freqs > thresh
@@ -90,7 +90,7 @@ def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
     return unique_freqs[:N], unique_indices[:N]
 
 
-def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
+def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
     """
     Assemble the mass and stiffness matrix.
 
@@ -118,7 +118,7 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     for index1, quad1 in enumerate(quadruplets):
         I, p1, q1, r1 = quad1
         for index2, quad2 in enumerate(quadruplets[index1:]):
-            index2 = index2 + index1
+            index2 = index2 + index1  # noqa: PLW2901
             J, p2, q2, r2 = quad2
             G[index1, index2] = (
                 cijkl[I, 1 - 1, J, 1 - 1]
@@ -171,10 +171,10 @@ l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
-    N,
-    analytical_integral_rppd,
-    geometry_parameters,
-    cijkl,
+    N=N,
+    F=analytical_integral_rppd,
+    geom_params=geometry_parameters,
+    cijkl=cijkl,
 )
 
 # solving the eigenvalue problem using symmetric solver
@@ -183,8 +183,10 @@ omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
 # expected values from (Bernard 2014, p.14),
 # error depends on polynomial order ``N``
-expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])
-computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thresh=1, decimals=1)
+expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])  # noqa: N816
+computed_freqs_kHz, mode_indices = get_first_N_above_thresh(  # noqa: N816
+    N=8, freqs=freqs / 1e3, thresh=1, decimals=1
+)
 print('found the following first unique eigenfrequencies:')
 for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
     error = np.abs(freq2 - freq1) / freq1 * 100.0

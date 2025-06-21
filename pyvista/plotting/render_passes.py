@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import weakref
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk
 
 # The order of both the pre and post-passes matters.
@@ -200,7 +202,8 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):
+    @_deprecate_positional_args
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001, FBT002
         """Enable the depth of field pass.
 
         Parameters
@@ -234,7 +237,10 @@ class RenderPasses:
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
 
-    def enable_ssao_pass(self, radius, bias, kernel_size, blur):
+    @_deprecate_positional_args
+    def enable_ssao_pass(  # noqa: PLR0917
+        self, radius, bias, kernel_size, blur
+    ):
         """Enable the screen space ambient occlusion pass.
 
         Parameters
@@ -299,7 +305,7 @@ class RenderPasses:
 
     def _update_passes(self):
         """Reassemble pass delegation."""
-        if self._renderer is None:  # pragma: no cover
+        if hasattr(self._renderer, '_closed') and self._renderer._closed:
             msg = 'The renderer has been closed.'
             raise RuntimeError(msg)
 

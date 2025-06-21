@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -66,7 +67,7 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     """
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, False))
+    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
 
     # get interpolation density
     u_res = n_points
@@ -74,11 +75,12 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
         u_res = points_.shape[0]
 
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res)
+    spline = surface_from_para(spline_function, u_res=u_res)
     return spline.compute_arc_length()
 
 
-def KochanekSpline(
+@_deprecate_positional_args(allowed=['points'])
+def KochanekSpline(  # noqa: PLR0917
     points: VectorLike[float] | MatrixLike[float],
     tension: VectorLike[float] | None = None,
     bias: VectorLike[float] | None = None,
@@ -144,7 +146,7 @@ def KochanekSpline(
 
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, False))
+    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
@@ -169,7 +171,7 @@ def KochanekSpline(
         u_res = points_.shape[0]
 
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res)
+    spline = surface_from_para(spline_function, u_res=u_res)
     return spline.compute_arc_length()
 
 
@@ -339,7 +341,7 @@ def ParametricCatalanMinimal(**kwargs) -> PolyData:
     return surf
 
 
-def ParametricConicSpiral(
+def ParametricConicSpiral(  # noqa: PLR0917
     a: float | None = None,
     b: float | None = None,
     c: float | None = None,
@@ -876,7 +878,8 @@ def ParametricPseudosphere(**kwargs) -> PolyData:
     return surf
 
 
-def ParametricRandomHills(
+@_deprecate_positional_args
+def ParametricRandomHills(  # noqa: PLR0917
     numberofhills: int | None = None,
     hillxvariance: float | None = None,
     hillyvariance: float | None = None,
@@ -1127,7 +1130,8 @@ def ParametricRoman(radius: float | None = None, **kwargs) -> PolyData:
     return surf
 
 
-def ParametricSuperEllipsoid(
+@_deprecate_positional_args(allowed=['xradius', 'yradius', 'zradius'])
+def ParametricSuperEllipsoid(  # noqa: PLR0917
     xradius: float | None = None,
     yradius: float | None = None,
     zradius: float | None = None,
@@ -1214,7 +1218,8 @@ def ParametricSuperEllipsoid(
     return surf
 
 
-def ParametricSuperToroid(
+@_deprecate_positional_args
+def ParametricSuperToroid(  # noqa: PLR0917
     ringradius: float | None = None,
     crosssectionradius: float | None = None,
     xradius: float | None = None,
@@ -1359,17 +1364,18 @@ def ParametricTorus(
     return surf
 
 
-def parametric_keywords(
+@_deprecate_positional_args(allowed=['parametric_function'])
+def parametric_keywords(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     min_u: float = 0.0,
     max_u: float = 2 * pi,
     min_v: float = 0.0,
     max_v: float = 2 * pi,
-    join_u: bool = False,
-    join_v: bool = False,
-    twist_u: bool = False,
-    twist_v: bool = False,
-    clockwise: bool = True,
+    join_u: bool = False,  # noqa: FBT001, FBT002
+    join_v: bool = False,  # noqa: FBT001, FBT002
+    twist_u: bool = False,  # noqa: FBT001, FBT002
+    twist_v: bool = False,  # noqa: FBT001, FBT002
+    clockwise: bool = True,  # noqa: FBT001, FBT002
 ) -> None:
     """Apply keyword arguments to a parametric function.
 
@@ -1422,13 +1428,14 @@ def parametric_keywords(
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
-def surface_from_para(
+@_deprecate_positional_args(allowed=['parametric_function'])
+def surface_from_para(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     u_res: int = 100,
     v_res: int = 100,
     w_res: int = 100,
-    clean: bool = False,
-    texture_coordinates: bool = False,
+    clean: bool = False,  # noqa: FBT001, FBT002
+    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Construct a mesh from a parametric function.
 
@@ -1452,7 +1459,8 @@ def surface_from_para(
 
     texture_coordinates : bool, default: False
         The generation of texture coordinates.
-        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
+        This is off by default. Note that this is only applicable
+        to parametric surfaces whose parametric dimension is 2.
         Note that texturing may fail in some cases.
 
     Returns

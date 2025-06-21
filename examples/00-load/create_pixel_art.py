@@ -42,9 +42,8 @@ alien = []
 for line in alien_str.splitlines()[1:]:  # skip first linebreak
     if not line:
         continue
-    if len(line) < 20:
-        line += (20 - len(line)) * ' '
-    alien.append([line[i : i + 2] == '% ' for i in range(0, len(line), 2)])
+    long_line = line + (20 - len(line)) * ' ' if len(line) < 20 else line
+    alien.append([long_line[i : i + 2] == '% ' for i in range(0, len(long_line), 2)])
 
 
 # %%
@@ -53,7 +52,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
 # Define a helper function to add pixel boxes to plotter.
 
 
-def draw_pixels(plotter, pixels, center, color):
+def draw_pixels(plotter, pixels, center, color):  # noqa: PLR0917
     bounds = [
         center[0] - 1.0,
         center[0] + 1.0,

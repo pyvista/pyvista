@@ -15,6 +15,7 @@ import weakref
 import numpy as np
 
 from pyvista import vtk_version_info
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import abstract_class
@@ -87,7 +88,14 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
+    @_deprecate_positional_args(allowed=['plotter'])
+    def __init__(  # noqa: PLR0917
+        self,
+        plotter,
+        desired_update_rate=30,
+        light_follow_camera=True,  # noqa: FBT002
+        interactor=None,
+    ):
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -201,7 +209,8 @@ class RenderWindowInteractor:
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    def add_observer(self, event, call, interactor_style_fallback=True):
+    @_deprecate_positional_args(allowed=['event', 'call'])
+    def add_observer(self, event, call, interactor_style_fallback=True):  # noqa: FBT002
         """Add an observer for the given event.
 
         Parameters
@@ -302,7 +311,8 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key, raise_on_missing=False):
+    @_deprecate_positional_args(allowed=['key'])
+    def clear_events_for_key(self, key, raise_on_missing=False):  # noqa: FBT002
         """Remove the callbacks associated to the key.
 
         Parameters
@@ -370,7 +380,14 @@ class RenderWindowInteractor:
         for callback in self._click_event_callbacks[event][double, True]:
             callback(self._plotter.click_position)
 
-    def track_click_position(self, callback=None, side='right', double=False, viewport=False):
+    @_deprecate_positional_args(allowed=['callback', 'side'])
+    def track_click_position(  # noqa: PLR0917,
+        self,
+        callback=None,
+        side='right',
+        double=False,  # noqa: FBT002
+        viewport=False,  # noqa: FBT002
+    ):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -398,13 +415,14 @@ class RenderWindowInteractor:
         event = self._get_click_event(side)
         add_observer = all(len(cbs) == 0 for cbs in self._click_event_callbacks[event].values())
         if callback is None and add_observer:
-            # No observers for this event yet and custom callback not given => insert dummy callback
-            callback = lambda obs, event: None
+            # No observers for this event yet and custom callback not given
+            # insert dummy callback
+            callback = lambda _, __: None
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
             msg = 'Invalid callback provided, it should be either ``None`` or a callable.'
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         if add_observer:
             self.add_observer(event, self._click_event)
@@ -429,7 +447,7 @@ class RenderWindowInteractor:
         """Clear key event callbacks."""
         self._key_press_event_callbacks.clear()
 
-    def key_press_event(self, *args):
+    def key_press_event(self, *args):  # noqa: ARG002
         """Listen for key press event."""
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
@@ -461,7 +479,8 @@ class RenderWindowInteractor:
         .. warning::
 
             Setting an interactor style needs careful control of events handling.
-            See :class:`~plotting.render_window_interactor.InteractorStyleCaptureMixin` and its implementation as an example.
+            See :class:`~plotting.render_window_interactor.InteractorStyleCaptureMixin`
+            and its implementation as an example.
 
         Returns
         -------
@@ -602,7 +621,8 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleTrackballCamera(self)
 
-    def enable_custom_trackball_style(
+    @_deprecate_positional_args
+    def enable_custom_trackball_style(  # noqa: PLR0917
         self,
         left='rotate',
         shift_left='pan',
@@ -722,7 +742,7 @@ class RenderWindowInteractor:
             'right': self.style.OnRightButtonUp,
         }
 
-        def _setup_callbacks(button, click, control, shift):
+        def _setup_callbacks(*, button, click, control, shift):
             """Return callbacks for press and release events.
 
             Callbacks are formed for a button and action for a click,
@@ -740,7 +760,7 @@ class RenderWindowInteractor:
             control_release_action = end_action_map[control]
             shift_release_action = end_action_map[shift]
 
-            def _press_callback(_obj, event):
+            def _press_callback(_obj, _):
                 if self.interactor.GetControlKey():
                     control_action()
                 elif self.interactor.GetShiftKey():
@@ -749,7 +769,7 @@ class RenderWindowInteractor:
                     click_action()
                 button_press()
 
-            def _release_callback(_obj, event):
+            def _release_callback(_obj, _):
                 click_release_action()
                 control_release_action()
                 shift_release_action()
@@ -758,28 +778,28 @@ class RenderWindowInteractor:
             return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
-            'left',
-            left,
-            control_left,
-            shift_left,
+            button='left',
+            click=left,
+            control=control_left,
+            shift=shift_left,
         )
         self.style.add_observer('LeftButtonPressEvent', _left_button_press_callback)
         self.style.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
-            'middle',
-            middle,
-            control_middle,
-            shift_middle,
+            button='middle',
+            click=middle,
+            control=control_middle,
+            shift=shift_middle,
         )
         self.style.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
         self.style.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
-            'right',
-            right,
-            control_right,
-            shift_right,
+            button='right',
+            click=right,
+            control=control_right,
+            shift=shift_right,
         )
         self.style.add_observer('RightButtonPressEvent', _right_button_press_callback)
         self.style.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
@@ -977,7 +997,12 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleZoom(self)
 
-    def enable_terrain_style(self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True):
+    @_deprecate_positional_args
+    def enable_terrain_style(
+        self,
+        mouse_wheel_zooms: bool | float = True,  # noqa: FBT001, FBT002
+        shift_pans: bool = True,  # noqa: FBT001, FBT002
+    ):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
@@ -1375,7 +1400,8 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_timer(self, duration, repeating=True):
+    @_deprecate_positional_args(allowed=['duration'])
+    def create_timer(self, duration, repeating=True):  # noqa: FBT002
         """Create a timer.
 
         Parameters
@@ -1487,7 +1513,8 @@ class RenderWindowInteractor:
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
+            This function is deprecated. Use
+            :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
         ----------
@@ -1591,7 +1618,7 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
             ),
         )
 
-    def _press(self, *args):
+    def _press(self, *_):
         # Figure out which renderer has the event and disable the
         # others
         self.OnLeftButtonDown()
@@ -1602,7 +1629,7 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
                 interact = renderer.IsInViewport(*click_pos)
                 renderer.SetInteractive(interact)
 
-    def _release(self, *args):
+    def _release(self, *_):
         self.OnLeftButtonUp()
         parent = self._parent()
         if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
@@ -1672,7 +1699,9 @@ class InteractorStyleJoystickCamera(
     """
 
 
-class InteractorStyleRubberBand2D(InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBand2D):
+class InteractorStyleRubberBand2D(
+    InteractorStyleCaptureMixin, _vtk.vtkInteractorStyleRubberBand2D
+):
     """Rubber band 2D interactor style.
 
     Wraps :vtk:`vtkInteractorStyleRubberBand2D`.

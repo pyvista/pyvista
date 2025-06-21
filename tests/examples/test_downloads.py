@@ -39,7 +39,11 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
 
 
 def _is_valid_url(url):
-    session = retry()
+    session = retry(
+        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
+        retries=5,
+        backoff_factor=2.0,
+    )
     try:
         session.get(url)
     except requests.RequestException:
@@ -130,7 +134,7 @@ def test_file_copier(tmpdir):
         examples.downloads._file_copier('not a file', output_file, None)
 
 
-def test_local_file_cache(tmpdir):
+def test_local_file_cache():
     """Ensure that pyvista.examples.downloads can work with a local cache."""
     basename = Path(examples.planefile).name
     dirname = str(Path(examples.planefile).parent)

@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
 
@@ -19,7 +20,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-def make_axis_labels(vmin, vmax, n, fmt):
+@_deprecate_positional_args
+def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     """Create axis labels as a :vtk:`vtkStringArray`.
 
     Parameters
@@ -31,7 +33,8 @@ def make_axis_labels(vmin, vmax, n, fmt):
     n : int
         The number of labels to create.
     fmt : str
-        A format string for the labels. If the string starts with '%', the label will be formatted using the old-style string formatting method.
+        A format string for the labels. If the string starts with '%', the label will be formatted
+        using the old-style string formatting method.
         Otherwise, the label will be formatted using the new-style string formatting method.
 
     Returns
@@ -52,7 +55,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
-    user-friendly interface to use `:vtk:`vtkCubeAxesActor`.
+    user-friendly interface to use :vtk:`vtkCubeAxesActor`.
 
     Parameters
     ----------
@@ -139,23 +142,24 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['camera'])
+    def __init__(  # noqa: PLR0917
         self,
         camera,
-        minor_ticks: bool = False,
+        minor_ticks: bool = False,  # noqa: FBT001, FBT002
         tick_location=None,
         x_title='X Axis',
         y_title='Y Axis',
         z_title='Z Axis',
-        x_axis_visibility: bool = True,
-        y_axis_visibility: bool = True,
-        z_axis_visibility: bool = True,
+        x_axis_visibility: bool = True,  # noqa: FBT001, FBT002
+        y_axis_visibility: bool = True,  # noqa: FBT001, FBT002
+        z_axis_visibility: bool = True,  # noqa: FBT001, FBT002
         x_label_format=None,
         y_label_format=None,
         z_label_format=None,
-        x_label_visibility: bool = True,
-        y_label_visibility: bool = True,
-        z_label_visibility: bool = True,
+        x_label_visibility: bool = True,  # noqa: FBT001, FBT002
+        y_label_visibility: bool = True,  # noqa: FBT001, FBT002
+        z_label_visibility: bool = True,  # noqa: FBT001, FBT002
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,
@@ -313,7 +317,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
     @property
     def title_offset(self) -> float | tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the distance between title and labels."""
-        if pyvista.vtk_version_info >= (9, 3):
+        if (9, 3, 0) <= pyvista.vtk_version_info < (9, 5, 0):
             offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
             self.GetTitleOffset(offx, offy)  # type: ignore[call-overload]
             return offx, offy  # type: ignore[return-value]
@@ -326,7 +330,11 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
 
         if vtk_geq_9_3:
             if isinstance(offset, float):
-                msg = f'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of (x,y) offsets. Setting the x offset to {(x := 0.0)}'
+                msg = (
+                    f'Setting title_offset with a float is deprecated from vtk >= 9.3. '
+                    f'Accepts now a sequence of (x,y) offsets. '
+                    f'Setting the x offset to {(x := 0.0)}'
+                )
                 warnings.warn(msg, UserWarning)
                 self.SetTitleOffset([x, offset])
             else:
@@ -334,7 +342,10 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
             return
 
         if isinstance(offset, MutableSequence):
-            msg = f'Setting title_offset with a sequence is only supported from vtk >= 9.3. Considering only the second value (ie. y-offset) of {(y := offset[1])}'
+            msg = (
+                f'Setting title_offset with a sequence is only supported from vtk >= 9.3. '
+                f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
+            )
             warnings.warn(msg, UserWarning)
             self.SetTitleOffset(y)
             return
@@ -547,9 +558,12 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.x_axis_visibility:
             self.SetXTitle(self._x_title)
             if self._x_label_visibility:
+                vmin, vmax = self.x_axis_range
                 self.SetAxisLabels(
                     0,
-                    make_axis_labels(*self.x_axis_range, self.n_xlabels, self.x_label_format),
+                    make_axis_labels(
+                        vmin=vmin, vmax=vmax, n=self.n_xlabels, fmt=self.x_label_format
+                    ),
                 )
             else:
                 self.SetAxisLabels(0, self._empty_str)
@@ -562,9 +576,12 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.y_axis_visibility:
             self.SetYTitle(self._y_title)
             if self._y_label_visibility:
+                vmin, vmax = self.y_axis_range
                 self.SetAxisLabels(
                     1,
-                    make_axis_labels(*self.y_axis_range, self.n_ylabels, self.y_label_format),
+                    make_axis_labels(
+                        vmin=vmin, vmax=vmax, n=self.n_ylabels, fmt=self.y_label_format
+                    ),
                 )
             else:
                 self.SetAxisLabels(1, self._empty_str)
@@ -577,9 +594,12 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         if self.z_axis_visibility:
             self.SetZTitle(self._z_title)
             if self._z_label_visibility:
+                vmin, vmax = self.z_axis_range
                 self.SetAxisLabels(
                     2,
-                    make_axis_labels(*self.z_axis_range, self.n_zlabels, self.z_label_format),
+                    make_axis_labels(
+                        vmin=vmin, vmax=vmax, n=self.n_zlabels, fmt=self.z_label_format
+                    ),
                 )
             else:
                 self.SetAxisLabels(2, self._empty_str)
