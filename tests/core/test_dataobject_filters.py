@@ -123,7 +123,7 @@ def test_transform_raises(sphere):
         sphere.transform(matrix, inplace=False)
 
 
-def test_clip_box(datasets):
+def test_clip_box(datasets, airplane, uniform):
     for dataset in datasets:
         clp = dataset.clip_box(invert=True, progress_bar=True)
         assert clp is not None
@@ -131,10 +131,9 @@ def test_clip_box(datasets):
         clp2 = dataset.clip_box(merge_points=False)
         assert clp2 is not None
 
-    dataset = examples.load_airplane()
-    # test length 3 bounds
+    dataset = airplane.copy()
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
-    dataset = examples.load_uniform()
+    dataset = uniform.copy()
     result = dataset.clip_box(bounds=0.5, progress_bar=True)
     assert result.n_cells
     with pytest.raises(ValueError):  # noqa: PT011
@@ -143,7 +142,7 @@ def test_clip_box(datasets):
     with pytest.raises(TypeError):
         dataset.clip_box(bounds={5, 6, 7}, progress_bar=True)
     # Test with a poly data box
-    mesh = examples.load_airplane()
+    mesh = airplane.copy()
     box = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500)
     box.rotate_z(33, inplace=True)
     result = mesh.clip_box(box, invert=False, progress_bar=True)
@@ -168,13 +167,13 @@ def test_clip_box_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_filter(datasets):
+def test_slice_filter(datasets, uniform):
     """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(datasets):
         slc = dataset.slice(normal=normals[i], progress_bar=True)
         assert slc is not None
         assert isinstance(slc, pv.PolyData)
-    dataset = examples.load_uniform()
+    dataset = uniform
     slc = dataset.slice(contour=True, progress_bar=True)
     assert slc is not None
     assert isinstance(slc, pv.PolyData)
@@ -205,7 +204,7 @@ def test_slice_orthogonal_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_along_axis(datasets):
+def test_slice_along_axis(datasets, uniform):
     """Test the many slices along axis filter"""
     axii = ['x', 'y', 'z', 'y', 0]
     ns = [2, 3, 4, 10, 20, 13]
@@ -216,7 +215,7 @@ def test_slice_along_axis(datasets):
         assert slices.n_blocks == ns[i]
         for slc in slices:
             assert isinstance(slc, pv.PolyData)
-    dataset = examples.load_uniform()
+    dataset = uniform
     with pytest.raises(ValueError):  # noqa: PT011
         dataset.slice_along_axis(axis='u')
 
@@ -348,8 +347,8 @@ def test_cell_centers_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_cell_data_to_point_data():
-    data = examples.load_uniform()
+def test_cell_data_to_point_data(uniform):
+    data = uniform
     foo = data.cell_data_to_point_data(progress_bar=True)
     assert foo.n_arrays == 2
     assert len(foo.cell_data.keys()) == 0
@@ -362,8 +361,8 @@ def test_cell_data_to_point_data_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_point_data_to_cell_data():
-    data = examples.load_uniform()
+def test_point_data_to_cell_data(uniform):
+    data = uniform
     foo = data.point_data_to_cell_data(progress_bar=True)
     assert foo.n_arrays == 2
     assert len(foo.point_data.keys()) == 0
@@ -376,8 +375,8 @@ def test_point_data_to_cell_data_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_triangulate():
-    data = examples.load_uniform()
+def test_triangulate(uniform):
+    data = uniform
     tri = data.triangulate(progress_bar=True)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
@@ -389,9 +388,9 @@ def test_triangulate_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_sample():
+def test_sample(uniform):
     mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-    data_to_probe = examples.load_uniform()
+    data_to_probe = uniform
 
     def sample_test(**kwargs):
         """Test `sample` with kwargs."""
@@ -469,8 +468,8 @@ def test_sample_composite():
     assert 'vtkGhostType' in result[0].point_data
 
 
-def test_slice_along_line():
-    model = examples.load_uniform()
+def test_slice_along_line(uniform):
+    model = uniform
     n = 5
     x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
@@ -840,14 +839,15 @@ def test_reflect_mesh_with_vectors(datasets):
 
 
 @pytest.mark.parametrize(
-    'dataset',
+    'fixture_name',
     [
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        'hexbeam',  # UnstructuredGrid
+        'airplane',  # PolyData
+        'structured',  # StructuredGrid
     ],
 )
-def test_reflect_inplace(dataset):
+def test_reflect_inplace(request, fixture_name):
+    dataset = request.getfixturevalue(fixture_name)
     orig = dataset.copy()
     dataset.reflect((1, 0, 0), inplace=True, progress_bar=True)
     assert dataset.n_cells == orig.n_cells
@@ -990,8 +990,8 @@ def test_rotate_vector_90_degrees_should_not_distort_geometry():
     assert np.isclose(cylinder.volume, rotated.volume)
 
 
-def test_rotations_should_match_by_a_360_degree_difference():
-    mesh = examples.load_airplane()
+def test_rotations_should_match_by_a_360_degree_difference(airplane):
+    mesh = airplane
 
     point = np.random.default_rng().random(3) - 0.5
     angle = (np.random.default_rng().random() - 0.5) * 360.0
@@ -1026,9 +1026,9 @@ def test_rotations_should_match_by_a_360_degree_difference():
     assert np.allclose(rot1.points, rot2.points)
 
 
-def test_rotate_x():
+def test_rotate_x(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_x(30)
     assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
@@ -1038,9 +1038,9 @@ def test_rotate_x():
         out = mesh.rotate_x(30, point=[1, 3])
 
 
-def test_rotate_y():
+def test_rotate_y(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_y(30)
     assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
@@ -1050,9 +1050,9 @@ def test_rotate_y():
         out = mesh.rotate_y(30, point=[1, 3])
 
 
-def test_rotate_z():
+def test_rotate_z(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_z(30)
     assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
@@ -1062,9 +1062,9 @@ def test_rotate_z():
         out = mesh.rotate_z(30, point=[1, 3])
 
 
-def test_rotate_vector():
+def test_rotate_vector(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
@@ -1074,10 +1074,9 @@ def test_rotate_vector():
         out = mesh.rotate_vector(30, 33)
 
 
-def test_rotate():
+def test_rotate(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    out = uniform.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
     assert isinstance(out, pv.ImageData)
 
 
@@ -1149,8 +1148,8 @@ def test_transform_integers_vtkbug_present():
     assert poly.points[-1, 1] != 0
 
 
-def test_scale():
-    mesh = examples.load_airplane()
+def test_scale(airplane, uniform):
+    mesh = airplane
 
     xyz = np.random.default_rng().random(3)
     scale1 = mesh.copy()
@@ -1168,52 +1167,48 @@ def test_scale():
     scale2.scale([xyz] * 3, inplace=True)
     assert np.allclose(scale1.points, scale2.points)
     # test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.scale(xyz)
+    out = uniform.scale(xyz)
     assert isinstance(out, pv.ImageData)
 
 
-def test_flip_x():
-    mesh = examples.load_airplane()
+def test_flip_x(airplane, uniform):
+    mesh = airplane
     flip_x1 = mesh.copy()
     flip_x2 = mesh.copy()
     flip_x1.flip_x(point=(0, 0, 0), inplace=True)
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_x()
+    out = uniform.flip_x()
     assert isinstance(out, pv.ImageData)
 
 
-def test_flip_y():
-    mesh = examples.load_airplane()
+def test_flip_y(airplane, uniform):
+    mesh = airplane
     flip_y1 = mesh.copy()
     flip_y2 = mesh.copy()
     flip_y1.flip_y(point=(0, 0, 0), inplace=True)
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_y()
+    out = uniform.flip_y()
     assert isinstance(out, pv.ImageData)
 
 
-def test_flip_z():
-    mesh = examples.load_airplane()
+def test_flip_z(airplane, uniform):
+    mesh = airplane
     flip_z1 = mesh.copy()
     flip_z2 = mesh.copy()
     flip_z1.flip_z(point=(0, 0, 0), inplace=True)
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_z()
+    out = uniform.flip_z()
     assert isinstance(out, pv.ImageData)
 
 
-def test_flip_normal():
-    mesh = examples.load_airplane()
+def test_flip_normal(airplane, uniform):
+    mesh = airplane
     flip_normal1 = mesh.copy()
     flip_normal2 = mesh.copy()
     flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0], inplace=True)
@@ -1233,6 +1228,5 @@ def test_flip_normal():
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
+    out = uniform.flip_normal(normal=[1.0, 0.0, 0.5])
     assert isinstance(out, pv.ImageData)

@@ -47,8 +47,8 @@ def test_polydata_strip_neq():
     assert mesh1 != mesh3
 
 
-def test_uniform_eq():
-    orig = examples.load_uniform()
+def test_uniform_eq(uniform):
+    orig = uniform
     copy = orig.copy(deep=True)
     copy.origin = [1, 1, 1]
     assert orig != copy
@@ -251,6 +251,7 @@ def test_user_dict_values(ant, value):
         (examples.load_ant(), '.vtkhdf'),
     ],
 )
+@pytest.mark.xdist_group('fileio')
 def test_user_dict_write_read(tmp_path, data_object, ext):
     if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
         return  # can't use VTKHDF on VTK<9.4.0

@@ -9,7 +9,6 @@ from PIL import ImageSequence
 import pytest
 
 import pyvista as pv
-from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 
@@ -56,9 +55,8 @@ def test_plot_curvature():
 
 @pytest.mark.skip_plotting
 @pytest.mark.skip_check_gc
-def test_plot_curvature_pointset():
-    grid = examples.load_structured()
-    grid.plot_curvature(off_screen=True)
+def test_plot_curvature_pointset(structured):
+    structured.plot_curvature(off_screen=True)
 
 
 @pytest.mark.skip_plotting

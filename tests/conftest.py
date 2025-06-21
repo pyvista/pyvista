@@ -6,6 +6,7 @@ from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
+from pathlib import Path
 import platform
 import re
 from typing import Optional
@@ -20,6 +21,7 @@ from pyvista import examples
 from pyvista.core._vtk_core import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
+ORIGINAL_ENV = os.environ.copy()
 pyvista.OFF_SCREEN = True
 
 NUMPY_VERSION_INFO = VersionInfo(
@@ -27,6 +29,10 @@ NUMPY_VERSION_INFO = VersionInfo(
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
 )
+
+
+def add_xdist_group_marker(request, group: str):
+    request.node.add_marker(pytest.mark.xdist_group(group))
 
 
 def flaky_test(
@@ -87,6 +93,21 @@ def global_variables_reset():
     pyvista.FIGURE_PATH = tmp_figurepath
 
 
+@pytest.fixture(autouse=True)
+def reset_os_environ():
+    def reset_env():
+        os.environ.clear()
+        os.environ.update(ORIGINAL_ENV)
+        os.environ.update(preserved)
+
+    # Determine which keys pytest or system has added that we should keep
+    preserved = {key: os.environ[key] for key in os.environ if key not in ORIGINAL_ENV}
+
+    reset_env()
+    yield
+    reset_env()
+
+
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
@@ -118,38 +139,75 @@ def cube():
 
 
 @pytest.fixture
-def airplane():
+def airplane(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_airplane()
 
 
 @pytest.fixture
-def rectilinear():
+def rectilinear(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_rectilinear()
 
 
 @pytest.fixture
-def sphere():
+def sphere(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_sphere()
 
 
 @pytest.fixture
-def uniform():
+def uniform(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_uniform()
 
 
 @pytest.fixture
-def ant():
+def ant(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_ant()
 
 
 @pytest.fixture
-def globe():
+def globe(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_globe()
 
 
 @pytest.fixture
-def hexbeam():
+def globe_texture(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.load_globe_texture()
+
+
+@pytest.fixture
+def mapfile(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.mapfile
+
+
+@pytest.fixture
+def vtk_logo(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_vtk_logo()
+
+
+@pytest.fixture
+def vtk_logo_filename(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_file('vtk.png')
+
+
+@pytest.fixture
+def hexbeam(request):
+    add_xdist_group_marker(request, 'fileio')
     return examples.load_hexbeam()
+
+
+@pytest.fixture
+def cow(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_cow()
 
 
 @pytest.fixture
@@ -165,6 +223,12 @@ def struct_grid():
         np.arange(-10, 10, 2, dtype=np.float32),
     )
     return pyvista.StructuredGrid(x, y, z)
+
+
+@pytest.fixture
+def structured():
+    # No need to mark xdist_group since this does not load from file
+    return examples.load_structured()
 
 
 @pytest.fixture
@@ -189,7 +253,36 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def masonry_texture():
+    return examples.download_masonry_texture()
+
+
+@pytest.fixture
+def puppy_texture():
+    return examples.download_puppy_texture()
+
+
+@pytest.fixture
+def doorman_filename(request):
+    add_xdist_group_marker(request, 'fileio')
+    return Path(examples.download_doorman(load=False))
+
+
+@pytest.fixture
+def oblique_cone(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_oblique_cone()
+
+
+@pytest.fixture
+def bunny_coarse(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_bunny_coarse()
+
+
+@pytest.fixture
+def datasets(request):
+    add_xdist_group_marker(request, 'fileio')
     return [
         examples.load_uniform(),  # ImageData
         examples.load_rectilinear(),  # RectilinearGrid
@@ -226,7 +319,8 @@ def multiblock_poly():
 
 
 @pytest.fixture
-def datasets_vtk9():
+def datasets_vtk9(request):
+    add_xdist_group_marker(request, 'fileio')
     return [
         examples.load_explicit_structured(),
     ]
