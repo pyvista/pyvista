@@ -1,5 +1,5 @@
 """
-.. _networkx:
+.. _networkx_example:
 
 NetworkX Graph Visualization
 ----------------------------
