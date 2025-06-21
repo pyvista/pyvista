@@ -166,6 +166,11 @@ def test_load_all_datasets(test_case: DatasetLoaderTestCase):
         dataset2 = ex.load(test_case.dataset_function[1])
     except pv.VTKVersionError:
         pytest.skip('VTK version not supported.')
+    except ImportError as e:
+        if 'vtkmodules' in repr(e):
+            pytest.skip('VTK version not supported.')
+        else:
+            raise
 
     assert paths is None or isinstance(paths, (Path, tuple))
     if paths is not None:
