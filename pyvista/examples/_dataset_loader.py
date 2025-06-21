@@ -879,13 +879,18 @@ def load(
     name: str | FunctionType, *, return_paths: bool = False, allow_download: bool = True
 ) -> tuple[DatasetObject, Path | tuple[Path] | None]:
     dataset_loader = _get_dataset_loader(name)
+
+    # Download if necessary
     if isinstance(dataset_loader, _Downloadable):
         if not allow_download:
             name_str = name.__name__ if isinstance(name, FunctionType) else name
             msg = f'Example {name_str!r} requires download.'
             raise ValueError(msg)
         dataset_loader.download()
+
     dataset = dataset_loader.load()
+
+    # Process paths
     if return_paths:
         path = getattr(dataset_loader, 'path', None)
         if path:

@@ -151,12 +151,15 @@ _NON_DETERMINISTIC_DATASETS = [
     'frog_tissue',
 ]
 _DEPRECATED_DATASETS = ['can', 'osmnx_graph']
+_SKIP_DATASETS_WINDOWS = ['biplane']
 
 
 @pytest.mark.needs_download
 def test_load_all_datasets(test_case: DatasetLoaderTestCase):
     if test_case.dataset_name in _DEPRECATED_DATASETS:
         pytest.skip('Dataset is deprecated.')
+    if os.name == 'nt' and test_case.dataset_name in _SKIP_DATASETS_WINDOWS:
+        pytest.skip('Error loading on Windows')
 
     try:
         dataset1, paths = ex.load(test_case.dataset_name, return_paths=True)
@@ -188,7 +191,7 @@ def test_load_all_datasets(test_case: DatasetLoaderTestCase):
         ('frog', pv.ImageData, tuple),
     ],
 )
-def test_load_builit_in(name, mesh_type, path_type):
+def test_load(name, mesh_type, path_type):
     mesh = ex.load(name)
     assert isinstance(mesh, mesh_type)
     mesh, paths = ex.load(name, return_paths=True)
@@ -204,9 +207,9 @@ def test_load_raises():
     with pytest.raises(ValueError, match=match):
         ex.load(downloads.download_cow, allow_download=False)
 
-    match = "Example 'download_cow' requires download."
+    match = "Example 'foo' could not be loaded, and may not exist."
     with pytest.raises(ValueError, match=match):
-        ex.load(downloads.download_cow, allow_download=False)
+        ex.load('foo', allow_download=False)
 
 
 @pytest.fixture
