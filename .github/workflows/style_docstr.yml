@@ -40,7 +40,7 @@ jobs:
           pip install -e . --group test
 
       - name: Setup headless display
-        uses: pyvista/setup-headless-display-action@v4.2
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Software Report
         run: |

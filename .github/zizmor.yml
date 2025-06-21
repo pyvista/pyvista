@@ -1,0 +1,5 @@
+rules:
+  unpinned-uses:
+    ignore:
+      - style_docstr.yml:78:9
+
