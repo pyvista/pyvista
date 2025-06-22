@@ -248,7 +248,8 @@ jobs:
         run: |
           xvfb-run -s '-maxclients 2048' -a python -m pytest \
             $PLOTTING_TEST_MODULES_CHARTS \
-            $LINUX_PLOTTING_ARGS
+            $LINUX_PLOTTING_ARGS \
+            --allow_unused_cache
 
       - name: Upload Generated Images
         if: always()
@@ -351,7 +352,8 @@ jobs:
         run: |
           xvfb-run -s '-maxclients 2048' -a python -m pytest \
             $PLOTTING_TEST_MODULES_CHARTS \
-            $LINUX_PLOTTING_ARGS
+            $LINUX_PLOTTING_ARGS \
+            --allow_unused_cache
 
       - name: Upload Generated Images
         if: always()
