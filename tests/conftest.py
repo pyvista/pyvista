@@ -21,7 +21,6 @@ from pyvista import examples
 from pyvista.core._vtk_core import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
-ORIGINAL_ENV = os.environ.copy()
 pyvista.OFF_SCREEN = True
 
 NUMPY_VERSION_INFO = VersionInfo(
@@ -233,11 +232,6 @@ def puppy_texture():
 @pytest.fixture
 def doorman_filename():
     return Path(examples.download_doorman(load=False))
-
-
-@pytest.fixture
-def oblique_cone():
-    return examples.download_oblique_cone()
 
 
 @pytest.fixture
