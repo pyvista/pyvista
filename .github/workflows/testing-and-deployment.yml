@@ -135,8 +135,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: failed_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
-          path: failed_image_dir
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
@@ -261,8 +261,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: failed_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: failed_image_dir
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
@@ -371,8 +371,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: failed_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: failed_image_dir
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
@@ -440,8 +440,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: failed_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: failed_image_dir
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()

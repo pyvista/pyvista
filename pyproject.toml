@@ -229,6 +229,8 @@ filterwarnings = [
 
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
+
+failed_image_dir = '_failed_test_images'
 image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
