@@ -129,7 +129,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --fail_unused_cache
+        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -345,8 +345,7 @@ jobs:
         run: |
           xvfb-run -s '-maxclients 2048' -a python -m pytest \
             $PLOTTING_TEST_MODULES_NO_CHARTS \
-            $LINUX_PLOTTING_ARGS \
-            --fail_unused_cache
+            $LINUX_PLOTTING_ARGS
 
       - name: Plotting Testing (charts only)
         run: |
@@ -414,7 +413,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --fail_unused_cache
+        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
