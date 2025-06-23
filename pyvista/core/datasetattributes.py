@@ -1329,6 +1329,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __eq__(self: Self, other: object) -> bool:
         """Test dict-like equivalency."""
+
+        def array_equal_nan(array1: npt.ArrayLike, array2: npt.ArrayLike) -> bool:
+            return (
+                np.issubdtype(np.asanyarray(array1).dtype, np.floating)
+                and np.issubdtype(np.asanyarray(array2).dtype, np.floating)
+                and np.array_equal(array1, array2, equal_nan=True)
+            )
+
         # here we check if other is the same class or a subclass of self.
         if not isinstance(other, type(self)):
             return False
@@ -1338,7 +1346,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         # verify the value of the arrays
         for key, value in other.items():
-            if not np.array_equal(value, self[key]):
+            if not np.array_equal(value, self[key]) and not array_equal_nan(value, self[key]):
                 return False
 
         # check the name of the active attributes
