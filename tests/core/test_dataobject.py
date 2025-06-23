@@ -109,6 +109,19 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
 
+def test_eq_nan_points():
+    poly = pv.PolyData([np.nan, np.nan, np.nan])
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_nan_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = [np.nan]
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
 def test_metadata_save(hexbeam, tmpdir):
     """Test if complex and bool metadata is saved and restored."""
     filename = tmpdir.join('hexbeam.vtk')
