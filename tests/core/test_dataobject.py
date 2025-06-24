@@ -122,6 +122,13 @@ def test_eq_nan_array():
     assert poly == poly2
 
 
+def test_eq_string_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = ['abc']
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
 def test_metadata_save(hexbeam, tmpdir):
     """Test if complex and bool metadata is saved and restored."""
     filename = tmpdir.join('hexbeam.vtk')
