@@ -237,6 +237,11 @@ def get_mixed_cells(vtkobj):
     arrays of size [N, D], where N is the number of cells and D is the
     size of the cells for the given type (e.g. 3 for triangles).
 
+    .. versionchanged:: 0.46
+
+        An empty dict ``{}`` is returned instead of ``None`` if the input
+        is empty.
+
     Parameters
     ----------
     vtkobj : pyvista.UnstructuredGrid
@@ -257,7 +262,7 @@ def get_mixed_cells(vtkobj):
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
-    return_dict = {}
+    return_dict = {}  # type: ignore[var-annotated]
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
         msg = 'Expected a pyvista object'
@@ -265,7 +270,7 @@ def get_mixed_cells(vtkobj):
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
-        return None
+        return return_dict
 
     cell_types = vtkobj.celltypes
     cells = vtkobj.cells
