@@ -34,7 +34,7 @@ env:
   CACHE_FOLDER_NAME: vtk-data
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
-    --tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
+    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
     --fail_extra_image_cache --generated_image_dir debug_images
 
 permissions:
