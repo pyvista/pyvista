@@ -1331,6 +1331,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Test dict-like equivalency."""
 
         def array_equal_nan(array1: npt.ArrayLike, array2: npt.ArrayLike) -> bool:
+            # Check with `equal_nan=True` but only for floats since this fails for strings
+            # See numpy/numpy#16377
             return (
                 np.issubdtype(np.asanyarray(array1).dtype, np.floating)
                 and np.issubdtype(np.asanyarray(array2).dtype, np.floating)
