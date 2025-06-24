@@ -120,7 +120,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install . --group test
-          pip install vtk==9.5.0
 
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
@@ -169,7 +168,7 @@ jobs:
             vtk-version: "9.4.2"
             numpy-version: "latest"
           - python-version: "3.13"
-            vtk-version: "9.5.0"
+            vtk-version: "latest"
             numpy-version: "nightly"
     steps:
       - uses: actions/checkout@v4

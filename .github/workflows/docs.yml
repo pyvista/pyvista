@@ -68,7 +68,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install . --group docs
-          pip install vtk==9.5.0
 
       - name: PyVista Report
         run: |
