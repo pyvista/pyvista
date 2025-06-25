@@ -160,7 +160,7 @@ jobs:
             vtk-version: "9.4.2"
             numpy-version: "latest"
           - python-version: "3.13"
-            vtk-version: "9.5.0"
+            vtk-version: "latest"
             numpy-version: "nightly"
     steps:
       - uses: actions/checkout@v4
