@@ -438,8 +438,8 @@ from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
 
 with contextlib.suppress(ImportError):
     # Deprecated in 9.3
-    from vtkmodules.vtkFiltersSources import (
-        vtkCapsuleSource as vtkCapsuleSource,  # type: ignore[attr-defined]
+    from vtkmodules.vtkFiltersSources import (  # type: ignore[attr-defined]
+        vtkCapsuleSource as vtkCapsuleSource,
     )
 
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
