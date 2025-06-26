@@ -9,6 +9,7 @@ from pyvista import examples
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from tests.conftest import add_xdist_group_marker
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -157,11 +158,16 @@ def test_triangulate_contours():
         assert cell.type == pv.CellType.TRIANGLE
 
 
+@pytest.fixture
+def tgqp(request):
+    add_xdist_group_marker(request, 'fileio')
+    return examples.download_3gqp()
+
+
 @pytest.mark.needs_vtk_version(
     9, 1, 0, reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader'
 )
-def test_protein_ribbon():
-    tgqp = examples.download_3gqp()
+def test_protein_ribbon(tgqp):
     ribbon = tgqp.protein_ribbon()
     assert ribbon.n_cells
 

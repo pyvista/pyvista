@@ -31,6 +31,8 @@ from pyvista.examples.planets import _download_dataset_texture
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+pytestmark = pytest.mark.xdist_group('fileio')
+
 
 @dataclass
 class DatasetLoaderTestCase:

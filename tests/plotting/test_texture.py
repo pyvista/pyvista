@@ -5,16 +5,15 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples
 from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.texture import numpy_to_texture
 
 
-def test_texture():
+def test_texture(globe_texture, mapfile):
     with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
         texture = pv.Texture(range(10))
 
-    texture = pv.Texture(examples.mapfile)
+    texture = pv.Texture(mapfile)
     assert texture is not None
 
     image = texture.to_image()
@@ -26,7 +25,7 @@ def test_texture():
 
     # test texture from array
 
-    texture = pv.Texture(examples.load_globe_texture())
+    texture = pv.Texture(globe_texture)
     assert texture is not None
 
 
@@ -77,8 +76,8 @@ def test_texture_from_images(image):
         pv.Texture(['foo'] * 6)
 
 
-def test_skybox_example():
-    texture = examples.load_globe_texture()
+def test_skybox_example(globe_texture):
+    texture = globe_texture
     texture.cube_map = False
     assert texture.cube_map is False
 
@@ -223,8 +222,8 @@ def test_texture_coordinates():
     assert np.allclose(foo, texture_coordinates)
 
 
-def test_multiple_texture_coordinates():
-    mesh = examples.load_airplane()
+def test_multiple_texture_coordinates(airplane):
+    mesh = airplane
     mesh.texture_map_to_plane(inplace=True, name='tex_a', use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name='tex_b', use_bounds=True)
     assert not np.allclose(mesh['tex_a'], mesh['tex_b'])
