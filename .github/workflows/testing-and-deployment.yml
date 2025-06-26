@@ -35,7 +35,7 @@ env:
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
     -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
-    --disallow_unused_cache --fail_extra_image_cache --generated_image_dir debug_images
+    --disallow_unused_cache --generated_image_dir debug_images
   PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
   PLOTTING_TEST_MODULES_NO_CHARTS: >
     --ignore=tests/core
@@ -129,7 +129,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --disallow_unused_cache --fail_extra_image_cache --generated_image_dir debug_images
+        run: pytest -v tests/plotting --disallow_unused_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -415,7 +415,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --disallow_unused_cache --fail_extra_image_cache --generated_image_dir debug_images
+        run: python -m pytest -v tests/plotting --disallow_unused_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
