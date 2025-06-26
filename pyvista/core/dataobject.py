@@ -472,7 +472,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             # Only check equality for attributes defined by PyVista
             # (i.e. ignore any default vtk snake_case attributes)
             if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
-                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
+                if not np.array_equal(getattr(self, attr), getattr(other, attr), equal_nan=True):
                     return False
 
         # these attrs can be directly compared
