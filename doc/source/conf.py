@@ -50,8 +50,13 @@ if not Path(pyvista.FIGURE_PATH).exists():
     Path(pyvista.FIGURE_PATH).mkdir()
 
 # necessary when building the sphinx gallery
-pyvista.BUILDING_GALLERY = True
-os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+# set to True by default but allow setting False with env variable
+BUILDING_GALLERY_VAR_NAME = 'PYVISTA_BUILDING_GALLERY'
+if os.environ.get(BUILDING_GALLERY_VAR_NAME, None) == 'false':
+    pyvista.BUILDING_GALLERY = False
+else:
+    os.environ[BUILDING_GALLERY_VAR_NAME] = 'true'
+    pyvista.BUILDING_GALLERY = True
 
 # SG warnings
 import warnings
@@ -96,7 +101,6 @@ extensions = [
     'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
-    'sphinx_gallery.gen_gallery',
     'sphinxcontrib.asciinema',
     'sphinx_tags',
     'sphinx_toolbox.more_autodoc.overloads',
@@ -106,6 +110,8 @@ extensions = [
     'sphinx_sitemap',
     'vtk_xref',
 ]
+if pyvista.BUILDING_GALLERY:
+    extensions.append('sphinx_gallery.gen_gallery')
 
 # Configuration of pyvista.ext.coverage
 coverage_additional_modules = [
