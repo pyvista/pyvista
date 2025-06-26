@@ -129,7 +129,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --check_useless_fixture
+        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -413,7 +413,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images --check_useless_fixture
+        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
