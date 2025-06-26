@@ -480,7 +480,6 @@ def test_plot_return_cpos(sphere):
     assert sphere.plot(return_cpos=False) is None
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 def test_add_title(verify_image_cache):
     verify_image_cache.high_variance_test = True
     plotter = pv.Plotter()
@@ -936,7 +935,6 @@ def test_open_gif_invalid():
         plotter.open_gif('file.abs')
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.skipif(ffmpeg_failed, reason='Requires imageio-ffmpeg')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_make_movie(sphere, tmpdir, verify_image_cache):
@@ -2219,7 +2217,6 @@ def test_plot_sigmoid_opacity_transfer_functions(uniform, opacity):
     pl.show()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 def test_closing_and_mem_cleanup(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     verify_image_cache.skip = True
@@ -4196,7 +4193,6 @@ def test_plot_cubemap_alone(cubemap, verify_image_cache):
     cubemap.plot()
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of VTK.')
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
