@@ -116,7 +116,10 @@ def verify_image_cache_wrapper(verify_image_cache):
 @pytest.fixture
 def no_images_to_verify(verify_image_cache_wrapper):
     verify_image_cache_wrapper.allow_useless_fixture = True
-    return verify_image_cache_wrapper
+    yield verify_image_cache_wrapper
+    assert (n_calls := verify_image_cache_wrapper.n_calls) == 0, (
+        f'No images were expected to be generated, but got {n_calls}'
+    )
 
 
 @pytest.fixture
@@ -477,6 +480,7 @@ def test_plot_return_cpos(sphere):
     assert sphere.plot(return_cpos=False) is None
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_add_title(verify_image_cache):
     verify_image_cache.high_variance_test = True
     plotter = pv.Plotter()
