@@ -36,7 +36,6 @@ env:
   LINUX_PLOTTING_ARGS: >
     -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
     --fail_extra_image_cache --generated_image_dir debug_images
-    --check_useless_fixture
   PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
   PLOTTING_TEST_MODULES_NO_CHARTS: >
     --ignore=tests/core
