@@ -1,3 +1,4 @@
+# refactor this code AI!
 """
 .. _networkx_example:
 
