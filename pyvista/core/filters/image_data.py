@@ -320,8 +320,9 @@ class ImageDataFilters(DataSetFilters):
         ----------
         var_input : str | ImageData | VectorLike[float], optional
             Variable input used for cropping. The behavior of the filter depends on the input type:
+            
             - For string or :class:`~pyvista.ImageData` inputs, this is equivalent to using the
-              ``mask`` parameter
+              ``mask`` parameter.
             - For length-6 integer vectors, this is equivalent to using the  ``extent`` parameter.
             - For length-6 float vectors, this is equivalent to using the  ``normalized_bounds``
               parameter.
