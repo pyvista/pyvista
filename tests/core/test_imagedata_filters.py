@@ -1463,14 +1463,14 @@ def test_crop_var_input(uncropped_image, kwargs, use_var_input):
     assert cropped == expected_output
 
 
-@pytest.mark.parametrize('background_value', [0.0, None])
-def test_crop_mask(uncropped_image, background_value):
+@pytest.mark.parametrize('scalars', [MASK_ARRAY_NAME, DATA_ARRAY_NAME])
+@pytest.mark.parametrize('background_value', [1.0, 0.0, None])
+def test_crop_mask(uncropped_image, background_value, scalars):
     # Test no args crops the foreground
-    uncropped_image.set_active_scalars(MASK_ARRAY_NAME)
+    uncropped_image.set_active_scalars(scalars)
     cropped = uncropped_image.crop(background_value=background_value)
-    assert all(np.array(cropped.dimensions) < np.array(uncropped_image.dimensions))
 
-    # Test string input: data scalars is not a mask, expect no cropping
-    uncropped_image.set_active_scalars(DATA_ARRAY_NAME)
-    cropped = uncropped_image.crop(background_value=background_value)
-    assert cropped.dimensions == uncropped_image.dimensions
+    if scalars == DATA_ARRAY_NAME or background_value == 1.0:
+        assert cropped.dimensions == uncropped_image.dimensions
+    else:
+        assert all(np.array(cropped.dimensions) < np.array(uncropped_image.dimensions))

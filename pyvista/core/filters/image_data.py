@@ -320,7 +320,7 @@ class ImageDataFilters(DataSetFilters):
         ----------
         var_input : str | ImageData | VectorLike[float], optional
             Variable input used for cropping. The behavior of the filter depends on the input type:
-            
+
             - For string or :class:`~pyvista.ImageData` inputs, this is equivalent to using the
               ``mask`` parameter.
             - For length-6 integer vectors, this is equivalent to using the  ``extent`` parameter.
@@ -384,7 +384,7 @@ class ImageDataFilters(DataSetFilters):
 
             if not _args_are_none(*args_to_check.values()):
                 arg_names = ', '.join(args_to_check.keys())
-                msg = f'{initial_msg}, the parameters\n{arg_names} cannot not be set.'
+                msg = f'{initial_msg}, the parameters:\n{arg_names} cannot not be set.'
                 raise TypeError(msg)
 
         def _validate_scalars(mesh: ImageData, scalars: str | None = None):
