@@ -326,9 +326,17 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         margin : int | VectorLike[int], optional
-            Margin to remove from each end of each axis. Use a single integer to remove a
-            uniform number of points, or use a vector with three integers to crop each xyz-axis
-            independently.
+            Margin to remove from each side of each axis. Specify:
+
+            - A single value to remove from all boundaries equally.
+            - Two values, one for each ``(X, Y)`` axis, to remove margin from
+              each axis independently.
+            - Three values, one for each ``(X, Y, Z)`` axis, to remove margin from
+              each axis independently.
+            - Four values, one for each ``(-X, +X, -Y, +Y)`` boundary, to remove
+              margin from each boundary independently.
+            - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to remove
+              margin from each boundary independently.
 
         factor : float, optional
             Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
@@ -535,24 +543,8 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_margin(margin_):
             _raise_error_kwargs_not_none('margin')
-            mx, my, mz = _validation.validate_array3(
-                margin_,
-                broadcast=True,
-                must_be_integer=True,
-                must_be_nonnegative=True,
-                dtype_out=int,
-                name='crop margin',
-            )
-            # Apply margins symmetrically
-            extent = self.extent
-            return [
-                extent[0] + mx,
-                extent[1] - mx,
-                extent[2] + my,
-                extent[3] - my,
-                extent[4] + mz,
-                extent[5] - mz,
-            ]
+            padding = _validate_padding(margin_)
+            return _pad_extent(self.extent, -padding)
 
         def _voi_from_dimensions_and_offset(dimensions, offset):
             if dimensions is not None:
