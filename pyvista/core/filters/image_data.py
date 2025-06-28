@@ -401,9 +401,11 @@ class ImageDataFilters(DataSetFilters):
                     f'Got {field.name.lower()} data instead.'
                 )
                 raise ValueError(msg)
-            return mesh.get_array(scalars, preference=field).reshape(mesh.dimensions[::-1])
+            return mesh.get_array(scalars, preference=field).reshape(
+                mesh.dimensions[::-1]
+            ), scalars
 
-        def _voi_from_array(arr):
+        def _voi_from_array(arr, array_name):
             default_value = 0.0
             value = (
                 default_value
@@ -414,7 +416,10 @@ class ImageDataFilters(DataSetFilters):
             background = value or default_value
             coords = np.argwhere(arr != background)
             if coords.size == 0:
-                msg = 'No foreground found'
+                msg = (
+                    f'Crop with mask failed, no foreground values found in array '
+                    f'{array_name!r} using background value {background}.'
+                )
                 raise ValueError(msg)
 
             zmin, ymin, xmin = coords.min(axis=0)
@@ -430,7 +435,7 @@ class ImageDataFilters(DataSetFilters):
             else:
                 mesh = mask_
                 scalars = None
-            mask_array = _validate_scalars(mesh, scalars)
+            mask_array, _ = _validate_scalars(mesh, scalars)
             voi = np.array(_voi_from_array(mask_array))
 
             # Add offset
@@ -461,7 +466,8 @@ class ImageDataFilters(DataSetFilters):
         allowed_args_mask_var_input.pop('background_value')
         if _args_are_none(var_input, *allowed_args_mask_var_input.values()):
             # Nothing specified, crop foreground using active scalars
-            voi = _voi_from_array(_validate_scalars(self))
+            mask_array, scalars = _validate_scalars(self)
+            voi = _voi_from_array(mask_array, scalars)
         elif var_input is not None:
             if isinstance(var_input, (str, pyvista.ImageData)):
                 voi = _voi_from_mask(var_input)

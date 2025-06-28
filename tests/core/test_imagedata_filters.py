@@ -1507,3 +1507,15 @@ def test_crop_mask(uncropped_image, background_value, scalars):
         assert cropped.dimensions == uncropped_image.dimensions
     else:
         assert all(np.array(cropped.dimensions) < np.array(uncropped_image.dimensions))
+
+
+def test_crop_raises():
+    background = 0.0
+    img = pv.ImageData(dimensions=(1, 1, 1))
+    img.point_data['data'] = [background]
+    match = (
+        'Crop with mask failed, no foreground values found '
+        "in array 'data' using background value 0.0."
+    )
+    with pytest.raises(ValueError, match=match):
+        img.crop()
