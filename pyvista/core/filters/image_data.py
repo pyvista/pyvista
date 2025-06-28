@@ -294,7 +294,6 @@ class ImageDataFilters(DataSetFilters):
 
     def crop(  # type: ignore[misc]
         self: ImageData,
-        var_input: str | ImageData | VectorLike[float] | None = None,
         *,
         factor: float | None = None,
         margin: int | None = None,
@@ -320,15 +319,6 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        var_input : str | ImageData | VectorLike[float], optional
-            Variable input used for cropping. The behavior of the filter depends on the input type:
-
-            - For string or :class:`~pyvista.ImageData` inputs, this is equivalent to using the
-              ``mask`` parameter.
-            - For length-6 integer vectors, this is equivalent to using the  ``extent`` parameter.
-            - For length-6 float vectors, this is equivalent to using the  ``normalized_bounds``
-              parameter.
-
         margin : int, optional
             Margin to remove from each axis.
 
@@ -384,10 +374,6 @@ class ImageDataFilters(DataSetFilters):
             return all(val is None for val in args)
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
-            initial_msg = f'When cropping with {arg_name}'
-            if var_input is not None:
-                initial_msg += ' as the variable argument'
-
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
             for arg in [arg_name, *also_exclude]:
                 args_to_check.pop(arg)
@@ -395,7 +381,7 @@ class ImageDataFilters(DataSetFilters):
             for key, val in args_to_check.items():
                 if val is not None:
                     msg = (
-                        f'{initial_msg}, the following parameters cannot be set:\n'
+                        f'When cropping with {arg_name}, the following parameters cannot be set:\n'
                         f'{list(args_to_check.keys())}.\n'
                         f'Got: {key}={val}'
                     )
@@ -545,30 +531,10 @@ class ImageDataFilters(DataSetFilters):
 
         allowed_args_mask_var_input = MUTUALLY_EXCLUSIVE_KWARGS.copy()
         allowed_args_mask_var_input.pop('background_value')
-        if _args_are_none(var_input, *allowed_args_mask_var_input.values()):
+        if _args_are_none(*allowed_args_mask_var_input.values()):
             # Nothing specified, crop foreground using active scalars
             mask_array, scalars = _validate_scalars(self)
             voi = _voi_from_array(mask_array, scalars)
-        elif var_input is not None:
-            if isinstance(var_input, (str, pyvista.ImageData)):
-                voi = _voi_from_mask(var_input)
-            else:
-                # Input must be an array
-                array = _validation.validate_array(
-                    var_input,
-                    must_have_dtype=(np.floating, np.integer),
-                    name='crop value',
-                )
-
-                if array.size in (0, 1, 3):
-                    if np.issubdtype(array.dtype, np.floating):
-                        voi = _voi_from_factor(array)
-                    else:
-                        voi = _voi_from_margin(array)
-                elif np.issubdtype(array.dtype, np.floating):
-                    voi = _voi_from_normalized_bounds(array)
-                else:
-                    voi = _voi_from_extent(array)
         elif factor is not None:
             voi = _voi_from_factor(factor)
         elif margin is not None:

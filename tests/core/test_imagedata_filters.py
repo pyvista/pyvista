@@ -1507,37 +1507,28 @@ CROP_TEST_CASES = {
 }
 
 
-@pytest.mark.parametrize('use_var_input', [True, False])
 @pytest.mark.parametrize(
-    ('arg_or_kwarg', 'kwarg_only', 'invalid_kwarg', 'match'),
+    ('required_kwarg', 'optional_kwarg', 'invalid_kwarg', 'match'),
     CROP_TEST_CASES.values(),
     ids=CROP_TEST_CASES.keys(),
 )
-def test_crop_var_input(
-    uncropped_image, arg_or_kwarg, kwarg_only, invalid_kwarg, match, use_var_input
-):
-    if 'margin' in arg_or_kwarg or 'margin' in kwarg_only:
+def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match):
+    if 'margin' in required_kwarg or 'margin' in optional_kwarg:
         # Need to modify input for this test since expected output otherwise is impossible to
         # achieve because the cropping is symmetric
         uncropped_image.offset = (-1, -1, -1)
-    if use_var_input and len(arg_or_kwarg) == 0:
-        pytest.xfail('Test case is keyword-only.')
 
-    args = ()
-    kwargs = kwarg_only.copy()
-    if use_var_input:
-        args = arg_or_kwarg.values()
-    else:
-        kwargs.update(arg_or_kwarg)
+    kwargs = optional_kwarg.copy()
+    kwargs.update(required_kwarg)
 
-    cropped = uncropped_image.crop(*args, **kwargs)
+    cropped = uncropped_image.crop(**kwargs)
     expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, modify_geometry=False)
     assert cropped.extent == expected_output.extent
     assert cropped == expected_output
 
     kwargs.update(invalid_kwarg)
     with pytest.raises(TypeError, match=re.escape(match)):
-        uncropped_image.crop(*args, **kwargs)
+        uncropped_image.crop(**kwargs)
 
 
 @pytest.mark.parametrize('scalars', [MASK_ARRAY_NAME, DATA_ARRAY_NAME])
