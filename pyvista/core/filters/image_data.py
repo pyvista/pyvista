@@ -452,11 +452,40 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_normalized_bounds(normalized_bounds_):
             _raise_error_kwargs_not_none('normalized_bounds')
-            return _validation.validate_array(
+            bounds = _validation.validate_array(
                 normalized_bounds_,
+                must_be_in_range=[0.0, 1.0],
                 must_have_length=6,
                 name='normalized_bounds',
             )
+
+            dims = np.array(self.dimensions)
+            # Calculate start and end ijk indices
+            xmin = int(np.floor(bounds[0] * dims[0]))
+            xmax = int(np.ceil(bounds[1] * dims[0])) - 1
+            ymin = int(np.floor(bounds[2] * dims[1]))
+            ymax = int(np.ceil(bounds[3] * dims[1])) - 1
+            zmin = int(np.floor(bounds[4] * dims[2]))
+            zmax = int(np.ceil(bounds[5] * dims[2])) - 1
+
+            # Clamp to image bounds
+            xmax = min(xmax, dims[0] - 1)
+            ymax = min(ymax, dims[1] - 1)
+            zmax = min(zmax, dims[2] - 1)
+
+            xmin = max(xmin, 0)
+            ymin = max(ymin, 0)
+            zmin = max(zmin, 0)
+
+            # adjust by image offset to get global extent
+            xmin += self.offset[0]
+            xmax += self.offset[0]
+            ymin += self.offset[1]
+            ymax += self.offset[1]
+            zmin += self.offset[2]
+            zmax += self.offset[2]
+
+            return np.array([xmin, xmax, ymin, ymax, zmin, zmax])
 
         def _voi_from_extent(extent_):
             _raise_error_kwargs_not_none('extent')

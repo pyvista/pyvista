@@ -1411,6 +1411,17 @@ CROPPED_MASK_IMAGE.point_data['scalars'] = np.ones((CROPPED_MASK_IMAGE.n_points,
 MASK_ARRAY_NAME = 'mask'
 DATA_ARRAY_NAME = 'data'
 
+CROP_FACTOR = np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION
+
+NORMALIZED_BOUNDS = (
+    CROPPED_OFFSET[0] / UNCROPPED_DIMENSION[0],
+    (CROPPED_OFFSET[0] + CROPPED_DIMENSIONS[0]) / UNCROPPED_DIMENSION[0],
+    CROPPED_OFFSET[1] / UNCROPPED_DIMENSION[1],
+    (CROPPED_OFFSET[1] + CROPPED_DIMENSIONS[1]) / UNCROPPED_DIMENSION[1],
+    CROPPED_OFFSET[2] / UNCROPPED_DIMENSION[2],
+    (CROPPED_OFFSET[2] + CROPPED_DIMENSIONS[2]) / UNCROPPED_DIMENSION[2],
+)
+
 
 @pytest.fixture
 def uncropped_image():
@@ -1444,16 +1455,22 @@ def create_mask_array_from_extents(outer_extent, inner_extent):
 
 CROP_TEST_CASES = {
     'factor_float': (
-        dict(factor=np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION),
+        dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
         "['offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",
     ),
     'factor_vector': (
-        dict(factor=np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION),
+        dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
         '\nGot: background_value=0.0',
+    ),
+    'normalized_bounds': (
+        dict(normalized_bounds=NORMALIZED_BOUNDS),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'offset', 'dimensions', 'extent', 'mask', 'background_value']",
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
@@ -1530,5 +1547,14 @@ def test_crop_raises():
         'Crop with mask failed, no foreground values found '
         "in array 'data' using background value 0.0."
     )
+    with pytest.raises(ValueError, match=match):
+        img.crop()
+
+    match = 'Offset and dimensions must both specified together.'
+    with pytest.raises(TypeError, match=match):
+        img.crop(offset=(1, 2, 3))
+
+    img = img.points_to_cells()
+    match = "Scalars 'data' must be associated with point data. Got cell data instead."
     with pytest.raises(ValueError, match=match):
         img.crop()
