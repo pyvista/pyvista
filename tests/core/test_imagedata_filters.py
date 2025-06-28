@@ -1400,7 +1400,7 @@ def test_select_values_dtype(uniform, dtype):
     assert selected.active_scalars.dtype == dtype
 
 
-UNCROPPED_DIMENSION = (10, 11, 12)
+UNCROPPED_DIMENSION = (10, 12, 12)
 CROPPED_OFFSET = (1, 3, 4)
 CROPPED_DIMENSIONS = (6, 4, 2)
 CROPPED_MASK_IMAGE = pv.ImageData(offset=CROPPED_OFFSET, dimensions=CROPPED_DIMENSIONS)
@@ -1412,6 +1412,8 @@ MASK_ARRAY_NAME = 'mask'
 DATA_ARRAY_NAME = 'data'
 
 CROP_FACTOR = np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION
+
+MARGIN = ((np.array(UNCROPPED_DIMENSION) - CROPPED_DIMENSIONS) / 2).astype(int)
 
 NORMALIZED_BOUNDS = (
     CROPPED_OFFSET[0] / UNCROPPED_DIMENSION[0],
@@ -1458,7 +1460,7 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",
+        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
     ),
     'factor_vector': (
         dict(factor=CROP_FACTOR),
@@ -1466,29 +1468,35 @@ CROP_TEST_CASES = {
         dict(background_value=0.0),
         '\nGot: background_value=0.0',
     ),
+    'margin_vector': (
+        dict(margin=MARGIN),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
+    ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'mask', 'background_value']",
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'background_value']",
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",
+        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
     ),
     'dims_offset': (
         {},
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         dict(background_value=0.0),
-        "['factor', 'extent', 'normalized_bounds', 'mask', 'background_value']",
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'background_value']",
     ),
     'mask_str': (
         dict(mask=MASK_ARRAY_NAME),
         dict(background_value=0.0),
         dict(offset=(0, 0, 0)),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds']",
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds']",
     ),
     'mask_img': (
         dict(mask=CROPPED_MASK_IMAGE),
@@ -1508,6 +1516,10 @@ CROP_TEST_CASES = {
 def test_crop_var_input(
     uncropped_image, arg_or_kwarg, kwarg_only, invalid_kwarg, match, use_var_input
 ):
+    if 'margin' in arg_or_kwarg or 'margin' in kwarg_only:
+        # Need to modify input for this test since expected output otherwise is impossible to
+        # achieve because the cropping is symmetric
+        uncropped_image.offset = (-1, -1, -1)
     if use_var_input and len(arg_or_kwarg) == 0:
         pytest.xfail('Test case is keyword-only.')
 
@@ -1520,6 +1532,7 @@ def test_crop_var_input(
 
     cropped = uncropped_image.crop(*args, **kwargs)
     expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, modify_geometry=False)
+    assert cropped.extent == expected_output.extent
     assert cropped == expected_output
 
     kwargs.update(invalid_kwarg)

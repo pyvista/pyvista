@@ -297,6 +297,7 @@ class ImageDataFilters(DataSetFilters):
         var_input: str | ImageData | VectorLike[float] | None = None,
         *,
         factor: float | None = None,
+        margin: int | None = None,
         offset: VectorLike[int] | None = None,
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
@@ -327,6 +328,9 @@ class ImageDataFilters(DataSetFilters):
             - For length-6 integer vectors, this is equivalent to using the  ``extent`` parameter.
             - For length-6 float vectors, this is equivalent to using the  ``normalized_bounds``
               parameter.
+
+        margin : int, optional
+            Margin to remove from each axis.
 
         factor : float, optional
             Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
@@ -367,6 +371,7 @@ class ImageDataFilters(DataSetFilters):
         """
         MUTUALLY_EXCLUSIVE_KWARGS = dict(
             factor=factor,
+            margin=margin,
             offset=offset,
             dimensions=dimensions,
             extent=extent,
@@ -509,6 +514,25 @@ class ImageDataFilters(DataSetFilters):
             new_offset = center - (new_dimensions // 2)
             return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
+        def _voi_from_margin(margin_):
+            _raise_error_kwargs_not_none('margin')
+            mx, my, mz = _validation.validate_array3(
+                margin_,
+                broadcast=True,
+                must_be_nonnegative=True,
+                name='crop margin',
+            )
+            # Apply margins symmetrically
+            extent = self.extent
+            return [
+                extent[0] + mx,
+                extent[1] - mx,
+                extent[2] + my,
+                extent[3] - my,
+                extent[4] + mz,
+                extent[5] - mz,
+            ]
+
         def _voi_from_dimensions_and_offset(dimensions, offset):
             if dimensions is not None:
                 _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
@@ -537,13 +561,18 @@ class ImageDataFilters(DataSetFilters):
                 )
 
                 if array.size in (0, 1, 3):
-                    voi = _voi_from_factor(array)
+                    if np.issubdtype(array.dtype, np.floating):
+                        voi = _voi_from_factor(array)
+                    else:
+                        voi = _voi_from_margin(array)
                 elif np.issubdtype(array.dtype, np.floating):
                     voi = _voi_from_normalized_bounds(array)
                 else:
                     voi = _voi_from_extent(array)
         elif factor is not None:
             voi = _voi_from_factor(factor)
+        elif margin is not None:
+            voi = _voi_from_margin(margin)
         elif mask is not None:
             voi = _voi_from_mask(mask)
         elif normalized_bounds is not None:
