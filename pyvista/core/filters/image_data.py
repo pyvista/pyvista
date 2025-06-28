@@ -305,41 +305,51 @@ class ImageDataFilters(DataSetFilters):
         background_value: float | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
-        """Crop this image using a mask or volume of interest.
+        """Crop this image to remove points at the edges.
 
         There are several ways to crop:
 
-        #. Crop the foreground using scalar data with the ``mask`` and ``background_value``
-           parameters.
-        #. Specify the cropped ``extent`` explicitly, or equivalently, specify the ``offset`` and
-           ``dimensions`` separately.
-        #. Specify ``normalized_bounds`` relative to the input. These are floats between ``0.0``
-           and ``1.0`` that define  a box relative to the input size. Has the form
-           ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+        #. Use ``factor`` to crop a portion of the image symmetrically.
+        #. Use ``margin`` to remove pixels from the image border symmetrically.
+        #. Use ``offset`` and ``dimensions`` to explicitly crop to the specified
+           :attr:`~pyvista.ImageData.offset` and :attr:`~pyvista.ImageData.dimensions`.
+        #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
+        #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
+        #. Use ``mask`` and ``background_value`` to crop the foreground using scalar values.
+
+        By default, this filter uses ``mask`` cropping with the current active scalars when no
+        arguments are provided.
+
+        .. versionadded:: 0.46
 
         Parameters
         ----------
-        margin : int, optional
-            Margin to remove from each axis.
+        margin : int | VectorLike[int], optional
+            Margin to remove from each end of each axis. Use a single integer to remove a
+            uniform number of points, or use a vector with three integers to crop each xyz-axis
+            independently.
 
         factor : float, optional
             Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
-            keep along each axis.
+            keep along each axis. Use a single float for uniform cropping or a vector of three
+            floats for cropping each xyz-axis independently.
 
         offset : VectorLike[int], optional
-            Length-3 vector specifying the :attr:`~pyvista.ImageData.offset` indices where the
-            cropping region originates. The ``dimensions`` must also be specified.
+            Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.offset` indices
+            where the cropping region originates. The ``dimensions`` must also be specified.
 
         dimensions : VectorLike[int], optional
-            Length-3 vector specifying the :attr:`~pyvista.ImageData.dimensions` of the cropping
-            region. The ``offset`` must also be specified.
+            Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.dimensions` of
+            the cropping region. The ``offset`` must also be specified.
 
         extent : VectorLike[int], optional
-            Length-3 vector specifying the full :attr:`~pyvista.ImageData.extent` of the cropping
-            region.
+            Length-3 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
+            the cropping region.
 
         normalized_bounds : VectorLike[float], optional
-            Normalized bounds
+            Normalized bounds relative to the input. These are floats between ``0.0``
+            and ``1.0`` that define a box relative to the input size. Has the form
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         mask : str | ImageData, optional
             Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
