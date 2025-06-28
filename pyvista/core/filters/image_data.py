@@ -224,6 +224,7 @@ class ImageDataFilters(DataSetFilters):
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
+        modify_geometry: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -256,6 +257,16 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
+        modify_geometry : bool, default: True
+            Modify the geometry of the extracted subset. By default,
+
+            - the :attr:`~pyvista.ImageData.origin` of the extracted subset is set to the minimum
+              bounds of the subset, and
+            - the :attr:`~pyvista.ImageData.offset` of the extracted subset is reset to
+              ``(0, 0, 0)``.
+
+            .. versionadded:: 0.46
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -272,17 +283,198 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
-        # Adjust for the confusing issue with the extents
-        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
-        fixed.origin = result.bounds[::2]
-        fixed.spacing = result.spacing
-        fixed.dimensions = result.dimensions
-        fixed.point_data.update(result.point_data)
-        fixed.cell_data.update(result.cell_data)
-        fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result, deep=True)
-        return fixed
+        if modify_geometry:
+            # Adjust for the confusing issue with the extents
+            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+            result.origin = result.bounds[::2]
+            result.offset = (0, 0, 0)
+        return result
+
+    def crop(
+        self: ImageData,
+        var_input: str | ImageData | VectorLike[float] | None = None,
+        *,
+        offset: VectorLike[int] | None = None,
+        dimensions: VectorLike[int] | None = None,
+        extent: VectorLike[int] | None = None,
+        normalized_bounds: VectorLike[float] | None = None,
+        mask: str | ImageData | None = None,
+        background_value: float | None = None,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Crop this image using a mask or volume of interest.
+
+        There are several ways to crop:
+
+        #. Crop the foreground using scalar data with the ``mask`` and ``background_value``
+           parameters.
+        #. Specify the cropped ``extent`` explicitly, or equivalently, specify the ``offset`` and
+           ``dimensions`` separately.
+        #. Specify ``normalized_bounds`` relative to the input. These are floats between ``0.0``
+           and ``1.0`` that define  a box relative to the input size. Has the form
+           ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        Parameters
+        ----------
+        var_input : str | ImageData | VectorLike[float], optional
+            Variable input used for cropping. The behavior of the filter depends on the input type:
+            - For string or :class:`~pyvista.ImageData` inputs, this is equivalent to using the
+              ``mask`` parameter
+            - For length-6 integer vectors, this is equivalent to using the  ``extent`` parameter.
+            - For length-6 float vectors, this is equivalent to using the  ``normalized_bounds``
+              parameter.
+
+        offset : VectorLike[int]
+            Length-3 vector specifying the :attr:`~pyvista.ImageData.offset` indices where the
+            cropping region originates. The ``dimensions`` must also be specified.
+
+        dimensions
+            Length-3 vector specifying the :attr:`~pyvista.ImageData.dimensions` of the cropping
+            region. The ``offset`` must also be specified.
+
+        extent
+            Length-3 vector specifying the full :attr:`~pyvista.ImageData.extent` of the cropping
+            region.
+
+        normalized_bounds
+            Normalized bounds
+
+        mask : str | ImageData, optional
+            Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
+            be used, in which case the other image's active scalars are used as the mask.
+            This mesh will be cropped to the foreground, i.e. values that are not equal to
+            the specified ``background_value``.
+
+        background_value : float, optional
+            Value considered to be the background. Only valid when using a mask to crop the image.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Cropped image.
+
+        """
+
+        def _args_are_none(*args):
+            return all(val is None for val in args)
+
+        def _raise_error_args_not_none(initial_msg: str, arg_names: list[str]):
+            all_args = ', '.join(arg_names)
+            msg = f'{initial_msg}, the parameters\n{all_args} cannot not be set.'
+            raise TypeError(msg)
+
+        def _validate_scalars(mesh: ImageData, scalars: str | None = None):
+            if scalars is None:
+                set_default_active_scalars(mesh)  # type: ignore[arg-type]
+                field, scalars = mesh.active_scalars_info  # type: ignore[attr-defined]
+            else:
+                field = mesh.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            if field != FieldAssociation.POINT:
+                msg = (
+                    f"Scalars '{scalars}' must be associated with point data. "
+                    f'Got {field.name.lower()} data instead.'
+                )
+                raise ValueError(msg)
+            return mesh.get_array(scalars, preference=field).reshape(mesh.dimensions[::-1])
+
+        def _voi_from_array(arr):
+            default_background_value = 0.0
+            background = background_value or default_background_value
+            coords = np.argwhere(arr != background)
+            if coords.size == 0:
+                msg = 'No foreground found'
+                raise ValueError(msg)
+
+            zmin, ymin, xmin = coords.min(axis=0)
+            zmax, ymax, xmax = coords.max(axis=0)
+            return xmin, xmax, ymin, ymax, zmin, zmax
+
+        def _voi_from_mask(mask_: str | ImageData, *, from_var_input: bool):
+            args = offset, dimensions, extent, normalized_bounds
+            arg_names = ['offset', 'dimensions', 'extent', 'normalized_bounds']
+            initial_msg = 'When cropping with a mask as the variable argument'
+            if from_var_input and not _args_are_none(*(*args, mask)):
+                _raise_error_args_not_none(initial_msg, arg_names=[*arg_names, 'mask'])
+            elif not _args_are_none(*args):
+                _raise_error_args_not_none(initial_msg, arg_names=arg_names)
+            if isinstance(mask_, str):
+                mesh = self
+                scalars = mask_
+            else:
+                mesh = mask_
+                scalars = None
+            mask_array = _validate_scalars(mesh, scalars)
+            voi = np.array(_voi_from_array(mask_array))
+            voi[[0, 1]] += mesh.offset[0]
+            voi[[2, 3]] += mesh.offset[1]
+            voi[[4, 5]] += mesh.offset[2]
+            return voi
+
+        def _voi_from_normalized_bounds(normalized_bounds_, *, from_var_input: bool):
+            args = offset, dimensions, extent, mask, background_value
+            arg_names = ['offset', 'dimensions', 'extent', 'mask', 'background_value']
+            initial_msg = 'When cropping with normalized bounds as the variable argument'
+            if from_var_input and not _args_are_none(*(*args, normalized_bounds)):
+                _raise_error_args_not_none(
+                    initial_msg, arg_names=[*arg_names, 'normalized_bounds']
+                )
+            elif not _args_are_none(*args):
+                _raise_error_args_not_none(initial_msg, arg_names=arg_names)
+            return normalized_bounds_
+
+        def _voi_from_extent(extent_, *, from_var_input: bool):
+            args = offset, dimensions, normalized_bounds, mask, background_value
+            arg_names = ['offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']
+            initial_msg = 'When cropping with extent as the variable argument'
+            if from_var_input and not _args_are_none(*(*args, extent)):
+                _raise_error_args_not_none(initial_msg, arg_names=[*arg_names, 'extent'])
+            elif not _args_are_none(*args):
+                _raise_error_args_not_none(initial_msg, arg_names=arg_names)
+            return extent_
+
+        def _voi_from_dimensions_and_offset(dimensions, offset):
+            if dimensions is None or offset is None:
+                msg = 'Offset and dimensions must both specified together.'
+                raise TypeError(msg)
+            return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
+
+        # EXTENT_ARGS = dict(extent=extent)
+        # OFFSET_DIMENSIONS_ARGS = dict(offset=offset, dimensions=dimensions)
+        # MASK_ARGS = dict(mask=mask, background_value=background_value)
+        # NORMALIZED_BOUNDS_ARGS = dict(normalized_bounds=normalized_bounds)
+
+        if _args_are_none(var_input, offset, dimensions, extent, normalized_bounds, mask):
+            # Nothing specified, crop foreground using active scalars
+            voi = _voi_from_array(_validate_scalars(self))
+        elif var_input is not None:
+            if isinstance(var_input, (str, pyvista.ImageData)):
+                voi = _voi_from_mask(var_input, from_var_input=True)
+            else:
+                # Input must be an array
+                array = _validation.validate_arrayN(
+                    var_input,
+                    must_have_length=6,
+                    must_have_dtype=(np.floating, np.integer),
+                    name='crop array',
+                )
+                if np.issubdtype(array.dtype, np.floating):
+                    voi = _voi_from_normalized_bounds(array, from_var_input=True)
+                else:
+                    voi = _voi_from_extent(array, from_var_input=True)
+        elif mask is not None:
+            voi = _voi_from_mask(mask, from_var_input=False)
+        elif normalized_bounds is not None:
+            voi = _voi_from_normalized_bounds(normalized_bounds, from_var_input=False)
+        elif extent:
+            voi = _voi_from_extent(extent, from_var_input=False)
+        else:
+            # Only option left is to specify dimensions and offset
+            voi = _voi_from_dimensions_and_offset(dimensions, offset)
+
+        return self.extract_subset(voi, modify_geometry=False, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917

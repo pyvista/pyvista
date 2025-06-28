@@ -1398,3 +1398,90 @@ def test_select_values_dtype(uniform, dtype):
     uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
     selected = uniform.select_values([0])
     assert selected.active_scalars.dtype == dtype
+
+
+CROPPED_OFFSET = (1, 3, 5)
+CROPPED_DIMENSIONS = (6, 4, 2)
+CROPPED_MASK_IMAGE = pv.ImageData(offset=CROPPED_OFFSET, dimensions=CROPPED_DIMENSIONS)
+CROPPED_EXTENT = CROPPED_MASK_IMAGE.extent
+
+# Add scalar data, here we just fill the mask with foreground
+CROPPED_MASK_IMAGE.point_data['scalars'] = np.ones((CROPPED_MASK_IMAGE.n_points,))
+MASK_ARRAY_NAME = 'mask'
+
+
+@pytest.fixture
+def uncropped_image():
+    mesh = pv.ImageData(dimensions=(10, 11, 12))
+    mesh.point_data['data'] = range(mesh.n_points)
+
+    array = create_mask_array_from_extents(mesh.extent, CROPPED_EXTENT)
+    mesh[MASK_ARRAY_NAME] = array
+    return mesh
+
+
+def create_mask_array_from_extents(outer_extent, inner_extent):
+    """
+    Create an ImageData with a binary mask array.
+
+    Parameters
+    ----------
+    outer_extent : tuple[int]
+        The extent of the entire image: (xmin, xmax, ymin, ymax, zmin, zmax).
+    inner_extent : tuple[int]
+        The extent defining the foreground region within the outer_extent.
+
+    Returns
+    -------
+    ImageData
+        The mask image, with 1s inside the inner_extent and 0s elsewhere.
+    """
+    # derive dimensions from the outer extent
+    dims = (
+        outer_extent[1] - outer_extent[0] + 1,
+        outer_extent[3] - outer_extent[2] + 1,
+        outer_extent[5] - outer_extent[4] + 1,
+    )
+    offset = (
+        outer_extent[0],
+        outer_extent[2],
+        outer_extent[4],
+    )
+    img = pv.ImageData(dimensions=dims, offset=offset)
+
+    # initialize mask to 0
+    mask = np.zeros(img.n_points, dtype=int)
+
+    # identify foreground points
+    for i in range(img.n_points):
+        x, y, z = img.points[i]
+        if (
+            inner_extent[0] <= x <= inner_extent[1]
+            and inner_extent[2] <= y <= inner_extent[3]
+            and inner_extent[4] <= z <= inner_extent[5]
+        ):
+            mask[i] = 1
+
+    return mask
+
+
+@pytest.mark.parametrize('use_var_input', [True, False])
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(extent=CROPPED_EXTENT),
+        dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
+        dict(mask=MASK_ARRAY_NAME),
+        dict(mask=CROPPED_MASK_IMAGE),
+    ],
+    ids=['extent', 'dims_offset', 'mask_str', 'mask_img'],
+)
+def test_crop(uncropped_image, kwargs, use_var_input):
+    if use_var_input and list(kwargs.keys()) == ['dimensions', 'offset']:
+        pytest.xfail('dimensions and offsets are kwargs only.')
+
+    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, modify_geometry=False)
+    cropped = (
+        uncropped_image.crop(*kwargs.values()) if use_var_input else uncropped_image.crop(**kwargs)
+    )
+    assert cropped == expected_output
