@@ -1516,14 +1516,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> mesh.point_data.active_texture_coordinates
-        pyvista_ndarray([[ 0.,  0.],
-                         [ 1.,  0.],
-                         [ 1.,  1.],
+        pyvista_ndarray([[-0.,  0.],
+                         [ 0.,  0.],
                          [ 0.,  1.],
-                         [-0.,  0.],
                          [-0.,  1.],
+                         [-1.,  0.],
                          [-1.,  1.],
-                         [-1.,  0.]], dtype=float32)
+                         [ 1.,  1.],
+                         [ 1.,  0.]], dtype=float32)
 
         """
         self._raise_no_texture_coordinates()
