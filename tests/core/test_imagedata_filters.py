@@ -1487,8 +1487,8 @@ CROP_TEST_CASES = {
         "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
     ),
     'dims_offset': (
-        {},
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
+        {},
         dict(background_value=0.0),
         "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'background_value']",
     ),
@@ -1502,7 +1502,7 @@ CROP_TEST_CASES = {
         dict(mask=CROPPED_MASK_IMAGE),
         {},
         dict(offset=(0, 0, 0)),
-        'When cropping with mask',
+        'When cropping with mask, the following parameters cannot be set:',
     ),
 }
 
