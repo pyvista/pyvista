@@ -295,13 +295,14 @@ class ImageDataFilters(DataSetFilters):
     def crop(  # type: ignore[misc]
         self: ImageData,
         *,
-        factor: float | None = None,
-        margin: int | None = None,
+        factor: float | VectorLike[float] | None = None,
+        margin: int | VectorLike[int] | None = None,
         offset: VectorLike[int] | None = None,
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
         normalized_bounds: VectorLike[float] | None = None,
         mask: str | ImageData | None = None,
+        padding: int | VectorLike[int] | None = None,
         background_value: float | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
@@ -357,6 +358,20 @@ class ImageDataFilters(DataSetFilters):
             This mesh will be cropped to the foreground, i.e. values that are not equal to
             the specified ``background_value``.
 
+        padding : int | VectorLike[int], optional
+            Padding to add to foreground region `before` cropping. Only valid when using a mask to
+            crop the image. Specify:
+
+            - A single value to pad all boundaries equally.
+            - Two values, one for each ``(X, Y)`` axis, to apply symmetric padding to
+              each axis independently.
+            - Three values, one for each ``(X, Y, Z)`` axis, to apply symmetric padding
+              to each axis independently.
+            - Four values, one for each ``(-X, +X, -Y, +Y)`` boundary, to apply
+              padding to each boundary independently.
+            - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
+              padding to each boundary independently.
+
         background_value : float, optional
             Value considered to be the background. Only valid when using a mask to crop the image.
 
@@ -377,8 +392,10 @@ class ImageDataFilters(DataSetFilters):
             extent=extent,
             normalized_bounds=normalized_bounds,
             mask=mask,
+            padding=padding,
             background_value=background_value,
         )
+        ALLOWED_MASK_ARG_NAMES = ['background_value', 'padding']
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
@@ -428,10 +445,15 @@ class ImageDataFilters(DataSetFilters):
 
             zmin, ymin, xmin = coords.min(axis=0)
             zmax, ymax, xmax = coords.max(axis=0)
-            return xmin, xmax, ymin, ymax, zmin, zmax
+            voi = xmin, xmax, ymin, ymax, zmin, zmax
+
+            if padding is not None:
+                pad = _validate_padding(padding)
+                return _pad_extent(voi, pad)
+            return voi
 
         def _voi_from_mask(mask_: str | ImageData):
-            _raise_error_kwargs_not_none('mask', also_exclude=['background_value'])
+            _raise_error_kwargs_not_none('mask', also_exclude=ALLOWED_MASK_ARG_NAMES)
             _validation.check_instance(mask_, (pyvista.ImageData, str), name='mask')
             if isinstance(mask_, str):
                 mesh = self
@@ -484,7 +506,7 @@ class ImageDataFilters(DataSetFilters):
             zmin += self.offset[2]
             zmax += self.offset[2]
 
-            return np.array([xmin, xmax, ymin, ymax, zmin, zmax])
+            return xmin, xmax, ymin, ymax, zmin, zmax
 
         def _voi_from_extent(extent_):
             _raise_error_kwargs_not_none('extent')
@@ -543,7 +565,8 @@ class ImageDataFilters(DataSetFilters):
             return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
 
         mutually_exclusive_for_mask = MUTUALLY_EXCLUSIVE_KWARGS.copy()
-        mutually_exclusive_for_mask.pop('background_value')
+        for arg in ALLOWED_MASK_ARG_NAMES:
+            mutually_exclusive_for_mask.pop(arg)
 
         if all(val is None for val in mutually_exclusive_for_mask.values()):
             # Nothing specified, crop foreground using active scalars
@@ -564,6 +587,12 @@ class ImageDataFilters(DataSetFilters):
         else:
             msg = 'Invalid input.'
             raise TypeError(msg)
+
+        # Ensure dimensions are all at least one
+        voi = np.array(voi)
+        voi[1] = max(voi[0:2])
+        voi[3] = max(voi[2:4])
+        voi[5] = max(voi[4:6])
 
         return self.extract_subset(voi, modify_geometry=False, progress_bar=progress_bar)
 
@@ -2706,38 +2735,7 @@ class ImageDataFilters(DataSetFilters):
             )
             raise ValueError(msg)
 
-        # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
-        pad_sz = np.atleast_1d(pad_size)
-        if pad_sz.ndim != 1:
-            msg = f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.'
-            raise ValueError(msg)
-        if not np.issubdtype(pad_sz.dtype, np.integer):
-            msg = f'Pad size must be integers. Got dtype {pad_sz.dtype.name}.'
-            raise TypeError(msg)
-        if np.any(pad_sz < 0):
-            msg = f'Pad size cannot be negative. Got {pad_size}.'
-            raise ValueError(msg)
-
-        length = len(pad_sz)
-        if length == 1:
-            all_pad_sizes = np.broadcast_to(pad_sz, (6,)).copy()
-        elif length == 2:
-            all_pad_sizes = np.array(
-                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], 0, 0),
-            )
-        elif length == 3:
-            all_pad_sizes = np.array(
-                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], pad_sz[2], pad_sz[2]),
-            )
-        elif length == 4:
-            all_pad_sizes = np.array(
-                (pad_sz[0], pad_sz[1], pad_sz[2], pad_sz[3], 0, 0),
-            )
-        elif length == 6:
-            all_pad_sizes = pad_sz
-        else:
-            msg = f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.'
-            raise ValueError(msg)
+        all_pad_sizes = _validate_padding(pad_size)
 
         # Combine size 2 by 2 to get a (3, ) shaped array
         dims_mask, _ = self._validate_dimensional_operation(
@@ -2746,19 +2744,7 @@ class ImageDataFilters(DataSetFilters):
             operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
-
-        # Define new extents after padding
-        pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_sizes
-        ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = self.GetExtent()  # type: ignore[attr-defined]
-
-        padded_extents = (
-            ext_xn - pad_xn,  # minX
-            ext_xp + pad_xp,  # maxX
-            ext_yn - pad_yn,  # minY
-            ext_yp + pad_yp,  # maxY
-            ext_zn - pad_zn,  # minZ
-            ext_zp + pad_zp,  # maxZ
-        )
+        padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)  # type: ignore[attr-defined]
 
         # Validate pad value
         pad_multi_component = None  # Flag for multi-component constants
@@ -4217,3 +4203,53 @@ class ImageDataFilters(DataSetFilters):
         output.copy_structure(self)
         output[array_name] = array_out
         return output
+
+
+def _validate_padding(pad_size):
+    # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
+    padding = np.atleast_1d(pad_size)
+    if padding.ndim != 1:
+        msg = f'Pad size must be one dimensional. Got {padding.ndim} dimensions.'
+        raise ValueError(msg)
+    if not np.issubdtype(padding.dtype, np.integer):
+        msg = f'Pad size must be integers. Got dtype {padding.dtype.name}.'
+        raise TypeError(msg)
+    if np.any(padding < 0):
+        msg = f'Pad size cannot be negative. Got {pad_size}.'
+        raise ValueError(msg)
+
+    length = len(padding)
+    if length == 1:
+        all_pad_sizes = np.broadcast_to(padding, (6,)).copy()
+    elif length == 2:
+        all_pad_sizes = np.array(
+            (padding[0], padding[0], padding[1], padding[1], 0, 0),
+        )
+    elif length == 3:
+        all_pad_sizes = np.array(
+            (padding[0], padding[0], padding[1], padding[1], padding[2], padding[2]),
+        )
+    elif length == 4:
+        all_pad_sizes = np.array(
+            (padding[0], padding[1], padding[2], padding[3], 0, 0),
+        )
+    elif length == 6:
+        all_pad_sizes = padding
+    else:
+        msg = f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.'
+        raise ValueError(msg)
+    return all_pad_sizes
+
+
+def _pad_extent(extent, padding):
+    pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = padding
+    ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = extent  # type: ignore[attr-defined]
+
+    return (
+        ext_xn - pad_xn,  # minX
+        ext_xp + pad_xp,  # maxX
+        ext_yn - pad_yn,  # minY
+        ext_yp + pad_yp,  # maxY
+        ext_zn - pad_zn,  # minZ
+        ext_zp + pad_zp,  # maxZ
+    )

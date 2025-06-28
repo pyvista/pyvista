@@ -1460,7 +1460,7 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
+        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
     'factor_vector': (
         dict(factor=CROP_FACTOR),
@@ -1472,25 +1472,25 @@ CROP_TEST_CASES = {
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
+        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'background_value']",
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",  # noqa: E501
+        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
     'dims_offset': (
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'background_value']",
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
     'mask_str': (
         dict(mask=MASK_ARRAY_NAME),
@@ -1541,6 +1541,28 @@ def test_crop_mask(uncropped_image, background_value, scalars):
         assert cropped.dimensions == uncropped_image.dimensions
     else:
         assert all(np.array(cropped.dimensions) < np.array(uncropped_image.dimensions))
+
+
+@pytest.mark.parametrize(
+    ('padding', 'extent'),
+    [
+        (0, (1, 1, 1, 1, 1, 1)),
+        (1, (0, 2, 0, 2, 0, 2)),
+        ((1, 1, 1), (0, 2, 0, 2, 0, 2)),
+        ((0, 1, 2), (1, 1, 0, 2, 0, 2)),
+        ((0, 0, 0, 1, 1, 1), (1, 1, 1, 2, 0, 2)),
+    ],
+)
+def test_crop_mask_padding(padding, extent):
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros(dims, dtype=int)
+    arr[1, 1, 1] = 1
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr.ravel()
+
+    cropped = mask.crop(padding=padding)
+    assert cropped.extent == extent
 
 
 def test_crop_raises():
