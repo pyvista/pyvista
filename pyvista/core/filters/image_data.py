@@ -2741,7 +2741,7 @@ class ImageDataFilters(DataSetFilters):
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
         padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)  # type: ignore[attr-defined]
@@ -4243,7 +4243,7 @@ def _validate_padding(pad_size):
 
 def _pad_extent(extent, padding):
     pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = padding
-    ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = extent  # type: ignore[attr-defined]
+    ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = extent
 
     return (
         ext_xn - pad_xn,  # minX
