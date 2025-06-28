@@ -380,8 +380,9 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
 
-        background_value : float, optional
-            Value considered to be the background. Only valid when using a mask to crop the image.
+        background_value : float | VectorLike[float], optional
+            Value or multi-component vector considered to be the background. Only valid when using
+            a mask to crop the image.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -390,6 +391,10 @@ class ImageDataFilters(DataSetFilters):
         -------
         ImageData
             Cropped image.
+
+        Examples
+        --------
+        >>> import pyvista as pv
 
         """
         MUTUALLY_EXCLUSIVE_KWARGS = dict(
@@ -430,24 +435,44 @@ class ImageDataFilters(DataSetFilters):
                     f'Got {field.name.lower()} data instead.'
                 )
                 raise ValueError(msg)
-            return mesh.get_array(scalars, preference=field).reshape(
-                mesh.dimensions[::-1]
-            ), scalars
+            return field, scalars
 
-        def _voi_from_array(arr, array_name):
-            default_value = 0.0
+        def _voi_from_mask(mask_: str | ImageData):
+            _raise_error_kwargs_not_none('mask', also_exclude=ALLOWED_MASK_ARG_NAMES)
+            _validation.check_instance(mask_, (pyvista.ImageData, str), name='mask')
+
+            # Validate scalars
+            if isinstance(mask_, str):
+                mesh = self
+                scalars = mask_
+            else:
+                mesh = mask_
+                scalars = None
+            field, scalars = _validate_scalars(mesh, scalars)
+
+            # Validate background
+            default_background = 0.0
             value = (
-                default_value
+                default_background
                 if background_value is None
                 else _validation.validate_number(background_value, name='background_value')
             )
+            background = value or default_background
 
-            background = value or default_value
-            coords = np.argwhere(arr != background)
+            # Binarize scalars
+            binarized = mesh.select_values(
+                scalars=scalars, values=background, invert=True, replacement_value=1.0
+            )
+            mask_array = get_array(binarized, name=scalars, preference=field).reshape(
+                binarized.dimensions[::-1]
+            )
+
+            # Get foreground voi
+            coords = np.argwhere(mask_array)
             if coords.size == 0:
                 msg = (
                     f'Crop with mask failed, no foreground values found in array '
-                    f'{array_name!r} using background value {background}.'
+                    f'{scalars!r} using background value {background}.'
                 )
                 raise ValueError(msg)
 
@@ -457,22 +482,10 @@ class ImageDataFilters(DataSetFilters):
 
             if padding is not None:
                 pad = _validate_padding(padding)
-                return _pad_extent(voi, pad)
-            return voi
-
-        def _voi_from_mask(mask_: str | ImageData):
-            _raise_error_kwargs_not_none('mask', also_exclude=ALLOWED_MASK_ARG_NAMES)
-            _validation.check_instance(mask_, (pyvista.ImageData, str), name='mask')
-            if isinstance(mask_, str):
-                mesh = self
-                scalars = mask_
-            else:
-                mesh = mask_
-                scalars = None
-            mask_array, scalars = _validate_scalars(mesh, scalars)
-            voi = np.array(_voi_from_array(mask_array, scalars))
+                voi = _pad_extent(voi, pad)
 
             # Add offset
+            voi = np.array(voi)
             voi[[0, 1]] += mesh.offset[0]
             voi[[2, 3]] += mesh.offset[1]
             voi[[4, 5]] += mesh.offset[2]
@@ -562,8 +575,7 @@ class ImageDataFilters(DataSetFilters):
 
         if all(val is None for val in mutually_exclusive_for_mask.values()):
             # Nothing specified, crop foreground using active scalars
-            mask_array, scalars = _validate_scalars(self)
-            voi = _voi_from_array(mask_array, scalars)
+            voi = _voi_from_mask(self)
         elif factor is not None:
             voi = _voi_from_factor(factor)
         elif margin is not None:
