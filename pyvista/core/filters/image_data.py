@@ -360,7 +360,7 @@ class ImageDataFilters(DataSetFilters):
             Cropped image.
 
         """
-        mutually_exclusive_args = dict(
+        MUTUALLY_EXCLUSIVE_KWARGS = dict(
             offset=offset,
             dimensions=dimensions,
             extent=extent,
@@ -374,18 +374,21 @@ class ImageDataFilters(DataSetFilters):
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             initial_msg = f'When cropping with {arg_name}'
-            args_to_check = mutually_exclusive_args.copy()
             if var_input:
                 initial_msg += ' as the variable argument'
-            else:
-                args_to_check = mutually_exclusive_args.copy()
-                for arg in [arg_name, *also_exclude]:
-                    args_to_check.pop(arg)
 
-            if not _args_are_none(*args_to_check.values()):
-                arg_names = ', '.join(args_to_check.keys())
-                msg = f'{initial_msg}, the parameters:\n{arg_names} cannot not be set.'
-                raise TypeError(msg)
+            args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
+            for arg in [arg_name, *also_exclude]:
+                args_to_check.pop(arg)
+
+            for key, val in args_to_check.items():
+                if val is not None:
+                    msg = (
+                        f'{initial_msg}, the following parameters cannot be set:\n'
+                        f'{list(args_to_check.keys())}.'
+                        f'Got: {key}={val}'
+                    )
+                    raise TypeError(msg)
 
         def _validate_scalars(mesh: ImageData, scalars: str | None = None):
             if scalars is None:
@@ -401,8 +404,14 @@ class ImageDataFilters(DataSetFilters):
             return mesh.get_array(scalars, preference=field).reshape(mesh.dimensions[::-1])
 
         def _voi_from_array(arr):
-            default_background_value = 0.0
-            background = background_value or default_background_value
+            default_value = 0.0
+            value = (
+                default_value
+                if background_value is None
+                else _validation.validate_number(background_value, name='background_value')
+            )
+
+            background = value or default_value
             coords = np.argwhere(arr != background)
             if coords.size == 0:
                 msg = 'No foreground found'
@@ -414,6 +423,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_mask(mask_: str | ImageData):
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value'])
+            _validation.check_instance(mask_, (pyvista.ImageData, str), name='mask')
             if isinstance(mask_, str):
                 mesh = self
                 scalars = mask_
@@ -422,6 +432,8 @@ class ImageDataFilters(DataSetFilters):
                 scalars = None
             mask_array = _validate_scalars(mesh, scalars)
             voi = np.array(_voi_from_array(mask_array))
+
+            # Add offset
             voi[[0, 1]] += mesh.offset[0]
             voi[[2, 3]] += mesh.offset[1]
             voi[[4, 5]] += mesh.offset[2]
@@ -436,12 +448,16 @@ class ImageDataFilters(DataSetFilters):
             return extent_
 
         def _voi_from_dimensions_and_offset(dimensions, offset):
+            if dimensions is not None:
+                _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
+            elif offset is not None:
+                _raise_error_kwargs_not_none('offset', also_exclude=['dimensions'])
             if dimensions is None or offset is None:
                 msg = 'Offset and dimensions must both specified together.'
                 raise TypeError(msg)
             return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
 
-        allowed_args_mask_var_input = mutually_exclusive_args.copy()
+        allowed_args_mask_var_input = MUTUALLY_EXCLUSIVE_KWARGS.copy()
         allowed_args_mask_var_input.pop('background_value')
         if _args_are_none(var_input, *allowed_args_mask_var_input.values()):
             # Nothing specified, crop foreground using active scalars
@@ -465,11 +481,13 @@ class ImageDataFilters(DataSetFilters):
             voi = _voi_from_mask(mask)
         elif normalized_bounds is not None:
             voi = _voi_from_normalized_bounds(normalized_bounds)
-        elif extent:
+        elif extent is not None:
             voi = _voi_from_extent(extent)
-        else:
-            # Only option left is to specify dimensions and offset
+        elif dimensions is not None or offset is not None:
             voi = _voi_from_dimensions_and_offset(dimensions, offset)
+        else:
+            msg = 'Invalid input.'
+            raise TypeError(msg)
 
         return self.extract_subset(voi, modify_geometry=False, progress_bar=progress_bar)
 

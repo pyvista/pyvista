@@ -1441,32 +1441,65 @@ def create_mask_array_from_extents(outer_extent, inner_extent):
     return mask
 
 
+CROP_TEST_CASES = {
+    'extent': (
+        dict(extent=CROPPED_EXTENT),
+        {},
+        dict(background_value=0.0),
+        "['offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",
+    ),
+    'dims_offset': (
+        {},
+        dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
+        dict(background_value=0.0),
+        "['extent', 'normalized_bounds', 'mask', 'background_value']",
+    ),
+    'mask_str': (
+        dict(mask=MASK_ARRAY_NAME),
+        dict(background_value=0.0),
+        dict(offset=(0, 0, 0)),
+        "['offset', 'dimensions', 'extent', 'normalized_bounds']",
+    ),
+    'mask_img': (
+        dict(mask=CROPPED_MASK_IMAGE),
+        {},
+        dict(offset=(0, 0, 0)),
+        'When cropping with mask',
+    ),
+}
+
+
 @pytest.mark.parametrize('use_var_input', [True, False])
 @pytest.mark.parametrize(
-    'kwargs',
-    [
-        dict(extent=CROPPED_EXTENT),
-        dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
-        dict(mask=MASK_ARRAY_NAME),
-        dict(mask=CROPPED_MASK_IMAGE),
-    ],
-    ids=['extent', 'dims_offset', 'mask_str', 'mask_img'],
+    ('arg_or_kwarg', 'kwarg_only', 'invalid_kwarg', 'match'),
+    CROP_TEST_CASES.values(),
+    ids=CROP_TEST_CASES.keys(),
 )
-def test_crop_var_input(uncropped_image, kwargs, use_var_input):
-    if use_var_input and list(kwargs.keys()) == ['dimensions', 'offset']:
-        pytest.xfail('dimensions and offsets are kwargs only.')
+def test_crop_var_input(
+    uncropped_image, arg_or_kwarg, kwarg_only, invalid_kwarg, match, use_var_input
+):
+    if use_var_input and len(arg_or_kwarg) == 0:
+        pytest.xfail('Test case is keyword-only.')
 
+    args = ()
+    kwargs = kwarg_only.copy()
+    if use_var_input:
+        args = arg_or_kwarg.values()
+    else:
+        kwargs.update(arg_or_kwarg)
+
+    cropped = uncropped_image.crop(*args, **kwargs)
     expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, modify_geometry=False)
-    cropped = (
-        uncropped_image.crop(*kwargs.values()) if use_var_input else uncropped_image.crop(**kwargs)
-    )
     assert cropped == expected_output
+
+    kwargs.update(invalid_kwarg)
+    with pytest.raises(TypeError, match=match):
+        uncropped_image.crop(*args, **kwargs)
 
 
 @pytest.mark.parametrize('scalars', [MASK_ARRAY_NAME, DATA_ARRAY_NAME])
 @pytest.mark.parametrize('background_value', [1.0, 0.0, None])
 def test_crop_mask(uncropped_image, background_value, scalars):
-    # Test no args crops the foreground
     uncropped_image.set_active_scalars(scalars)
     cropped = uncropped_image.crop(background_value=background_value)
 
