@@ -435,8 +435,8 @@ class ImageDataFilters(DataSetFilters):
             else:
                 mesh = mask_
                 scalars = None
-            mask_array, _ = _validate_scalars(mesh, scalars)
-            voi = np.array(_voi_from_array(mask_array))
+            mask_array, scalars = _validate_scalars(mesh, scalars)
+            voi = np.array(_voi_from_array(mask_array, scalars))
 
             # Add offset
             voi[[0, 1]] += mesh.offset[0]
