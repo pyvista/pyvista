@@ -493,7 +493,6 @@ from vtkmodules.vtkImagingMorphological import (
     vtkImageConnectivityFilter as vtkImageConnectivityFilter,
 )
 from vtkmodules.vtkImagingStencil import vtkImageStencil as vtkImageStencil
-from vtkmodules.vtkImagingStencil import vtkImageToImageStencil as vtkImageToImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil as vtkPolyDataToImageStencil
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
 from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
