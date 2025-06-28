@@ -1400,7 +1400,8 @@ def test_select_values_dtype(uniform, dtype):
     assert selected.active_scalars.dtype == dtype
 
 
-CROPPED_OFFSET = (1, 3, 5)
+UNCROPPED_DIMENSION = (10, 11, 12)
+CROPPED_OFFSET = (1, 3, 4)
 CROPPED_DIMENSIONS = (6, 4, 2)
 CROPPED_MASK_IMAGE = pv.ImageData(offset=CROPPED_OFFSET, dimensions=CROPPED_DIMENSIONS)
 CROPPED_EXTENT = CROPPED_MASK_IMAGE.extent
@@ -1413,7 +1414,7 @@ DATA_ARRAY_NAME = 'data'
 
 @pytest.fixture
 def uncropped_image():
-    mesh = pv.ImageData(dimensions=(10, 11, 12))
+    mesh = pv.ImageData(dimensions=UNCROPPED_DIMENSION)
     mesh.point_data[DATA_ARRAY_NAME] = range(mesh.n_points)
 
     array = create_mask_array_from_extents(mesh.extent, CROPPED_EXTENT)
@@ -1442,23 +1443,35 @@ def create_mask_array_from_extents(outer_extent, inner_extent):
 
 
 CROP_TEST_CASES = {
+    'factor_float': (
+        dict(factor=np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION),
+        {},
+        dict(background_value=0.0),
+        "['offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'background_value']",
+    ),
+    'factor_vector': (
+        dict(factor=np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION),
+        {},
+        dict(background_value=0.0),
+        '\nGot: background_value=0.0',
+    ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",
+        "['factor', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'background_value']",
     ),
     'dims_offset': (
         {},
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         dict(background_value=0.0),
-        "['extent', 'normalized_bounds', 'mask', 'background_value']",
+        "['factor', 'extent', 'normalized_bounds', 'mask', 'background_value']",
     ),
     'mask_str': (
         dict(mask=MASK_ARRAY_NAME),
         dict(background_value=0.0),
         dict(offset=(0, 0, 0)),
-        "['offset', 'dimensions', 'extent', 'normalized_bounds']",
+        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds']",
     ),
     'mask_img': (
         dict(mask=CROPPED_MASK_IMAGE),
@@ -1493,7 +1506,7 @@ def test_crop_var_input(
     assert cropped == expected_output
 
     kwargs.update(invalid_kwarg)
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match=re.escape(match)):
         uncropped_image.crop(*args, **kwargs)
 
 

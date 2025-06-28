@@ -296,6 +296,7 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         var_input: str | ImageData | VectorLike[float] | None = None,
         *,
+        factor: float | None = None,
         offset: VectorLike[int] | None = None,
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
@@ -327,19 +328,23 @@ class ImageDataFilters(DataSetFilters):
             - For length-6 float vectors, this is equivalent to using the  ``normalized_bounds``
               parameter.
 
-        offset : VectorLike[int]
+        factor : float, optional
+            Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
+            keep along each axis.
+
+        offset : VectorLike[int], optional
             Length-3 vector specifying the :attr:`~pyvista.ImageData.offset` indices where the
             cropping region originates. The ``dimensions`` must also be specified.
 
-        dimensions
+        dimensions : VectorLike[int], optional
             Length-3 vector specifying the :attr:`~pyvista.ImageData.dimensions` of the cropping
             region. The ``offset`` must also be specified.
 
-        extent
+        extent : VectorLike[int], optional
             Length-3 vector specifying the full :attr:`~pyvista.ImageData.extent` of the cropping
             region.
 
-        normalized_bounds
+        normalized_bounds : VectorLike[float], optional
             Normalized bounds
 
         mask : str | ImageData, optional
@@ -361,6 +366,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         MUTUALLY_EXCLUSIVE_KWARGS = dict(
+            factor=factor,
             offset=offset,
             dimensions=dimensions,
             extent=extent,
@@ -374,7 +380,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             initial_msg = f'When cropping with {arg_name}'
-            if var_input:
+            if var_input is not None:
                 initial_msg += ' as the variable argument'
 
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
@@ -385,7 +391,7 @@ class ImageDataFilters(DataSetFilters):
                 if val is not None:
                     msg = (
                         f'{initial_msg}, the following parameters cannot be set:\n'
-                        f'{list(args_to_check.keys())}.'
+                        f'{list(args_to_check.keys())}.\n'
                         f'Got: {key}={val}'
                     )
                     raise TypeError(msg)
@@ -446,11 +452,33 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_normalized_bounds(normalized_bounds_):
             _raise_error_kwargs_not_none('normalized_bounds')
-            return normalized_bounds_
+            return _validation.validate_array(
+                normalized_bounds_,
+                must_have_length=6,
+                name='normalized_bounds',
+            )
 
         def _voi_from_extent(extent_):
             _raise_error_kwargs_not_none('extent')
-            return extent_
+            return _validation.validate_array(
+                extent_,
+                must_have_length=6,
+                name='extent',
+            )
+
+        def _voi_from_factor(factor_):
+            _raise_error_kwargs_not_none('factor')
+            valid_factor = _validation.validate_array3(
+                factor_,
+                broadcast=True,
+                must_be_in_range=[0.0, 1.0],
+                name='crop factor',
+            )
+
+            center = self.offset + ((np.array(self.dimensions) - 1) // 2)
+            new_dimensions = np.round(valid_factor * self.dimensions).astype(int)
+            new_offset = center - (new_dimensions // 2)
+            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_dimensions_and_offset(dimensions, offset):
             if dimensions is not None:
@@ -473,16 +501,20 @@ class ImageDataFilters(DataSetFilters):
                 voi = _voi_from_mask(var_input)
             else:
                 # Input must be an array
-                array = _validation.validate_arrayN(
+                array = _validation.validate_array(
                     var_input,
-                    must_have_length=6,
                     must_have_dtype=(np.floating, np.integer),
-                    name='crop array',
+                    name='crop value',
                 )
-                if np.issubdtype(array.dtype, np.floating):
+
+                if array.size in (0, 1, 3):
+                    voi = _voi_from_factor(array)
+                elif np.issubdtype(array.dtype, np.floating):
                     voi = _voi_from_normalized_bounds(array)
                 else:
                     voi = _voi_from_extent(array)
+        elif factor is not None:
+            voi = _voi_from_factor(factor)
         elif mask is not None:
             voi = _voi_from_mask(mask)
         elif normalized_bounds is not None:
