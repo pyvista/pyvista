@@ -370,9 +370,6 @@ class ImageDataFilters(DataSetFilters):
             background_value=background_value,
         )
 
-        def _args_are_none(*args):
-            return all(val is None for val in args)
-
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
             for arg in [arg_name, *also_exclude]:
@@ -443,8 +440,9 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_normalized_bounds(normalized_bounds_):
             _raise_error_kwargs_not_none('normalized_bounds')
-            bounds = _validation.validate_array(
+            bounds = _validation.validate_arrayN(
                 normalized_bounds_,
+                must_have_dtype=float,
                 must_be_in_range=[0.0, 1.0],
                 must_have_length=6,
                 name='normalized_bounds',
@@ -480,9 +478,11 @@ class ImageDataFilters(DataSetFilters):
 
         def _voi_from_extent(extent_):
             _raise_error_kwargs_not_none('extent')
-            return _validation.validate_array(
+            return _validation.validate_arrayN(
                 extent_,
+                must_be_integer=True,
                 must_have_length=6,
+                dtype_out=int,
                 name='extent',
             )
 
@@ -492,6 +492,7 @@ class ImageDataFilters(DataSetFilters):
                 factor_,
                 broadcast=True,
                 must_be_in_range=[0.0, 1.0],
+                dtype_out=float,
                 name='crop factor',
             )
 
@@ -505,7 +506,9 @@ class ImageDataFilters(DataSetFilters):
             mx, my, mz = _validation.validate_array3(
                 margin_,
                 broadcast=True,
+                must_be_integer=True,
                 must_be_nonnegative=True,
+                dtype_out=int,
                 name='crop margin',
             )
             # Apply margins symmetrically
@@ -529,9 +532,10 @@ class ImageDataFilters(DataSetFilters):
                 raise TypeError(msg)
             return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
 
-        allowed_args_mask_var_input = MUTUALLY_EXCLUSIVE_KWARGS.copy()
-        allowed_args_mask_var_input.pop('background_value')
-        if _args_are_none(*allowed_args_mask_var_input.values()):
+        mutually_exclusive_for_mask = MUTUALLY_EXCLUSIVE_KWARGS.copy()
+        mutually_exclusive_for_mask.pop('background_value')
+
+        if all(val is None for val in mutually_exclusive_for_mask.values()):
             # Nothing specified, crop foreground using active scalars
             mask_array, scalars = _validate_scalars(self)
             voi = _voi_from_array(mask_array, scalars)
