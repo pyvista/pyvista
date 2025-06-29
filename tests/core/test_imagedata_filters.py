@@ -1398,3 +1398,267 @@ def test_select_values_dtype(uniform, dtype):
     uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
     selected = uniform.select_values([0])
     assert selected.active_scalars.dtype == dtype
+
+
+UNCROPPED_DIMENSION = (10, 12, 12)
+CROPPED_OFFSET = (1, 3, 4)
+CROPPED_DIMENSIONS = (6, 4, 2)
+CROPPED_MASK_IMAGE = pv.ImageData(offset=CROPPED_OFFSET, dimensions=CROPPED_DIMENSIONS)
+CROPPED_EXTENT = CROPPED_MASK_IMAGE.extent
+
+# Add scalar data, here we just fill the mask with foreground
+CROPPED_MASK_IMAGE.point_data['scalars'] = np.ones((CROPPED_MASK_IMAGE.n_points,))
+MASK_ARRAY_NAME = 'mask'
+DATA_ARRAY_NAME = 'data'
+
+CROP_FACTOR = np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION
+
+MARGIN = ((np.array(UNCROPPED_DIMENSION) - CROPPED_DIMENSIONS) / 2).astype(int)
+
+NORMALIZED_BOUNDS = (
+    CROPPED_OFFSET[0] / UNCROPPED_DIMENSION[0],
+    (CROPPED_OFFSET[0] + CROPPED_DIMENSIONS[0]) / UNCROPPED_DIMENSION[0],
+    CROPPED_OFFSET[1] / UNCROPPED_DIMENSION[1],
+    (CROPPED_OFFSET[1] + CROPPED_DIMENSIONS[1]) / UNCROPPED_DIMENSION[1],
+    CROPPED_OFFSET[2] / UNCROPPED_DIMENSION[2],
+    (CROPPED_OFFSET[2] + CROPPED_DIMENSIONS[2]) / UNCROPPED_DIMENSION[2],
+)
+
+
+@pytest.fixture
+def uncropped_image():
+    mesh = pv.ImageData(dimensions=UNCROPPED_DIMENSION)
+    mesh.point_data[DATA_ARRAY_NAME] = range(mesh.n_points)
+
+    array = create_mask_array_from_extents(mesh.extent, CROPPED_EXTENT)
+    mesh[MASK_ARRAY_NAME] = array
+    return mesh
+
+
+def create_mask_array_from_extents(outer_extent, inner_extent):
+    """Create binary mask array with 1s inside the inner_extent and 0s elsewhere."""
+
+    img = pv.ImageData()
+    img.extent = outer_extent
+    mask = np.zeros(img.n_points, dtype=int)
+
+    # Set foreground points
+    for i in range(img.n_points):
+        x, y, z = img.points[i]
+        if (
+            inner_extent[0] <= x <= inner_extent[1]
+            and inner_extent[2] <= y <= inner_extent[3]
+            and inner_extent[4] <= z <= inner_extent[5]
+        ):
+            mask[i] = 1
+
+    return mask
+
+
+CROP_TEST_CASES = {
+    'factor': (
+        dict(factor=CROP_FACTOR),
+        {},
+        dict(background_value=0.0),
+        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+    ),
+    'margin': (
+        dict(margin=MARGIN),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+    ),
+    'normalized_bounds': (
+        dict(normalized_bounds=NORMALIZED_BOUNDS),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', 'background_value']",  # noqa: E501
+    ),
+    'extent': (
+        dict(extent=CROPPED_EXTENT),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+    ),
+    'dims_offset': (
+        dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+    ),
+    'mask_str': (
+        dict(mask=MASK_ARRAY_NAME),
+        dict(background_value=0.0),
+        dict(offset=(0, 0, 0)),
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds']",
+    ),
+    'mask_img': (
+        dict(mask=CROPPED_MASK_IMAGE),
+        {},
+        dict(offset=(0, 0, 0)),
+        'When cropping with mask, the following parameters cannot be set:',
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ('required_kwarg', 'optional_kwarg', 'invalid_kwarg', 'match'),
+    CROP_TEST_CASES.values(),
+    ids=CROP_TEST_CASES.keys(),
+)
+def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match):
+    if 'margin' in required_kwarg or 'factor' in required_kwarg:
+        # Need to modify input for this test since expected output otherwise is impossible to
+        # achieve because the cropping is symmetric
+        uncropped_image.offset = (-1, -1, -1)
+
+    kwargs = optional_kwarg.copy()
+    kwargs.update(required_kwarg)
+
+    cropped = uncropped_image.crop(**kwargs)
+    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, modify_geometry=False)
+    assert cropped.extent == expected_output.extent
+    assert cropped == expected_output
+
+    kwargs.update(invalid_kwarg)
+    with pytest.raises(TypeError, match=re.escape(match)):
+        uncropped_image.crop(**kwargs)
+
+
+@pytest.mark.parametrize('scalars', [MASK_ARRAY_NAME, DATA_ARRAY_NAME])
+@pytest.mark.parametrize('background_value', [1.0, 0.0, None])
+def test_crop_mask(uncropped_image, background_value, scalars):
+    uncropped_image.set_active_scalars(scalars)
+    cropped = uncropped_image.crop(mask=True, background_value=background_value)
+
+    if scalars == DATA_ARRAY_NAME or background_value == 1.0:
+        assert cropped.dimensions == uncropped_image.dimensions
+    else:
+        assert all(np.array(cropped.dimensions) < np.array(uncropped_image.dimensions))
+
+
+@pytest.mark.parametrize(
+    ('background_value', 'extent'),
+    [
+        (0, (1, 1, 1, 1, 1, 1)),
+        ((0, 0, 0), (1, 1, 1, 1, 1, 1)),
+        ((1, 1, 1), (0, 2, 0, 2, 0, 2)),
+    ],
+)
+def test_crop_mask_multi_component(background_value, extent):
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros((np.prod(dims), 3), dtype=int)
+    arr[13] = (1, 1, 1)
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr
+
+    cropped = mask.crop(mask=True, background_value=background_value)
+    assert cropped.extent == extent
+
+
+@pytest.mark.parametrize(
+    ('padding', 'extent'),
+    [
+        (0, (1, 1, 1, 1, 1, 1)),
+        (1, (0, 2, 0, 2, 0, 2)),
+        ((1, 1, 1), (0, 2, 0, 2, 0, 2)),
+        ((0, 1, 2), (1, 1, 0, 2, 0, 2)),
+        ((0, 0, 0, 1, 1, 1), (1, 1, 1, 2, 0, 2)),
+    ],
+)
+def test_crop_mask_padding(padding, extent):
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros(dims, dtype=int)
+    arr[1, 1, 1] = 1
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr.ravel()
+
+    cropped = mask.crop(mask=True, padding=padding)
+    assert cropped.extent == extent
+
+
+@pytest.mark.parametrize(
+    ('margin', 'dimensions_in', 'dimensions_out'),
+    [(1, (10, 10, 10), (8, 8, 8)), (1, (10, 10, 1), (8, 8, 1))],
+)
+def test_crop_margin(margin, dimensions_in, dimensions_out):
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(margin=margin)
+    assert cropped.dimensions == dimensions_out
+
+
+@pytest.mark.parametrize('dimensionality', ['2D', '3D'])
+@pytest.mark.parametrize(
+    ('bounds', 'dimensions_in', 'dimensions_out'),
+    [
+        ([0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [10, 10, 10], [10, 10, 10]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [10, 10, 10], [1, 2, 3]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [11, 11, 11], [1, 2, 3]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [9, 9, 9], [1, 2, 3]),
+    ],
+)
+def test_crop_normalized_bounds(bounds, dimensions_in, dimensions_out, dimensionality):
+    if dimensionality == '2D':
+        bounds[4:6] = [0.0, 0.0]
+        dimensions_in[2] = 1
+        dimensions_out[2] = 1
+
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(normalized_bounds=bounds)
+    dimensions = cropped.dimensions
+    assert np.array_equal(dimensions, dimensions_out)
+
+
+@pytest.mark.parametrize('dimensionality', ['2D', '3D'])
+@pytest.mark.parametrize(
+    ('factor', 'dimensions_in', 'dimensions_out'),
+    [
+        (1.0, (10, 10, 10), (10, 10, 10)),
+        ((1.0, 1.0, 1.0), (10, 10, 10), (10, 10, 10)),
+        ((0.21, 0.25, 0.29), (10, 10, 10), (2, 2, 2)),
+        ((0.21, 0.25, 0.29), (11, 11, 11), (2, 2, 3)),
+        ((0.21, 0.25, 0.29), (9, 9, 9), (1, 2, 2)),
+    ],
+)
+def test_crop_factor(factor, dimensions_in, dimensions_out, dimensionality):
+    if dimensionality == '2D':
+        dimensions_in = (dimensions_in[0], dimensions_in[1], 1)
+        dimensions_out = (dimensions_out[0], dimensions_out[1], 1)
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(factor=factor)
+    dimensions = cropped.dimensions
+    assert np.array_equal(dimensions, dimensions_out)
+
+
+def test_crop_raises():
+    background = 0.0
+    img = pv.ImageData(dimensions=(1, 1, 1))
+    img.point_data['data'] = [background]
+    match = (
+        'Crop with mask failed, no foreground values found '
+        "in array 'data' using background value 0.0."
+    )
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=True)
+
+    match = 'mask cannot be `False`.'
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=False)
+
+    match = 'Offset and dimensions must both specified together.'
+    with pytest.raises(TypeError, match=match):
+        img.crop(offset=(1, 2, 3))
+
+    img = img.points_to_cells()
+    match = "Scalars 'data' must be associated with point data. Got cell data instead."
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=True)
+
+    match = (
+        'No crop arguments provided. One of the following keywords must be provided:\n'
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask']"
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        img.crop()
