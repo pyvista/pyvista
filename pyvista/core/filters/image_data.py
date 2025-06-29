@@ -306,7 +306,7 @@ class ImageDataFilters(DataSetFilters):
         background_value: float | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
-        """Crop this image to remove points at the edges.
+        """Crop this image to remove points at the image's boundaries.
 
         There are several ways to crop:
 
@@ -391,6 +391,10 @@ class ImageDataFilters(DataSetFilters):
         -------
         ImageData
             Cropped image.
+
+        See Also
+        --------
+        pad_image, resample
 
         Examples
         --------
@@ -2685,6 +2689,10 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Padded image.
 
+        See Also
+        --------
+        crop, resample, contour_labels
+
         Examples
         --------
         Pad a grayscale image with a 100-pixel wide border. The padding is black
@@ -3493,6 +3501,9 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        crop
+            Crop image to remove points at the image's boundaries.
+
         :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
