@@ -395,7 +395,59 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        Load a grayscale image and pad it to create a black border.
+
+        >>> import numpy as np
         >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> gray_image = examples.download_cake_easy().pad_image(pad_size=20)
+        >>> gray_image.dimensions
+        (120, 120, 1)
+
+        Define a custom plotting helper to show images as RGB pixel cells.
+
+        >>> def image_plotter(image):
+        ...     pl = pv.Plotter()
+        ...     pixels = image.points_to_cells()
+        ...     # Convert single-channel image to RGB
+        ...     array = pixels.active_scalars
+        ...     if array.ndim == 1:
+        ...         array = np.tile(array[:, np.newaxis], (1, 3))
+        ...     pl.add_mesh(pixels, scalars=array, lighting=False, rgb=True)
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
+
+        Visualize the padded image.
+
+        >>> image_plotter(gray_image).show()
+
+        Crop the image with no arguments. Theforeground is cropped by default.
+
+        >>> cropped = gray_image.crop()
+        >>> image_plotter(cropped).show()
+
+        Remove 10 and 20 pixels from each side of the x- and y-axis, respectively.
+
+        >>> cropped = gray_image.crop(margin=(10, 20))
+        >>> image_plotter(cropped).show()
+
+        Crop 80% of the image.
+
+        >>> cropped = gray_image.crop(factor=0.80)
+        >>> image_plotter(cropped).show()
+
+        Crop a 40 by 60 square from the corner of the image. Use -20 offset to account
+        for the initial padding that was added.
+
+        >>> cropped = gray_image.crop(offset=(-20, -20, 0), dimensions=(100, 70, 1))
+        >>> image_plotter(cropped).show()
+
+        Crop from 40% to 100% of the image along the x-axis, and from 20% to 50% of the
+        image along the y-axis.
+
+        >>> cropped = gray_image.crop(normalized_bounds=[0.4, 1.0, 0.2, 0.5, 0.0, 0.0])
+        >>> image_plotter(cropped).show()
 
         """
         MUTUALLY_EXCLUSIVE_KWARGS = dict(
@@ -558,6 +610,10 @@ class ImageDataFilters(DataSetFilters):
         def _voi_from_margin(margin_):
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
+            # Do not pad singleton dims
+            singleton_dims = np.array(self.dimensions) == 1
+            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
+            padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 
         def _voi_from_dimensions_and_offset(dimensions, offset):
@@ -2778,6 +2834,7 @@ class ImageDataFilters(DataSetFilters):
                     f"match the number components ({num_input_components}) in array '{scalars}'."
                 )
                 raise ValueError(msg)
+            val = np.broadcast_to(val, (num_input_components,))
             if num_input_components > 1:
                 pad_multi_component = True
                 data = self.point_data  # type: ignore[attr-defined]

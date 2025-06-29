@@ -1585,6 +1585,16 @@ def test_crop_mask_padding(padding, extent):
     assert cropped.extent == extent
 
 
+@pytest.mark.parametrize(
+    ('margin', 'dimensions_in', 'dimensions_out'),
+    [(1, (10, 10, 10), (8, 8, 8)), (1, (10, 10, 1), (8, 8, 1))],
+)
+def test_crop_margin(margin, dimensions_in, dimensions_out):
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(margin=margin)
+    assert cropped.dimensions == dimensions_out
+
+
 def test_crop_raises():
     background = 0.0
     img = pv.ImageData(dimensions=(1, 1, 1))
