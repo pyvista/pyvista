@@ -301,6 +301,7 @@ class ImageDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
         normalized_bounds: VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         mask: str | ImageData | None = None,
         padding: int | VectorLike[int] | None = None,
         background_value: float | None = None,
@@ -361,6 +362,11 @@ class ImageDataFilters(DataSetFilters):
             and ``1.0`` that define a box relative to the input size. Has the form
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control the rounding function used when converting float values from
+            ``normalized_bounds`` to the integer values for the extents of the cropping region.
+            :func:`numpy.floor` is used by default.
+
         mask : str | ImageData, optional
             Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
             be used, in which case the other image's active scalars are used as the mask.
@@ -402,7 +408,7 @@ class ImageDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>> gray_image = examples.download_cake_easy().pad_image(pad_size=20)
         >>> gray_image.dimensions
-        (120, 120, 1)
+        (140, 140, 1)
 
         Define a custom plotting helper to show images as RGB pixel cells.
 
@@ -437,7 +443,7 @@ class ImageDataFilters(DataSetFilters):
         >>> cropped = gray_image.crop(factor=0.80)
         >>> image_plotter(cropped).show()
 
-        Crop a 40 by 60 square from the corner of the image. Use -20 offset to account
+        Crop a 100 by 70 section from the corner of the image. Use -20 offset to account
         for the initial padding that was added.
 
         >>> cropped = gray_image.crop(offset=(-20, -20, 0), dimensions=(100, 70, 1))
@@ -462,6 +468,7 @@ class ImageDataFilters(DataSetFilters):
             background_value=background_value,
         )
         ALLOWED_MASK_ARG_NAMES = ['background_value', 'padding']
+        round_func = rounding_func if rounding_func is not None else np.floor
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
@@ -555,30 +562,21 @@ class ImageDataFilters(DataSetFilters):
             )
 
             dims = np.array(self.dimensions)
-            # Calculate start and end ijk indices
-            xmin = int(np.floor(bounds[0] * dims[0]))
-            xmax = int(np.ceil(bounds[1] * dims[0])) - 1
-            ymin = int(np.floor(bounds[2] * dims[1]))
-            ymax = int(np.ceil(bounds[3] * dims[1])) - 1
-            zmin = int(np.floor(bounds[4] * dims[2]))
-            zmax = int(np.ceil(bounds[5] * dims[2])) - 1
+
+            # Compute ijk indices
+            starts = round_func(bounds[::2] * dims).astype(int)
+            stops = round_func(bounds[1::2] * dims).astype(int) - 1  # inclusive
 
             # Clamp to image bounds
-            xmax = min(xmax, dims[0] - 1)
-            ymax = min(ymax, dims[1] - 1)
-            zmax = min(zmax, dims[2] - 1)
+            starts = np.maximum(starts, 0)
+            stops = np.minimum(stops, dims - 1)
 
-            xmin = max(xmin, 0)
-            ymin = max(ymin, 0)
-            zmin = max(zmin, 0)
+            # adjust by image offset
+            starts += self.offset
+            stops += self.offset
 
-            # adjust by image offset to get global extent
-            xmin += self.offset[0]
-            xmax += self.offset[0]
-            ymin += self.offset[1]
-            ymax += self.offset[1]
-            zmin += self.offset[2]
-            zmax += self.offset[2]
+            xmin, ymin, zmin = starts
+            xmax, ymax, zmax = stops
 
             return xmin, xmax, ymin, ymax, zmin, zmax
 

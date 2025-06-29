@@ -1595,6 +1595,31 @@ def test_crop_margin(margin, dimensions_in, dimensions_out):
     assert cropped.dimensions == dimensions_out
 
 
+@pytest.mark.parametrize('dimensionality', ['2D', '3D'])
+@pytest.mark.parametrize(
+    ('bounds', 'dimensions_in', 'dimensions_out', 'rounding_func'),
+    [
+        ([0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [10, 10, 10], [10, 10, 10], None),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [10, 10, 10], [1, 2, 3], np.floor),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [11, 11, 11], [1, 2, 3], np.floor),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [9, 9, 9], [1, 2, 3], np.floor),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [11, 11, 11], [1, 2, 3], np.ceil),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [9, 9, 9], [1, 2, 3], np.ceil),
+    ],
+)
+def test_crop_normalized_bounds(
+    bounds, dimensions_in, dimensions_out, dimensionality, rounding_func
+):
+    if dimensionality == '2D':
+        bounds[4:6] = [0.0, 0.0]
+        dimensions_in[2] = 1
+        dimensions_out[2] = 1
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(normalized_bounds=bounds, rounding_func=rounding_func)
+    dimensions = cropped.dimensions
+    assert np.array_equal(dimensions, dimensions_out)
+
+
 def test_crop_raises():
     background = 0.0
     img = pv.ImageData(dimensions=(1, 1, 1))
