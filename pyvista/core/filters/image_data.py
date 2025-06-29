@@ -311,12 +311,13 @@ class ImageDataFilters(DataSetFilters):
         There are several ways to crop:
 
         #. Use ``factor`` to crop a portion of the image symmetrically.
-        #. Use ``margin`` to remove pixels from the image border symmetrically.
+        #. Use ``margin`` to remove pixels from the image border.
         #. Use ``offset`` and ``dimensions`` to explicitly crop to the specified
            :attr:`~pyvista.ImageData.offset` and :attr:`~pyvista.ImageData.dimensions`.
         #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
-        #. Use ``mask`` and ``background_value`` to crop the foreground using scalar values.
+        #. Use ``mask``, ``padding``, and ``background_value`` to crop the foreground using scalar
+           values.
 
         By default, this filter uses ``mask`` cropping with the current active scalars when no
         arguments are provided.
@@ -325,6 +326,11 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
+        factor : float, optional
+            Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
+            keep along each axis. Use a single float for uniform cropping or a vector of three
+            floats for cropping each xyz-axis independently.
+
         margin : int | VectorLike[int], optional
             Margin to remove from each side of each axis. Specify:
 
@@ -337,11 +343,6 @@ class ImageDataFilters(DataSetFilters):
               margin from each boundary independently.
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to remove
               margin from each boundary independently.
-
-        factor : float, optional
-            Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
-            keep along each axis. Use a single float for uniform cropping or a vector of three
-            floats for cropping each xyz-axis independently.
 
         offset : VectorLike[int], optional
             Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.offset` indices
@@ -448,31 +449,31 @@ class ImageDataFilters(DataSetFilters):
             else:
                 mesh = mask_
                 scalars = None
-            field, scalars = _validate_scalars(mesh, scalars)
+            field, scalars_ = _validate_scalars(mesh, scalars)
+            array = cast(
+                'pyvista.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field)
+            )
+            num_components = 1 if array.ndim == 1 else array.shape[1]
 
-            # Validate background
+            # Create a binary foreground/background mask array
             default_background = 0.0
-            value = (
-                default_background
-                if background_value is None
-                else _validation.validate_number(background_value, name='background_value')
-            )
-            background = value or default_background
-
-            # Binarize scalars
-            binarized = mesh.select_values(
-                scalars=scalars, values=background, invert=True, replacement_value=1.0
-            )
-            mask_array = get_array(binarized, name=scalars, preference=field).reshape(
-                binarized.dimensions[::-1]
-            )
+            background = default_background if background_value is None else background_value
+            if num_components > 1:
+                background = _validation.validate_arrayN(
+                    background, name='background_value', must_have_length=(1, num_components)
+                )
+                mask_array = np.any(array != background, axis=1)
+            else:
+                background = _validation.validate_number(background, name='background_value')
+                mask_array = array != background
 
             # Get foreground voi
-            coords = np.argwhere(mask_array)
+            shaped_array = mask_array.reshape(mesh.dimensions[::-1])
+            coords = np.argwhere(shaped_array)
             if coords.size == 0:
                 msg = (
                     f'Crop with mask failed, no foreground values found in array '
-                    f'{scalars!r} using background value {background}.'
+                    f'{scalars_!r} using background value {background}.'
                 )
                 raise ValueError(msg)
 
@@ -485,11 +486,11 @@ class ImageDataFilters(DataSetFilters):
                 voi = _pad_extent(voi, pad)
 
             # Add offset
-            voi = np.array(voi)
-            voi[[0, 1]] += mesh.offset[0]
-            voi[[2, 3]] += mesh.offset[1]
-            voi[[4, 5]] += mesh.offset[2]
-            return voi
+            voi_array = np.array(voi)
+            voi_array[[0, 1]] += mesh.offset[0]
+            voi_array[[2, 3]] += mesh.offset[1]
+            voi_array[[4, 5]] += mesh.offset[2]
+            return voi_array
 
         def _voi_from_normalized_bounds(normalized_bounds_):
             _raise_error_kwargs_not_none('normalized_bounds')

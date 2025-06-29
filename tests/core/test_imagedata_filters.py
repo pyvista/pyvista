@@ -1544,6 +1544,26 @@ def test_crop_mask(uncropped_image, background_value, scalars):
 
 
 @pytest.mark.parametrize(
+    ('background_value', 'extent'),
+    [
+        (0, (1, 1, 1, 1, 1, 1)),
+        ((0, 0, 0), (1, 1, 1, 1, 1, 1)),
+        ((1, 1, 1), (0, 2, 0, 2, 0, 2)),
+    ],
+)
+def test_crop_mask_multi_component(background_value, extent):
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros((np.prod(dims), 3), dtype=int)
+    arr[13] = (1, 1, 1)
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr
+
+    cropped = mask.crop(background_value=background_value)
+    assert cropped.extent == extent
+
+
+@pytest.mark.parametrize(
     ('padding', 'extent'),
     [
         (0, (1, 1, 1, 1, 1, 1)),
