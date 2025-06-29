@@ -301,7 +301,7 @@ class ImageDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
         normalized_bounds: VectorLike[float] | None = None,
-        mask: str | ImageData | None = None,
+        mask: str | ImageData | Literal[True] | None = None,
         padding: int | VectorLike[int] | None = None,
         background_value: float | None = None,
         progress_bar: bool = False,
@@ -318,9 +318,6 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
         #. Use ``mask``, ``padding``, and ``background_value`` to crop the foreground using scalar
            values.
-
-        By default, this filter uses ``mask`` cropping with the current active scalars when no
-        arguments are provided.
 
         .. versionadded:: 0.46
 
@@ -362,11 +359,12 @@ class ImageDataFilters(DataSetFilters):
             and ``1.0`` that define a box relative to the input size. Has the form
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-        mask : str | ImageData, optional
+        mask : str | ImageData | bool, optional
             Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
             be used, in which case the other image's active scalars are used as the mask.
             This mesh will be cropped to the foreground, i.e. values that are not equal to
-            the specified ``background_value``.
+            the specified ``background_value``. Set this to ``True`` to use this mesh's default
+            scalars as the mask.
 
         padding : int | VectorLike[int], optional
             Padding to add to foreground region `before` cropping. Only valid when using a mask to
@@ -423,9 +421,10 @@ class ImageDataFilters(DataSetFilters):
 
         >>> image_plotter(gray_image).show()
 
-        Crop the image with no arguments. Theforeground is cropped by default.
+        Crop the image as a mask. The padded background values are removed and the foreground is
+        cropped.
 
-        >>> cropped = gray_image.crop()
+        >>> cropped = gray_image.crop(mask=True)
         >>> image_plotter(cropped).show()
 
         Remove 10 and 20 pixels from each side of the x- and y-axis, respectively.
@@ -451,7 +450,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image_plotter(cropped).show()
 
         """
-        MUTUALLY_EXCLUSIVE_KWARGS = dict(
+        CORE_METHOD_KWARGS = dict(
             factor=factor,
             margin=margin,
             offset=offset,
@@ -459,10 +458,9 @@ class ImageDataFilters(DataSetFilters):
             extent=extent,
             normalized_bounds=normalized_bounds,
             mask=mask,
-            padding=padding,
-            background_value=background_value,
         )
-        ALLOWED_MASK_ARG_NAMES = ['background_value', 'padding']
+        SUPPORTING_KWARGS = dict(padding=padding, background_value=background_value)
+        MUTUALLY_EXCLUSIVE_KWARGS = CORE_METHOD_KWARGS | SUPPORTING_KWARGS
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
@@ -492,13 +490,19 @@ class ImageDataFilters(DataSetFilters):
             return field, scalars
 
         def _voi_from_mask(mask_: str | ImageData):
-            _raise_error_kwargs_not_none('mask', also_exclude=ALLOWED_MASK_ARG_NAMES)
-            _validation.check_instance(mask_, (pyvista.ImageData, str), name='mask')
+            _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
+            _validation.check_instance(mask_, (pyvista.ImageData, str, bool), name='mask')
 
             # Validate scalars
-            if isinstance(mask_, str):
+            if isinstance(mask_, (str, bool)):
                 mesh = self
-                scalars = mask_
+                if isinstance(mask_, str):
+                    scalars = mask_
+                elif mask_ is True:
+                    scalars = None
+                else:
+                    msg = 'mask cannot be `False`.'
+                    raise ValueError(msg)
             else:
                 mesh = mask_
                 scalars = None
@@ -565,7 +569,7 @@ class ImageDataFilters(DataSetFilters):
             starts = np.maximum(starts, 0)
             stops = np.minimum(stops, dims - 1)
 
-            # adjust by image offset
+            # Adjust by image offset
             starts += self.offset
             stops += self.offset
 
@@ -624,14 +628,7 @@ class ImageDataFilters(DataSetFilters):
                 raise TypeError(msg)
             return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
 
-        mutually_exclusive_for_mask = MUTUALLY_EXCLUSIVE_KWARGS.copy()
-        for arg in ALLOWED_MASK_ARG_NAMES:
-            mutually_exclusive_for_mask.pop(arg)
-
-        if all(val is None for val in mutually_exclusive_for_mask.values()):
-            # Nothing specified, crop foreground using active scalars
-            voi = _voi_from_mask(self)
-        elif factor is not None:
+        if factor is not None:
             voi = _voi_from_factor(factor)
         elif margin is not None:
             voi = _voi_from_margin(margin)
@@ -644,7 +641,10 @@ class ImageDataFilters(DataSetFilters):
         elif dimensions is not None or offset is not None:
             voi = _voi_from_dimensions_and_offset(dimensions, offset)
         else:
-            msg = 'Invalid input.'
+            msg = (
+                'No crop arguments provided. One of the following keywords must be provided:\n'
+                f'{list(CORE_METHOD_KWARGS.keys())}'
+            )
             raise TypeError(msg)
 
         # Ensure dimensions are all at least one

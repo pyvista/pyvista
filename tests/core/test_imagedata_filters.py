@@ -1529,7 +1529,7 @@ def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, ma
 @pytest.mark.parametrize('background_value', [1.0, 0.0, None])
 def test_crop_mask(uncropped_image, background_value, scalars):
     uncropped_image.set_active_scalars(scalars)
-    cropped = uncropped_image.crop(background_value=background_value)
+    cropped = uncropped_image.crop(mask=True, background_value=background_value)
 
     if scalars == DATA_ARRAY_NAME or background_value == 1.0:
         assert cropped.dimensions == uncropped_image.dimensions
@@ -1553,7 +1553,7 @@ def test_crop_mask_multi_component(background_value, extent):
     mask = pv.ImageData(dimensions=dims)
     mask['mask'] = arr
 
-    cropped = mask.crop(background_value=background_value)
+    cropped = mask.crop(mask=True, background_value=background_value)
     assert cropped.extent == extent
 
 
@@ -1575,7 +1575,7 @@ def test_crop_mask_padding(padding, extent):
     mask = pv.ImageData(dimensions=dims)
     mask['mask'] = arr.ravel()
 
-    cropped = mask.crop(padding=padding)
+    cropped = mask.crop(mask=True, padding=padding)
     assert cropped.extent == extent
 
 
@@ -1641,7 +1641,11 @@ def test_crop_raises():
         "in array 'data' using background value 0.0."
     )
     with pytest.raises(ValueError, match=match):
-        img.crop()
+        img.crop(mask=True)
+
+    match = 'mask cannot be `False`.'
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=False)
 
     match = 'Offset and dimensions must both specified together.'
     with pytest.raises(TypeError, match=match):
@@ -1650,4 +1654,11 @@ def test_crop_raises():
     img = img.points_to_cells()
     match = "Scalars 'data' must be associated with point data. Got cell data instead."
     with pytest.raises(ValueError, match=match):
+        img.crop(mask=True)
+
+    match = (
+        'No crop arguments provided. One of the following keywords must be provided:\n'
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask']"
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         img.crop()
