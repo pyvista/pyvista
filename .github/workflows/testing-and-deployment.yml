@@ -131,6 +131,13 @@ jobs:
         if: always()
         run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
@@ -250,6 +257,13 @@ jobs:
             $PLOTTING_TEST_MODULES_CHARTS \
             $LINUX_PLOTTING_ARGS
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
@@ -353,6 +367,13 @@ jobs:
             $PLOTTING_TEST_MODULES_CHARTS \
             $LINUX_PLOTTING_ARGS
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
@@ -414,6 +435,13 @@ jobs:
       - name: Test Plotting
         if: always()
         run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
