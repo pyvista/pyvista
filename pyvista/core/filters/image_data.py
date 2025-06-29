@@ -311,7 +311,7 @@ class ImageDataFilters(DataSetFilters):
         There are several ways to crop:
 
         #. Use ``factor`` to crop a portion of the image symmetrically.
-        #. Use ``margin`` to remove pixels from the image border.
+        #. Use ``margin`` to remove points from the image border.
         #. Use ``offset`` and ``dimensions`` to explicitly crop to the specified
            :attr:`~pyvista.ImageData.offset` and :attr:`~pyvista.ImageData.dimensions`.
         #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
@@ -329,7 +329,7 @@ class ImageDataFilters(DataSetFilters):
         factor : float, optional
             Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
             keep along each axis. Use a single float for uniform cropping or a vector of three
-            floats for cropping each xyz-axis independently.
+            floats for cropping each xyz-axis independently. The crop is centered in the image.
 
         margin : int | VectorLike[int], optional
             Margin to remove from each side of each axis. Specify:
@@ -346,11 +346,12 @@ class ImageDataFilters(DataSetFilters):
 
         offset : VectorLike[int], optional
             Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.offset` indices
-            where the cropping region originates. The ``dimensions`` must also be specified.
+            where the cropping region originates. If specified, then ``dimensions`` must also be
+            provided.
 
         dimensions : VectorLike[int], optional
             Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.dimensions` of
-            the cropping region. The ``offset`` must also be specified.
+            the cropping region. If specified, then ``offset`` must also be provided.
 
         extent : VectorLike[int], optional
             Length-3 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
