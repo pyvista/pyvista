@@ -2504,6 +2504,7 @@ class ImageDataFilters(DataSetFilters):
                     f"match the number components ({num_input_components}) in array '{scalars}'."
                 )
                 raise ValueError(msg)
+            val = np.broadcast_to(val, (num_input_components,))
             if num_input_components > 1:
                 pad_multi_component = True
                 data = self.point_data  # type: ignore[attr-defined]
