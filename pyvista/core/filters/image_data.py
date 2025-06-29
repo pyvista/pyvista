@@ -493,7 +493,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(msg)
             return field, scalars
 
-        def _voi_from_mask(mask_: str | ImageData):
+        def _voi_from_mask(mask_: str | ImageData | bool):  # noqa: FBT001
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
             _validation.check_instance(mask_, (pyvista.ImageData, str, bool), name='mask')
 
