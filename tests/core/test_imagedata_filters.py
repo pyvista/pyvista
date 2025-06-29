@@ -1456,19 +1456,13 @@ def create_mask_array_from_extents(outer_extent, inner_extent):
 
 
 CROP_TEST_CASES = {
-    'factor_float': (
+    'factor': (
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
         "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
-    'factor_vector': (
-        dict(factor=CROP_FACTOR),
-        {},
-        dict(background_value=0.0),
-        '\nGot: background_value=0.0',
-    ),
-    'margin_vector': (
+    'margin': (
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
@@ -1513,7 +1507,7 @@ CROP_TEST_CASES = {
     ids=CROP_TEST_CASES.keys(),
 )
 def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match):
-    if 'margin' in required_kwarg or 'margin' in optional_kwarg:
+    if 'margin' in required_kwarg or 'factor' in required_kwarg:
         # Need to modify input for this test since expected output otherwise is impossible to
         # achieve because the cropping is symmetric
         uncropped_image.offset = (-1, -1, -1)
@@ -1610,8 +1604,30 @@ def test_crop_normalized_bounds(bounds, dimensions_in, dimensions_out, dimension
         bounds[4:6] = [0.0, 0.0]
         dimensions_in[2] = 1
         dimensions_out[2] = 1
+
     mesh = pv.ImageData(dimensions=dimensions_in)
     cropped = mesh.crop(normalized_bounds=bounds)
+    dimensions = cropped.dimensions
+    assert np.array_equal(dimensions, dimensions_out)
+
+
+@pytest.mark.parametrize('dimensionality', ['2D', '3D'])
+@pytest.mark.parametrize(
+    ('factor', 'dimensions_in', 'dimensions_out'),
+    [
+        (1.0, (10, 10, 10), (10, 10, 10)),
+        ((1.0, 1.0, 1.0), (10, 10, 10), (10, 10, 10)),
+        ((0.21, 0.25, 0.29), (10, 10, 10), (2, 2, 2)),
+        ((0.21, 0.25, 0.29), (11, 11, 11), (2, 2, 3)),
+        ((0.21, 0.25, 0.29), (9, 9, 9), (1, 2, 2)),
+    ],
+)
+def test_crop_factor(factor, dimensions_in, dimensions_out, dimensionality):
+    if dimensionality == '2D':
+        dimensions_in = (dimensions_in[0], dimensions_in[1], 1)
+        dimensions_out = (dimensions_out[0], dimensions_out[1], 1)
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(factor=factor)
     dimensions = cropped.dimensions
     assert np.array_equal(dimensions, dimensions_out)
 

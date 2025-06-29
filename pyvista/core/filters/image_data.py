@@ -593,9 +593,15 @@ class ImageDataFilters(DataSetFilters):
                 name='crop factor',
             )
 
+            scale_dims = valid_factor * np.array(self.dimensions)
+            new_dimensions = np.floor(scale_dims).astype(int)
+            new_dimensions = np.maximum(new_dimensions, 1)  # avoid zero
+
+            # Center of the current image in ijk coordinates
             center = self.offset + ((np.array(self.dimensions) - 1) // 2)
-            new_dimensions = np.round(valid_factor * self.dimensions).astype(int)
-            new_offset = center - (new_dimensions // 2)
+            # Offset to center the new cropped region around the original center
+            new_offset = center - ((new_dimensions - 1) // 2)
+
             return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_margin(margin_):
