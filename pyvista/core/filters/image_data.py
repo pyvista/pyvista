@@ -301,7 +301,6 @@ class ImageDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         extent: VectorLike[int] | None = None,
         normalized_bounds: VectorLike[float] | None = None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         mask: str | ImageData | None = None,
         padding: int | VectorLike[int] | None = None,
         background_value: float | None = None,
@@ -361,11 +360,6 @@ class ImageDataFilters(DataSetFilters):
             Normalized bounds relative to the input. These are floats between ``0.0``
             and ``1.0`` that define a box relative to the input size. Has the form
             ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
-            Control the rounding function used when converting float values from
-            ``normalized_bounds`` to the integer values for the extents of the cropping region.
-            :func:`numpy.floor` is used by default.
 
         mask : str | ImageData, optional
             Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
@@ -468,7 +462,6 @@ class ImageDataFilters(DataSetFilters):
             background_value=background_value,
         )
         ALLOWED_MASK_ARG_NAMES = ['background_value', 'padding']
-        round_func = rounding_func if rounding_func is not None else np.floor
 
         def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
@@ -564,8 +557,8 @@ class ImageDataFilters(DataSetFilters):
             dims = np.array(self.dimensions)
 
             # Compute ijk indices
-            starts = round_func(bounds[::2] * dims).astype(int)
-            stops = round_func(bounds[1::2] * dims).astype(int) - 1  # inclusive
+            starts = np.floor(bounds[::2] * dims).astype(int)
+            stops = np.floor(bounds[1::2] * dims).astype(int) - 1  # inclusive
 
             # Clamp to image bounds
             starts = np.maximum(starts, 0)
