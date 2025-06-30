@@ -1516,7 +1516,7 @@ def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, ma
     kwargs.update(required_kwarg)
 
     cropped = uncropped_image.crop(**kwargs)
-    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, modify_geometry=False)
+    expected_output = uncropped_image._extract_voi(CROPPED_EXTENT)
     assert cropped.extent == expected_output.extent
     assert cropped == expected_output
 

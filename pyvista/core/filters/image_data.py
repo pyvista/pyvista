@@ -226,7 +226,6 @@ class ImageDataFilters(DataSetFilters):
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
-        modify_geometry: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -259,16 +258,6 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
-        modify_geometry : bool, default: True
-            Modify the geometry of the extracted subset. By default,
-
-            - the :attr:`~pyvista.ImageData.origin` of the extracted subset is set to the minimum
-              bounds of the subset, and
-            - the :attr:`~pyvista.ImageData.offset` of the extracted subset is reset to
-              ``(0, 0, 0)``.
-
-            .. versionadded:: 0.46
-
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -278,19 +267,27 @@ class ImageDataFilters(DataSetFilters):
             ImageData subset.
 
         """
+        result = self._extract_voi(voi, rate=rate, boundary=boundary, progress_bar=progress_bar)
+        # Adjust for the confusing issue with the extents
+        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+        fixed = pyvista.ImageData()
+        fixed.origin = result.bounds[::2]
+        fixed.spacing = result.spacing
+        fixed.dimensions = result.dimensions
+        fixed.point_data.update(result.point_data)
+        fixed.cell_data.update(result.cell_data)
+        fixed.field_data.update(result.field_data)
+        fixed.copy_meta_from(result, deep=True)
+        return fixed
+
+    def _extract_voi(self, voi, *, rate=(1, 1, 1), boundary=False, progress_bar=False):
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(self)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
-        result = _get_output(alg)
-        if modify_geometry:
-            # Adjust for the confusing issue with the extents
-            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-            result.origin = result.bounds[::2]
-            result.offset = (0, 0, 0)
-        return result
+        return _get_output(alg)
 
     def crop(  # type: ignore[misc]
         self: ImageData,
@@ -657,7 +654,7 @@ class ImageDataFilters(DataSetFilters):
         voi[3] = max(voi[2:4])
         voi[5] = max(voi[4:6])
 
-        return self.extract_subset(voi, modify_geometry=False, progress_bar=progress_bar)
+        return self._extract_voi(voi, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
