@@ -614,3 +614,55 @@ def test_picker_raises(picker, mocker: MockerFixture):
         pl.enable_surface_point_picking(picker=picker)
 
     m.assert_called_once_with(picker)
+
+
+def test_block_picking_across_four_subplots():
+    """Test block picking on a 2x2 subplot layout with a MultiBlock of two spheres."""
+    sphere1 = pv.Sphere(center=(-1.0, 0.0, 0.0), radius=0.5)
+    sphere2 = pv.Sphere(center=(1.0, 0.0, 0.0), radius=0.5)
+    blocks = pv.MultiBlock([sphere1, sphere2])
+
+    # Record each block index picked up
+    picked = []
+
+    def callback(index, dataset):  # noqa: ARG001
+        picked.append(index)
+
+    pl = pv.Plotter(shape=(2, 2), window_size=[400, 400])
+    for row in range(2):
+        for col in range(2):
+            pl.subplot(row, col)
+            pl.add_composite(blocks, color='w', pickable=True)
+
+    pl.enable_block_picking(callback, side='left')
+
+    # Using camera_position to ensure consistent view for testing
+    camera_position = [
+        (3.0, 3.0, 3.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 1.0),
+    ]
+
+    pl.show(
+        auto_close=False,
+        cpos=camera_position,
+    )
+
+    # Using hard-coded click positions to ensure consistent testing
+    click_coords = [
+        [45, 266],
+        [147, 326],
+        [245, 263],
+        [352, 321],
+        [44, 59],
+        [147, 121],
+        [243, 60],
+        [349, 125],
+    ]
+
+    for x, y in click_coords:
+        pl.iren._mouse_left_button_click(x, y)
+    pl.close()
+
+    expected = [2, 1] * 4
+    assert picked == expected, f'Picked indices {picked}, but expected {expected}'

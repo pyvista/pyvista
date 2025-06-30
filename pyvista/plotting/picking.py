@@ -1610,7 +1610,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         """
         # use a weak reference to enable garbage collection
-        renderer_ = weakref.ref(self.renderer)  # type: ignore[attr-defined]
         self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
@@ -1619,9 +1618,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
+            loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]
+            index = self_().renderers.loc_to_index(loc)  # type: ignore[union-attr]
+            renderer = self_().renderers[index]  # type: ignore[union-attr]
+
             selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetRenderer(renderer_())  # type: ignore[arg-type]
-            selector.SetArea(x, y, x, y)  # single pixel
+            selector.SetRenderer(renderer)
+            selector.SetArea(x, y, x, y)
             selection = selector.Select()
 
             for ii in range(selection.GetNumberOfNodes()):
