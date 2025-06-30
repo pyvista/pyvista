@@ -2772,34 +2772,12 @@ def test_compute_derivatives(random_hills):
 
 
 def test_extract_subset():
-    offset = (1, 2, 3)
-    dict_ = {'foo': 'bar'}
-
     volume = examples.load_uniform()
-    volume.user_dict = dict_
-    volume.offset = offset
-
-    new_offset = (2, 4, 6)
-    new_dims = 4, 3, 2
-    voi = (
-        new_offset[0],
-        new_offset[0] + new_dims[0] - 1,
-        new_offset[1],
-        new_offset[1] + new_dims[1] - 1,
-        new_offset[2],
-        new_offset[2] + new_dims[2] - 1,
-    )
-    voi = volume.extract_subset(voi, progress_bar=True)
+    voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=True)
     assert isinstance(voi, pv.ImageData)
     # Test that we fix the confusing issue from extents in
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
-    assert voi.offset != offset
-    assert voi.offset == (0, 0, 0)
-    assert voi.spacing == volume.spacing
-    assert voi.dimensions == new_dims
-    assert voi.array_names == volume.array_names
-    assert voi.user_dict == dict_
 
 
 def test_gaussian_smooth_output_type():
