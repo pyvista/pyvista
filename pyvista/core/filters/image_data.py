@@ -303,9 +303,9 @@ class ImageDataFilters(DataSetFilters):
         background_value: float | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
-        """Crop this image to remove points at the image's boundaries.
+        """Crop this image to remove points at its boundaries.
 
-        There are several ways to crop:
+        Cropping is performed using the image's ijk-indices. There are several ways to crop:
 
         #. Use ``factor`` to crop a portion of the image symmetrically.
         #. Use ``margin`` to remove points from the image border.
