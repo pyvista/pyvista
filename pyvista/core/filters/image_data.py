@@ -348,7 +348,7 @@ class ImageDataFilters(DataSetFilters):
             the cropping region. If specified, then ``offset`` must also be provided.
 
         extent : VectorLike[int], optional
-            Length-3 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
+            Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
             the cropping region.
 
         normalized_bounds : VectorLike[float], optional
