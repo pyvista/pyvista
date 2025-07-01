@@ -612,7 +612,6 @@ class ImageDataFilters(DataSetFilters):
             return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
         def _voi_from_dimensions(dimensions_):
-            _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
             valid_dims = _validation.validate_array3(
                 dimensions_,
                 broadcast=True,
