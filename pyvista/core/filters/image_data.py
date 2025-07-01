@@ -305,7 +305,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> ImageData:
         """Crop this image to remove points at its boundaries.
 
-        Cropping is performed using the image's ijk-indices. There are several ways to crop:
+        There are several ways to crop:
 
         #. Use ``factor`` to crop a portion of the image symmetrically.
         #. Use ``margin`` to remove points from the image border.
@@ -315,6 +315,13 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
         #. Use ``mask``, ``padding``, and ``background_value`` to crop the foreground using scalar
            values.
+
+        These methods are all independent, e.g. it is not possible to specify both ``factor`` and
+        ``margin``.
+
+        .. note::
+
+            All cropping is performed using the image's ijk-indices, not physical xyz-bounds.
 
         .. versionadded:: 0.46
 
@@ -392,7 +399,14 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        pad_image, resample
+        pad_image
+            Add points to image boundaries. This is the inverse operation of the ``margin`` crop.
+
+        resample
+            Modify an image's dimensions and spacing.
+
+        select_values
+            Threshold-like filter which may be used to generate a mask for cropping.
 
         Examples
         --------
