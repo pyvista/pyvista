@@ -1499,6 +1499,12 @@ CROP_TEST_CASES = {
         dict(background_value=0.0),
         "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
+    'dimensions': (
+        dict(dimensions=CROPPED_DIMENSIONS),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+    ),
     'mask_str': (
         dict(mask=MASK_ARRAY_NAME),
         dict(background_value=0.0),
@@ -1520,7 +1526,7 @@ CROP_TEST_CASES = {
     ids=CROP_TEST_CASES.keys(),
 )
 def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match):
-    if 'margin' in required_kwarg or 'factor' in required_kwarg:
+    if 'margin' in required_kwarg or 'factor' in required_kwarg or 'dimensions' in required_kwarg:
         # Need to modify input for this test since expected output otherwise is impossible to
         # achieve because the cropping is symmetric
         uncropped_image.offset = (-1, -1, -1)
@@ -1645,6 +1651,20 @@ def test_crop_factor(factor, dimensions_in, dimensions_out, dimensionality):
     assert np.array_equal(dimensions, dimensions_out)
 
 
+@pytest.mark.parametrize(
+    ('dimensions_in', 'dimensions', 'extent_out'),
+    [
+        ((10, 10, 10), (10, 10, 10), (0, 9, 0, 9, 0, 9)),
+        ((10, 10, 10), (9, 9, 9), (0, 8, 0, 8, 0, 8)),
+    ],
+)
+def test_crop_dimensions(dimensions_in, dimensions, extent_out):
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(dimensions=dimensions)
+    assert np.array_equal(cropped.dimensions, dimensions)
+    assert np.array_equal(cropped.extent, extent_out)
+
+
 def test_crop_raises():
     background = 0.0
     img = pv.ImageData(dimensions=(1, 1, 1))
@@ -1660,7 +1680,7 @@ def test_crop_raises():
     with pytest.raises(ValueError, match=match):
         img.crop(mask=False)
 
-    match = 'Offset and dimensions must both specified together.'
+    match = 'Dimensions must also be specified when cropping with offset.'
     with pytest.raises(TypeError, match=match):
         img.crop(offset=(1, 2, 3))
 

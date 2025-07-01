@@ -345,7 +345,8 @@ class ImageDataFilters(DataSetFilters):
 
         dimensions : VectorLike[int], optional
             Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.dimensions` of
-            the cropping region. If specified, then ``offset`` must also be provided.
+            the cropping region. ``offset`` may also be provided, but if it is not, the crop is
+            centered in the image.
 
         extent : VectorLike[int], optional
             Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
@@ -610,6 +611,29 @@ class ImageDataFilters(DataSetFilters):
 
             return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
+        def _voi_from_dimensions(dimensions_):
+            _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
+            valid_dims = _validation.validate_array3(
+                dimensions_,
+                broadcast=True,
+                must_have_dtype=np.integer,
+                must_be_in_range=[1, np.inf],
+                dtype_out=int,
+                name='dimensions',
+            )
+
+            new_dimensions = np.minimum(valid_dims, np.array(self.dimensions))
+
+            # Center of the current image in ijk coordinates
+            center = self.offset + ((np.array(self.dimensions) - 1) // 2)
+
+            # Compute offset to center the new cropped region
+            # When the difference is odd, place the extra point on the min side
+            half_size = (new_dimensions - 1) // 2
+            new_offset = center - half_size
+
+            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+
         def _voi_from_margin(margin_):
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
@@ -619,15 +643,15 @@ class ImageDataFilters(DataSetFilters):
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 
-        def _voi_from_dimensions_and_offset(dimensions, offset):
-            if dimensions is not None:
-                _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
-            elif offset is not None:
-                _raise_error_kwargs_not_none('offset', also_exclude=['dimensions'])
-            if dimensions is None or offset is None:
-                msg = 'Offset and dimensions must both specified together.'
+        def _voi_from_dimensions_or_offset(dimensions_, offset_):
+            _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
+            if dimensions_ is None:
+                msg = 'Dimensions must also be specified when cropping with offset.'
                 raise TypeError(msg)
-            return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
+            elif offset_ is None:
+                return _voi_from_dimensions(dimensions_)
+            else:
+                return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
 
         if factor is not None:
             voi = _voi_from_factor(factor)
@@ -640,7 +664,7 @@ class ImageDataFilters(DataSetFilters):
         elif extent is not None:
             voi = _voi_from_extent(extent)
         elif dimensions is not None or offset is not None:
-            voi = _voi_from_dimensions_and_offset(dimensions, offset)
+            voi = _voi_from_dimensions_or_offset(dimensions, offset)
         else:
             msg = (
                 'No crop arguments provided. One of the following keywords must be provided:\n'
