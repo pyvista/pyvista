@@ -832,6 +832,19 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
+def test_pad_image_multi_component_with_scalar(beach):
+    # Image has rgb scalars
+    first_value = beach.active_scalars[0]
+    assert len(first_value) == 3
+
+    # Test padding with single (non-rgb) value works
+    zero = 0
+    padded = beach.pad_image(zero)
+    new_first_value = padded.active_scalars[0]
+    assert not np.array_equal(new_first_value, first_value)
+    assert np.array_equal(new_first_value, (zero, zero, zero))
+
+
 def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
