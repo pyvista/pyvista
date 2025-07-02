@@ -1418,6 +1418,14 @@ CROPPED_OFFSET = (1, 3, 4)
 CROPPED_DIMENSIONS = (6, 4, 2)
 CROPPED_MASK_IMAGE = pv.ImageData(offset=CROPPED_OFFSET, dimensions=CROPPED_DIMENSIONS)
 CROPPED_EXTENT = CROPPED_MASK_IMAGE.extent
+PADDING = [
+    CROPPED_OFFSET[0],
+    UNCROPPED_DIMENSION[0] - CROPPED_OFFSET[0] - CROPPED_DIMENSIONS[0],
+    CROPPED_OFFSET[1],
+    UNCROPPED_DIMENSION[1] - CROPPED_OFFSET[1] - CROPPED_DIMENSIONS[1],
+    CROPPED_OFFSET[2],
+    UNCROPPED_DIMENSION[2] - CROPPED_OFFSET[2] - CROPPED_DIMENSIONS[2],
+]
 
 # Add scalar data, here we just fill the mask with foreground
 CROPPED_MASK_IMAGE.point_data['scalars'] = np.ones((CROPPED_MASK_IMAGE.n_points,))
@@ -1520,22 +1528,41 @@ CROP_TEST_CASES = {
 }
 
 
+def _remove_one_from_offset(mesh: pv.ImageData):
+    mesh.offset = np.array(mesh.offset) - 1
+
+
 @pytest.mark.parametrize(
     ('required_kwarg', 'optional_kwarg', 'invalid_kwarg', 'match'),
     CROP_TEST_CASES.values(),
     ids=CROP_TEST_CASES.keys(),
 )
-def test_crop(uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match):
-    if 'margin' in required_kwarg or 'factor' in required_kwarg or 'dimensions' in required_kwarg:
+@pytest.mark.parametrize('keep_dimensions', [True, False])
+def test_crop(
+    uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match, keep_dimensions
+):
+    is_symmetric_padding = (
+        'margin' in required_kwarg or 'factor' in required_kwarg or 'dimensions' in required_kwarg
+    )
+    if is_symmetric_padding:
         # Need to modify input for this test since expected output otherwise is impossible to
         # achieve because the cropping is symmetric
-        uncropped_image.offset = (-1, -1, -1)
+        _remove_one_from_offset(uncropped_image)
 
-    kwargs = optional_kwarg.copy()
-    kwargs.update(required_kwarg)
+    kwargs = required_kwarg.copy()
+    kwargs.update(optional_kwarg)
 
-    cropped = uncropped_image.crop(**kwargs)
+    cropped = uncropped_image.crop(**kwargs, keep_dimensions=keep_dimensions)
     expected_output = uncropped_image._extract_voi(CROPPED_EXTENT)
+
+    if keep_dimensions:
+        expected_output = expected_output.pad_image(pad_size=PADDING)
+        if is_symmetric_padding:
+            _remove_one_from_offset(expected_output)
+        # Only the point data is padded for the expected output, so we don't check full equality
+        assert cropped.extent == expected_output.extent
+        return
+
     assert cropped.extent == expected_output.extent
     assert cropped == expected_output
 
@@ -1576,6 +1603,17 @@ def test_crop_mask_multi_component(background_value, extent):
     assert cropped.extent == extent
 
 
+@pytest.fixture
+def mask3x3():
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros(dims, dtype=int)
+    arr[1, 1, 1] = 1
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr.ravel()
+    return mask
+
+
 @pytest.mark.parametrize(
     ('padding', 'extent'),
     [
@@ -1586,15 +1624,8 @@ def test_crop_mask_multi_component(background_value, extent):
         ((0, 0, 0, 1, 1, 1), (1, 1, 1, 2, 0, 2)),
     ],
 )
-def test_crop_mask_padding(padding, extent):
-    # Image with a single foreground voxel in center
-    dims = (3, 3, 3)
-    arr = np.zeros(dims, dtype=int)
-    arr[1, 1, 1] = 1
-    mask = pv.ImageData(dimensions=dims)
-    mask['mask'] = arr.ravel()
-
-    cropped = mask.crop(mask=True, padding=padding)
+def test_crop_mask_padding(mask3x3, padding, extent):
+    cropped = mask3x3.crop(mask=True, padding=padding)
     assert cropped.extent == extent
 
 
@@ -1663,6 +1694,43 @@ def test_crop_dimensions(dimensions_in, dimensions, extent_out):
     cropped = mesh.crop(dimensions=dimensions)
     assert np.array_equal(cropped.dimensions, dimensions)
     assert np.array_equal(cropped.extent, extent_out)
+
+
+@pytest.fixture
+def image2x2():
+    # Image with multiple point and cell arrays
+    dims = (2, 2, 2)
+    im = pv.ImageData(dimensions=dims)
+    im['zeros'] = np.zeros((im.n_points,))
+    im['ones'] = np.ones((im.n_points,))
+    im['range'] = range(im.n_cells)
+    im['twos'] = np.ones((im.n_cells,)) * 2
+    return im
+
+
+@pytest.mark.parametrize('fill_value', [42, -1, None])
+def test_crop_keep_dimensions(image2x2, fill_value):
+    # Test with 2x2 image and use margin to crop half the input
+
+    fill_value = 0 if fill_value is None else fill_value
+
+    cropped = image2x2.crop(margin=(1, 0, 0), keep_dimensions=True, fill_value=fill_value)
+    assert cropped.array_names == image2x2.array_names
+    assert cropped.dimensions == image2x2.dimensions
+
+    for name in image2x2.point_data:
+        actual_array = cropped.point_data[name]
+        expected_array = image2x2.point_data[name]
+        assert actual_array.dtype == expected_array.dtype
+
+        # Expect half the input to have fill value
+        expected_array[0:-1:2] = fill_value
+        assert np.array_equal(actual_array, expected_array)
+
+    # Test cell data is not modified at all
+    image2x2.point_data.clear()
+    cropped.point_data.clear()
+    assert image2x2 == cropped
 
 
 def test_crop_raises():

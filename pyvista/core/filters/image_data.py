@@ -301,16 +301,19 @@ class ImageDataFilters(DataSetFilters):
         mask: str | ImageData | Literal[True] | None = None,
         padding: int | VectorLike[int] | None = None,
         background_value: float | None = None,
+        keep_dimensions: bool = False,
+        fill_value: float | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
         """Crop this image to remove points at its boundaries.
 
-        There are several ways to crop:
+        This filter is useful for extracting a volume or region of interest. There are several ways
+        to crop:
 
         #. Use ``factor`` to crop a portion of the image symmetrically.
         #. Use ``margin`` to remove points from the image border.
-        #. Use ``offset`` and ``dimensions`` to explicitly crop to the specified
-           :attr:`~pyvista.ImageData.offset` and :attr:`~pyvista.ImageData.dimensions`.
+        #. Use ``dimensions`` (and optionally, ``offset``) to explicitly crop to the specified
+           :attr:`~pyvista.ImageData.dimensions` and :attr:`~pyvista.ImageData.offset`.
         #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
         #. Use ``mask``, ``padding``, and ``background_value`` to crop the foreground using scalar
@@ -318,6 +321,10 @@ class ImageDataFilters(DataSetFilters):
 
         These methods are all independent, e.g. it is not possible to specify both ``factor`` and
         ``margin``.
+
+        By default, the cropped output's :attr:`~pyvista.ImageData.dimensions` are typically less
+        than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
+        ensure the output dimensions always match the input.
 
         .. note::
 
@@ -388,6 +395,13 @@ class ImageDataFilters(DataSetFilters):
         background_value : float | VectorLike[float], optional
             Value or multi-component vector considered to be the background. Only valid when using
             a mask to crop the image.
+
+        keep_dimensions : bool, default: False
+            If ``True``, the cropped output is :meth:`padded <pad_iamge>` with ``fill_value`` to
+            ensure the output dimensions match the input.
+
+        fill_value: float | VectorLike[float], optional
+            Value used when padding the cropped output if ``keep_dimensions`` is ``True``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -691,7 +705,57 @@ class ImageDataFilters(DataSetFilters):
         voi[3] = max(voi[2:4])
         voi[5] = max(voi[4:6])
 
-        return self._extract_voi(voi, progress_bar=progress_bar)
+        cropped = self._extract_voi(voi, progress_bar=progress_bar)
+        if not keep_dimensions:
+            return cropped
+
+        result = self.copy()
+
+        # Determine IJK region the cropped chunk occupies in the original image
+        cropped_ext = np.array(cropped.extent)
+        orig_ext = np.array(self.extent)
+
+        # calculate local extents in original coordinates
+        insert_xmin = cropped_ext[0] - orig_ext[0]
+        insert_xmax = cropped_ext[1] - orig_ext[0]
+        insert_ymin = cropped_ext[2] - orig_ext[2]
+        insert_ymax = cropped_ext[3] - orig_ext[2]
+        insert_zmin = cropped_ext[4] - orig_ext[4]
+        insert_zmax = cropped_ext[5] - orig_ext[4]
+
+        # Update arrays with cropped data
+        for name in cropped.point_data:
+            cropped_data = cropped.point_data[name]
+            orig_data = self.point_data[name]
+            fill = fill_value if fill_value is not None else 0
+            new_data = np.full_like(orig_data, fill)
+
+            # Reshape for indexing
+            dims_orig = self.dimensions[::-1]
+            dims_crop = cropped.dimensions[::-1]
+
+            if cropped_data.ndim == 1:
+                data_reshaped = cropped_data.reshape(dims_crop)
+            else:
+                # shape is (N, C)
+                num_components = cropped_data.shape[1]
+                data_reshaped = cropped_data.reshape(*dims_crop, num_components)
+
+            # get the view into the big array
+            slc_x = slice(insert_xmin, insert_xmax + 1)
+            slc_y = slice(insert_ymin, insert_ymax + 1)
+            slc_z = slice(insert_zmin, insert_zmax + 1)
+
+            if cropped_data.ndim == 1:
+                new_data.reshape(dims_orig)[slc_z, slc_y, slc_x] = data_reshaped
+            else:
+                new_data.reshape(*dims_orig, cropped_data.shape[1])[slc_z, slc_y, slc_x, :] = (
+                    data_reshaped
+                )
+
+            result.point_data[name] = new_data
+
+        return result
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
