@@ -3760,7 +3760,7 @@ class AxesGeometrySource:
         # Scale so bounding box edges have length one
         size = np.array(part.size)
         if np.any(size < 1e-8):
-            msg = f'Custom axes part must be 3D. Got bounds: {part.bounds}.'
+            msg = f'Custom axes part must be 3D. Got bounds:\n{part.bounds}.'
             raise ValueError(msg)
         part.scale(np.reciprocal(size), inplace=True)
         return part
