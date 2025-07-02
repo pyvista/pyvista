@@ -523,7 +523,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(msg)
             return field, scalars
 
-        def _voi_from_mask(mask_: str | ImageData | bool):  # noqa: FBT001
+        def _voi_from_mask(mask_: str | ImageData | NumpyArray[float] | bool):  # noqa: FBT001
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
             # Validate scalars
             if isinstance(mask_, (str, bool)):
@@ -539,7 +539,7 @@ class ImageDataFilters(DataSetFilters):
                 mesh = mask_
                 scalars = None
             else:
-                mesh = pyvista.ImageData(dimensions=self.dimensions)
+                mesh = pyvista.ImageData(dimensions=self.dimensions, offset=self.offset)
                 scalars = 'scalars'
                 mesh[scalars] = mask_
 
