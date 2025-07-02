@@ -738,9 +738,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             else:
                 msg = f'Unsupported index type: {type(slicer)}'
                 raise TypeError(msg)
-        return self._extract_voi(voi)
 
-    def _extract_voi(self, voi: VectorLike[int]) -> ImageData:
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(self)
