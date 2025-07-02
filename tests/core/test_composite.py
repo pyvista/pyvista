@@ -19,6 +19,7 @@ from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core.dataobject import USER_DICT_KEY
+from tests.conftest import add_xdist_group_marker
 
 
 def test_multi_block_init_vtk():
@@ -508,12 +509,18 @@ def test_multi_block_hdf_invalid_nested_block(tmpdir):
         multi.save(filename)
 
 
+@pytest.fixture
+def backward_facing_step(request):
+    add_xdist_group_marker(request, 'fileio')
+    return ex.download_backward_facing_step()
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, tmpdir):
+def test_ensight_multi_block_io(extension, binary, tmpdir, backward_facing_step):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.%s' % extension))  # noqa: UP031
     # multi = ex.load_bfs()  # .case file
-    multi = ex.download_backward_facing_step()  # .case file
+    multi = backward_facing_step  # .case file
     # Now check everything
     assert multi.n_blocks == 4
     array_names = ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
