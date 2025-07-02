@@ -224,7 +224,7 @@ class ImageDataFilters(DataSetFilters):
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
-        reset_origin: bool = True,  # noqa: FBT001, FBT002
+        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -257,15 +257,15 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
-        reset_origin : bool, default: True
-            Reset the origin of the extracted subset. By default,
+        rebase_coordinates : bool, default: True
+            If ``True`` (default), reset the coordinate reference of the extracted subset:
 
-            - the :attr:`~pyvista.ImageData.origin` of the extracted subset is set to the minimum
-              bounds of the subset, and
-            - the :attr:`~pyvista.ImageData.offset` of the extracted subset is reset to
-              ``(0, 0, 0)``.
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            Set this to ``False`` retain the same geometry as the input.
+            This effectively re-bases the output in both world (XYZ) and voxel (IJK) coordinates.
+            Set to ``False`` to leave the origin unmodified and keep the offset specified by the
+            ``voi`` parameter.
 
             .. versionadded:: 0.46
 
@@ -285,7 +285,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
-        if reset_origin:
+        if rebase_coordinates:
             # Adjust for the confusing issue with the extents
             #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
             result.origin = result.bounds[::2]

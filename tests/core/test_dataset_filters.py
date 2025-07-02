@@ -2771,8 +2771,8 @@ def test_compute_derivatives(random_hills):
         derv = mesh.compute_derivative()
 
 
-@pytest.mark.parametrize('reset_origin', [True, False])
-def test_extract_subset(uniform, reset_origin):
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset(uniform, rebase_coordinates):
     offset = (1, 2, 3)
     dict_ = {'foo': 'bar'}
     origin = (1.1, 2.2, 3.3)
@@ -2783,7 +2783,7 @@ def test_extract_subset(uniform, reset_origin):
     new_offset = (2, 4, 6)
     new_dims = 4, 3, 2
     extent = pv.ImageData(dimensions=new_dims, offset=new_offset).extent
-    voi = uniform.extract_subset(extent, progress_bar=True, reset_origin=reset_origin)
+    voi = uniform.extract_subset(extent, progress_bar=True, rebase_coordinates=rebase_coordinates)
     assert isinstance(voi, pv.ImageData)
     assert voi is not uniform
     assert voi.spacing == uniform.spacing
@@ -2791,7 +2791,7 @@ def test_extract_subset(uniform, reset_origin):
     assert voi.array_names == uniform.array_names
     assert voi.user_dict == dict_
 
-    if reset_origin:
+    if rebase_coordinates:
         # Test that we fix the confusing issue from extents in
         #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
         assert voi.origin != origin
