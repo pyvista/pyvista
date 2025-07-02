@@ -397,7 +397,7 @@ class ImageDataFilters(DataSetFilters):
             a mask to crop the image.
 
         keep_dimensions : bool, default: False
-            If ``True``, the cropped output is :meth:`padded <pad_iamge>` with ``fill_value`` to
+            If ``True``, the cropped output is :meth:`padded <pad_image>` with ``fill_value`` to
             ensure the output dimensions match the input.
 
         fill_value: float | VectorLike[float], optional
