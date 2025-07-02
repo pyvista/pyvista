@@ -1513,17 +1513,11 @@ CROP_TEST_CASES = {
         dict(background_value=0.0),
         "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
     ),
-    'mask_str': (
+    'mask': (
         dict(mask=MASK_ARRAY_NAME),
         dict(background_value=0.0),
         dict(offset=(0, 0, 0)),
         "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds']",
-    ),
-    'mask_img': (
-        dict(mask=CROPPED_MASK_IMAGE),
-        {},
-        dict(offset=(0, 0, 0)),
-        'When cropping with mask, the following parameters cannot be set:',
     ),
 }
 
@@ -1627,6 +1621,19 @@ def mask3x3():
 def test_crop_mask_padding(mask3x3, padding, extent):
     cropped = mask3x3.crop(mask=True, padding=padding)
     assert cropped.extent == extent
+
+
+@pytest.mark.parametrize('mask', [True, MASK_ARRAY_NAME, CROPPED_MASK_IMAGE, 'array'])
+def test_crop_mask_inputs(uncropped_image, mask):
+    if mask == 'array':
+        mask = uncropped_image[MASK_ARRAY_NAME]
+    elif mask is True:
+        uncropped_image.set_active_scalars('mask')
+
+    expected_output = uncropped_image._extract_voi(CROPPED_EXTENT)
+
+    cropped = uncropped_image.crop(mask=mask)
+    assert cropped == expected_output
 
 
 @pytest.mark.parametrize(
