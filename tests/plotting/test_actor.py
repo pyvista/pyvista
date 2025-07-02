@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import platform
-
 import numpy as np
 import pytest
 import scipy
@@ -13,11 +11,6 @@ from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
-
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
 
 
 @pytest.fixture
@@ -149,7 +142,7 @@ def test_actor_mblock_copy_shallow(actor_from_multi_block):
     assert actor_copy.mapper.dataset is actor_from_multi_block.mapper.dataset
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_actor_texture(actor):
     texture = examples.download_masonry_texture()
     actor.texture = texture
@@ -258,7 +251,9 @@ def test_actor_user_matrix(klass, actor, dummy_actor):
     actor = actor if klass == 'Prop3D' else dummy_actor
     assert np.allclose(actor.user_matrix, np.eye(4))
 
-    arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
+    arr = np.array(
+        [[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]]
+    )
 
     actor.user_matrix = arr
     assert isinstance(actor.user_matrix, np.ndarray)
@@ -306,7 +301,9 @@ def test_vol_actor_prop(vol_actor):
 
 
 @pytest.mark.parametrize(
-    'func', [np.array, scipy.spatial.transform.Rotation.from_matrix], ids=['numpy', 'scipy']
+    'func',
+    [np.array, scipy.spatial.transform.Rotation.from_matrix],
+    ids=['numpy', 'scipy'],
 )
 def test_rotation_from(actor, func):
     array = [

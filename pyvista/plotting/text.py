@@ -5,9 +5,11 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
 import warnings
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
@@ -30,12 +32,16 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
 
+HorizontalOptions = Literal['left', 'center', 'right']
+VerticalOptions = Literal['bottom', 'center', 'top']
+
 
 @no_new_attr
-class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
+class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
-    This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
+    This is an annotation object that manages four text actors / mappers to provide
+    annotation in the four corners of a viewport.
 
     Parameters
     ----------
@@ -66,7 +72,10 @@ class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
+    @_deprecate_positional_args(allowed=['position', 'text'])
+    def __init__(  # noqa: PLR0917
+        self, position, text, prop=None, linear_font_scale_factor=None, name=None
+    ):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -164,7 +173,7 @@ class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(_NameMixin, _vtk.vtkTextActor):
+class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -195,7 +204,10 @@ class Text(_NameMixin, _vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None, name=None):
+    @_deprecate_positional_args(allowed=['text'])
+    def __init__(  # noqa: PLR0917
+        self, text=None, position=None, prop=None, name=None
+    ):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -268,8 +280,9 @@ class Label(_Prop3DMixin, Text):
     In addition, this class supports an additional :attr:`relative_position` attribute.
     In general, it is recommended to simply use :attr:`~pyvista.Prop3D.position` when positioning a
     :class:`Label` by itself. However, if the position of the label depends on the
-    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and :attr:`relative_position`
-    may be used together. In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
+    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and
+    :attr:`relative_position` may be used together.
+    In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
     should be kept in-sync. See the examples below.
 
     Parameters
@@ -452,9 +465,9 @@ class Label(_Prop3DMixin, Text):
             raise RuntimeError(msg)
 
         msg = (
-            'The behavior of `size` will change in a future version. It currently returns a float with\n'
-            "the label's font size, but will return a tuple with its physical geometric size in the future.\n"
-            'Use `font_size` instead.'
+            'The behavior of `size` will change in a future version. It currently returns a float '
+            "with\n the label's font size, but will return a tuple with its physical geometric "
+            'size in the future.\nUse `font_size` instead.'
         )
         warnings.warn(msg, PyVistaFutureWarning)
         return self.prop.font_size
@@ -497,7 +510,7 @@ class Label(_Prop3DMixin, Text):
 
 
 @no_new_attr
-class TextProperty(_vtk.vtkTextProperty):
+class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters
@@ -568,7 +581,8 @@ class TextProperty(_vtk.vtkTextProperty):
     _background_color_set = None
     _font_family = None
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['theme'])
+    def __init__(  # noqa: PLR0917
         self,
         theme=None,
         color=None,
@@ -576,11 +590,11 @@ class TextProperty(_vtk.vtkTextProperty):
         orientation=None,
         font_size=None,
         font_file=None,
-        shadow: bool = False,
+        shadow: bool = False,  # noqa: FBT001, FBT002
         justification_horizontal=None,
         justification_vertical=None,
-        italic: bool = False,
-        bold: bool = False,
+        italic: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = False,  # noqa: FBT001, FBT002
         background_color=None,
         background_opacity=None,
     ):

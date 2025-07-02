@@ -1,8 +1,11 @@
 """
+.. _plot_over_circular_arc_example:
+
 Plot Scalars Over a Circular Arc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Interpolate the scalars of a dataset over a circular arc.
+Interpolate the scalars of a dataset over a circular arc
+using :meth:`~pyvista.DataSetFilters.plot_over_circular_arc_normal`.
 
 """
 
@@ -34,7 +37,10 @@ center = [bnds.x_min, bnds.y_min, bnds.z_min]
 angle = 90.0
 
 # Preview how this circular arc intersects this mesh
-arc = pv.CircularArcFromNormal(center, 100, normal, polar, angle)
+# with :func:`~pyvista.CircularArcFromNormal`.
+arc = pv.CircularArcFromNormal(
+    center=center, resolution=100, normal=normal, polar=polar, angle=angle
+)
 
 p = pv.Plotter()
 p.add_mesh(mesh, style='wireframe', color='w')
@@ -46,6 +52,8 @@ p.show()
 
 # %%
 # Run the filter and produce a line plot.
-mesh.plot_over_circular_arc_normal(center, 100, normal, polar, angle, 'height')
+mesh.plot_over_circular_arc_normal(
+    center=center, resolution=100, normal=normal, polar=polar, angle=angle, scalars='height'
+)
 # %%
 # .. tags:: plot

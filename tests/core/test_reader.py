@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import pickle
 import re
@@ -28,9 +27,6 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-
-
 def test_read_raises():
     with pytest.raises(
         ValueError, match='Only one of `file_format` and `force_ext` may be specified.'
@@ -56,7 +52,7 @@ def test_read_texture_raises(mocker: MockerFixture, npoints):
 @pytest.mark.parametrize('sideset', [1.0, None, object(), np.array([])])
 def test_read_exodus_raises(sideset):
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=re.escape(f'Could not parse sideset ID/name: {sideset}'),
     ):
         pv.read_exodus(examples.download_mug(load=False), enabled_sidesets=[sideset])
@@ -319,7 +315,7 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
-def test_dcmreader(tmpdir):
+def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
     reader = pv.get_reader(directory)
@@ -568,7 +564,7 @@ def test_pvdreader_no_time_group():
         assert dataset.part == i
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
@@ -602,11 +598,8 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
-    # vtk < 9.1.0 does not support
-    if pv.vtk_version_info < (9, 1, 0):
-        pytest.xfail('OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
-
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
     reader.set_active_time_point(1)
@@ -677,8 +670,8 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info > (9, 3),
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 3),
     reason='polyhedra decomposition was removed after 9.3',
 )
 def test_openfoam_decompose_polyhedra():
@@ -981,6 +974,12 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+def test_hdf_reader_raises(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0))
+    with pytest.raises(pv.VTKVersionError):
+        pv.HDFReader('foo')
+
+
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -1032,9 +1031,8 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
 )
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
@@ -1047,12 +1045,11 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert len(new_partitions) == len(partitions)
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
-        assert new_partitions[i].n_cells == partitions[i].n_cells
+        assert new_partition.n_cells == partitions[i].n_cells
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3, 0),
-    reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 3, 0, reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.'
 )
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
@@ -1076,9 +1073,8 @@ def test_gambitreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
 )
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
@@ -1112,9 +1108,8 @@ def test_gesignareader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0),
-    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+@pytest.mark.needs_vtk_version(
+    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
 )
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
@@ -1365,8 +1360,8 @@ def test_nek5000_reader():
     ('data_object', 'ext'),
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
 )
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='VTK version not supported.')
-def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+@pytest.mark.needs_vtk_version(9, 3, reason='VTK version not supported.')
+def test_read_write_pickle(tmp_path, data_object, ext):
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
     new_data_object = pv.read(filepath)
@@ -1387,7 +1382,10 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.read_pickle({})
 
-    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    match = (
+        "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. "
+        "Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 

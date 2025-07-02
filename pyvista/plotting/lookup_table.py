@@ -1,15 +1,16 @@
-"""Wrap vtkLookupTable."""
+"""Wrap :vtk:`vtkLookupTable`."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Union
 from typing import cast
 
+import matplotlib as mpl
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -19,18 +20,17 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
-    from matplotlib import colors
-
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
-    """An ndarray which references the owning table and the underlying vtkArray.
+class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
+    """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
-    This class is used to ensure that the internal vtkLookupTable updates when
+    This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
     the values array is updated.
 
     """
@@ -76,7 +76,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
@@ -92,7 +92,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
 
 
 @no_new_attr
-class LookupTable(_vtk.vtkLookupTable):
+class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -100,15 +100,15 @@ class LookupTable(_vtk.vtkLookupTable):
     colors (in the RGBA format), and this class provides the functionality to
     do so.
 
-    See `vtkLookupTable
-    <https://vtk.org/doc/nightly/html/classvtkLookupTable.html>`_ for more
+    See :vtk:`vtkLookupTable` for more
     details regarding the underlying VTK API.
 
     Parameters
     ----------
-    cmap : str | colors.Colormap, optional
+    cmap : str | matplotlib.colors.Colormap, optional
         Color map from ``matplotlib``, ``colorcet``, or ``cmocean``. Either
         ``cmap`` or ``values`` can be set, but not both.
+        See :ref:`named_colormaps` for supported colormaps.
 
     n_values : int, default: 256
         Number of colors in the color map.
@@ -161,6 +161,10 @@ class LookupTable(_vtk.vtkLookupTable):
         range to annotate on the scalar bar and the values are the string
         annotations.
 
+    See Also
+    --------
+    :ref:`lookup_table_example`
+
     Examples
     --------
     Plot the lookup table with the default VTK color map.
@@ -201,15 +205,16 @@ class LookupTable(_vtk.vtkLookupTable):
     """
 
     _nan_color_set = False
-    _cmap: colors.Colormap | colors.ListedColormap | None = None
+    _cmap: mpl.colors.Colormap | None = None
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['cmap', 'n_values'])
+    def __init__(  # noqa: PLR0917
         self,
         cmap=None,
         n_values=256,
-        flip: bool = False,
+        flip: bool = False,  # noqa: FBT001, FBT002
         values=None,
         value_range=None,
         hue_range=None,
@@ -330,8 +335,10 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
+    def cmap(self) -> mpl.colors.Colormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
+
+        See :ref:`named_colormaps` for supported colormaps.
 
         Examples
         --------
@@ -353,7 +360,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, value):
+    def cmap(self, value: ColormapOptions):
         self.apply_cmap(value, self.n_values)
 
     @property
@@ -740,7 +747,13 @@ class LookupTable(_vtk.vtkLookupTable):
             color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
-    def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
+    @_deprecate_positional_args(allowed=['cmap', 'n_values'])
+    def apply_cmap(
+        self,
+        cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
+        n_values: int = 256,
+        flip: bool = False,  # noqa: FBT001, FBT002
+    ):
         """Assign a colormap to this lookup table.
 
         This can be used instead of :attr:`LookupTable.cmap` when you need to
@@ -748,7 +761,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Parameters
         ----------
-        cmap : str, list, colors.Colormap
+        cmap : str, list, matplotlib.colors.Colormap
             Colormap from Matplotlib, colorcet, or cmocean.
 
         n_values : int, default: 256
@@ -770,9 +783,8 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         if isinstance(cmap, list):
             n_values = len(cmap)
-
-        cmap = get_cmap_safe(cmap)
-        values = cmap(np.linspace(0, 1, n_values)) * 255
+        cmap_obj = cmap if isinstance(cmap, mpl.colors.Colormap) else get_cmap_safe(cmap)
+        values = cmap_obj(np.linspace(0, 1, n_values)) * 255
 
         if flip:
             values = values[::-1]
@@ -781,12 +793,14 @@ class LookupTable(_vtk.vtkLookupTable):
         self._values_manual = False
 
         # reapply the opacity
-        if self._opacity_parm[0] is not None:
-            self.apply_opacity(*self._opacity_parm)
+        opacity, interpolate, kind = self._opacity_parm
+        if opacity is not None:
+            self.apply_opacity(opacity=opacity, interpolate=interpolate, kind=kind)
 
-        self._cmap = cmap
+        self._cmap = cmap_obj
 
-    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
+    @_deprecate_positional_args(allowed=['opacity'])
+    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):  # noqa: FBT001, FBT002
         """Assign custom opacity to this lookup table.
 
         Parameters
@@ -915,7 +929,10 @@ class LookupTable(_vtk.vtkLookupTable):
             self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
-            msg = 'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+            msg = (
+                'Number of values cannot be set when the values array has been manually set. '
+                'Reassign the values array if you wish to change the number of values.'
+            )
             raise RuntimeError(msg)
         else:
             self.SetNumberOfColors(value)
@@ -999,7 +1016,7 @@ class LookupTable(_vtk.vtkLookupTable):
         mesh = pyvista.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
+        pl = pyvista.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
@@ -1020,7 +1037,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         label_level += self._nan_color_set
 
-        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)  # type: ignore[arg-type]
+        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)
         scalar_bar.SetLookupTable(self)
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
@@ -1037,7 +1054,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Returns
         -------
-        vtk.vtkColorTransferFunction
+        :vtk:`vtkColorTransferFunction`
             VTK color transfer function.
 
         Examples
@@ -1051,23 +1068,36 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         color_tf = _vtk.vtkColorTransferFunction()
         mn, mx = self.scalar_range
-        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
-            color_tf.AddRGBPoint(ii, *self.map_value(value, False))
+        for value in np.linspace(mn, mx, self.n_values):
+            # Be sure to index the point by the value to map the scalar range
+            color_tf.AddRGBPoint(value, *self.map_value(value, opacity=False))
         return color_tf
 
-    def to_opacity_tf(self, clamping: bool = True) -> _vtk.vtkPiecewiseFunction:
+    @_deprecate_positional_args
+    def to_opacity_tf(
+        self,
+        clamping: bool = True,  # noqa: FBT001, FBT002
+        max_clip: float = 0.998,
+    ) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
 
         Parameters
         ----------
         clamping : bool, optional
-            When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
+            When zero range clamping is False, values returns 0.0 when a value is requested
+            outside of the points specified.
 
             .. versionadded:: 0.44
 
+        max_clip : float, default: 0.998
+            The maximum value to clip the opacity to. This is useful for volume rendering
+            to avoid the jarring effect of completely opaque values.
+
+            .. versionadded:: 0.45
+
         Returns
         -------
-        vtk.vtkPiecewiseFunction
+        :vtk:`vtkPiecewiseFunction`
             Piecewise function of the opacity of this color table.
 
         Examples
@@ -1081,14 +1111,21 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()
         opacity_tf.SetClamping(clamping)
-        for ii, value in enumerate(self.values[:, 3]):
-            opacity_tf.AddPoint(ii, value / self.n_values)
+        mn, mx = self.scalar_range
+        for ii, value in enumerate(np.linspace(mn, mx, self.n_values)):
+            alpha = self.values[ii, 3]
+            # vtkPiecewiseFunction expects alphas between 0 and 1
+            # our lookup table is between 0 and 255
+            alpha = alpha / 255
+            alpha = min(alpha, max_clip)
+            opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
+    @_deprecate_positional_args(allowed=['value'])
     def map_value(
         self,
         value: float,
-        opacity: bool = True,
+        opacity: bool = True,  # noqa: FBT001, FBT002
     ) -> tuple[float, float, float] | tuple[float, float, float, float]:
         """Map a single value through the lookup table, returning an RBG(A) color.
 
@@ -1119,7 +1156,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[tuple[float, float, float], tuple[float, float, float, float]],
+            'tuple[float, float, float] | tuple[float, float, float, float]',
             tuple(color),
         )
 

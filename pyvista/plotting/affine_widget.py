@@ -7,6 +7,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import try_callback
 
@@ -81,7 +82,8 @@ def get_angle(v1, v2):
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
-def ray_plane_intersection(start_point, direction, plane_point, normal):
+@_deprecate_positional_args
+def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa: PLR0917
     """Compute the intersection between a ray and a plane.
 
     Parameters
@@ -172,15 +174,16 @@ class AffineWidget3D:
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['plotter', 'actor'])
+    def __init__(  # noqa: PLR0917
         self,
         plotter,
         actor,
         origin=None,
-        start: bool = True,
+        start: bool = True,  # noqa: FBT001, FBT002
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,
+        always_visible: bool = True,  # noqa: FBT001, FBT002
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -231,8 +234,8 @@ class AffineWidget3D:
             try:
                 _validate_axes(axes)
             except ValueError:
-                for actor in self._arrows + self._circles:
-                    self._pl.remove_actor(actor)
+                for actor_ in self._arrows + self._circles:
+                    self._pl.remove_actor(actor_)
                 raise
             self.axes = axes
 
@@ -243,13 +246,15 @@ class AffineWidget3D:
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
             arrow = pyvista.Arrow(
-                (0, 0, 0),
+                start=(0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
                 tip_radius=0.05,
                 shaft_radius=self._line_radius,
             )
-            self._arrows.append(self._pl.add_mesh(arrow, color=color, lighting=False, render=False))
+            self._arrows.append(
+                self._pl.add_mesh(arrow, color=color, lighting=False, render=False)
+            )
             axis_circ = self._circ.copy()
             if ii == 0:
                 axis_circ = axis_circ.rotate_y(-90)
@@ -301,7 +306,12 @@ class AffineWidget3D:
         if self._selected_actor:
             index = self._circles.index(self._selected_actor)
             to_widget = np.array(ren.camera.position - self._origin)
-            point = ray_plane_intersection(point, to_widget, self._origin, self.axes[index])
+            point = ray_plane_intersection(
+                start_point=point,
+                direction=to_widget,
+                plane_point=self._origin,
+                normal=self.axes[index],
+            )
         return point
 
     def _get_world_coord_trans(self, interactor):
@@ -453,7 +463,7 @@ class AffineWidget3D:
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
-        self._axes_inv = np.linalg.inv(self._axes)
+        self._axes_inv = np.linalg.inv(self._axes)  # type: ignore[assignment]
         for actor in self._arrows + self._circles:
             matrix = actor.user_matrix
             # Be sure to use the inverse here
@@ -473,7 +483,7 @@ class AffineWidget3D:
             Widget origin.
 
         """
-        return cast(tuple[float, float, float], tuple(self._origin))
+        return cast('tuple[float, float, float]', tuple(self._origin))
 
     @origin.setter
     def origin(self, value):

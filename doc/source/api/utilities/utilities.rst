@@ -33,6 +33,7 @@ Features
    :toctree: _autosummary
 
    cartesian_to_spherical
+   cell_quality_info
    create_grid
    grid_from_sph_coords
    merge
@@ -111,12 +112,22 @@ Colors
    Color
    ColorLike
 
-Named colors supported by the :class:`~pyvista.Color` class:
+Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
+and other plotting-related methods:
 
 .. toctree::
    :maxdepth: 3
 
    /api/utilities/named_colors
+
+
+Named colormaps supported by :class:`~pyvista.LookupTable`, :class:`~pyvista.Plotter`,
+and other plotting-related methods:
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/utilities/named_colormaps
 
 Miscellaneous
 ~~~~~~~~~~~~~
@@ -127,6 +138,7 @@ Miscellaneous
    start_xvfb
    Report
    vtk_verbosity
+   vtk_snake_case
 
 PyVista Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

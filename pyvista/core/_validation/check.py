@@ -633,8 +633,8 @@ def check_shape(
 
     array_shape = np.shape(array)
     for input_shape in shape:
-        input_shape = _validate_shape_value(input_shape)
-        if _shape_is_allowed(array_shape, input_shape):
+        valid_shape = _validate_shape_value(input_shape)
+        if _shape_is_allowed(array_shape, valid_shape):
             return
 
     msg = f'{name} has shape {array_shape} which is not allowed. '
@@ -707,7 +707,8 @@ def check_ndim(
             check_integer(ndim, strict=True, name='ndim')
             expected = f'one of {ndim}'
         msg = (
-            f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
+            f'{name} has the incorrect number of dimensions. '
+            f'Got {array_ndim}, expected {expected}.'
         )
         raise ValueError(msg)
 
@@ -942,7 +943,9 @@ def check_instance(
         raise TypeError(msg)
 
 
-def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object') -> None:
+def check_type(
+    obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object'
+) -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -1045,7 +1048,9 @@ def check_iterable_items(
     )
 
 
-def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
+def check_contains(
+    container: Container[Any], /, must_contain: Any, *, name: str = 'Input'
+) -> None:
     """Check if an item is in a container.
 
     Parameters
@@ -1204,15 +1209,15 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
 
     # Return early for common inputs
     if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
-        return cast(_Shape, shape)
+        return cast('_Shape', shape)
 
     def _is_valid_dim(d: Any) -> bool:
         return isinstance(d, int) and d >= -1
 
     if _is_valid_dim(shape):
-        return (cast(int, shape),)
+        return (cast('int', shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast(_Shape, shape)
+        return cast('_Shape', shape)
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error

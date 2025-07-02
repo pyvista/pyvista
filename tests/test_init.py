@@ -44,5 +44,5 @@ def test_pyvista_oo_flag():
     code = 'from pyvista import Chart2D'
 
     command = [sys.executable, '-OO', '-c', code]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
     assert result.returncode == 0, f'PyVista failed with -OO flag. stderr: {result.stderr}'

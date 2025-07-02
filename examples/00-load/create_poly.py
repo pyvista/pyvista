@@ -1,5 +1,5 @@
 """
-.. _create_poly:
+.. _create_poly_example:
 
 Create PolyData
 ~~~~~~~~~~~~~~~

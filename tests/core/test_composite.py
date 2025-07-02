@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Generator
 import itertools
 import pathlib
-import platform
 import re
 import weakref
 
@@ -20,8 +19,6 @@ from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
 from pyvista.core.dataobject import USER_DICT_KEY
-
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 
 def test_multi_block_init_vtk():
@@ -440,14 +437,75 @@ def test_multi_block_io(
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
-    multi = multiblock_all_with_nested_and_none
+
+    # Use non-nested multiblock with no None types for vtkhdf case
+    # these cases are tested separately
+    multi = (
+        pv.MultiBlock([pv.PolyData(), pv.UnstructuredGrid()])
+        if extension == '.vtkhdf'
+        else multiblock_all_with_nested_and_none
+    )
 
     # Save it out
-    multi.save(filename, binary)
+    if extension == '.vtkhdf' and binary is False:
+        match = '.vtkhdf files can only be written in binary format'
+        with pytest.raises(ValueError, match=match):
+            multi.save(filename, binary=binary)
+        return
+    multi.save(filename, binary=binary)
+
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     foo = pv.read(filename)
     assert foo.n_blocks == multi.n_blocks
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 4, 0), less_than=(9, 5))
+def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
+    filename = tmpdir / 'multi.vtkhdf'
+
+    multi = pv.MultiBlock([pv.MultiBlock()])
+    match = (
+        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Upgrade to VTK>=9.5 for this functionality.'
+    )
+    with pytest.raises(TypeError, match=match):
+        multi.save(filename)
+
+    multi = pv.MultiBlock([None])
+    match = (
+        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Upgrade to VTK>=9.5 for this functionality.'
+    )
+    with pytest.raises(TypeError, match=match):
+        multi.save(filename)
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 4, 0))
+def test_multi_block_hdf_invalid_block_type(tmpdir):
+    filename = tmpdir / 'multi.vtkhdf'
+
+    multi = pv.MultiBlock([pv.ImageData()])
+    match = (
+        "Block at index [0] with name 'Block-00' has type 'ImageData' which cannot be saved to "
+        "the .vtkhdf format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
+        "'MultiBlock', 'PartitionedDataSet']."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        multi.save(filename)
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 5, 0))
+def test_multi_block_hdf_invalid_nested_block(tmpdir):
+    filename = tmpdir / 'multi.vtkhdf'
+
+    multi = pv.MultiBlock([pv.MultiBlock({'nested_block': pv.PointSet()})])
+    match = (
+        "Block at index [0][0] with name 'nested_block' has type 'PointSet' which cannot be saved "
+        'to the .vtkhdf format.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        multi.save(filename)
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -462,7 +520,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir):
     for block in multi:
         assert block.array_names == array_names
     # Save it out
-    multi.save(filename, binary)
+    multi.save(filename, binary=binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     for block in foo:
@@ -526,7 +584,10 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
 
     # Do test
     output = multi.transform(
-        transform, inplace=inplace, transform_all_input_vectors=False, progress_bar=False
+        transform,
+        inplace=inplace,
+        transform_all_input_vectors=False,
+        progress_bar=False,
     )
     bounds_after = np.array(output.bounds)
     n_blocks_after = output.n_blocks
@@ -560,9 +621,9 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
     for i, block in enumerate(multi_copy):
         assert pv.is_pyvista_dataset(block) or block is None
         if isinstance(multi[i], MultiBlock):
-            assert (multi[i] is multi_copy[i]) != recursive
+            assert (multi[i] is block) != recursive
         else:
-            assert multi_copy[i] is multi[i]
+            assert block is multi[i]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -1007,7 +1068,10 @@ def test_multiblock_partitioned_zip(container):
 
 
 def test_transform_filter_inplace_default_warns(multiblock_poly):
-    expected_msg = 'The default value of `inplace` for the filter `MultiBlock.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `MultiBlock.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = multiblock_poly.transform(np.eye(4))
 
@@ -1071,7 +1135,9 @@ def test_recursive_iterator_contents(
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('names', node_type=node_type)
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks', node_type=node_type)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(
+        'blocks', node_type=node_type
+    )
     assert all(isinstance(item, expected_types) for item in iterator)
 
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('items', node_type=node_type)
@@ -1239,10 +1305,13 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
 
     # Test block name key overrides root user dict key
     root = _make_nested_multiblock(
-        root_user_dict={NAME1: VALUE1}, nested1_user_dict={NAME2: VALUE2}, nested1_block_name=NAME1
+        root_user_dict={NAME1: VALUE1},
+        nested1_user_dict={NAME2: VALUE2},
+        nested1_block_name=NAME1,
     )
     match = (
-        "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'name1'.\n"
+        'The root user dict cannot be updated with data from nested MultiBlock '
+        "at index [0] with name 'name1'.\n"
         "The key 'name1' already exists in the root user dict and would be overwritten."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1254,7 +1323,8 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
         root_user_dict={NAME1: VALUE1}, nested1_user_dict={NAME1: VALUE1}
     )
     match = (
-        "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'Block-00'.\n"
+        'The root user dict cannot be updated with data from nested MultiBlock '
+        "at index [0] with name 'Block-00'.\n"
         "The key 'name1' already exists in the root user dict and would be overwritten."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1327,7 +1397,8 @@ def test_flatten(multiblock_all_with_nested_and_none):
 
     match = (
         "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
-        "with the same name already exists. Use `name_mode='reset'` or `check_duplicate_keys=False`."
+        "with the same name already exists. Use `name_mode='reset'` "
+        'or `check_duplicate_keys=False`.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = root_multi.flatten()
@@ -1411,14 +1482,20 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
-    match = "The filter 'resample'\ncould not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
+    match = (
+        "The filter 'resample'\ncould not be applied to the block at index 1 with name "
+        "'Block-01' and type RectilinearGrid."
+    )
     with pytest.raises(RuntimeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             'resample',
         )
     # Test with nested index
     multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
-    match = "The filter 'resample'\ncould not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
+    match = (
+        "The filter 'resample'\ncould not be applied to the nested block at index [0][1] "
+        "with name 'Block-01' and type RectilinearGrid."
+    )
     with pytest.raises(RuntimeError, match=re.escape(match)):
         multi.generic_filter(
             'resample',

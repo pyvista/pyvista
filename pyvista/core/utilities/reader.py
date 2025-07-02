@@ -18,6 +18,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 from .fileio import _get_ext_force
@@ -38,7 +39,7 @@ def _lazy_vtk_instantiation(module_name, class_name):
 
 
 def lazy_vtkPOpenFOAMReader():
-    """Lazy import of the vtkPOpenFOAMReader."""
+    """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
     from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
     from vtkmodules.vtkParallelCore import vtkDummyController
 
@@ -198,12 +199,13 @@ def get_reader(filename, force_ext=None):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_human(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'Human.vtp'
     >>> reader = pv.get_reader(filename)
     >>> reader
-    XMLPolyDataReader('.../Human.vtp')
+    XMLPolyDataReader('...Human.vtp')
     >>> mesh = reader.read()
     >>> mesh
     PolyData ...
@@ -216,12 +218,14 @@ def get_reader(filename, force_ext=None):
         Reader = CLASS_READERS[ext]
     except KeyError:
         if Path(filename).is_dir():
-            if len(files := os.listdir(filename)) > 0 and all(
+            if len(files := os.listdir(filename)) > 0 and all(  # noqa: PTH208
                 Path(f).suffix == '.dcm' for f in files
             ):
                 Reader = DICOMReader
             else:
-                msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+                msg = (
+                    f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+                )
                 raise ValueError(msg)
         else:
             msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
@@ -249,7 +253,7 @@ class BaseVTKReader(ABC):
         """Add Observer that can be triggered during Update."""
         self._observers.append([event_type, callback])  # type: ignore[arg-type]
 
-    def RemoveObservers(self, *args) -> None:
+    def RemoveObservers(self, *args) -> None:  # noqa: ARG002
         """Remove Observer."""
         self._observers = []
 
@@ -270,7 +274,7 @@ class BaseVTKReader(ABC):
         Set self._data_object.
         """
 
-    def GetOutputDataObject(self, *args):
+    def GetOutputDataObject(self, *args):  # noqa: ARG002
         """Return stored data."""
         return self._data_object
 
@@ -447,8 +451,9 @@ class PointCellDataSelection:
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_backward_facing_step(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'foam_case_0_0_0_0.case'
     >>> reader = pv.get_reader(filename)
     >>> reader
@@ -458,7 +463,8 @@ class PointCellDataSelection:
     >>> reader.point_array_names
     []
     >>> reader.all_cell_arrays_status  # doctest: +NORMALIZE_WHITESPACE
-    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True, 'omega': True, 'f': True, 'epsilon': True, 'U': True}
+    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True,
+    'omega': True, 'f': True, 'epsilon': True, 'U': True}
     >>> reader.disable_all_cell_arrays()
     >>> reader.enable_cell_array('U')
     >>> mesh = reader.read()  # MultiBlock mesh
@@ -731,8 +737,9 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_rectilinear_grid(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'RectilinearGrid.vtr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -763,8 +770,9 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_notch_displacement(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'notch_disp.vtu'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -795,8 +803,9 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_cow_head(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'cowHead.vtp'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -819,8 +828,9 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_structured_grid(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'StructuredGrid.vts'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -846,8 +856,9 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_cylinder_crossflow(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'cylinder_Re35.case'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1269,8 +1280,9 @@ class PLYReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_lobster(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'lobster.ply'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1289,8 +1301,9 @@ class OBJReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_trumpet(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'trumpet.obj'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1309,8 +1322,9 @@ class STLReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_cad_model(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     '42400-IDGH.stl'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1347,14 +1361,15 @@ class VTKDataSetReader(BaseReader):
     -----
     This reader calls ``ReadAllScalarsOn``, ``ReadAllColorScalarsOn``,
     ``ReadAllNormalsOn``, ``ReadAllTCoordsOn``, ``ReadAllVectorsOn``,
-    and ``ReadAllFieldsOn`` on the underlying ``vtkDataSetReader``.
+    and ``ReadAllFieldsOn`` on the underlying :vtk:`vtkDataSetReader`.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_brain(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'brain.vtk'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1390,8 +1405,9 @@ class BYUReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_teapot(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'teapot.g'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1410,8 +1426,9 @@ class FacetReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_clown(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'clown.facet'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1458,8 +1475,8 @@ class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader.
 
     The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
-    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as class variables,
-    as shown below.
+    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as
+    class variables, as shown below.
 
         - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
         - ``MultiBlockPlot3DReader.PRESSURE = Plot3DFunctionEnum.PRESSURE``
@@ -1542,8 +1559,8 @@ class MultiBlockPlot3DReader(BaseReader):
     def add_function(self, value: int | Plot3DFunctionEnum) -> None:
         """Specify additional functions to compute.
 
-        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
-        easily accessed by their aliases as class variables.
+        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this
+        enumeration are most easily accessed by their aliases as class variables.
 
         Multiple functions may be requested by calling this method multiple times.
 
@@ -1591,9 +1608,9 @@ class MultiBlockPlot3DReader(BaseReader):
     def preserve_intermediate_functions(self):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
-        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still needs to compute
-        ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the output will not have ``Velocity``
-        array, only the requested ``VelocityMagnitude``.
+        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still
+        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the
+        output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
         """
@@ -1631,7 +1648,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     By default, all point and cell arrays are loaded as well as the boundary
     patch. This varies from VTK's defaults. For more details, see
-    `vtkCGNSReader <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
+    :vtk:`vtkCGNSReader`.
 
     Examples
     --------
@@ -1931,8 +1948,9 @@ class BinaryMarchingCubesReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_pine_roots(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'pine_root.tri'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -1991,7 +2009,9 @@ class _PVDReader(BaseVTKReader):
 
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-        self._time_mapping: dict[float, list[PVDDataSet]] = {time: [] for time in self._time_values}
+        self._time_mapping: dict[float, list[PVDDataSet]] = {
+            time: [] for time in self._time_values
+        }
         for dataset in self._datasets:
             self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
@@ -2016,8 +2036,9 @@ class PVDReader(BaseReader, TimeReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_wavy(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'wavy.pvd'
     >>> reader = pv.get_reader(filename)
     >>> reader.time_values
@@ -2093,7 +2114,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     .. versionadded:: 0.45.0
 
-    This reader requires vtk version >=9.3.0.
+    .. note::
+        This reader requires vtk version >=9.3.0.
 
     Examples
     --------
@@ -2247,13 +2269,13 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     def cell_array_names(self):  # noqa: D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def enable_cell_array(self, name) -> None:  # noqa: D102
+    def enable_cell_array(self, name) -> None:  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def disable_cell_array(self, name) -> None:  # noqa: D102
+    def disable_cell_array(self, name) -> None:  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def cell_array_status(self, name):  # noqa: D102
+    def cell_array_status(self, name):  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
     def enable_all_cell_arrays(self) -> None:  # noqa: D102
@@ -2299,8 +2321,9 @@ class BMPReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_masonry_texture(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'masonry.bmp'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2319,8 +2342,9 @@ class DEMReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_st_helens(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'SainteHelens.dem'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2339,8 +2363,9 @@ class JPEGReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.planets.download_mars_surface(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'mars.jpg'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2359,8 +2384,9 @@ class MetaImageReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_chest(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'ChestCT-SHORT.mha'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2379,8 +2405,9 @@ class NIFTIReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_brain_atlas_with_sides(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'avg152T1_RL_nifti.nii.gz'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2399,8 +2426,9 @@ class NRRDReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_beach(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'beach.nrrd'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2419,8 +2447,9 @@ class PNGReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_vtk_logo(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'vtk.png'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2439,8 +2468,9 @@ class PNMReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_gourds_pnm(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'Gourds.pnm'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2459,8 +2489,9 @@ class SLCReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_knee_full(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'vw_knee.slc'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2479,8 +2510,9 @@ class TIFFReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_crater_imagery(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'BJ34_GeoTifv1-04_crater_clip.tif'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2499,8 +2531,9 @@ class HDRReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_parched_canal_4k(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'parched_canal_4k.hdr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2535,8 +2568,9 @@ class AVSucdReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_cells_nd(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'cellsnd.ascii.inp'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2551,12 +2585,16 @@ class AVSucdReader(BaseReader):
 class HDFReader(BaseReader):
     """HDFReader for .hdf files.
 
+    .. note::
+        This reader requires vtk version >=9.1.0.
+
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_can_crushed_hdf(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'can-vtu.hdf'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2566,6 +2604,13 @@ class HDFReader(BaseReader):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
+
+    def __init__(self, path):
+        if pyvista.vtk_version_info < (9, 1, 0):
+            msg = f'{self.__class__.__name__} is only available for vtk>=9.1'
+            raise pyvista.VTKVersionError(msg)
+
+        super().__init__(path)
 
     @wraps(BaseReader.read)
     def read(self):
@@ -2640,11 +2685,11 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[union-attr]
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
-            self._data_object.point_data.active_scalars_name = 'frame0'
+        if 'frame0' in self._data_object.point_data:  # type: ignore[union-attr]
+            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[union-attr]
 
         img.close()
 
@@ -2661,8 +2706,9 @@ class GIFReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_gif_simple(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'sample.gif'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
@@ -2685,9 +2731,10 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_meshio_xdmf(load=False)
     >>> reader = pv.get_reader(filename)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'out.xdmf'
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -2807,9 +2854,10 @@ class GaussianCubeReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
 
     >>> filename = examples.download_m4_total_density(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'm4_TotalDensity.cube'
 
     """
@@ -2817,7 +2865,8 @@ class GaussianCubeReader(BaseReader):
     _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
 
-    def read(self, grid: bool = True):
+    @_deprecate_positional_args
+    def read(self, grid: bool = True):  # noqa: FBT001, FBT002
         """Read the file and return the output.
 
         Parameters
@@ -2919,8 +2968,9 @@ class PDBReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_caffeine(load=False)
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'caffeine.pdb'
 
     """
@@ -2963,10 +3013,11 @@ class ParticleReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+    >>> from pathlib import Path
     >>> filename = examples.download_particles(load=False)
     >>> reader = pv.get_reader(filename)
     >>> reader.endian = 'BigEndian'
-    >>> filename.split('/')[-1]  # omit the path
+    >>> Path(filename).name
     'Particles.raw'
     >>> mesh = reader.read()
     >>> mesh.plot()
@@ -3461,7 +3512,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
 
 class ExodusIIBlockSet:
-    """Class for enabling and disabling the blocks, sets, block arrays and set arrays in Exodus II files."""
+    """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):
         if not exodus_reader.reader.GetObjectTypeName(object_type):
