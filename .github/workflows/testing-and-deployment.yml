@@ -188,11 +188,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- --ignore=tests/plotting/test_charts.py # zizmor: ignore[template-injection]
-
-      - name: Plotting Testing (charts only)
-        if: always()
-        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- tests/plotting/test_charts.py # zizmor: ignore[template-injection]
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes # zizmor: ignore[template-injection]
 
       - name: Upload Generated Images
         if: always()
@@ -266,11 +262,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- --ignore=tests/plotting/test_charts.py # zizmor: ignore[template-injection]
-
-      - name: Plotting Testing (charts only)
-        if: always()
-        run: xvfb-run -s '-maxclients 2048' tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes -- tests/plotting/test_charts.py # zizmor: ignore[template-injection]
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes # zizmor: ignore[template-injection]
 
       - name: Upload Generated Images
         if: always()
