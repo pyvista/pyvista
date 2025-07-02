@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 import warnings
 
@@ -677,6 +678,74 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def __str__(self: Self) -> str:
         """Return the default str representation."""
         return DataSet.__str__(self)
+
+    def __getitem__(
+        self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
+    ) -> ImageData:
+        """Support slicing in logical (0-based) coordinates ignoring extent offset."""
+        # Return point, cell, or field data
+        if isinstance(key, str) or (
+            isinstance(key, tuple) and len(key) > 0 and isinstance(key, str)
+        ):
+            return super().__getitem__(key)
+
+        # Normalize as a tuple of slices
+        if not isinstance(key, tuple):
+            key = (key,)
+
+        required = ' Exactly 3 indices must be specified, one for each xyz-axis.'
+        if len(key) > 3:
+            msg = 'Too many indices.' + required
+            raise IndexError(msg)
+        if len(key) < 3:
+            msg = 'Too few indices.' + required
+            raise IndexError(msg)
+
+        dims = self.dimensions
+        extent = self.extent
+
+        # Copy ext to VOI, to be modified
+        voi = list(extent)
+
+        # Map 0-based indices from dimensions to extent coordinates
+        for axis, slicer in enumerate(key):
+            extent_min = extent[axis * 2]
+
+            if isinstance(slicer, slice):
+                start = slicer.start if slicer.start is not None else 0
+                stop = slicer.stop if slicer.stop is not None else dims[axis]
+                step = slicer.step
+                if step not in (None, 1):
+                    msg = 'Only contiguous slices with step=1 are supported.'
+                    raise ValueError(msg)
+
+                # Handle negative indices
+                if start < 0:
+                    start += dims[axis]
+                if stop < 0:
+                    stop += dims[axis]
+
+                voi[axis * 2] = extent_min + start
+                voi[axis * 2 + 1] = extent_min + (stop - 1)
+            elif isinstance(slicer, int):
+                if slicer < -dims[axis] or slicer >= dims[axis]:
+                    msg = f'index {slicer} is out of bounds for axis {axis} with size {dims[axis]}'
+                    raise IndexError(msg)
+                if slicer < 0:
+                    slicer += dims[axis]  # noqa: PLW2901
+                voi[axis * 2] = extent_min + slicer
+                voi[axis * 2 + 1] = extent_min + slicer
+            else:
+                msg = f'Unsupported index type: {type(slicer)}'
+                raise TypeError(msg)
+        return self._extract_voi(voi)
+
+    def _extract_voi(self, voi: VectorLike[int]) -> ImageData:
+        alg = _vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return pyvista.wrap(alg.GetOutput())
 
     @property  # type: ignore[explicit-override, override]
     def points(self: Self) -> NumpyArray[float]:

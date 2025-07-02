@@ -1873,3 +1873,66 @@ def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
     connectivity = empty_poly_cast_to_ugrid.cell_connectivity
     assert connectivity.size == 0
     assert connectivity.dtype == hexbeam.cell_connectivity.dtype
+
+
+@pytest.fixture
+def appended_images():
+    def create_slice(ind: 0):
+        im = pv.ImageData(dimensions=(3, 3, 1), offset=(0, 0, ind))
+        im.point_data['data'] = np.ones((im.n_points,)) * ind
+        return im
+
+    slice0 = create_slice(0)
+    slice1 = create_slice(1)
+
+    append = vtk.vtkImageAppend()
+    append.SetAppendAxis(2)
+    append.AddInputData(slice0)
+    append.AddInputData(slice1)
+    append.Update()
+    return slice0, slice1, pv.wrap(append.GetOutput())
+
+
+@pytest.mark.parametrize('add_offset', [(1, 2, 3), None])
+def test_imagedata_getitem(appended_images, add_offset):
+    slice0, slice1, appended = appended_images
+    if add_offset:
+        slice0.offset = slice0.offset + np.array(add_offset)
+        slice1.offset = slice1.offset + np.array(add_offset)
+        appended.offset = appended.offset + np.array(add_offset)
+
+    sliced = appended[:, :, :]
+    assert sliced == appended
+
+    sliced = appended[:, :, 0]
+    assert sliced == slice0
+
+    sliced = appended[:, :, 1]
+    assert sliced == slice1
+
+    sliced = appended[0:3, 0:3, 0:3]
+    assert sliced == appended
+
+    sliced = appended[0:4, 0:5, 0:6]
+    assert sliced == appended
+
+    sliced = appended[0:-1, 0:-1, 0:-1]
+    assert sliced.dimensions == (2, 2, 1)
+
+
+def test_imagedata_getitem_raises(uniform):
+    match = 'Too few indices. Exactly 3 indices must be specified, one for each xyz-axis.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform[0]
+
+    match = "Unsupported index type: <class 'dict'>"
+    with pytest.raises(TypeError, match=re.escape(match)):
+        uniform[{}, str, set()]
+
+    match = 'Only contiguous slices with step=1 are supported.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform[2::2, 0, 0]
+
+    match = 'index 10 is out of bounds for axis 0 with size 10'
+    with pytest.raises(IndexError, match=match):
+        uniform[uniform.dimensions[0], 0, 0]
