@@ -114,7 +114,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Install PyVista test dependencies
         run: |
@@ -188,7 +188,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Build wheel and install pyvista
         run: |
@@ -316,7 +316,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Install Testing Requirements
         run: |
@@ -395,7 +395,7 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v4.2
