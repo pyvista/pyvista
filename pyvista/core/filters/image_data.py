@@ -401,7 +401,8 @@ class ImageDataFilters(DataSetFilters):
             ensure the output dimensions match the input.
 
         fill_value: float | VectorLike[float], optional
-            Value used when padding the cropped output if ``keep_dimensions`` is ``True``.
+            Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
+            a single float or a multi-component vector (e.g. RGB vector).
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -709,52 +710,32 @@ class ImageDataFilters(DataSetFilters):
         if not keep_dimensions:
             return cropped
 
-        result = self.copy()
+        # Compute padding required to make extents match the input
+        off_before = self.offset
+        off_after = cropped.offset
+        dims_before = self.dimensions
+        dims_after = cropped.dimensions
+        padding = [
+            off_after[0] - off_before[0],
+            (off_before[0] + dims_before[0]) - (off_after[0] + dims_after[0]),
+            off_after[1] - off_before[1],
+            (off_before[1] + dims_before[1]) - (off_after[1] + dims_after[1]),
+            off_after[2] - off_before[2],
+            (off_before[2] + dims_before[2]) - (off_after[2] + dims_after[2]),
+        ]
 
-        # Determine IJK region the cropped chunk occupies in the original image
-        cropped_ext = np.array(cropped.extent)
-        orig_ext = np.array(self.extent)
+        # Pad the output
+        fill = fill_value if fill_value is not None else 0
+        result = cropped.pad_image(
+            pad_value=fill,
+            pad_size=padding,
+            pad_all_scalars=True,
+            dimensionality=self.dimensionality,
+            progress_bar=progress_bar,
+        )
 
-        # calculate local extents in original coordinates
-        insert_xmin = cropped_ext[0] - orig_ext[0]
-        insert_xmax = cropped_ext[1] - orig_ext[0]
-        insert_ymin = cropped_ext[2] - orig_ext[2]
-        insert_ymax = cropped_ext[3] - orig_ext[2]
-        insert_zmin = cropped_ext[4] - orig_ext[4]
-        insert_zmax = cropped_ext[5] - orig_ext[4]
-
-        # Update arrays with cropped data
-        for name in cropped.point_data:
-            cropped_data = cropped.point_data[name]
-            orig_data = self.point_data[name]
-            fill = fill_value if fill_value is not None else 0
-            new_data = np.full_like(orig_data, fill)
-
-            # Reshape for indexing
-            dims_orig = self.dimensions[::-1]
-            dims_crop = cropped.dimensions[::-1]
-
-            if cropped_data.ndim == 1:
-                data_reshaped = cropped_data.reshape(dims_crop)
-            else:
-                # shape is (N, C)
-                num_components = cropped_data.shape[1]
-                data_reshaped = cropped_data.reshape(*dims_crop, num_components)
-
-            # get the view into the big array
-            slc_x = slice(insert_xmin, insert_xmax + 1)
-            slc_y = slice(insert_ymin, insert_ymax + 1)
-            slc_z = slice(insert_zmin, insert_zmax + 1)
-
-            if cropped_data.ndim == 1:
-                new_data.reshape(dims_orig)[slc_z, slc_y, slc_x] = data_reshaped
-            else:
-                new_data.reshape(*dims_orig, cropped_data.shape[1])[slc_z, slc_y, slc_x, :] = (
-                    data_reshaped
-                )
-
-            result.point_data[name] = new_data
-
+        # The pad filter removes cell data, so copy it unchanged from input
+        result.cell_data.update(self.cell_data)
         return result
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])

@@ -1712,6 +1712,8 @@ def image2x2():
 def test_crop_keep_dimensions(image2x2, fill_value):
     # Test with 2x2 image and use margin to crop half the input
 
+    user_dict = dict(name='crop')
+    image2x2.user_dict = user_dict
     fill_value = 0 if fill_value is None else fill_value
 
     cropped = image2x2.crop(margin=(1, 0, 0), keep_dimensions=True, fill_value=fill_value)
@@ -1731,6 +1733,9 @@ def test_crop_keep_dimensions(image2x2, fill_value):
     image2x2.point_data.clear()
     cropped.point_data.clear()
     assert image2x2 == cropped
+
+    # Test field data is preserved
+    assert cropped.user_dict == user_dict
 
 
 def test_crop_raises():
