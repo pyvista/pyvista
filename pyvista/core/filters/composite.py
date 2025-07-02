@@ -8,9 +8,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -19,12 +21,11 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
 @abstract_class
-class CompositeFilters:
+class CompositeFilters(DataObjectFilters):
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def generic_filter(  # type:ignore[misc]
@@ -97,16 +98,20 @@ class CompositeFilters:
         >>> unstructured = examples.load_tetbeam()
         >>> multi = pv.MultiBlock([volume, poly, unstructured])
 
-        >>> type(multi[0]), type(multi[1]), type(multi[2])
-        (<class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+        >>> [type(block) for block in multi]  # doctest: +NORMALIZE_WHITESPACE
+        [<class 'pyvista.core.grid.ImageData'>,
+         <class 'pyvista.core.pointset.PolyData'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>]
 
         Use the generic filter to apply :meth:`~pyvista.DataSet.cast_to_unstructured_grid`
         to all blocks.
 
         >>> filtered = multi.generic_filter('cast_to_unstructured_grid')
 
-        >>> type(filtered[0]), type(filtered[1]), type(filtered[2])
-        (<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+        >>> [type(block) for block in filtered]  # doctest: +NORMALIZE_WHITESPACE
+        [<class 'pyvista.core.pointset.UnstructuredGrid'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>,
+         <class 'pyvista.core.pointset.UnstructuredGrid'>]
 
         Use the :meth:`~pyvista.DataSetFilters.partition` filter on all blocks.
         Any arguments can be specified as though the filter is being used directly.
@@ -142,7 +147,8 @@ class CompositeFilters:
         :class:`~pyvista.ImageData`.
 
         >>> multi.generic_filter('resample', 0.5)  # doctest:+SKIP
-        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type PolyData.
+        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with
+        name 'Block-01' and type PolyData.
 
         Use a custom function instead to apply the generic filter conditionally. Here we
         filter the image blocks but simply pass-through a copy of any other blocks.
@@ -167,7 +173,7 @@ class CompositeFilters:
 
         skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
-        def apply_filter(function_, ids_, name_, block_):
+        def apply_filter(function_, ids_, name_, block_):  # noqa: PLR0917
             try:
                 function_ = (
                     getattr(block_, function_)
@@ -186,10 +192,11 @@ class CompositeFilters:
                     nested = ' '
                 else:
                     nested = ' nested '
-                    index = ''.join([f'[{id_}]' for id_ in ids_])
+                    index = _format_nested_index(ids)
                 msg = (
                     f"The filter '{func_name}'\n"
-                    f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                    f'could not be applied to the{nested}block at index {index} with '
+                    f"name '{name_}' and type {obj_name}."
                 )
                 raise RuntimeError(msg) from e
             return output_
@@ -234,7 +241,8 @@ class CompositeFilters:
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(self, merge_points: bool = False, tolerance=0.0):
+    @_deprecate_positional_args
+    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -275,51 +283,27 @@ class CompositeFilters:
         """
         alg = _vtk.vtkAppendFilter()
         for block in self:  # type: ignore[attr-defined]
-            if isinstance(block, _vtk.vtkMultiBlockDataSet):
-                block = CompositeFilters.combine(
+            single_block = (
+                CompositeFilters.combine(
                     block,  # type: ignore[arg-type]
                     merge_points=merge_points,
                     tolerance=tolerance,
                 )
-            alg.AddInputData(block)
+                if isinstance(block, _vtk.vtkMultiBlockDataSet)
+                else block
+            )
+            alg.AddInputData(single_block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
-    clip = DataSetFilters.clip
-
-    clip_box = DataSetFilters.clip_box
-
-    slice = DataSetFilters.slice
-
-    slice_orthogonal = DataSetFilters.slice_orthogonal
-
-    slice_along_axis = DataSetFilters.slice_along_axis
-
-    slice_along_line = DataSetFilters.slice_along_line
-
-    extract_all_edges = DataSetFilters.extract_all_edges
-
-    elevation = DataSetFilters.elevation
-
-    compute_cell_sizes = DataSetFilters.compute_cell_sizes
-
-    cell_centers = DataSetFilters.cell_centers
-
-    cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
-
-    point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
-
-    sample = DataSetFilters.sample
-
-    triangulate = DataSetFilters.triangulate
-
+    @_deprecate_positional_args
     def outline(  # type: ignore[misc]
         self: MultiBlock,
-        generate_faces: bool = False,
-        nested: bool = False,
-        progress_bar: bool = False,
+        generate_faces: bool = False,  # noqa: FBT001, FBT002
+        nested: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -349,8 +333,12 @@ class CompositeFilters:
         box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
+    @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
-        self: MultiBlock, factor=0.2, nested: bool = False, progress_bar: bool = False
+        self: MultiBlock,
+        factor=0.2,
+        nested: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
@@ -377,25 +365,27 @@ class CompositeFilters:
         box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    def _compute_normals(
+    @_deprecate_positional_args
+    def _compute_normals(  # noqa: PLR0917
         self,
-        cell_normals: bool = True,
-        point_normals: bool = True,
-        split_vertices: bool = False,
-        flip_normals: bool = False,
-        consistent_normals: bool = True,
-        auto_orient_normals: bool = False,
-        non_manifold_traversal: bool = True,
+        cell_normals: bool = True,  # noqa: FBT001, FBT002
+        point_normals: bool = True,  # noqa: FBT001, FBT002
+        split_vertices: bool = False,  # noqa: FBT001, FBT002
+        flip_normals: bool = False,  # noqa: FBT001, FBT002
+        consistent_normals: bool = True,  # noqa: FBT001, FBT002
+        auto_orient_normals: bool = False,  # noqa: FBT001, FBT002
+        non_manifold_traversal: bool = True,  # noqa: FBT001, FBT002
         feature_angle=30.0,
-        track_vertices: bool = False,
-        progress_bar: bool = False,
+        track_vertices: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
-            raise RuntimeError(
+            msg = (
                 'This multiblock contains non-PolyData datasets. Convert all the '
-                'datasets to PolyData with `as_polydata`',
+                'datasets to PolyData with `as_polydata`'
             )
+            raise RuntimeError(msg)
 
         # track original point indices
         if split_vertices and track_vertices:
@@ -413,73 +403,9 @@ class CompositeFilters:
         alg.SetNonManifoldTraversal(non_manifold_traversal)
         alg.SetFeatureAngle(feature_angle)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Normals')
+        _update_alg(alg, progress_bar=progress_bar, message='Computing Normals')
         return _get_output(alg)
 
-    def transform(  # type: ignore[misc]
-        self: MultiBlock,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = False,
-        inplace: bool | None = None,
-        progress_bar: bool = False,
-    ):
-        """Transform all blocks in this composite dataset.
 
-        .. note::
-            See also the notes at :func:`pyvista.DataSetFilters.transform` which is
-            used by this filter under the hood.
-
-        .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
-
-        Parameters
-        ----------
-        trans : TransformLike
-            Accepts any transformation input such as a :class:`~pyvista.Transform`
-            or a 3x3 or 4x4 array.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all arrays with three components are transformed.
-            Otherwise, only the normals and vectors are transformed.
-
-        inplace : bool, default: True
-            When ``True``, modifies the dataset inplace.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.MultiBlock
-            Transformed dataset. Return type of all blocks matches input unless
-            input dataset is a :class:`pyvista.ImageData`, in which
-            case the output datatype is a :class:`pyvista.StructuredGrid`.
-
-        See Also
-        --------
-        :class:`pyvista.Transform`
-            Describe linear transformations via a 4x4 matrix.
-
-        Examples
-        --------
-        Translate a mesh by ``(50, 100, 200)``. Here a :class:`~pyvista.Transform` is
-        used, but any :class:`~pyvista.TransformLike` is accepted.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
-        >>> transform = pv.Transform().translate(50, 100, 200)
-        >>> transformed = mesh.transform(transform, inplace=False)
-        >>> transformed.plot(show_edges=True)
-
-        """
-        from ._deprecate_transform_inplace_default_true import check_inplace
-
-        inplace = check_inplace(cls=type(self), inplace=inplace)
-
-        return self.generic_filter(
-            'transform',
-            trans=trans,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-            progress_bar=progress_bar,
-        )
+def _format_nested_index(index: tuple[int, ...]) -> str:
+    return ''.join([f'[{ind}]' for ind in index])

@@ -10,7 +10,7 @@ represent geometry. This class is useful for improving the performance of
 filters on point clouds.
 
 This example shows the performance improvement when clipping using the
-:func:`pyvista.DataSetFilters.clip` filter on a :class:`pyvista.PointSet`.
+:func:`pyvista.DataObjectFilters.clip` filter on a :class:`pyvista.PointSet`.
 
 """
 
@@ -35,6 +35,10 @@ clipped.plot(show_scalar_bar=False)
 # %%
 # Show the performance improvement when using a PointSet.
 # This is only available with VTK >= 9.1.0.
+#
+# .. note::
+#   For VTK 9.4.X, there is no performance improvement due to a VTK bug which
+#   was introduced into this version. See https://gitlab.kitware.com/vtk/vtk/-/issues/19649.
 
 # pset = lidar.cast_to_pointset()
 

@@ -1,5 +1,5 @@
 """
-.. _strips_example:
+.. _create_polydata_strips_example:
 
 Triangle Strips
 ~~~~~~~~~~~~~~~
@@ -68,7 +68,7 @@ pl.show()
 # Convert strips to triangles
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can convert strips to triangle faces using :func:`triangulate
-# <pyvista.DataSetFilters.triangulate>`.
+# <pyvista.DataObjectFilters.triangulate>`.
 
 trimesh = mesh.triangulate()
 trimesh

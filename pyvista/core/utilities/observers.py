@@ -13,6 +13,7 @@ import traceback
 from typing import NamedTuple
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 
@@ -26,9 +27,9 @@ def set_error_output_file(filename):
 
     Returns
     -------
-    vtkFileOutputWindow
+    :vtk:`vtkFileOutputWindow`
         VTK file output window.
-    vtkOutputWindow
+    :vtk:`vtkOutputWindow`
         VTK output window.
 
     """
@@ -65,7 +66,8 @@ class VtkErrorCatcher:
 
     """
 
-    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:
+    @_deprecate_positional_args
+    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:  # noqa: FBT001, FBT002
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -102,8 +104,12 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
+    @_deprecate_positional_args(allowed=['event_type'])
     def __init__(
-        self, event_type='ErrorEvent', log: bool = True, store_history: bool = False
+        self,
+        event_type='ErrorEvent',
+        log: bool = True,  # noqa: FBT001, FBT002
+        store_history: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize observer."""
         self.__event_occurred = False
@@ -132,9 +138,9 @@ class Observer:
     def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
         if kind == 'ERROR':
-            logging.error(alert)
+            logging.error(alert)  # noqa: LOG015
         else:
-            logging.warning(alert)
+            logging.warning(alert)  # noqa: LOG015
 
     def __call__(self, _obj, _event, message) -> None:
         """Declare standard call function for the observer.
@@ -175,7 +181,8 @@ class Observer:
         self.__event_occurred = False
         return occ
 
-    def get_message(self, etc: bool = False):
+    @_deprecate_positional_args
+    def get_message(self, etc: bool = False):  # noqa: FBT001, FBT002
         """Get the last set error message.
 
         Returns
@@ -191,7 +198,8 @@ class Observer:
     def observe(self, algorithm):
         """Make this an observer of an algorithm."""
         if self.__observing:
-            raise RuntimeError('This error observer is already observing an algorithm.')
+            msg = 'This error observer is already observing an algorithm.'
+            raise RuntimeError(msg)
         if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
@@ -227,7 +235,8 @@ class ProgressMonitor:
     def __init__(self, algorithm, message=''):
         """Initialize observer."""
         if not importlib.util.find_spec('tqdm'):
-            raise ImportError('Please install `tqdm` to monitor algorithms.')
+            msg = 'Please install `tqdm` to monitor algorithms.'
+            raise ImportError(msg)
         self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
@@ -241,9 +250,9 @@ class ProgressMonitor:
     def handler(self, sig, frame) -> None:
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
-        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
-    def __call__(self, obj, *args) -> None:
+    def __call__(self, obj, *args) -> None:  # noqa: ARG002
         """Call progress update callback.
 
         On an event occurrence, this function executes.

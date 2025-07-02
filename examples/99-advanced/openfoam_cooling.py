@@ -62,7 +62,7 @@ pl.show()
 # Let's plot the velocity of the air.
 #
 # Start by clipping the air dataset with :func:`clip()
-# <pyvista.DataSetFilters.clip>` and plotting it alongside the electronics.
+# <pyvista.DataObjectFilters.clip>` and plotting it alongside the electronics.
 #
 # As you can see, the air enters from the front of the case (left) and is being
 # pushed out of the "back" of the case via a fan.
@@ -129,7 +129,13 @@ lines = air.streamlines_from_source(points, max_length=2.0)
 # Plot
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
-pl.add_mesh(lines, line_width=2, scalars='T', cmap='reds', scalar_bar_args={'title': 'Temperature'})
+pl.add_mesh(
+    lines,
+    line_width=2,
+    scalars='T',
+    cmap='reds',
+    scalar_bar_args={'title': 'Temperature'},
+)
 pl.add_mesh(
     structure,
     scalars='T',
@@ -151,7 +157,7 @@ pl.show()
 #
 # For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
-# :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
+# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can visualize
 # it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
 

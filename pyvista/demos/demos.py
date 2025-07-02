@@ -8,6 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista import examples
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
@@ -216,7 +217,8 @@ def orientation_plotter():
     return pl
 
 
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
+@_deprecate_positional_args
+def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -255,7 +257,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     # Make data
     X = np.arange(-10, 10, 0.25)
     Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
+    X, Y = np.meshgrid(X, Y)  # type: ignore[assignment]
     R = np.sqrt(X**2 + Y**2)
     Z = np.sin(R)
 
@@ -268,7 +270,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(mesh, scalars='Height', show_scalar_bar=False, smooth_shading=True)
-    plotter.camera_position = cpos
+    plotter.camera_position = cpos  # type: ignore[assignment]
     plotter.show(
         title='Wave Example',
         window_size=[800, 600],
@@ -337,8 +339,8 @@ def plot_ants_plane(notebook=None):
        Create plotting object.
 
        >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+       >>> _ = plotter.add_mesh(ant, color='r')
+       >>> _ = plotter.add_mesh(ant_copy, color='b')
 
        Add airplane mesh and make the color equal to the Y position.
 
@@ -378,8 +380,8 @@ def plot_ants_plane(notebook=None):
 
     # Create plotting object
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, color='r')
+    plotter.add_mesh(ant_copy, color='b')
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
@@ -428,9 +430,9 @@ def plot_beam(notebook=None):
         scalars=d,
         scalar_bar_args={'title': 'Y Displacement'},
         rng=[-d.max(), d.max()],
-        cmap=cmap,
+        cmap=cmap,  # type: ignore[arg-type]
     )
-    plotter.camera_position = cpos
+    plotter.camera_position = cpos  # type: ignore[assignment]
     plotter.add_text('Static Beam Example')
     plotter.show()
 
@@ -471,10 +473,11 @@ def plot_datasets(dataset_type=None):
         'StructuredGrid',
     ]
     if dataset_type is not None and dataset_type not in allowable_types:
-        raise ValueError(
-            f'Invalid dataset_type {dataset_type}.  Must be one '
-            f'of the following: {allowable_types}',
+        msg = (
+            f'Invalid dataset_type {dataset_type}.  '
+            f'Must be one of the following: {allowable_types}'
         )
+        raise ValueError(msg)
 
     ###########################################################################
     # uniform grid
@@ -549,7 +552,7 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'ImageData']:
         pl.add_mesh(image)
         pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
 
     # RectilinearGrid
     if dataset_type is None:
@@ -558,7 +561,7 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'RectilinearGrid']:
         pl.add_mesh(rec_grid)
         pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
 
     # StructuredGrid
     if dataset_type is None:
@@ -567,6 +570,6 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'StructuredGrid']:
         pl.add_mesh(struct_grid)
         pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
 
     pl.show()

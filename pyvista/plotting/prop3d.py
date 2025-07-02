@@ -6,9 +6,11 @@ from abc import ABC
 from abc import abstractmethod
 from functools import wraps
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -17,14 +19,16 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
-class Prop3D(_vtk.vtkProp3D):
-    """Prop3D wrapper for vtkProp3D.
+class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
+    """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
     properties and methods relating to an entity's position, orientation
@@ -294,7 +298,12 @@ class Prop3D(_vtk.vtkProp3D):
         >>> mesh = pv.Cube(x_length=0.1, y_length=0.2, z_length=0.3)
         >>> actor = pl.add_mesh(mesh)
         >>> actor.bounds
-        BoundsTuple(x_min=-0.05, x_max=0.05, y_min=-0.1, y_max=0.1, z_min=-0.15, z_max=0.15)
+        BoundsTuple(x_min = -0.05,
+                    x_max =  0.05,
+                    y_min = -0.1,
+                    y_max =  0.1,
+                    z_min = -0.15,
+                    z_max =  0.15)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -327,6 +336,11 @@ class Prop3D(_vtk.vtkProp3D):
 
         The user matrix is the last transformation applied to the actor before
         rendering.
+
+        See Also
+        --------
+        transform
+            Apply a transformation to the :attr:`user_matrix`.
 
         Returns
         -------
@@ -371,6 +385,81 @@ class Prop3D(_vtk.vtkProp3D):
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
+    def transform(
+        self,
+        trans: TransformLike,
+        multiply_mode: Literal['pre', 'post'] = 'post',
+        *,
+        inplace: bool = False,
+    ):
+        """Apply a transformation to this object's :attr:`user_matrix`.
+
+        .. note::
+
+            This applies a transformation by modifying the :attr:`user_matrix`. This
+            differs from methods like :meth:`rotate_x`, :meth:`rotate_y`, :meth:`rotate_z`,
+            and :meth:`rotation_from` which apply a transformation indirectly by modifying
+            the :attr:`orientation`. See the :class:`Prop3D` class description for more
+            information about how this class is transformed.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        trans : TransformLike
+            Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+            :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+            If the input is 3x3, the array is padded using a 4x4 identity matrix.
+
+        multiply_mode : 'pre' | 'post', default: 'post'
+            Multiplication mode to use.
+
+            - ``'pre'``: pre-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+              ``user_matrix @ trans``. The transformation is applied `before` the
+              current user-matrix.
+            - ``'post'``: post-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+              ``trans @ user_matrix``. The transformation is applied `after` the
+              current user-matrix.
+
+        inplace : bool, default: False
+            When ``True``, modifies the prop inplace. Otherwise, a copy is returned.
+
+        Returns
+        -------
+        Prop3D
+            Transformed prop.
+
+        See Also
+        --------
+        pyvista.Transform
+            Describe linear transformations via a 4x4 matrix.
+        pyvista.DataObjectFilters.transform
+            Apply a transformation to a mesh.
+
+        """
+        # Validate input
+        _validation.check_contains(
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply_mode'
+        )
+        matrix = _validation.validate_transform4x4(trans)
+
+        # Update user matrix
+        new_matrix = (
+            self.user_matrix @ matrix if multiply_mode == 'pre' else matrix @ self.user_matrix
+        )
+        output = self if inplace else self.copy()
+        output.user_matrix = new_matrix
+        return output
+
+    @abstractmethod
+    @_deprecate_positional_args
+    def copy(
+        self: Self,
+        deep: bool = True,  # noqa: FBT001, FBT002
+    ) -> Self:  # numpydoc ignore=RT01
+        """Return a copy of this prop."""
+        raise NotImplementedError  # pragma: no cover
+
     @property
     def length(self) -> float:  # numpydoc ignore=RT01
         """Return the length of the entity.
@@ -390,7 +479,7 @@ class Prop3D(_vtk.vtkProp3D):
         """Set the entity's orientation from a rotation.
 
         Set the rotation of this entity from a 3x3 rotation matrix. This includes
-        NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
+        NumPy arrays, a :vtk:`vtkMatrix3x3`, and SciPy ``Rotation`` objects.
 
         This method may be used as an alternative for setting the :attr:`orientation`.
 
@@ -435,8 +524,8 @@ def _rotation_matrix_as_orientation(
 
     Parameters
     ----------
-    array : NumpyArray[float] | vtkMatrix3x3
-        3x3 rotation matrix as a NumPy array or a vtkMatrix.
+    array : NumpyArray[float] | :vtk:`vtkMatrix3x3`
+        3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix3x3`.
 
     Returns
     -------

@@ -1,6 +1,7 @@
 name: Integration Tests
 
-on:
+# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
+on: # zizmor: ignore[cache-poisoning]
   pull_request:
   workflow_dispatch:
   schedule:
@@ -18,6 +19,19 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  USE_CACHE: ${{
+    (
+    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
+    (github.event_name == 'pull_request') ||
+    (github.event_name == 'push')
+    ) &&
+    !startsWith(github.ref, 'refs/tags/v') &&
+    !startsWith(github.ref, 'refs/heads/release/') &&
+    !startsWith(github.ref, 'refs/heads/main')
+    }}
+
+permissions:
+  id-token: none
 
 jobs:
   # For now this is just MNE-Python, but others could be added
@@ -33,7 +47,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
@@ -51,6 +65,7 @@ jobs:
       - run: ./tools/get_testing_version.sh
         working-directory: mne-python
       - uses: actions/cache@v4
+        if: env.USE_CACHE == 'true'
         with:
           key: ${{ env.TESTING_VERSION }}
           path: ~/mne_data
@@ -89,16 +104,13 @@ jobs:
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
-        with:
-          packages: libgl1-mesa-glx xvfb
-          version: 3.0
+      - uses: pyvista/setup-headless-display-action@main
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
         run: pip install -ve . # pyvista
@@ -108,8 +120,8 @@ jobs:
       - name: Download cartopy assets
         run: |
           mkdir -p ${CARTOPY_SHARE_DIR}
-          python -m cartopy.feature.download physical --output ${CARTOPY_SHARE_DIR} --no-warn
-      - run: pytest
+          cartopy_feature_download physical --output ${CARTOPY_SHARE_DIR} --no-warn
+      - run: xvfb-run -a pytest
         working-directory: geovista
 
   trame:
@@ -124,9 +136,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Install PyVista
-        run: pip install -ve .[test]
+        run: |
+          pip install --upgrade pip
+          pip install -ve . --group test
+
       - name: Install requirements
         run: |
           pip install -r examples_trame/requirements.txt

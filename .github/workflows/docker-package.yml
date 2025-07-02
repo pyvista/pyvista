@@ -16,10 +16,13 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  packages: write
+
 jobs:
   build-and-publish:
     name: Build and Publish Docker Image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # For Pull Requests, only runs from `docker`
     if: github.event_name == 'push' ||
       ( github.event_name == 'pull_request' &&
@@ -31,10 +34,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Create PyVista package
         run: |

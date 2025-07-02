@@ -443,7 +443,8 @@ def validate_axes(
             name=f'{name} orientation',
         )
     elif len(axes) == 2:
-        raise ValueError(f'{name} orientation must be specified when only two vectors are given.')
+        msg = f'{name} orientation must be specified when only two vectors are given.'
+        raise ValueError(msg)
 
     # Validate axes array
     if len(axes) == 1:
@@ -464,9 +465,11 @@ def validate_axes(
         np.dot(axes_array[0], axes_array[2]),
         1,
     ):
-        raise ValueError(f'{name} cannot be parallel.')
+        msg = f'{name} cannot be parallel.'
+        raise ValueError(msg)
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
-        raise ValueError(f'{name} cannot be zeros.')
+        msg = f'{name} cannot be zeros.'
+        raise ValueError(msg)
 
     # Check orthogonality and orientation using cross products
     # Normalize axes first since norm values are needed for cross product calc
@@ -478,14 +481,17 @@ def validate_axes(
         (np.allclose(cross_0_1, axes_norm[2]) or np.allclose(cross_0_1, -axes_norm[2]))
         and (np.allclose(cross_1_2, axes_norm[0]) or np.allclose(cross_1_2, -axes_norm[0]))
     ):
-        raise ValueError(f'{name} are not orthogonal.')
+        msg = f'{name} are not orthogonal.'
+        raise ValueError(msg)
 
     if must_have_orientation:
         dot = np.dot(cross_0_1, axes_norm[2])
         if must_have_orientation == 'right' and dot < 0:
-            raise ValueError(f'{name} do not have a right-handed orientation.')
+            msg = f'{name} do not have a right-handed orientation.'
+            raise ValueError(msg)
         if must_have_orientation == 'left' and dot > 0:
-            raise ValueError(f'{name} do not have a left-handed orientation.')
+            msg = f'{name} do not have a left-handed orientation.'
+            raise ValueError(msg)
 
     if normalize:
         return axes_norm
@@ -495,11 +501,13 @@ def validate_axes(
 def validate_rotation(
     rotation: RotationLike,
     must_have_handedness: Literal['right', 'left'] | None = None,
+    *,
+    tolerance: float = 1e-6,
     name: str = 'Rotation',
 ):
     """Validate a rotation as a 3x3 matrix.
 
-    The rotation is valid if its transpose equals its inverse and has a determinant
+    The rotation is valid if it is orthogonal and has a determinant
     of ``1`` (right-handed or "proper" rotation) or ``-1`` (left-handed or "improper"
     rotation). By default, right- and left-handed rotations are allowed.
     Use ``must_have_handedness`` to restrict the handedness.
@@ -513,6 +521,9 @@ def validate_rotation(
         Check if the rotation has a specific handedness. If ``right``, the
         determinant must be ``1``. If ``left``, the determinant must be ``-1``.
         By default, either handedness is allowed.
+
+    tolerance : float, default: 1e-6
+        Tolerance used for checking orthogonality.
 
     name : str, default: "Rotation"
         Variable name to use in the error messages if any of the
@@ -547,20 +558,29 @@ def validate_rotation(
     check_contains(
         ['right', 'left', None], must_contain=must_have_handedness, name='must_have_handedness'
     )
+
     rotation_matrix = validate_transform3x3(rotation, name=name)
-    if not np.allclose(np.linalg.inv(rotation_matrix), rotation_matrix.T):
-        raise ValueError(f'{name} is not valid. Its inverse must equal its transpose.')
+    # Check orthogonality
+    # A matrix M is orthogonal if the product of M with its transpose is the identity
+    norm_diff = np.linalg.norm(rotation_matrix @ rotation_matrix.T - np.eye(3), ord='fro')
+    if not norm_diff < tolerance:
+        msg = f'{name} is not valid. Rotation must be orthogonal.'
+        raise ValueError(msg)
 
     if must_have_handedness is not None:
         det = np.linalg.det(rotation_matrix)
         if must_have_handedness == 'right' and not det > 0:
-            raise ValueError(
-                f'{name} has incorrect handedness. Expected a right-handed rotation, but got a left-handed rotation instead.'
+            msg = (
+                f'{name} has incorrect handedness. Expected a right-handed rotation, but got a '
+                f'left-handed rotation instead.'
             )
+            raise ValueError(msg)
         elif must_have_handedness == 'left' and not det < 0:
-            raise ValueError(
-                f'{name} has incorrect handedness. Expected a left-handed rotation, but got a right-handed rotation instead.'
+            msg = (
+                f'{name} has incorrect handedness. Expected a left-handed rotation, but got a '
+                f'right-handed rotation instead.'
             )
+            raise ValueError(msg)
 
     return rotation_matrix
 
@@ -570,17 +590,12 @@ def validate_transform4x4(
 ) -> NumpyArray[float]:
     """Validate transform-like input as a 4x4 ndarray.
 
-    This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
-    the array is padded using a 4x4 identity matrix.
-
     Parameters
     ----------
     transform : TransformLike
-        Transformation matrix as a 3x3 or 4x4 array or vtk matrix, or a
-        SciPy ``Rotation`` instance.
-
-        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
-        or as a vtkTransform.
+        Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+        :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+        If the input is 3x3, the array is padded using a 4x4 identity matrix.
 
     must_be_finite : bool, default: True
         :func:`Check <pyvista.core._validation.check.check_finite>`
@@ -611,9 +626,9 @@ def validate_transform4x4(
         arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
     except (ValueError, TypeError):
         if isinstance(transform, vtkMatrix4x4):
-            arr = _array_from_vtkmatrix(transform, shape=(4, 4))
+            arr = _array_from_vtkmatrix(transform, shape=(4, 4))  # type: ignore[assignment]
         elif isinstance(transform, vtkTransform):
-            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
+            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))  # type: ignore[assignment]
         else:
             try:
                 arr = validate_array(
@@ -623,16 +638,17 @@ def validate_transform4x4(
                     name=name,
                 )
             except TypeError:
-                raise TypeError(
+                msg = (
                     'Input transform must be one of:\n'
                     '\tvtkMatrix4x4\n'
                     '\tvtkMatrix3x3\n'
                     '\tvtkTransform\n'
                     '\t4x4 np.ndarray\n'
-                    '\t3x3 np.ndarray\n',
+                    '\t3x3 np.ndarray\n'
                     '\tscipy.spatial.transform.Rotation\n'
                     f'Got {reprlib.repr(transform)} with type {type(transform)} instead.',
                 )
+                raise TypeError(msg)
 
     return arr
 
@@ -838,7 +854,7 @@ def validate_data_range(rng: VectorLike[float], /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(
+def validate_arrayNx3(  # noqa: N802
     arr: VectorLike[float] | MatrixLike[float], /, *, reshape: bool = True, **kwargs
 ):
     """Validate an array is numeric and has shape Nx3.
@@ -911,7 +927,7 @@ def validate_arrayNx3(
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):
+def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):  # noqa: N802
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -984,7 +1000,7 @@ def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, 
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_unsigned(
+def validate_arrayN_unsigned(  # noqa: N802
     arr: VectorLike[float], /, *, reshape: bool = True, **kwargs
 ) -> NumpyArray[int]:
     """Validate a numeric 1D array of non-negative (unsigned) integers.
@@ -1232,10 +1248,11 @@ def validate_dimensionality(
     try:
         dimensionality_as_array = dimensionality_as_array.astype(np.int64)
     except ValueError:
-        raise ValueError(
+        msg = (
             f'`{dimensionality}` is not a valid dimensionality.'
             ' Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D"].'
         )
+        raise ValueError(msg)
 
     if reshape:
         shape = [(), (1,)]
@@ -1264,7 +1281,7 @@ def _validate_color_sequence(
 
     try:
         # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
+        color_list = [Color(color)]
         n_colors = 1 if n_colors is None else n_colors
         return tuple(color_list * n_colors)
     except ValueError:
@@ -1280,9 +1297,11 @@ def _validate_color_sequence(
                     return tuple(color_list)
             except ValueError:
                 pass
-    raise ValueError(
+    n_colors_str = f' {n_colors} ' if n_colors else ' '
+    msg = (
         f'Invalid color(s):\n'
         f'\t{color}\n'
         f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
+        f'or a sequence of{n_colors_str}ColorLike colors.'
     )
+    raise ValueError(msg)

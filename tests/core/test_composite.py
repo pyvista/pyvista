@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Generator
 import itertools
 import pathlib
-import platform
 import re
 import weakref
 
@@ -19,8 +18,7 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
-
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
+from pyvista.core.dataobject import USER_DICT_KEY
 
 
 def test_multi_block_init_vtk():
@@ -104,6 +102,9 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
 
     with pytest.raises(ValueError, match='Cannot nest a composite dataset in itself.'):
         multi.append(multi)
+
+    with pytest.raises(TypeError, match='dataset should not be or contain an array'):
+        multi.append(vtk.vtkFloatArray())
 
 
 def test_multi_block_set_get_ers():
@@ -436,14 +437,75 @@ def test_multi_block_io(
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
-    multi = multiblock_all_with_nested_and_none
+
+    # Use non-nested multiblock with no None types for vtkhdf case
+    # these cases are tested separately
+    multi = (
+        pv.MultiBlock([pv.PolyData(), pv.UnstructuredGrid()])
+        if extension == '.vtkhdf'
+        else multiblock_all_with_nested_and_none
+    )
 
     # Save it out
-    multi.save(filename, binary)
+    if extension == '.vtkhdf' and binary is False:
+        match = '.vtkhdf files can only be written in binary format'
+        with pytest.raises(ValueError, match=match):
+            multi.save(filename, binary=binary)
+        return
+    multi.save(filename, binary=binary)
+
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     foo = pv.read(filename)
     assert foo.n_blocks == multi.n_blocks
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 4, 0), less_than=(9, 5))
+def test_multi_block_hdf_invalid_block_types_vtk94(tmpdir):
+    filename = tmpdir / 'multi.vtkhdf'
+
+    multi = pv.MultiBlock([pv.MultiBlock()])
+    match = (
+        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Upgrade to VTK>=9.5 for this functionality.'
+    )
+    with pytest.raises(TypeError, match=match):
+        multi.save(filename)
+
+    multi = pv.MultiBlock([None])
+    match = (
+        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.\n'
+        'Upgrade to VTK>=9.5 for this functionality.'
+    )
+    with pytest.raises(TypeError, match=match):
+        multi.save(filename)
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 4, 0))
+def test_multi_block_hdf_invalid_block_type(tmpdir):
+    filename = tmpdir / 'multi.vtkhdf'
+
+    multi = pv.MultiBlock([pv.ImageData()])
+    match = (
+        "Block at index [0] with name 'Block-00' has type 'ImageData' which cannot be saved to "
+        "the .vtkhdf format.\nSupported types are: ['PolyData', 'UnstructuredGrid', 'NoneType', "
+        "'MultiBlock', 'PartitionedDataSet']."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        multi.save(filename)
+
+
+@pytest.mark.needs_vtk_version(at_least=(9, 5, 0))
+def test_multi_block_hdf_invalid_nested_block(tmpdir):
+    filename = tmpdir / 'multi.vtkhdf'
+
+    multi = pv.MultiBlock([pv.MultiBlock({'nested_block': pv.PointSet()})])
+    match = (
+        "Block at index [0][0] with name 'nested_block' has type 'PointSet' which cannot be saved "
+        'to the .vtkhdf format.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        multi.save(filename)
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -458,7 +520,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir):
     for block in multi:
         assert block.array_names == array_names
     # Save it out
-    multi.save(filename, binary)
+    multi.save(filename, binary=binary)
     foo = MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
     for block in foo:
@@ -522,7 +584,10 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
 
     # Do test
     output = multi.transform(
-        transform, inplace=inplace, transform_all_input_vectors=False, progress_bar=False
+        transform,
+        inplace=inplace,
+        transform_all_input_vectors=False,
+        progress_bar=False,
     )
     bounds_after = np.array(output.bounds)
     n_blocks_after = output.n_blocks
@@ -556,9 +621,9 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
     for i, block in enumerate(multi_copy):
         assert pv.is_pyvista_dataset(block) or block is None
         if isinstance(multi[i], MultiBlock):
-            assert (multi[i] is multi_copy[i]) != recursive
+            assert (multi[i] is block) != recursive
         else:
-            assert multi_copy[i] is multi[i]
+            assert block is multi[i]
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
@@ -862,22 +927,56 @@ def test_set_active_scalars_mixed(multiblock_poly):
             assert block.point_data.active_scalars_name == 'data'
 
 
-def test_to_polydata(multiblock_all):
+def test_as_polydata_blocks(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
     if pv.vtk_version_info >= (9, 1, 0):
-        multiblock_all.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
-    assert not multiblock_all.is_all_polydata
+        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    assert not multi.is_all_polydata
+    # Get a polydata block for copy test
+    poly_index = 3
+    poly = multi[poly_index]
+    assert isinstance(poly, pv.PolyData)
 
-    dataset_a = multiblock_all.as_polydata_blocks()
+    dataset_a = multi.as_polydata_blocks()
+    assert dataset_a[poly_index] is poly
     if pv.vtk_version_info >= (9, 1, 0):
         assert dataset_a[-1].n_points == 1
-    assert not multiblock_all.is_all_polydata
+    assert not multi.is_all_polydata
     assert dataset_a.is_all_polydata
 
+    # Test shallow copy
+    dataset_copy = multi.as_polydata_blocks(copy=True)
+    assert dataset_copy[poly_index] is not poly
+    copied_points = dataset_copy[poly_index].points
+    expected_points = poly.points
+    assert np.shares_memory(copied_points, expected_points)
+
     # verify nested works
-    nested_mblock = pv.MultiBlock([multiblock_all, multiblock_all])
+    nested_mblock = pv.MultiBlock([multi, multi])
     assert not nested_mblock.is_all_polydata
     dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
+
+
+def test_as_unstructured_grid_blocks(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    if pv.vtk_version_info >= (9, 1, 0):
+        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    # Get a UnstructuredGrid block for copy test
+    grid_index = 2
+    grid = multi[grid_index]
+    assert isinstance(grid, pv.UnstructuredGrid)
+
+    new_multi = multi.as_unstructured_grid_blocks()
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in new_multi.recursive_iterator())
+    assert new_multi[grid_index] is grid
+
+    # Test shallow copy
+    dataset_copy = multi.as_unstructured_grid_blocks(copy=True)
+    assert dataset_copy[grid_index] is not grid
+    copied_points = dataset_copy[grid_index].points
+    expected_points = grid.points
+    assert np.shares_memory(copied_points, expected_points)
 
 
 def test_compute_normals(multiblock_poly):
@@ -969,7 +1068,10 @@ def test_multiblock_partitioned_zip(container):
 
 
 def test_transform_filter_inplace_default_warns(multiblock_poly):
-    expected_msg = 'The default value of `inplace` for the filter `MultiBlock.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `MultiBlock.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = multiblock_poly.transform(np.eye(4))
 
@@ -1000,26 +1102,54 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
     assert all(item.n_points > 0 for item in iterator_list if item is not None)
 
 
-def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids')
+def test_recursive_iterator_node_type():
+    empty = pv.MultiBlock()
+    assert len(list(empty.recursive_iterator(node_type='parent'))) == 0
+
+    nested_empty = pv.MultiBlock([empty])
+    assert len(list(nested_empty.recursive_iterator(node_type='parent'))) == 1
+    assert len(list(nested_empty.recursive_iterator(node_type='parent', skip_empty=True))) == 0
+
+    nested_empty2 = pv.MultiBlock([nested_empty])
+    assert len(list(nested_empty2.recursive_iterator(node_type='parent'))) == 2
+    assert len(list(nested_empty2.recursive_iterator(node_type='parent', skip_empty=True))) == 1
+
+    match = "Cannot skip None blocks when the node type is 'parent'."
+    with pytest.raises(ValueError, match=match):
+        empty.recursive_iterator(skip_none=True, node_type='parent')
+    match = "Cannot set order when the node type is 'parent'."
+    with pytest.raises(TypeError, match=match):
+        empty.recursive_iterator(order='nested_first', node_type='parent')
+
+
+@pytest.mark.parametrize(
+    ('node_type', 'expected_types'),
+    [('parent', pv.MultiBlock), ('child', (pv.DataSet, type(None)))],
+)
+def test_recursive_iterator_contents(
+    multiblock_all_with_nested_and_none, node_type, expected_types
+):
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids', node_type=node_type)
     assert all(isinstance(item, tuple) and isinstance(item[0], int) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names', node_type=node_type)
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks')
-    assert all(isinstance(item, pv.DataSet) or item is None for item in iterator)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(
+        'blocks', node_type=node_type
+    )
+    assert all(isinstance(item, expected_types) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items', node_type=node_type)
     for name, block in iterator:
         assert isinstance(name, str)
-        assert isinstance(block, pv.DataSet) or block is None
+        assert isinstance(block, expected_types)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all', node_type=node_type)
     for id_, name, block in iterator:
         assert isinstance(id_, tuple)
         assert isinstance(name, str)
-        assert isinstance(block, pv.DataSet) or block is None
+        assert isinstance(block, expected_types)
 
 
 @pytest.mark.parametrize('prepend_names', [True, False])
@@ -1066,6 +1196,9 @@ def test_recursive_iterator_raises():
     with pytest.raises(ValueError, match=match):
         multi.recursive_iterator('blocks', prepend_names=True)
 
+    with pytest.raises(ValueError, match='String separator cannot be empty.'):
+        multi.recursive_iterator(separator='')
+
 
 @pytest.mark.parametrize(
     ('order', 'expected_ids', 'expected_names'),
@@ -1091,20 +1224,200 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
         assert block is expected_meshes[name]
 
 
+@pytest.mark.parametrize('copy', [True, False, None])
+@pytest.mark.parametrize(
+    ('field_data_mode', 'separator', 'name_in', 'name_out'),
+    [('prepend', '//', 'data', 'Block-00//data'), ('preserve', '::', 'data', 'data')],
+)
+def test_move_nested_field_data_to_root(copy, field_data_mode, separator, name_in, name_out):
+    value = [42]
+    multi = pv.MultiBlock()
+    multi.field_data[name_in] = value
+    root = pv.MultiBlock([multi])
+    root.move_nested_field_data_to_root(
+        copy=copy, field_data_mode=field_data_mode, separator=separator
+    )
+    assert root.field_data.keys() == [name_out]
+    assert np.array_equal(root.field_data[name_out], value)
+
+    if copy is None:
+        assert name_in not in multi.field_data
+    else:
+        assert name_in in multi.field_data
+        data_in = multi.field_data[name_in]
+        data_out = root.field_data[name_out]
+        assert np.shares_memory(data_in, data_out) == (copy is False)
+
+
+def _make_nested_multiblock(
+    *,
+    root_field_data=None,
+    root_user_dict=None,
+    nested1_field_data=None,
+    nested1_user_dict=None,
+    nested1_block_name=None,
+    nested2_field_data=None,
+    nested2_user_dict=None,
+    nested2_block_name=None,
+):
+    nested2 = pv.MultiBlock()
+    if nested2_field_data:
+        nested2.field_data.update(nested2_field_data)
+    if nested2_user_dict:
+        nested2.user_dict.update(nested2_user_dict)
+
+    nested1 = pv.MultiBlock([nested2])
+    if nested2_block_name:
+        nested1.set_block_name(0, nested2_block_name)
+    if nested1_field_data:
+        nested1.field_data.update(nested1_field_data)
+    if nested1_user_dict:
+        nested1.user_dict.update(nested1_user_dict)
+
+    root = pv.MultiBlock([nested1])
+    if nested1_block_name:
+        root.set_block_name(0, nested1_block_name)
+    if root_field_data:
+        root.field_data.update(root_field_data)
+    if root_user_dict:
+        root.user_dict.update(root_user_dict)
+    return root
+
+
+def test_move_nested_field_data_to_root_check_duplicate_keys():
+    NAME1 = 'name1'
+    VALUE1 = 'value1'
+    NAME2 = 'name2'
+    VALUE2 = 'value2'
+
+    # Test nested field data key overrides root field data key
+    root = _make_nested_multiblock(
+        root_field_data={NAME1: VALUE1}, nested1_field_data={NAME1: VALUE1}
+    )
+    match = (
+        "The field data array 'name1' from nested MultiBlock at index [0] with name 'Block-00'\n"
+        "also exists in the root MultiBlock's field data and cannot be moved.\n"
+        "Use `field_data_mode='prepend'` to make the array names unique."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        root.move_nested_field_data_to_root()
+    root.move_nested_field_data_to_root(check_duplicate_keys=False)
+
+    # Test block name key overrides root user dict key
+    root = _make_nested_multiblock(
+        root_user_dict={NAME1: VALUE1},
+        nested1_user_dict={NAME2: VALUE2},
+        nested1_block_name=NAME1,
+    )
+    match = (
+        'The root user dict cannot be updated with data from nested MultiBlock '
+        "at index [0] with name 'name1'.\n"
+        "The key 'name1' already exists in the root user dict and would be overwritten."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        root.move_nested_field_data_to_root(user_dict_mode='prepend')
+    root.move_nested_field_data_to_root(check_duplicate_keys=False)
+
+    # Test nested user dict key overrides root user dict key
+    root = _make_nested_multiblock(
+        root_user_dict={NAME1: VALUE1}, nested1_user_dict={NAME1: VALUE1}
+    )
+    match = (
+        'The root user dict cannot be updated with data from nested MultiBlock '
+        "at index [0] with name 'Block-00'.\n"
+        "The key 'name1' already exists in the root user dict and would be overwritten."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        root.move_nested_field_data_to_root()
+    root.move_nested_field_data_to_root(check_duplicate_keys=False)
+
+
+@pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend', 'flat', 'nested'])
+def test_move_nested_field_data_user_dict_mode(user_dict_mode):
+    block_name1 = 'level1'
+    block_name2 = 'level2'
+    root_dict = {'root': 0}
+    nested_dict1 = {'nested1': 1}
+    nested_dict2 = {'nested2': 2}
+    separator = ';'
+
+    expected_user_dict = root_dict.copy()
+    if user_dict_mode == 'flat':
+        expected_user_dict[block_name1] = nested_dict1
+        expected_user_dict[block_name2] = nested_dict2
+    elif user_dict_mode == 'prepend':
+        expected_user_dict[block_name1] = nested_dict1
+        expected_user_dict[block_name1 + separator + block_name2] = nested_dict2
+    elif user_dict_mode == 'preserve':
+        expected_user_dict.update(nested_dict1)
+        expected_user_dict.update(nested_dict2)
+    elif user_dict_mode == 'nested':
+        nested_dict = nested_dict1.copy()
+        nested_dict[block_name2] = nested_dict2
+        expected_user_dict[block_name1] = nested_dict
+
+    root = _make_nested_multiblock(
+        root_user_dict=root_dict,
+        nested1_user_dict=nested_dict1,
+        nested1_block_name=block_name1,
+        nested2_user_dict=nested_dict2,
+        nested2_block_name=block_name2,
+    )
+
+    # Test root user dict is updated with nested user dict data
+    root.move_nested_field_data_to_root(user_dict_mode=user_dict_mode, separator=separator)
+    actual_user_dict = dict(root.user_dict)
+    assert actual_user_dict == expected_user_dict
+    assert USER_DICT_KEY not in root[0].field_data
+    assert root[0].user_dict == {}
+    assert USER_DICT_KEY not in root[0][0].field_data
+    assert root[0][0].user_dict == {}
+
+
 def test_flatten(multiblock_all_with_nested_and_none):
-    root_names = multiblock_all_with_nested_and_none.keys()[:-1]
-    nested_names = multiblock_all_with_nested_and_none[-1].keys()
+    # Add field data
+    ROOT_KEY = 'root'
+    NESTED_KEY = 'nested'
+    root_multi = multiblock_all_with_nested_and_none
+    root_multi.field_data[ROOT_KEY] = ['root data']
+    nested_multi = multiblock_all_with_nested_and_none[-1]
+    nested_multi.field_data[NESTED_KEY] = ['nested data']
+    assert isinstance(nested_multi, pv.MultiBlock)
+
+    def assert_field_data_keys(flat_, root_, nested_):
+        # Test that input block field data isn't accidentally cleared
+        assert flat_.field_data.keys() == [ROOT_KEY, NESTED_KEY]
+        assert root_.field_data.keys() == [ROOT_KEY]
+        assert nested_.field_data.keys() == [NESTED_KEY]
+
+    root_names = root_multi.keys()[:-1]
+    nested_names = nested_multi.keys()
     expected_names = [*root_names, *nested_names]
     expected_n_blocks = len(root_names) + len(nested_names)
 
-    flat = multiblock_all_with_nested_and_none.flatten(name_mode='preserve')
+    match = (
+        "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
+        "with the same name already exists. Use `name_mode='reset'` "
+        'or `check_duplicate_keys=False`.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = root_multi.flatten()
+    flat = root_multi.flatten(name_mode='preserve', check_duplicate_keys=False)
     assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
     assert len(flat) == expected_n_blocks
     assert flat.keys() == expected_names
 
-    flat = multiblock_all_with_nested_and_none.flatten(name_mode='reset')
+    # Test field data keys with copy
+    assert nested_multi[0] is not flat[0]
+    assert_field_data_keys(flat, root_multi, nested_multi)
+
+    flat = root_multi.flatten(name_mode='reset', copy=False)
     expected_names = [f'Block-{i:02}' for i in range(expected_n_blocks)]
     assert flat.keys() == expected_names
+
+    # Test field data keys without copy
+    assert nested_multi[0] is flat[0]
+    assert_field_data_keys(flat, root_multi, nested_multi)
 
 
 @pytest.mark.parametrize('copy', [True, False])
@@ -1133,7 +1446,7 @@ def test_generic_filter(multiblock_all_with_nested_and_none, function):
     multiblock_all_with_nested_and_none.append(empty_mesh)
 
     output = multiblock_all_with_nested_and_none.generic_filter(function)
-    flat_output = output.flatten()
+    flat_output = output.flatten(check_duplicate_keys=False)
     # Make sure no `None` blocks were removed
     assert None in flat_output
     # Check output
@@ -1147,13 +1460,15 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     input_ = multiblock_all_with_nested_and_none
     empty_mesh = pv.PolyData()
     multiblock_all_with_nested_and_none.append(empty_mesh)
-    flat_inputs = multiblock_all_with_nested_and_none.flatten(copy=False)
+    flat_inputs = multiblock_all_with_nested_and_none.flatten(
+        copy=False, check_duplicate_keys=False
+    )
 
     output = multiblock_all_with_nested_and_none.generic_filter(
         'extract_largest',
         inplace=inplace,
     )
-    flat_output = output.flatten(copy=False)
+    flat_output = output.flatten(copy=False, check_duplicate_keys=False)
 
     assert flat_inputs.n_blocks == flat_output.n_blocks
     for block_in, block_out in zip(flat_inputs, flat_output):
@@ -1167,26 +1482,62 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
-    match = "The filter 'resample'\ncould not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
+    match = (
+        "The filter 'resample'\ncould not be applied to the block at index 1 with name "
+        "'Block-01' and type RectilinearGrid."
+    )
     with pytest.raises(RuntimeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             'resample',
         )
     # Test with nested index
     multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
-    match = "The filter 'resample'\ncould not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
+    match = (
+        "The filter 'resample'\ncould not be applied to the nested block at index [0][1] "
+        "with name 'Block-01' and type RectilinearGrid."
+    )
     with pytest.raises(RuntimeError, match=re.escape(match)):
         multi.generic_filter(
             'resample',
         )
     # Test with invalid kwargs
-    multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
     match = "The filter '<bound method DataSetFilters.align_xyz of ImageData"
     with pytest.raises(RuntimeError, match=re.escape(match)):
-        multi.generic_filter('align_xyz', foo='bar')
+        multiblock_all_with_nested_and_none.generic_filter('align_xyz', foo='bar')
     # Test with function
     match = "The filter '<function test_generic_filter_raises"
     with pytest.raises(RuntimeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             test_generic_filter_raises,
         )
+
+
+def test_block_types(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    types = {
+        type(None),
+        pv.RectilinearGrid,
+        pv.ImageData,
+        pv.PolyData,
+        pv.UnstructuredGrid,
+        pv.StructuredGrid,
+    }
+    assert multi.nested_block_types == types
+    types.add(pv.MultiBlock)
+    assert multi.block_types == types
+
+
+def test_is_homogeneous_is_heterogeneous(multiblock_all_with_nested_and_none):
+    # Empty case
+    assert pv.MultiBlock().is_homogeneous is False
+    assert pv.MultiBlock().is_heterogeneous is False
+
+    # Heterogeneous case
+    heterogeneous = multiblock_all_with_nested_and_none
+    assert heterogeneous.is_homogeneous is False
+    assert heterogeneous.is_heterogeneous is True
+
+    # Homogeneous case
+    homogeneous = multiblock_all_with_nested_and_none.as_polydata_blocks()
+    assert homogeneous.is_homogeneous is True
+    assert homogeneous.is_heterogeneous is False

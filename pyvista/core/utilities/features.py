@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -46,8 +47,13 @@ def _padded_bins(mesh, density):
     ]
 
 
-def voxelize(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+@_deprecate_positional_args(allowed=['mesh'])
+def voxelize(  # noqa: PLR0917
+    mesh,
+    density=None,
+    check_surface: bool = True,  # noqa: FBT001, FBT002
+    enclosed: bool = False,  # noqa: FBT001, FBT002
+    fit_bounds: bool = False,  # noqa: FBT001, FBT002
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -165,7 +171,12 @@ def voxelize(
 
 
 def _voxelize_legacy(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+    mesh,
+    *,
+    density=None,
+    check_surface: bool = True,
+    enclosed: bool = False,
+    fit_bounds: bool = False,
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -182,13 +193,15 @@ def _voxelize_legacy(
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        msg = f'Invalid density {density!r}, expected number or array-like.'
+        raise TypeError(msg)
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -215,8 +228,8 @@ def _voxelize_legacy(
             z = np.arange(z_min, z_max, density_z)
 
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
-    # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
-    # see https://github.com/pyvista/pyvista/pull/4365
+    # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering,
+    # not y-x-z ordering, see https://github.com/pyvista/pyvista/pull/4365
 
     # Create unstructured grid from the structured grid
     grid = pyvista.StructuredGrid(x, y, z)
@@ -226,7 +239,7 @@ def _voxelize_legacy(
         # Normalise cells to unit size
         ugrid_norm = ugrid.copy()
         surface_norm = surface.copy()
-        ugrid_norm.points /= np.array(density)
+        ugrid_norm.points /= np.array(density)  # type: ignore[misc]
         surface_norm.points /= np.array(density)
         # Select cells if they're within one unit of the surface
         ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
@@ -244,8 +257,13 @@ def _voxelize_legacy(
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(
-    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+@_deprecate_positional_args(allowed=['mesh'])
+def voxelize_volume(  # noqa: PLR0917
+    mesh,
+    density=None,
+    check_surface: bool = True,  # noqa: FBT001, FBT002
+    enclosed: bool = False,  # noqa: FBT001, FBT002
+    fit_bounds: bool = False,  # noqa: FBT001, FBT002
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
@@ -255,7 +273,8 @@ def voxelize_volume(
 
     .. deprecated:: 0.45
 
-        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_rectilinear` instead.
+        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_rectilinear`
+        instead.
 
     Parameters
     ----------
@@ -373,7 +392,8 @@ def voxelize_volume(
     """
     # Deprecated on v0.45.0, estimated removal on v0.48.0
     warnings.warn(
-        '`pyvista.voxelize_volume` is deprecated. Use `pyvista.DataSetFilters.voxelize_rectilinear` instead.',
+        '`pyvista.voxelize_volume` is deprecated. Use '
+        '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
         PyVistaDeprecationWarning,
     )
     mesh = wrap(mesh)
@@ -384,13 +404,15 @@ def voxelize_volume(
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        msg = f'Invalid density {density!r}, expected number or array-like.'
+        raise TypeError(msg)
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -468,14 +490,15 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError('Please specify dimensions.')
+        msg = 'Please specify dimensions.'
+        raise NotImplementedError(msg)
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.ImageData()
     image.dimensions = dimensions
     dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
-    image.origin = bounds[::2]  # type: ignore[assignment]
+    image.origin = bounds[::2]
     return image
 
 
@@ -496,6 +519,10 @@ def grid_from_sph_coords(theta, phi, r):
     pyvista.StructuredGrid
         Structured grid.
 
+    See Also
+    --------
+    :ref:`spherical_example`
+
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
     # Transform grid to cartesian coordinates
@@ -506,7 +533,8 @@ def grid_from_sph_coords(theta, phi, r):
     return pyvista.StructuredGrid(x_cart, y_cart, z_cart)
 
 
-def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT02
+@_deprecate_positional_args
+def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # noqa: PLR0917  # numpydoc ignore=RT02
     """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -611,11 +639,12 @@ def spherical_to_cartesian(r, phi, theta):
     return x, y, z
 
 
-def merge(
+@_deprecate_positional_args(allowed=['datasets'])
+def merge(  # noqa: PLR0917
     datasets,
-    merge_points: bool = True,
-    main_has_priority: bool = True,
-    progress_bar: bool = False,
+    merge_points: bool = True,  # noqa: FBT001, FBT002
+    main_has_priority: bool | None = None,  # noqa: FBT001
+    progress_bar: bool = False,  # noqa: FBT001, FBT002
 ):
     """Merge several datasets.
 
@@ -624,6 +653,17 @@ def merge(
        :func:`PolyDataFilters.boolean_union` filter. This filter
        does not attempt to create a manifold mesh and will include
        internal surfaces when two meshes overlap.
+
+    .. warning::
+
+        The merge order of this filter depends on the installed version
+        of VTK. For example, if merging meshes ``a``, ``b``, and ``c``,
+        the merged order is ``bca`` for VTK<9.5 and ``abc`` for VTK>=9.5.
+        This may be a breaking change for some applications. If only
+        merging two meshes, it may be possible to maintain `some` backwards
+        compatibility by swapping the input order of the two meshes,
+        though this may also affect the merged arrays and is therefore
+        not fully backwards-compatible.
 
     Parameters
     ----------
@@ -636,6 +676,11 @@ def merge(
     main_has_priority : bool, default: True
         When this parameter is ``True`` and ``merge_points=True``, the arrays
         of the merging grids will be overwritten by the original main mesh.
+
+        .. deprecated:: 0.46
+
+            This keyword will be removed in a future version. The main mesh
+            always has priority with VTK 9.5.0 or later.
 
     progress_bar : bool, default: False
         Display a progress bar to indicate progress.
@@ -659,14 +704,17 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        raise TypeError(f'Expected a sequence, got {type(datasets).__name__}')
+        msg = f'Expected a sequence, got {type(datasets).__name__}'
+        raise TypeError(msg)
 
     if len(datasets) < 1:
-        raise ValueError('Expected at least one dataset.')
+        msg = 'Expected at least one dataset.'
+        raise ValueError(msg)
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f'Expected pyvista.DataSet, not {type(first).__name__}')
+        msg = f'Expected pyvista.DataSet, not {type(first).__name__}'
+        raise TypeError(msg)
 
     return datasets[0].merge(
         datasets[1:],
@@ -679,9 +727,9 @@ def merge(
 def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     """Return the implicit function that implements Perlin noise.
 
-    Uses ``vtk.vtkPerlinNoise`` and computes a Perlin noise field as
-    an implicit function. ``vtk.vtkPerlinNoise`` is a concrete
-    implementation of ``vtk.vtkImplicitFunction``. Perlin noise,
+    Uses :vtk:`vtkPerlinNoise` and computes a Perlin noise field as
+    an implicit function. :vtk:`vtkPerlinNoise` is a concrete
+    implementation of :vtk:`vtkImplicitFunction`. Perlin noise,
     originally described by Ken Perlin, is a non-periodic and
     continuous noise function useful for modeling real-world objects.
 
@@ -715,10 +763,14 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
 
     Returns
     -------
-    vtk.vtkPerlinNoise
-        Instance of ``vtk.vtkPerlinNoise`` to a Perlin noise field as an
-        implicit function. Use with :func:`pyvista.sample_function()
-        <pyvista.core.utilities.features.sample_function>`.
+    :vtk:`vtkPerlinNoise`
+        Instance of :vtk:`vtkPerlinNoise` to a Perlin noise field as an
+        implicit function. Use with :func:`~pyvista.sample_function`.
+
+    See Also
+    --------
+    :ref:`perlin_noise_2d_example`
+    :ref:`perlin_noise_3d_example`
 
     Examples
     --------
@@ -730,7 +782,7 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
 
     Sample Perlin noise over a structured grid and plot it.
 
-    >>> grid = pv.sample_function(noise, [0, 5, 0, 5, 0, 5])
+    >>> grid = pv.sample_function(noise, bounds=[0, 5, 0, 5, 0, 5])
     >>> grid.plot()
 
     """
@@ -741,33 +793,34 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     return noise
 
 
-def sample_function(
+@_deprecate_positional_args(allowed=['function'])
+def sample_function(  # noqa: PLR0917
     function: _vtk.vtkImplicitFunction,
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
-    compute_normals: bool = False,
+    compute_normals: bool = False,  # noqa: FBT001, FBT002
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
-    capping: bool = False,
+    capping: bool = False,  # noqa: FBT001, FBT002
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
     normal_arr_name: str = 'normals',
-    progress_bar: bool = False,
+    progress_bar: bool = False,  # noqa: FBT001, FBT002
 ):
     """Sample an implicit function over a structured point set.
 
-    Uses ``vtk.vtkSampleFunction``
+    Uses :vtk:`vtkSampleFunction`
 
     This method evaluates an implicit function and normals at each
-    point in a ``vtk.vtkStructuredPoints``. The user can specify the
+    point in a :vtk:`vtkStructuredPoints`. The user can specify the
     sample dimensions and location in space to perform the sampling.
 
     To create closed surfaces (in conjunction with the
-    vtkContourFilter), capping can be turned on to set a particular
+    :vtk:`vtkContourFilter`), capping can be turned on to set a particular
     value on the boundaries of the sample space.
 
     Parameters
     ----------
-    function : vtk.vtkImplicitFunction
+    function : :vtk:`vtkImplicitFunction`
         Implicit function to evaluate.  For example, the function
         generated from :func:`perlin_noise() <pyvista.core.utilities.features.perlin_noise>`.
 
@@ -826,7 +879,7 @@ def sample_function(
     >>> import pyvista as pv
     >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
     >>> grid = pv.sample_function(
-    ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
+    ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
     >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
@@ -836,7 +889,8 @@ def sample_function(
     >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
-    See :ref:`perlin_noise_2d_example` for a full example using this function.
+    See :ref:`perlin_noise_2d_example` and :ref:`perlin_noise_3d_example`
+    for a full example using this function.
 
     """
     # internal import to avoide circular dependency
@@ -858,11 +912,13 @@ def sample_function(
         samp.SetOutputScalarTypeToFloat()
     elif output_type == np.int64:
         if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+            msg = 'This function on Windows only supports int32 or smaller'
+            raise ValueError(msg)
         samp.SetOutputScalarTypeToLong()
     elif output_type == np.uint64:
         if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+            msg = 'This function on Windows only supports int32 or smaller'
+            raise ValueError(msg)
         samp.SetOutputScalarTypeToUnsignedLong()
     elif output_type == np.int32:
         samp.SetOutputScalarTypeToInt()
@@ -877,7 +933,8 @@ def sample_function(
     elif output_type == np.uint8:
         samp.SetOutputScalarTypeToUnsignedChar()
     else:
-        raise ValueError(f'Invalid output_type {output_type}')
+        msg = f'Invalid output_type {output_type}'
+        raise ValueError(msg)
 
     _update_alg(samp, progress_bar=progress_bar, message='Sampling')
     return wrap(samp.GetOutput())

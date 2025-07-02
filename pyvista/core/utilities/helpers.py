@@ -6,13 +6,14 @@ from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import TypeIs
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
@@ -39,10 +40,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._dataset_types import ConcreteDataObjectAlias
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
-
-    from ..wrappers import _WrappableVTKDataObjectType
+    from pyvista.wrappers import _WrappableVTKDataObjectType
 
 
 # vtkDataSet overloads
@@ -74,13 +72,9 @@ def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
 
 # General catch-all cases
 @overload
-def wrap(dataset: _vtk.vtkDataSet) -> ConcreteDataSetAlias: ...
+def wrap(dataset: _vtk.vtkDataSet) -> DataSet: ...
 @overload
-def wrap(dataset: DataSet) -> ConcreteDataSetAlias: ...
-@overload
-def wrap(dataset: _vtk.vtkDataObject) -> ConcreteDataObjectAlias: ...
-@overload
-def wrap(dataset: DataObject) -> ConcreteDataObjectAlias: ...
+def wrap(dataset: _vtk.vtkDataObject) -> DataObject: ...
 
 
 # Misc overloads
@@ -98,7 +92,7 @@ def wrap(dataset: Trimesh) -> PolyData: ...
 # TODO: Support meshio overload
 # @overload
 # def wrap(dataset: Mesh) -> UnstructuredGrid: ...
-def wrap(
+def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
     | Trimesh
@@ -130,6 +124,10 @@ def wrap(
     -------
     pyvista.DataSet
         The PyVista wrapped dataset.
+
+    See Also
+    --------
+    :ref:`wrap_trimesh_example`
 
     Examples
     --------
@@ -197,9 +195,7 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        from pyvista import DataObject  # avoid circular import
-
-        return cast(DataObject, dataset)
+        return cast('DataObject', dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -218,7 +214,8 @@ def wrap(
             mesh.active_scalars_name = 'values'
             return mesh
         else:
-            raise NotImplementedError('NumPy array could not be wrapped pyvista.')
+            msg = 'NumPy array could not be wrapped pyvista.'
+            raise NotImplementedError(msg)
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
@@ -230,8 +227,8 @@ def wrap(
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
-        return None  # pragma: no cover
+            msg = f'VTK data type ({key}) is not currently supported by pyvista.'
+            raise TypeError(msg)
 
     # wrap meshio
     if is_meshio_mesh(dataset):
@@ -251,18 +248,11 @@ def wrap(
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
-    raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
+    msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'
+    raise NotImplementedError(msg)
 
 
-@overload
-def is_pyvista_dataset(
-    obj: pyvista.DataSet | pyvista.MultiBlock,
-) -> Literal[True]: ...
-@overload
-def is_pyvista_dataset(
-    obj: Any,
-) -> Literal[False]: ...
-def is_pyvista_dataset(obj: Any) -> bool:
+def is_pyvista_dataset(obj: Any) -> TypeIs[pyvista.DataSet | pyvista.MultiBlock]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -280,7 +270,7 @@ def is_pyvista_dataset(obj: Any) -> bool:
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
-    """Return a _vtk.vtkPlane.
+    """Return a :vtk:`vtkPlane`.
 
     Parameters
     ----------
@@ -292,21 +282,26 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
     Returns
     -------
-    vtk.vtkPlane
+    :vtk:`vtkPlane`
         VTK plane.
 
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal_ = _validation.validate_array3(normal, dtype_out=float)
-    normal_ /= np.linalg.norm(normal_)
+    normal_ = normal_ / np.linalg.norm(normal_)
     plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane
 
 
-def axis_rotation(
-    points: NumpyArray[float], angle: float, inplace: bool = False, deg: bool = True, axis='z'
+@_deprecate_positional_args(allowed=['points', 'angle'])
+def axis_rotation(  # noqa: PLR0917
+    points: NumpyArray[float],
+    angle: float,
+    inplace: bool = False,  # noqa: FBT001, FBT002
+    deg: bool = True,  # noqa: FBT001, FBT002
+    axis='z',
 ):
     """Rotate points by angle about an axis.
 
@@ -353,7 +348,8 @@ def axis_rotation(
     axis_to_vec = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
 
     if axis not in axis_to_vec:
-        raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
+        msg = 'Invalid axis. Must be either "x", "y", or "z"'
+        raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
@@ -385,12 +381,14 @@ def is_inside_bounds(point, bounds):
         deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise ValueError('Bounds mismatch point dimensionality')
+            msg = 'Bounds mismatch point dimensionality'
+            raise ValueError(msg)
         point = deque(point)
         bounds = deque(bounds)
         return is_inside_bounds(point, bounds)
     if not isinstance(point, deque):
-        raise TypeError(f'Unknown input data type ({type(point)}).')
+        msg = f'Unknown input data type ({type(point)}).'
+        raise TypeError(msg)
     if len(point) < 1:
         return True
     p = point.popleft()

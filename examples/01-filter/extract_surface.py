@@ -5,7 +5,7 @@ Extract Surface
 ~~~~~~~~~~~~~~~
 
 You can extract the surface of nearly any object within ``pyvista``
-using the ``extract_surface`` filter.
+using the :meth:`~pyvista.DataSetFilters.extract_surface` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -38,8 +38,8 @@ lin_pts = np.array(
 )
 
 # these are the "midside" points of a quad cell.  See the definition of a
-# vtkQuadraticHexahedron at:
-# https://vtk.org/doc/nightly/html/classvtkQuadraticHexahedron.html
+# :vtk:`vtkQuadraticHexahedron`.
+
 quad_pts = np.array(
     [
         (lin_pts[1] + lin_pts[0]) / 2,  # between point 0 and 1

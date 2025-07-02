@@ -5,8 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import Union
-from typing import cast
 from typing import overload
 
 import numpy as np
@@ -16,22 +14,27 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
+    from scipy.spatial.transform import Rotation
+
+    from pyvista import DataSet
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import ConcreteDataSetType
+    from pyvista import Prop3D
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _DataSetOrMultiBlockType
 
 
-class Transform(_vtk.vtkTransform):
+class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTransform):
     """Describes linear transformations via a 4x4 matrix.
 
     A :class:`Transform` can be used to describe the full range of linear (also known
@@ -55,12 +58,12 @@ class Transform(_vtk.vtkTransform):
 
     Parameters
     ----------
-    trans : TransformLike, optional
-        Initialize the transform with a transformation. By default, the transform
-        is initialized as the identity matrix.
+    trans : TransformLike | Sequence[TransformLike], optional
+        Initialize the transform with a transformation or sequence of transformations.
+        By default, the transform is initialized as the identity matrix.
 
     point : VectorLike[float], optional
-        Point to use when concatenating some transformations such as scale, rotation, etc.
+        Point to use when composing some transformations such as scale, rotation, etc.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
@@ -71,13 +74,15 @@ class Transform(_vtk.vtkTransform):
         transformations are performed about the origin ``(0, 0, 0)``.
 
     multiply_mode : 'pre' | 'post', optional
-        Multiplication mode to use when concatenating. Set this to ``'pre'`` for
+        Multiplication mode to use when composing. Set this to ``'pre'`` for
         pre-multiplication or ``'post'`` for post-multiplication.
 
     See Also
     --------
-    :meth:`pyvista.DataSetFilters.transform`
+    pyvista.DataObjectFilters.transform
         Apply a transformation to a mesh.
+    pyvista.Prop3D.transform
+        Transform an actor.
 
     Examples
     --------
@@ -254,7 +259,12 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                [self.compose(t) for t in trans]
+                if all(isinstance(item, Sequence) for item in trans):
+                    # Init from a nested sequence array
+                    self.compose(trans)
+                else:
+                    # Init from sequence of transformations
+                    [self.compose(t) for t in trans]
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
@@ -263,30 +273,38 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+            msg = (
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+            msg = (
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' "
+                f"and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+            msg = (
+                f"Unsupported operand type(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+            msg = (
+                f"Unsupported operand value(s) for +: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`compose` this transform using post-multiply semantics.
@@ -301,15 +319,20 @@ class Transform(_vtk.vtkTransform):
             try:
                 transform = copied.compose(other, multiply_mode='post')
             except TypeError:
-                raise TypeError(
-                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                msg = (
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
+                raise TypeError(msg)
             except ValueError:
-                raise ValueError(
-                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                msg = (
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' "
+                    f"and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector '
+                    f'or have 3x3 or 4x4 shape.'
                 )
+                raise ValueError(msg)
         return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
@@ -317,15 +340,19 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+            msg = (
+                f"Unsupported operand type(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+            msg = (
+                f"Unsupported operand value(s) for *: '{type(other).__name__}' "
+                f"and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
@@ -388,7 +415,7 @@ class Transform(_vtk.vtkTransform):
 
     @property
     def point(self: Transform) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
-        """Point to use when concatenating some transformations such as scale, rotation, etc.
+        """Point to use when composing some transformations such as scale, rotation, etc.
 
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
@@ -398,6 +425,7 @@ class Transform(_vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
         """
         return self._point
 
@@ -500,13 +528,13 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the scaling
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.scale`
+        pyvista.DataObjectFilters.scale
             Scale a mesh.
 
         Examples
@@ -596,13 +624,13 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.reflect`
+        pyvista.DataObjectFilters.reflect
             Reflect a mesh.
 
         Examples
@@ -662,13 +690,13 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_x
+        pyvista.DataObjectFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -722,13 +750,13 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_y
+        pyvista.DataObjectFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -782,13 +810,13 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.flip_z
+        pyvista.DataObjectFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -836,13 +864,13 @@ class Transform(_vtk.vtkTransform):
             unpacked vector (three args).
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        :meth:`pyvista.DataSetFilters.translate`
+        pyvista.DataObjectFilters.translate
             Translate a mesh.
 
         Examples
@@ -906,13 +934,15 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate
+        as_rotation
+            Get this transform's rotation component.
+        pyvista.DataObjectFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -1003,13 +1033,15 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_x
+        as_rotation
+            Get this transform's rotation component.
+        pyvista.DataObjectFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1070,13 +1102,15 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_y
+        as_rotation
+            Get this transform's rotation component.
+        pyvista.DataObjectFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1137,13 +1171,15 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_z
+        as_rotation
+            Get this transform's rotation component.
+        pyvista.DataObjectFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1208,13 +1244,15 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         See Also
         --------
-        pyvista.DataSetFilters.rotate_vector
+        as_rotation
+            Get this transform's rotation component.
+        pyvista.DataObjectFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
@@ -1262,9 +1300,13 @@ class Transform(_vtk.vtkTransform):
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
         multiply_mode : 'pre' | 'post', optional
-            Multiplication mode to use when concatenating the matrix. By default, the
+            Multiplication mode to use when composing the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        decompose
 
         Examples
         --------
@@ -1323,7 +1365,7 @@ class Transform(_vtk.vtkTransform):
 
         Notes
         -----
-        This matrix is a single 4x4 matrix computed from concatenating all
+        This matrix is a single 4x4 matrix computed from composing all
         transformations. Use :attr:`matrix_list` instead to get a list of the
         individual transformations.
 
@@ -1354,7 +1396,7 @@ class Transform(_vtk.vtkTransform):
 
         Notes
         -----
-        This matrix is a single 4x4 matrix computed from concatenating the inverse of
+        This matrix is a single 4x4 matrix computed from composing the inverse of
         all transformations. Use :attr:`inverse_matrix_list` instead to get a list of
         the individual inverse transformations.
 
@@ -1435,53 +1477,100 @@ class Transform(_vtk.vtkTransform):
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float],
         /,
+        mode: Literal['points', 'vectors'] | None = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
     def apply(
         self: Transform,
-        obj: ConcreteDataSetType,
+        obj: _DataSetOrMultiBlockType,
         /,
+        mode: Literal['active_vectors', 'all_vectors'] = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
-    ) -> ConcreteDataSetType: ...
+    ) -> _DataSetOrMultiBlockType: ...
     @overload
     def apply(
         self: Transform,
-        obj: MultiBlock,
+        obj: Prop3D,
         /,
+        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
-    ) -> MultiBlock: ...
+    ) -> Prop3D: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetType | MultiBlock,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
         /,
+        mode: Literal[
+            'points',
+            'vectors',
+            'active_vectors',
+            'all_vectors',
+            'replace',
+            'pre-multiply',
+            'post-multiply',
+        ]
+        | None = None,
         *,
         inverse: bool = False,
         copy: bool = True,
-        transform_all_input_vectors: bool = False,
     ):
-        """Apply the current transformation :attr:`matrix` to points or a dataset.
+        """Apply the current transformation :attr:`matrix` to points, vectors, a dataset, or actor.
 
         .. note::
 
             Points with integer values are cast to a float type before the
             transformation is applied. A similar casting is also performed when
-            transforming datasets. See also the notes at :func:`~pyvista.DataSetFilters.transform`
+            transforming datasets. See also the notes at
+            :func:`~pyvista.DataObjectFilters.transform`
             which is used by this filter under the hood.
 
         Parameters
         ----------
-        obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
+        obj : VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D
             Object to apply the transformation to.
+
+        mode : str, optional
+            Define how to apply the transformation. Different modes may be used depending
+            on the input type.
+
+            #.  For array inputs:
+
+                - ``'points'`` transforms point arrays.
+                - ``'vectors'`` transforms vector arrays. The translation component of
+                  the transformation is removed for vectors.
+
+                By default, ``'points'`` mode is used for array inputs.
+
+            #.  For dataset inputs:
+
+                The dataset's points are always transformed, and its vectors are
+                transformed based on the mode:
+
+                - ``'active_vectors'`` transforms active normals and active vectors
+                  arrays only.
+                - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
+                  with three components. This mode is equivalent to setting
+                  ``transform_all_input_vectors=True``
+                  with :meth:`pyvista.DataObjectFilters.transform`.
+
+                By default, only ``'active_vectors'`` are transformed.
+
+            #.  For actor inputs:
+
+                - ``'pre-multiply'`` pre-multiplies this transform with the actor's
+                  :attr:`~pyvista.Prop3D.user_matrix`.
+                - ``'post-multiply'`` post-multiplies this transform with the actor's
+                  user-matrix.
+                - ``'replace'`` replaces the actor's user-matrix with this transform's
+                  :attr:`matrix`.
+
+                By default, ``'post-multiply'`` mode is used for actors.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
@@ -1489,24 +1578,31 @@ class Transform(_vtk.vtkTransform):
 
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
-            ``False`` to transform the input directly and return it. Only applies to
-            NumPy arrays and datasets. A copy is always returned for tuple and list
-            inputs or point arrays with integers.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are transformed. Otherwise, only the points,
-            normals and active vectors are transformed. Has no effect if the input is
-            not a dataset.
+            ``False`` to transform the input directly and return it. Setting this to
+            ``False`` only applies to NumPy float arrays, datasets, and actors; a copy
+            is always returned for tuple and list inputs or arrays with integers.
 
         Returns
         -------
-        np.ndarray or pyvista.DataSet
-            Transformed array or dataset.
+        np.ndarray | DataSet | MultiBlock | Prop3D
+            Transformed array, dataset, or actor.
 
         See Also
         --------
-        pyvista.DataSetFilters.transform
+        apply_to_points
+            Equivalent to ``apply(obj, 'points')`` for point-array inputs.
+        apply_to_vectors
+            Equivalent to ``apply(obj, 'vectors')`` for vector-array inputs.
+        apply_to_dataset
+            Equivalent to ``apply(obj, mode)`` for dataset inputs where ``mode`` may be
+            ``'active_vectors'`` or ``'all_vectors'``.
+        apply_to_actor
+            Equivalent to ``apply(obj, mode)`` for actor inputs where ``mode`` may be
+            ``'pre-multiply'``, ``'post-multiply'``, or ``'replace'``.
+        pyvista.DataObjectFilters.transform
             Transform a dataset.
+        pyvista.Prop3D.transform
+            Transform an actor.
 
         Examples
         --------
@@ -1514,52 +1610,132 @@ class Transform(_vtk.vtkTransform):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point = (1, 2, 3)
-        >>> transform = pv.Transform().scale(2)
-        >>> transformed_point = transform.apply(point)
-        >>> transformed_point
-        array([2., 4., 6.])
+        >>> point = (1.0, 2.0, 3.0)
+        >>> transform = pv.Transform().scale(2).translate((0.0, 0.0, 1.0))
+        >>> transformed = transform.apply(point)
+        >>> transformed
+        array([2., 4., 7.])
 
         Apply a transformation to a points array.
 
-        >>> points = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        >>> transformed_points = transform.apply(points)
-        >>> transformed_points
+        >>> array = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        >>> transformed = transform.apply(array)
+        >>> transformed
+        array([[ 2.,  4.,  7.],
+               [ 8., 10., 13.]])
+
+        Apply a transformation to a vector array. Use the same array as before but
+        use the ``'vectors'`` mode. Note how the translation component is not applied
+        to vectors.
+
+        >>> transformed = transform.apply(array, 'vectors')
+        >>> transformed
         array([[ 2.,  4.,  6.],
                [ 8., 10., 12.]])
 
         Apply a transformation to a dataset.
 
-        >>> dataset = pv.PolyData(points)
-        >>> transformed_dataset = transform.apply(dataset)
-        >>> transformed_dataset.points
+        >>> dataset = pv.PolyData(array)
+        >>> transformed = transform.apply(dataset)
+        >>> transformed.points
         pyvista_ndarray([[ 2.,  4.,  6.],
                          [ 8., 10., 12.]])
 
         Apply the inverse.
 
-        >>> inverted_dataset = transform.apply(dataset, inverse=True)
-        >>> inverted_dataset.points
-        pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]])
+        >>> transformed = transform.apply(dataset, inverse=True)
+        >>> transformed.points
+        pyvista_ndarray([[0.5, 1. , 1. ],
+                         [2. , 2.5, 2.5]])
+
+        Apply a transformation to an actor.
+
+        >>> actor = pv.Actor()
+        >>> transformed_actor = transform.apply(actor)
+        >>> transformed_actor.user_matrix
+        array([[2., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 2., 0.],
+               [0., 0., 0., 1.]])
 
         """
+
+        def _check_mode(kind: str, mode_: str | None, allowed_modes: list[str | None]) -> None:
+            if mode_ not in allowed_modes:
+                msg = (
+                    f"Transformation mode '{mode_}' is not supported for {kind}. "
+                    'Mode must be one of'
+                    f'\n{allowed_modes}'
+                )
+                raise ValueError(msg)
+
+        _validation.check_contains(
+            [
+                'points',
+                'vectors',
+                'active_vectors',
+                'all_vectors',
+                'replace',
+                'pre-multiply',
+                'post-multiply',
+                None,
+            ],
+            must_contain=mode,
+            name='mode',
+        )
+        _validation.check_instance(
+            obj,
+            (
+                np.ndarray,
+                Sequence,
+                pyvista.DataSet,
+                pyvista.MultiBlock,
+                pyvista.Prop3D,
+            ),
+        )
+
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
-            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
+            allowed = ['active_vectors', 'all_vectors', None]
+            _check_mode('datasets', mode, allowed)
+            if mode in ['active_vectors', None]:
+                mode = None
+
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
-                transform_all_input_vectors=transform_all_input_vectors,
+                transform_all_input_vectors=bool(mode),
             )
 
         matrix = self.inverse_matrix if inverse else self.matrix
+
+        # Transform actor
+        if isinstance(obj, pyvista.Prop3D):
+            allowed = ['replace', 'pre-multiply', 'post-multiply', None]
+            _check_mode('actors', mode, allowed)
+            if mode in ['post-multiply', None]:
+                return obj.transform(matrix, 'post', inplace=inplace)
+            elif mode == 'pre-multiply':
+                return obj.transform(matrix, 'pre', inplace=inplace)
+            else:
+                actor = obj.copy() if copy else obj
+                actor.user_matrix = matrix
+                return actor
+
+        # Transform array
+        allowed = ['points', 'vectors', None]
+        _check_mode('arrays', mode, allowed)
+
+        if mode == 'vectors':
+            # Remove translation
+            matrix[:3, 3] = 0
+
         # Validate array - make sure we have floats
         array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
-        # Transform a single point
+        # Transform a 1D array
         out: NumpyArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
@@ -1568,12 +1744,221 @@ class Transform(_vtk.vtkTransform):
                 out = array
             return out
 
-        # Transform many points
+        # Transform a 2D array
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
-        if out is not None:
-            return out
-        else:
-            return array
+        return out if out is not None else array
+
+    def apply_to_points(
+        self,
+        points: VectorLike[float] | MatrixLike[float],
+        /,
+        *,
+        inverse: bool = False,
+        copy: bool = True,
+    ) -> NumpyArray[float]:
+        """Apply the current transformation :attr:`matrix` to a point or points.
+
+        This is equivalent to ``apply(points, 'points')``. See :meth:`apply` for
+        details and examples.
+
+        Parameters
+        ----------
+        points : VectorLike[float] | MatrixLike[float]
+            Single point or ``Nx3`` points array to apply the transformation to.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it. Only applies to
+            NumPy arrays. A copy is always returned for tuple and list
+            inputs or point arrays with integers.
+
+        Returns
+        -------
+        np.ndarray
+            Transformed points.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
+
+        """
+        return self.apply(points, 'points', inverse=inverse, copy=copy)
+
+    def apply_to_vectors(
+        self,
+        vectors: VectorLike[float] | MatrixLike[float],
+        /,
+        *,
+        inverse: bool = False,
+        copy: bool = True,
+    ) -> NumpyArray[float]:
+        """Apply the current transformation :attr:`matrix` to a vector or vectors.
+
+        This is equivalent to ``apply(vectors, 'vectors')``. See :meth:`apply` for
+        details and examples.
+
+        Parameters
+        ----------
+        vectors : VectorLike[float] | MatrixLike[float]
+            Single vector or ``Nx3`` vectors array to apply the transformation to.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it. Only applies to
+            NumPy arrays. A copy is always returned for tuple and list
+            inputs or point arrays with integers.
+
+        Returns
+        -------
+        np.ndarray
+            Transformed vectors.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+        apply_to_actor
+            Apply this transformation to an actor.
+
+        """
+        return self.apply(vectors, 'vectors', inverse=inverse, copy=copy)
+
+    def apply_to_dataset(
+        self,
+        dataset: _DataSetOrMultiBlockType,
+        /,
+        mode: Literal['active_vectors', 'all_vectors'] = 'active_vectors',
+        *,
+        copy: bool = True,
+        inverse: bool = False,
+    ) -> _DataSetOrMultiBlockType:
+        """Apply the current transformation :attr:`matrix` to a dataset.
+
+        This is equivalent to ``apply(dataset, mode)``. See :meth:`apply` for details
+        and examples.
+
+        Parameters
+        ----------
+        dataset : DataSet | MultiBlock
+            Object to apply the transformation to.
+
+        mode : 'active_vectors' | 'all_vectors', default: 'active_vectors'
+            Mode for transforming the dataset's vectors:
+
+            - ``'active_vectors'`` transforms active normals and active vectors arrays
+              only.
+            - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
+              three components. This mode is equivalent to setting
+              ``transform_all_input_vectors=True``
+              with :meth:`pyvista.DataObjectFilters.transform`.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Transformed dataset.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        apply_to_actor
+            Apply this transformation to an actor.
+        pyvista.DataObjectFilters.transform
+            Transform a dataset.
+
+        """
+        return self.apply(dataset, mode, inverse=inverse, copy=copy)
+
+    def apply_to_actor(
+        self,
+        actor: Prop3D,
+        /,
+        mode: Literal['pre-multiply', 'post-multiply', 'replace'] = 'post-multiply',
+        *,
+        copy: bool = True,
+        inverse: bool = False,
+    ) -> Prop3D:
+        """Apply the current transformation :attr:`matrix` to an actor.
+
+        This is equivalent to ``apply(actor, mode)``. See :meth:`apply` for details and
+        examples.
+
+        Parameters
+        ----------
+        actor : Prop3D
+            Actor to apply the transformation to.
+
+        mode : 'pre-multiply', 'post-multiply', 'replace', default: 'post-multiply'
+            Mode for transforming the actor:
+
+            - ``'pre-multiply'`` pre-multiplies this transform with the actor's
+              :attr:`~pyvista.Prop3D.user_matrix`.
+            - ``'post-multiply'``  post-multiplies this transform with the actor's
+              user-matrix.
+            - ``'replace'`` replaces the actor's user-matrix with this transform's
+              :attr:`matrix`.
+
+            By default, ``'post-multiply'`` mode is used.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it.
+
+        Returns
+        -------
+        Prop3D
+            Transformed actor.
+
+        See Also
+        --------
+        apply
+            Apply this transformation to any input.
+        apply_to_points
+            Apply this transformation to points.
+        apply_to_vectors
+            Apply this transformation to vectors.
+        apply_to_dataset
+            Apply this transformation to a dataset.
+        pyvista.Prop3D.transform
+            Transform an actor.
+
+        """
+        return self.apply(actor, mode, inverse=inverse, copy=copy)
 
     def decompose(
         self: Transform,
@@ -1639,9 +2024,17 @@ class Transform(_vtk.vtkTransform):
             shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
             is ``True``).
 
+        See Also
+        --------
+        compose
+            Compose a transformation.
+        as_rotation
+            Get this transform's rotation component.
+
+
         Examples
         --------
-        Create a transform by concatenating scaling, rotation, and translation
+        Create a transform by composing scaling, rotation, and translation
         matrices.
 
         >>> import numpy as np
@@ -1915,3 +2308,149 @@ class Transform(_vtk.vtkTransform):
     @check_finite.setter
     def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
+
+    def as_rotation(
+        self,
+        representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']
+        | None = None,
+        *args,
+        **kwargs,
+    ) -> Rotation | NumpyArray[float]:
+        """Return the rotation component as a SciPy ``Rotation`` or any of its representations.
+
+        The current :attr:`matrix` is first decomposed to extract the rotation component
+        and then returned with the specified representation.
+
+        .. note::
+
+            This method depends on the ``scipy`` package which must be installed to use it.
+
+        Parameters
+        ----------
+        representation : str, optional
+            Representation of the rotation.
+
+            - ``'quat'``: Represent as a quaternion using
+              :meth:`~scipy.spatial.transform.Rotation.as_quat`. Returns a length-4 vector.
+            - ``'matrix'``: Represent as a 3x3 matrix using
+              :meth:`~scipy.spatial.transform.Rotation.as_matrix`.
+            - ``'rotvec'``: Represent as a rotation vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_rotvec`.
+            - ``'mrp'``: Represent as a Modified Rodrigues Parameters (MRPs) vector using
+              :meth:`~scipy.spatial.transform.Rotation.as_mrp`.
+            - ``'euler'``: Represent as Euler angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_euler`.
+            - ``'davenport'``: Represent as Davenport angles using
+              :meth:`~scipy.spatial.transform.Rotation.as_davenport`.
+
+            If no representation is given, then an instance of
+            :class:`scipy.spatial.transform.Rotation` is returned by default.
+
+        *args
+            Arguments passed to the ``Rotation`` method for the specified
+            representation.
+
+        **kwargs
+            Keyword arguments passed to the ``Rotation`` method for the specified
+            representation.
+
+        Returns
+        -------
+        scipy.spatial.transform.Rotation | np.ndarray
+            Rotation object or array depending on the representation.
+
+        See Also
+        --------
+        decompose
+            Alternative method for obtaining the rotation component (and others).
+        rotate, rotate_x, rotate_y, rotate_z, rotate_vector
+            Compose a rotation matrix.
+
+        Examples
+        --------
+        Create a rotation matrix and initialize a :class:`Transform` from it.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> transform = pv.Transform(matrix)
+
+        Represent the rotation as :class:`scipy.spatial.transform.Rotation` instance.
+
+        >>> rot = transform.as_rotation()
+        >>> rot
+        <scipy.spatial.transform._rotation.Rotation ...>
+
+        Represent the rotation as a quaternion.
+
+        >>> rot = transform.as_rotation('quat')
+        >>> rot
+        array([0.        , 0.        , 0.70710678, 0.70710678])
+
+        Represent the rotation as a rotation vector. The vector has a direction
+        ``(0, 0, 1)`` and magnitude of ``pi/2``.
+
+        >>> rot = transform.as_rotation('rotvec')
+        >>> rot
+        array([0.        , 0.        , 1.57079633])
+
+        Represent the rotation as a Modified Rodrigues Parameters vector.
+
+        >>> rot = transform.as_rotation('mrp')
+        >>> rot
+        array([0.        , 0.        , 0.41421356])
+
+        Represent the rotation as x-y-z Euler angles in degrees.
+
+        >>> rot = transform.as_rotation('euler', 'xyz', degrees=True)
+        >>> rot
+        array([ 0.,  0., 90.])
+
+        Represent the rotation as extrinsic x-y-z Davenport angles in degrees.
+
+        >>> rot = transform.as_rotation(
+        ...     'davenport', np.eye(3), 'extrinsic', degrees=True
+        ... )
+        >>> rot
+        array([-1.27222187e-14,  0.00000000e+00,  9.00000000e+01])
+
+        """
+        try:
+            from scipy.spatial.transform import Rotation
+        except ImportError:
+            msg = "The 'scipy' package must be installed to use `as_rotation`"
+            raise ImportError(msg)
+
+        if isinstance(representation, str):
+            representation = representation.lower()  # type: ignore[assignment]
+
+        _validation.check_contains(
+            ['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport', None],
+            must_contain=representation,
+            name='representation',
+        )
+        if representation in ['rotation', 'matrix']:
+            assert_empty_kwargs(**kwargs)
+
+        _, R, _, _, _ = self.decompose()
+
+        if representation == 'matrix':
+            out = R
+        else:
+            rotation = Rotation.from_matrix(R)
+            if representation is None:
+                out = rotation
+            elif representation == 'quat':
+                out = rotation.as_quat(*args, **kwargs)
+            elif representation == 'rotvec':
+                out = rotation.as_rotvec(*args, **kwargs)
+            elif representation == 'mrp':
+                out = rotation.as_mrp(*args, **kwargs)
+            elif representation == 'euler':
+                out = rotation.as_euler(*args, **kwargs)
+            elif representation == 'davenport':
+                out = rotation.as_davenport(*args, **kwargs)
+            else:  # pragma: no cover
+                msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
+                raise RuntimeError(msg)
+        return out

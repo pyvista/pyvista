@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pyvista
-from pyvista.plotting import _vtk
 
 
 def cubemap(path='', prefix='', ext='.jpg'):
@@ -103,7 +102,8 @@ def cubemap_from_filenames(image_paths):
 
     """
     if len(image_paths) != 6:
-        raise ValueError('image_paths must contain 6 paths')
+        msg = 'image_paths must contain 6 paths'
+        raise ValueError(msg)
 
     return _cubemap_from_paths(image_paths)
 
@@ -113,9 +113,10 @@ def _cubemap_from_paths(image_paths):
     for image_path in image_paths:
         if not Path(image_path).is_file():
             file_str = '\n'.join(image_paths)
-            raise FileNotFoundError(
-                f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}',
+            msg = (
+                f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}'
             )
+            raise FileNotFoundError(msg)
 
     texture = pyvista.Texture()  # type: ignore[abstract]
     texture.SetMipmap(True)
@@ -124,11 +125,7 @@ def _cubemap_from_paths(image_paths):
 
     # add each image to the cubemap
     for i, fn in enumerate(image_paths):
-        image = pyvista.read(fn)
-        flip = _vtk.vtkImageFlip()
-        flip.SetInputDataObject(image)
-        flip.SetFilteredAxis(1)  # flip y-axis
-        flip.Update()
-        texture.SetInputDataObject(i, flip.GetOutput())
+        # Read and flip along y-axis
+        texture.SetInputDataObject(i, pyvista.read(fn)._flip_uniform(1))
 
     return texture

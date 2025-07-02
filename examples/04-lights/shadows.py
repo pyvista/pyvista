@@ -1,10 +1,11 @@
 """
-.. _light_shadows_example:
+.. _shadows_example:
 
 Shadows
 ~~~~~~~
 
-Demonstrate the usage of lights and shadows in PyVista.
+Demonstrate the usage of lights and shadows in PyVista with :class:`~pyvista.Light`
+objects and the :meth:`~pyvista.Plotter.enable_shadows` plotting method.
 """
 
 from __future__ import annotations
@@ -53,7 +54,7 @@ center = np.array(mesh.center)
 center -= [0, 0, mesh.center[2] - bnds.z_min + height / 2]
 width = rnge[0] * (1 + expand)
 length = rnge[1] * (1 + expand)
-base_mesh = pyvista.Cube(center, width, length, height)
+base_mesh = pyvista.Cube(center=center, x_length=width, y_length=length, z_length=height)
 
 # rotate base and mesh to get a better view
 base_mesh.rotate_z(30, inplace=True)
