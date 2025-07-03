@@ -268,7 +268,7 @@ class ImageDataFilters(DataSetFilters):
         x_ = (lower[0], lower[0] + dims[0]) if x is None else np.asanyarray(x).tolist()
         y_ = (lower[1], lower[1] + dims[1]) if y is None else np.asanyarray(y).tolist()
         z_ = (lower[2], lower[2] + dims[2]) if z is None else np.asanyarray(z).tolist()
-        return self._extract_voi(self._compute_voi_from_index((x_, y_, z_), index_mode=index_mode))  # type: ignore[arg-type]
+        return self._extract_voi(self._compute_voi_from_index((x_, y_, z_), index_mode=index_mode))
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
