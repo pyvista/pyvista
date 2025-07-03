@@ -1678,6 +1678,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the surface of a sphere.
@@ -1747,6 +1755,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the surface of a sphere.
@@ -1814,6 +1830,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
@@ -1935,6 +1959,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the random hills dataset in the X direction.
@@ -2046,6 +2078,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
