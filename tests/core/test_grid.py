@@ -1895,7 +1895,7 @@ def appended_images():
 
 @pytest.mark.parametrize('use_slice_index', [True, False])
 @pytest.mark.parametrize('add_offset', [(1, 2, 3), None])
-def test_imagedata_getitem(appended_images, add_offset, use_slice_index):
+def test_imagedata_getitem_slice_index(appended_images, add_offset, use_slice_index):
     slice0, slice1, appended = appended_images
     x_dim, y_dim, z_dim = appended.dimensions
     if add_offset:
@@ -1908,8 +1908,8 @@ def test_imagedata_getitem(appended_images, add_offset, use_slice_index):
     sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice0
 
-    # Slice with integer
-    z = 1
+    # Slice with negative integer
+    z = -1
     sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice1
 
@@ -1937,15 +1937,26 @@ def test_imagedata_getitem(appended_images, add_offset, use_slice_index):
     )
     assert sliced == appended
 
-    # Slice with negative index
+    # Slice with negative stop index
     lower = 0
     upper = -1
-    sliced = (
+    sliced_stop = (
         appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
         if use_slice_index
         else appended[lower:upper, lower:upper, lower:upper]
     )
-    assert sliced.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
+    assert sliced_stop.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
+
+    # Slice with negative start index
+    lower = -3
+    upper = -1
+    sliced_start = (
+        appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
+        if use_slice_index
+        else appended[lower:upper, lower:upper, lower:upper]
+    )
+    assert sliced_start.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
+    assert sliced_stop == sliced_start
 
     # Slice all indices
     if use_slice_index:
