@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -679,37 +680,41 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def __getitem__(
+    def __getitem__(  # type: ignore[override]
         self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
-    ) -> ImageData:
+    ) -> ImageData | pyvista_ndarray:
         """Support slicing in logical (0-based) coordinates ignoring extent offset."""
         # Return point, cell, or field data
         if isinstance(key, str) or (
-            isinstance(key, tuple) and len(key) > 0 and isinstance(key, str)
+            isinstance(key, tuple) and len(key) > 0 and isinstance(key[0], str)  # type: ignore[redundant-expr]
         ):
             return super().__getitem__(key)
+        return self._extract_voi(self._compute_voi_from_index(key))
 
-        # Normalize as a tuple of slices
-        if not isinstance(key, tuple):
-            key = (key,)
-
-        required = ' Exactly 3 indices must be specified, one for each xyz-axis.'
-        if len(key) > 3:
-            msg = 'Too many indices.' + required
-            raise IndexError(msg)
-        if len(key) < 3:
-            msg = 'Too few indices.' + required
+    def _compute_voi_from_index(
+        self,
+        indices: tuple[
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+        ],
+    ) -> tuple[int, int, int, int, int, int]:
+        """Compute VOI extents from indexing values."""
+        if not (isinstance(indices, tuple) and len(indices) == 3):  # type: ignore[redundant-expr]
+            msg = 'Exactly 3 slices must be specified, one for each xyz-axis.'  # type: ignore[unreachable]
             raise IndexError(msg)
 
         dims = self.dimensions
         extent = self.extent
-
-        # Copy ext to VOI, to be modified
         voi = list(extent)
 
-        # Map 0-based indices from dimensions to extent coordinates
-        for axis, slicer in enumerate(key):
+        for axis, slicer in enumerate(indices):
+            _validation.check_instance(slicer, (int, tuple, list, slice), name='index')
             extent_min = extent[axis * 2]
+
+            if isinstance(slicer, (list, tuple)):
+                rng = _validation.validate_array(slicer, must_have_dtype=int, must_have_length=2)
+                slicer = slice(*rng)  # noqa: PLW2901
 
             if isinstance(slicer, slice):
                 start = slicer.start if slicer.start is not None else 0
@@ -735,15 +740,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                     slicer += dims[axis]  # noqa: PLW2901
                 voi[axis * 2] = extent_min + slicer
                 voi[axis * 2 + 1] = extent_min + slicer
-            else:
-                msg = f'Unsupported index type: {type(slicer)}'
-                raise TypeError(msg)
-
-        alg = _vtk.vtkExtractVOI()
-        alg.SetVOI(voi)
-        alg.SetInputDataObject(self)
-        alg.Update()
-        return pyvista.wrap(alg.GetOutput())
+        return cast('tuple[int, int, int, int, int, int]', tuple(voi))
 
     @property  # type: ignore[explicit-override, override]
     def points(self: Self) -> NumpyArray[float]:

@@ -218,6 +218,36 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
+    def slice_index(  # type: ignore[misc]
+        self: ImageData,
+        x: int | tuple[int, int] | list[int] | None = None,
+        y: int | tuple[int, int] | list[int] | None = None,
+        z: int | tuple[int, int] | list[int] | None = None,
+    ):
+        """Slice.
+
+        Returns
+        -------
+        ImageData
+            Sliced mesh.
+
+        """
+        dims = self.dimensions
+        if x is None and y is None and z is None:
+            msg = 'No indices were provided for slicing.'
+            raise TypeError(msg)
+        x_ = (0, dims[0]) if x is None else x
+        y_ = (0, dims[1]) if y is None else y
+        z_ = (0, dims[2]) if z is None else z
+        return self._extract_voi(self._compute_voi_from_index((x_, y_, z_)))  # type: ignore[arg-type]
+
+    def _extract_voi(self, voi: tuple[int, int, int, int, int, int]) -> ImageData:
+        alg = _vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return pyvista.wrap(alg.GetOutput())  # type:ignore[return-value]
+
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
         self,

@@ -1893,39 +1893,82 @@ def appended_images():
     return slice0, slice1, pv.wrap(append.GetOutput())
 
 
+@pytest.mark.parametrize('use_slice_index', [True, False])
 @pytest.mark.parametrize('add_offset', [(1, 2, 3), None])
-def test_imagedata_getitem(appended_images, add_offset):
+def test_imagedata_getitem(appended_images, add_offset, use_slice_index):
     slice0, slice1, appended = appended_images
+    x_dim, y_dim, z_dim = appended.dimensions
     if add_offset:
         slice0.offset = slice0.offset + np.array(add_offset)
         slice1.offset = slice1.offset + np.array(add_offset)
         appended.offset = appended.offset + np.array(add_offset)
 
-    sliced = appended[:, :, :]
-    assert sliced == appended
-
-    sliced = appended[:, :, 0]
+    # Slice with integer
+    z = 0
+    sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice0
 
-    sliced = appended[:, :, 1]
+    # Slice with integer
+    z = 1
+    sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice1
 
-    sliced = appended[0:3, 0:3, 0:3]
+    # Slice with index range equal to dimensions
+    lower = 0
+    upper_x = x_dim
+    upper_y = y_dim
+    upper_z = z_dim
+    sliced = (
+        appended.slice_index(x=[lower, upper_x], y=[lower, upper_y], z=[lower, upper_z])
+        if use_slice_index
+        else appended[lower:upper_x, lower:upper_y, lower:upper_y]
+    )
     assert sliced == appended
 
-    sliced = appended[0:4, 0:5, 0:6]
+    # Slice with upper range larger than dimensions
+    lower = 0
+    upper_x = x_dim + 1
+    upper_y = y_dim + 2
+    upper_z = z_dim + 3
+    sliced = (
+        appended.slice_index(x=[lower, upper_x], y=[lower, upper_y], z=[lower, upper_z])
+        if use_slice_index
+        else appended[lower:upper_x, lower:upper_y, lower:upper_y]
+    )
     assert sliced == appended
 
-    sliced = appended[0:-1, 0:-1, 0:-1]
-    assert sliced.dimensions == (2, 2, 1)
+    # Slice with negative index
+    lower = 0
+    upper = -1
+    sliced = (
+        appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
+        if use_slice_index
+        else appended[lower:upper, lower:upper, lower:upper]
+    )
+    assert sliced.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
+
+    # Slice all indices
+    if use_slice_index:
+        match = 'No indices were provided for slicing.'
+        with pytest.raises(TypeError, match=match):
+            appended.slice_index()
+    else:
+        sliced = appended[:, :, :]
+        assert sliced == appended
 
 
 def test_imagedata_getitem_raises(uniform):
-    match = 'Too few indices. Exactly 3 indices must be specified, one for each xyz-axis.'
+    match = 'Exactly 3 slices must be specified, one for each xyz-axis.'
     with pytest.raises(IndexError, match=re.escape(match)):
         uniform[0]
 
-    match = "Unsupported index type: <class 'dict'>"
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform[:]
+
+    match = (
+        "index must be an instance of any type (<class 'int'>, <class 'tuple'>, "
+        "<class 'list'>, <class 'slice'>). Got <class 'dict'> instead."
+    )
     with pytest.raises(TypeError, match=re.escape(match)):
         uniform[{}, str, set()]
 
