@@ -223,8 +223,19 @@ class ImageDataFilters(DataSetFilters):
         x: int | tuple[int, int] | list[int] | None = None,
         y: int | tuple[int, int] | list[int] | None = None,
         z: int | tuple[int, int] | list[int] | None = None,
-    ):
-        """Slice.
+    ) -> ImageData:
+        """Extract a subset using IJK indices along each axis.
+
+        This filter enables slicing :class:`~pyvista.ImageData` with Python-style indexing using
+        IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
+        a volume of interest.
+
+        Parameters
+        ----------
+        x, y, z : int | sequence[int], optional
+            Indices to slice along the X, Y, and Z axes, respectively. Specify an integer for
+            a single index, or two integers ``(start, stop)`` where the ``start`` index is
+            included in the output, and the ``stop`` index is `not` included.
 
         Returns
         -------
@@ -232,21 +243,14 @@ class ImageDataFilters(DataSetFilters):
             Sliced mesh.
 
         """
-        dims = self.dimensions
         if x is None and y is None and z is None:
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
+        dims = self.dimensions
         x_ = (0, dims[0]) if x is None else x
         y_ = (0, dims[1]) if y is None else y
         z_ = (0, dims[2]) if z is None else z
         return self._extract_voi(self._compute_voi_from_index((x_, y_, z_)))  # type: ignore[arg-type]
-
-    def _extract_voi(self, voi: tuple[int, int, int, int, int, int]) -> ImageData:
-        alg = _vtk.vtkExtractVOI()
-        alg.SetVOI(voi)
-        alg.SetInputDataObject(self)
-        alg.Update()
-        return pyvista.wrap(alg.GetOutput())  # type:ignore[return-value]
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
@@ -295,13 +299,7 @@ class ImageDataFilters(DataSetFilters):
             ImageData subset.
 
         """
-        alg = _vtk.vtkExtractVOI()
-        alg.SetVOI(voi)
-        alg.SetInputDataObject(self)
-        alg.SetSampleRate(rate)
-        alg.SetIncludeBoundary(boundary)
-        _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
-        result = _get_output(alg)
+        result = self._extract_voi(voi, rate=rate, boundary=boundary, progress_bar=progress_bar)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
         fixed = pyvista.ImageData()
@@ -313,6 +311,15 @@ class ImageDataFilters(DataSetFilters):
         fixed.field_data.update(result.field_data)
         fixed.copy_meta_from(result, deep=True)
         return fixed
+
+    def _extract_voi(self, voi, *, rate=(1, 1, 1), boundary=False, progress_bar=False):
+        alg = _vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(self)
+        alg.SetSampleRate(rate)
+        alg.SetIncludeBoundary(boundary)
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
+        return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
