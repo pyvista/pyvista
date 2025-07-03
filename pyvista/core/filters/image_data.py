@@ -220,9 +220,11 @@ class ImageDataFilters(DataSetFilters):
 
     def slice_index(  # type: ignore[misc]
         self: ImageData,
-        x: int | tuple[int, int] | list[int] | None = None,
-        y: int | tuple[int, int] | list[int] | None = None,
-        z: int | tuple[int, int] | list[int] | None = None,
+        x: int | VectorLike[int] | None = None,
+        y: int | VectorLike[int] | None = None,
+        z: int | VectorLike[int] | None = None,
+        *,
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
     ) -> ImageData:
         """Extract a subset using IJK indices along each axis.
 
@@ -230,12 +232,27 @@ class ImageDataFilters(DataSetFilters):
         IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
         a volume of interest.
 
+        .. versionadded::0.46
+
         Parameters
         ----------
         x, y, z : int | sequence[int], optional
             Indices to slice along the X, Y, and Z axes, respectively. Specify an integer for
-            a single index, or two integers ``(start, stop)`` where the ``start`` index is
-            included in the output, and the ``stop`` index is `not` included.
+            a single index, or two integers ``(start, stop)`` for a range of indices, where the
+            ``start`` index is included in the output and the ``stop`` index is `not` included.
+
+        index_mode : 'extent' | 'dimensions', default: 'dimensions'
+            Select the range of values that are available for indexing.
+
+            - Use ``'dimensions'`` to index values in the range ``[0, dimensions-1]``.
+            - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
+              i.e. ``[offset, offset + dimensions-1]``.
+
+            The main difference between these methods is the inclusion or exclusion of the
+            :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
+            underlying NumPy data arrays themselves would be indexed, whereas ``'extent'``
+            respects VTK's definition of ``extent`` and considers the object's geometry.
+
 
         Returns
         -------
@@ -247,10 +264,11 @@ class ImageDataFilters(DataSetFilters):
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
         dims = self.dimensions
-        x_ = (0, dims[0]) if x is None else x
-        y_ = (0, dims[1]) if y is None else y
-        z_ = (0, dims[2]) if z is None else z
-        return self._extract_voi(self._compute_voi_from_index((x_, y_, z_)))  # type: ignore[arg-type]
+        lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
+        x_ = (lower[0], lower[0] + dims[0]) if x is None else np.asanyarray(x).tolist()
+        y_ = (lower[1], lower[1] + dims[1]) if y is None else np.asanyarray(y).tolist()
+        z_ = (lower[2], lower[2] + dims[2]) if z is None else np.asanyarray(z).tolist()
+        return self._extract_voi(self._compute_voi_from_index((x_, y_, z_), index_mode=index_mode))  # type: ignore[arg-type]
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917

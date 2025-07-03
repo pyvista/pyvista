@@ -683,7 +683,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def __getitem__(  # type: ignore[override]
         self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
     ) -> ImageData | pyvista_ndarray:
-        """Support slicing in logical (0-based) coordinates ignoring extent offset."""
+        """Search for a data array or slice with IJK indexing."""
         # Return point, cell, or field data
         if isinstance(key, str) or (
             isinstance(key, tuple) and len(key) > 0 and isinstance(key[0], str)  # type: ignore[redundant-expr]
@@ -698,8 +698,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             int | slice | tuple[int, int],
             int | slice | tuple[int, int],
         ],
+        *,
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
     ) -> tuple[int, int, int, int, int, int]:
         """Compute VOI extents from indexing values."""
+        _validation.check_contains(
+            ['extent', 'dimensions'], must_contain=index_mode, name='index_mode'
+        )
         if not (isinstance(indices, tuple) and len(indices) == 3):  # type: ignore[redundant-expr]
             msg = 'Exactly 3 slices must be specified, one for each xyz-axis.'  # type: ignore[unreachable]
             raise IndexError(msg)
@@ -710,7 +715,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         for axis, slicer in enumerate(indices):
             _validation.check_instance(slicer, (int, tuple, list, slice), name='index')
-            extent_min = extent[axis * 2]
+
+            offset = extent[axis * 2]
+            index_offset = 0 if index_mode == 'extent' else offset
 
             if isinstance(slicer, (list, tuple)):
                 rng = _validation.validate_array(slicer, must_have_dtype=int, must_have_length=2)
@@ -730,16 +737,22 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 if stop < 0:
                     stop += dims[axis]
 
-                voi[axis * 2] = extent_min + start
-                voi[axis * 2 + 1] = extent_min + (stop - 1)
-            elif isinstance(slicer, int):
-                if slicer < -dims[axis] or slicer >= dims[axis]:
-                    msg = f'index {slicer} is out of bounds for axis {axis} with size {dims[axis]}'
+                voi[axis * 2] = index_offset + start
+                voi[axis * 2 + 1] = index_offset + (stop - 1)
+            else:  # isinstance(slicer, int)
+                min_allowed = offset - dims[axis] - index_offset
+                max_allowed = min_allowed + (dims[axis]) * 2 - 1
+                if slicer < min_allowed or slicer > max_allowed:
+                    msg = (
+                        f'index {slicer} is out of bounds for axis {axis} with size {dims[axis]}.'
+                        f'\nValid range of valid index values (inclusive) is '
+                        f'[{min_allowed}, {max_allowed}].'
+                    )
                     raise IndexError(msg)
                 if slicer < 0:
                     slicer += dims[axis]  # noqa: PLW2901
-                voi[axis * 2] = extent_min + slicer
-                voi[axis * 2 + 1] = extent_min + slicer
+                voi[axis * 2] = index_offset + slicer
+                voi[axis * 2 + 1] = index_offset + slicer
         return cast('tuple[int, int, int, int, int, int]', tuple(voi))
 
     @property  # type: ignore[explicit-override, override]
