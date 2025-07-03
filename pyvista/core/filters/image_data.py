@@ -232,6 +232,9 @@ class ImageDataFilters(DataSetFilters):
         IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
         a volume of interest.
 
+        .. note::
+            Index slicing is also possible using the get index operator ``[]``.
+
         .. versionadded::0.46
 
         Parameters
@@ -241,6 +244,10 @@ class ImageDataFilters(DataSetFilters):
             a single index, or two integers ``(start, stop)`` for a range of indices, where the
             ``start`` index is included in the output and the ``stop`` index is `not` included.
 
+            .. note::
+                The use of half-open intervals (i.e. the ``stop`` index is excluded) is consistent
+                with how slicing works in Python and NumPy.
+
         index_mode : 'extent' | 'dimensions', default: 'dimensions'
             Select the range of values that are available for indexing.
 
@@ -248,16 +255,47 @@ class ImageDataFilters(DataSetFilters):
             - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
               i.e. ``[offset, offset + dimensions-1]``.
 
-            The main difference between these methods is the inclusion or exclusion of the
+            The main difference between these modes is the inclusion or exclusion of the
             :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
-            underlying NumPy data arrays themselves would be indexed, whereas ``'extent'``
-            respects VTK's definition of ``extent`` and considers the object's geometry.
-
+            object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
+            definition of ``extent`` and considers the object's geometry.
 
         Returns
         -------
         ImageData
             Sliced mesh.
+
+        Examples
+        --------
+        Create a :class:`~pyvista.ImageData` mesh and give it some point data.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ImageData(dimensions=(10, 10, 10))
+        >>> mesh['data'] = range(mesh.n_points)
+
+        Extract a single slice along the z-axis.
+
+        >>> sliced = mesh.slice_index(z=5)
+        >>> sliced.dimensions
+        (10, 10, 1)
+
+        Or, equivalently, use the ``[]`` operator.
+
+        >>> sliced2 = mesh[:, :, 5]
+        >>> sliced == sliced2
+        True
+
+        Extract a volume of interest.
+
+        >>> sliced = mesh.slice_index(x=[1, 3], y=[2, 5], z=[5, 10])
+        >>> sliced.dimensions
+        (2, 3, 5)
+
+        Or, equivalently:
+
+        >>> sliced2 = mesh[1:3, 2:5, 5:11]
+        >>> sliced == sliced2
+        True
 
         """
         if x is None and y is None and z is None:
