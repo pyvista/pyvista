@@ -737,8 +737,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 if stop < 0:
                     stop += dims[axis]
 
-                voi[axis * 2] = index_offset + start
-                voi[axis * 2 + 1] = index_offset + (stop - 1)
             else:  # isinstance(slicer, int)
                 min_allowed = offset - dims[axis] - index_offset
                 max_allowed = min_allowed + (dims[axis]) * 2 - 1
@@ -751,8 +749,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                     raise IndexError(msg)
                 if slicer < 0:
                     slicer += dims[axis]  # noqa: PLW2901
-                voi[axis * 2] = index_offset + slicer
-                voi[axis * 2 + 1] = index_offset + slicer
+                start = slicer
+                stop = start + 1
+
+            voi[axis * 2] = index_offset + start
+            voi[axis * 2 + 1] = index_offset + stop - 1
+
         return cast('tuple[int, int, int, int, int, int]', tuple(voi))
 
     @property  # type: ignore[explicit-override, override]
