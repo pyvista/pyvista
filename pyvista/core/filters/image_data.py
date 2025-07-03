@@ -297,15 +297,37 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced == sliced2
         True
 
+        Use ``None`` to implicitly define the start and/or stop indices.
+
+        >>> sliced = mesh.slice_index(x=[None, 3], y=[2, None], z=None)
+        >>> sliced.dimensions
+        (3, 8, 10)
+
+        Or, equivalently:
+
+        >>> sliced2 = mesh[:3, 2:, :]
+        >>> sliced == sliced2
+        True
+
         """
+
+        def _set_default_start_and_stop(rng, default_start, default_stop):
+            out = (lower[0], lower[0] + dims[0]) if rng is None else np.asanyarray(rng).tolist()
+            if isinstance(out, list) and len(out) >= 2:
+                if out[0] is None:
+                    out[0] = default_start
+                if out[1] is None:
+                    out[1] = default_stop
+            return out
+
         if x is None and y is None and z is None:
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
         dims = self.dimensions
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
-        x_ = (lower[0], lower[0] + dims[0]) if x is None else np.asanyarray(x).tolist()
-        y_ = (lower[1], lower[1] + dims[1]) if y is None else np.asanyarray(y).tolist()
-        z_ = (lower[2], lower[2] + dims[2]) if z is None else np.asanyarray(z).tolist()
+        x_ = _set_default_start_and_stop(x, lower[0], lower[0] + dims[0])
+        y_ = _set_default_start_and_stop(y, lower[1], lower[1] + dims[1])
+        z_ = _set_default_start_and_stop(z, lower[2], lower[2] + dims[2])
         return self._extract_voi(self._compute_voi_from_index((x_, y_, z_), index_mode=index_mode))
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
