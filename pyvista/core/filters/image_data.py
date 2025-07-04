@@ -232,10 +232,11 @@ class ImageDataFilters(DataSetFilters):
 
         This filter enables slicing :class:`~pyvista.ImageData` with Python-style indexing using
         IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
-        a volume of interest.
+        a volume of interest. Unlike other slicing filters, this filter returns
+        :class:`~pyvista.ImageData`.
 
         .. note::
-            Slicing by index is also possible using the "get index" operator ``[]``.
+            Slicing by index is also possible using the "get index" operator ``[]``. See examples.
 
         .. versionadded::0.46
 
@@ -273,7 +274,7 @@ class ImageDataFilters(DataSetFilters):
         strict_index : bool, default: False
             Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
             ``IndexError`` is only raised if a single integer index is out of range, but not when
-            a range of indices are specified.
+            a range of indices are specified; set this to ``True`` to raise in error in both cases.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
