@@ -64,6 +64,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:
         """Allocate the array."""
+        type(array)()
         if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
