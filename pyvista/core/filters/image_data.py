@@ -263,9 +263,13 @@ class ImageDataFilters(DataSetFilters):
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
 
-            This effectively re-bases the output in both world (XYZ) and voxel (IJK) coordinates.
-            Set to ``False`` to leave the origin unmodified and keep the offset specified by the
-            ``voi`` parameter.
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
 
             .. versionadded:: 0.46
 
