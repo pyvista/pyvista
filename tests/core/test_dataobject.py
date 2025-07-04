@@ -47,8 +47,8 @@ def test_polydata_strip_neq():
     assert mesh1 != mesh3
 
 
-def test_uniform_eq():
-    orig = examples.load_uniform()
+def test_uniform_eq(uniform):
+    orig = uniform
     copy = orig.copy(deep=True)
     copy.origin = [1, 1, 1]
     assert orig != copy
