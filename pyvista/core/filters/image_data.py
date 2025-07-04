@@ -220,9 +220,9 @@ class ImageDataFilters(DataSetFilters):
 
     def slice_index(  # type: ignore[misc]
         self: ImageData,
-        x: int | VectorLike[int] | None = None,
-        y: int | VectorLike[int] | None = None,
-        z: int | VectorLike[int] | None = None,
+        x: int | VectorLike[int] | slice | None = None,
+        y: int | VectorLike[int] | slice | None = None,
+        z: int | VectorLike[int] | slice | None = None,
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
     ) -> ImageData:
@@ -330,6 +330,8 @@ class ImageDataFilters(DataSetFilters):
         """
 
         def _set_default_start_and_stop(rng, default_start, default_stop):
+            if isinstance(rng, slice):
+                return rng
             out = (default_start, default_stop) if rng is None else np.asanyarray(rng).tolist()
             if isinstance(out, list) and len(out) >= 2:
                 if out[0] is None:

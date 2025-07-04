@@ -1903,6 +1903,11 @@ def appended_images_with_offset(appended_images):
     return slice0, slice1, appended
 
 
+def test_imagedata_slice_index_with_slice(uniform):
+    sliced = uniform.slice_index(slice(10), slice(0, 10), slice(None))
+    assert sliced == uniform
+
+
 @pytest.mark.parametrize('use_slice_index', [True, False])
 @pytest.mark.parametrize('add_offset', [True, False])
 def test_imagedata_slice_index_integer(
