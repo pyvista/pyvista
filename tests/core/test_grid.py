@@ -1905,15 +1905,11 @@ def appended_images_with_offset(appended_images):
 
 @pytest.mark.parametrize('use_slice_index', [True, False])
 @pytest.mark.parametrize('add_offset', [True, False])
-def test_imagedata_getitem_slice_index(
+def test_imagedata_slice_index_integer(
     appended_images, appended_images_with_offset, add_offset, use_slice_index
 ):
-    if add_offset:
-        slice0, slice1, appended = appended_images_with_offset
-    else:
-        slice0, slice1, appended = appended_images
-
-    x_dim, y_dim, z_dim = appended.dimensions
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
 
     # Slice with integer
     z = 0
@@ -1925,29 +1921,67 @@ def test_imagedata_getitem_slice_index(
     sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice1
 
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_range(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+    x_dim, y_dim, z_dim = appended.dimensions
+
     # Slice with index range equal to dimensions
     lower = 0
-    upper_x = x_dim
-    upper_y = y_dim
-    upper_z = z_dim
     sliced = (
-        appended.slice_index(x=[lower, upper_x], y=[lower, upper_y], z=[lower, upper_z])
+        appended.slice_index(x=[lower, x_dim], y=[lower, y_dim], z=[lower, z_dim])
         if use_slice_index
-        else appended[lower:upper_x, lower:upper_y, lower:upper_y]
+        else appended[lower:x_dim, lower:y_dim, lower:z_dim]
     )
     assert sliced == appended
 
-    # Slice with upper range larger than dimensions
+    # Slice with unspecified start and stop index
     lower = 0
-    upper_x = x_dim + 1
-    upper_y = y_dim + 2
-    upper_z = z_dim + 3
+    upper_x = x_dim
+    upper_z = z_dim
     sliced = (
-        appended.slice_index(x=[lower, upper_x], y=[lower, upper_y], z=[lower, upper_z])
+        appended.slice_index(x=[None, upper_x], y=[lower, None], z=[lower, upper_z])
         if use_slice_index
-        else appended[lower:upper_x, lower:upper_y, lower:upper_y]
+        else appended[:upper_x, lower:, lower:upper_z]
     )
     assert sliced == appended
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_range_upper_bounds(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+    x_dim, y_dim, z_dim = appended.dimensions
+
+    # Slice with upper range larger than dimensions
+    lower = 0
+    extra = 2
+    sliced = (
+        appended.slice_index(
+            x=[lower, x_dim + extra], y=[lower, y_dim + extra], z=[lower, z_dim + extra]
+        )
+        if use_slice_index
+        else appended[lower : x_dim + extra, lower : y_dim + extra, lower : z_dim + extra]
+    )
+    assert sliced == appended
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_negative_range(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+    x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with negative stop index
     lower = 0
@@ -1970,18 +2004,15 @@ def test_imagedata_getitem_slice_index(
     assert sliced_start.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
     assert sliced_stop == sliced_start
 
-    # Slice with unspecified start and stop index
-    lower = 0
-    upper_x = x_dim
-    upper_z = z_dim
-    sliced = (
-        appended.slice_index(x=[None, upper_x], y=[lower, None], z=[lower, upper_z])
-        if use_slice_index
-        else appended[:upper_x, lower:, lower:upper_z]
-    )
-    assert sliced == appended
 
-    # Slice all indices
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_all_none(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    _, _, appended = meshes
+
     if use_slice_index:
         match = 'No indices were provided for slicing.'
         with pytest.raises(TypeError, match=match):

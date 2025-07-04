@@ -752,8 +752,17 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 start = slicer
                 stop = start + 1
 
-            voi[axis * 2] = index_offset + start
-            voi[axis * 2 + 1] = index_offset + stop - 1
+            min_ind = axis * 2
+            max_ind = axis * 2 + 1
+
+            min_val = index_offset + start
+            max_val = index_offset + stop - 1
+
+            # Clip values so we don't exceed the extents
+            ref_min = extent[min_ind]
+            ref_max = extent[max_ind]
+            voi[min_ind] = max(min_val, ref_min)
+            voi[max_ind] = min(max_val, ref_max)
 
         return cast('tuple[int, int, int, int, int, int]', tuple(voi))
 
