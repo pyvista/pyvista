@@ -6,7 +6,6 @@ import time
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -417,14 +416,7 @@ def test_contour_labels_raises_vtkversionerror():
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_empty_input(frog_tissues):
-    def extract_voi(self, voi):
-        alg = vtk.vtkExtractVOI()
-        alg.SetVOI(voi)
-        alg.SetInputDataObject(self)
-        alg.Update()
-        return pv.wrap(alg.GetOutput())
-
-    voi = extract_voi(frog_tissues, (10, 100, 20, 200, 20, 80))
+    voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     assert voi.active_scalars.mean() == 0
     surface = voi.contour_labels()
     assert surface.is_empty
