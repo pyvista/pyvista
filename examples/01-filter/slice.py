@@ -194,12 +194,15 @@ colored = sliced.color_labels()
 colored.plot(cpos='xy', zoom='tight', lighting=False)
 
 # %%
-# Extract a 3D volume of interest instead and visualize it as a surface mesh.
+# Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we define
+# indices to extract the frog's head.
 
-sliced = mask.slice_index(x=[10, 100], y=[20, 200], z=[20, 80])
+sliced = mask.slice_index(x=[300, 500], y=[110, 350], z=[0, 100])
 surface = sliced.contour_labels()
 colored = surface.color_labels()
-colored.plot()
+
+cpos = [(520.0, 461.0, -402.0), (372.0, 243.0, 52.0), (-0.73, -0.50, -0.47)]
+colored.plot(cpos=cpos)
 
 # %%
 # .. tags:: filter

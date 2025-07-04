@@ -1743,6 +1743,9 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
+        if alg_input.active_scalars.mean() == background_value:
+            # Empty input, no contour will be generated
+            return pyvista.PolyData()
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
