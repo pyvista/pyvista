@@ -1958,15 +1958,14 @@ def test_imagedata_getitem_slice_index(appended_images, add_offset, use_slice_in
     assert sliced_start.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
     assert sliced_stop == sliced_start
 
-    # Slice with unspecified start index
-    lower = None
+    # Slice with unspecified start and stop index
+    lower = 0
     upper_x = x_dim
-    upper_y = y_dim
     upper_z = z_dim
     sliced = (
-        appended.slice_index(x=[lower, upper_x], y=[lower, upper_y], z=[lower, upper_z])
+        appended.slice_index(x=[None, upper_x], y=[lower, None], z=[lower, upper_z])
         if use_slice_index
-        else appended[:upper_x, :upper_y, :upper_y]
+        else appended[:upper_x, lower:, lower:upper_z]
     )
     assert sliced == appended
 

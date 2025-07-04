@@ -265,6 +265,14 @@ class ImageDataFilters(DataSetFilters):
         ImageData
             Sliced mesh.
 
+        See Also
+        --------
+        :meth:`~pyvista.DataObjectFilters.slice`
+        :meth:`~pyvista.DataObjectFilters.slice_implicit`
+        :meth:`~pyvista.DataObjectFilters.slice_orthogonal`
+        :meth:`~pyvista.DataObjectFilters.slice_along_axis`
+        :meth:`~pyvista.DataObjectFilters.slice_along_line`
+
         Examples
         --------
         Create a :class:`~pyvista.ImageData` mesh and give it some point data.
@@ -309,10 +317,12 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced == sliced2
         True
 
+        See :ref:`slice_example` for more examples using this filter.
+
         """
 
         def _set_default_start_and_stop(rng, default_start, default_stop):
-            out = (lower[0], lower[0] + dims[0]) if rng is None else np.asanyarray(rng).tolist()
+            out = (default_start, default_stop) if rng is None else np.asanyarray(rng).tolist()
             if isinstance(out, list) and len(out) >= 2:
                 if out[0] is None:
                     out[0] = default_start
