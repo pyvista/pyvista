@@ -57,7 +57,7 @@ def voxelize(  # noqa: PLR0917
 ):
     """Voxelize mesh to UnstructuredGrid.
 
-    .. deprecated:: 0.45
+    .. deprecated:: 0.46
 
         This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize` instead.
 
@@ -156,7 +156,7 @@ def voxelize(  # noqa: PLR0917
     >>> pl.show()  # doctest:+SKIP
 
     """
-    # Deprecated on v0.45.0, estimated removal on v0.48.0
+    # Deprecated on v0.46.0, estimated removal on v0.49.0
     warnings.warn(
         '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
         PyVistaDeprecationWarning,
@@ -271,7 +271,7 @@ def voxelize_volume(  # noqa: PLR0917
     within the volume that intersect or are contained within the input mesh.
     ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
 
-    .. deprecated:: 0.45
+    .. deprecated:: 0.46
 
         This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_rectilinear`
         instead.
@@ -390,7 +390,7 @@ def voxelize_volume(  # noqa: PLR0917
     >>> pl.show()  # doctest:+SKIP
 
     """
-    # Deprecated on v0.45.0, estimated removal on v0.48.0
+    # Deprecated on v0.46.0, estimated removal on v0.49.0
     warnings.warn(
         '`pyvista.voxelize_volume` is deprecated. Use '
         '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',

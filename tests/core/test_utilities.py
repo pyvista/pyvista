@@ -423,7 +423,7 @@ def test_voxelize(uniform):
         vox = pv.voxelize(uniform, density=0.5)
     assert vox.n_cells
 
-    if pv._version.version_info[:2] > (0, 48):
+    if pv._version.version_info[:2] > (0, 49):
         msg = 'Remove this deprecated function.'
         raise RuntimeError(msg)
 
@@ -462,7 +462,7 @@ def test_voxelize_volume_default_density(uniform):
         actual = pv.voxelize_volume(uniform).n_cells
     assert actual == expected
 
-    if pv._version.version_info[:2] > (0, 48):
+    if pv._version.version_info[:2] > (0, 49):
         msg = 'Remove this deprecated function.'
         raise RuntimeError(msg)
 
