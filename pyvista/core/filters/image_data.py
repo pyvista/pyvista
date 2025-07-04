@@ -225,8 +225,8 @@ class ImageDataFilters(DataSetFilters):
         z: int | VectorLike[int] | slice | None = None,
         *,
         indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
-        progress_bar: bool = False,
         strict_index: bool = False,
+        progress_bar: bool = False,
     ) -> ImageData:
         """Extract a subset using IJK indices.
 
