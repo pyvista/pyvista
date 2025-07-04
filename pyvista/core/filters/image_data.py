@@ -225,6 +225,7 @@ class ImageDataFilters(DataSetFilters):
         z: int | VectorLike[int] | slice | None = None,
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        progress_bar: bool = False,
     ) -> ImageData:
         """Extract a subset using IJK indices.
 
@@ -267,6 +268,10 @@ class ImageDataFilters(DataSetFilters):
             object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
             definition of ``extent`` and considers the object's geometry.
 
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+
         Returns
         -------
         ImageData
@@ -295,7 +300,7 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced.dimensions
         (10, 10, 1)
 
-        Or, equivalently, use the ``[]`` operator.
+        Equivalently:
 
         >>> sliced2 = mesh[:, :, 5]
         >>> sliced == sliced2
@@ -307,7 +312,7 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced.dimensions
         (2, 3, 5)
 
-        Or, equivalently, use the ``[]`` operator.
+        Equivalently:
 
         >>> sliced2 = mesh[1:3, 2:5, 5:11]
         >>> sliced == sliced2
@@ -319,7 +324,7 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced.dimensions
         (3, 8, 10)
 
-        Or, equivalently, use the ``[]`` operator.
+        Equivalently:
 
         >>> sliced2 = mesh[:3, 2:, :]
         >>> sliced == sliced2
@@ -343,12 +348,13 @@ class ImageDataFilters(DataSetFilters):
         if x is None and y is None and z is None:
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
-        dims = self.dimensions
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
-        x_ = _set_default_start_and_stop(x, lower[0], lower[0] + dims[0])
-        y_ = _set_default_start_and_stop(y, lower[1], lower[1] + dims[1])
-        z_ = _set_default_start_and_stop(z, lower[2], lower[2] + dims[2])
-        return self._extract_voi(self._compute_voi_from_index((x_, y_, z_), index_mode=index_mode))
+        indices = tuple(
+            _set_default_start_and_stop(slc, low, dim)
+            for slc, low, dim in zip((x, y, z), lower, self.dimensions)
+        )
+        voi = self._compute_voi_from_index(indices, index_mode=index_mode)
+        return self._extract_voi(voi, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
