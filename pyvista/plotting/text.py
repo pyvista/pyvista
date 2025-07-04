@@ -305,7 +305,7 @@ class Label(_Prop3DMixin, Text):
     size : int, optional
         Font size of the text label.
 
-        .. deprecated:: 0.45
+        .. deprecated:: 0.46
 
             Use `font_size` instead. Maintained for backwards compatibility. Will be
             removed in a future version.
@@ -457,10 +457,10 @@ class Label(_Prop3DMixin, Text):
         The text property's font size used to control the size of the label.
 
         """
-        if version_info >= (0, 48):  # pragma: no cover
+        if version_info >= (0, 49):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
-        if version_info >= (0, 49):  # pragma: no cover
+        if version_info >= (0, 50):  # pragma: no cover
             msg = 'Remove this property.'
             raise RuntimeError(msg)
 

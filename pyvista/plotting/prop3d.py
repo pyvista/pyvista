@@ -479,7 +479,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
     def size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the prop's bounding box.
 
-        .. versionadded:: 0.45
+        .. versionadded:: 0.46
 
         Returns
         -------
