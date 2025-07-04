@@ -229,7 +229,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  #
         # Init array from the array type instead
         array_type = array.GetArrayType()
         vtk_array_class = VTK_ARRAY_TYPES.get(array_type)
-        if vtk_array_class is None:
+        if vtk_array_class is None:  # pragma: no cover
             msg = f'Unsupported array type code: {array_type}'
             raise ValueError(msg)
         new_array = vtk_array_class()
