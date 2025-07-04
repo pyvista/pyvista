@@ -3411,8 +3411,8 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
-def test_align_xyz():
-    mesh = examples.download_oblique_cone()
+def test_align_xyz(oblique_cone):
+    mesh = oblique_cone
     aligned = mesh.align_xyz()
     assert np.allclose(aligned.center, (0, 0, 0))
 
@@ -3420,8 +3420,8 @@ def test_align_xyz():
     assert np.allclose(aligned.center, mesh.center)
 
 
-def test_align_xyz_return_matrix():
-    mesh = examples.download_oblique_cone()
+def test_align_xyz_return_matrix(oblique_cone):
+    mesh = oblique_cone
     initial_bounds = mesh.bounds
 
     aligned, matrix = mesh.align_xyz(return_matrix=True)
