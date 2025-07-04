@@ -255,7 +255,8 @@ class ImageDataFilters(DataSetFilters):
                 - An ``IndexError`` is raised when a single integer is specified as the index and
                   the index is out-of-bounds.
                 - An ``IndexError`` is `not` raised when a range is specified as the index and
-                  the index is out-of-bounds.
+                  the index is out-of-bounds. This default can be overridden by setting
+                  ``strict_index=True``.
 
         index_mode : 'extent' | 'dimensions', default: 'dimensions'
             Select the range of values that are available for indexing.
