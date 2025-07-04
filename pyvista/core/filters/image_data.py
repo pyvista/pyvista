@@ -226,14 +226,14 @@ class ImageDataFilters(DataSetFilters):
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
     ) -> ImageData:
-        """Extract a subset using IJK indices along each axis.
+        """Extract a subset using IJK indices.
 
         This filter enables slicing :class:`~pyvista.ImageData` with Python-style indexing using
         IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
         a volume of interest.
 
         .. note::
-            Index slicing is also possible using the get index operator ``[]``.
+            Slicing by index is also possible using the "get index" operator ``[]``.
 
         .. versionadded::0.46
 
@@ -241,12 +241,19 @@ class ImageDataFilters(DataSetFilters):
         ----------
         x, y, z : int | sequence[int], optional
             Indices to slice along the X, Y, and Z axes, respectively. Specify an integer for
-            a single index, or two integers ``(start, stop)`` for a range of indices, where the
-            ``start`` index is included in the output and the ``stop`` index is `not` included.
+            a single index, or two integers ``(start, stop)`` for a range of indices.
 
             .. note::
-                The use of half-open intervals (i.e. the ``stop`` index is excluded) is consistent
-                with how slicing works in Python and NumPy.
+
+                Like regular Python slicing:
+
+                - Half-open intervals are used, i.e. the ``start`` index is included in the range
+                  but the ``stop`` index is not.
+                - Negative indexing is supported.
+                - An ``IndexError`` is raised when a single integer is specified as the index and
+                  the index is out-of-bounds.
+                - An ``IndexError`` is `not` raised when a range is specified as the index and
+                  the index is out-of-bounds.
 
         index_mode : 'extent' | 'dimensions', default: 'dimensions'
             Select the range of values that are available for indexing.
@@ -267,6 +274,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        extract_subset
         :meth:`~pyvista.DataObjectFilters.slice`
         :meth:`~pyvista.DataObjectFilters.slice_implicit`
         :meth:`~pyvista.DataObjectFilters.slice_orthogonal`
@@ -299,7 +307,7 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced.dimensions
         (2, 3, 5)
 
-        Or, equivalently:
+        Or, equivalently, use the ``[]`` operator.
 
         >>> sliced2 = mesh[1:3, 2:5, 5:11]
         >>> sliced == sliced2
@@ -311,7 +319,7 @@ class ImageDataFilters(DataSetFilters):
         >>> sliced.dimensions
         (3, 8, 10)
 
-        Or, equivalently:
+        Or, equivalently, use the ``[]`` operator.
 
         >>> sliced2 = mesh[:3, 2:, :]
         >>> sliced == sliced2
@@ -385,6 +393,10 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             ImageData subset.
+
+        See Also
+        --------
+        slice_index
 
         """
         result = self._extract_voi(voi, rate=rate, boundary=boundary, progress_bar=progress_bar)

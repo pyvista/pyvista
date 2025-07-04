@@ -181,9 +181,10 @@ p.show()
 # %%
 # Slice ImageData With Indexing
 # +++++++++++++++++++++++++++++
-# Most slicing filters return :class:`~pyvista.UnstructuredGrid`. For :class:`~pyvista.ImageData`
-# inputs, however, it's often desirable to return :class:`~pyvista.ImageData`. The
-# :meth:`~pyvista.ImageDataFilters.slice_index` filter supports this use case.
+# Most slicing filters return :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+# For :class:`~pyvista.ImageData` inputs, however, it's often desirable to return
+# :class:`~pyvista.ImageData`. The :meth:`~pyvista.ImageDataFilters.slice_index` filter supports
+# this use case.
 #
 # Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
 # :func:`~pyvista.examples.examples.load_frog_tissues`.
