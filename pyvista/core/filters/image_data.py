@@ -1618,7 +1618,8 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
-        if alg_input.active_scalars.mean() == background_value:
+        active_scalars = cast('pyvista.pyvista_ndarray', alg_input.active_scalars)
+        if active_scalars.mean() == background_value:
             # Empty input, no contour will be generated
             return pyvista.PolyData()
 
@@ -1638,7 +1639,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                array_=cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
+                array_=active_scalars,
                 select_inputs_=select_inputs,
                 select_outputs_=select_outputs,
             )
