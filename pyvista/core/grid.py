@@ -721,7 +721,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             index_offset = 0 if index_mode == 'extent' else offset
 
             if isinstance(slicer, (list, tuple)):
-                rng = _validation.validate_array(slicer, must_have_dtype=int, must_have_length=2)
+                rng = _validation.validate_array(
+                    slicer, must_have_dtype=int, must_have_length=2, to_list=True
+                )
                 slicer = slice(*rng)  # noqa: PLW2901
 
             if isinstance(slicer, slice):
@@ -761,8 +763,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2]))
             or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2]))
         ):
-            voi = tuple(int(val) for val in voi)  # Fixup the repr
-            msg = f"The requested volume of interest {voi} is outside the input's extent {extent}."
+            msg = (
+                f'The requested volume of interest {tuple(voi)} '
+                f"is outside the input's extent {extent}."
+            )
             raise IndexError(msg)
         return clipped
 
