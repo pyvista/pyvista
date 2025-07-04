@@ -1788,6 +1788,32 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.renderer.bounds
 
+    @property
+    def size(self) -> tuple[float, float, float]:
+        """Return the size of each axis of the plotter's bounding box.
+
+        .. versionadded:: 0.46
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Size of each x-y-z axis.
+
+        Examples
+        --------
+        Get the size of the plotter after adding a cube actor. The cube has edge lengths af
+        ``(1.0, 1.0, 1.0)`` by default.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cube())
+        >>> pl.size
+        (1.0, 1.0, 1.0)
+
+        """
+        bnds = self.bounds
+        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+
     @wraps(Renderer.compute_bounds)
     def compute_bounds(self, *args, **kwargs) -> BoundsTuple:  # numpydoc ignore=PR01,RT01
         """Return the bounds of actors present in the renderer."""
@@ -6423,9 +6449,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if viewup is None:
             viewup = self._theme.camera.viewup
         center = np.array(self.center)
-        bnds = self.bounds
-        radius = (bnds.x_max - bnds.x_min) * factor
-        y = (bnds.y_max - bnds.y_min) * factor
+        x_size, y_size, z_size = self.size
+        radius = x_size * factor
+        y = y_size * factor
         radius = max(y, radius)
         center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
