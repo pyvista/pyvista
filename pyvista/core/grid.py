@@ -700,6 +700,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         ],
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        strict_index: bool = False,
     ) -> tuple[int, int, int, int, int, int]:
         """Compute VOI extents from indexing values."""
         _validation.check_contains(
@@ -752,19 +753,18 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 start = slicer
                 stop = start + 1
 
-            min_ind = axis * 2
-            max_ind = axis * 2 + 1
+            voi[axis * 2] = index_offset + start
+            voi[axis * 2 + 1] = index_offset + stop - 1
 
-            min_val = index_offset + start
-            max_val = index_offset + stop - 1
-
-            # Clip values so we don't exceed the extents
-            ref_min = extent[min_ind]
-            ref_max = extent[max_ind]
-            voi[min_ind] = max(min_val, ref_min)
-            voi[max_ind] = min(max_val, ref_max)
-
-        return cast('tuple[int, int, int, int, int, int]', tuple(voi))
+        clipped = self._clip_voi(voi)
+        if strict_index and (
+            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2]))
+            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2]))
+        ):
+            voi = tuple(int(val) for val in voi)  # Fixup the repr
+            msg = f"The requested volume of interest {voi} is outside the input's extent {extent}."
+            raise IndexError(msg)
+        return clipped
 
     @property  # type: ignore[explicit-override, override]
     def points(self: Self) -> NumpyArray[float]:

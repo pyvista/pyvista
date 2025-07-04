@@ -226,6 +226,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
         progress_bar: bool = False,
+        strict_index: bool = False,
     ) -> ImageData:
         """Extract a subset using IJK indices.
 
@@ -259,18 +260,22 @@ class ImageDataFilters(DataSetFilters):
         index_mode : 'extent' | 'dimensions', default: 'dimensions'
             Select the range of values that are available for indexing.
 
-            - Use ``'dimensions'`` to index values in the range ``[0, dimensions-1]``.
+            - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
             - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
-              i.e. ``[offset, offset + dimensions-1]``.
+              i.e. ``[offset, offset + dimensions - 1]``.
 
             The main difference between these modes is the inclusion or exclusion of the
             :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
             object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
             definition of ``extent`` and considers the object's geometry.
 
+        strict_index : bool, default: False
+            Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
+            ``IndexError`` is only raised if a single integer index is out of range, but not when
+            a range of indices are specified.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
-
 
         Returns
         -------
@@ -348,12 +353,15 @@ class ImageDataFilters(DataSetFilters):
         if x is None and y is None and z is None:
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
+
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
             for slc, low, dim in zip((x, y, z), lower, self.dimensions)
         )
-        voi = self._compute_voi_from_index(indices, index_mode=index_mode)
+        voi = self._compute_voi_from_index(
+            indices, index_mode=index_mode, strict_index=strict_index
+        )
         return self._extract_voi(voi, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
@@ -428,6 +436,19 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         return _get_output(alg)
+
+    def _clip_voi(  # type: ignore[misc]
+        self: ImageData, voi: tuple[int, int, int, int, int, int] | list[int]
+    ) -> tuple[int, int, int, int, int, int]:
+        extent = self.extent
+        out = list(voi)
+        for axis in range(2):
+            min_ind = axis * 2
+            max_ind = axis * 2 + 1
+
+            out[min_ind] = max(voi[min_ind], extent[min_ind])
+            out[max_ind] = min(voi[max_ind], extent[max_ind])
+        return cast('tuple[int, int, int, int, int, int]', tuple(out))
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917

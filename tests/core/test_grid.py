@@ -1908,6 +1908,26 @@ def test_imagedata_slice_index_with_slice(uniform):
     assert sliced == uniform
 
 
+def test_imagedata_slice_index_strict_index(uniform):
+    rng = [None, uniform.dimensions[0] + 1]
+    uniform.slice_index(rng)  # No error
+    match = (
+        'The requested volume of interest (0, 10, 0, 9, 0, 9) '
+        "is outside the input's extent (0, 9, 0, 9, 0, 9)."
+    )
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform.slice_index(rng, strict_index=True)
+
+    rng = [-uniform.dimensions[0] - 1, None]
+    uniform.slice_index(rng)  # No error
+    match = (
+        'The requested volume of interest (-1, 9, 0, 9, 0, 9) '
+        "is outside the input's extent (0, 9, 0, 9, 0, 9)."
+    )
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform.slice_index(rng, strict_index=True)
+
+
 @pytest.mark.parametrize('use_slice_index', [True, False])
 @pytest.mark.parametrize('add_offset', [True, False])
 def test_imagedata_slice_index_integer(
