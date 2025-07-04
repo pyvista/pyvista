@@ -2047,15 +2047,15 @@ def test_imagedata_slice_index_all_none(
         assert sliced == appended
 
 
-def test_slice_index_index_mode():
+def test_slice_index_indexing_range():
     mesh = pv.ImageData(dimensions=(10, 11, 12))
     mesh['data'] = range(mesh.n_points)
     index = np.array((5, 6, 7))
     offset = (1, 2, 3)
     mesh.offset = offset
 
-    sliced_dimensions = mesh.slice_index(*index, index_mode='dimensions')
-    sliced_extent = mesh.slice_index(*(index + offset), index_mode='extent')
+    sliced_dimensions = mesh.slice_index(*index, indexing_range='dimensions')
+    sliced_extent = mesh.slice_index(*(index + offset), indexing_range='extent')
     assert sliced_dimensions == sliced_extent
 
 
@@ -2086,10 +2086,12 @@ def test_imagedata_getitem_raises(uniform):
         uniform[uniform.dimensions[0], 0, 0]
 
     uniform.offset = [1, 1, 1]
-    _ = uniform.slice_index(uniform.dimensions[0], index_mode='extent')
+    _ = uniform.slice_index(uniform.dimensions[0], indexing_range='extent')
     match = (
         'index 11 is out of bounds for axis 0 with size 10.\n'
         'Valid range of valid index values (inclusive) is [-9, 10].'
     )
     with pytest.raises(IndexError, match=re.escape(match)):
-        uniform.slice_index(uniform.dimensions[0] + uniform.offset[0], 0, 0, index_mode='extent')
+        uniform.slice_index(
+            uniform.dimensions[0] + uniform.offset[0], 0, 0, indexing_range='extent'
+        )

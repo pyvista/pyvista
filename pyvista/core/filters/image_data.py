@@ -224,7 +224,7 @@ class ImageDataFilters(DataSetFilters):
         y: int | VectorLike[int] | slice | None = None,
         z: int | VectorLike[int] | slice | None = None,
         *,
-        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
         progress_bar: bool = False,
         strict_index: bool = False,
     ) -> ImageData:
@@ -258,14 +258,14 @@ class ImageDataFilters(DataSetFilters):
                   the index is out-of-bounds. This default can be overridden by setting
                   ``strict_index=True``.
 
-        index_mode : 'extent' | 'dimensions', default: 'dimensions'
-            Select the range of values that are available for indexing.
+        indexing_range : 'extent' | 'dimensions', default: 'dimensions'
+            Select the range of values available for indexing.
 
             - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
             - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
               i.e. ``[offset, offset + dimensions - 1]``.
 
-            The main difference between these modes is the inclusion or exclusion of the
+            The main difference between these ranges is the inclusion or exclusion of the
             :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
             object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
             definition of ``extent`` and considers the object's geometry.
@@ -355,13 +355,13 @@ class ImageDataFilters(DataSetFilters):
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
 
-        lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
+        lower = (0, 0, 0) if indexing_range == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
             for slc, low, dim in zip((x, y, z), lower, self.dimensions)
         )
         voi = self._compute_voi_from_index(
-            indices, index_mode=index_mode, strict_index=strict_index
+            indices, indexing_range=indexing_range, strict_index=strict_index
         )
         return self._extract_voi(voi, progress_bar=progress_bar)
 
