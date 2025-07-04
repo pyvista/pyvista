@@ -1893,15 +1893,27 @@ def appended_images():
     return slice0, slice1, pv.wrap(append.GetOutput())
 
 
-@pytest.mark.parametrize('use_slice_index', [True, False])
-@pytest.mark.parametrize('add_offset', [(1, 2, 3), None])
-def test_imagedata_getitem_slice_index(appended_images, add_offset, use_slice_index):
+@pytest.fixture
+def appended_images_with_offset(appended_images):
+    offset = (1, 2, 3)
     slice0, slice1, appended = appended_images
-    x_dim, y_dim, z_dim = appended.dimensions
+    slice0.offset = slice0.offset + np.array(offset)
+    slice1.offset = slice1.offset + np.array(offset)
+    appended.offset = appended.offset + np.array(offset)
+    return slice0, slice1, appended
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_getitem_slice_index(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
     if add_offset:
-        slice0.offset = slice0.offset + np.array(add_offset)
-        slice1.offset = slice1.offset + np.array(add_offset)
-        appended.offset = appended.offset + np.array(add_offset)
+        slice0, slice1, appended = appended_images_with_offset
+    else:
+        slice0, slice1, appended = appended_images
+
+    x_dim, y_dim, z_dim = appended.dimensions
 
     # Slice with integer
     z = 0
