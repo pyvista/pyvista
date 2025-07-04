@@ -1619,7 +1619,7 @@ class ImageDataFilters(DataSetFilters):
 
         alg_input = _get_alg_input(self, scalars)
         active_scalars = cast('pyvista.pyvista_ndarray', alg_input.active_scalars)
-        if np.all(active_scalars == background_value):
+        if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
             return pyvista.PolyData()
 
