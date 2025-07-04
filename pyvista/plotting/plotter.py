@@ -4912,7 +4912,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(
-        self, *args, **kwargs
+        self, title: str = '', **kwargs
     ) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
         """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
@@ -4928,23 +4928,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
 
-        # title can be the first and only arg
-        title = args[0] if args else kwargs.get('title', '')
-        if title is None:
-            title = ''
-        kwargs['title'] = title
-
         interactive = kwargs.get('interactive')
         if interactive is None:
             interactive = self._theme.interactive
             if self.shape != (1, 1):
                 interactive = False
+            kwargs['interactive'] = interactive
         elif interactive and self.shape != (1, 1):
             msg = 'Interactive scalar bars disabled for multi-renderer plots'
             raise ValueError(msg)
         # by default, use the plotter local theme
         kwargs.setdefault('theme', self._theme)
-        return self.scalar_bars.add_scalar_bar(**kwargs)
+        return self.scalar_bars.add_scalar_bar(title, **kwargs)
 
     @_deprecate_positional_args(allowed=['scalars'])
     def update_scalars(self, scalars, mesh=None, render: bool = True) -> None:  # noqa: ANN001, FBT001, FBT002
