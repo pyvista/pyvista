@@ -6,6 +6,7 @@ from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
 import os
+from pathlib import Path
 import platform
 import re
 from typing import Optional
@@ -20,6 +21,7 @@ from pyvista import examples
 from pyvista.core._vtk_core import VersionInfo
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
+ORIGINAL_ENV = os.environ.copy()
 pyvista.OFF_SCREEN = True
 
 NUMPY_VERSION_INFO = VersionInfo(
@@ -148,8 +150,33 @@ def globe():
 
 
 @pytest.fixture
+def globe_texture():
+    return examples.load_globe_texture()
+
+
+@pytest.fixture
+def mapfile():
+    return examples.mapfile
+
+
+@pytest.fixture
+def vtk_logo():
+    return examples.download_vtk_logo()
+
+
+@pytest.fixture
+def vtk_logo_filename():
+    return examples.download_file('vtk.png')
+
+
+@pytest.fixture
 def hexbeam():
     return examples.load_hexbeam()
+
+
+@pytest.fixture
+def cow():
+    return examples.download_cow()
 
 
 @pytest.fixture
@@ -165,6 +192,11 @@ def struct_grid():
         np.arange(-10, 10, 2, dtype=np.float32),
     )
     return pyvista.StructuredGrid(x, y, z)
+
+
+@pytest.fixture
+def structured():
+    return examples.load_structured()
 
 
 @pytest.fixture
@@ -189,13 +221,38 @@ def tri_cylinder():
 
 
 @pytest.fixture
-def datasets():
+def masonry_texture():
+    return examples.download_masonry_texture()
+
+
+@pytest.fixture
+def puppy_texture():
+    return examples.download_puppy_texture()
+
+
+@pytest.fixture
+def doorman_filename():
+    return Path(examples.download_doorman(load=False))
+
+
+@pytest.fixture
+def oblique_cone():
+    return examples.download_oblique_cone()
+
+
+@pytest.fixture
+def bunny_coarse():
+    return examples.download_bunny_coarse()
+
+
+@pytest.fixture
+def datasets(request):
     return [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        request.getfixturevalue('uniform'),  # ImageData
+        request.getfixturevalue('rectilinear'),  # RectilinearGrid
+        request.getfixturevalue('hexbeam'),  # UnstructuredGrid
+        request.getfixturevalue('airplane'),  # PolyData
+        request.getfixturevalue('structured'),  # StructuredGrid
     ]
 
 

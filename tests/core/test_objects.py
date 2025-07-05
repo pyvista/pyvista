@@ -9,7 +9,6 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -20,7 +19,7 @@ except ImportError:
     pd = None
 
 
-def test_table_init(tmpdir):
+def test_table_init(tmpdir, hexbeam):
     """Save some delimited text to a file and read it"""
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.csv'))
     nr, nc = 50, 3
@@ -59,7 +58,7 @@ def test_table_init(tmpdir):
     for i in range(nc):
         assert np.allclose(arrays[:, i], table[f'foo{i}'])
 
-    dataset = examples.load_hexbeam()
+    dataset = hexbeam
     array_dict = dict(dataset.point_data)
     table = pv.Table(array_dict)
     assert table.n_rows == dataset.n_points
@@ -105,7 +104,7 @@ def test_table_init(tmpdir):
         pv.Table('foo')
 
 
-def test_table_row_arrays():
+def test_table_row_arrays(hexbeam):
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table()
@@ -125,7 +124,7 @@ def test_table_row_arrays():
     del table['multi']
     assert table.n_columns == 0
 
-    dataset = examples.load_hexbeam()
+    dataset = hexbeam
     array_dict = dataset.point_data
     # Test dict methods
     table = pv.Table()

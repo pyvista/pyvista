@@ -1186,8 +1186,8 @@ def test_strips():
     assert n_strips_test.n_strips == len(strips)
 
 
-def test_ribbon_filter():
-    line = examples.load_spline().compute_arc_length(progress_bar=True)
+def test_ribbon_filter(spline):
+    line = spline.compute_arc_length(progress_bar=True)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     assert ribbon.n_points
 
