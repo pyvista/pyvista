@@ -246,13 +246,13 @@ def test_implicit_distance():
     assert 'implicit_distance' in dataset.point_data
 
 
-def test_threshold(datasets):
+def test_threshold(datasets, uniform):
     for dataset in datasets[0:3]:
         thresh = dataset.threshold(progress_bar=True)
         assert thresh is not None
         assert isinstance(thresh, pv.UnstructuredGrid)
     # Test value ranges
-    dataset = examples.load_uniform()  # ImageData
+    dataset = uniform.copy()  # ImageData
     thresh = dataset.threshold(100, invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pv.UnstructuredGrid)
@@ -271,7 +271,7 @@ def test_threshold(datasets):
     with pytest.raises(ValueError):  # noqa: PT011
         thresh = dataset.threshold()
 
-    dataset = examples.load_uniform()
+    dataset = uniform.copy()
     with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold([10, 100, 300], progress_bar=True)
 
@@ -346,7 +346,7 @@ def test_threshold_multicomponent():
         mesh.threshold(value=0.5, scalars='data', component_mode='component', component=0.5)
 
 
-def test_threshold_percent(datasets):
+def test_threshold_percent(datasets, uniform):
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
     inverts = [False, True, False, True, False]
     # Only test data sets that have arrays
@@ -358,7 +358,7 @@ def test_threshold_percent(datasets):
         )
         assert thresh is not None
         assert isinstance(thresh, pv.UnstructuredGrid)
-    dataset = examples.load_uniform()
+    dataset = uniform
     _ = dataset.threshold_percent(0.75, scalars='Spatial Cell Data', progress_bar=True)
     with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold_percent(20000)
@@ -499,15 +499,14 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-@pytest.mark.parametrize('dataset', [examples.download_bunny()])
-def test_gaussian_splatting(dataset):
-    output = dataset.gaussian_splatting(progress_bar=True)
+def test_gaussian_splatting(ant):
+    output = ant.gaussian_splatting(progress_bar=True)
     assert output is not None
     assert isinstance(output, pv.ImageData)
     assert output.dimensions == (50, 50, 50)
 
     dimensions = (10, 11, 12)
-    output = dataset.gaussian_splatting(dimensions=dimensions)
+    output = ant.gaussian_splatting(dimensions=dimensions)
     assert output.dimensions == dimensions
 
 
@@ -527,8 +526,8 @@ def test_extract_geometry_extent(uniform):
     assert geom.bounds == (0.0, 5.0, 0.0, 9.0, 0.0, 9.0)
 
 
-def test_delaunay_2d_unstructured():
-    mesh = examples.load_hexbeam().delaunay_2d(progress_bar=True)  # UnstructuredGrid
+def test_delaunay_2d_unstructured(hexbeam):
+    mesh = hexbeam.delaunay_2d(progress_bar=True)  # UnstructuredGrid
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_points
     assert len(mesh.point_data.keys()) > 0
@@ -578,8 +577,8 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
-def test_texture_map_to_plane():
-    dataset = examples.load_airplane()
+def test_texture_map_to_plane(airplane):
+    dataset = airplane
     # Automatically decide plane
     out = dataset.texture_map_to_plane(inplace=False, progress_bar=True)
     assert isinstance(out, type(dataset))
@@ -1243,9 +1242,9 @@ def test_connectivity_closest_point(foot_bones):
     assert counts == [598]
 
 
-def test_split_bodies():
+def test_split_bodies(uniform):
     # Load a simple example mesh
-    dataset = examples.load_uniform()
+    dataset = uniform
     dataset.set_active_scalars('Spatial Cell Data')
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True, progress_bar=True)
 
@@ -1257,8 +1256,8 @@ def test_split_bodies():
         assert np.allclose(body.volume, volumes[i], rtol=0.1)
 
 
-def test_warp_by_scalar():
-    data = examples.load_uniform()
+def test_warp_by_scalar(uniform, hexbeam):
+    data = uniform
     warped = data.warp_by_scalar(progress_bar=True)
     assert data.n_points == warped.n_points
     warped = data.warp_by_scalar(scale_factor=3, progress_bar=True)
@@ -1266,16 +1265,21 @@ def test_warp_by_scalar():
     warped = data.warp_by_scalar(normal=[1, 1, 3], progress_bar=True)
     assert data.n_points == warped.n_points
     # Test in place!
-    foo = examples.load_hexbeam()
+    foo = hexbeam
     foo.point_data.active_scalars_name = 'sample_point_scalars'
     warped = foo.warp_by_scalar(progress_bar=True)
     foo.warp_by_scalar(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
 
 
-def test_warp_by_vector():
+@pytest.fixture
+def sphere_vectors():
+    return examples.load_sphere_vectors()
+
+
+def test_warp_by_vector(sphere_vectors):
     # Test when inplace=False (default)
-    data = examples.load_sphere_vectors()
+    data = sphere_vectors.copy()
     warped = data.warp_by_vector(progress_bar=True)
     assert data.n_points == warped.n_points
     assert not np.allclose(data.points, warped.points)
@@ -1283,7 +1287,7 @@ def test_warp_by_vector():
     assert data.n_points == warped.n_points
     assert not np.allclose(data.points, warped.points)
     # Test when inplace=True
-    foo = examples.load_sphere_vectors()
+    foo = sphere_vectors.copy()
     warped = foo.warp_by_vector(progress_bar=True)
     foo.warp_by_vector(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
@@ -1313,8 +1317,8 @@ def test_invalid_warp_vector(sphere):
         sphere.warp_by_vector()
 
 
-def test_delaunay_3d():
-    data = examples.load_uniform().threshold_percent(30, progress_bar=True)
+def test_delaunay_3d(uniform):
+    data = uniform.threshold_percent(30, progress_bar=True)
     result = data.delaunay_3d()
     assert np.any(result.points)
 
@@ -1591,10 +1595,10 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
-def test_plot_over_line(tmpdir):
+def test_plot_over_line(tmpdir, uniform):
     tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
-    mesh = examples.load_uniform()
+    mesh = uniform
     # Make two points to construct the line between
     a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
@@ -1643,11 +1647,9 @@ def test_sample_over_multiple_lines():
     assert name in sampled_multiple_lines.array_names  # is name in sampled result
 
 
-def test_sample_over_circular_arc():
+def test_sample_over_circular_arc(uniform):
     """Test that we get a circular arc."""
     name = 'values'
-
-    uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
     xmin = uniform.bounds.x_min
@@ -1680,11 +1682,9 @@ def test_sample_over_circular_arc():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
-def test_sample_over_circular_arc_normal():
+def test_sample_over_circular_arc_normal(uniform):
     """Test that we get a circular arc_normal."""
     name = 'values'
-
-    uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
     xmin = uniform.bounds.x_min
@@ -1725,8 +1725,8 @@ def test_sample_over_circular_arc_normal():
     assert isinstance(sampled_from_sphere, pv.PolyData)
 
 
-def test_plot_over_circular_arc(tmpdir):
-    mesh = examples.load_uniform()
+def test_plot_over_circular_arc(tmpdir, uniform):
+    mesh = uniform
     tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
 
@@ -1773,8 +1773,8 @@ def test_plot_over_circular_arc(tmpdir):
         )
 
 
-def test_plot_over_circular_arc_normal(tmpdir):
-    mesh = examples.load_uniform()
+def test_plot_over_circular_arc_normal(tmpdir, uniform):
+    mesh = uniform
     tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
 
@@ -2550,9 +2550,8 @@ def test_select_enclosed_points(uniform, hexbeam):
         result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
 
 
-def test_decimate_boundary():
-    mesh = examples.load_uniform()
-    boundary = mesh.decimate_boundary(progress_bar=True)
+def test_decimate_boundary(uniform):
+    boundary = uniform.decimate_boundary(progress_bar=True)
     assert boundary.n_points
 
 
@@ -2678,9 +2677,14 @@ def test_iadd_general(uniform, hexbeam, sphere):
         merged += sphere
 
 
+@pytest.fixture
+def can_crushed_vtu():
+    return examples.download_can_crushed_vtu()
+
+
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_compute_boundary_mesh_quality():
-    mesh = examples.download_can_crushed_vtu()
+def test_compute_boundary_mesh_quality(can_crushed_vtu):
+    mesh = can_crushed_vtu
     qual = mesh.compute_boundary_mesh_quality()
     assert 'DistanceFromCellCenterToFaceCenter' in qual.array_names
     assert 'DistanceFromCellCenterToFacePlane' in qual.array_names
@@ -2771,8 +2775,8 @@ def test_compute_derivatives(random_hills):
         derv = mesh.compute_derivative()
 
 
-def test_extract_subset():
-    volume = examples.load_uniform()
+def test_extract_subset(uniform):
+    volume = uniform
     voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=True)
     assert isinstance(voi, pv.ImageData)
     # Test that we fix the confusing issue from extents in
@@ -2780,8 +2784,8 @@ def test_extract_subset():
     assert voi.origin == voi.bounds[::2]
 
 
-def test_gaussian_smooth_output_type():
-    volume = examples.load_uniform()
+def test_gaussian_smooth_output_type(uniform):
+    volume = uniform
     volume_smooth = volume.gaussian_smooth()
     assert isinstance(volume_smooth, pv.ImageData)
     volume_smooth = volume.gaussian_smooth(scalars='Spatial Point Data')
@@ -2826,8 +2830,8 @@ def test_gaussian_smooth_cell_data_active():
         volume.gaussian_smooth()
 
 
-def test_median_smooth_output_type():
-    volume = examples.load_uniform()
+def test_median_smooth_output_type(uniform):
+    volume = uniform
     volume_smooth = volume.median_smooth()
     assert isinstance(volume_smooth, pv.ImageData)
     volume_smooth = volume.median_smooth(scalars='Spatial Point Data')
@@ -2954,18 +2958,16 @@ def test_image_threshold_dtype(value_dtype, array_dtype):
     assert image['Data'].dtype == thresh['Data'].dtype
 
 
-def test_image_threshold_wrong_threshold_length():
+def test_image_threshold_wrong_threshold_length(uniform):
     threshold = (10, 10, 10)  # tuple with too many values
-    volume = examples.load_uniform()
     with pytest.raises(ValueError):  # noqa: PT011
-        volume.image_threshold(threshold)
+        uniform.image_threshold(threshold)
 
 
-def test_image_threshold_wrong_threshold_type():
+def test_image_threshold_wrong_threshold_type(uniform):
     threshold = {'min': 0, 'max': 10}  # dict thresh
-    volume = examples.load_uniform()
     with pytest.raises(TypeError):
-        volume.image_threshold(threshold)
+        uniform.image_threshold(threshold)
 
 
 @pytest.mark.parametrize('in_value', [1, None])
@@ -3020,19 +3022,17 @@ def test_image_threshold_between(in_value, out_value):
     )
 
 
-def test_extract_subset_structured():
-    structured = examples.load_structured()
+def test_extract_subset_structured(structured):
     voi = structured.extract_subset([0, 3, 1, 4, 0, 1])
     assert isinstance(voi, pv.StructuredGrid)
     assert voi.dimensions == (4, 4, 1)
 
 
 @pytest.fixture
-def structured_grids_split_coincident():
+def structured_grids_split_coincident(structured):
     """Two structured grids which are coincident along second axis (axis=1), and
     the grid from which they were extracted.
     """
-    structured = examples.load_structured()
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
     structured.point_data['point_data'] = point_data
@@ -3043,9 +3043,8 @@ def structured_grids_split_coincident():
 
 
 @pytest.fixture
-def structured_grids_split_disconnected():
+def structured_grids_split_disconnected(structured):
     """Two structured grids which are disconnected."""
-    structured = examples.load_structured()
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
     structured.point_data['point_data'] = point_data
@@ -3106,25 +3105,23 @@ def test_concatenate_structured_different_arrays(structured_grids_split_coincide
         voi_1.concatenate(voi_2, axis=1)
 
 
-def test_structured_add_non_grid():
-    grid = examples.load_structured()
-    merged = grid + examples.load_hexbeam()
+def test_structured_add_non_grid(structured):
+    merged = structured + examples.load_hexbeam()
     assert isinstance(merged, pv.UnstructuredGrid)
 
 
-def test_poly_data_strip():
-    mesh = examples.load_airplane()
-    slc = mesh.slice(normal='z', origin=(0, 0, -10))
+def test_poly_data_strip(airplane):
+    slc = airplane.slice(normal='z', origin=(0, 0, -10))
     stripped = slc.strip(progress_bar=True)
     assert stripped.n_cells == 1
 
 
-def test_shrink():
+def test_shrink(uniform):
     mesh = pv.Sphere()
     shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.area < mesh.area
-    mesh = examples.load_uniform()
+    mesh = uniform
     shrunk = mesh.shrink(shrink_factor=0.8, progress_bar=True)
     assert shrunk.n_cells == mesh.n_cells
     assert shrunk.volume < mesh.volume
@@ -3362,8 +3359,8 @@ def test_is_manifold(sphere, plane):
     assert not plane.is_manifold
 
 
-def test_reconstruct_surface_unstructured():
-    mesh = examples.load_hexbeam().reconstruct_surface()
+def test_reconstruct_surface_unstructured(hexbeam):
+    mesh = hexbeam.reconstruct_surface()
     assert isinstance(mesh, pv.PolyData)
     assert mesh.n_points
 
@@ -3414,8 +3411,8 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
-def test_align_xyz():
-    mesh = examples.download_oblique_cone()
+def test_align_xyz(oblique_cone):
+    mesh = oblique_cone
     aligned = mesh.align_xyz()
     assert np.allclose(aligned.center, (0, 0, 0))
 
@@ -3423,8 +3420,8 @@ def test_align_xyz():
     assert np.allclose(aligned.center, mesh.center)
 
 
-def test_align_xyz_return_matrix():
-    mesh = examples.download_oblique_cone()
+def test_align_xyz_return_matrix(oblique_cone):
+    mesh = oblique_cone
     initial_bounds = mesh.bounds
 
     aligned, matrix = mesh.align_xyz(return_matrix=True)
