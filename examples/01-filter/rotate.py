@@ -22,7 +22,7 @@ from pyvista import examples
 
 # %%
 # Define camera and axes
-# ++++++++++++++++++++++
+
 #
 # Define camera and axes. Setting axes origin to ``(3.0, 3.0, 3.0)``.
 
@@ -38,7 +38,7 @@ axes.origin = (3.0, 3.0, 3.0)
 
 # %%
 # Original Mesh
-# +++++++++++++
+
 #
 # Plot original mesh. Add axes actor to Plotter.
 
@@ -53,7 +53,7 @@ p.show()
 
 # %%
 # Rotation about the x axis
-# +++++++++++++++++++++++++
+
 #
 # Plot the mesh rotated about the x axis every 60 degrees.
 # Add the axes actor to the Plotter and set the axes origin to the point of rotation.
@@ -72,7 +72,7 @@ p.show()
 
 # %%
 # Rotation about the y axis
-# +++++++++++++++++++++++++
+
 #
 # Plot the mesh rotated about the y axis every 60 degrees.
 # Add the axes actor to the Plotter and set the axes origin to the point of rotation.
@@ -91,7 +91,7 @@ p.show()
 
 # %%
 # Rotation about the z axis
-# +++++++++++++++++++++++++
+
 #
 # Plot the mesh rotated about the z axis every 60 degrees.
 # Add axes actor to the Plotter and set the axes origin to the point of rotation.
@@ -110,7 +110,7 @@ p.show()
 
 # %%
 # Rotation about a custom vector
-# ++++++++++++++++++++++++++++++
+
 #
 # Plot the mesh rotated about a custom vector every 60 degrees.
 # Add the axes actor to the Plotter and set axes origin to the point of rotation.

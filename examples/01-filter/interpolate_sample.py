@@ -32,7 +32,7 @@ import pyvista as pv
 
 # %%
 # Interpolating from point cloud
-# ++++++++++++++++++++++++++++++
+
 # A point cloud is a collection of points that have no connectivity in
 # the mesh, i.e. the mesh contains no cells or the cells are 0D
 # (vertex or polyvertex). The filter :func:`pyvista.DataSetFilters.interpolate`
@@ -117,7 +117,7 @@ pl.show()
 
 # %%
 # Sampling from a mesh with connectivity
-# ++++++++++++++++++++++++++++++++++++++
+
 # This example is in many ways the opposite of the prior one.
 # A mesh with cell connectivity that spans 2 dimensions is
 # sampled at discrete points using :func:`pyvista.DataObjectFilters.sample`.

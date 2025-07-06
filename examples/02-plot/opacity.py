@@ -21,7 +21,7 @@ mesh = image.warp_by_scalar()
 
 # %%
 # Global Value
-# ++++++++++++
+
 #
 # You can also apply a global opacity value to the mesh by passing a single
 # float between 0 and 1 which would enable you to see objects behind the mesh:
@@ -41,7 +41,7 @@ p.show()
 
 # %%
 # Transfer Functions
-# ++++++++++++++++++
+
 #
 # It's possible to apply an opacity mapping to any scalar array plotted. You
 # can specify either a single static value to make the mesh transparent on all
@@ -130,7 +130,7 @@ p.show()
 
 # %%
 # Opacity by Array
-# ++++++++++++++++
+
 #
 # You can also use a scalar array associated with the mesh to give each cell
 # its own opacity/transparency value derived from a scalar field. For example,

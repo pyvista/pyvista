@@ -14,7 +14,7 @@ import pyvista as pv
 
 # %%
 # Pick either a cube or a sphere using "p"
-# ++++++++++++++++++++++++++++++++++++++++
+
 #
 
 sphere = pv.Sphere(center=(1, 0, 0))
@@ -29,7 +29,7 @@ pl.show()
 
 # %%
 # Deform the mesh after picking
-# +++++++++++++++++++++++++++++
+
 # Pick to trigger a callback that "shrinks" the mesh each time it's selected.
 
 
@@ -48,7 +48,7 @@ pl.show()
 
 # %%
 # Pick based on Actors
-# ++++++++++++++++++++
+
 # Return the picked actor to the callback
 
 pl = pv.Plotter()

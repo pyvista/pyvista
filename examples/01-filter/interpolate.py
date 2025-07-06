@@ -20,7 +20,7 @@ from pyvista import examples
 
 # %%
 # Simple Surface Interpolation
-# ++++++++++++++++++++++++++++
+
 # Resample the points' arrays onto a surface
 
 # Download sample data
@@ -46,7 +46,7 @@ p.show()
 
 # %%
 # Complex Interpolation
-# +++++++++++++++++++++
+
 # In this example, we will in interpolate sparse points in 3D space into a
 # volume. These data are from temperature probes in the subsurface and the goal
 # is to create an approximate 3D model of the temperature field in the

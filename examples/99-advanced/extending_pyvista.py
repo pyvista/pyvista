@@ -46,7 +46,7 @@ class FooData(pyvista.PolyData):  # noqa: D101
 
 # %%
 # Directly Managing Types
-# +++++++++++++++++++++++
+
 #
 # Now a ``foo_sphere`` object is created of type ``FooData``.
 # The index of the point and location of the point of interest can be obtained
@@ -90,7 +90,7 @@ print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}'
 
 # %%
 # Automatically Managing Types
-# ++++++++++++++++++++++++++++
+
 #
 # The default :class:`pyvista.DataSet` type can be set using ``pyvista._wrappers``.
 # In general, it is best to use this method when it is expected to primarily

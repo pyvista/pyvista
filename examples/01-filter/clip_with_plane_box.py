@@ -19,7 +19,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Clip with Plane
-# +++++++++++++++
+
 #
 # Clip any dataset by a user defined plane using the
 # :func:`pyvista.DataObjectFilters.clip` filter
@@ -36,7 +36,7 @@ p.show()
 
 # %%
 # Clip with Bounds
-# ++++++++++++++++
+
 #
 # Clip any dataset by a set of XYZ bounds using the
 # :func:`pyvista.DataObjectFilters.clip_box` filter.
@@ -54,7 +54,7 @@ p.show()
 
 # %%
 # Clip with Rotated Box
-# +++++++++++++++++++++
+
 #
 # Clip any dataset by an arbitrarily rotated solid box using the
 # :func:`pyvista.DataObjectFilters.clip_box` filter.
@@ -85,7 +85,7 @@ p.show()
 
 # %%
 # Crinkled Clipping
-# +++++++++++++++++
+
 # Crinkled clipping is useful if you don't want the clip filter to truly clip
 # cells on the boundary, but want to preserve the input cell structure and to
 # pass the entire cell on through the boundary.

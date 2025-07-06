@@ -53,7 +53,7 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 
 # %%
 # Boolean Union
-# +++++++++++++
+
 #
 # Perform a boolean union of ``A`` and ``B`` using the
 # :func:`pyvista.PolyDataFilters.boolean_union` filter.
@@ -75,7 +75,7 @@ pl.show()
 
 # %%
 # Boolean Difference
-# ++++++++++++++++++
+
 #
 # Perform a boolean difference of ``A`` and ``B`` using the
 # :func:`pyvista.PolyDataFilters.boolean_difference` filter or the
@@ -97,7 +97,7 @@ pl.show()
 
 # %%
 # Boolean Intersection
-# ++++++++++++++++++++
+
 #
 # Perform a boolean intersection of ``A`` and ``B`` using the
 # :func:`pyvista.PolyDataFilters.boolean_intersection` filter.

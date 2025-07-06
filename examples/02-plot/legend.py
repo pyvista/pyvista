@@ -21,7 +21,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Default legend for glyphs
-# +++++++++++++++++++++++++
+
 #
 # The method :func:`~pyvista.Plotter.add_legend` is able to retrieve and use
 # the glyphs for each plot.
@@ -52,7 +52,7 @@ pl.show()
 
 # %%
 # Using custom legends
-# ++++++++++++++++++++
+
 #
 # You can use specific labels with :func:`~pyvista.Plotter.add_legend`
 #
@@ -80,7 +80,7 @@ pl.show()
 
 # %%
 # Using custom legend and glyphs
-# ++++++++++++++++++++++++++++++
+
 #
 # You can use specific labels or glyphs even if they have been specified before.
 #

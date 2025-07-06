@@ -23,7 +23,7 @@ from pyvista import examples
 
 # %%
 # Label String Array
-# ++++++++++++++++++
+
 #
 # This example will label the nodes of a mesh with a given array of string
 # labels for each of the nodes.
@@ -49,7 +49,7 @@ plotter.show()
 
 # %%
 # Label Node Locations
-# ++++++++++++++++++++
+
 #
 # This example will label the nodes of a mesh with their coordinate locations
 
@@ -74,7 +74,7 @@ plotter.show()
 
 # %%
 # Label Scalar Values
-# +++++++++++++++++++
+
 #
 # This example will label each point with their scalar values
 

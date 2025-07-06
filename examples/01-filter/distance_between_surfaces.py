@@ -64,7 +64,7 @@ p.show()
 
 # %%
 # Ray Tracing Distance
-# ++++++++++++++++++++
+
 #
 # Compute normals of lower surface at vertex points
 h0n = h0.compute_normals(point_normals=True, cell_normals=False, auto_orient_normals=True)
@@ -97,7 +97,7 @@ p.show()
 
 # %%
 # Nearest Neighbor Distance
-# +++++++++++++++++++++++++
+
 #
 # You could also use a KDTree to compare the distance between each vertex point
 # of the
@@ -120,7 +120,7 @@ p.show()
 
 # %%
 # Using PyVista Filter
-# ++++++++++++++++++++
+
 #
 # The :func:`pyvista.DataSet.find_closest_cell` filter returns the spatial
 # points inside the cells of the top surface that are closest to the vertex

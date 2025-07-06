@@ -27,7 +27,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Statue
-# +++++++++++
+
 #
 # Eye-Dome Lighting can dramatically improve depth perception when plotting
 # incredibly sophisticated meshes like the creative commons Queen Nefertiti
@@ -58,7 +58,7 @@ p.show()
 
 # %%
 # Point Cloud
-# +++++++++++
+
 #
 # When plotting a simple point cloud, it can be difficult to perceive depth.
 # Take this Lidar point cloud for example:

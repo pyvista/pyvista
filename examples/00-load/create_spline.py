@@ -113,7 +113,7 @@ tube.plot(scalars='theta', smooth_shading=True)
 
 # %%
 # Ribbons
-# +++++++
+
 #
 # Ayy of the lines from the examples above can be used to create ribbons.
 # Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.

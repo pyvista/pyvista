@@ -98,7 +98,7 @@ largest.plot(show_grid=True, cpos=[-2, 5, 3])
 # .. _split_vol:
 #
 # Splitting Volumes
-# +++++++++++++++++
+
 #
 # What if instead, we wanted to split all the different connected bodies /
 # volumes in a dataset like the one above? We could use the
@@ -127,7 +127,7 @@ bodies.plot(show_grid=True, multi_colors=True, cpos=[-2, 5, 3])
 # -----
 #
 # A Real Dataset
-# ++++++++++++++
+
 #
 # Here is a realistic training dataset of fluvial channels in the subsurface.
 # This will threshold the channels from the dataset then separate each

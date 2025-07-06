@@ -20,7 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Pick points on a sphere
-# +++++++++++++++++++++++
+
 #
 sphere = pv.Sphere()
 
@@ -31,7 +31,7 @@ p.show()
 
 # %%
 # Ignore the 3D window
-# ++++++++++++++++++++
+
 #
 # In the above example, both points on the mesh and points in the 3d window can be
 # selected. It is possible instead pick only points on the mesh.
@@ -44,7 +44,7 @@ p.show()
 
 # %%
 # Modify which actors are pickable
-# ++++++++++++++++++++++++++++++++
+
 #
 # After enabling point picking, we can modify which actors are pickable.
 sphere = pv.Sphere()
@@ -61,7 +61,7 @@ p.show()
 
 # %%
 # Pick using the left-mouse button
-# ++++++++++++++++++++++++++++++++
+
 #
 sphere = pv.Sphere()
 

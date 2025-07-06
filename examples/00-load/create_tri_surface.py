@@ -20,7 +20,7 @@ rng = np.random.default_rng(seed=0)
 
 # %%
 # Simple Triangulations
-# +++++++++++++++++++++
+
 #
 # First, create some points for the surface.
 
@@ -54,7 +54,7 @@ surf.plot(show_edges=True)
 
 # %%
 # Masked Triangulations
-# +++++++++++++++++++++
+
 #
 
 x = np.arange(10, dtype=float)

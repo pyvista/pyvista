@@ -28,7 +28,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Example A
-# +++++++++
+
 #
 # Use a single sphere widget
 
@@ -68,7 +68,7 @@ p.show()
 
 # %%
 # Example B
-# +++++++++
+
 #
 # Use several sphere widgets at once
 
@@ -108,7 +108,7 @@ p.show()
 
 # %%
 # Example C
-# +++++++++
+
 #
 # This one is the coolest - use four sphere widgets to update perturbations on
 # a surface and interpolate between them with some boundary conditions

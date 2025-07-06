@@ -82,7 +82,7 @@ p.show()
 
 # %%
 # Filter Pipeline
-# +++++++++++++++
+
 # We can do this with any :vtk:`vtkAlgorithm` subclass for dynamically generating
 # or filtering data. Here is an example of executing a pipeline of VTK filters
 # together.

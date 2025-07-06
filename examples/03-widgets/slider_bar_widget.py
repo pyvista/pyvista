@@ -45,7 +45,7 @@ p.threshold_meshes
 
 # %%
 # Custom Callback
-# +++++++++++++++
+
 #
 # Or you could leverage a custom callback function that takes a single value
 # from the slider as its argument to do something like control the resolution

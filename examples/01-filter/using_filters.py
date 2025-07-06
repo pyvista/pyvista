@@ -88,7 +88,7 @@ p.show()
 
 # %%
 # Filter Pipeline
-# +++++++++++++++
+
 #
 # In VTK, filters are often used in a pipeline where each algorithm passes its
 # output to the next filtering algorithm. In PyVista, we can mimic the

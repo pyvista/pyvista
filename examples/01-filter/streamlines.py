@@ -22,7 +22,7 @@ from pyvista import examples
 
 # %%
 # Carotid
-# +++++++
+
 # Download a sample dataset containing a vector field that can be integrated.
 
 mesh = examples.download_carotid()
@@ -56,7 +56,7 @@ p.show()
 
 # %%
 # Blood Vessels
-# +++++++++++++
+
 # Here is another example of blood flow:
 
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
@@ -115,7 +115,7 @@ p.show()
 
 # %%
 # Kitchen
-# +++++++
+
 #
 kpos = [(-6.68, 11.9, 11.6), (3.5, 2.5, 1.26), (0.45, -0.4, 0.8)]
 
@@ -136,7 +136,7 @@ p.show()
 
 # %%
 # Custom 3D Vector Field
-# ++++++++++++++++++++++
+
 #
 
 nx = 20

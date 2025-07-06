@@ -32,7 +32,7 @@ from pyvista import examples
 
 # %%
 # Custom Made Colormaps
-# +++++++++++++++++++++
+
 #
 # To get started using a custom colormap, download some data with scalar values to
 # plot.
@@ -93,7 +93,7 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 # %%
 # Matplotlib vs. Colorcet
-# +++++++++++++++++++++++
+
 #
 # Let's compare Colorcet's perceptually uniform "fire" colormap to Matplotlib's
 # "hot" colormap much like the example on the `first page of Colorcet's docs`_.

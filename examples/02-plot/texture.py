@@ -68,7 +68,7 @@ curvsurf.plot(texture=tex)
 
 # %%
 # Textures from Files
-# +++++++++++++++++++
+
 #
 # What about loading your own texture from an image? This is often most easily
 # done using the :func:`pyvista.read_texture` function - simply pass an image
@@ -82,7 +82,7 @@ curvsurf.plot(texture=tex)
 
 # %%
 # NumPy Arrays as Textures
-# ++++++++++++++++++++++++
+
 #
 # Want to use a programmatically built image? :class:`pyvista.ImageData`
 # objects can be converted to textures using :func:`pyvista.image_to_texture`
@@ -109,7 +109,7 @@ curvsurf.plot(texture=tex)
 
 # %%
 # Create a GIF Movie with updating textures
-# +++++++++++++++++++++++++++++++++++++++++
+
 # Generate a moving gif from an active plotter with updating textures.
 
 mesh = curvsurf.extract_surface()
@@ -148,7 +148,7 @@ plotter.close()
 
 # %%
 # Textures with Transparency
-# ++++++++++++++++++++++++++
+
 #
 # Textures can also specify per-pixel opacity values. The image must
 # contain a 4th channel specifying the opacity value from 0 [transparent] to
@@ -168,7 +168,7 @@ curvsurf.plot(texture=rgba, show_grid=True)
 
 # %%
 # Repeating Textures
-# ++++++++++++++++++
+
 #
 # What if you have a single texture that you'd like to repeat across a mesh?
 # Simply define the texture coordinates for all nodes explicitly.
@@ -203,7 +203,7 @@ curvsurf.plot(texture=tex, cpos='xy')
 
 # %%
 # Spherical Texture Coordinates
-# +++++++++++++++++++++++++++++
+
 # We have a built in convienance method for mapping textures to spherical
 # coordinate systems much like the planar mapping demoed above.
 mesh = pv.Sphere()

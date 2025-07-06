@@ -22,7 +22,7 @@ import pyvista as pv
 
 # %%
 # Single Checkbox
-# +++++++++++++++
+
 
 mesh = pv.Sphere()
 
@@ -39,7 +39,7 @@ p.show()
 
 # %%
 # Multiple Checkboxes
-# +++++++++++++++++++
+
 #
 # In this example, we will add many meshes to a scene with unique colors and
 # create corresponding checkboxes for those meshes of the same color to toggle

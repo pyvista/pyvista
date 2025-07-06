@@ -26,7 +26,7 @@ from pyvista.plotting.opts import ElementType
 
 # %%
 # Pick Face on Voxel Cell
-# +++++++++++++++++++++++
+
 #
 mesh = pv.Wavelet()
 
@@ -53,7 +53,7 @@ except AttributeError:
 
 # %%
 # Pick an Edge of a Cell
-# ++++++++++++++++++++++
+
 #
 sphere = pv.Sphere()
 

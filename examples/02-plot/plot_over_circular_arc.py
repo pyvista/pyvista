@@ -22,7 +22,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Volumetric Mesh
-# +++++++++++++++
+
 #
 # Add the height scalars to a uniform 3D mesh.
 mesh = examples.load_uniform()

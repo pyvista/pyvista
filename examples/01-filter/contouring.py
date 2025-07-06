@@ -19,7 +19,7 @@ from pyvista import examples
 
 # %%
 # Iso-Lines
-# +++++++++
+
 #
 # Let's extract 1D iso-lines of a scalar field from a 2D surface mesh.
 mesh = examples.load_random_hills()
@@ -34,7 +34,7 @@ pl.show()
 
 # %%
 # Iso-Surfaces
-# ++++++++++++
+
 #
 # Let's extract 2D iso-surfaces of a scalar field from a 3D mesh.
 mesh = examples.download_embryo()
@@ -54,7 +54,7 @@ pl.show()
 
 # %%
 # Banded Contours
-# +++++++++++++++
+
 # Create banded contours for surface meshes using :func:`~pyvista.PolyDataFilters.contour_banded`.
 mesh = examples.load_random_hills()
 
@@ -80,7 +80,7 @@ pl.show()
 
 # %%
 # Contours from a label map
-# +++++++++++++++++++++++++
+
 #
 # Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
 # using :func:`~pyvista.ImageDataFilters.contour_labels`.

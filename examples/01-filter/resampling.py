@@ -23,7 +23,7 @@ from pyvista import examples
 
 # %%
 # Simple Resample
-# +++++++++++++++
+
 # Query a grid's points onto a sphere
 mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
 data_to_probe = examples.load_uniform()
@@ -45,7 +45,7 @@ result.plot(scalars=name, clim=data_to_probe.get_data_range(name))
 
 # %%
 # Complex Resample
-# ++++++++++++++++
+
 # Take a volume of data and create a grid of lower resolution to resample on
 data_to_probe = examples.download_embryo()
 mesh = pv.create_grid(data_to_probe, dimensions=(75, 75, 75))

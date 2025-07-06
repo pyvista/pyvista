@@ -72,7 +72,7 @@ p.show()
 
 # %%
 # Subset of Glyphs
-# ++++++++++++++++
+
 #
 # Sometimes you might not want glyphs for every node in the input dataset. In
 # this case, you can choose to build glyphs for a subset of the input dataset

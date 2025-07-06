@@ -31,7 +31,7 @@ vol
 
 # %%
 # Simple Volume Render
-# ++++++++++++++++++++
+
 #
 
 # A nice camera position
@@ -42,7 +42,7 @@ vol.plot(volume=True, cmap='bone', cpos=cpos)
 
 # %%
 # Opacity Mappings
-# ++++++++++++++++
+
 #
 # Or use the :func:`pyvista.Plotter.add_volume` method like below.
 # Note that here we use a non-default opacity mapping to a sigmoid:
@@ -76,7 +76,7 @@ pl.show()
 
 # %%
 # Cool Volume Examples
-# ++++++++++++++++++++
+
 #
 # Here are a few more cool volume rendering examples.
 
@@ -128,7 +128,7 @@ pl.show()
 
 # %%
 # Extracting a VOI
-# ++++++++++++++++
+
 #
 # Use the :func:`pyvista.ImageDataFilters.extract_subset` filter to extract
 # a volume of interest/subset volume to volume render. This is ideal when
@@ -186,7 +186,7 @@ pl.show()
 # .. _volume_with_mask_example:
 #
 # Volume With Segmentation Mask
-# +++++++++++++++++++++++++++++
+
 # Visualize a medical image with a corresponding binary segmentation mask.
 #
 # For this example, we use :func:`~pyvista.examples.downloads.download_whole_body_ct_male`

@@ -71,7 +71,7 @@ slices.plot(cmap=cmap)
 
 # %%
 # Slice Along Line
-# ++++++++++++++++
+
 #
 # We can also slice a dataset along a :func:`pyvista.Spline` or
 # :func:`pyvista.Line` using the :func:`pyvista.DataObjectFilters.slice_along_line` filter.
@@ -113,7 +113,7 @@ p.show(cpos=[1, -1, 1])
 
 # %%
 # Multiple Slices in Vector Direction
-# +++++++++++++++++++++++++++++++++++
+
 #
 # Slice a mesh along a vector direction perpendicularly.
 
@@ -148,7 +148,7 @@ p.show()
 
 # %%
 # Slice At Different Bearings
-# +++++++++++++++++++++++++++
+
 #
 # From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_
 #
