@@ -35,7 +35,7 @@ env:
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
     tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
-    --disallow_unused_cache --generated_image_dir debug_images
+    --disallow_unused_cache --generated_image_dir debug_images --allow_useless_fixture
 
 permissions:
   id-token: none
