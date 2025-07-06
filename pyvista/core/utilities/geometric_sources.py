@@ -91,7 +91,7 @@ def translate(
 if _vtk.vtk_version_info < (9, 3):
 
     @no_new_attr
-    class CapsuleSource(_vtk.vtkCapsuleSource):
+    class CapsuleSource(_vtk.vtkCapsuleSource):  # type: ignore[misc]
         """Capsule source algorithm class.
 
         .. versionadded:: 0.44.0

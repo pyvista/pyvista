@@ -26,7 +26,7 @@ dependencies = [
   'typing-extensions',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
-  'vtk<9.5.0',
+  'vtk<9.6.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
