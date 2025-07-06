@@ -231,6 +231,7 @@ filterwarnings = [
 ]
 
 failed_image_dir = '_failed_test_images'
+generated_image_dir = '_generated_test_images'
 image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
