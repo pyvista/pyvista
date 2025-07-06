@@ -414,6 +414,15 @@ def test_contour_labels_raises_vtkversionerror():
         pv.ImageData().contour_labels()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_empty_input(frog_tissues):
+    voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
+    background_value = 0
+    assert np.allclose(voi.active_scalars, background_value)
+    surface = voi.contour_labels(background_value=background_value)
+    assert surface.is_empty
+
+
 @pytest.fixture
 def uniform_many_scalars(uniform):
     uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
