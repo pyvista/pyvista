@@ -5,7 +5,8 @@ Control Global and Local Plotting Themes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyVista allows you to set global and local plotting themes to easily
-set default plotting parameters.
+set default plotting parameters. This example shows how to use the
+:ref:`theme_api` and :func:`~pyvista.set_plot_theme` function.
 
 """
 
@@ -45,7 +46,8 @@ plot_example()
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
 # * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
-# * ``'document'``: this is built for use in document style plotting and making publication quality figures.
+# * ``'document'``: this is built for use in document style plotting and making publication
+#   quality figures.
 
 # %%
 # Demo the ``'ParaView'`` theme.

@@ -1,9 +1,11 @@
 """
+.. _extract_cells_inside_surface_example:
+
 Extract Cells Inside Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Extract the cells in a mesh that exist inside or outside a closed surface of
-another mesh
+Extract the cells inside or outside a closed surface using
+:meth:`~pyvista.DataSetFilters.select_enclosed_points`.
 
 """
 

@@ -1,4 +1,4 @@
-"""Wrapper for vtk.vtkTexture."""
+"""Wrapper for :vtk:`vtkTexture`."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ import warnings
 import numpy as np
 
 import pyvista
+
+pyvista.OFF_SCREEN = True
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class Texture(DataObject, _vtk.vtkTexture):
-    """Wrap vtkTexture.
+    """Wrap :vtk:`vtkTexture`.
 
     Textures can be used to apply images to surfaces, as in the case of
     :ref:`texture_example`.
@@ -31,8 +33,8 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     Parameters
     ----------
-    uinput : str, vtkImageData, vtkTexture, sequence[pyvista.ImageData], optional
-        Filename, ``vtkImageData``, ``vtkTexture``, :class:`numpy.ndarray` or a
+    uinput : str, :vtk:`vtkImageData`, :vtk:`vtkTexture`, sequence[ImageData], optional
+        Filename, :vtk:`vtkImageData`, :vtk:`vtkTexture`, :class:`numpy.ndarray` or a
         sequence of images to create a cubemap. If a sequence of images, must
         be of the same size and in the following order:
 
@@ -345,7 +347,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         return self.to_image().active_scalars.reshape(
-            list(self.dimensions)[::-1] + [self.n_components],
+            [*list(self.dimensions)[::-1], self.n_components]
         )[::-1]
 
     def rotate_cw(self) -> Texture:
@@ -405,11 +407,11 @@ class Texture(DataObject, _vtk.vtkTexture):
         return Texture(self.to_image().copy())  # type: ignore[abstract]
 
     def to_skybox(self):
-        """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
+        """Return the texture as a :vtk:`vtkSkybox` if cube mapping is enabled.
 
         Returns
         -------
-        vtk.vtkSkybox
+        :vtk:`vtkSkybox`
             Skybox if cube mapping is enabled.  Otherwise, ``None``.
 
         """
@@ -517,12 +519,12 @@ class Texture(DataObject, _vtk.vtkTexture):
         lighting = kwargs.pop('lighting', None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, True)  # type: ignore[arg-type]
+        pl.set_environment_texture(self, is_srgb=True)
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
-            pl.show_axes()  # type: ignore[call-arg]
+            pl.show_axes()
         pl.show(**kwargs)
 
     @property
@@ -650,7 +652,7 @@ def image_to_texture(image):
 
     Parameters
     ----------
-    image : pyvista.ImageData | vtkImageData
+    image : pyvista.ImageData | :vtk:`vtkImageData`
         Image to convert.
 
     Returns

@@ -13,6 +13,7 @@ import traceback
 from typing import NamedTuple
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 
@@ -26,9 +27,9 @@ def set_error_output_file(filename):
 
     Returns
     -------
-    vtkFileOutputWindow
+    :vtk:`vtkFileOutputWindow`
         VTK file output window.
-    vtkOutputWindow
+    :vtk:`vtkOutputWindow`
         VTK output window.
 
     """
@@ -65,7 +66,8 @@ class VtkErrorCatcher:
 
     """
 
-    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:
+    @_deprecate_positional_args
+    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:  # noqa: FBT001, FBT002
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -102,8 +104,12 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
+    @_deprecate_positional_args(allowed=['event_type'])
     def __init__(
-        self, event_type='ErrorEvent', log: bool = True, store_history: bool = False
+        self,
+        event_type='ErrorEvent',
+        log: bool = True,  # noqa: FBT001, FBT002
+        store_history: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize observer."""
         self.__event_occurred = False
@@ -175,7 +181,8 @@ class Observer:
         self.__event_occurred = False
         return occ
 
-    def get_message(self, etc: bool = False):
+    @_deprecate_positional_args
+    def get_message(self, etc: bool = False):  # noqa: FBT001, FBT002
         """Get the last set error message.
 
         Returns
@@ -245,7 +252,7 @@ class ProgressMonitor:
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
-    def __call__(self, obj, *args) -> None:
+    def __call__(self, obj, *args) -> None:  # noqa: ARG002
         """Call progress update callback.
 
         On an event occurrence, this function executes.

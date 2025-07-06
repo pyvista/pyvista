@@ -7,6 +7,7 @@ import shutil
 from typing import TYPE_CHECKING
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -84,7 +85,8 @@ def _process_events_before_scraping(plotter):
         plotter.update()
 
 
-def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:
+@_deprecate_positional_args(allowed=['image_path_iterator'])
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:  # noqa: FBT001, FBT002
     """Generate images from the current plotters.
 
     The file names are taken from the ``image_path_iterator`` iterator.
@@ -130,7 +132,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
             else:  # pragma: no cover
                 fname = fname[:-3] + 'vtksz'
                 with Path(fname).open('wb') as f:
-                    f.write(plotter.last_vtksz)
+                    f.write(plotter.last_vtksz)  # type: ignore[arg-type]
                     image_names.append(fname)
 
     pyvista.close_all()  # close and clear all plotters
@@ -153,7 +155,7 @@ class Scraper:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
 
-    def __call__(self, block, block_vars, gallery_conf):
+    def __call__(self, block, block_vars, gallery_conf):  # noqa: ARG002
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.
@@ -179,8 +181,8 @@ class DynamicScraper:  # pragma: no cover
 
     Be sure to set ``pyvista.BUILDING_GALLERY = True`` in your ``conf.py``.
 
-    If the boolean variable ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True/False`` is set as a global
-    variable in the document then its value will be used as default for the
+    If the boolean variable ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True/False``
+    is set as a global variable in the document then its value will be used as default for the
     force_static argument of the pyvista-plot command. see also the notes at :func:plot_directive
 
     To alter the global value behavior just for some plots you may set the

@@ -25,15 +25,15 @@ required: the data's geometry, which describes where the data is
 positioned in space and what its values are, and its topology, which
 describes how points in the dataset are connected to one another.
 
-At the top level, we have `vtkDataObject`_, which are just "blobs" of
+At the top level, we have :vtk:`vtkDataObject`, which are just "blobs" of
 data without geometry or topology. These contain arrays of
-`vtkFieldData`_. Under this are `vtkDataSet`_, which add geometry and
-topology to `vtkDataObject`_. Associated with every point or cell in
+:vtk:`vtkFieldData`. Under this are :vtk:`vtkDataSet`, which add geometry and
+topology to :vtk:`vtkDataObject`. Associated with every point or cell in
 the dataset is a specific value. Since these values must be positioned
-and connected in space, they are held in the `vtkDataArray`_ class,
+and connected in space, they are held in the :vtk:`vtkDataArray` class,
 which are simply memory buffers on the heap. In PyVista, 99% of the
-time we interact with `vtkDataSet`_ objects rather than with
-`vtkDataObject`_ objects. PyVista uses the same data types as VTK, but
+time we interact with :vtk:`vtkDataSet` objects rather than with
+:vtk:`vtkDataObject` objects. PyVista uses the same data types as VTK, but
 structures them in a more pythonic manner for ease of use.
 
 If you'd like some background for how VTK structures its data, see
@@ -96,7 +96,7 @@ Here, the above datasets are ordered from most (5) to least complex
 |UnstructuredGrid|, but the
 |UnstructuredGrid| class takes the most amount of
 memory to store since they must account for every individual point and
-cell . On the other hand, since `vtkImageData`_
+cell . On the other hand, since :vtk:`vtkImageData`
 (|ImageData|) is uniformly spaced, a few integers and
 floats can describe the shape, so it takes the least amount of memory
 to store.
@@ -147,7 +147,7 @@ done with:
    >>> vtk_array.SetValue(8, 0)
    >>> print(vtk_array)
 
-PyVista supports creating objects directly from the `vtkDataArray`_
+PyVista supports creating objects directly from the :vtk:`vtkDataArray`
 class, but there's a better, and more pythonic alternative by using
 :class:`numpy.ndarray`.
 
@@ -724,12 +724,6 @@ with the geometry as these vectors represent quantities with direction.
    will transform any array with three components, so multi-component
    scalar arrays like RGB arrays will have to be discarded after
    transformation.
-
-.. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
-.. _vtkDataSet: https://vtk.org/doc/nightly/html/classvtkDataSet.html
-.. _vtkFieldData: https://vtk.org/doc/nightly/html/classvtkFieldData.html
-.. _vtkDataObject: https://vtk.org/doc/nightly/html/classvtkDataObject.html
-.. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 
 .. |PolyData| replace:: :class:`PolyData <pyvista.PolyData>`
 .. |UnstructuredGrid| replace:: :class:`UnstructuredGrid <pyvista.UnstructuredGrid>`

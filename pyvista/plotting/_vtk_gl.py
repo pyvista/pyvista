@@ -10,17 +10,21 @@ raise an ImportError if the user does not have libGL installed.
 
 from __future__ import annotations
 
+import contextlib
+
 try:
     # Necessary for displaying charts, otherwise crashes on rendering
     from vtkmodules import vtkRenderingContextOpenGL2 as vtkRenderingContextOpenGL2
 except ImportError:  # pragma: no cover
-    vtkRenderingContextOpenGL2 = None  # type: ignore[assignment]
+    vtkRenderingContextOpenGL2 = None  # type: ignore[assignment] # noqa: N816
 
 
 from vtkmodules.vtkRenderingOpenGL2 import vtkCameraPass as vtkCameraPass
-from vtkmodules.vtkRenderingOpenGL2 import (
-    vtkCompositePolyDataMapper2 as vtkCompositePolyDataMapper2,
-)
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkRenderingOpenGL2 import (  # type: ignore[attr-defined]
+        vtkCompositePolyDataMapper2 as vtkCompositePolyDataMapper2,
+    )
 from vtkmodules.vtkRenderingOpenGL2 import vtkDepthOfFieldPass as vtkDepthOfFieldPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkEDLShading as vtkEDLShading
 from vtkmodules.vtkRenderingOpenGL2 import vtkGaussianBlurPass as vtkGaussianBlurPass

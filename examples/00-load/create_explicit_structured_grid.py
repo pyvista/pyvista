@@ -1,5 +1,5 @@
 """
-.. _create_explicit_structured_grid:
+.. _create_explicit_structured_grid_example:
 
 Creating an Explicit Structured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

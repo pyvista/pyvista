@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
@@ -541,7 +542,7 @@ class DataSet(DataSetFilters, DataObject):
             _points = _points.GetData()
         except AttributeError:
             # create an empty array
-            vtkpts = vtk_points(np.empty((0, 3)), False)
+            vtkpts = vtk_points(np.empty((0, 3)), deep=False)
             self.SetPoints(vtkpts)
             _points = self.GetPoints().GetData()
         return pyvista_ndarray(_points, dataset=self)
@@ -552,7 +553,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        points : MatrixLike[float] | vtk.vtkPoints
+        points : MatrixLike[float] | :vtk:`vtkPoints`
             Points as a array object.
 
         """
@@ -573,7 +574,7 @@ class DataSet(DataSetFilters, DataObject):
             return
         # otherwise, wrap and use the array
         points, _ = _coerce_pointslike_arg(points, copy=False)
-        vtkpts = vtk_points(points, False)
+        vtkpts = vtk_points(points, deep=False)
         if not pdata:
             self.SetPoints(vtkpts)
         else:
@@ -649,7 +650,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
+            'Use of `DataSet.active_t_coords` is deprecated. '
+            'Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -665,7 +667,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
+            'Use of `DataSet.active_t_coords` is deprecated. '
+            'Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
@@ -700,7 +703,12 @@ class DataSet(DataSetFilters, DataObject):
             An array from the dataset matching ``name``.
 
         """
-        if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
+        if preference not in [
+            'point',
+            'cell',
+            FieldAssociation.CELL,
+            FieldAssociation.POINT,
+        ]:
             msg = '``preference`` must be either "point" or "cell"'
             raise ValueError(msg)
         if name is None:
@@ -769,7 +777,10 @@ class DataSet(DataSetFilters, DataObject):
                 raise ValueError(msg)
 
             if ret < 0:
-                msg = f'Data field ({name}) with type ({field}) could not be set as the active vectors'
+                msg = (
+                    f'Data field ({name}) with type ({field}) could not be set as the '
+                    f'active vectors'
+                )
                 raise ValueError(msg)
 
         self._active_vectors_info = ActiveArrayInfoTuple(field, name)
@@ -808,7 +819,10 @@ class DataSet(DataSetFilters, DataObject):
                 raise ValueError(msg)
 
             if ret < 0:
-                msg = f'Data field ({name}) with type ({field}) could not be set as the active tensors'
+                msg = (
+                    f'Data field ({name}) with type ({field}) could not be set as the '
+                    f'active tensors'
+                )
                 raise ValueError(msg)
 
         self._active_tensors_info = ActiveArrayInfoTuple(field, name)
@@ -865,8 +879,8 @@ class DataSet(DataSetFilters, DataObject):
             raise KeyError(msg)
 
         arr = data.pop(old_name)
-        # Update the array's name before reassigning. This prevents taking a copy of the array
-        # in `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
+        # Update the array's name before reassigning. This prevents taking a copy of the array in
+        # `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
         # See issue #5244.
         arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
@@ -972,7 +986,8 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:
+    @_deprecate_positional_args(allowed=['ido'])
+    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1226,7 +1241,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> cube = pv.Cube()
         >>> cube.bounds
-        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -1613,7 +1633,9 @@ class DataSet(DataSetFilters, DataObject):
             row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(
-                name: str, arr: str | pyvista_ndarray, field: Literal['Points', 'Cells', 'Fields']
+                name: str,
+                arr: str | pyvista_ndarray,
+                field: Literal['Points', 'Cells', 'Fields'],
             ) -> str:
                 """Format array information for printing (internal helper)."""
                 if isinstance(arr, str):
@@ -1648,12 +1670,13 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:
+    @_deprecate_positional_args(allowed=['mesh'])
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
         ----------
-        mesh : vtk.vtkDataSet
+        mesh : :vtk:`vtkDataSet`
             The overwriting mesh.
 
         deep : bool, default: True
@@ -1713,7 +1736,8 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:
+    @_deprecate_positional_args
+    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1733,6 +1757,10 @@ class DataSet(DataSetFilters, DataObject):
         This will produce a deep copy of the points and point/cell data of
         the original mesh.
 
+        See Also
+        --------
+        :ref:`create_pointset_example`
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1744,13 +1772,13 @@ class DataSet(DataSetFilters, DataObject):
         """
         pset = pyvista.PointSet()
         pset.points = self.points.copy()
-        if pass_cell_data:
-            self = self.cell_data_to_point_data()
-        pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        out = self.cell_data_to_point_data() if pass_cell_data else self
+        pset.GetPointData().DeepCopy(out.GetPointData())
+        pset.active_scalars_name = out.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:
+    @_deprecate_positional_args
+    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:  # noqa: FBT001, FBT002
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1812,8 +1840,12 @@ class DataSet(DataSetFilters, DataObject):
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
-    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLike[int]:
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = ...
+    ) -> VectorLike[int]: ...
+    def find_closest_point(
+        self: Self, point: Iterable[float], n: int = 1
+    ) -> int | VectorLike[int]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1877,10 +1909,11 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
+    @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = False,
+        return_closest_point: bool = False,  # noqa: FBT001, FBT002
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
         """Find index of closest cell in this mesh to the given point.
 
@@ -1925,6 +1958,7 @@ class DataSet(DataSetFilters, DataObject):
         DataSet.find_containing_cell
         DataSet.find_cells_along_line
         DataSet.find_cells_within_bounds
+        :ref:`distance_between_surfaces_example`
 
         Examples
         --------
@@ -2001,7 +2035,9 @@ class DataSet(DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
-        out_cells: int | NumpyArray[int] = closest_cells[0] if singular else np.array(closest_cells)
+        out_cells: int | NumpyArray[int] = (
+            closest_cells[0] if singular else np.array(closest_cells)
+        )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
 
         if return_closest_point:
@@ -2310,7 +2346,7 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()  # type: ignore[abstract]
+        cell = pyvista.Cell()
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
@@ -2350,8 +2386,7 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
-        Concrete implementation of vtkDataSet's `GetCellNeighbors
-        <https://vtk.org/doc/nightly/html/classvtkDataSet.html#ae1ba413c15802ef50d9b1955a66521e4>`_.
+        Concrete implementation of :vtk:`vtkDataSet.GetCellNeighbors`.
 
         Parameters
         ----------
@@ -2370,7 +2405,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+        For a :class:`pyvista.ExplicitStructuredGrid`, use
+        :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -2656,7 +2692,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Warnings
         --------
-        For a :class:`pyvista.ExplicitStructuredGrid`, use :func:`pyvista.ExplicitStructuredGrid.neighbors`.
+        For a :class:`pyvista.ExplicitStructuredGrid`, use
+        :func:`pyvista.ExplicitStructuredGrid.neighbors`.
 
         See Also
         --------
@@ -2755,7 +2792,7 @@ class DataSet(DataSetFilters, DataObject):
     def point_cell_ids(self: Self, ind: int) -> list[int]:
         """Get the cell IDs that use the ind-th point.
 
-        Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
+        Implements :vtk:`vtkDataSet.GetPointCells`.
 
         Parameters
         ----------
@@ -2819,7 +2856,7 @@ class DataSet(DataSetFilters, DataObject):
         ids = _vtk.vtkIdList()
         self.GetPointCells(ind, ids)
         out = [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
-        if pyvista.vtk_version_info >= (9, 4, 0):
+        if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
             # Need to reverse the order
             return out[::-1]
         return out
@@ -2852,7 +2889,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> mesh.get_cell(0).bounds
-        BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.5, z_min=0.0, z_max=0.5)
+        BoundsTuple(x_min = 0.0,
+                    x_max = 0.5,
+                    y_min = 0.0,
+                    y_max = 0.5,
+                    z_min = 0.0,
+                    z_max = 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True
 
@@ -2910,7 +2952,7 @@ class DataSet(DataSetFilters, DataObject):
                          ...,
                          [1.        , 0.85714286],
                          [1.        , 0.92857143],
-                         [1.        , 1.        ]])
+                         [1.        , 1.        ]], shape=(540, 2))
 
         """
         return self.point_data.active_texture_coordinates

@@ -11,6 +11,7 @@ import numpy as np
 
 import pyvista
 from pyvista import vtk_version_info
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
@@ -77,6 +78,8 @@ class BlockAttributes:
     Opacity:   0.1
     Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
+
+    >>> pl.show()
 
     """
 
@@ -261,7 +264,7 @@ class BlockAttributes:
         )
 
 
-class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
+class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplayAttributes):
     """Block attributes.
 
     Parameters
@@ -310,6 +313,8 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
     Opacity:   0.1
     Color:     Color(name='blue', hex='#0000ffff', opacity=255)
     Pickable   None
+
+    >>> pl.show()
 
     """
 
@@ -539,7 +544,8 @@ class CompositePolyDataMapper(
 
     """
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['dataset'])
+    def __init__(  # noqa: PLR0917
         self,
         dataset=None,
         theme=None,
@@ -654,7 +660,7 @@ class CompositePolyDataMapper(
 
     def set_unique_colors(
         self,
-        color_cycler: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = True,
+        color_cycler: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = True,  # noqa: FBT001, FBT002
     ):
         """Set each block of the dataset to a unique color.
 
@@ -684,6 +690,8 @@ class CompositePolyDataMapper(
         >>> mapper.block_attr[2].color
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
 
+        >>> pl.show()
+
         """
         self.scalar_visibility = False
 
@@ -695,7 +703,8 @@ class CompositePolyDataMapper(
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
-    def set_scalars(
+    @_deprecate_positional_args(allowed=['scalars_name'])
+    def set_scalars(  # noqa: PLR0917
         self,
         scalars_name,
         preference,
@@ -803,10 +812,10 @@ class CompositePolyDataMapper(
         self._orig_scalars_name = scalars_name
 
         field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
-            scalars_name,
-            preference,
-            component,
-            rgb,
+            scalars_name=scalars_name,
+            preference=preference,
+            component=component,
+            rgb=rgb,
         )
 
         self.scalar_visibility = True
@@ -855,7 +864,7 @@ class CompositePolyDataMapper(
                 cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             if cmap is not None:
-                self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)
+                self.lookup_table.apply_cmap(cmap, n_colors, flip=flip_scalars)
             elif flip_scalars:
                 self.lookup_table.SetHueRange(0.0, 0.66667)
             else:

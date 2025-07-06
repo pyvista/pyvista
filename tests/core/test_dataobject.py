@@ -109,6 +109,26 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
 
+def test_eq_nan_points():
+    poly = pv.PolyData([np.nan, np.nan, np.nan])
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_nan_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = [np.nan]
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_string_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = ['abc']
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
 def test_metadata_save(hexbeam, tmpdir):
     """Test if complex and bool metadata is saved and restored."""
     filename = tmpdir.join('hexbeam.vtk')
@@ -151,9 +171,11 @@ def test_save_nested_multiblock_field_data(tmp_path, file_ext):
 
     # Save the multiblock and expect a warning
     match = (
-        "Nested MultiBlock at index [0] with name 'Block-00' has field data which will not be saved.\n"
+        "Nested MultiBlock at index [0] with name 'Block-00' has field data "
+        'which will not be saved.\n'
         'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
-        'Use `move_nested_field_data_to_root` to store the field data with the root MultiBlock before saving.'
+        'Use `move_nested_field_data_to_root` to store the field data with the root '
+        'MultiBlock before saving.'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         root.save(tmp_path / filename)
@@ -226,7 +248,9 @@ def test_user_dict_removal(data_object, method):
     assert actual_dict == expected_dict
 
 
-@pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
+@pytest.mark.parametrize(
+    'value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None]
+)
 def test_user_dict_values(ant, value):
     ant.user_dict['key'] = value
     with pytest.raises(TypeError, match='not JSON serializable'):
@@ -241,9 +265,16 @@ def test_user_dict_values(ant, value):
 
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
+    [
+        (pv.MultiBlock([examples.load_ant()]), '.vtm'),
+        (examples.load_ant(), '.vtp'),
+        (examples.load_ant(), '.vtkhdf'),
+    ],
 )
 def test_user_dict_write_read(tmp_path, data_object, ext):
+    if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
+        return  # can't use VTKHDF on VTK<9.4.0
+
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
     data_object.user_dict = dict_data
@@ -272,7 +303,7 @@ def test_user_dict_persists_with_merge_filter():
     sphere2.user_dict['name'] = 'sphere2'
 
     merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == 'sphere2'
+    assert merged.user_dict['name'] == 'sphere1'
 
 
 def test_user_dict_persists_with_threshold_filter(uniform):
@@ -305,14 +336,6 @@ def test_default_pickle_format():
     assert pv.PICKLE_FORMAT == 'vtk' if pv.vtk_version_info >= (9, 3) else 'xml'
 
 
-@pytest.fixture
-def _modifies_pickle_format():
-    before = pv.PICKLE_FORMAT
-    yield
-    pv.PICKLE_FORMAT = before
-
-
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 @pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
 def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_path):
@@ -361,7 +384,6 @@ def n_points(dataset):
     return dataset.n_points
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -375,7 +397,6 @@ def test_pickle_multiprocessing(datasets, pickle_format):
         assert r == dataset.n_points
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -385,7 +406,10 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     multiblock = multiblock_all_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
-        match = "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\nUse `pyvista.PICKLE_FORMAT='vtk'`."
+        match = (
+            "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\n"
+            "Use `pyvista.PICKLE_FORMAT='vtk'`."
+        )
         with pytest.raises(TypeError, match=match):
             pickle.dumps(multiblock)
     else:
@@ -395,7 +419,6 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
         assert unpickled == multiblock
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_user_dict(sphere, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -411,7 +434,6 @@ def test_pickle_user_dict(sphere, pickle_format):
     assert unpickled.user_dict == user_dict
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_set_pickle_format(pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
@@ -423,7 +445,6 @@ def test_set_pickle_format(pickle_format):
         assert pickle_format == pv.PICKLE_FORMAT
 
 
-@pytest.mark.usefixtures('_modifies_pickle_format')
 def test_pickle_invalid_format(sphere):
     match = 'Unsupported pickle format `invalid_format`.'
     with pytest.raises(ValueError, match=match):
@@ -437,7 +458,8 @@ def test_pickle_invalid_format(sphere):
 def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
     match = re.escape(
-        'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+        'PolyData writers are not specified, this should be a '
+        'dict of (file extension: vtkWriter type)'
     )
     with pytest.raises(NotImplementedError, match=match):
         pv.Sphere().save('foo.vtp')

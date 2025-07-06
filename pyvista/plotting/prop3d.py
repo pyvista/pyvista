@@ -10,6 +10,7 @@ from typing import Literal
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -26,8 +27,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-class Prop3D(_vtk.vtkProp3D):
-    """Prop3D wrapper for vtkProp3D.
+class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
+    """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
     properties and methods relating to an entity's position, orientation
@@ -297,7 +298,12 @@ class Prop3D(_vtk.vtkProp3D):
         >>> mesh = pv.Cube(x_length=0.1, y_length=0.2, z_length=0.3)
         >>> actor = pl.add_mesh(mesh)
         >>> actor.bounds
-        BoundsTuple(x_min=-0.05, x_max=0.05, y_min=-0.1, y_max=0.1, z_min=-0.15, z_max=0.15)
+        BoundsTuple(x_min = -0.05,
+                    x_max =  0.05,
+                    y_min = -0.1,
+                    y_max =  0.1,
+                    z_min = -0.15,
+                    z_max =  0.15)
 
         """
         return BoundsTuple(*self.GetBounds())
@@ -401,8 +407,9 @@ class Prop3D(_vtk.vtkProp3D):
         Parameters
         ----------
         trans : TransformLike
-            Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix, vtkTransform,
-            or a SciPy ``Rotation`` instance.
+            Transformation matrix as a 3x3 or 4x4 array, :vtk:`vtkMatrix3x3` or
+            :vtk:`vtkMatrix4x4`, :vtk:`vtkTransform`, or a SciPy ``Rotation`` instance.
+            If the input is 3x3, the array is padded using a 4x4 identity matrix.
 
         multiply_mode : 'pre' | 'post', default: 'post'
             Multiplication mode to use.
@@ -445,7 +452,11 @@ class Prop3D(_vtk.vtkProp3D):
         return output
 
     @abstractmethod
-    def copy(self: Self, deep: bool = True) -> Self:  # numpydoc ignore=RT01
+    @_deprecate_positional_args
+    def copy(
+        self: Self,
+        deep: bool = True,  # noqa: FBT001, FBT002
+    ) -> Self:  # numpydoc ignore=RT01
         """Return a copy of this prop."""
         raise NotImplementedError  # pragma: no cover
 
@@ -468,7 +479,7 @@ class Prop3D(_vtk.vtkProp3D):
         """Set the entity's orientation from a rotation.
 
         Set the rotation of this entity from a 3x3 rotation matrix. This includes
-        NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
+        NumPy arrays, a :vtk:`vtkMatrix3x3`, and SciPy ``Rotation`` objects.
 
         This method may be used as an alternative for setting the :attr:`orientation`.
 
@@ -513,8 +524,8 @@ def _rotation_matrix_as_orientation(
 
     Parameters
     ----------
-    array : NumpyArray[float] | vtkMatrix3x3
-        3x3 rotation matrix as a NumPy array or a vtkMatrix.
+    array : NumpyArray[float] | :vtk:`vtkMatrix3x3`
+        3x3 rotation matrix as a NumPy array or a :vtk:`vtkMatrix3x3`.
 
     Returns
     -------
