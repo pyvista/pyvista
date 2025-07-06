@@ -126,7 +126,7 @@ def Capsule(  # noqa: PLR0917
         )
         algo.capsule_cap = True
     else:
-        algo = CapsuleSource(  # type: ignore[assignment]
+        algo = CapsuleSource(
             center=(0, 0, 0),
             direction=(1, 0, 0),
             radius=radius,
