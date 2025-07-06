@@ -218,6 +218,154 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
+    def slice_index(  # type: ignore[misc]
+        self: ImageData,
+        x: int | VectorLike[int] | slice | None = None,
+        y: int | VectorLike[int] | slice | None = None,
+        z: int | VectorLike[int] | slice | None = None,
+        *,
+        indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
+        strict_index: bool = False,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Extract a subset using IJK indices.
+
+        This filter enables slicing :class:`~pyvista.ImageData` with Python-style indexing using
+        IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
+        a volume of interest. Unlike other slicing filters, this filter returns
+        :class:`~pyvista.ImageData`.
+
+        .. note::
+            Slicing by index is also possible using the "get index" operator ``[]``. See examples.
+
+        .. versionadded::0.46
+
+        Parameters
+        ----------
+        x, y, z : int | sequence[int], optional
+            Indices to slice along the X, Y, and Z axes, respectively. Specify an integer for
+            a single index, or two integers ``(start, stop)`` for a range of indices.
+
+            .. note::
+
+                Like regular Python slicing:
+
+                - Half-open intervals are used, i.e. the ``start`` index is included in the range
+                  but the ``stop`` index is not.
+                - Negative indexing is supported.
+                - An ``IndexError`` is raised when a single integer is specified as the index and
+                  the index is out-of-bounds.
+                - An ``IndexError`` is `not` raised when a range is specified as the index and
+                  the index is out-of-bounds. This default can be overridden by setting
+                  ``strict_index=True``.
+
+        indexing_range : 'extent' | 'dimensions', default: 'dimensions'
+            Select the range of values available for indexing.
+
+            - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
+            - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
+              i.e. ``[offset, offset + dimensions - 1]``.
+
+            The main difference between these ranges is the inclusion or exclusion of the
+            :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
+            object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
+            definition of ``extent`` and considers the object's geometry.
+
+        strict_index : bool, default: False
+            Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
+            ``IndexError`` is only raised if a single integer index is out of range, but not when
+            a range of indices are specified; set this to ``True`` to raise in error in both cases.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Sliced mesh.
+
+        See Also
+        --------
+        extract_subset
+        :meth:`~pyvista.DataObjectFilters.slice`
+        :meth:`~pyvista.DataObjectFilters.slice_implicit`
+        :meth:`~pyvista.DataObjectFilters.slice_orthogonal`
+        :meth:`~pyvista.DataObjectFilters.slice_along_axis`
+        :meth:`~pyvista.DataObjectFilters.slice_along_line`
+
+        Examples
+        --------
+        Create a :class:`~pyvista.ImageData` mesh and give it some point data.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ImageData(dimensions=(10, 10, 10))
+        >>> mesh['data'] = range(mesh.n_points)
+
+        Extract a single slice along the z-axis.
+
+        >>> sliced = mesh.slice_index(z=5)
+        >>> sliced.dimensions
+        (10, 10, 1)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[:, :, 5]
+        >>> sliced == sliced2
+        True
+
+        Extract a volume of interest.
+
+        >>> sliced = mesh.slice_index(x=[1, 3], y=[2, 5], z=[5, 10])
+        >>> sliced.dimensions
+        (2, 3, 5)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[1:3, 2:5, 5:11]
+        >>> sliced == sliced2
+        True
+
+        Use ``None`` to implicitly define the start and/or stop indices.
+
+        >>> sliced = mesh.slice_index(x=[None, 3], y=[2, None], z=None)
+        >>> sliced.dimensions
+        (3, 8, 10)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[:3, 2:, :]
+        >>> sliced == sliced2
+        True
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+
+        def _set_default_start_and_stop(rng, default_start, default_stop):
+            if isinstance(rng, slice):
+                return rng
+            out = (default_start, default_stop) if rng is None else np.asanyarray(rng).tolist()
+            if isinstance(out, list) and len(out) >= 2:
+                if out[0] is None:
+                    out[0] = default_start
+                if out[1] is None:
+                    out[1] = default_stop
+            return out
+
+        if x is None and y is None and z is None:
+            msg = 'No indices were provided for slicing.'
+            raise TypeError(msg)
+
+        lower = (0, 0, 0) if indexing_range == 'dimensions' else self.offset
+        indices = tuple(
+            _set_default_start_and_stop(slc, low, dim)
+            for slc, low, dim in zip((x, y, z), lower, self.dimensions)
+        )
+        voi = self._compute_voi_from_index(
+            indices, indexing_range=indexing_range, strict_index=strict_index
+        )
+        return self._extract_voi(voi, progress_bar=progress_bar)
+
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
         self,
@@ -264,14 +412,12 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             ImageData subset.
 
+        See Also
+        --------
+        slice_index
+
         """
-        alg = _vtk.vtkExtractVOI()
-        alg.SetVOI(voi)
-        alg.SetInputDataObject(self)
-        alg.SetSampleRate(rate)
-        alg.SetIncludeBoundary(boundary)
-        _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
-        result = _get_output(alg)
+        result = self._extract_voi(voi, rate=rate, boundary=boundary, progress_bar=progress_bar)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
         fixed = pyvista.ImageData()
@@ -283,6 +429,28 @@ class ImageDataFilters(DataSetFilters):
         fixed.field_data.update(result.field_data)
         fixed.copy_meta_from(result, deep=True)
         return fixed
+
+    def _extract_voi(self, voi, *, rate=(1, 1, 1), boundary=False, progress_bar=False):
+        alg = _vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(self)
+        alg.SetSampleRate(rate)
+        alg.SetIncludeBoundary(boundary)
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
+        return _get_output(alg)
+
+    def _clip_voi(  # type: ignore[misc]
+        self: ImageData, voi: tuple[int, int, int, int, int, int] | list[int]
+    ) -> tuple[int, int, int, int, int, int]:
+        extent = self.extent
+        out = list(voi)
+        for axis in range(2):
+            min_ind = axis * 2
+            max_ind = axis * 2 + 1
+
+            out[min_ind] = max(voi[min_ind], extent[min_ind])
+            out[max_ind] = min(voi[max_ind], extent[max_ind])
+        return cast('tuple[int, int, int, int, int, int]', tuple(out))
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
