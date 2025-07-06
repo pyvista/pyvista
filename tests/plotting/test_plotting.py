@@ -3192,7 +3192,6 @@ def test_ssao_pass_from_helper():
     ugrid.plot(ssao=True)
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.skip_windows
 def test_many_multi_pass(verify_image_cache):
     verify_image_cache.high_variance_test = True
