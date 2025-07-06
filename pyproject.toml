@@ -86,7 +86,7 @@ test = [
   'pyanalyze<=0.13.1',
   'pytest-cov<6.2.0',
   'pytest-mypy-plugins<3.3.0',
-  'pytest-pyvista==0.1.8',
+  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista@main',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
   'pytest_cases<3.8.7',
@@ -124,9 +124,9 @@ docs = [
   'mypy==1.15.0',
   'numpydoc==1.8.0',
   'osmnx==2.0.2',
-  'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pydata-sphinx-theme==0.15.4',                                         # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
-  'pytest-pyvista==0.1.8',
+  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista@main',
   'pytest-sphinx==0.6.3',
   'scipy==1.15.2',
   'sphinx-autobuild==2024.10.3',
@@ -229,6 +229,8 @@ filterwarnings = [
 
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
+
+failed_image_dir = '_failed_test_images'
 image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
