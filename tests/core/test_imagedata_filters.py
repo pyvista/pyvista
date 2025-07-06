@@ -414,6 +414,15 @@ def test_contour_labels_raises_vtkversionerror():
         pv.ImageData().contour_labels()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_empty_input(frog_tissues):
+    voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
+    background_value = 0
+    assert np.allclose(voi.active_scalars, background_value)
+    surface = voi.contour_labels(background_value=background_value)
+    assert surface.is_empty
+
+
 @pytest.fixture
 def uniform_many_scalars(uniform):
     uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
@@ -830,6 +839,19 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
     assert np.all(padded.active_scalars == new_value)
     assert np.all(padded['scalars2'] == new_value * 2)
+
+
+def test_pad_image_multi_component_with_scalar(beach):
+    # Image has rgb scalars
+    first_value = beach.active_scalars[0]
+    assert len(first_value) == 3
+
+    # Test padding with single (non-rgb) value works
+    zero = 0
+    padded = beach.pad_image(zero)
+    new_first_value = padded.active_scalars[0]
+    assert not np.array_equal(new_first_value, first_value)
+    assert np.array_equal(new_first_value, (zero, zero, zero))
 
 
 def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
