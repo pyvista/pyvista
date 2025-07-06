@@ -920,6 +920,27 @@ def test_copy_vtk_array():
     assert new_value == arr_copy_shallow.GetValue(1)
 
 
+def test_copy_implicit_vtk_array(plane):
+    # Use the connectivity filter to generate an implicit vtkDataArray
+    conn = plane.connectivity()
+    vtk_object = conn['RegionId'].VTKObject
+    if pv.vtk_version_info >= (9, 4):
+        # The VTK array appears to be abstract but is not
+        assert type(vtk_object) is vtk.vtkDataArray
+    else:
+        assert type(vtk_object) is vtk.vtkIdTypeArray
+
+    # `copy_vtk_array` is called with this assignment
+    plane['test'] = conn['RegionId']
+
+    new_vtk_object = plane['test'].VTKObject
+    if pv.vtk_version_info >= (9, 4):
+        # The VTK array type has changed and is now a concrete subclass
+        assert type(new_vtk_object) is vtk.vtkUnsignedIntArray
+    else:
+        assert type(new_vtk_object) is vtk.vtkIdTypeArray
+
+
 def test_cartesian_to_spherical():
     def polar2cart(r, phi, theta):
         return np.vstack(
