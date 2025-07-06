@@ -34,7 +34,7 @@ env:
   CACHE_FOLDER_NAME: vtk-data
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
-    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
+    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch --disallow_unused_cache
     --generated_image_dir debug_images
 
 permissions:
@@ -121,7 +121,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --generated_image_dir debug_images
+        run: pytest -v tests/plotting --generated_image_dir debug_images --disallow_unused_cache
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -410,7 +410,7 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --generated_image_dir debug_images
+        run: python -m pytest -v tests/plotting --generated_image_dir debug_images --disallow_unused_cache
 
       - name: Upload Images for Failed Tests
         if: always()
