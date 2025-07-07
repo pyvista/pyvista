@@ -203,7 +203,6 @@ skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doct
 
 [tool.coverage.run]
 omit = [
-  'pyvista/conftest.py',
   'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
