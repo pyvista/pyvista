@@ -353,6 +353,9 @@ from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.4
+    from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation
