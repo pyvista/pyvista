@@ -1715,13 +1715,13 @@ class ImageDataFilters(DataSetFilters):
 
         if orient_faces and output.n_cells > 0:
             if pyvista.vtk_version_info >= (9, 4):
-                alg = _vtk.vtkOrientPolyData()
-                alg.SetInputData(output)
-                alg.ConsistencyOn()
-                alg.AutoOrientNormalsOn()
-                alg.NonManifoldTraversalOn()
-                alg.Update()
-                oriented = wrap(alg.GetOutput())
+                filter_ = _vtk.vtkOrientPolyData()
+                filter_.SetInputData(output)
+                filter_.ConsistencyOn()
+                filter_.AutoOrientNormalsOn()
+                filter_.NonManifoldTraversalOn()
+                filter_.Update()
+                oriented = wrap(filter_.GetOutput())
                 output.points = oriented.points
                 output.faces = oriented.faces
             else:
