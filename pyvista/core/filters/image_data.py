@@ -1721,8 +1721,9 @@ class ImageDataFilters(DataSetFilters):
                 alg.AutoOrientNormalsOn()
                 alg.NonManifoldTraversalOn()
                 alg.Update()
-                oriented = alg.GetOutput()
-                output.copy_structure(oriented)
+                oriented = wrap(alg.GetOutput())
+                output.points = oriented.points
+                output.faces = oriented.faces
             else:
                 # Orient the faces but discard the normals array
                 output.compute_normals(
