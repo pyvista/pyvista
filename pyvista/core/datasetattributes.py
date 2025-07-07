@@ -1329,6 +1329,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __eq__(self: Self, other: object) -> bool:
         """Test dict-like equivalency."""
+
+        def array_equal_nan(array1: npt.ArrayLike, array2: npt.ArrayLike) -> bool:
+            # Check with `equal_nan=True` but only for floats since this fails for strings
+            # See numpy/numpy#16377
+            return (
+                np.issubdtype(np.asanyarray(array1).dtype, np.floating)
+                and np.issubdtype(np.asanyarray(array2).dtype, np.floating)
+                and np.array_equal(array1, array2, equal_nan=True)
+            )
+
         # here we check if other is the same class or a subclass of self.
         if not isinstance(other, type(self)):
             return False
@@ -1338,7 +1348,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         # verify the value of the arrays
         for key, value in other.items():
-            if not np.array_equal(value, self[key]):
+            if not np.array_equal(value, self[key]) and not array_equal_nan(value, self[key]):
                 return False
 
         # check the name of the active attributes
@@ -1506,14 +1516,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> mesh.point_data.active_texture_coordinates
-        pyvista_ndarray([[ 0.,  0.],
-                         [ 1.,  0.],
-                         [ 1.,  1.],
+        pyvista_ndarray([[-0.,  0.],
+                         [ 0.,  0.],
                          [ 0.,  1.],
-                         [-0.,  0.],
                          [-0.,  1.],
+                         [-1.,  0.],
                          [-1.,  1.],
-                         [-1.,  0.]], dtype=float32)
+                         [ 1.,  1.],
+                         [ 1.,  0.]], dtype=float32)
 
         """
         self._raise_no_texture_coordinates()

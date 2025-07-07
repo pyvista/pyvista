@@ -34,12 +34,9 @@ env:
   CACHE_FOLDER_NAME: vtk-data
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
-    -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
-    --fail_extra_image_cache --generated_image_dir debug_images -n auto --dist=loadgroup
-  PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
-  PLOTTING_TEST_MODULES_NO_CHARTS: >
-    tests/plotting
-    --ignore=tests/plotting/test_charts.py
+    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
+    --fail_extra_image_cache --generated_image_dir debug_images
+    -n auto --dist=loadgroup
 
 permissions:
   id-token: none
@@ -223,7 +220,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n auto --dist=loadgroup
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@7ca5f46d061ad9aa95863cd9b214dd48edef361d
         if: always()
         with:
           packages: xvfb
@@ -236,15 +233,7 @@ jobs:
       - name: Plotting Testing (uses GL)
         if: always()
         run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_NO_CHARTS \
-            $LINUX_PLOTTING_ARGS
-
-      - name: Plotting Testing (charts only)
-        run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_CHARTS \
-            $LINUX_PLOTTING_ARGS
+          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
@@ -260,7 +249,7 @@ jobs:
           which python
           pip list
 
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -326,7 +315,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n auto --dist=loadgroup
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@7ca5f46d061ad9aa95863cd9b214dd48edef361d
         if: always()
         with:
           packages: xvfb
@@ -339,15 +328,7 @@ jobs:
       - name: Plotting Testing (uses GL)
         if: always()
         run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_NO_CHARTS \
-            $LINUX_PLOTTING_ARGS
-
-      - name: Plotting Testing (charts only)
-        run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_CHARTS \
-            $LINUX_PLOTTING_ARGS
+          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
@@ -394,7 +375,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v4.2
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Install PyVista test dependencies
         run: |

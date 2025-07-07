@@ -2042,9 +2042,9 @@ class DataSetFilters(DataObjectFilters):
         >>> conn = mesh.connectivity('closest', (0, 0, 0))
         >>> conn.plot(color='blue', show_edges=True)
 
-        Extract a region using a cell ID ``100`` as a seed.
+        Extract a region using a cell ID ``3100`` as a seed.
 
-        >>> conn = mesh.connectivity('cell_seed', 100)
+        >>> conn = mesh.connectivity('cell_seed', 3100)
         >>> conn.plot(color='green', show_edges=True)
 
         Extract the largest region.

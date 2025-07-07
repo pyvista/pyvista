@@ -586,7 +586,7 @@ def test_merge_main_has_priority(input_, main_has_priority):
             for j in (this.points == point).all(-1).nonzero()
         )
 
-    if pv.vtk_version_info > (9, 5, 0):
+    if pv.vtk_version_info >= (9, 5, 0):
         merged = mesh.merge(other)
         expected_to_match = mesh
     else:
@@ -603,7 +603,7 @@ def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
         "The keyword 'main_has_priority' is deprecated and should not be used.\n"
         'The main mesh will always have priority in a future version.'
     )
-    if main_has_priority is False and pv.vtk_version_info > (9, 5, 0):
+    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
