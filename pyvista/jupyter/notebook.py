@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
+import PIL.Image
 
 if TYPE_CHECKING:
     import io
@@ -65,8 +66,6 @@ def show_static_image(
     screenshot: str | Path | io.BytesIO | bool | None,  # noqa: FBT001
 ) -> Image:  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
-    import PIL.Image
-
     if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()

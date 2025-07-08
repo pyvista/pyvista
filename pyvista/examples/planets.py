@@ -8,6 +8,7 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+from pyvista.plotting.texture import Texture
 
 
 def _download_dataset_texture(
@@ -15,8 +16,6 @@ def _download_dataset_texture(
 ):
     dataset = _download_dataset(loader, load=load)
     if texture:
-        from pyvista.plotting.texture import Texture
-
         return Texture(dataset)  # type: ignore[abstract]
     return dataset
 

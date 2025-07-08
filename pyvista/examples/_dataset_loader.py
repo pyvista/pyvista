@@ -429,8 +429,8 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
         from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
         from pyvista.examples.downloads import _download_archive_file_or_folder  # noqa: PLC0415
-        from pyvista.examples.downloads import download_file
-        from pyvista.examples.downloads import file_from_files
+        from pyvista.examples.downloads import download_file  # noqa: PLC0415
+        from pyvista.examples.downloads import file_from_files  # noqa: PLC0415
         from pyvista.examples.examples import dir_path
 
         if Path(path).is_absolute():
