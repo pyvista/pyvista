@@ -20,6 +20,18 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
+
+# Optional matplotlib imports
+try:
+    import matplotlib.colors
+    from matplotlib import pyplot as plt
+except ImportError:
+    matplotlib = None
+    plt = None
+
+# Import plotting-related modules
+from pyvista.core._validation.validate import _validate_color_sequence
+from pyvista.plotting.colors import get_cmap_safe
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -1175,8 +1187,6 @@ class DataSetFilters(DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation
-
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
         alg = _vtk.vtkGaussianSplatter()
@@ -3606,8 +3616,8 @@ class DataSetFilters(DataObjectFilters):
         See the :ref:`plot_over_line_example` example.
 
         """
-        from matplotlib import pyplot as plt
-
+        if plt is None:
+            raise ImportError('matplotlib is required for this functionality')
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
             self,
@@ -3959,8 +3969,8 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
-
+        if plt is None:
+            raise ImportError('matplotlib is required for this functionality')
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
             self,
@@ -4100,8 +4110,8 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
-
+        if plt is None:
+            raise ImportError('matplotlib is required for this functionality')
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
             self,
@@ -7235,12 +7245,6 @@ class DataSetFilters(DataObjectFilters):
 
 
         """
-        # Lazy import since these are from plotting module
-        import matplotlib.colors
-
-        from pyvista.core._validation.validate import _validate_color_sequence
-        from pyvista.plotting.colors import get_cmap_safe
-
         def _local_validate_color_sequence(
             seq: ColorLike | Sequence[ColorLike],
         ) -> Sequence[Color]:
