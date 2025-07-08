@@ -131,7 +131,7 @@ def set_plot_theme(theme):
     >>> pv.set_plot_theme('paraview')
 
     """
-    import pyvista
+    import pyvista  # noqa: PLC0415
 
     if isinstance(theme, str):
         theme = theme.lower()
@@ -2127,7 +2127,7 @@ class Theme(_ThemeConfig):
 
     @jupyter_backend.setter
     def jupyter_backend(self, backend: str):
-        from pyvista.jupyter import _validate_jupyter_backend
+        from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
