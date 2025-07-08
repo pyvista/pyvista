@@ -56,6 +56,7 @@ try:  # meshio<5.0 compatibility
 except ImportError:  # pragma: no cover
     from meshio._vtk_common import meshio_to_vtk_type
     from meshio._vtk_common import vtk_to_meshio_type
+
     try:
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
     except ImportError:

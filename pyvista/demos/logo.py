@@ -20,12 +20,12 @@ import os
 from pathlib import Path
 
 import numpy as np
+from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 

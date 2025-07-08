@@ -105,7 +105,7 @@ def test_plotter_store_mouse_position_raises(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
+    from pyvista.plotting import plotter  # noqa: PLC0415
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
     m.return_value = pv.MultiBlock(), 'foo'
@@ -119,7 +119,7 @@ def test_plotter_add_mesh_multiblock_algo_raises(mocker: MockerFixture):
 
 
 def test_plotter_add_mesh_smooth_shading_algo_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
+    from pyvista.plotting import plotter  # noqa: PLC0415
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
     m.return_value = pv.PolyData(), 'foo'
@@ -145,7 +145,7 @@ def test_plotter_add_mesh_scalars_rgb_raises():
 
 
 def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
+    from pyvista.plotting import plotter  # noqa: PLC0415
 
     pl = pv.Plotter()
     with pytest.raises(
@@ -174,7 +174,7 @@ def test_plotter_add_volume_scalar_raises():
 
 
 def test_plotter_add_volume_resolution_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
+    from pyvista.plotting import plotter  # noqa: PLC0415
 
     pl = pv.Plotter()
     mocker.patch.object(plotter, 'wrap')
@@ -248,7 +248,7 @@ def test_add_point_labels_raises(points):
 
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_add_point_labels_algo_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
+    from pyvista.plotting import plotter  # noqa: PLC0415
 
     m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
     m.return_value = pv.PolyData(), vtk.vtkAlgorithm()
@@ -295,7 +295,7 @@ def test_save_image_raises(mocker: MockerFixture):
 
 
 def test_add_volume_scalar_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotter
+    from pyvista.plotting import plotter  # noqa: PLC0415
 
     m = mocker.patch.object(plotter, 'get_array')
     m().ndim = 1

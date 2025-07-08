@@ -26,9 +26,9 @@ import importlib
 import importlib.util
 import logging
 import os
-import pickle
 from pathlib import Path
 from pathlib import PureWindowsPath
+import pickle
 import shutil
 import sys
 from typing import cast

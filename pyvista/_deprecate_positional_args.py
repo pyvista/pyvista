@@ -62,7 +62,6 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
-
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
@@ -227,7 +226,6 @@ def _deprecate_positional_args(
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
-
                         msg = (
                             f'\n{call_site()}: '
                             f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '

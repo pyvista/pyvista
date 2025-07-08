@@ -431,7 +431,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         from pyvista.examples.downloads import _download_archive_file_or_folder  # noqa: PLC0415
         from pyvista.examples.downloads import download_file  # noqa: PLC0415
         from pyvista.examples.downloads import file_from_files  # noqa: PLC0415
-        from pyvista.examples.examples import dir_path
+        from pyvista.examples.examples import dir_path  # noqa: PLC0415
 
         if Path(path).is_absolute():
             # Absolute path must point to a built-in dataset

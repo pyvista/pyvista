@@ -34,7 +34,7 @@ def test_cmap_values_raises():
 
 
 def test_call_raises(lut: LookupError, mocker: MockerFixture):
-    from pyvista.plotting import lookup_table
+    from pyvista.plotting import lookup_table  # noqa: PLC0415
 
     m = mocker.patch.object(lookup_table, 'np')
     m.array.side_effect = TypeError

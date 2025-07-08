@@ -7248,6 +7248,7 @@ class DataSetFilters(DataObjectFilters):
 
 
         """
+
         def _local_validate_color_sequence(
             seq: ColorLike | Sequence[ColorLike],
         ) -> Sequence[Color]:

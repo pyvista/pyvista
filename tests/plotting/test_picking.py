@@ -601,7 +601,7 @@ def test_switch_picking_type():
 def test_picker_raises(picker, mocker: MockerFixture):
     pl = pv.Plotter()  # patching need to occur after init
 
-    from pyvista.plotting import picking
+    from pyvista.plotting import picking  # noqa: PLC0415
 
     m = mocker.patch.object(typ := picking.PickerType, 'from_any')
     m.return_value = None

@@ -65,7 +65,7 @@ def test_process_events_raises(mocker: MockerFixture):
 def test_picker_raises(picker, mocker: MockerFixture):
     pl = pv.Plotter()  # patching need to occur after init
 
-    from pyvista.plotting import render_window_interactor
+    from pyvista.plotting import render_window_interactor  # noqa: PLC0415
 
     m = mocker.patch.object(render_window_interactor.PickerType, 'from_any')
     m.return_value = (v := len(list(render_window_interactor.PickerType)))

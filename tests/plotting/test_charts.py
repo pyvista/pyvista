@@ -77,7 +77,7 @@ def chart_pie():
 
 @pytest.fixture
 def chart_mpl():
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     f, ax = plt.subplots()
     ax.plot([0, 1, 2], [3, 1, 2])
@@ -1005,7 +1005,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 @pytest.mark.skip_plotting
 def test_chart_mpl(pl):
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -1039,7 +1039,7 @@ def test_chart_mpl(pl):
 
 @pytest.mark.skip_plotting
 def test_chart_mpl_update(pl):
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     # Create simple chart
     x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]

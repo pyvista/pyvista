@@ -1226,7 +1226,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        from pyvista import examples  # avoid circular import
+        from pyvista import examples  # avoid circular import  # noqa: PLC0415
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
@@ -1262,7 +1262,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
-        from pyvista.core.errors import VTKVersionError
+        from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
