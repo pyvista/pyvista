@@ -503,7 +503,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkGLTFImporter
+        from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
 
         importer = vtkGLTFImporter()
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover

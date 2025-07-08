@@ -251,7 +251,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         if culling is not None:
             self.culling = culling
         if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
-            import warnings
+            import warnings  # noqa: PLC0415
 
             warnings.warn(
                 '`edge_opacity` cannot be used under VTK v9.3.0. '
@@ -1186,7 +1186,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -1195,7 +1195,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     @anisotropy.setter
     def anisotropy(self, value: float):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
