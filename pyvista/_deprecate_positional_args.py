@@ -13,6 +13,8 @@ import warnings
 
 from typing_extensions import ParamSpec
 
+from pyvista._version import version_info
+
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
 
@@ -59,8 +61,6 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
-        from pyvista._version import version_info
-
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 

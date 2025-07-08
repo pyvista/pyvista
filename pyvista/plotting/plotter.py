@@ -14,6 +14,7 @@ from copy import deepcopy
 import ctypes
 from functools import wraps
 import io
+from itertools import cycle
 import logging
 import os
 from pathlib import Path
@@ -4407,8 +4408,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             name = f'{type(volume).__name__}({volume.memory_address})'
 
         if isinstance(volume, pyvista.MultiBlock):
-            from itertools import cycle
-
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
