@@ -263,7 +263,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
                         return False
         return True
 
-    __hash__ = None  # type: ignore[assignment]
+    __hash__ = None  # type: ignore[assignment]  # Mutable class
 
     def __del__(self):
         """Clean up when the light is being destroyed."""

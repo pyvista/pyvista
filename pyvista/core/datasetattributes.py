@@ -1360,7 +1360,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         return True
 
-    __hash__ = None  # type: ignore[assignment]
+    __hash__ = None  # type: ignore[assignment]  # Mutable class
 
     @property
     def active_normals(self: Self) -> pyvista_ndarray | None:

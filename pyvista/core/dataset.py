@@ -170,7 +170,7 @@ class ActiveArrayInfo:
             return self.name == other.name and same_association
         return False
 
-    __hash__ = None  # type: ignore[assignment]
+    __hash__ = None  # type: ignore[assignment]  # Mutable class
 
 
 @promote_type(_vtk.vtkDataSet)
