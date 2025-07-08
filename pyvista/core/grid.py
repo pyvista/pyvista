@@ -918,7 +918,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         # Use linspace to avoid rounding error accumulation
         dims = self.dimensions
         spacing = self.spacing
-        origin = self.origin
+        origin = np.array(self.origin) + np.array(self.offset)
         return [
             (np.linspace(0, (dims[i] - 1) * spacing[i], dims[i]) + origin[i]) for i in range(3)
         ]

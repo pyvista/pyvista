@@ -1041,7 +1041,7 @@ def test_cast_uniform_to_structured():
 
 
 def test_cast_uniform_to_rectilinear():
-    grid = examples.load_uniform()
+    grid = pv.Wavelet()  # Uses an offset
     rectilinear = grid.cast_to_rectilinear_grid()
     assert rectilinear.n_points == grid.n_points
     assert rectilinear.n_arrays == grid.n_arrays
