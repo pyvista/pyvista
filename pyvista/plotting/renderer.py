@@ -271,6 +271,8 @@ class CameraPosition:
             return self.to_list() == other.to_list()
         return self.to_list() == other
 
+    __hash__ = None  # type: ignore[assignment]
+
     @property
     def position(self):  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""

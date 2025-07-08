@@ -484,6 +484,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         return True
 
+    __hash__ = None  # type: ignore[assignment]
+
     @_deprecate_positional_args(allowed=['array', 'name'])
     def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.

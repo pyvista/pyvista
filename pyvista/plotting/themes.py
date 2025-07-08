@@ -212,6 +212,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
         return True
 
+    __hash__ = None  # type: ignore[assignment]
+
     def __getitem__(self, key):
         """Get a value via a key.
 

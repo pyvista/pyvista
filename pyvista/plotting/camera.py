@@ -82,6 +82,8 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
             return False
         return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
 
+    __hash__ = None  # type: ignore[assignment]
+
     def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""
         repr_str = f'{self.__class__.__name__} ({hex(id(self))})'
