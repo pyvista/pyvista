@@ -2941,7 +2941,7 @@ class WidgetHelper:
 
         """
         try:
-            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget  # noqa: PLC0415
+            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
