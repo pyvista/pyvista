@@ -59,14 +59,14 @@ def test_common_utilities_import_paths():
         from pyvista.utilities import abstract_class  # noqa: F401
         from pyvista.utilities import assert_empty_kwargs  # noqa: F401
         from pyvista.utilities import conditional_decorator  # noqa: F401
-        from pyvista.utilities import convert_string_array  # noqa: F401
-        from pyvista.utilities import generate_plane  # noqa: F401
-        from pyvista.utilities import get_array  # noqa: F401
-        from pyvista.utilities import get_array_association  # noqa: F401
-        from pyvista.utilities import get_vtk_type  # noqa: F401
-        from pyvista.utilities import threaded  # noqa: F401
-        from pyvista.utilities import try_callback  # noqa: F401
-        from pyvista.utilities import xvfb  # noqa: F401
+        from pyvista.utilities import convert_string_array  # noqa: F401, PLC0415
+        from pyvista.utilities import generate_plane  # noqa: F401, PLC0415
+        from pyvista.utilities import get_array  # noqa: F401, PLC0415
+        from pyvista.utilities import get_array_association  # noqa: F401, PLC0415
+        from pyvista.utilities import get_vtk_type  # noqa: F401, PLC0415
+        from pyvista.utilities import threaded  # noqa: F401, PLC0415
+        from pyvista.utilities import try_callback  # noqa: F401, PLC0415
+        from pyvista.utilities import xvfb  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import add_ids_algorithm  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import algorithm_to_mesh_handler  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import crinkle_algorithm  # noqa: F401, PLC0415
