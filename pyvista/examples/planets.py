@@ -15,7 +15,7 @@ def _download_dataset_texture(
 ):
     dataset = _download_dataset(loader, load=load)
     if texture:
-        from pyvista.plotting.texture import Texture
+        from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
         return Texture(dataset)  # type: ignore[abstract]
     return dataset

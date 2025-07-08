@@ -102,8 +102,8 @@ def __getattr__(name):
         If the attribute is not found.
 
     """
-    import importlib
-    import inspect
+    import importlib  # noqa: PLC0415
+    import inspect  # noqa: PLC0415
 
     allow = {
         'demos',
@@ -117,7 +117,7 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting  # noqa: F401
+        import pyvista.plotting  # noqa: F401, PLC0415
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)

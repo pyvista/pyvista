@@ -225,7 +225,7 @@ def _deprecate_positional_args(
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
-                        from pyvista.core.errors import PyVistaDeprecationWarning
+                        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
                         msg = (
                             f'\n{call_site()}: '

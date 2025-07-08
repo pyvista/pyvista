@@ -72,7 +72,7 @@ def __getattr__(name):
         f'as: `{import_path}`.'
     )
 
-    from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
     warnings.warn(
         message,

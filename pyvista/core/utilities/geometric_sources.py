@@ -1528,7 +1528,7 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             self.SetCenter(*center)
         else:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
             raise VTKVersionError(msg)
@@ -1874,7 +1874,7 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
         if pyvista.vtk_version_info >= (9, 2):
             self.SetCenter(*center)
         else:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
             raise VTKVersionError(msg)

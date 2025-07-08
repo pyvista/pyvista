@@ -573,7 +573,7 @@ class _Prop3DMixin(ABC):
     """
 
     def __init__(self) -> None:
-        from pyvista import Actor  # Avoid circular import
+        from pyvista import Actor  # Avoid circular import  # noqa: PLC0415
 
         self._prop3d = Actor()
 

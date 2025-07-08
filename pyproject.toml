@@ -393,7 +393,6 @@ ignore = [
   'ISC001',  # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
-  'PLC0415',
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
   'PLR0915', # Too many statements
@@ -419,7 +418,7 @@ allow-dict-calls-with-keyword-arguments = true
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
 '__init__.py' = ['PLC0414']
-'doc/*' = ['ANN', 'INP']
+'doc/*' = ['ANN', 'INP', 'PLC0415']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -429,16 +428,17 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH123',
   'T20',
 ]
-'examples*' = ['ANN', 'INP']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
-  'B015',   # https://github.com/pyvista/pyvista/pull/6014
-  'B018',   # https://github.com/pyvista/pyvista/pull/6019
+  'B015',    # https://github.com/pyvista/pyvista/pull/6014
+  'B018',    # https://github.com/pyvista/pyvista/pull/6019
   'D102',
   'D103',
   'D205',
   'D212',
   'D400',
   'D415',
+  'PLC0415',
   'SIM115',
   'T20',
 ]
@@ -522,7 +522,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/report.py' = ['ANN']
 'pyvista/trame/*' = ['ANN', 'FBT', 'PLR0917']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
-'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLR0917', 'T20']
+'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'T20']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',

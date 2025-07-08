@@ -1,0 +1,1356 @@
+pyvista/__init__.py:105:5: PLC0415 `import` should be at the top-level of a file
+    |
+104 |     """
+105 |     import importlib
+    |     ^^^^^^^^^^^^^^^^ PLC0415
+106 |     import inspect
+    |
+
+pyvista/__init__.py:106:5: PLC0415 `import` should be at the top-level of a file
+    |
+104 |     """
+105 |     import importlib
+106 |     import inspect
+    |     ^^^^^^^^^^^^^^ PLC0415
+107 |
+108 |     allow = {
+    |
+
+pyvista/__init__.py:120:9: PLC0415 `import` should be at the top-level of a file
+    |
+118 |     # avoid recursive import
+119 |     if 'pyvista.plotting' not in sys.modules:
+120 |         import pyvista.plotting  # noqa: F401
+    |         ^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+121 |
+122 |     try:
+    |
+
+pyvista/_deprecate_positional_args.py:62:9: PLC0415 `import` should be at the top-level of a file
+   |
+61 |     def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
+62 |         from pyvista._version import version_info
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+63 |
+64 |         def qualified_name() -> str:
+   |
+
+pyvista/_deprecate_positional_args.py:228:25: PLC0415 `import` should be at the top-level of a file
+    |
+227 |                     def warn_positional_args() -> None:
+228 |                         from pyvista.core.errors import PyVistaDeprecationWarning
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+229 |
+230 |                         msg = (
+    |
+
+pyvista/core/_validation/validate.py:711:17: PLC0415 `import` should be at the top-level of a file
+    |
+709 |         except TypeError:
+710 |             try:
+711 |                 from scipy.spatial.transform import Rotation
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+712 |             except ModuleNotFoundError:  # pragma: no cover
+713 |                 pass
+    |
+
+pyvista/core/_validation/validate.py:1280:5: PLC0415 `import` should be at the top-level of a file
+     |
+1278 |     If `n_colors` is None, no broadcasting or length-checking is performed.
+1279 |     """
+1280 |     from pyvista.plotting.colors import Color
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1281 |
+1282 |     try:
+     |
+
+pyvista/core/_vtk_core.py:581:13: PLC0415 `import` should be at the top-level of a file
+    |
+579 |         def __init__(self):  # pragma: no cover
+580 |             """Raise version error on init."""
+581 |             from pyvista.core.errors import VTKVersionError
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+582 |
+583 |             msg = 'Chart backgrounds require the vtkPythonContext2D module'
+    |
+
+pyvista/core/_vtk_core.py:679:13: PLC0415 `import` should be at the top-level of a file
+    |
+677 |             # Raise error if accessing attributes from VTK's pythonic snake_case API
+678 |
+679 |             import pyvista as pv
+    |             ^^^^^^^^^^^^^^^^^^^^ PLC0415
+680 |
+681 |             state = pv._VTK_SNAKE_CASE_STATE
+    |
+
+pyvista/core/dataobject.py:171:21: PLC0415 `import` should be at the top-level of a file
+    |
+169 |                 if len(nested_multiblock.field_data.keys()) > 0:
+170 |                     # Avoid circular import
+171 |                     from pyvista.core.filters.composite import _format_nested_index
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+172 |
+173 |                     index_fmt = _format_nested_index(index)
+    |
+
+pyvista/core/dataobject.py:206:21: PLC0415 `import` should be at the top-level of a file
+    |
+204 |             for id_, name, block in mesh.recursive_iterator('all'):
+205 |                 if type(block) not in supported_block_types:
+206 |                     from pyvista.core.filters.composite import _format_nested_index
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+207 |
+208 |                     index_fmt = _format_nested_index(id_)
+    |
+
+pyvista/core/dataobject.py:366:17: PLC0415 `import` should be at the top-level of a file
+    |
+364 |             fmt += '\n'
+365 |             if display:
+366 |                 from IPython.display import HTML
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+367 |                 from IPython.display import display as _display
+    |
+
+pyvista/core/dataobject.py:367:17: PLC0415 `import` should be at the top-level of a file
+    |
+365 |             if display:
+366 |                 from IPython.display import HTML
+367 |                 from IPython.display import display as _display
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+368 |
+369 |                 _display(HTML(fmt))
+    |
+
+pyvista/core/filters/data_set.py:1178:9: PLC0415 `import` should be at the top-level of a file
+     |
+1177 |         """
+1178 |         from pyvista.core import _validation
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1179 |
+1180 |         _validation.check_range(radius, [0.0, 1.0], name='radius')
+     |
+
+pyvista/core/filters/data_set.py:3609:9: PLC0415 `import` should be at the top-level of a file
+     |
+3608 |         """
+3609 |         from matplotlib import pyplot as plt
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3610 |
+3611 |         # Sample on line
+     |
+
+pyvista/core/filters/data_set.py:3962:9: PLC0415 `import` should be at the top-level of a file
+     |
+3961 |         """
+3962 |         from matplotlib import pyplot as plt
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3963 |
+3964 |         # Sample on circular arc
+     |
+
+pyvista/core/filters/data_set.py:4103:9: PLC0415 `import` should be at the top-level of a file
+     |
+4102 |         """
+4103 |         from matplotlib import pyplot as plt
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+4104 |
+4105 |         # Sample on circular arc
+     |
+
+pyvista/core/filters/data_set.py:7239:9: PLC0415 `import` should be at the top-level of a file
+     |
+7237 |         """
+7238 |         # Lazy import since these are from plotting module
+7239 |         import matplotlib.colors
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+7240 |
+7241 |         from pyvista.core._validation.validate import _validate_color_sequence
+     |
+
+pyvista/core/filters/data_set.py:7241:9: PLC0415 `import` should be at the top-level of a file
+     |
+7239 |         import matplotlib.colors
+7240 |
+7241 |         from pyvista.core._validation.validate import _validate_color_sequence
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+7242 |         from pyvista.plotting.colors import get_cmap_safe
+     |
+
+pyvista/core/filters/data_set.py:7242:9: PLC0415 `import` should be at the top-level of a file
+     |
+7241 |         from pyvista.core._validation.validate import _validate_color_sequence
+7242 |         from pyvista.plotting.colors import get_cmap_safe
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+7243 |
+7244 |         def _local_validate_color_sequence(
+     |
+
+pyvista/core/filters/image_data.py:998:13: PLC0415 `import` should be at the top-level of a file
+     |
+ 997 |         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+ 998 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+ 999 |
+1000 |             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
+     |
+
+pyvista/core/filters/image_data.py:1604:13: PLC0415 `import` should be at the top-level of a file
+     |
+1603 |         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+1604 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1605 |
+1606 |             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
+     |
+
+pyvista/core/filters/poly_data.py:2619:13: PLC0415 `import` should be at the top-level of a file
+     |
+2618 |         try:
+2619 |             import trimesh
+     |             ^^^^^^^^^^^^^^ PLC0415
+2620 |
+2621 |             if not trimesh.ray.has_embree:
+     |
+
+pyvista/core/filters/unstructured_grid.py:144:13: PLC0415 `import` should be at the top-level of a file
+    |
+142 |         """
+143 |         try:
+144 |             from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+145 |         except ImportError:  # pragma no cover
+146 |             msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
+    |
+
+pyvista/core/objects.py:338:13: PLC0415 `import` should be at the top-level of a file
+    |
+336 |         """
+337 |         try:
+338 |             import pandas as pd
+    |             ^^^^^^^^^^^^^^^^^^^ PLC0415
+339 |         except ImportError:  # pragma: no cover
+340 |             msg = 'Install ``pandas`` to use this feature.'
+    |
+
+pyvista/core/utilities/arrays.py:878:5: PLC0415 `import` should be at the top-level of a file
+    |
+877 |     """
+878 |     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+879 |
+880 |     if mesh.active_vectors_name is None:
+    |
+
+pyvista/core/utilities/arrays.py:946:5: PLC0415 `import` should be at the top-level of a file
+    |
+945 |     """
+946 |     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+947 |
+948 |     if mesh.active_scalars_name is None:
+    |
+
+pyvista/core/utilities/cells.py:173:5: PLC0415 `import` should be at the top-level of a file
+    |
+172 |     """
+173 |     from .cell_type_helper import enum_cell_type_nr_points_map
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+174 |
+175 |     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
+    |
+
+pyvista/core/utilities/cells.py:263:5: PLC0415 `import` should be at the top-level of a file
+    |
+262 |     """
+263 |     from .cell_type_helper import enum_cell_type_nr_points_map
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+264 |
+265 |     return_dict = {}  # type: ignore[var-annotated]
+    |
+
+pyvista/core/utilities/docs.py:40:5: PLC0415 `import` should be at the top-level of a file
+   |
+39 |     """
+40 |     import pyvista
+   |     ^^^^^^^^^^^^^^ PLC0415
+41 |
+42 |     if domain != 'py':
+   |
+
+pyvista/core/utilities/features.py:839:5: PLC0415 `import` should be at the top-level of a file
+    |
+837 |     """
+838 |     # internal import to avoide circular dependency
+839 |     from pyvista.core.filters import _update_alg
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+840 |
+841 |     samp = _vtk.vtkSampleFunction()
+    |
+
+pyvista/core/utilities/fileio.py:155:5: PLC0415 `import` should be at the top-level of a file
+    |
+154 |     """
+155 |     from vtkmodules.vtkIOGeometry import vtkSTLWriter
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+156 |     from vtkmodules.vtkIOLegacy import vtkDataWriter
+157 |     from vtkmodules.vtkIOPLY import vtkPLYWriter
+    |
+
+pyvista/core/utilities/fileio.py:156:5: PLC0415 `import` should be at the top-level of a file
+    |
+154 |     """
+155 |     from vtkmodules.vtkIOGeometry import vtkSTLWriter
+156 |     from vtkmodules.vtkIOLegacy import vtkDataWriter
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+157 |     from vtkmodules.vtkIOPLY import vtkPLYWriter
+    |
+
+pyvista/core/utilities/fileio.py:157:5: PLC0415 `import` should be at the top-level of a file
+    |
+155 |     from vtkmodules.vtkIOGeometry import vtkSTLWriter
+156 |     from vtkmodules.vtkIOLegacy import vtkDataWriter
+157 |     from vtkmodules.vtkIOPLY import vtkPLYWriter
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+158 |
+159 |     if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
+    |
+
+pyvista/core/utilities/fileio.py:294:9: PLC0415 `import` should be at the top-level of a file
+    |
+292 |             msg = 'This file was not able to be automatically read by pyvista.'
+293 |             raise OSError(msg)
+294 |         from meshio._exceptions import ReadError
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+295 |
+296 |         try:
+    |
+
+pyvista/core/utilities/fileio.py:447:5: PLC0415 `import` should be at the top-level of a file
+    |
+446 |     """
+447 |     from .helpers import wrap
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+448 |
+449 |     # lazy import here to avoid loading module on import pyvista
+    |
+
+pyvista/core/utilities/fileio.py:451:9: PLC0415 `import` should be at the top-level of a file
+    |
+449 |     # lazy import here to avoid loading module on import pyvista
+450 |     try:
+451 |         from vtkmodules.vtkIOExodus import vtkExodusIIReader
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+452 |     except ImportError:
+453 |         from vtk import vtkExodusIIReader  # type: ignore[no-redef]
+    |
+
+pyvista/core/utilities/fileio.py:453:9: PLC0415 `import` should be at the top-level of a file
+    |
+451 |         from vtkmodules.vtkIOExodus import vtkExodusIIReader
+452 |     except ImportError:
+453 |         from vtk import vtkExodusIIReader  # type: ignore[no-redef]
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+454 |
+455 |     reader = vtkExodusIIReader()
+    |
+
+pyvista/core/utilities/fileio.py:948:9: PLC0415 `import` should be at the top-level of a file
+    |
+946 |     """
+947 |     try:
+948 |         import meshio
+    |         ^^^^^^^^^^^^^ PLC0415
+949 |
+950 |         return isinstance(obj, meshio.Mesh)
+    |
+
+pyvista/core/utilities/fileio.py:975:9: PLC0415 `import` should be at the top-level of a file
+    |
+973 |     """
+974 |     try:  # meshio<5.0 compatibility
+975 |         from meshio.vtk._vtk import meshio_to_vtk_type
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+976 |         from meshio.vtk._vtk import vtk_type_to_numnodes
+977 |     except ImportError:  # pragma: no cover
+    |
+
+pyvista/core/utilities/fileio.py:976:9: PLC0415 `import` should be at the top-level of a file
+    |
+974 |     try:  # meshio<5.0 compatibility
+975 |         from meshio.vtk._vtk import meshio_to_vtk_type
+976 |         from meshio.vtk._vtk import vtk_type_to_numnodes
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+977 |     except ImportError:  # pragma: no cover
+978 |         from meshio._vtk_common import meshio_to_vtk_type
+    |
+
+pyvista/core/utilities/fileio.py:978:9: PLC0415 `import` should be at the top-level of a file
+    |
+976 |         from meshio.vtk._vtk import vtk_type_to_numnodes
+977 |     except ImportError:  # pragma: no cover
+978 |         from meshio._vtk_common import meshio_to_vtk_type
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+979 |         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+    |
+
+pyvista/core/utilities/fileio.py:979:9: PLC0415 `import` should be at the top-level of a file
+    |
+977 |     except ImportError:  # pragma: no cover
+978 |         from meshio._vtk_common import meshio_to_vtk_type
+979 |         from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+980 |
+981 |     if len(mesh.cells) == 0:
+    |
+
+pyvista/core/utilities/fileio.py:1082:9: PLC0415 `import` should be at the top-level of a file
+     |
+1080 |     """
+1081 |     try:
+1082 |         import meshio
+     |         ^^^^^^^^^^^^^ PLC0415
+1083 |
+1084 |     except ImportError:  # pragma: no cover
+     |
+
+pyvista/core/utilities/fileio.py:1089:9: PLC0415 `import` should be at the top-level of a file
+     |
+1088 |     try:  # for meshio<5.0 compatibility
+1089 |         from meshio.vtk._vtk import vtk_to_meshio_type
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1090 |
+1091 |     except:  # pragma: no cover
+     |
+
+pyvista/core/utilities/fileio.py:1092:9: PLC0415 `import` should be at the top-level of a file
+     |
+1091 |     except:  # pragma: no cover
+1092 |         from meshio._vtk_common import vtk_to_meshio_type
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1093 |
+1094 |     # Cast to unstructured grid
+     |
+
+pyvista/core/utilities/fileio.py:1226:9: PLC0415 `import` should be at the top-level of a file
+     |
+1224 |     """
+1225 |     try:
+1226 |         import meshio
+     |         ^^^^^^^^^^^^^ PLC0415
+1227 |     except ImportError:  # pragma: no cover
+1228 |         msg = 'To use this feature install meshio with:\n\npip install meshio'
+     |
+
+pyvista/core/utilities/fileio.py:1301:9: PLC0415 `import` should be at the top-level of a file
+     |
+1299 |     """
+1300 |     try:
+1301 |         from imageio.v2 import imread
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1302 |     except ModuleNotFoundError:  # pragma: no cover
+1303 |         msg = (
+     |
+
+pyvista/core/utilities/geometric_sources.py:1531:13: PLC0415 `import` should be at the top-level of a file
+     |
+1529 |             self.SetCenter(*center)
+1530 |         else:  # pragma: no cover
+1531 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1532 |
+1533 |             msg = 'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+     |
+
+pyvista/core/utilities/geometric_sources.py:1877:13: PLC0415 `import` should be at the top-level of a file
+     |
+1875 |             self.SetCenter(*center)
+1876 |         else:  # pragma: no cover
+1877 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1878 |
+1879 |             msg = 'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+     |
+
+pyvista/core/utilities/observers.py:270:9: PLC0415 `import` should be at the top-level of a file
+    |
+268 |     def __enter__(self):
+269 |         """Enter event for ``with`` context."""
+270 |         from tqdm import tqdm
+    |         ^^^^^^^^^^^^^^^^^^^^^ PLC0415
+271 |
+272 |         # check if in main thread
+    |
+
+pyvista/core/utilities/reader.py:43:5: PLC0415 `import` should be at the top-level of a file
+   |
+41 | def lazy_vtkPOpenFOAMReader():
+42 |     """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
+43 |     from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+44 |     from vtkmodules.vtkParallelCore import vtkDummyController
+   |
+
+pyvista/core/utilities/reader.py:44:5: PLC0415 `import` should be at the top-level of a file
+   |
+42 |     """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
+43 |     from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+44 |     from vtkmodules.vtkParallelCore import vtkDummyController
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+45 |
+46 |     # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
+   |
+
+pyvista/core/utilities/reader.py:424:9: PLC0415 `import` should be at the top-level of a file
+    |
+423 |         """
+424 |         from pyvista.core.filters import _update_alg  # avoid circular import
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+425 |
+426 |         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+    |
+
+pyvista/core/utilities/reader.py:2677:9: PLC0415 `import` should be at the top-level of a file
+     |
+2675 |     def Update(self) -> None:
+2676 |         """Read the GIF and store internally to `_data_object`."""
+2677 |         from PIL import Image
+     |         ^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2678 |         from PIL import ImageSequence
+     |
+
+pyvista/core/utilities/reader.py:2678:9: PLC0415 `import` should be at the top-level of a file
+     |
+2676 |         """Read the GIF and store internally to `_data_object`."""
+2677 |         from PIL import Image
+2678 |         from PIL import ImageSequence
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2679 |
+2680 |         img = Image.open(self._filename)
+     |
+
+pyvista/core/utilities/reader.py:2878:9: PLC0415 `import` should be at the top-level of a file
+     |
+2877 |         """
+2878 |         from pyvista.core.filters import _update_alg  # avoid circular import
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2879 |
+2880 |         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+     |
+
+pyvista/core/utilities/state_manager.py:116:9: PLC0415 `import` should be at the top-level of a file
+    |
+114 |     @final
+115 |     def _validate_state(self, state: T) -> T:
+116 |         from pyvista import _validation
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+117 |
+118 |         _validation.check_contains(self._valid_states, must_contain=state, name='state')
+    |
+
+pyvista/core/utilities/state_manager.py:301:9: PLC0415 `import` should be at the top-level of a file
+    |
+299 |     @property
+300 |     def _state(self) -> _VtkSnakeCaseOptions:
+301 |         import pyvista as pv
+    |         ^^^^^^^^^^^^^^^^^^^^ PLC0415
+302 |
+303 |         return pv._VTK_SNAKE_CASE_STATE
+    |
+
+pyvista/core/utilities/state_manager.py:307:9: PLC0415 `import` should be at the top-level of a file
+    |
+305 |     @_state.setter
+306 |     def _state(self, state: _VtkSnakeCaseOptions) -> None:
+307 |         import pyvista as pv
+    |         ^^^^^^^^^^^^^^^^^^^^ PLC0415
+308 |
+309 |         pv._VTK_SNAKE_CASE_STATE = state
+    |
+
+pyvista/core/utilities/transform.py:2419:13: PLC0415 `import` should be at the top-level of a file
+     |
+2417 |         """
+2418 |         try:
+2419 |             from scipy.spatial.transform import Rotation
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2420 |         except ImportError:
+2421 |             msg = "The 'scipy' package must be installed to use `as_rotation`"
+     |
+
+pyvista/demos/logo.py:85:5: PLC0415 `import` should be at the top-level of a file
+   |
+84 |     """
+85 |     from vtkmodules.vtkRenderingFreeType import vtkVectorText
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+86 |
+87 |     vec_text = vtkVectorText()
+   |
+
+pyvista/errors.py:49:5: PLC0415 `import` should be at the top-level of a file
+   |
+48 |     """
+49 |     from pyvista.core.errors import PyVistaDeprecationWarning
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+50 |
+51 |     for module in _MODULES:
+   |
+
+pyvista/examples/_dataset_loader.py:305:9: PLC0415 `import` should be at the top-level of a file
+    |
+304 |     def __init__(self, path):
+305 |         from pyvista.examples.downloads import USER_DATA_PATH
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+306 |
+307 |         self._path = (
+    |
+
+pyvista/examples/_dataset_loader.py:429:9: PLC0415 `import` should be at the top-level of a file
+    |
+427 |         _SingleFile.__init__(self, path)
+428 |
+429 |         from pyvista.examples.downloads import SOURCE
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+430 |         from pyvista.examples.downloads import USER_DATA_PATH
+431 |         from pyvista.examples.downloads import _download_archive_file_or_folder
+    |
+
+pyvista/examples/_dataset_loader.py:430:9: PLC0415 `import` should be at the top-level of a file
+    |
+429 |         from pyvista.examples.downloads import SOURCE
+430 |         from pyvista.examples.downloads import USER_DATA_PATH
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+431 |         from pyvista.examples.downloads import _download_archive_file_or_folder
+432 |         from pyvista.examples.downloads import download_file
+    |
+
+pyvista/examples/_dataset_loader.py:431:9: PLC0415 `import` should be at the top-level of a file
+    |
+429 |         from pyvista.examples.downloads import SOURCE
+430 |         from pyvista.examples.downloads import USER_DATA_PATH
+431 |         from pyvista.examples.downloads import _download_archive_file_or_folder
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+432 |         from pyvista.examples.downloads import download_file
+433 |         from pyvista.examples.downloads import file_from_files
+    |
+
+pyvista/examples/_dataset_loader.py:432:9: PLC0415 `import` should be at the top-level of a file
+    |
+430 |         from pyvista.examples.downloads import USER_DATA_PATH
+431 |         from pyvista.examples.downloads import _download_archive_file_or_folder
+432 |         from pyvista.examples.downloads import download_file
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+433 |         from pyvista.examples.downloads import file_from_files
+434 |         from pyvista.examples.examples import dir_path
+    |
+
+pyvista/examples/_dataset_loader.py:433:9: PLC0415 `import` should be at the top-level of a file
+    |
+431 |         from pyvista.examples.downloads import _download_archive_file_or_folder
+432 |         from pyvista.examples.downloads import download_file
+433 |         from pyvista.examples.downloads import file_from_files
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+434 |         from pyvista.examples.examples import dir_path
+    |
+
+pyvista/examples/_dataset_loader.py:434:9: PLC0415 `import` should be at the top-level of a file
+    |
+432 |         from pyvista.examples.downloads import download_file
+433 |         from pyvista.examples.downloads import file_from_files
+434 |         from pyvista.examples.examples import dir_path
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+435 |
+436 |         if Path(path).is_absolute():
+    |
+
+pyvista/examples/downloads.py:5533:5: PLC0415 `import` should be at the top-level of a file
+     |
+5532 | def _osmnx_graph_read_func(filename):
+5533 |     import pickle
+     |     ^^^^^^^^^^^^^ PLC0415
+5534 |
+5535 |     return pickle.load(Path(filename).open('rb'))
+     |
+
+pyvista/examples/downloads.py:7996:13: PLC0415 `import` should be at the top-level of a file
+     |
+7994 |             sys.modules[spec.name] = module
+7995 |             spec.loader.exec_module(module)  # type:ignore[union-attr]
+7996 |             from colors import colors
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+7997 |
+7998 |             return dict(sorted(colors.items()))
+     |
+
+pyvista/examples/examples.py:633:9: PLC0415 `import` should be at the top-level of a file
+    |
+631 | def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
+632 |     try:
+633 |         from sympy import lambdify
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+634 |         from sympy.abc import phi
+635 |         from sympy.abc import r
+    |
+
+pyvista/examples/examples.py:634:9: PLC0415 `import` should be at the top-level of a file
+    |
+632 |     try:
+633 |         from sympy import lambdify
+634 |         from sympy.abc import phi
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+635 |         from sympy.abc import r
+636 |         from sympy.abc import theta
+    |
+
+pyvista/examples/examples.py:635:9: PLC0415 `import` should be at the top-level of a file
+    |
+633 |         from sympy import lambdify
+634 |         from sympy.abc import phi
+635 |         from sympy.abc import r
+    |         ^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+636 |         from sympy.abc import theta
+637 |         from sympy.physics.hydrogen import Psi_nlm
+    |
+
+pyvista/examples/examples.py:636:9: PLC0415 `import` should be at the top-level of a file
+    |
+634 |         from sympy.abc import phi
+635 |         from sympy.abc import r
+636 |         from sympy.abc import theta
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+637 |         from sympy.physics.hydrogen import Psi_nlm
+638 |     except ImportError:  # pragma: no cover
+    |
+
+pyvista/examples/examples.py:637:9: PLC0415 `import` should be at the top-level of a file
+    |
+635 |         from sympy.abc import r
+636 |         from sympy.abc import theta
+637 |         from sympy.physics.hydrogen import Psi_nlm
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+638 |     except ImportError:  # pragma: no cover
+639 |         msg = '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+    |
+
+pyvista/examples/planets.py:18:9: PLC0415 `import` should be at the top-level of a file
+   |
+16 |     dataset = _download_dataset(loader, load=load)
+17 |     if texture:
+18 |         from pyvista.plotting.texture import Texture
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+19 |
+20 |         return Texture(dataset)  # type: ignore[abstract]
+   |
+
+pyvista/jupyter/__init__.py:50:13: PLC0415 `import` should be at the top-level of a file
+   |
+48 |     if backend in ['server', 'client', 'trame', 'html']:
+49 |         try:
+50 |             from pyvista.trame.jupyter import show_trame as show_trame
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+51 |         except ImportError:  # pragma: no cover
+52 |             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+   |
+
+pyvista/jupyter/notebook.py:51:13: PLC0415 `import` should be at the top-level of a file
+   |
+49 |     try:
+50 |         if backend in ['server', 'client', 'trame', 'html']:
+51 |             from pyvista.trame.jupyter import show_trame
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+52 |
+53 |             return show_trame(plotter, mode=backend, **kwargs)
+   |
+
+pyvista/jupyter/notebook.py:68:5: PLC0415 `import` should be at the top-level of a file
+   |
+66 | ) -> Image:  # numpydoc ignore=RT01
+67 |     """Display a static image to be displayed within a jupyter notebook."""
+68 |     import PIL.Image
+   |     ^^^^^^^^^^^^^^^^ PLC0415
+69 |
+70 |     if plotter.last_image is None:
+   |
+
+pyvista/plotting/_property.py:254:13: PLC0415 `import` should be at the top-level of a file
+    |
+252 |             self.culling = culling
+253 |         if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
+254 |             import warnings
+    |             ^^^^^^^^^^^^^^^ PLC0415
+255 |
+256 |             warnings.warn(
+    |
+
+pyvista/plotting/_property.py:1189:13: PLC0415 `import` should be at the top-level of a file
+     |
+1187 |         """
+1188 |         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
+1189 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1190 |
+1191 |             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+     |
+
+pyvista/plotting/_property.py:1198:13: PLC0415 `import` should be at the top-level of a file
+     |
+1196 |     def anisotropy(self, value: float):
+1197 |         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
+1198 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1199 |
+1200 |             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+     |
+
+pyvista/plotting/_property.py:1229:9: PLC0415 `import` should be at the top-level of a file
+     |
+1228 |         """
+1229 |         from pyvista import examples  # avoid circular import
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1230 |
+1231 |         before_close_callback = kwargs.pop('before_close_callback', None)
+     |
+
+pyvista/plotting/_property.py:1265:9: PLC0415 `import` should be at the top-level of a file
+     |
+1263 |     def __repr__(self):
+1264 |         """Representation of this property."""
+1265 |         from pyvista.core.errors import VTKVersionError
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1266 |
+1267 |         props = [
+     |
+
+pyvista/plotting/background_renderer.py:35:9: PLC0415 `import` should be at the top-level of a file
+   |
+33 |         """Initialize BackgroundRenderer with an image."""
+34 |         # avoiding circular import
+35 |         from . import _vtk
+   |         ^^^^^^^^^^^^^^^^^^ PLC0415
+36 |
+37 |         # read the image first as we don't need to create a render if
+   |
+
+pyvista/plotting/composite_mapper.py:498:9: PLC0415 `import` should be at the top-level of a file
+    |
+496 |     def __len__(self):
+497 |         """Return the number of blocks in this dataset."""
+498 |         from pyvista import MultiBlock  # avoid circular
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+499 |
+500 |         # start with 1 as there is always a composite dataset and this is the
+    |
+
+pyvista/plotting/plotter.py:506:9: PLC0415 `import` should be at the top-level of a file
+    |
+505 |         # lazy import here to avoid importing unused modules
+506 |         from vtkmodules.vtkIOImport import vtkGLTFImporter
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+507 |
+508 |         importer = vtkGLTFImporter()
+    |
+
+pyvista/plotting/plotter.py:540:9: PLC0415 `import` should be at the top-level of a file
+    |
+539 |         """
+540 |         from vtkmodules.vtkIOImport import vtkVRMLImporter
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+541 |
+542 |         filename = Path(filename).expanduser().resolve()
+    |
+
+pyvista/plotting/plotter.py:576:9: PLC0415 `import` should be at the top-level of a file
+    |
+575 |         """
+576 |         from vtkmodules.vtkIOImport import vtk3DSImporter
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+577 |
+578 |         filename = Path(filename).expanduser().resolve()
+    |
+
+pyvista/plotting/plotter.py:623:9: PLC0415 `import` should be at the top-level of a file
+    |
+622 |         """
+623 |         from vtkmodules.vtkIOImport import vtkOBJImporter
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+624 |
+625 |         filename = Path(filename).expanduser().resolve()
+    |
+
+pyvista/plotting/plotter.py:681:13: PLC0415 `import` should be at the top-level of a file
+    |
+679 |         """
+680 |         try:
+681 |             from trame_vtk.tools.vtksz2html import write_html
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+682 |         except ImportError:  # pragma: no cover
+683 |             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+    |
+
+pyvista/plotting/plotter.py:729:13: PLC0415 `import` should be at the top-level of a file
+    |
+727 |         """
+728 |         try:
+729 |             from pyvista.trame import PyVistaLocalView
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+730 |             from pyvista.trame.jupyter import elegantly_launch
+731 |             from pyvista.trame.views import get_server
+    |
+
+pyvista/plotting/plotter.py:730:13: PLC0415 `import` should be at the top-level of a file
+    |
+728 |         try:
+729 |             from pyvista.trame import PyVistaLocalView
+730 |             from pyvista.trame.jupyter import elegantly_launch
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+731 |             from pyvista.trame.views import get_server
+732 |         except ImportError:  # pragma: no cover
+    |
+
+pyvista/plotting/plotter.py:731:13: PLC0415 `import` should be at the top-level of a file
+    |
+729 |             from pyvista.trame import PyVistaLocalView
+730 |             from pyvista.trame.jupyter import elegantly_launch
+731 |             from pyvista.trame.views import get_server
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+732 |         except ImportError:  # pragma: no cover
+733 |             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
+    |
+
+pyvista/plotting/plotter.py:828:9: PLC0415 `import` should be at the top-level of a file
+    |
+826 |             raise RuntimeError(msg)
+827 |
+828 |         from vtkmodules.vtkIOExport import vtkGLTFExporter
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+829 |
+830 |         # rotate scene to gltf compatible view
+    |
+
+pyvista/plotting/plotter.py:912:9: PLC0415 `import` should be at the top-level of a file
+    |
+911 |         """
+912 |         from vtkmodules.vtkIOExport import vtkVRMLExporter
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+913 |
+914 |         if self.render_window is None:
+    |
+
+pyvista/plotting/plotter.py:1221:9: PLC0415 `import` should be at the top-level of a file
+     |
+1219 |     def disable_3_lights(self) -> None:
+1220 |         """Please use ``enable_lightkit``, this method has been deprecated."""
+1221 |         from pyvista.core.errors import DeprecationError
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1222 |
+1223 |         msg = 'DEPRECATED: Please use ``enable_lightkit``'
+     |
+
+pyvista/plotting/plotter.py:4410:13: PLC0415 `import` should be at the top-level of a file
+     |
+4409 |         if isinstance(volume, pyvista.MultiBlock):
+4410 |             from itertools import cycle
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+4411 |
+4412 |             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
+     |
+
+pyvista/plotting/plotter.py:5330:13: PLC0415 `import` should be at the top-level of a file
+     |
+5328 |         """
+5329 |         try:
+5330 |             from imageio import get_writer
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+5331 |         except ModuleNotFoundError:  # pragma: no cover
+5332 |             msg = 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
+     |
+
+pyvista/plotting/plotter.py:5408:13: PLC0415 `import` should be at the top-level of a file
+     |
+5406 |         """
+5407 |         try:
+5408 |             from imageio import __version__
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+5409 |             from imageio import get_writer
+5410 |         except ModuleNotFoundError:  # pragma: no cover
+     |
+
+pyvista/plotting/plotter.py:5409:13: PLC0415 `import` should be at the top-level of a file
+     |
+5407 |         try:
+5408 |             from imageio import __version__
+5409 |             from imageio import get_writer
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+5410 |         except ModuleNotFoundError:  # pragma: no cover
+5411 |             msg = 'Install imageio to use `open_gif` with:\n\n   pip install imageio'
+     |
+
+pyvista/plotting/plotter.py:5854:17: PLC0415 `import` should be at the top-level of a file
+     |
+5852 |         if algo is not None:
+5853 |             if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
+5854 |                 from pyvista.core.errors import VTKVersionError
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+5855 |
+5856 |                 msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
+     |
+
+pyvista/plotting/plotter.py:6164:13: PLC0415 `import` should be at the top-level of a file
+     |
+6162 |         # write screenshot to file if requested
+6163 |         if isinstance(filename, (str, Path, io.BytesIO)):
+6164 |             from PIL import Image
+     |             ^^^^^^^^^^^^^^^^^^^^^ PLC0415
+6165 |
+6166 |             if isinstance(filename, (str, Path)):
+     |
+
+pyvista/plotting/plotter.py:6231:9: PLC0415 `import` should be at the top-level of a file
+     |
+6230 |         """
+6231 |         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+6232 |
+6233 |         if self.render_window is None:
+     |
+
+pyvista/plotting/plotter.py:6527:17: PLC0415 `import` should be at the top-level of a file
+     |
+6525 |         if progress_bar:
+6526 |             try:
+6527 |                 from tqdm import tqdm
+     |                 ^^^^^^^^^^^^^^^^^^^^^ PLC0415
+6528 |             except ImportError:  # pragma: no cover
+6529 |                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
+     |
+
+pyvista/plotting/plotter.py:6578:9: PLC0415 `import` should be at the top-level of a file
+     |
+6577 |         """
+6578 |         from vtkmodules.vtkIOExport import vtkOBJExporter
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+6579 |
+6580 |         if self.render_window is None:
+     |
+
+pyvista/plotting/plotter.py:7247:13: PLC0415 `import` should be at the top-level of a file
+     |
+7245 |         jupyter_disp = None
+7246 |         if self.notebook:
+7247 |             from pyvista.jupyter.notebook import handle_plotter
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+7248 |
+7249 |             if jupyter_backend is None:
+     |
+
+pyvista/plotting/plotter.py:7339:17: PLC0415 `import` should be at the top-level of a file
+     |
+7337 |             # Default behaviour is to display the Jupyter viewer
+7338 |             try:
+7339 |                 from IPython import display
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+7340 |             except ImportError:  # pragma: no cover
+7341 |                 msg = 'Install IPython to display an image in a notebook'
+     |
+
+pyvista/plotting/prop3d.py:576:9: PLC0415 `import` should be at the top-level of a file
+    |
+575 |     def __init__(self) -> None:
+576 |         from pyvista import Actor  # Avoid circular import
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+577 |
+578 |         self._prop3d = Actor()
+    |
+
+pyvista/plotting/renderer.py:843:13: PLC0415 `import` should be at the top-level of a file
+    |
+841 |         """
+842 |         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
+843 |             from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+844 |
+845 |             msg = 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.'
+    |
+
+pyvista/plotting/renderer.py:3668:13: PLC0415 `import` should be at the top-level of a file
+     |
+3666 |             3,
+3667 |         ):  # pragma: no cover
+3668 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3669 |
+3670 |             msg = (
+     |
+
+pyvista/plotting/texture.py:595:13: PLC0415 `import` should be at the top-level of a file
+    |
+593 |         """
+594 |         if not hasattr(self, 'GetWrap'):  # pragma: no cover
+595 |             from pyvista.core.errors import VTKVersionError
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+596 |
+597 |             msg = '`wrap` requires VTK v9.1.0 or newer.'
+    |
+
+pyvista/plotting/texture.py:605:13: PLC0415 `import` should be at the top-level of a file
+    |
+603 |     def wrap(self, value: Texture.WrapType | int):
+604 |         if not hasattr(self, 'SetWrap'):  # pragma: no cover
+605 |             from pyvista.core.errors import VTKVersionError
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+606 |
+607 |             msg = '`wrap` requires VTK v9.1.0 or newer.'
+    |
+
+pyvista/plotting/themes.py:134:5: PLC0415 `import` should be at the top-level of a file
+    |
+133 |     """
+134 |     import pyvista
+    |     ^^^^^^^^^^^^^^ PLC0415
+135 |
+136 |     if isinstance(theme, str):
+    |
+
+pyvista/plotting/themes.py:2130:9: PLC0415 `import` should be at the top-level of a file
+     |
+2128 |     @jupyter_backend.setter
+2129 |     def jupyter_backend(self, backend: str):
+2130 |         from pyvista.jupyter import _validate_jupyter_backend
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2131 |
+2132 |         self._jupyter_backend = _validate_jupyter_backend(backend)
+     |
+
+pyvista/plotting/tools.py:672:17: PLC0415 `import` should be at the top-level of a file
+    |
+670 |                     msg = 'No interpolation.'
+671 |                     raise ValueError(msg)
+672 |                 from scipy.interpolate import interp1d
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+673 |
+674 |                 f = interp1d(xo, mapping, kind=kind)
+    |
+
+pyvista/plotting/tools.py:750:5: PLC0415 `import` should be at the top-level of a file
+    |
+749 |     """
+750 |     import matplotlib as mpl
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+751 |
+752 |     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
+    |
+
+pyvista/plotting/utilities/regression.py:224:5: PLC0415 `import` should be at the top-level of a file
+    |
+223 |     """
+224 |     from pyvista import ImageData
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+225 |     from pyvista import Plotter
+226 |     from pyvista import read
+    |
+
+pyvista/plotting/utilities/regression.py:225:5: PLC0415 `import` should be at the top-level of a file
+    |
+223 |     """
+224 |     from pyvista import ImageData
+225 |     from pyvista import Plotter
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+226 |     from pyvista import read
+227 |     from pyvista import wrap
+    |
+
+pyvista/plotting/utilities/regression.py:226:5: PLC0415 `import` should be at the top-level of a file
+    |
+224 |     from pyvista import ImageData
+225 |     from pyvista import Plotter
+226 |     from pyvista import read
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+227 |     from pyvista import wrap
+    |
+
+pyvista/plotting/utilities/regression.py:227:5: PLC0415 `import` should be at the top-level of a file
+    |
+225 |     from pyvista import Plotter
+226 |     from pyvista import read
+227 |     from pyvista import wrap
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+228 |
+229 |     def to_img(img):
+    |
+
+pyvista/plotting/utilities/sphinx_gallery.py:42:5: PLC0415 `import` should be at the top-level of a file
+   |
+40 | ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
+41 |     """Generate reST for viewer with exported scene."""
+42 |     from sphinx_gallery.scrapers import _get_srcset_st
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+43 |     from sphinx_gallery.scrapers import figure_rst
+   |
+
+pyvista/plotting/utilities/sphinx_gallery.py:43:5: PLC0415 `import` should be at the top-level of a file
+   |
+41 |     """Generate reST for viewer with exported scene."""
+42 |     from sphinx_gallery.scrapers import _get_srcset_st
+43 |     from sphinx_gallery.scrapers import figure_rst
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+44 |
+45 |     if srcsetpaths is None:
+   |
+
+pyvista/plotting/utilities/sphinx_gallery.py:164:9: PLC0415 `import` should be at the top-level of a file
+    |
+163 |         """
+164 |         from sphinx_gallery.scrapers import figure_rst
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+165 |
+166 |         if not pyvista.BUILDING_GALLERY:
+    |
+
+pyvista/plotting/utilities/xvfb.py:54:5: PLC0415 `import` should be at the top-level of a file
+   |
+52 |     )
+53 |
+54 |     from pyvista import global_theme
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+55 |
+56 |     if os.name != 'posix':
+   |
+
+pyvista/plotting/widgets.py:334:9: PLC0415 `import` should be at the top-level of a file
+    |
+333 |         """
+334 |         from pyvista.core.filters import _get_output  # avoids circular import
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+335 |
+336 |         mesh, algo = algorithm_to_mesh_handler(
+    |
+
+pyvista/plotting/widgets.py:764:9: PLC0415 `import` should be at the top-level of a file
+    |
+763 |         """
+764 |         from pyvista.core.filters import _get_output  # avoids circular import
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+765 |
+766 |         mesh, algo = algorithm_to_mesh_handler(
+    |
+
+pyvista/plotting/widgets.py:1749:9: PLC0415 `import` should be at the top-level of a file
+     |
+1747 |         """
+1748 |         # avoid circular import
+1749 |         from pyvista.core.filters.data_set import _set_threshold_limit
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+1750 |
+1751 |         mesh, algo = algorithm_to_mesh_handler(mesh)
+     |
+
+pyvista/plotting/widgets.py:2944:13: PLC0415 `import` should be at the top-level of a file
+     |
+2942 |         """
+2943 |         try:
+2944 |             from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2945 |         except ImportError:  # pragma: no cover
+2946 |             from pyvista.core.errors import VTKVersionError
+     |
+
+pyvista/plotting/widgets.py:2946:13: PLC0415 `import` should be at the top-level of a file
+     |
+2944 |             from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+2945 |         except ImportError:  # pragma: no cover
+2946 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+2947 |
+2948 |             msg = 'vtkCameraOrientationWidget requires vtk>=9.1.0'
+     |
+
+pyvista/plotting/widgets.py:3022:13: PLC0415 `import` should be at the top-level of a file
+     |
+3020 |         if logo is None:
+3021 |             # Fallback to PyVista logo
+3022 |             from pyvista import examples
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3023 |
+3024 |             logo = examples.logofile
+     |
+
+pyvista/plotting/widgets.py:3079:13: PLC0415 `import` should be at the top-level of a file
+     |
+3077 |         """
+3078 |         try:
+3079 |             from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3080 |             from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
+3081 |         except ImportError:  # pragma: no cover
+     |
+
+pyvista/plotting/widgets.py:3080:13: PLC0415 `import` should be at the top-level of a file
+     |
+3078 |         try:
+3079 |             from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation
+3080 |             from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3081 |         except ImportError:  # pragma: no cover
+3082 |             from pyvista.core.errors import VTKVersionError
+     |
+
+pyvista/plotting/widgets.py:3082:13: PLC0415 `import` should be at the top-level of a file
+     |
+3080 |             from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
+3081 |         except ImportError:  # pragma: no cover
+3082 |             from pyvista.core.errors import VTKVersionError
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+3083 |
+3084 |             msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
+     |
+
+pyvista/report.py:173:9: PLC0415 `import` should be at the top-level of a file
+    |
+171 |     ):
+172 |         """Generate a :class:`scooby.Report` instance."""
+173 |         from vtkmodules.vtkRenderingCore import vtkRenderWindow
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+174 |
+175 |         from pyvista.plotting.tools import check_math_text_support
+    |
+
+pyvista/report.py:175:9: PLC0415 `import` should be at the top-level of a file
+    |
+173 |         from vtkmodules.vtkRenderingCore import vtkRenderWindow
+174 |
+175 |         from pyvista.plotting.tools import check_math_text_support
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+176 |
+177 |         # Mandatory packages
+    |
+
+pyvista/trame/jupyter.py:424:9: PLC0415 `import` should be at the top-level of a file
+    |
+423 |     if jupyter_extension_enabled:  # pragma: no cover
+424 |         from trame_client.ui.core import iframe_url_builder_jupyter_extension
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+425 |
+426 |         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
+    |
+
+pyvista/trame/jupyter.py:469:9: PLC0415 `import` should be at the top-level of a file
+    |
+467 |     """
+468 |     try:
+469 |         import nest_asyncio
+    |         ^^^^^^^^^^^^^^^^^^^ PLC0415
+470 |     except ImportError:
+471 |         msg = (
+    |
+
+pyvista/utilities/__init__.py:54:5: PLC0415 `import` should be at the top-level of a file
+   |
+53 |     """
+54 |     from pyvista.core.errors import PyVistaDeprecationWarning
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ PLC0415
+55 |
+56 |     try:
+   |
+
+Found 141 errors.

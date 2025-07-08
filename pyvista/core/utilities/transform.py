@@ -2416,7 +2416,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         """
         try:
-            from scipy.spatial.transform import Rotation
+            from scipy.spatial.transform import Rotation  # noqa: PLC0415
         except ImportError:
             msg = "The 'scipy' package must be installed to use `as_rotation`"
             raise ImportError(msg)

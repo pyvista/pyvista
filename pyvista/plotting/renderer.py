@@ -840,7 +840,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         """
         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415  # type: ignore[unreachable]
 
             msg = 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -3665,7 +3665,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             9,
             3,
         ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = (
                 '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '

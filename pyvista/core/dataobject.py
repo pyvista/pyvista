@@ -168,7 +168,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             for index, name, nested_multiblock in iterator:
                 if len(nested_multiblock.field_data.keys()) > 0:
                     # Avoid circular import
-                    from pyvista.core.filters.composite import _format_nested_index
+                    from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
 
                     index_fmt = _format_nested_index(index)
                     warnings.warn(
@@ -203,7 +203,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             ]
             for id_, name, block in mesh.recursive_iterator('all'):
                 if type(block) not in supported_block_types:
-                    from pyvista.core.filters.composite import _format_nested_index
+                    from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
 
                     index_fmt = _format_nested_index(id_)
                     msg = (
@@ -363,8 +363,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             fmt += '</table>\n'
             fmt += '\n'
             if display:
-                from IPython.display import HTML
-                from IPython.display import display as _display
+                from IPython.display import HTML  # noqa: PLC0415
+                from IPython.display import display as _display  # noqa: PLC0415
 
                 _display(HTML(fmt))
                 return ''
