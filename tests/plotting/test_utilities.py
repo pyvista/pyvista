@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 def test_start_xvfb():
     with pytest.warns(PyVistaDeprecationWarning):
         pv.start_xvfb()
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this method'
-        raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
 
 
 def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture):
