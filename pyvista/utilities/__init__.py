@@ -51,7 +51,7 @@ def __getattr__(name):
         pyvista.utilities.
 
     """
-    from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
     try:
         return globals()[name]
