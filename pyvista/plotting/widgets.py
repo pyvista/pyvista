@@ -2930,10 +2930,10 @@ class WidgetHelper:
 
         See Also
         --------
-        add_axes
+        :meth:`~pyvista.Plotter.add_axes`
             Add arrow-style axes as an orientation widget.
 
-        add_box_axes
+        :meth:`~pyvista.Plotter.add_box_axes`
             Add an axes box as an orientation widget.
 
         :ref:`axes_objects_example`
