@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import _validation
+from pyvista.core import _validation
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk

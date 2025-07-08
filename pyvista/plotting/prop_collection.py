@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pyvista import _validation
+from pyvista.core import _validation
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
