@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 # Mapping from types in `vtkType.h` to the corresponding array class
 VTK_ARRAY_TYPES = {

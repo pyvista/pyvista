@@ -372,7 +372,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             fmt += '\n'
             if display:
                 if HTML is None or _display is None:
-                    raise ImportError('IPython is required for display functionality')
+                    msg = 'IPython is required for display functionality'
+                    raise ImportError(msg)
                 _display(HTML(fmt))
                 return ''
             return fmt
