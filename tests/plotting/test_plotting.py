@@ -2548,7 +2548,7 @@ def test_interactive_update():
     p.close()
 
     p = pv.Plotter()
-    with pytest.warns(UserWarning, match=r'interactive'):
+    with pytest.warns(UserWarning, match=r'The plotter will close immediately'):
         p.show(auto_close=True, interactive_update=True)
 
 
