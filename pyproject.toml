@@ -26,7 +26,7 @@ dependencies = [
   'typing-extensions',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
-  'vtk<9.5.0',
+  'vtk<9.6.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -393,10 +393,15 @@ ignore = [
   'ISC001',  # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
+  'PLC0415',
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
   'PLR0915', # Too many statements
   'PLR2004', # Magic value used in comparison
+  'PLW1641',
+  'PT028',
+  'PT030',
+  'PT031',
   'Q0',      # Quotes (temporary)
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
   'RET506',  # https://github.com/pyvista/pyvista/pull/5911
