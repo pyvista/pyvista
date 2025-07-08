@@ -440,7 +440,7 @@ def test_save_bad_extension():
 
 
 @pytest.mark.parametrize(
-    ('nonlinear', 'linear'),
+    ('nonlinear_input', 'linear_output'),
     [
         (cells.QuadraticQuadrilateral(), cells.Quadrilateral()),
         (cells.QuadraticTriangle(), cells.Triangle()),
@@ -450,13 +450,13 @@ def test_save_bad_extension():
         (cells.QuadraticHexahedron(), cells.Hexahedron()),
     ],
 )
-def test_linear_copy(nonlinear, linear):
-    assert not nonlinear.get_cell(0).IsLinear()
-    lgrid = nonlinear.linear_copy()
+def test_linear_copy(nonlinear_input, linear_output):
+    assert not nonlinear_input.get_cell(0).IsLinear()
+    lgrid = nonlinear_input.linear_copy()
     assert lgrid.get_cell(0).IsLinear()
-    assert lgrid.n_points == nonlinear.n_points
-    assert lgrid.n_points != linear.n_points
-    assert lgrid.n_cells == lgrid.n_cells
+    assert lgrid.n_points == nonlinear_input.n_points
+    assert lgrid.n_points != linear_output.n_points
+    assert lgrid.n_cells == linear_output.n_cells
 
 
 def test_linear_copy_surf_elem():
