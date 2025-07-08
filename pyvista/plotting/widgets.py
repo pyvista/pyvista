@@ -331,7 +331,7 @@ class WidgetHelper:
         For a full example see :ref:`box_widget_example`.
 
         """
-        from pyvista.core.filters import _get_output  # avoids circular import  # noqa: PLC0415
+        from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
@@ -761,7 +761,7 @@ class WidgetHelper:
         For a full example see :ref:`plane_widget_example`.
 
         """
-        from pyvista.core.filters import _get_output  # avoids circular import  # noqa: PLC0415
+        from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
@@ -1746,7 +1746,7 @@ class WidgetHelper:
 
         """
         # avoid circular import
-        from pyvista.core.filters.data_set import _set_threshold_limit  # noqa: PLC0415
+        from pyvista.core.filters.data_set import _set_threshold_limit
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
@@ -2943,7 +2943,7 @@ class WidgetHelper:
         try:
             from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
         except ImportError:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+            from pyvista.core.errors import VTKVersionError
 
             msg = 'vtkCameraOrientationWidget requires vtk>=9.1.0'
             raise VTKVersionError(msg)
@@ -3019,7 +3019,7 @@ class WidgetHelper:
             logo = pyvista.global_theme.logo_file
         if logo is None:
             # Fallback to PyVista logo
-            from pyvista import examples  # noqa: PLC0415
+            from pyvista import examples
 
             logo = examples.logofile
 
@@ -3076,10 +3076,10 @@ class WidgetHelper:
 
         """
         try:
-            from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation  # noqa: PLC0415
-            from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget  # noqa: PLC0415
+            from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation
+            from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
         except ImportError:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+            from pyvista.core.errors import VTKVersionError
 
             msg = 'vtkCamera3DWidget requires vtk>=9.3.0'
             raise VTKVersionError(msg)

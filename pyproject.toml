@@ -506,7 +506,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/prop_collection.py' = ['ANN']
 'pyvista/plotting/render_passes.py' = ['ANN']
 'pyvista/plotting/render_window_interactor.py' = ['ANN']
-'pyvista/plotting/renderer.py' = ['ANN']
+'pyvista/plotting/renderer.py' = ['ANN', 'PLC0415']
 'pyvista/plotting/renderers.py' = ['ANN']
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/text.py' = ['ANN']
@@ -517,11 +517,14 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/plotting/volume.py' = ['ANN']
 'pyvista/plotting/volume_property.py' = ['ANN']
-'pyvista/plotting/widgets.py' = ['ANN']
+'pyvista/plotting/widgets.py' = ['ANN', 'PLC0415']
 'pyvista/report.py' = ['ANN']
 'pyvista/trame/*' = ['ANN', 'FBT', 'PLR0917']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
 'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLR0917', 'T20']
+# PLC0415 exceptions for test files with legitimate dynamic imports
+'tests/core/test_dataobject_filters.py' = ['PLC0415']
+'tests/namespace/test_utilities_namespace.py' = ['PLC0415']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',

@@ -3665,7 +3665,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             9,
             3,
         ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+            from pyvista.core.errors import VTKVersionError
 
             msg = (
                 '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
