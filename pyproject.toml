@@ -524,7 +524,6 @@ allow-dict-calls-with-keyword-arguments = true
 'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLR0917', 'T20']
 # PLC0415 exceptions for test files with legitimate dynamic imports
 'tests/core/test_dataobject_filters.py' = ['PLC0415']
-'tests/namespace/test_utilities_namespace.py' = ['PLC0415']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',
@@ -534,6 +533,7 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH118',
   'PTH119',
 ]
+'tests/namespace/test_utilities_namespace.py' = ['PLC0415']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3
