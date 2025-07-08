@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
+from pyvista._constants import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
 
 from . import _vtk as _vtk

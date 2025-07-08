@@ -24,7 +24,6 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
-from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers as _wrappers
@@ -73,10 +72,10 @@ FLOAT_FORMAT = '{:.3e}'
 # Serialization format to be used when pickling `DataObject`
 PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
-# Name used for unnamed scalars
-DEFAULT_SCALARS_NAME = 'Data'
-
-MAX_N_COLOR_BARS = 10
+# Import constants
+from pyvista._constants import DEFAULT_SCALARS_NAME
+from pyvista._constants import MAX_N_COLOR_BARS
+from pyvista._constants import vtk_version_info
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 
