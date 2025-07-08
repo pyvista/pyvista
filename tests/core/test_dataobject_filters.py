@@ -509,7 +509,7 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning, match='This filter is deprecated. Use `cell_quality` instead'):
         qual = mesh.compute_cell_quality(progress_bar=True)
         assert 'CellQuality' in qual.array_names
         with pytest.raises(KeyError):

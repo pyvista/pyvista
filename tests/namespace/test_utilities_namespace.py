@@ -16,7 +16,7 @@ with namespace_data.open() as f:
 
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning, match='The `pyvista.utilities` module has been deprecated'):
         import pyvista.utilities as utilities  # noqa: PLR0402
 
         assert hasattr(utilities, name)
@@ -54,7 +54,7 @@ def test_utilities_modules(name):
 def test_common_utilities_import_paths():
     # These are `pyvista.utilities` imports found via search on GitHub
     # across multiple public repositories
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning, match='The `pyvista.utilities` module has been deprecated'):
         from pyvista.utilities import NORMALS  # noqa: F401
         from pyvista.utilities import abstract_class  # noqa: F401
         from pyvista.utilities import assert_empty_kwargs  # noqa: F401

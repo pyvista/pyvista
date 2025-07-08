@@ -818,7 +818,7 @@ def test_plotter_reset_key_events():
 
 
 def test_plotter_update_coordinates(sphere):
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(PyVistaDeprecationWarning, match='This method is deprecated and will be removed in a future version'):
         pl = pv.Plotter()
         pl.add_mesh(sphere)
         pl.update_coordinates(sphere.points * 2.0)

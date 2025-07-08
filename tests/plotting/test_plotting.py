@@ -753,7 +753,7 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning, match='This method is deprecated and will be removed in a future version'):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -761,7 +761,7 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning, match='This method is deprecated and will be removed in a future version'):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -1261,7 +1261,7 @@ def test_axes():
 
 def test_box_axes():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'):
         plotter.add_axes(box=True)
     if pv._version.version_info[:2] > (0, 47):
         msg = 'Convert error this function'
@@ -1275,7 +1275,7 @@ def test_box_axes():
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'):
         plotter.add_axes(box=True, box_args={'color_box': True})
     if pv._version.version_info[:2] > (0, 47):
         msg = 'Convert error this function'
@@ -3056,11 +3056,11 @@ def test_plot_complex_value(plane, verify_image_cache):
     except:
         ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
