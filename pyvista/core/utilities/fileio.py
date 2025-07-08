@@ -17,19 +17,54 @@ from typing import overload
 import warnings
 
 import numpy as np
+from vtkmodules.vtkIOGeometry import vtkSTLWriter
+from vtkmodules.vtkIOLegacy import vtkDataWriter
+from vtkmodules.vtkIOPLY import vtkPLYWriter
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
+from .helpers import wrap
 from .observers import Observer
+
+# Optional imports for VTK Exodus reader
+try:
+    from vtkmodules.vtkIOExodus import vtkExodusIIReader
+except ImportError:
+    from vtk import vtkExodusIIReader  # type: ignore[no-redef]
+
+# Optional imports
+try:
+    import meshio
+    from meshio._exceptions import ReadError
+except ImportError:
+    meshio = None
+    ReadError = None
+
+try:
+    from imageio.v2 import imread
+except ModuleNotFoundError:
+    imread = None
+
+# Meshio compatibility imports
+try:  # meshio<5.0 compatibility
+    from meshio.vtk._vtk import meshio_to_vtk_type
+    from meshio.vtk._vtk import vtk_to_meshio_type
+    from meshio.vtk._vtk import vtk_type_to_numnodes
+except ImportError:  # pragma: no cover
+    from meshio._vtk_common import meshio_to_vtk_type
+    from meshio._vtk_common import vtk_to_meshio_type
+    try:
+        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+    except ImportError:
+        vtk_type_to_numnodes = None
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     import imageio
-    import meshio
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
@@ -152,10 +187,6 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
         The configured vtk writer instance.
 
     """
-    from vtkmodules.vtkIOGeometry import vtkSTLWriter
-    from vtkmodules.vtkIOLegacy import vtkDataWriter
-    from vtkmodules.vtkIOPLY import vtkPLYWriter
-
     if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
@@ -291,8 +322,9 @@ def read(  # noqa: PLR0911, PLR0917
         if force_ext is not None:
             msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
-        from meshio._exceptions import ReadError
-
+        if ReadError is None:
+            msg = 'meshio is required for this functionality'
+            raise ImportError(msg)
         try:
             return read_meshio(filename)
         except ReadError:
@@ -444,14 +476,6 @@ def read_exodus(  # noqa: PLR0917
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
-    from .helpers import wrap
-
-    # lazy import here to avoid loading module on import pyvista
-    try:
-        from vtkmodules.vtkIOExodus import vtkExodusIIReader
-    except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]
-
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
     reader.UpdateInformation()
@@ -944,12 +968,9 @@ def is_meshio_mesh(obj: object) -> bool:
         ``True`` if ``obj`` is a ``meshio.Mesh``.
 
     """
-    try:
-        import meshio
-
-        return isinstance(obj, meshio.Mesh)
-    except ImportError:
+    if meshio is None:
         return False
+    return isinstance(obj, meshio.Mesh)
 
 
 def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
@@ -971,13 +992,6 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
         If the appropriate version of ``meshio`` library is not found.
 
     """
-    try:  # meshio<5.0 compatibility
-        from meshio.vtk._vtk import meshio_to_vtk_type
-        from meshio.vtk._vtk import vtk_type_to_numnodes
-    except ImportError:  # pragma: no cover
-        from meshio._vtk_common import meshio_to_vtk_type
-        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
-
     if len(mesh.cells) == 0:
         # Empty mesh
         grid = pyvista.UnstructuredGrid()
@@ -1078,18 +1092,9 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     >>> mesh = pv.to_meshio(sphere)
 
     """
-    try:
-        import meshio
-
-    except ImportError:  # pragma: no cover
+    if meshio is None:
         msg = 'To use this feature install meshio with:\n\npip install meshio'
         raise ImportError(msg)
-
-    try:  # for meshio<5.0 compatibility
-        from meshio.vtk._vtk import vtk_to_meshio_type
-
-    except:  # pragma: no cover
-        from meshio._vtk_common import vtk_to_meshio_type
 
     # Cast to unstructured grid
     mesh = mesh.cast_to_unstructured_grid()
@@ -1222,9 +1227,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
         If the meshio package is not installed.
 
     """
-    try:
-        import meshio
-    except ImportError:  # pragma: no cover
+    if meshio is None:
         msg = 'To use this feature install meshio with:\n\npip install meshio'
         raise ImportError(msg)
 
@@ -1297,9 +1300,7 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
         ``filename``.
 
     """
-    try:
-        from imageio.v2 import imread
-    except ModuleNotFoundError:  # pragma: no cover
+    if imread is None:
         msg = (
             'Problem reading the image with VTK. Install imageio to try to read the '
             'file using imageio with:\n\n'
