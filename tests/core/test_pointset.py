@@ -424,6 +424,6 @@ def test_polyhedron_faces_and_face_locations(attr, mesh, expected):
     assert np.array_equal(actual, expected)
 
     if pv.vtk_version_info >= (9, 4):
-        with pytest.warns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning, match=".*deprecated.*"):
             # Test deprecation warning is emitted by VTK
             getattr(mesh, attr.split('polyhedron_')[1])
