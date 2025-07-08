@@ -34,8 +34,7 @@ env:
   CACHE_FOLDER_NAME: vtk-data
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
-    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
-    --fail_extra_image_cache --generated_image_dir debug_images
+    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch --disallow_unused_cache
 
 permissions:
   id-token: none
@@ -121,14 +120,21 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: pytest -v tests/plotting --disallow_unused_cache
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _generated_test_images
 
   Linux:
     name: Linux Unit Testing
@@ -234,12 +240,19 @@ jobs:
         run: |
           xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
 
       - name: Software Report
         if: always()
@@ -329,12 +342,19 @@ jobs:
         run: |
           xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
 
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
 
       - name: Software Report
         if: always()
@@ -389,11 +409,18 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: python -m pytest -v tests/plotting --disallow_unused_cache
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
