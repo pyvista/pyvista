@@ -182,7 +182,8 @@ def test_parametric_random_hills():
             raise RuntimeError(msg)
     with pytest.warns(
         PyVistaDeprecationWarning,
-        match=r'`xvariancescalefactor` argument is deprecated. Please use `x_variance_scale_factor`.',
+        match=r'`xvariancescalefactor` argument is deprecated. '
+              r'Please use `x_variance_scale_factor`.',
     ):
         geom = pv.ParametricRandomHills(xvariancescalefactor=13)
         if pv._version.version_info[:2] > (0, 46):
@@ -190,7 +191,8 @@ def test_parametric_random_hills():
             raise RuntimeError(msg)
     with pytest.warns(
         PyVistaDeprecationWarning,
-        match=r'`yvariancescalefactor` argument is deprecated. Please use `y_variance_scale_factor`.',
+        match=r'`yvariancescalefactor` argument is deprecated. '
+              r'Please use `y_variance_scale_factor`.',
     ):
         geom = pv.ParametricRandomHills(yvariancescalefactor=13)
         if pv._version.version_info[:2] > (0, 46):
@@ -198,7 +200,8 @@ def test_parametric_random_hills():
             raise RuntimeError(msg)
     with pytest.warns(
         PyVistaDeprecationWarning,
-        match=r'`amplitudescalefactor` argument is deprecated. Please use `amplitude_scale_factor`.',
+        match=r'`amplitudescalefactor` argument is deprecated. '
+              r'Please use `amplitude_scale_factor`.',
     ):
         geom = pv.ParametricRandomHills(amplitudescalefactor=13)
         if pv._version.version_info[:2] > (0, 46):
