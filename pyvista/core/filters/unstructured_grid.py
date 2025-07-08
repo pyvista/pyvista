@@ -141,7 +141,7 @@ class UnstructuredGridFilters(DataSetFilters):
 
         """
         try:
-            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
+            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid  # noqa: PLC0415
         except ImportError:  # pragma no cover
             msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
             raise VTKVersionError(msg) from None
