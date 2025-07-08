@@ -2341,10 +2341,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         quad_tri_mask = celltype == CellType.QUADRATIC_TRIANGLE
         celltype[quad_tri_mask] = CellType.TRIANGLE
 
-        vtk_offset = self.GetCellLocationsArray()
         cells = _vtk.vtkCellArray()
         cells.DeepCopy(self._get_cells())
-        lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
+        if pyvista.vtk_version_info >= (9, 5):
+            face_locations = self.GetPolyhedronFaceLocations()
+            faces = self.GetPolyhedronFaces()
+            lgrid.SetPolyhedralCells(vtk_cell_type, cells, face_locations, faces)
+        else:
+            vtk_offset = self.GetCellLocationsArray()
+            lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):

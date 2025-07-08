@@ -18,6 +18,7 @@ from pyvista import examples
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
+from pyvista.examples import cells
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -438,10 +439,24 @@ def test_save_bad_extension():
         pv.UnstructuredGrid('file.abc')
 
 
-def test_linear_copy(hexbeam):
-    # need a grid with quadratic cells
-    lgrid = hexbeam.linear_copy()
-    assert np.all(lgrid.celltypes < 20)
+@pytest.mark.parametrize(
+    ('nonlinear', 'linear'),
+    [
+        (cells.QuadraticQuadrilateral(), cells.Quadrilateral()),
+        (cells.QuadraticTriangle(), cells.Triangle()),
+        (cells.QuadraticTetrahedron(), cells.Tetrahedron()),
+        (cells.QuadraticPyramid(), cells.Pyramid()),
+        (cells.QuadraticWedge(), cells.Wedge()),
+        (cells.QuadraticHexahedron(), cells.Hexahedron()),
+    ],
+)
+def test_linear_copy(nonlinear, linear):
+    assert not nonlinear.get_cell(0).IsLinear()
+    lgrid = nonlinear.linear_copy()
+    assert lgrid.get_cell(0).IsLinear()
+    assert lgrid.n_points == nonlinear.n_points
+    assert lgrid.n_points != linear.n_points
+    assert lgrid.n_cells == lgrid.n_cells
 
 
 def test_linear_copy_surf_elem():
