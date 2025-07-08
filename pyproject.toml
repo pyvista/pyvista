@@ -441,7 +441,7 @@ allow-dict-calls-with-keyword-arguments = true
   'D212',
   'D400',
   'D415',
-  'PLC0415',
+  'PLC0415',   # https://github.com/pyvista/pyvista/pull/7676
   'SIM115',
   'T20',
 ]
