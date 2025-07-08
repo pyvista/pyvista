@@ -94,7 +94,7 @@ def uniform_vec():
 
 
 def test_threshold_raises(mocker: MockerFixture):
-    from pyvista.core.filters import data_set
+    from pyvista.core.filters import data_set  # noqa: PLC0415
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
@@ -103,7 +103,7 @@ def test_threshold_raises(mocker: MockerFixture):
 
 
 def test_contour_raises(mocker: MockerFixture):
-    from pyvista.core.filters import data_set
+    from pyvista.core.filters import data_set  # noqa: PLC0415
 
     m = mocker.patch.object(data_set, 'set_default_active_scalars')
     m().name = 'foo'
@@ -113,7 +113,7 @@ def test_contour_raises(mocker: MockerFixture):
 
 
 def test_wrap_by_vector_raises(mocker: MockerFixture):
-    from pyvista.core.filters import data_set
+    from pyvista.core.filters import data_set  # noqa: PLC0415
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None

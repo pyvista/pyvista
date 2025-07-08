@@ -900,7 +900,7 @@ def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amount
     grid_copy = hexbeam.copy()
     grid_copy.transform(trans_rotate_only, inplace=True)
 
-    from pyvista.core.utilities.transformations import apply_transformation_to_points
+    from pyvista.core.utilities.transformations import apply_transformation_to_points  # noqa: PLC0415
 
     trans_arr = trans_rotate_only.matrix[:3, :3]
     trans_pts = apply_transformation_to_points(trans_arr, hexbeam.points)

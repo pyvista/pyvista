@@ -840,7 +840,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         """
         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
+            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]  # noqa: PLC0415
 
             msg = 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
