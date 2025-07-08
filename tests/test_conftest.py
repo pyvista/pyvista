@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import re
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,7 @@ from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 
 import pyvista
+from pyvista.plotting.utilities import gl_checks
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -489,8 +491,6 @@ def test_skip_windows(
 
 @pytest.fixture
 def _patch_uses_egl(mocker: MockerFixture):
-    from pyvista.plotting.utilities import gl_checks
-
     m = mocker.patch.object(gl_checks, 'uses_egl')
     m.return_value = True
 
@@ -552,8 +552,6 @@ def test_skip_egl(
 
 @pytest.fixture
 def _patch_mac_system(mocker: MockerFixture):
-    import platform
-
     m = mocker.patch.object(platform, 'system')
     m.return_value = 'Darwin'
 
@@ -586,9 +584,6 @@ def test_skip_mac(
         ...
 
     """
-
-    import platform
-
     m = mocker.patch.object(platform, 'processor')
     m.return_value = processor
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 import pathlib
 
 import meshio
+from meshio._exceptions import ReadError
+from meshio._exceptions import WriteError
 import numpy as np
 import pytest
 
@@ -276,9 +278,6 @@ def test_pathlib_read_write(tmpdir, sphere):
 
 
 def test_file_format(hexbeam):
-    from meshio._exceptions import ReadError
-    from meshio._exceptions import WriteError
-
     with pytest.raises(ReadError):
         _ = pv.read_meshio(examples.hexbeamfile, file_format='bar')
 

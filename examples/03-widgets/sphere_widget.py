@@ -26,12 +26,15 @@ from __future__ import annotations
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
+from itertools import cycle
+
+import matplotlib as mpl
+
 # %%
 # Example A
 # +++++++++
 #
 # Use a single sphere widget
-
 import numpy as np
 
 import pyvista as pv
@@ -121,10 +124,6 @@ import pyvista as pv
 
 def get_colors(n):
     """Get n colors."""
-    from itertools import cycle
-
-    import matplotlib as mpl
-
     cycler = mpl.rcParams['axes.prop_cycle']
     colors = cycle(cycler)
     return [next(colors)['color'] for i in range(n)]

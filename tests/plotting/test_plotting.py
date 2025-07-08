@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 
+import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import pytest
@@ -33,6 +34,7 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting import check_math_text_support
+from pyvista.plotting import plotting
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
@@ -144,8 +146,6 @@ def test_pyvista_qt_raises():
 
 
 def test_plotting_module_raises(mocker: MockerFixture):
-    from pyvista.plotting import plotting
-
     m = mocker.patch.object(plotting, 'inspect')
     m.getattr_static.side_effect = AttributeError
 
@@ -2737,8 +2737,6 @@ def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
     verify_image_cache.high_variance_test = True
-
-    import matplotlib.pyplot as plt
 
     rng = np.random.default_rng(1)
     # First, create the matplotlib figure

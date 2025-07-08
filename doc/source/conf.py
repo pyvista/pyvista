@@ -27,11 +27,12 @@ sys.path.insert(0, str(Path().cwd()))
 import make_external_gallery
 import make_tables
 
+import pyvista
+
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
-import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
@@ -464,8 +465,6 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
-        import pyvista
-
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
         pyvista.set_plot_theme('document_build')
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import os
 import sys
 from typing import TYPE_CHECKING
@@ -102,9 +104,6 @@ def __getattr__(name):
         If the attribute is not found.
 
     """
-    import importlib
-    import inspect
-
     allow = {
         'demos',
         'examples',
@@ -117,7 +116,7 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting  # noqa: F401
+        import pyvista.plotting  # noqa: F401, PLC0415
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)

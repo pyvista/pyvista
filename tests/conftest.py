@@ -91,7 +91,7 @@ def global_variables_reset():
 def set_mpl():
     """Avoid matplotlib windows popping up."""
     try:
-        import matplotlib as mpl
+        import matplotlib as mpl  # noqa: PLC0415
     except ImportError:
         pass
     else:

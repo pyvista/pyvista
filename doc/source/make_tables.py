@@ -28,9 +28,11 @@ import warnings
 import cmcrameri
 import cmocean
 import colorcet
+import colour
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 from scipy.stats import linregress
 
 import pyvista as pv
@@ -1276,8 +1278,6 @@ class ColormapTable(DocTable):
     @staticmethod
     def generate_img_lightness(cmap, img_path):
         def rgb_to_cam02ucs(rgb):
-            import colour
-
             xyz = colour.sRGB_to_XYZ(rgb)
             return colour.XYZ_to_CAM02UCS(xyz)
 
@@ -1303,8 +1303,6 @@ class ColormapTable(DocTable):
     def generate_img_delta_e(cmap, img_path):
         def delta_e_cie2000(rgb):
             # Compute ΔE between adjacent colors
-            import colour
-
             xyz = colour.sRGB_to_XYZ(rgb)
             lab = colour.XYZ_to_Lab(xyz)
             return colour.difference.delta_E_CIE2000(lab[:-1], lab[1:])
@@ -1380,8 +1378,6 @@ class ColormapTable(DocTable):
         Sorted list of colormap info.
 
         """
-        import colour
-
         _validation.check_contains(['hue', 'cam02ucs'], sort_by, name='sort_by')
 
         def sort_colormap_colors(colors, sort_by: Literal['hue', 'cam02ucs']):
@@ -2218,8 +2214,6 @@ class DatasetCard:
     @staticmethod
     def _create_default_image():
         """Process the thumbnail image to ensure it's the right size."""
-        from PIL import Image
-
         img_path = Path(DATASET_GALLERY_DIR, 'not_available.png').as_posix()
         if os.path.isfile(img_path):
             return img_path

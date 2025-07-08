@@ -393,7 +393,6 @@ ignore = [
   'ISC001',  # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
-  'PLC0415',
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
   'PLR0915', # Too many statements
