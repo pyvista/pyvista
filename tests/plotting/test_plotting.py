@@ -730,22 +730,22 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT011
         plotter.update_scalars(np.arange(5))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Convert error this method'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Remove this method'
+        raise RuntimeError(msg)
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT011
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Convert error this method'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Remove this method'
+        raise RuntimeError(msg)
 
 
 def test_plot_show_bounds(sphere):

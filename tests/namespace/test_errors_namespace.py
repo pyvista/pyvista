@@ -29,7 +29,7 @@ def test_core_errors_namespace(name):
     ):
         import pyvista.errors as errors  # noqa: PLR0402
 
-        assert hasattr(errors, name)
+    assert hasattr(errors, name)
 
 
 @pytest.mark.parametrize(
@@ -46,4 +46,4 @@ def test_plotting_errors_namespace(name):
     ):
         import pyvista.errors as errors  # noqa: PLR0402
 
-        assert hasattr(errors, name)
+    assert hasattr(errors, name)

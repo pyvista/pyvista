@@ -818,16 +818,16 @@ def test_plotter_reset_key_events():
 
 
 def test_plotter_update_coordinates(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
     with pytest.warns(PyVistaDeprecationWarning):
-        pl = pv.Plotter()
-        pl.add_mesh(sphere)
         pl.update_coordinates(sphere.points * 2.0)
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Convert error this method'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Remove this method'
+        raise RuntimeError(msg)
 
 
 @pytest.mark.usefixtures('global_variables_reset')

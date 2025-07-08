@@ -401,7 +401,6 @@ ignore = [
   'PLW1641',
   'PT028',
   'PT030',
-  'PT031',
   'Q0',      # Quotes (temporary)
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
   'RET506',  # https://github.com/pyvista/pyvista/pull/5911
