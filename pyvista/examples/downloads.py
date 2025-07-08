@@ -26,6 +26,7 @@ import importlib
 import importlib.util
 import logging
 import os
+import pickle
 from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
@@ -5530,8 +5531,6 @@ def download_osmnx_graph(load=True):  # noqa: FBT002
 
 
 def _osmnx_graph_read_func(filename):
-    import pickle
-
     return pickle.load(Path(filename).open('rb'))
 
 

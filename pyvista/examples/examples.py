@@ -630,11 +630,11 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
 
 def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):  # noqa: PLR0917
     try:
-        from sympy import lambdify
-        from sympy.abc import phi
-        from sympy.abc import r
-        from sympy.abc import theta
-        from sympy.physics.hydrogen import Psi_nlm
+        from sympy import lambdify  # noqa: PLC0415
+        from sympy.abc import phi  # noqa: PLC0415
+        from sympy.abc import r  # noqa: PLC0415
+        from sympy.abc import theta  # noqa: PLC0415
+        from sympy.physics.hydrogen import Psi_nlm  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         msg = '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
         raise ImportError(msg) from None
