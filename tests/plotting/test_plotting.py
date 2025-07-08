@@ -2495,7 +2495,7 @@ def test_interactive_update():
     p.close()
 
     p = pv.Plotter()
-    with pytest.warns(UserWarning, match=".*interactive.*"):
+    with pytest.warns(UserWarning, match='.*interactive.*'):
         p.show(auto_close=True, interactive_update=True)
 
 

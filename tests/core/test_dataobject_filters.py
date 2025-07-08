@@ -1105,7 +1105,7 @@ def test_transform_integers():
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
 
-    with pytest.warns(UserWarning, match="points.*converted"):
+    with pytest.warns(UserWarning, match='points.*converted'):
         poly.rotate_x(angle=10, inplace=True)
 
     # check that points were converted and transformed correctly

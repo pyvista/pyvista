@@ -668,13 +668,13 @@ def test_glyph(datasets, sphere):
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
 
     # tries to orient but no orientation vector available
-    with pytest.warns(Warning, match=".*orientation.*"):
+    with pytest.warns(Warning, match='.*orientation.*'):
         assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
 
     sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
     # tries to orient but multiple orientation vectors are possible
-    with pytest.warns(Warning, match=".*orientation.*"):
+    with pytest.warns(Warning, match='.*orientation.*'):
         assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
 
     with pytest.raises(TypeError):
@@ -690,7 +690,7 @@ def test_glyph(datasets, sphere):
 
 def test_glyph_warns_ambiguous_data(sphere):
     sphere.compute_normals(inplace=True)
-    with pytest.warns(Warning, match=".*ambiguous.*"):
+    with pytest.warns(Warning, match='.*ambiguous.*'):
         sphere.glyph(scale=True)
 
 
