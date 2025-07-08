@@ -363,8 +363,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             fmt += '</table>\n'
             fmt += '\n'
             if display:
-                from IPython.display import HTML  # noqa: PLC0415
-                from IPython.display import display as _display  # noqa: PLC0415
+                from IPython.display import HTML
+                from IPython.display import display as _display
 
                 _display(HTML(fmt))
                 return ''
