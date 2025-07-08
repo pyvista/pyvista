@@ -16,6 +16,9 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.typing.mypy_plugin import promote_type
 
+if TYPE_CHECKING:
+    from pyvista.core.filters.composite import _format_nested_index
+
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
@@ -168,7 +171,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             for index, name, nested_multiblock in iterator:
                 if len(nested_multiblock.field_data.keys()) > 0:
                     # Avoid circular import
-                    from pyvista.core.filters.composite import _format_nested_index
+                    from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
 
                     index_fmt = _format_nested_index(index)
                     warnings.warn(
@@ -203,7 +206,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             ]
             for id_, name, block in mesh.recursive_iterator('all'):
                 if type(block) not in supported_block_types:
-                    from pyvista.core.filters.composite import _format_nested_index
+                    from pyvista.core.filters.composite import _format_nested_index  # noqa: PLC0415
 
                     index_fmt = _format_nested_index(id_)
                     msg = (
