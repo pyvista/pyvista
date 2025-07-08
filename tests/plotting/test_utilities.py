@@ -19,11 +19,14 @@ if TYPE_CHECKING:
 @pytest.mark.skip_windows
 @pytest.mark.skip_mac
 def test_start_xvfb():
-    with pytest.warns(PyVistaDeprecationWarning):
+    def _test_start_xvfb():
         pv.start_xvfb()
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this method'
             raise RuntimeError(msg)
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        _test_start_xvfb()
 
 
 def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture):

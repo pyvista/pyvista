@@ -753,7 +753,8 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT011
+
+    def _test_update_scalars_with_invalid_array():
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -761,7 +762,8 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT011
+
+    def _test_update_scalars_with_valid_array():
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -769,6 +771,11 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
+
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT011
+        _test_update_scalars_with_invalid_array()
+    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT011
+        _test_update_scalars_with_valid_array()
 
 
 def test_plot_show_bounds(sphere):
@@ -1261,7 +1268,8 @@ def test_axes():
 
 def test_box_axes():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_box():
         plotter.add_axes(box=True)
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Convert error this function'
@@ -1269,13 +1277,17 @@ def test_box_axes():
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
             raise RuntimeError(msg)
+
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        _test_add_axes_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_color_box():
         plotter.add_axes(box=True, box_args={'color_box': True})
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Convert error this function'
@@ -1283,6 +1295,9 @@ def test_box_axes_color_box():
         if pv._version.version_info[:2] > (0, 48):
             msg = 'Remove this function'
             raise RuntimeError(msg)
+
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        _test_add_axes_color_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
