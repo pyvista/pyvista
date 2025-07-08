@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista import examples
 
 has_trame = True
 try:
@@ -361,41 +360,31 @@ def test_trame_export_html(tmpdir):
     assert Path(filename).is_file()
 
 
-def test_export_single(tmpdir):
+def test_export_single(tmpdir, airplane):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-single'))
-    data = examples.load_airplane()
     # Create the scene
     plotter = pv.Plotter()
-    plotter.add_mesh(data)
+    plotter.add_mesh(airplane)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
 
-def test_export_multi(tmpdir):
+def test_export_multi(tmpdir, multiblock_all):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-multi'))
-    multi = pv.MultiBlock()
-    # Add examples
-    multi.append(examples.load_ant())
-    multi.append(examples.load_sphere())
-    multi.append(examples.load_uniform())
-    multi.append(examples.load_airplane())
-    multi.append(examples.load_rectilinear())
     # Create the scene
     plotter = pv.Plotter()
-    plotter.add_mesh(multi)
+    plotter.add_mesh(multiblock_all)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
 
 
-def test_export_texture(tmpdir):
+def test_export_texture(tmpdir, globe, globe_texture):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-texture'))
-    data = examples.load_globe()
-    texture = examples.load_globe_texture()
     # Create the scene
     plotter = pv.Plotter()
-    plotter.add_mesh(data, texture=texture)
+    plotter.add_mesh(globe, texture=globe_texture)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()
@@ -412,12 +401,11 @@ def test_export_verts(tmpdir):
     assert Path(f'{filename}').is_file()
 
 
-def test_export_color(tmpdir):
+def test_export_color(tmpdir, airplane):
     filename = str(tmpdir.mkdir('tmpdir').join('scene-color'))
-    data = examples.load_airplane()
     # Create the scene
     plotter = pv.Plotter()
-    plotter.add_mesh(data, color='yellow')
+    plotter.add_mesh(airplane, color='yellow')
     plotter.export_vtksz(filename)
     # Now make sure the file is there
     assert Path(f'{filename}').is_file()

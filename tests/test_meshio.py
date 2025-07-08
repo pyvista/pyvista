@@ -16,8 +16,8 @@ def empty():
 
 
 @pytest.fixture
-def cow_ugrid():
-    return examples.download_cow().cast_to_unstructured_grid()
+def cow_ugrid(cow):
+    return cow.cast_to_unstructured_grid()
 
 
 @pytest.fixture
