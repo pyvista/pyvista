@@ -14,7 +14,6 @@ import warnings
 from typing_extensions import ParamSpec
 
 from pyvista._version import version_info
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
@@ -233,6 +232,8 @@ def _deprecate_positional_args(
                             f'From version {version_str}, passing {this} as{a}positional '
                             f'argument{s} will result in a TypeError.'
                         )
+                        # Import here to avoid circular import
+                        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
                         warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=stack_level)
 
                     warn_positional_args()

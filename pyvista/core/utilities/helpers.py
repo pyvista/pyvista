@@ -18,8 +18,6 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
-from .fileio import from_meshio
-from .fileio import is_meshio_mesh
 
 if TYPE_CHECKING:
     from meshio import Mesh
@@ -231,7 +229,10 @@ def wrap(  # noqa: PLR0911
             raise TypeError(msg)
 
     # wrap meshio
+    # Import here to avoid circular import
+    from .fileio import is_meshio_mesh  # noqa: PLC0415
     if is_meshio_mesh(dataset):
+        from .fileio import from_meshio  # noqa: PLC0415
         return from_meshio(dataset)
 
     # wrap trimesh

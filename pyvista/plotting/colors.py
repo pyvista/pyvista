@@ -34,7 +34,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista import _validation
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
@@ -1506,6 +1505,8 @@ class Color:
         if color is None:
             color = pyvista.global_theme.color if default_color is None else default_color
 
+        # Import here to avoid circular import
+        from pyvista import _validation  # noqa: PLC0415
         _validation.check_instance(
             color, (Color, str, dict, list, tuple, np.ndarray, _vtk.vtkColor3ub), name='color'
         )
@@ -2000,7 +2001,7 @@ class Color:
         return f'Color({kwargs})'
 
 
-PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
+PARAVIEW_BACKGROUND = (0.32156862745098036, 0.3411764705882353, 0.43137254901960786)  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
@@ -2027,6 +2028,8 @@ def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
         If the input is a list of items that are not strings.
 
     """
+    # Import here to avoid circular import
+    from pyvista import _validation  # noqa: PLC0415
     _validation.check_instance(cmap, (str, list), name='cmap')
 
     def get_3rd_party_cmap(cmap_):
