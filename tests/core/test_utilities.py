@@ -109,7 +109,7 @@ def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_progress_monitor_raises(mocker: MockerFixture):
-    from pyvista.core.utilities import observers  # noqa: PLC0415
+    from pyvista.core.utilities import observers
 
     m = mocker.patch.object(observers, 'importlib')
     m.util.find_spec.return_value = False
@@ -277,7 +277,7 @@ def test_read_force_ext(tmpdir):
     )
 
     dummy_extension = '.dummy'
-    for fname, type_ in zip(fnames, types):
+    for fname, type_ in zip(fnames, types, strict=False):
         path = Path(fname)
         root = str(path.parent / path.stem)
         original_ext = path.suffix

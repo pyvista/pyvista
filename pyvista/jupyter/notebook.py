@@ -49,7 +49,7 @@ def handle_plotter(
 
     try:
         if backend in ['server', 'client', 'trame', 'html']:
-            from pyvista.trame.jupyter import show_trame  # noqa: PLC0415
+            from pyvista.trame.jupyter import show_trame
 
             return show_trame(plotter, mode=backend, **kwargs)
 

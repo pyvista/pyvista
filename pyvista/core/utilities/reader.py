@@ -40,8 +40,8 @@ def _lazy_vtk_instantiation(module_name, class_name):
 
 def lazy_vtkPOpenFOAMReader():
     """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
-    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader  # noqa: PLC0415
-    from vtkmodules.vtkParallelCore import vtkDummyController  # noqa: PLC0415
+    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
+    from vtkmodules.vtkParallelCore import vtkDummyController
 
     # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
     reader = vtkPOpenFOAMReader()
@@ -421,7 +421,7 @@ class BaseReader:
             PyVista Dataset.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
+        from pyvista.core.filters import _update_alg  # avoid circular import
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
@@ -2674,8 +2674,8 @@ class _GIFReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the GIF and store internally to `_data_object`."""
-        from PIL import Image  # noqa: PLC0415
-        from PIL import ImageSequence  # noqa: PLC0415
+        from PIL import Image
+        from PIL import ImageSequence
 
         img = Image.open(self._filename)
         self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
@@ -2875,7 +2875,7 @@ class GaussianCubeReader(BaseReader):
             Output as a grid if ``True``, otherwise return the polydata.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
+        from pyvista.core.filters import _update_alg  # avoid circular import
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = (

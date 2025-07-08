@@ -669,7 +669,7 @@ def opacity_transfer_function(  # noqa: PLR0917
                 if not interpolate:
                     msg = 'No interpolation.'
                     raise ValueError(msg)
-                from scipy.interpolate import interp1d  # noqa: PLC0415
+                from scipy.interpolate import interp1d
 
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
@@ -747,7 +747,7 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib as mpl  # noqa: PLC0415
+    import matplotlib as mpl
 
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):

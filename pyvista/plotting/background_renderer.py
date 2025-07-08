@@ -32,7 +32,7 @@ class BackgroundRenderer(Renderer):
     ):
         """Initialize BackgroundRenderer with an image."""
         # avoiding circular import
-        from . import _vtk  # noqa: PLC0415
+        from . import _vtk
 
         # read the image first as we don't need to create a render if
         # the image path is invalid

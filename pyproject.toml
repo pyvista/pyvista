@@ -253,7 +253,9 @@ extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
-plugins = ['npt_promote']  # 'pyvista.typing.mypy_plugin' temporarily disabled due to circular import
+plugins = [
+  'npt_promote',
+] # 'pyvista.typing.mypy_plugin' temporarily disabled due to circular import
 pretty = true
 show_error_context = true
 strict_equality = true
@@ -392,11 +394,11 @@ ignore = [
   'ISC001',  # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
+  'PLC0415', # Import outside top-level (conflicts with circular import workarounds)
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
   'PLR0915', # Too many statements
   'PLR2004', # Magic value used in comparison
-  'PLC0415', # Import outside top-level (conflicts with circular import workarounds)
   'PLW1641',
   'PT028',
   'PT030',

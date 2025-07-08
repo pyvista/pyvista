@@ -1121,7 +1121,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         offsets_ = np.cumsum(offsets)
 
-        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:])]
+        return [arr[i1 + 1 : i2] for i1, i2 in itertools.pairwise(offsets_)]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
@@ -1157,7 +1157,9 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         cells = []
         offset = mesh.offset
 
-        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
+        for i, (i1, i2, vtk_celltype) in enumerate(
+            zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
+        ):
             cell = connectivity[i1:i2]
 
             if vtk_celltype == pyvista.CellType.POLYHEDRON:
@@ -1199,7 +1201,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = {
-        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in itertools.pairwise(indices)]
         for k, v in vtk_cell_data.items()
     }
 

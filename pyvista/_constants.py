@@ -11,6 +11,4 @@ MAX_N_COLOR_BARS = 10
 DEFAULT_SCALARS_NAME = 'Data'
 
 # VTK version information
-vtk_version_info = tuple(
-    int(x) for x in _vtk.vtkVersion.GetVTKVersion().split('.')
-)
+vtk_version_info = tuple(int(x) for x in _vtk.vtkVersion.GetVTKVersion().split('.'))

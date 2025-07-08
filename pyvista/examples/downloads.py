@@ -7992,7 +7992,7 @@ class _WholeBodyCTUtilities:
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)  # type:ignore[union-attr]
-            from colors import colors  # noqa: PLC0415
+            from colors import colors
 
             return dict(sorted(colors.items()))
         else:

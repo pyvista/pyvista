@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -995,7 +995,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+            from pyvista.core.errors import VTKVersionError
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1601,7 +1601,7 @@ class ImageDataFilters(DataSetFilters):
                 alg_.SmoothingOff()
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+            from pyvista.core.errors import VTKVersionError
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)

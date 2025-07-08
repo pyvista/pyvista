@@ -77,7 +77,7 @@ def chart_pie():
 
 @pytest.fixture
 def chart_mpl():
-    import matplotlib.pyplot as plt  # noqa: PLC0415
+    import matplotlib.pyplot as plt
 
     f, ax = plt.subplots()
     ax.plot([0, 1, 2], [3, 1, 2])
@@ -549,7 +549,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.color_scheme = cs
     assert plot.color_scheme == cs
     assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]['id']
-    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
+    assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors, strict=False))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
     ]
@@ -563,7 +563,7 @@ def test_multicomp_plot_common(plot_f, request):
     plot.colors = cs
     assert plot.color_scheme == cs
     plot.colors = colors
-    assert all(pc == c for pc, c in zip(plot.colors, colors))
+    assert all(pc == c for pc, c in zip(plot.colors, colors, strict=False))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(colors))
     ]
@@ -692,7 +692,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.y, y)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=False))
     assert plot.orientation == ori
     assert plot.labels == l
 
@@ -737,7 +737,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot._chart == weakref.proxy(chart_2d)
     assert np.allclose(plot.x, x)
     assert np.allclose(plot.ys, ys)
-    assert all(pc == ci for pc, ci in zip(plot.colors, c))
+    assert all(pc == ci for pc, ci in zip(plot.colors, c, strict=False))
     assert plot.labels == l
 
     # Test single comp constructor
@@ -1005,7 +1005,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
 
 @pytest.mark.skip_plotting
 def test_chart_mpl(pl):
-    import matplotlib.pyplot as plt  # noqa: PLC0415
+    import matplotlib.pyplot as plt
 
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -1039,7 +1039,7 @@ def test_chart_mpl(pl):
 
 @pytest.mark.skip_plotting
 def test_chart_mpl_update(pl):
-    import matplotlib.pyplot as plt  # noqa: PLC0415
+    import matplotlib.pyplot as plt
 
     # Create simple chart
     x0, y0, y1 = [0, 1, 2], [2, 1, 3], [-1, 0, 2]

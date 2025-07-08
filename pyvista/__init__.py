@@ -73,9 +73,9 @@ FLOAT_FORMAT = '{:.3e}'
 PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
 # Import constants
-from pyvista._constants import DEFAULT_SCALARS_NAME
-from pyvista._constants import MAX_N_COLOR_BARS
-from pyvista._constants import vtk_version_info
+from pyvista._constants import DEFAULT_SCALARS_NAME as DEFAULT_SCALARS_NAME
+from pyvista._constants import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
+from pyvista._constants import vtk_version_info as vtk_version_info
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
 

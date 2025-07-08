@@ -503,7 +503,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
+        from vtkmodules.vtkIOImport import vtkGLTFImporter
 
         importer = vtkGLTFImporter()
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
@@ -537,7 +537,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
-        from vtkmodules.vtkIOImport import vtkVRMLImporter  # noqa: PLC0415
+        from vtkmodules.vtkIOImport import vtkVRMLImporter
 
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
@@ -573,7 +573,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        from vtkmodules.vtkIOImport import vtk3DSImporter  # noqa: PLC0415
+        from vtkmodules.vtkIOImport import vtk3DSImporter
 
         filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
@@ -620,7 +620,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show(cpos='xy')
 
         """
-        from vtkmodules.vtkIOImport import vtkOBJImporter  # noqa: PLC0415
+        from vtkmodules.vtkIOImport import vtkOBJImporter
 
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
@@ -678,7 +678,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from trame_vtk.tools.vtksz2html import write_html  # noqa: PLC0415
+            from trame_vtk.tools.vtksz2html import write_html
         except ImportError:  # pragma: no cover
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
@@ -726,9 +726,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from pyvista.trame import PyVistaLocalView  # noqa: PLC0415
-            from pyvista.trame.jupyter import elegantly_launch  # noqa: PLC0415
-            from pyvista.trame.views import get_server  # noqa: PLC0415
+            from pyvista.trame import PyVistaLocalView
+            from pyvista.trame.jupyter import elegantly_launch
+            from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
@@ -825,7 +825,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = 'This plotter has been closed and is unable to export the scene.'
             raise RuntimeError(msg)
 
-        from vtkmodules.vtkIOExport import vtkGLTFExporter  # noqa: PLC0415
+        from vtkmodules.vtkIOExport import vtkGLTFExporter
 
         # rotate scene to gltf compatible view
         renamed_arrays = []  # any renamed normal arrays
@@ -909,7 +909,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml('sample')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkVRMLExporter  # noqa: PLC0415
+        from vtkmodules.vtkIOExport import vtkVRMLExporter
 
         if self.render_window is None:
             msg = 'This plotter has been closed and cannot be shown.'
@@ -1209,7 +1209,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Inspired from Mayavi's version of Raymond Maple 3-lights illumination
         intensities = [1, 0.6, 0.5]
         all_angles = [(45.0, 45.0), (-30.0, -60.0), (-30.0, 60.0)]
-        for intensity, angles in zip(intensities, all_angles):
+        for intensity, angles in zip(intensities, all_angles, strict=False):
             light = pyvista.Light(light_type='camera light')
             light.intensity = intensity
             light.position = _to_pos(*angles)
@@ -1218,7 +1218,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def disable_3_lights(self) -> None:
         """Please use ``enable_lightkit``, this method has been deprecated."""
-        from pyvista.core.errors import DeprecationError  # noqa: PLC0415
+        from pyvista.core.errors import DeprecationError
 
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
@@ -4407,7 +4407,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             name = f'{type(volume).__name__}({volume.memory_address})'
 
         if isinstance(volume, pyvista.MultiBlock):
-            from itertools import cycle  # noqa: PLC0415
+            from itertools import cycle
 
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
@@ -5327,7 +5327,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from imageio import get_writer  # noqa: PLC0415
+            from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
             msg = 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
             raise ModuleNotFoundError(msg) from None
@@ -5405,8 +5405,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from imageio import __version__  # noqa: PLC0415
-            from imageio import get_writer  # noqa: PLC0415
+            from imageio import __version__
+            from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
             msg = 'Install imageio to use `open_gif` with:\n\n   pip install imageio'
             raise ModuleNotFoundError(msg) from None
@@ -5851,7 +5851,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
             if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+                from pyvista.core.errors import VTKVersionError
 
                 msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
                 raise VTKVersionError(msg)
@@ -6161,7 +6161,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
         # write screenshot to file if requested
         if isinstance(filename, (str, Path, io.BytesIO)):
-            from PIL import Image  # noqa: PLC0415
+            from PIL import Image
 
             if isinstance(filename, (str, Path)):
                 filename = Path(filename)
@@ -6228,7 +6228,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.save_graphic('img.svg')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter  # noqa: PLC0415
+        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
 
         if self.render_window is None:
             msg = 'This plotter is closed and unable to save a screenshot.'
@@ -6524,7 +6524,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if progress_bar:
             try:
-                from tqdm import tqdm  # noqa: PLC0415
+                from tqdm import tqdm
             except ImportError:  # pragma: no cover
                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
                 raise ImportError(msg)
@@ -6575,7 +6575,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkOBJExporter  # noqa: PLC0415
+        from vtkmodules.vtkIOExport import vtkOBJExporter
 
         if self.render_window is None:
             msg = 'This plotter must still have a render window open.'
@@ -7244,7 +7244,7 @@ class Plotter(BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from pyvista.jupyter.notebook import handle_plotter  # noqa: PLC0415
+            from pyvista.jupyter.notebook import handle_plotter
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
@@ -7336,7 +7336,7 @@ class Plotter(BasePlotter):
         if jupyter_disp is not None and not return_viewer:
             # Default behaviour is to display the Jupyter viewer
             try:
-                from IPython import display  # noqa: PLC0415
+                from IPython import display
             except ImportError:  # pragma: no cover
                 msg = 'Install IPython to display an image in a notebook'
                 raise ImportError(msg)

@@ -6,7 +6,7 @@ from inspect import Parameter
 from inspect import Signature
 import os
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
 import warnings
@@ -14,6 +14,9 @@ import warnings
 from typing_extensions import ParamSpec
 
 from pyvista._version import version_info
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
@@ -233,7 +236,8 @@ def _deprecate_positional_args(
                             f'argument{s} will result in a TypeError.'
                         )
                         # Import here to avoid circular import
-                        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+                        from pyvista.core.errors import PyVistaDeprecationWarning
+
                         warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=stack_level)
 
                     warn_positional_args()

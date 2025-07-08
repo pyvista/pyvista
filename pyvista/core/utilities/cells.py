@@ -170,7 +170,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     ... )
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
+    from .cell_type_helper import enum_cell_type_nr_points_map
 
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         msg = 'Found unknown or unsupported VTK cell type in your requested cells'
@@ -260,7 +260,7 @@ def get_mixed_cells(vtkobj):
         like VTK_POLYGON.
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
+    from .cell_type_helper import enum_cell_type_nr_points_map
 
     return_dict = {}  # type: ignore[var-annotated]
 

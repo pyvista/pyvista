@@ -230,9 +230,11 @@ def wrap(  # noqa: PLR0911
 
     # wrap meshio
     # Import here to avoid circular import
-    from .fileio import is_meshio_mesh  # noqa: PLC0415
+    from .fileio import is_meshio_mesh
+
     if is_meshio_mesh(dataset):
-        from .fileio import from_meshio  # noqa: PLC0415
+        from .fileio import from_meshio
+
         return from_meshio(dataset)
 
     # wrap trimesh

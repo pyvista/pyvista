@@ -578,7 +578,7 @@ except ImportError:  # pragma: no cover
 
         def __init__(self):  # pragma: no cover
             """Raise version error on init."""
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+            from pyvista.core.errors import VTKVersionError
 
             msg = 'Chart backgrounds require the vtkPythonContext2D module'
             raise VTKVersionError(msg)
@@ -676,7 +676,7 @@ class DisableVtkSnakeCase:
         if vtk_version_info >= (9, 4) and sys.meta_path is not None:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
 
-            import pyvista as pv  # noqa: PLC0415
+            import pyvista as pv
 
             state = pv._VTK_SNAKE_CASE_STATE
             if state != 'allow':

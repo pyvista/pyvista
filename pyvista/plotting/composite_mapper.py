@@ -495,7 +495,7 @@ class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplay
 
     def __len__(self):
         """Return the number of blocks in this dataset."""
-        from pyvista import MultiBlock  # avoid circular  # noqa: PLC0415
+        from pyvista import MultiBlock  # avoid circular
 
         # start with 1 as there is always a composite dataset and this is the
         # root of the tree

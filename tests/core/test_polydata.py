@@ -581,7 +581,7 @@ def test_merge_main_has_priority(input_, main_has_priority):
         """Return True if scalars on two meshes only differ by point order."""
         return all(
             new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name])
+            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=False)
             for j in (this.points == point).all(-1).nonzero()
         )
 
@@ -1387,7 +1387,7 @@ def test_regular_faces_mutable():
 
 def _assert_irregular_faces_equal(faces, expected):
     assert len(faces) == len(expected)
-    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected, strict=False))
 
 
 def test_irregular_faces():

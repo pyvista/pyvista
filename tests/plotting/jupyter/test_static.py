@@ -26,7 +26,7 @@ def test_set_jupyter_backend_fail():
 
 
 def test_validate_jupyter_backend_raises(mocker: MockerFixture):
-    from pyvista import jupyter  # noqa: PLC0415
+    from pyvista import jupyter
 
     m = mocker.patch.object(jupyter, 'importlib')
     m.util.find_spec.return_value = False

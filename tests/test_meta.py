@@ -12,7 +12,7 @@ def test_mpl_backend():
     """Check if the backend is correctly set for testing."""
     # only fail if matplotlib is otherwise available
     try:
-        import matplotlib as mpl  # noqa: PLC0415
+        import matplotlib as mpl
     except ImportError:
         return
 

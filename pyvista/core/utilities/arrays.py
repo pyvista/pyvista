@@ -490,7 +490,7 @@ def get_array_association(  # noqa: PLR0917
         msg = f'Data field ({preference}) not supported.'
         raise ValueError(msg)
 
-    matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
+    matches = [pref for pref, array in zip(preferences, arrays, strict=False) if array is not None]
     # optionally raise if no match
     if not matches:
         if err:
@@ -875,7 +875,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
         The field and name of the active array.
 
     """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
     if mesh.active_vectors_name is None:
         point_data = mesh.point_data
@@ -943,7 +943,7 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
         The field and name of the active array.
 
     """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
     if mesh.active_scalars_name is None:
         point_data = mesh.point_data

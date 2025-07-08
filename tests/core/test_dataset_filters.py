@@ -94,7 +94,7 @@ def uniform_vec():
 
 
 def test_threshold_raises(mocker: MockerFixture):
-    from pyvista.core.filters import data_set  # noqa: PLC0415
+    from pyvista.core.filters import data_set
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
@@ -103,7 +103,7 @@ def test_threshold_raises(mocker: MockerFixture):
 
 
 def test_contour_raises(mocker: MockerFixture):
-    from pyvista.core.filters import data_set  # noqa: PLC0415
+    from pyvista.core.filters import data_set
 
     m = mocker.patch.object(data_set, 'set_default_active_scalars')
     m().name = 'foo'
@@ -113,7 +113,7 @@ def test_contour_raises(mocker: MockerFixture):
 
 
 def test_wrap_by_vector_raises(mocker: MockerFixture):
-    from pyvista.core.filters import data_set  # noqa: PLC0415
+    from pyvista.core.filters import data_set
 
     m = mocker.patch.object(data_set, 'get_array')
     m.return_value = None
@@ -163,7 +163,7 @@ def test_clip_scalar_filter(datasets, both, invert):
             assert len(clps) == 1
             expect_les = (invert,)
 
-        for clp, expect_le in zip(clps, expect_les):
+        for clp, expect_le in zip(clps, expect_les, strict=False):
             assert clp is not None
             if isinstance(dataset, pv.PolyData):
                 assert isinstance(clp, pv.PolyData)
@@ -2025,7 +2025,7 @@ def extract_values_values():
         np.array(range(10)),
     ]
 
-    return list(zip(point_values, cell_values))
+    return list(zip(point_values, cell_values, strict=False))
 
 
 @pytest.mark.parametrize('preference', ['point', 'cell'])
@@ -2209,7 +2209,7 @@ def test_split_values_extract_values_component(
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
     assert expected_n_blocks == len(expected_volume)
-    for block, volume in zip(multiblock, expected_volume):
+    for block, volume in zip(multiblock, expected_volume, strict=False):
         assert np.isclose(block.volume, volume)
 
 
@@ -2405,7 +2405,7 @@ def test_extract_values_component_values_split_unique(
     assert extracted.n_blocks == len(COLORS_LIST)
     assert (
         np.array_equal(block['colors'], [color, color])
-        for block, color in zip(extracted, COLORS_LIST)
+        for block, color in zip(extracted, COLORS_LIST, strict=False)
     )
 
 
@@ -3948,7 +3948,7 @@ def test_color_labels_return_dict(labeled_image, color_type):
     input_keys = list(range(len(input_colors)))
     assert set(expected_keys) < set(input_keys)
 
-    mapping_in = dict(zip(input_keys, input_colors))
+    mapping_in = dict(zip(input_keys, input_colors, strict=False))
     colored_mesh, mapping_out = labeled_image.color_labels(
         mapping_in, return_dict=True, color_type=color_type
     )

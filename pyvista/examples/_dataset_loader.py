@@ -170,7 +170,8 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         url = self.base_url
         base_url_iter = [url] if isinstance(url, str) else url
         url_raw = [
-            os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)
+            os.path.join(base_url, name)
+            for base_url, name in zip(base_url_iter, name_iter, strict=False)
         ]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
@@ -302,7 +303,7 @@ class _SingleFile(_SingleFilePropsProtocol):
     """Wrap a single file."""
 
     def __init__(self, path):
-        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+        from pyvista.examples.downloads import USER_DATA_PATH
 
         self._path = (
             path if path is None or os.path.isabs(path) else os.path.join(USER_DATA_PATH, path)
@@ -426,12 +427,12 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     ):
         _SingleFile.__init__(self, path)
 
-        from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
-        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
-        from pyvista.examples.downloads import _download_archive_file_or_folder  # noqa: PLC0415
-        from pyvista.examples.downloads import download_file  # noqa: PLC0415
-        from pyvista.examples.downloads import file_from_files  # noqa: PLC0415
-        from pyvista.examples.examples import dir_path  # noqa: PLC0415
+        from pyvista.examples.downloads import SOURCE
+        from pyvista.examples.downloads import USER_DATA_PATH
+        from pyvista.examples.downloads import _download_archive_file_or_folder
+        from pyvista.examples.downloads import download_file
+        from pyvista.examples.downloads import file_from_files
+        from pyvista.examples.examples import dir_path
 
         if Path(path).is_absolute():
             # Absolute path must point to a built-in dataset
@@ -711,7 +712,7 @@ def _load_as_multiblock(
             for path in paths
         ]
 
-    for file, name in zip(files, names):
+    for file, name in zip(files, names, strict=False):
         if not isinstance(file, _DatasetLoader):
             continue  # type: ignore[unreachable]
         loaded = file.load()

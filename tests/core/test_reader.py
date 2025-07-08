@@ -37,7 +37,7 @@ def test_read_raises():
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(npoints=st.integers().filter(lambda x: x < 2))
 def test_read_texture_raises(mocker: MockerFixture, npoints):
-    from pyvista.core.utilities import fileio  # noqa: PLC0415
+    from pyvista.core.utilities import fileio
 
     m = mocker.patch.object(fileio, 'read')
     m().n_points = npoints
@@ -281,7 +281,7 @@ def test_ensightreader_timepoints():
     mesh_3 = reader.read()
 
     # assert all the data is different
-    for m_1, m_3 in zip(mesh_1, mesh_3):
+    for m_1, m_3 in zip(mesh_1, mesh_3, strict=False):
         assert not all(m_1['DENS'] == m_3['DENS'])
 
     reader.set_active_time_point(0)

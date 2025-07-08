@@ -432,7 +432,7 @@ def test_embeddable_widget():
 
 
 def test_ipywidgets_raises(monkeypatch: pytest.MonkeyPatch):
-    from pyvista.trame import jupyter  # noqa: PLC0415
+    from pyvista.trame import jupyter
 
     monkeypatch.setattr(jupyter, 'HTML', object)
     with pytest.raises(ImportError, match='Please install `ipywidgets`.'):

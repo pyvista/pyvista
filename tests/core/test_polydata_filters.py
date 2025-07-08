@@ -68,7 +68,7 @@ def test_boolean_raises(other_mesh):
 
 
 def test_clean_raises(mocker: MockerFixture):
-    from pyvista.core.filters import poly_data  # noqa: PLC0415
+    from pyvista.core.filters import poly_data
 
     m = mocker.patch.object(poly_data, '_get_output')
     m.return_value = pv.PolyData()
@@ -90,7 +90,7 @@ def test_flip_normals_raises():
 
 
 def test_contour_banded_raises(mocker: MockerFixture):
-    from pyvista.core.filters import poly_data  # noqa: PLC0415
+    from pyvista.core.filters import poly_data
 
     m = mocker.patch.object(poly_data, 'get_array')
     m.return_value = None

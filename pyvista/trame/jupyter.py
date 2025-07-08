@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 from typing import TYPE_CHECKING
+from typing import Concatenate
 from typing import Literal
 import warnings
 
@@ -13,7 +14,6 @@ from trame.widgets import html as html_widgets
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
-from typing_extensions import Concatenate
 
 try:
     from ipywidgets.widgets import HTML
@@ -421,7 +421,7 @@ def show_trame(
     )
 
     if jupyter_extension_enabled:  # pragma: no cover
-        from trame_client.ui.core import iframe_url_builder_jupyter_extension  # noqa: PLC0415
+        from trame_client.ui.core import iframe_url_builder_jupyter_extension
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
         src = iframe_attrs['src']
@@ -466,7 +466,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     """
     try:
-        import nest_asyncio  # noqa: PLC0415
+        import nest_asyncio
     except ImportError:
         msg = (
             'Please install `nest_asyncio` to automagically launch the trame server '
