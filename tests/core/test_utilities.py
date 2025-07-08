@@ -109,7 +109,7 @@ def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_progress_monitor_raises(mocker: MockerFixture):
-    from pyvista.core.utilities import observers
+    from pyvista.core.utilities import observers  # noqa: PLC0415
 
     m = mocker.patch.object(observers, 'importlib')
     m.util.find_spec.return_value = False

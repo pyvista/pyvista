@@ -37,7 +37,7 @@ def test_read_raises():
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(npoints=st.integers().filter(lambda x: x < 2))
 def test_read_texture_raises(mocker: MockerFixture, npoints):
-    from pyvista.core.utilities import fileio
+    from pyvista.core.utilities import fileio  # noqa: PLC0415
 
     m = mocker.patch.object(fileio, 'read')
     m().n_points = npoints

@@ -17,7 +17,7 @@ with namespace_data.open() as f:
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
-        import pyvista.utilities as utilities  # noqa: PLR0402
+        import pyvista.utilities as utilities  # noqa: PLR0402, PLC0415
 
         assert hasattr(utilities, name)
 
@@ -55,10 +55,10 @@ def test_common_utilities_import_paths():
     # These are `pyvista.utilities` imports found via search on GitHub
     # across multiple public repositories
     with pytest.warns(PyVistaDeprecationWarning):
-        from pyvista.utilities import NORMALS  # noqa: F401
-        from pyvista.utilities import abstract_class  # noqa: F401
-        from pyvista.utilities import assert_empty_kwargs  # noqa: F401
-        from pyvista.utilities import conditional_decorator  # noqa: F401
+        from pyvista.utilities import NORMALS  # noqa: F401, PLC0415
+        from pyvista.utilities import abstract_class  # noqa: F401, PLC0415
+        from pyvista.utilities import assert_empty_kwargs  # noqa: F401, PLC0415
+        from pyvista.utilities import conditional_decorator  # noqa: F401, PLC0415
         from pyvista.utilities import convert_string_array  # noqa: F401, PLC0415
         from pyvista.utilities import generate_plane  # noqa: F401, PLC0415
         from pyvista.utilities import get_array  # noqa: F401, PLC0415
@@ -71,7 +71,7 @@ def test_common_utilities_import_paths():
         from pyvista.utilities.algorithms import algorithm_to_mesh_handler  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import crinkle_algorithm  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import outline_algorithm  # noqa: F401, PLC0415
-        from pyvista.utilities.algorithms import pointset_to_polydata_algorithm  # noqa: F401
+        from pyvista.utilities.algorithms import pointset_to_polydata_algorithm  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import set_algorithm_input  # noqa: F401, PLC0415
         from pyvista.utilities.errors import GPUInfo  # noqa: F401, PLC0415
         from pyvista.utilities.geometric_objects import Arrow  # noqa: F401, PLC0415
