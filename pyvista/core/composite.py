@@ -1972,7 +1972,7 @@ class MultiBlock(
 
         return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
-    __hash__ = None  # type: ignore[assignment]  # Mutable class
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def insert(
         self: MultiBlock,

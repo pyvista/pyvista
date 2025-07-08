@@ -271,7 +271,7 @@ class CameraPosition:
             return self.to_list() == other.to_list()
         return self.to_list() == other
 
-    __hash__ = None  # type: ignore[assignment]  # Mutable class
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
     def position(self):  # numpydoc ignore=RT01

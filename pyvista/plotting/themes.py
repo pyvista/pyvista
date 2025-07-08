@@ -212,7 +212,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
         return True
 
-    __hash__ = None  # type: ignore[assignment]  # Mutable class
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __getitem__(self, key):
         """Get a value via a key.

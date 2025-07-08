@@ -82,7 +82,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
             return False
         return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
 
-    __hash__ = None  # type: ignore[assignment]  # Mutable class
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""

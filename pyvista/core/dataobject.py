@@ -484,7 +484,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         return True
 
-    __hash__ = None  # type: ignore[assignment]  # Mutable class
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
     def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
