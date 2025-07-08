@@ -1740,7 +1740,7 @@ class PlanesAssembly(_XYZAssembly):
         # For 3D labels, we re-scale the text proportional to the planes assembly
         # Values on the order of 0.01-0.05 seem to work best. Use a normalization
         # factor so that input values are on the order of 10-50 and roughly match 2D sizes
-        NORM_FACTOR = 1000
+        NORM_FACTOR = 3200 if pv.vtk_version_info > (9, 5, 99) else 1000
         scale = self.planes.length * float(valid_size) / NORM_FACTOR
         for axis in self._axis_actors:
             axis.GetTitleActor().SetScale(scale)  # 3D labels
