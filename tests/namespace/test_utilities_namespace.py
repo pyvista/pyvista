@@ -71,7 +71,7 @@ def test_common_utilities_import_paths():
         from pyvista.utilities.algorithms import algorithm_to_mesh_handler  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import crinkle_algorithm  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import outline_algorithm  # noqa: F401, PLC0415
-        from pyvista.utilities.algorithms import pointset_to_polydata_algorithm  # noqa: F401
+        from pyvista.utilities.algorithms import pointset_to_polydata_algorithm  # noqa: F401, PLC0415
         from pyvista.utilities.algorithms import set_algorithm_input  # noqa: F401, PLC0415
         from pyvista.utilities.errors import GPUInfo  # noqa: F401, PLC0415
         from pyvista.utilities.geometric_objects import Arrow  # noqa: F401, PLC0415
