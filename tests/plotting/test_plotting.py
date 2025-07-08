@@ -759,28 +759,28 @@ def test_plot_no_active_scalars(sphere):
             PyVistaDeprecationWarning,
             match='This method is deprecated and will be removed in a future version',
         ),
-    ):  # noqa: PT012
+    ):
         plotter.update_scalars(np.arange(5))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Convert error this method'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Remove this method'
+        raise RuntimeError(msg)
     with (
         pytest.raises(ValueError, match='Number of scalars'),
         pytest.warns(
             PyVistaDeprecationWarning,
             match='This method is deprecated and will be removed in a future version',
         ),
-    ):  # noqa: PT012
+    ):
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Convert error this method'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Remove this method'
+        raise RuntimeError(msg)
 
 
 def test_plot_show_bounds(sphere):
