@@ -6,6 +6,8 @@ import importlib
 import inspect
 import warnings
 
+from pyvista.core.errors import PyVistaDeprecationWarning
+
 # Places to look for the utility
 _MODULES = [
     'pyvista.core.errors',
@@ -46,8 +48,6 @@ def __getattr__(name):
         ``pyvista.utilities``.
 
     """
-    from pyvista.core.errors import PyVistaDeprecationWarning
-
     for module in _MODULES:
         feature, import_path = _try_import(module, name)
         if feature is not None:

@@ -14,6 +14,8 @@ from typing import final
 from typing import get_args
 from typing import overload
 
+import pyvista
+from pyvista import _validation
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
@@ -113,8 +115,6 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
 
     @final
     def _validate_state(self, state: T) -> T:
-        from pyvista import _validation
-
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
 
@@ -298,15 +298,11 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     @property
     def _state(self) -> _VtkSnakeCaseOptions:
-        import pyvista as pv
-
-        return pv._VTK_SNAKE_CASE_STATE
+        return pyvista._VTK_SNAKE_CASE_STATE
 
     @_state.setter
     def _state(self, state: _VtkSnakeCaseOptions) -> None:
-        import pyvista as pv
-
-        pv._VTK_SNAKE_CASE_STATE = state
+        pyvista._VTK_SNAKE_CASE_STATE = state
 
 
 vtk_snake_case = _vtkSnakeCase()

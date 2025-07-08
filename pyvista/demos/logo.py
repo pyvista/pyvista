@@ -25,6 +25,7 @@ import pyvista
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
@@ -82,8 +83,6 @@ def text_3d(string, depth=0.5):
     :ref:`create_pixel_art_example`
 
     """
-    from vtkmodules.vtkRenderingFreeType import vtkVectorText
-
     vec_text = vtkVectorText()
     vec_text.SetText(string)
 
