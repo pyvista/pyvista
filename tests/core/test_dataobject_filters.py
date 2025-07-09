@@ -513,7 +513,8 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(progress_bar=True)
     assert 'CellQuality' in qual.array_names
     with pytest.raises(KeyError):
-        qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
+        with pytest.warns(PyVistaDeprecationWarning):
+            qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
 SHAPE = 'shape'
