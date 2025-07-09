@@ -2136,7 +2136,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         # Here, we normalize relative to 12 to give the user an illusion of
         # just changing the font size relative to a font size of 12. 10 is used
         # here since it's the default "screen size".
-        cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
+        scale_factor = font_size / 12 * 10.0
+        # Default size of text changed in vtk 9.6
+        scale_factor = scale_factor / 4 if pyvista.vtk_version_info > (9, 5, 99) else scale_factor
+        cube_axes_actor.SetScreenSize(scale_factor)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
