@@ -668,8 +668,11 @@ def test_glyph(datasets, sphere):
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
 
     # tries to orient but no orientation vector available
-    with pytest.warns(Warning, match=r'No vector-like data to use for orient'):
+    with pytest.warns(Warning) as warning_info:
         assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # Check that at least one of the expected warnings is raised
+    warning_messages = [str(w.message) for w in warning_info]
+    assert any('No vector-like data to use for orient' in msg for msg in warning_messages)
 
     sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
@@ -692,10 +695,11 @@ def test_glyph(datasets, sphere):
 
 def test_glyph_warns_ambiguous_data(sphere):
     sphere.compute_normals(inplace=True)
-    with pytest.warns(
-        Warning, match=r'It is unclear which one to use. scale will be set to False'
-    ):
+    with pytest.warns(Warning) as warning_info:
         sphere.glyph(scale=True)
+    # Check that at least one of the expected warnings is raised
+    warning_messages = [str(w.message) for w in warning_info]
+    assert any('It is unclear which one to use. scale will be set to False' in msg for msg in warning_messages)
 
 
 def test_glyph_cell_point_data(sphere):
