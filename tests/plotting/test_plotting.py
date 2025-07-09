@@ -795,7 +795,11 @@ def test_plot_label_fmt(sphere):
 
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
-def test_plot_show_bounds_params(grid, location):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_plot_show_bounds_params(grid, location, verify_image_cache):
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially with VTK 9.6
+        verify_image_cache.skip = True
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
