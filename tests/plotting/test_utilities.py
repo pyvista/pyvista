@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 def test_start_xvfb():
     with pytest.warns(
         PyVistaDeprecationWarning,
-        match='This function is deprecated and will be removed in a future version',
+        match='This function is deprecated and will be removed in future version',
     ):
         pv.start_xvfb()
     if pv._version.version_info[:2] > (0, 48):
@@ -35,7 +35,7 @@ def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixtur
         pytest.raises(OSError, match='`start_xvfb` is only supported on Linux'),
         pytest.warns(
             PyVistaDeprecationWarning,
-            match='This function is deprecated and will be removed in a future version',
+            match='This function is deprecated and will be removed in future version',
         ),
     ):
         pv.start_xvfb()
