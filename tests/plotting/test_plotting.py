@@ -768,7 +768,7 @@ def test_plot_no_active_scalars(sphere):
         msg = 'Remove this method'
         raise RuntimeError(msg)
     with (
-        pytest.raises(ValueError, match='Number of scalars'),
+        pytest.raises(ValueError, match='No active scalars'),
         pytest.warns(
             PyVistaDeprecationWarning,
             match='This method is deprecated and will be removed in a future version',
