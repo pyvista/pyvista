@@ -44,4 +44,5 @@ def test_plotting_errors_namespace(name):
         match=rf'now imported as: `from pyvista\.plotting\.errors import {name}`\.',
     ):
         import pyvista.errors as errors  # noqa: PLR0402
+
         assert hasattr(errors, name)
