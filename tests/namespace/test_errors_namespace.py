@@ -24,6 +24,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 )
 def test_core_errors_namespace(name):
     import pyvista.errors as errors  # noqa: PLR0402
+
     with pytest.warns(
         PyVistaDeprecationWarning,
         match=rf'now imported as: `from pyvista\.core\.errors import {name}`\.',
@@ -40,6 +41,7 @@ def test_core_errors_namespace(name):
 )
 def test_plotting_errors_namespace(name):
     import pyvista.errors as errors  # noqa: PLR0402
+
     with pytest.warns(
         PyVistaDeprecationWarning,
         match=rf'now imported as: `from pyvista\.plotting\.errors import {name}`\.',
