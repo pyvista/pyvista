@@ -19,7 +19,7 @@ def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
         import pyvista.utilities as utilities  # noqa: PLR0402
 
-        assert hasattr(utilities, name)
+    assert hasattr(utilities, name)
 
 
 @pytest.mark.parametrize(
