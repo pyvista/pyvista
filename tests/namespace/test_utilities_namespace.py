@@ -18,6 +18,7 @@ with namespace_data.open() as f:
 def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
         import pyvista.utilities as utilities  # noqa: PLR0402
+
         assert hasattr(utilities, name)
 
 
