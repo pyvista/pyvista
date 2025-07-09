@@ -741,7 +741,7 @@ def sample_function(  # noqa: PLR0917
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
     compute_normals: bool = False,  # noqa: FBT001, FBT002
-    output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
+    output_type: np.dtype = np.double,  # type: ignore[assignment]
     capping: bool = False,  # noqa: FBT001, FBT002
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
