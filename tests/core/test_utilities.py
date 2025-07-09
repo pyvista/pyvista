@@ -297,12 +297,12 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
-def test_read_force_ext_wrong_extension(tmpdir):
+def test_read_force_ext_wrong_extension(tmpdir, airplane):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
     # the returned dataset is empty
     fname = tmpdir / 'airplane.vtu'
-    ex.load_airplane().cast_to_unstructured_grid().save(fname)
+    airplane.cast_to_unstructured_grid().save(fname)
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         data = fileio.read(fname, force_ext='.vts')
@@ -395,8 +395,8 @@ def get_array_vtk(hexbeam):
     get_array(grid_vtk, 'foo')
 
 
-def test_is_inside_bounds():
-    data = ex.load_uniform()
+def test_is_inside_bounds(uniform):
+    data = uniform
     bnds = data.bounds
     assert is_inside_bounds((0.5, 0.5, 0.5), bnds)
     assert not is_inside_bounds((12, 5, 5), bnds)
@@ -686,8 +686,8 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
-def test_apply_transformation_to_points():
-    mesh = ex.load_airplane()
+def test_apply_transformation_to_points(airplane):
+    mesh = airplane
     points = mesh.points
     points_orig = points.copy()
 
