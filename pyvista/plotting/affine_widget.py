@@ -201,9 +201,9 @@ class AffineWidget3D:
         self._main_actor = actor
         self._selected_actor: pyvista.Actor | None = None
         self._init_position = None
-        self._mouse_move_observer = None
-        self._left_press_observer = None
-        self._left_release_observer = None
+        self._mouse_move_observer: int | None = None
+        self._left_press_observer: int | None = None
+        self._left_release_observer: int | None = None
 
         if self._main_actor.user_matrix is None:
             self._main_actor.user_matrix = np.eye(4)

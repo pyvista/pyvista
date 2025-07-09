@@ -2464,7 +2464,7 @@ class ImageDataFilters(DataSetFilters):
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
@@ -2818,7 +2818,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,  # type: ignore[arg-type]
+            scalars,
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':
@@ -3522,7 +3522,7 @@ class ImageDataFilters(DataSetFilters):
             if dimensions is not None:
                 dimensions_ = np.array(dimensions)
                 dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+                reference_image.dimensions = dimensions_
             new_dimensions = np.array(reference_image.dimensions)
 
         # Compute the magnification factors to use with the filter
