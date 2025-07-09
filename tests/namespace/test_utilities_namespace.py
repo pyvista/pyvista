@@ -16,10 +16,10 @@ with namespace_data.open() as f:
 
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
-    with pytest.warns(PyVistaDeprecationWarning):
-        import pyvista.utilities as utilities  # noqa: PLR0402
+    import pyvista.utilities as utilities  # noqa: PLR0402
 
-    assert hasattr(utilities, name)
+    with pytest.warns(PyVistaDeprecationWarning):
+        assert hasattr(utilities, name)
 
 
 @pytest.mark.parametrize(
