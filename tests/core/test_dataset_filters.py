@@ -699,7 +699,10 @@ def test_glyph_warns_ambiguous_data(sphere):
         sphere.glyph(scale=True)
     # Check that at least one of the expected warnings is raised
     warning_messages = [str(w.message) for w in warning_info]
-    assert any('It is unclear which one to use. scale will be set to False' in msg for msg in warning_messages)
+    assert any(
+        'It is unclear which one to use. scale will be set to False' in msg
+        for msg in warning_messages
+    )
 
 
 def test_glyph_cell_point_data(sphere):
