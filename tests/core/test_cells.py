@@ -518,7 +518,7 @@ def test_n_cells_deprecated():
 def test_deep_deprecated(deep: bool):
     with pytest.warns(
         pv.PyVistaDeprecationWarning,
-        match=r'`CellArray` parameter `deep` is deprecated and no longer used.',
+        match=r'`CellArray parameter `deep` is deprecated and no longer used\.',
     ):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
         if pv._version.version_info[:2] > (0, 47):
