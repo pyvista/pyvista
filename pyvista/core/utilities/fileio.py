@@ -815,7 +815,7 @@ def read_grdecl(
         grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
 
     # Store unused keywords in user dict
-    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}  # type: ignore[assignment]
+    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
 
     return grid
 
