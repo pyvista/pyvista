@@ -102,7 +102,6 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
-    from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -515,7 +514,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set camera position to a three.js viewing perspective
         if set_camera:
-            self.camera_position = 'xy'  # type: ignore[assignment]
+            self.camera_position = 'xy'
 
     def import_vrml(self, filename: str | Path) -> None:
         """Import a VRML file into the plotter.
@@ -1976,7 +1975,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         size_before = self.window_size
         if window_size is not None:
-            self.window_size = window_size  # type: ignore[assignment]
+            self.window_size = window_size
         try:
             yield self
         finally:
@@ -3750,7 +3749,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
                 silhouette_actor = self.add_silhouette(algo or mesh)
-            silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
+            silhouette_actor.user_matrix = user_matrix
 
         scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
@@ -3822,7 +3821,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
                 raise ValueError(msg)
 
-        mesh = cast('DataSet | PolyData', mesh)
         if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
             msg = (
@@ -3839,7 +3837,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
-        actor.user_matrix = user_matrix  # type: ignore[assignment]
+        actor.user_matrix = user_matrix
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -4386,13 +4384,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast('pyvista.ImageData', wrap(cast('NumpyArray[float]', volume)))
+                volume = cast('pyvista.ImageData', wrap(volume))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
                     msg = 'Invalid resolution dimensions.'
                     raise ValueError(msg)
-                volume.spacing = resolution  # type: ignore[assignment]
+                volume.spacing = resolution
             _validation.check_instance(
                 volume, (pyvista.DataSet, pyvista.MultiBlock), name='volume'
             )
@@ -4603,7 +4601,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.volume = Volume()
         self.volume.mapper = self.mapper
-        self.volume.user_matrix = user_matrix  # type: ignore[assignment]
+        self.volume.user_matrix = user_matrix
 
         self.volume.prop = VolumeProperty(
             lookup_table=self.mapper.lookup_table,
@@ -4763,7 +4761,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not hasattr(self, 'mapper'):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
-            self.mapper.scalar_range = clim  # type: ignore[assignment]
+            self.mapper.scalar_range = clim
             return
 
         try:
@@ -5532,7 +5530,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
 
         if fill_value is not None:
-            zval[self._image_depth_null] = fill_value  # type:ignore[index]
+            zval[self._image_depth_null] = fill_value
 
         return zval
 

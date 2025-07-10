@@ -6948,7 +6948,7 @@ class DataSetFilters(DataObjectFilters):
                 result.cell_data[output_scalars] = packed_array
 
             # vtkPackLabels sets active scalars by default, so do the same here
-            result.set_active_scalars(output_scalars, preference=field)
+            result.set_active_scalars(output_scalars, preference=field)  # type: ignore[arg-type]
 
             return result
 
@@ -7788,7 +7788,7 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
-            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            reference_volume.dimensions = dimensions
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds
@@ -7820,8 +7820,7 @@ class DataSetFilters(DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars
-
+        binary_mask['mask'] = scalars  # type: ignore[assignment]
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
