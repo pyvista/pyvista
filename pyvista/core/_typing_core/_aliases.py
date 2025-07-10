@@ -36,22 +36,10 @@ else:
 Number = int | float
 
 VectorLike = _ArrayLike1D[NumberType]
-VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
-
-Includes sequences and numpy arrays.
-"""
 
 MatrixLike = _ArrayLike2D[NumberType]
-MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
-
-Includes singly-nested sequences and numpy arrays.
-"""
 
 ArrayLike = _ArrayLike[NumberType]
-ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
-
-Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
-"""
 if Rotation is not None:
     RotationLike = MatrixLike[float] | _vtk.vtkMatrix3x3 | Rotation
 else:
