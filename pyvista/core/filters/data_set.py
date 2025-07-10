@@ -2738,7 +2738,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if not isinstance(surface, pyvista.PolyData):
-            msg = '`surface` must be `pyvista.PolyData`'
+            msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
         if check_surface and surface.n_open_edges > 0:
             msg = (
