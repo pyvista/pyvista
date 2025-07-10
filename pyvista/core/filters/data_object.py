@@ -93,8 +93,11 @@ class DataObjectFilters:
             this conversion always applies to the input mesh.
 
         .. warning::
-            Shear transformations are not supported for :class:`~pyvista.ImageData`.
-            If present, any shear component is removed by the filter.
+            Shear transformations are not supported for :class:`~pyvista.ImageData` or
+            :class:`~pyvista.RectilinearGrid`, and rotations are not supported for
+            :class:`~pyvista.RectilinearGrid`. If present, these component(s) are removed by the
+            filter. To fully support these transformations, the input should be cast to
+            :class:`~pyvista.StructuredGrid` `before` applying this filter.
 
         .. note::
             Transforming :class:`~pyvista.ImageData` modifies its
@@ -105,6 +108,14 @@ class DataObjectFilters:
         .. deprecated:: 0.45.0
             `inplace` was previously defaulted to `True`. In the future this will change
             to `False`.
+
+        .. versionchanged:: 0.45.0
+            Transforming :class:`~pyvista.ImageData` now returns ``ImageData``.
+            Previously, :class:`~pyvista.StructuredGrid` was returned.
+
+        .. versionchanged:: 0.46.0
+            Transforming :class:`~pyvista.RectilinearGrid` now returns ``RectilinearGrid``.
+            Previously, :class:`~pyvista.StructuredGrid` was returned.
 
         Parameters
         ----------
