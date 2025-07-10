@@ -56,15 +56,8 @@ if Rotation is not None:
     RotationLike = MatrixLike[float] | _vtk.vtkMatrix3x3 | Rotation
 else:
     RotationLike = MatrixLike[float] | _vtk.vtkMatrix3x3  # type: ignore[misc]
-RotationLike.__doc__ = """Array or object representing a spatial rotation.
-
-Includes 3x3 arrays and SciPy Rotation objects.
-"""
 
 TransformLike = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
-TransformLike.__doc__ = """Array or object representing a spatial transformation.
-
-Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 
 
 class BoundsTuple(NamedTuple):
@@ -112,7 +105,3 @@ CellArrayLike = CellsLike | _vtk.vtkCellArray
 _ArrayLikeOrScalar = NumberType | ArrayLike[NumberType]
 
 InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
-InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
-
-Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
-"""
