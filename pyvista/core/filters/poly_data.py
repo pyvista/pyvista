@@ -2616,7 +2616,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError(msg)
 
         try:
-            import trimesh
+            import trimesh  # noqa: PLC0415
 
             if not trimesh.ray.has_embree:
                 raise ImportError
