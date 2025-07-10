@@ -91,6 +91,6 @@ CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
 CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]
+_ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]  # noqa: PYI047
 
 InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
