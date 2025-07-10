@@ -1132,7 +1132,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.add_legend_scale``."""
         return self.renderer.add_legend_scale(*args, **kwargs)
 
-    @wraps(Renderer.add_legend)  # type: ignore[misc]
     def add_legend(self, *args, **kwargs) -> _vtk.vtkLegendBoxActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend``."""
         return self.renderer.add_legend(*args, **kwargs)

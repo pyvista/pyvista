@@ -631,7 +631,7 @@ def check_shape(
     if not isinstance(shape, list):
         shape = [shape]
 
-    array_shape = np.shape(array)  # type: ignore[arg-type]
+    array_shape = np.shape(array)
     for input_shape in shape:
         valid_shape = _validate_shape_value(input_shape)
         if _shape_is_allowed(array_shape, valid_shape):
