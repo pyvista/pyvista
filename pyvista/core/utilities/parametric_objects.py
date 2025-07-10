@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from math import pi
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
 
@@ -12,7 +11,6 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .geometric_sources import translate
 from .helpers import wrap

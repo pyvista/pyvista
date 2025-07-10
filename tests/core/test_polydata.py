@@ -5,7 +5,6 @@ import pathlib
 from pathlib import Path
 import re
 from unittest.mock import patch
-import warnings
 
 import numpy as np
 import pytest

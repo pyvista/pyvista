@@ -5,7 +5,6 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 def test_spline():

@@ -7,7 +7,6 @@ import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
-import warnings
 
 import numpy as np
 import numpy.typing as npt
@@ -15,7 +14,6 @@ import numpy.typing as npt
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
-from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
