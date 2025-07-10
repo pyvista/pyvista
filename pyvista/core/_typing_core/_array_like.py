@@ -59,11 +59,7 @@ _FiniteNestedTuple = (
     | tuple[tuple[tuple[tuple[NumberType]]]]
 )
 
-_ArrayLike1D = (
-    NumpyArray[NumberType]
-    | Sequence[NumberType]
-    | Sequence[NumpyArray[NumberType]]
-)
+_ArrayLike1D = NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
 _ArrayLike2D = (
     NumpyArray[NumberType]
     | Sequence[Sequence[NumberType]]
