@@ -263,6 +263,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
                         return False
         return True
 
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
+
     def __del__(self):
         """Clean up when the light is being destroyed."""
         self.actor = None
