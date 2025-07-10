@@ -327,7 +327,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
-    @property  # type: ignore[explicit-override, override]
+    @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
@@ -629,7 +629,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def __init__(  # noqa: PLR0917
         self: Self,
         uinput: ImageData | str | Path | None = None,
-        dimensions: VectorLike[float] | None = None,
+        dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         deep: bool = False,  # noqa: FBT001, FBT002
@@ -662,13 +662,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 raise TypeError(msg)
         else:
             if dimensions is not None:
-                self.dimensions = dimensions  # type: ignore[assignment]
-            self.origin = origin  # type: ignore[assignment]
-            self.spacing = spacing  # type: ignore[assignment]
+                self.dimensions = dimensions
+            self.origin = origin
+            self.spacing = spacing
             if direction_matrix is not None:
-                self.direction_matrix = direction_matrix  # type: ignore[assignment]
+                self.direction_matrix = direction_matrix
             if offset is not None:
-                self.offset = offset  # type: ignore[assignment]
+                self.offset = offset
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -678,7 +678,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    @property  # type: ignore[explicit-override, override]
+    @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Build a copy of the implicitly defined points as a numpy array.
 
@@ -1109,9 +1109,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.'
             )
 
-        self.origin = T  # type: ignore[assignment]
+        self.origin = T
         self.direction_matrix = R * N
-        self.spacing = S  # type: ignore[assignment]
+        self.spacing = S
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:

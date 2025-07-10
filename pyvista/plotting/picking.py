@@ -312,7 +312,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         if self.click_position is None:  # type: ignore[attr-defined]
             self.store_click_position()  # type: ignore[attr-defined]
         renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def pick_mouse_position(self):
@@ -327,7 +327,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         if self.mouse_position is None:  # type: ignore[attr-defined]
             self.store_mouse_position()  # type: ignore[attr-defined]
         renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def _init_click_picking_callback(self, *, left_clicking=False):
@@ -342,7 +342,7 @@ class PickingInterface:  # numpydoc ignore=PR01
                 partial(try_callback, _launch_pick_event),
             )
 
-    def disable_picking(self):
+    def disable_picking(self) -> None:
         """Disable any active picking and remove observers.
 
         Examples
@@ -756,7 +756,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         return self._picked_block_index
 
     @wraps(PickingInterface.disable_picking)
-    def disable_picking(self):
+    def disable_picking(self) -> None:  # type: ignore[override]
         """Disable picking."""
         super().disable_picking()
         # remove any picking text
