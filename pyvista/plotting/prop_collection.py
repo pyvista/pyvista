@@ -104,7 +104,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         ]
 
     def items(self) -> Iterable[tuple[str, _vtk.vtkProp]]:
-        yield from zip(self.keys(), self)
+        yield from zip(self.keys(), self, strict=False)
 
     def __del__(self):
         self._prop_collection = None  # type: ignore[assignment]

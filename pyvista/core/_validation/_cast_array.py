@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 def _cast_to_list(
     arr: _ArrayLikeOrScalar[NumberType],
-) -> Union[NumberType, _FiniteNestedList[NumberType]]:
+) -> NumberType | _FiniteNestedList[NumberType]:
     """Cast an array to a nested list.
 
     Parameters
@@ -39,7 +39,7 @@ def _cast_to_list(
 
 def _cast_to_tuple(
     arr: ArrayLike[NumberType],
-) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
+) -> NumberType | _FiniteNestedTuple[NumberType]:
     """Cast an array to a nested tuple.
 
     Parameters
@@ -66,7 +66,7 @@ def _cast_to_numpy(
     /,
     *,
     as_any: bool = True,
-    dtype: Optional[npt.DTypeLike] = None,
+    dtype: npt.DTypeLike | None = None,
     copy: bool = False,
     must_be_real: bool = False,
 ) -> NumpyArray[NumberType]:

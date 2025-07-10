@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
@@ -9,7 +10,6 @@ import functools
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -1745,7 +1745,7 @@ class DataSetFilters(DataObjectFilters):
             # use a single glyph, ignore indices
             alg.SetSourceData(geoms[0])
         else:
-            for index, subgeom in zip(indices, geoms):
+            for index, subgeom in zip(indices, geoms, strict=False):
                 alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
@@ -4993,11 +4993,11 @@ class DataSetFilters(DataObjectFilters):
         multi = pyvista.MultiBlock()
         if values is not None:
             value_names = value_names if value_names else [None] * len(values)
-            for name, val in zip(value_names, values):
+            for name, val in zip(value_names, values, strict=False):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
             range_names = range_names if range_names else [None] * len(ranges)
-            for name, rng in zip(range_names, ranges):
+            for name, rng in zip(range_names, ranges, strict=False):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
@@ -6936,7 +6936,7 @@ class DataSetFilters(DataObjectFilters):
 
             # Pack/sort array
             packed_array = np.zeros_like(arr)
-            for num_in, num_out in zip(label_numbers_in, label_numbers_out):
+            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=False):
                 packed_array[arr == num_in] = num_out
 
             result = self if inplace else self.copy(deep=True)
@@ -7296,7 +7296,7 @@ class DataSetFilters(DataObjectFilters):
                 cast('list[ColorLike]', list(colors.values()))
             )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
-            items = zip(colors.keys(), color_rgb_sequence)
+            items = zip(colors.keys(), color_rgb_sequence, strict=False)
 
         else:
             if array.ndim > 1:
@@ -7371,7 +7371,7 @@ class DataSetFilters(DataObjectFilters):
                 keys = np.unique(array)
                 values = itertools.cycle(color_rgb_sequence)
 
-            items = zip(keys, values)
+            items = zip(keys, values, strict=False)
 
         colors_out = np.full(
             (len(array), num_components), default_channel_value, dtype=color_dtype

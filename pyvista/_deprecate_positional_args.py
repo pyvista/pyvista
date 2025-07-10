@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
 import inspect
 from inspect import Parameter
 from inspect import Signature
 import os
 from pathlib import Path
-from typing import Callable
 from typing import TypeVar
 from typing import overload
 import warnings

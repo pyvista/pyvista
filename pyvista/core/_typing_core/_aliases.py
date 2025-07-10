@@ -93,7 +93,7 @@ class BoundsTuple(NamedTuple):
         field_size = max(len(f) for f in fields)
         name = self.__class__.__name__
         whitespace = (len(name) + 1) * ' '
-        for i, items in enumerate(zip(fields, split_strings)):
+        for i, items in enumerate(zip(fields, split_strings, strict=False)):
             field, parts = items
             left, right = parts
             aligned = f'{left:>{pad_left}}{dot}{right}'

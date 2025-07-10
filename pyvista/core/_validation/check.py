@@ -43,9 +43,9 @@ _ShapeLike = Union[int, _Shape]
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
+    input_obj: npt.DTypeLike | _ArrayLikeOrScalar[NumberType],
     /,
-    base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
+    base_dtype: npt.DTypeLike | tuple[npt.DTypeLike, ...] | list[npt.DTypeLike],
     *,
     name: str = 'Input',
 ) -> None:

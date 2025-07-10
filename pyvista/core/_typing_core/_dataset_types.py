@@ -24,7 +24,7 @@ _PointSetType.__doc__ = """Type variable for PyVista ``PointSet`` classes."""
 _DataSetType = TypeVar('_DataSetType', bound=DataSet)
 _DataSetType.__doc__ = """Type variable for :class:`~pyvista.DataSet` classes."""
 
-_DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=Union[DataSet, MultiBlock])
+_DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound=DataSet | MultiBlock)
 _DataSetOrMultiBlockType.__doc__ = (
     """Type variable for :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` classes."""
 )
