@@ -43,9 +43,9 @@ MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
 
 ArrayLike: TypeAlias = _ArrayLike[NumberType]
 if Rotation is not None:
-    RotationLike: TypeAlias = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike: TypeAlias = MatrixLike[float] | _vtk.vtkMatrix3x3 | Rotation
 else:
-    RotationLike: TypeAlias = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[no-redef]
+    RotationLike: TypeAlias = MatrixLike[float] | _vtk.vtkMatrix3x3  # type: ignore[no-redef]
 
 TransformLike: TypeAlias = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
 
