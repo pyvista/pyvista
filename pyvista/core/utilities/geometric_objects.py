@@ -298,7 +298,7 @@ def CylinderStructured(  # noqa: PLR0917
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
-    zz = np.full((X.size, z_resolution), dz)  # type:ignore[assignment]
+    zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
 
@@ -957,10 +957,10 @@ def SolidSphereGeneric(  # noqa: PLR0917
             cells.append(5)
             cells.extend(
                 [
-                    _index(0, iphi, itheta),  # type:ignore[arg-type]
-                    _index(0, iphi, itheta + 1),  # type:ignore[arg-type]
-                    _index(0, iphi + 1, itheta + 1),  # type:ignore[arg-type]
-                    _index(0, iphi + 1, itheta),  # type:ignore[arg-type]
+                    _index(0, iphi, itheta),
+                    _index(0, iphi, itheta + 1),
+                    _index(0, iphi + 1, itheta + 1),
+                    _index(0, iphi + 1, itheta),
                     0,
                 ],
             )
@@ -1011,14 +1011,14 @@ def SolidSphereGeneric(  # noqa: PLR0917
         cells.append(8)
         cells.extend(
             [
-                _index(ir, iphi, itheta),  # type:ignore[arg-type]
-                _index(ir, iphi + 1, itheta),  # type:ignore[arg-type]
-                _index(ir, iphi + 1, itheta + 1),  # type:ignore[arg-type]
-                _index(ir, iphi, itheta + 1),  # type:ignore[arg-type]
-                _index(ir + 1, iphi, itheta),  # type:ignore[arg-type]
-                _index(ir + 1, iphi + 1, itheta),  # type:ignore[arg-type]
-                _index(ir + 1, iphi + 1, itheta + 1),  # type:ignore[arg-type]
-                _index(ir + 1, iphi, itheta + 1),  # type:ignore[arg-type]
+                _index(ir, iphi, itheta),
+                _index(ir, iphi + 1, itheta),
+                _index(ir, iphi + 1, itheta + 1),
+                _index(ir, iphi, itheta + 1),
+                _index(ir + 1, iphi, itheta),
+                _index(ir + 1, iphi + 1, itheta),
+                _index(ir + 1, iphi + 1, itheta + 1),
+                _index(ir + 1, iphi, itheta + 1),
             ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
@@ -1758,9 +1758,9 @@ def CircularArc(  # noqa: PLR0917
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
-    pointb = list(pointb)  # type: ignore[assignment]
-    pointb[0] -= 1e-10  # type: ignore[index]
-    pointb[1] -= 1e-10  # type: ignore[index]
+    pointb = list(pointb)
+    pointb[0] -= 1e-10
+    pointb[1] -= 1e-10
 
     arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
