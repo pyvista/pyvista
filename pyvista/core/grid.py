@@ -920,17 +920,22 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         origin = self.origin
         offset = self.offset
         direction = self.direction_matrix
-        if not np.allclose(np.abs(self.direction_matrix), np.eye(3)):
+
+        # Off-axis rotation is not supported by RectilinearGrid
+        if np.allclose(np.abs(direction), np.eye(3)):
+            sign = np.diagonal(direction)
+        else:
+            sign = np.array((1.0, 1.0, 1.0))
             msg = (
-                'Direction matrix must be a diagonal matrix when casting to RectilinearGrid; all'
-                '\noff-diagonal values are ignored. Consider casting to StructuredGrid instead.'
+                'The direction matrix is not a diagonal matrix and cannot be used when casting to '
+                'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
+                'instead.'
             )
             warnings.warn(msg, RuntimeWarning)
-        direction = np.diagonal(direction)
 
         # Use linspace to avoid rounding error accumulation
         ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
-        return [ijk[axis] * spacing[axis] * direction[axis] + origin[axis] for axis in range(3)]
+        return [ijk[axis] * spacing[axis] * sign[axis] + origin[axis] for axis in range(3)]
 
     @property
     def extent(

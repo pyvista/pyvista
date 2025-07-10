@@ -1052,11 +1052,16 @@ def test_cast_uniform_to_rectilinear():
 
     grid.direction_matrix = pv.Transform().rotate_x(30).matrix[:3, :3]
     match = (
-        'Direction matrix must be a diagonal matrix when casting to RectilinearGrid; all\n'
-        'off-diagonal values are ignored. Consider casting to StructuredGrid instead.'
+        'The direction matrix is not a diagonal matrix and cannot be used when casting to '
+        'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid instead.'
     )
     with pytest.warns(RuntimeWarning, match=match):
-        grid.cast_to_rectilinear_grid()
+        rectilinear = grid.cast_to_rectilinear_grid()
+    # Input has orientation, output does not
+    assert rectilinear.bounds != grid.bounds
+    # Test output has orientation component removed
+    grid.direction_matrix = np.eye(3)
+    assert rectilinear.bounds == grid.bounds
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():
