@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02  # noqa: N801
+class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
     """A ndarray which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.

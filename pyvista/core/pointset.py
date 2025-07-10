@@ -3408,7 +3408,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
-        dims = np.diff(dims, axis=1)  # type: ignore[assignment]
+        dims = np.diff(dims, axis=1)
         dims = dims.flatten() + 1  # type: ignore[assignment]
         return int(dims[0]), int(dims[1]), int(dims[2])
 
@@ -3537,7 +3537,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             coords = tuple(coords)
         dims = self._dimensions()
         try:
-            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore[call-overload]
+            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')
         except ValueError:
             return None
         else:
