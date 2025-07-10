@@ -5930,7 +5930,7 @@ class DataSetFilters(DataObjectFilters):
         elif preference == 'cell':
             table_data = {name: self.cell_data[name] for name in self.cell_data.keys()}
         else:
-            msg = f"preference must be 'point' or 'cell', not {preference}"
+            msg = f"preference must be 'point' or 'cell', not {preference}"  # type: ignore[unreachable]
             raise ValueError(msg)
 
         # Create table from data
