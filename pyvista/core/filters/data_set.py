@@ -5982,12 +5982,12 @@ class DataSetFilters(DataObjectFilters):
 
                 # Store means and variances
                 if means:
-                    result_data['means'] = np.array([
-                        means.get(name, 0.0) for name in column_names
-                    ])
-                    result_data['variances'] = np.array([
-                        variances.get(name, 0.0) for name in column_names
-                    ])
+                    result_data['means'] = np.array(
+                        [means.get(name, 0.0) for name in column_names]
+                    )
+                    result_data['variances'] = np.array(
+                        [variances.get(name, 0.0) for name in column_names]
+                    )
                     result_data['column_names'] = np.array(column_names, dtype=object)
 
         # Create result table
