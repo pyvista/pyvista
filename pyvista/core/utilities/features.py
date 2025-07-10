@@ -202,7 +202,7 @@ def voxelize(  # noqa: PLR0917
         # Normalise cells to unit size
         ugrid_norm = ugrid.copy()
         surface_norm = surface.copy()
-        ugrid_norm.points /= np.array(density)  # type: ignore[misc]
+        ugrid_norm.points /= np.array(density)
         surface_norm.points /= np.array(density)
         # Select cells if they're within one unit of the surface
         ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)

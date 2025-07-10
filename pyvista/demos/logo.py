@@ -314,7 +314,7 @@ def plot_logo(  # noqa: PLR0917
 
     # finalize plot and show it
     plotter.set_background(kwargs.pop('background', 'white'))
-    plotter.camera_position = 'xy'  # type: ignore[assignment]
+    plotter.camera_position = 'xy'
     if 'zoom' in kwargs:
         plotter.camera.zoom(kwargs.pop('zoom'))
 

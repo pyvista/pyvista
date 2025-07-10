@@ -62,7 +62,7 @@ pinned = [ # Pinned versions of core dependencies
 ]
 
 typing = [
-  'mypy<1.14.0',
+  'mypy<1.17.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
   'trimesh<4.6.0',
