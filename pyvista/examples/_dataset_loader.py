@@ -70,12 +70,7 @@ _FilePropIntType_co = TypeVar(
 )
 
 DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
-DatasetType = (
-    type[pv.DataSet]
-    | type[pv.Texture]
-    | type[NumpyArray[Any]]
-    | type[pv.MultiBlock]
-)
+DatasetType = type[pv.DataSet] | type[pv.Texture] | type[NumpyArray[Any]] | type[pv.MultiBlock]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
