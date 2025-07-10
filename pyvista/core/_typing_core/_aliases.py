@@ -43,11 +43,11 @@ MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
 
 ArrayLike: TypeAlias = _ArrayLike[NumberType]
 if Rotation is not None:
-    RotationLike: TypeAlias = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike: TypeAlias = MatrixLike[float] | _vtk.vtkMatrix3x3 | Rotation
 else:
-    RotationLike: TypeAlias = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[no-redef]
+    RotationLike: TypeAlias = MatrixLike[float] | _vtk.vtkMatrix3x3  # type: ignore[no-redef]
 
-TransformLike: TypeAlias = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
+TransformLike: TypeAlias = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
 
 
 class BoundsTuple(NamedTuple):
@@ -87,11 +87,11 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike: TypeAlias = Union[MatrixLike[int], VectorLike[int]]
+CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
 
-CellArrayLike: TypeAlias = Union[CellsLike, _vtk.vtkCellArray]
+CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar: TypeAlias = Union[NumberType, ArrayLike[NumberType]]  # noqa: PYI047
+_ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]  # noqa: PYI047
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
