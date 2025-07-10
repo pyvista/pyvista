@@ -482,6 +482,7 @@ from vtkmodules.vtkFiltersSources import vtkSphereSource as vtkSphereSource
 from vtkmodules.vtkFiltersSources import vtkSuperquadricSource as vtkSuperquadricSource
 from vtkmodules.vtkFiltersSources import vtkTessellatedBoxSource as vtkTessellatedBoxSource
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles as vtkComputeQuartiles
+from vtkmodules.vtkFiltersStatistics import vtkPCAStatistics as vtkPCAStatistics
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersStatistics import vtkLengthDistribution as vtkLengthDistribution
