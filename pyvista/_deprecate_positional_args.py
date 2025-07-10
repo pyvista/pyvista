@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from functools import wraps
 import inspect
 from inspect import Parameter
 from inspect import Signature
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
 import warnings
 
 from typing_extensions import ParamSpec
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 

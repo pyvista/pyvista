@@ -1115,7 +1115,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         offsets_ = np.cumsum(offsets)
 
-        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:], strict=False)]
+        return [arr[i1 + 1 : i2] for i1, i2 in itertools.pairwise(offsets_)]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
@@ -1195,7 +1195,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = {
-        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:], strict=False)]
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in itertools.pairwise(indices)]
         for k, v in vtk_cell_data.items()
     }
 
