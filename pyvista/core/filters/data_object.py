@@ -193,10 +193,6 @@ class DataObjectFilters:
                 progress_bar=progress_bar,
             )
 
-        if inplace and isinstance(self, pyvista.RectilinearGrid):
-            msg = f'Cannot transform a {self.__class__} inplace'
-            raise TypeError(msg)
-
         t = trans if isinstance(trans, Transform) else Transform(trans)
 
         if t.matrix[3, 3] == 0:
@@ -272,12 +268,7 @@ class DataObjectFilters:
                 output_.point_data.active_scalars_name = active_point_scalars_name
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
-        if isinstance(self, pyvista.RectilinearGrid):
-            output: DataSet | MultiBlock = pyvista.StructuredGrid()
-        elif inplace:
-            output = self
-        else:
-            output = self.__class__()
+        output = self if inplace else self.__class__()
 
         if isinstance(output, pyvista.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
@@ -288,6 +279,46 @@ class DataObjectFilters:
             current_matrix = output.index_to_physical_matrix
             new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
+
+            output.point_data.update(res.point_data, copy=False)
+            output.cell_data.update(res.cell_data, copy=False)
+            output.field_data.update(res.field_data, copy=False)
+            _restore_active_scalars(self, output)
+            return output
+
+        elif isinstance(output, pyvista.RectilinearGrid):
+            # vtkTransformFilter returns a StructuredGrid, but we can return
+            # RectilinearGrid if we ignore shear and rotations
+            # Follow similar decomposition performed by ImageData.index_to_physical_matrix
+            T, R, N, S, K = t.decompose()
+
+            if not np.allclose(K, np.eye(3)):
+                msg = (
+                    'The transformation matrix has a shear component which has been removed.\n'
+                    'Shear is not supported by RectilinearGrid; cast to StructuredGrid first\n'
+                    'to support shear transformations.'
+                )
+                warnings.warn(msg)
+
+            # Lump scale and reflection together
+            scale = S * N
+            if not np.allclose(np.abs(R), np.eye(3)):
+                msg = (
+                    'The transformation matrix has a non-diagonal rotation component which has\n'
+                    'been removed. Rotation is not supported by RectilinearGrid; cast to\n'
+                    'StructuredGrid first to fully support rotation transformations.'
+                )
+                warnings.warn(msg)
+            else:
+                # Lump any reflections from the rotation into the scale
+                scale *= np.diagonal(R)
+
+            # Apply reflection N, scale S, and translation T
+            tx, ty, tz = T
+            sx, sy, sz = scale
+            output.x = self.x * sx + tx
+            output.y = self.y * sy + ty
+            output.z = self.z * sz + tz
 
             output.point_data.update(res.point_data, copy=False)
             output.cell_data.update(res.cell_data, copy=False)

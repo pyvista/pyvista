@@ -593,10 +593,9 @@ def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
-    # rotate about x-axis by 90 degrees
+    dx, dy, dz = -1.0, 2.0, 3.0
+    tf = pv.Transform().translate((dx, dy, dz))
     for dataset in datasets:
-        tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
-
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
@@ -610,9 +609,9 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
         transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
 
-        assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
-        assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
-        assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+        assert np.allclose(dataset.points[:, 0] + dx, transformed.points[:, 0])
+        assert np.allclose(dataset.points[:, 1] + dy, transformed.points[:, 1])
+        assert np.allclose(dataset.points[:, 2] + dz, transformed.points[:, 2])
 
         # ensure that none of the vector data is changed
         for name, array in dataset.point_data.items():
@@ -635,10 +634,9 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
+    sx, sy, sz = -1.1, 2.2, 3.3
+    tf = pv.Transform().scale((sx, sy, sz))
     for dataset in datasets:
-        # rotate about x-axis by 90 degrees
-        tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
-
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
@@ -656,29 +654,35 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         if num_point_data:
             assert dataset.point_data == orig_dataset.point_data
 
-        assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
-        assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
-        assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+        assert np.allclose(dataset.points[:, 0] * sx, transformed.points[:, 0])
+        assert np.allclose(dataset.points[:, 1] * sy, transformed.points[:, 1])
+        assert np.allclose(dataset.points[:, 2] * sz, transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
+            assert np.allclose(
+                dataset.cell_data[f'C{i}'][:, 0] * sx,
                 transformed.cell_data[f'C{i}'][:, 0],
             )
-            assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
-                -transformed.cell_data[f'C{i}'][:, 1],
+            assert np.allclose(
+                dataset.cell_data[f'C{i}'][:, 1] * sy,
+                transformed.cell_data[f'C{i}'][:, 1],
             )
-            assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
+            assert np.allclose(
+                dataset.cell_data[f'C{i}'][:, 2] * sz,
                 transformed.cell_data[f'C{i}'][:, 2],
             )
 
         for i in range(num_point_data):
-            assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
+            assert np.allclose(
+                dataset.point_data[f'P{i}'][:, 0] * sx,
                 transformed.point_data[f'P{i}'][:, 0],
             )
-            assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
-                -transformed.point_data[f'P{i}'][:, 1],
+            assert np.allclose(
+                dataset.point_data[f'P{i}'][:, 1] * sy,
+                transformed.point_data[f'P{i}'][:, 1],
             )
-            assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
+            assert np.allclose(
+                dataset.point_data[f'P{i}'][:, 2] * sz,
                 transformed.point_data[f'P{i}'][:, 2],
             )
 
@@ -697,8 +701,8 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+    tf = pv.Transform().scale((1, 2, 3))
     for dataset in datasets:
-        tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().integers(
@@ -716,13 +720,34 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
 
 
 def test_transform_inplace_rectilinear(rectilinear):
-    # assert that transformations of this type raises the correct error
-    tf = pv.core.utilities.transformations.axis_angle_rotation(
-        (1, 0, 0),
-        90,
-    )  # rotate about x-axis by 90 degrees
-    with pytest.raises(TypeError):
-        rectilinear.transform(tf, inplace=True)
+    copied = rectilinear.copy()
+    tf = pv.Transform().scale(1, 2, 3)
+    inplace = copied.transform(tf, inplace=True)
+    assert inplace is copied
+    not_inplace = rectilinear.transform(tf, inplace=False)
+    assert inplace == not_inplace
+
+
+def test_transform_rectilinear_warns(rectilinear):
+    tf = pv.Transform().rotate_x(30)
+    match = (
+        'The transformation matrix has a non-diagonal rotation component which has\n'
+        'been removed. Rotation is not supported by RectilinearGrid; cast to\n'
+        'StructuredGrid first to fully support rotation transformations.'
+    )
+    with pytest.warns(UserWarning, match=match):
+        rectilinear.transform(tf, inplace=False)
+
+    matrix = np.eye(4)
+    matrix[0, 1] = 0.1
+    matrix[1, 0] = 0.1
+    match = (
+        'The transformation matrix has a shear component which has been removed.\n'
+        'Shear is not supported by RectilinearGrid; cast to StructuredGrid first\n'
+        'to support shear transformations.'
+    )
+    with pytest.warns(UserWarning, match=match):
+        rectilinear.transform(matrix, inplace=False)
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
