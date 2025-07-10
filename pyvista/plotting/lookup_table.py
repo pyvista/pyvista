@@ -789,7 +789,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if flip:
             values = values[::-1]
 
-        self.values = values
+        self.values = values  # type: ignore[assignment]
         self._values_manual = False
 
         # reapply the opacity
