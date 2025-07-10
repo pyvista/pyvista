@@ -12,8 +12,8 @@ from .prop3d import Prop3D
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ._property import Property
     from .mapper import _BaseMapper
+    from .volume_property import VolumeProperty
 
 
 class Volume(Prop3D, _vtk.vtkVolume):
@@ -77,8 +77,8 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):
-        self.SetProperty(obj)  # type: ignore[arg-type]
+    def prop(self, obj: VolumeProperty):
+        self.SetProperty(obj)
 
     @_deprecate_positional_args
     def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
