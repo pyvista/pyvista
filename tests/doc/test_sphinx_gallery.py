@@ -4,7 +4,6 @@ from collections import Counter
 from pathlib import Path
 import re
 from typing import NamedTuple
-from typing import Optional
 
 import pytest
 

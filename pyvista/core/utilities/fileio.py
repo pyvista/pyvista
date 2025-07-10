@@ -11,7 +11,6 @@ from typing import Any
 from typing import Literal
 from typing import TextIO
 from typing import TypeVar
-from typing import Union
 from typing import cast
 from typing import overload
 import warnings
@@ -40,15 +39,15 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
+PathStrSeq = str | Path | Sequence['PathStrSeq']
 
 if TYPE_CHECKING:
-    _VTKWriterAlias = Union[
-        _vtk.vtkXMLPartitionedDataSetWriter,
-        _vtk.vtkXMLWriter,
-        _vtk.vtkDataWriter,
-        _vtk.vtkHDFWriter,
-    ]
+    _VTKWriterAlias = (
+        _vtk.vtkXMLPartitionedDataSetWriter
+        | _vtk.vtkXMLWriter
+        | _vtk.vtkDataWriter
+        | _vtk.vtkHDFWriter
+    )
     _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')

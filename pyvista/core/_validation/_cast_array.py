@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
 
 import numpy as np
 import numpy.typing as npt

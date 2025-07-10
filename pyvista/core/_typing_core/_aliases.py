@@ -6,7 +6,6 @@ import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
-from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
 

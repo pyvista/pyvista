@@ -11,7 +11,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Union
 from typing import cast
 import warnings
 
@@ -56,20 +55,20 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
-    _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter,
-        _vtk.vtkXMLPolyDataWriter,
-        _vtk.vtkSTLWriter,
-        _vtk.vtkPolyDataWriter,
-        _vtk.vtkHoudiniPolyDataWriter,
-        _vtk.vtkOBJWriter,
-        _vtk.vtkIVWriter,
-        _vtk.vtkHDFWriter,
-    ]
+    _PolyDataWriterAlias = (
+        _vtk.vtkPLYWriter
+        | _vtk.vtkXMLPolyDataWriter
+        | _vtk.vtkSTLWriter
+        | _vtk.vtkPolyDataWriter
+        | _vtk.vtkHoudiniPolyDataWriter
+        | _vtk.vtkOBJWriter
+        | _vtk.vtkIVWriter
+        | _vtk.vtkHDFWriter
+    )
 
-    _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
-    ]
+    _UnstructuredGridWriterAlias = (
+        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
+    )
 
 
 DEFAULT_INPLACE_WARNING = (

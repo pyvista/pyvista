@@ -38,8 +38,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core._array_like import _NumberType
 
 
-_Shape = Union[tuple[()], tuple[int, ...]]
-_ShapeLike = Union[int, _Shape]
+_Shape = tuple[()] | tuple[int, ...]
+_ShapeLike = int | _Shape
 
 
 def check_subdtype(
