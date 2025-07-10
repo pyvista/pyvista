@@ -1041,11 +1041,22 @@ def test_cast_uniform_to_structured():
 
 
 def test_cast_uniform_to_rectilinear():
-    grid = pv.Wavelet()  # Uses an offset
+    grid = examples.load_uniform()
+    grid.offset = (1, 2, 3)
+    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))
+    grid.spacing = (1.1, 2.2, 3.3)
     rectilinear = grid.cast_to_rectilinear_grid()
     assert rectilinear.n_points == grid.n_points
     assert rectilinear.n_arrays == grid.n_arrays
     assert rectilinear.bounds == grid.bounds
+
+    grid.direction_matrix = pv.Transform().rotate_x(30).matrix[:3, :3]
+    match = (
+        'Direction matrix must be a diagonal matrix when casting to RectilinearGrid; all\n'
+        'off-diagonal values are ignored. Consider casting to StructuredGrid instead.'
+    )
+    with pytest.warns(RuntimeWarning, match=match):
+        grid.cast_to_rectilinear_grid()
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():

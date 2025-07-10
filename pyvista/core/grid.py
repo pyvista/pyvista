@@ -915,13 +915,22 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             Rectilinear coordinates over the three dimensions.
 
         """
-        # Use linspace to avoid rounding error accumulation
         dims = self.dimensions
         spacing = self.spacing
-        origin = np.array(self.origin) + np.array(self.offset)
-        return [
-            (np.linspace(0, (dims[i] - 1) * spacing[i], dims[i]) + origin[i]) for i in range(3)
-        ]
+        origin = self.origin
+        offset = self.offset
+        direction = self.direction_matrix
+        if not np.allclose(np.abs(self.direction_matrix), np.eye(3)):
+            msg = (
+                'Direction matrix must be a diagonal matrix when casting to RectilinearGrid; all'
+                '\noff-diagonal values are ignored. Consider casting to StructuredGrid instead.'
+            )
+            warnings.warn(msg, RuntimeWarning)
+        direction = np.diagonal(direction)
+
+        # Use linspace to avoid rounding error accumulation
+        ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
+        return [ijk[axis] * spacing[axis] * direction[axis] + origin[axis] for axis in range(3)]
 
     @property
     def extent(
