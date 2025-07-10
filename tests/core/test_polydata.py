@@ -1297,33 +1297,18 @@ def default_n_faces():
 
 
 def test_n_faces():
-    if pv._version.version_info[:2] > (0, 46):
-        msg = 'Convert non-strict n_faces use to error'
-        raise RuntimeError(msg)
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Convert default n_faces behavior to strict'
-        raise RuntimeError(msg)
-
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
         faces=[3, 0, 1, 2],
         lines=[2, 0, 1],
     )
 
-    # Should raise a warning the first time
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        nf = mesh.n_faces
+    # With strict mode enabled by default, n_faces should only count face cells
+    nf = mesh.n_faces
+    assert nf == 1  # Only the triangle face
 
-    # Current (deprecated) behavior is that n_faces is aliased to n_cells
-    assert nf == mesh.n_cells
-
-    # Shouldn't raise deprecation warning the second time
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
-        nf1 = mesh.n_faces
-
-    assert nf1 == nf
+    # n_cells includes all cells (faces + lines)
+    assert mesh.n_cells == 2
 
 
 def test_opt_in_n_faces_strict():

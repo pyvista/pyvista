@@ -693,32 +693,6 @@ def test_complex(plane, dtype_str):
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
 
 
-def test_active_t_coords_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-
-
-def test_active_t_coords_name_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('copy', [True, False])

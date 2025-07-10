@@ -755,7 +755,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     """
 
-    _USE_STRICT_N_FACES = False
+    _USE_STRICT_N_FACES = True
     _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS: ClassVar[
