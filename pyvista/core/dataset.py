@@ -151,7 +151,7 @@ class ActiveArrayInfo:
         """Build a namedtuple on the fly to provide legacy support."""
         return ActiveArrayInfoTuple(self.association, self.name)
 
-    def __iter__(self: ActiveArrayInfo) -> Iterator[FieldAssociation | str]:
+    def __iter__(self: ActiveArrayInfo) -> Iterator[FieldAssociation | str | None]:
         """Provide namedtuple-like __iter__."""
         return self._namedtuple.__iter__()
 
@@ -159,7 +159,7 @@ class ActiveArrayInfo:
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
 
-    def __getitem__(self: ActiveArrayInfo, item: int) -> FieldAssociation | str:
+    def __getitem__(self: ActiveArrayInfo, item: int) -> FieldAssociation | str | None:
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
 
@@ -449,7 +449,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property  # type: ignore[explicit-override, override]
+    @property
     def active_scalars_name(self: Self) -> str | None:
         """Return the name of the active scalars.
 
@@ -673,7 +673,7 @@ class DataSet(DataSetFilters, DataObject):
             'Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
+        self.active_texture_coordinates = t_coords
 
     def set_active_scalars(
         self: Self,
@@ -2972,7 +2972,7 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
 
         """
-        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+        self.point_data.active_texture_coordinates = texture_coordinates
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
