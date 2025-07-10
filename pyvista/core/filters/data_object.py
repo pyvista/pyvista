@@ -322,13 +322,14 @@ class DataObjectFilters:
                 # Lump any reflections from the rotation into the scale
                 scale *= np.diagonal(R)
 
-            # Apply reflection N, scale S, and translation T
+            # Apply transformation to structure
             tx, ty, tz = T
             sx, sy, sz = scale
             output.x = self.x * sx + tx
             output.y = self.y * sy + ty
             output.z = self.z * sz + tz
 
+            # Copy data arrays from the vtkTransformFilter's output
             output.point_data.update(res.point_data, copy=False)
             output.cell_data.update(res.cell_data, copy=False)
             output.field_data.update(res.field_data, copy=False)
