@@ -59,7 +59,9 @@ _FiniteNestedTuple: TypeAlias = (
     | tuple[tuple[tuple[tuple[NumberType]]]]
 )
 
-_ArrayLike1D: TypeAlias = NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
+_ArrayLike1D: TypeAlias = (
+    NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
+)
 _ArrayLike2D: TypeAlias = (
     NumpyArray[NumberType]
     | Sequence[Sequence[NumberType]]
