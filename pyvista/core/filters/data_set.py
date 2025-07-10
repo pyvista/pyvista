@@ -2738,7 +2738,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if not isinstance(surface, pyvista.PolyData):
-            msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
+            msg = '`surface` must be `pyvista.PolyData`'
             raise TypeError(msg)
         if check_surface and surface.n_open_edges > 0:
             msg = (
@@ -7820,7 +7820,7 @@ class DataSetFilters(DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars
 
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier

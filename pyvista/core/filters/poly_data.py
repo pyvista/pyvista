@@ -2736,7 +2736,7 @@ class PolyDataFilters(DataSetFilters):
             line_width=line_width,
         )
         plotter.add_mesh(self, label='Mesh', **kwargs)
-        plotter.add_legend()  # type: ignore[call-arg]
+        plotter.add_legend()
         return plotter.show()
 
     @_deprecate_positional_args
