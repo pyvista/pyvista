@@ -27,7 +27,7 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
+class lookup_table_ndarray(np.ndarray):  # noqa: N801
     """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
@@ -789,7 +789,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if flip:
             values = values[::-1]
 
-        self.values = values
+        self.values = values  # type: ignore[assignment]
         self._values_manual = False
 
         # reapply the opacity

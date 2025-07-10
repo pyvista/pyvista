@@ -2379,7 +2379,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         >>> rot = transform.as_rotation()
         >>> rot
-        <scipy.spatial.transform._rotation.Rotation ...>
+        Rotation.from_matrix(array([[ 0., -1.,  0.],
+                                    [ 1.,  0.,  0.],
+                                    [ 0.,  0.,  1.]]))
 
         Represent the rotation as a quaternion.
 

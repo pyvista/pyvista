@@ -1746,7 +1746,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms):
-                alg.SetSourceData(index, subgeom)  # type: ignore[call-overload]
+                alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -7360,7 +7360,7 @@ class DataSetFilters(DataObjectFilters):
                 keys_ = np.arange(n_colors)
                 values_ = color_rgb_sequence
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))  # type: ignore[assignment]
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
                     values_.extend(values_[::-1])
                 keys = keys_
                 values = values_
