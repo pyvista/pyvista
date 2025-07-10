@@ -406,7 +406,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             return self.dataset.GetNumberOfCells()
         return None
 
-
     def get_array(self: Self, key: str | int) -> pyvista_ndarray:
         """Get an array in this object.
 

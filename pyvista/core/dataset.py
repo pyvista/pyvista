@@ -641,7 +641,6 @@ class DataSet(DataSetFilters, DataObject):
             self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
-
     def set_active_scalars(
         self: Self,
         name: str | None,

@@ -693,8 +693,6 @@ def test_complex(plane, dtype_str):
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
 
 
-
-
 @pytest.mark.parametrize('copy', [True, False])
 def test_update(uniform, copy):
     new_mesh = pv.ImageData(dimensions=uniform.dimensions)

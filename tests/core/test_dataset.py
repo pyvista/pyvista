@@ -1539,8 +1539,6 @@ def mesh():
     return examples.load_globe()
 
 
-
-
 def test_active_array_info_deprecated():
     match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
