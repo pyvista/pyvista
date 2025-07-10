@@ -42,10 +42,14 @@ VectorLike: TypeAlias = _ArrayLike1D[NumberType]
 MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
 
 ArrayLike: TypeAlias = _ArrayLike[NumberType]
+
+# Create a float-specific matrix type for rotation use
+FloatMatrixLike: TypeAlias = _ArrayLike2D[float]
+
 if Rotation is not None:
-    RotationLike: TypeAlias = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike: TypeAlias = Union[FloatMatrixLike, _vtk.vtkMatrix3x3, Rotation]
 else:
-    RotationLike: TypeAlias = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[no-redef]
+    RotationLike: TypeAlias = Union[FloatMatrixLike, _vtk.vtkMatrix3x3]  # type: ignore[no-redef,misc]
 
 TransformLike: TypeAlias = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
 
