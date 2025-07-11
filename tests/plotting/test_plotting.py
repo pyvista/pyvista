@@ -4989,7 +4989,7 @@ def test_contour_labels_smoothing_constraint(
     # the scale of the smoothing applied by the smoothing constraints
     plot.enable_parallel_projection()
     plot.view_yz()
-    plot.show_grid(xtitle='', ytitle='', ztitle='')
+    plot.show_grid()
     plot.reset_camera()
     plot.camera.zoom(1.5)
     plot.show()
