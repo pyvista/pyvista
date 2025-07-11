@@ -140,9 +140,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Transformed dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Transformed dataset. Return type matches input.
 
         See Also
         --------
@@ -401,9 +399,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Reflected dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Reflected dataset. Return type matches input.
 
         See Also
         --------
@@ -477,9 +473,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -558,9 +552,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -640,9 +632,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -728,9 +718,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -810,9 +798,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Rotated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Rotated dataset. Return type matches input.
 
         See Also
         --------
@@ -895,9 +881,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Translated dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Translated dataset. Return type matches input.
 
         See Also
         --------
@@ -973,9 +957,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Scaled dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Scaled dataset. Return type matches input.
 
         See Also
         --------
@@ -1056,9 +1038,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Flipped dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Flipped dataset. Return type matches input.
 
         See Also
         --------
@@ -1134,9 +1114,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Flipped dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Flipped dataset. Return type matches input.
 
         See Also
         --------
@@ -1212,9 +1190,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Flipped dataset. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Flipped dataset. Return type matches input.
 
         See Also
         --------
@@ -1296,9 +1272,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Dataset flipped about its normal. Return type matches input unless
-            input dataset is a :class:`~pyvista.RectilinearGrid`, in which
-            case the output datatype is a :class:`~pyvista.StructuredGrid`.
+            Dataset flipped about its normal. Return type matches input.
 
         See Also
         --------
