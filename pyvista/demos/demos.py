@@ -508,20 +508,20 @@ def plot_datasets(dataset_type=None):
     points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pyvista.Line()
-    line.points += np.array((2, 0, 0))
+    line.points += np.array((2, 0, 0))  # type: ignore[misc]
     line.clear_data()
 
     tri = pyvista.Triangle()
-    tri.points += np.array([0, 1, 0])
+    tri.points += np.array([0, 1, 0])  # type: ignore[misc]
     circ = pyvista.Circle()
-    circ.points += np.array([1.5, 1.5, 0])
+    circ.points += np.array([1.5, 1.5, 0])  # type: ignore[misc]
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
     pyr = pyvista.Pyramid()
-    pyr.points *= 0.7
+    pyr.points *= 0.7  # type: ignore[misc]
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
@@ -552,7 +552,7 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'ImageData']:
         pl.add_mesh(image)
         pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
 
     # RectilinearGrid
     if dataset_type is None:
@@ -561,7 +561,7 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'RectilinearGrid']:
         pl.add_mesh(rec_grid)
         pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
 
     # StructuredGrid
     if dataset_type is None:
@@ -570,6 +570,6 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'StructuredGrid']:
         pl.add_mesh(struct_grid)
         pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.camera_position = 'xy'  # type: ignore[assignment]
 
     pl.show()

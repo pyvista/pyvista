@@ -1368,9 +1368,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'
+        self._classic.slider_color = 'gray'  # type: ignore[assignment]
         self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'
+        self._classic.tube_color = 'white'  # type: ignore[assignment]
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1379,9 +1379,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (110, 113, 117)
+        self._modern.slider_color = (110, 113, 117)  # type: ignore[assignment]
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (178, 179, 181)
+        self._modern.tube_color = (178, 179, 181)  # type: ignore[assignment]
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -3326,16 +3326,16 @@ class DarkTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'dark'
-        self.background = 'black'
+        self.background = 'black'  # type: ignore[assignment]
         self.cmap = 'viridis'
-        self.font.color = 'white'
+        self.font.color = 'white'  # type: ignore[assignment]
         self.show_edges = False
-        self.color = 'lightblue'
-        self.outline_color = 'white'
-        self.edge_color = 'white'
-        self.axes.x_color = 'tomato'
-        self.axes.y_color = 'seagreen'
-        self.axes.z_color = 'blue'
+        self.color = 'lightblue'  # type: ignore[assignment]
+        self.outline_color = 'white'  # type: ignore[assignment]
+        self.edge_color = 'white'  # type: ignore[assignment]
+        self.axes.x_color = 'tomato'  # type: ignore[assignment]
+        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
+        self.axes.z_color = 'blue'  # type: ignore[assignment]
 
 
 class ParaViewTheme(Theme):
@@ -3359,18 +3359,18 @@ class ParaViewTheme(Theme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = 'paraview'
+        self.background = 'paraview'  # type: ignore[assignment]
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16
-        self.font.color = 'white'
+        self.font.color = 'white'  # type: ignore[assignment]
         self.show_edges = False
-        self.color = 'white'
-        self.outline_color = 'white'
-        self.edge_color = 'black'
-        self.axes.x_color = 'tomato'
-        self.axes.y_color = 'gold'
-        self.axes.z_color = 'green'
+        self.color = 'white'  # type: ignore[assignment]
+        self.outline_color = 'white'  # type: ignore[assignment]
+        self.edge_color = 'black'  # type: ignore[assignment]
+        self.axes.x_color = 'tomato'  # type: ignore[assignment]
+        self.axes.y_color = 'gold'  # type: ignore[assignment]
+        self.axes.z_color = 'green'  # type: ignore[assignment]
 
 
 class DocumentTheme(Theme):
@@ -3404,19 +3404,19 @@ class DocumentTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'document'
-        self.background = 'white'
+        self.background = 'white'  # type: ignore[assignment]
         self.cmap = 'viridis'
         self.font.size = 18
         self.font.title_size = 18
         self.font.label_size = 18
-        self.font.color = 'black'
+        self.font.color = 'black'  # type: ignore[assignment]
         self.show_edges = False
-        self.color = 'lightblue'
-        self.outline_color = 'black'
-        self.edge_color = 'black'
-        self.axes.x_color = 'tomato'
-        self.axes.y_color = 'seagreen'
-        self.axes.z_color = 'blue'
+        self.color = 'lightblue'  # type: ignore[assignment]
+        self.outline_color = 'black'  # type: ignore[assignment]
+        self.edge_color = 'black'  # type: ignore[assignment]
+        self.axes.x_color = 'tomato'  # type: ignore[assignment]
+        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
+        self.axes.z_color = 'blue'  # type: ignore[assignment]
 
 
 class DocumentProTheme(DocumentTheme):

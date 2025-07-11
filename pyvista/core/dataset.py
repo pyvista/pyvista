@@ -449,7 +449,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property
+    @property  # type: ignore[override]
     def active_scalars_name(self: Self) -> str | None:
         """Return the name of the active scalars.
 
@@ -2938,7 +2938,7 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
 
         """
-        self.point_data.active_texture_coordinates = texture_coordinates
+        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01

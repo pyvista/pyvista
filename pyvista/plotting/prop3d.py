@@ -586,7 +586,7 @@ class _Prop3DMixin(ABC):
     @scale.setter
     @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
     def scale(self, scale: VectorLike[float]) -> None:
-        self._prop3d.scale = scale
+        self._prop3d.scale = scale  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -598,7 +598,7 @@ class _Prop3DMixin(ABC):
     @position.setter
     @wraps(Prop3D.position.fset)  # type: ignore[attr-defined]
     def position(self, position: VectorLike[float]) -> None:
-        self._prop3d.position = position
+        self._prop3d.position = position  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -610,7 +610,7 @@ class _Prop3DMixin(ABC):
     @orientation.setter
     @wraps(Prop3D.orientation.fset)  # type: ignore[attr-defined]
     def orientation(self, orientation: VectorLike[float]) -> None:
-        self._prop3d.orientation = orientation
+        self._prop3d.orientation = orientation  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -622,7 +622,7 @@ class _Prop3DMixin(ABC):
     @origin.setter
     @wraps(Prop3D.origin.fset)  # type: ignore[attr-defined]
     def origin(self, origin: VectorLike[float]) -> None:
-        self._prop3d.origin = origin
+        self._prop3d.origin = origin  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -634,7 +634,7 @@ class _Prop3DMixin(ABC):
     @user_matrix.setter
     @wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
     def user_matrix(self, matrix: TransformLike) -> None:
-        self._prop3d.user_matrix = matrix
+        self._prop3d.user_matrix = matrix  # type: ignore[assignment]
         self._post_set_update()
 
     @property

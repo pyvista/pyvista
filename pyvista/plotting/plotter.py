@@ -515,7 +515,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set camera position to a three.js viewing perspective
         if set_camera:
-            self.camera_position = 'xy'
+            self.camera_position = 'xy'  # type: ignore[assignment]
 
     def import_vrml(self, filename: str | Path) -> None:
         """Import a VRML file into the plotter.
@@ -1975,7 +1975,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         size_before = self.window_size
         if window_size is not None:
-            self.window_size = window_size
+            self.window_size = window_size  # type: ignore[assignment]
         try:
             yield self
         finally:
@@ -3749,7 +3749,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
                 silhouette_actor = self.add_silhouette(algo or mesh)
-            silhouette_actor.user_matrix = user_matrix
+            silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
 
         scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
@@ -3837,7 +3837,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
-        actor.user_matrix = user_matrix
+        actor.user_matrix = user_matrix  # type: ignore[assignment]
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -4390,7 +4390,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 elif len(resolution) != 3:
                     msg = 'Invalid resolution dimensions.'
                     raise ValueError(msg)
-                volume.spacing = resolution
+                volume.spacing = resolution  # type: ignore[assignment]
             _validation.check_instance(
                 volume, (pyvista.DataSet, pyvista.MultiBlock), name='volume'
             )
@@ -4599,7 +4599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.volume = Volume()
         self.volume.mapper = self.mapper
-        self.volume.user_matrix = user_matrix
+        self.volume.user_matrix = user_matrix  # type: ignore[assignment]
 
         self.volume.prop = VolumeProperty(
             lookup_table=self.mapper.lookup_table,
@@ -4759,7 +4759,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not hasattr(self, 'mapper'):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
-            self.mapper.scalar_range = clim
+            self.mapper.scalar_range = clim  # type: ignore[assignment]
             return
 
         try:
@@ -5528,7 +5528,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
 
         if fill_value is not None:
-            zval[self._image_depth_null] = fill_value
+            zval[self._image_depth_null] = fill_value  # type: ignore[index]
 
         return zval
 

@@ -7788,7 +7788,7 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
-            reference_volume.dimensions = dimensions
+            reference_volume.dimensions = dimensions  # type: ignore[assignment]
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds

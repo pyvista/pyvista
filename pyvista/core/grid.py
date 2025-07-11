@@ -661,13 +661,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 raise TypeError(msg)
         else:
             if dimensions is not None:
-                self.dimensions = dimensions
-            self.origin = origin
-            self.spacing = spacing
+                self.dimensions = dimensions  # type: ignore[assignment]
+            self.origin = origin  # type: ignore[assignment]
+            self.spacing = spacing  # type: ignore[assignment]
             if direction_matrix is not None:
-                self.direction_matrix = direction_matrix
+                self.direction_matrix = direction_matrix  # type: ignore[assignment]
             if offset is not None:
-                self.offset = offset
+                self.offset = offset  # type: ignore[assignment]
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -1093,9 +1093,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.'
             )
 
-        self.origin = T
+        self.origin = T  # type: ignore[assignment]
         self.direction_matrix = R * N
-        self.spacing = S
+        self.spacing = S  # type: ignore[assignment]
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:

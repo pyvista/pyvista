@@ -213,7 +213,7 @@ class _PointSet(DataSet):
 
         """
         if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)
+            self.points = self.points.astype(np.double)  # type: ignore[assignment]
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
@@ -2602,7 +2602,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput
+            self.points = uinput  # type: ignore[assignment]
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -2924,7 +2924,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             for key in s1:
                 grid.cell_data.pop(key, None)
 
-        return grid
+        return grid  # type: ignore[return-value]
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""

@@ -431,7 +431,7 @@ def show_trame(
         iframe_attrs = {}
         src = build_url(
             server,
-            ui=plotter._id_name,
+            ui=plotter._id_name,  # type: ignore[assignment]
             server_proxy_enabled=server_proxy_enabled,
             server_proxy_prefix=server_proxy_prefix,
             host=kwargs.get('host', 'localhost'),

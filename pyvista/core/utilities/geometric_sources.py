@@ -85,7 +85,7 @@ def translate(
 
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points = surf.points + np.array(center, dtype=surf.points.dtype)  # type: ignore[assignment]
+        surf.points = surf.points + np.array(center, dtype=surf.points.dtype)  # type: ignore[misc]
 
 
 if _vtk.vtk_version_info < (9, 3):
@@ -142,8 +142,8 @@ if _vtk.vtk_version_info < (9, 3):
         ) -> None:
             """Initialize the capsule source class."""
             super().__init__()
-            self.center = center
-            self.direction = direction
+            self.center = center  # type: ignore[assignment]
+            self.direction = direction  # type: ignore[assignment]
             self.radius = radius
             self.cylinder_length = cylinder_length
             self.theta_resolution = theta_resolution
@@ -368,8 +368,8 @@ class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
     ) -> None:
         """Initialize the cone source class."""
         super().__init__()
-        self.center = center
-        self.direction = direction
+        self.center = center  # type: ignore[assignment]
+        self.direction = direction  # type: ignore[assignment]
         self.height = height
         self.capping = capping
         if angle is not None and radius is not None:
@@ -647,8 +647,8 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
     ) -> None:
         """Initialize the cylinder source class."""
         super().__init__()
-        self.center = center
-        self.direction = direction
+        self.center = center  # type: ignore[assignment]
+        self.direction = direction  # type: ignore[assignment]
         self.radius = radius
         self.height = height
         self.resolution = resolution
@@ -862,7 +862,7 @@ class MultipleLinesSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
         if points is None:
             points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         super().__init__()
-        self.points = points
+        self.points = points  # type: ignore[assignment]
 
     @property
     def points(self: MultipleLinesSource) -> NumpyArray[float]:
@@ -979,8 +979,8 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         # Set params
         self.string = '' if string is None else string
         self._process_empty_string = process_empty_string
-        self.center = center
-        self.normal = normal
+        self.center = center  # type: ignore[assignment]
+        self.normal = normal  # type: ignore[assignment]
         self._height = height
         self._width = width
         self._depth = depth
@@ -1132,7 +1132,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
             if is_empty_string and self.process_empty_string:
                 # Add a single point to 'fix' the bounds
-                self._output.points = (0.0, 0.0, 0.0)
+                self._output.points = (0.0, 0.0, 0.0)  # type: ignore[assignment]
 
             self._transform_output()
             self._modified = False
@@ -1270,9 +1270,9 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
         """Initialize the cube source class."""
         super().__init__()
         if bounds is not None:
-            self.bounds = bounds
+            self.bounds = bounds  # type: ignore[assignment]
         else:
-            self.center = center
+            self.center = center  # type: ignore[assignment]
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
@@ -1494,7 +1494,7 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
         """Initialize the disc source class."""
         super().__init__()
         if center is not None:
-            self.center = center
+            self.center = center  # type: ignore[assignment]
         self.inner = inner
         self.outer = outer
         self.r_res = r_res
@@ -1670,8 +1670,8 @@ class LineSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     ) -> None:
         """Initialize source."""
         super().__init__()
-        self.pointa = pointa
-        self.pointb = pointb
+        self.pointa = pointa  # type: ignore[assignment]
+        self.pointb = pointb  # type: ignore[assignment]
         self.resolution = resolution
 
     @property
@@ -1838,7 +1838,7 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
         super().__init__()
         self.radius = radius
         if center is not None:  # pragma: no cover
-            self.center = center
+            self.center = center  # type: ignore[assignment]
         self.theta_resolution = theta_resolution
         self.phi_resolution = phi_resolution
         self.start_theta = start_theta
@@ -2106,9 +2106,9 @@ class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
     ) -> None:
         """Initialize the polygon source class."""
         super().__init__()
-        self.center = center
+        self.center = center  # type: ignore[assignment]
         self.radius = radius
-        self.normal = normal
+        self.normal = normal  # type: ignore[assignment]
         self.n_sides = n_sides
         self.fill = fill
 
@@ -2398,10 +2398,10 @@ class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
-        self.center = center
-        self.origin = origin
-        self.point_a = point_a
-        self.point_b = point_b
+        self.center = center  # type: ignore[misc]
+        self.origin = origin  # type: ignore[misc]
+        self.point_a = point_a  # type: ignore[misc]
+        self.point_b = point_b  # type: ignore[misc]
 
     @property
     def i_resolution(self: PlaneSource) -> int:
@@ -2801,7 +2801,7 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
     ) -> None:
         """Initialize source."""
         super().__init__()
-        self.bounds = bounds
+        self.bounds = bounds  # type: ignore[misc]
         self.level = level
         self.quads = quads
 
@@ -2942,8 +2942,8 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
     ) -> None:
         """Initialize source."""
         super().__init__()
-        self.center = center
-        self.scale = scale
+        self.center = center  # type: ignore[misc]
+        self.scale = scale  # type: ignore[misc]
         self.size = size
         self.theta_roundness = theta_roundness
         self.phi_roundness = phi_roundness
@@ -3302,12 +3302,12 @@ class AxesGeometrySource:
         self._tip_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
 
         # Set geometry-dependent params
-        self.shaft_type = shaft_type
+        self.shaft_type = shaft_type  # type: ignore[misc]
         self.shaft_radius = shaft_radius
-        self.shaft_length = shaft_length
-        self.tip_type = tip_type
+        self.shaft_length = shaft_length  # type: ignore[misc]
+        self.tip_type = tip_type  # type: ignore[misc]
         self.tip_radius = tip_radius
-        self.tip_length = tip_length
+        self.tip_length = tip_length  # type: ignore[misc]
 
         # Set flags
         self._symmetric = symmetric
@@ -3677,7 +3677,7 @@ class AxesGeometrySource:
                 new_face = [3, point_id, point_id, point_id]
 
                 # Update mesh
-                part.points = np.append(part.points, flipped_point, axis=0)
+                part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[misc]
                 part.faces = np.append(part.faces, new_face)
 
     def update(self: AxesGeometrySource) -> None:
@@ -3862,10 +3862,10 @@ class OrthogonalPlanesSource:
         self.sources = tuple(pyvista.PlaneSource() for _ in range(3))
 
         # Init properties
-        self.bounds = bounds
-        self.resolution = resolution
-        self.normal_sign = normal_sign
-        self.names = names
+        self.bounds = bounds  # type: ignore[misc]
+        self.resolution = resolution  # type: ignore[misc]
+        self.normal_sign = normal_sign  # type: ignore[misc]
+        self.names = names  # type: ignore[misc]
 
     @property
     def normal_sign(
