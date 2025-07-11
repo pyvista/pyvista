@@ -764,6 +764,26 @@ def test_transform_rectilinear_warns(rectilinear):
         rectilinear.transform(matrix, inplace=False)
 
 
+def test_transform_rectilinear(rectilinear):
+    # Test that various transformations applied sequentially work
+
+    def transform(mesh):
+        return (
+            mesh.flip_x()
+            .flip_y()
+            .flip_z()
+            .rotate_x(360)
+            .rotate(np.diag((-1, -1, -1)))
+            .scale((1, 2, 3))
+            .translate((4, 5, 6))
+        )
+
+    transform_then_cast = transform(rectilinear).cast_to_unstructured_grid()
+    cast_then_transform = transform(rectilinear.cast_to_unstructured_grid())
+
+    assert transform_then_cast == cast_then_transform
+
+
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
 def test_transform_imagedata(uniform, spacing):
     # Transformations affect origin, spacing, and direction, so test these here
