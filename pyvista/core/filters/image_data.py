@@ -1455,7 +1455,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -2061,7 +2061,7 @@ class ImageDataFilters(DataSetFilters):
                 alg_.SmoothingOff()
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -3239,7 +3239,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,  # type: ignore[arg-type]
+            scalars,
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':
@@ -3946,7 +3946,7 @@ class ImageDataFilters(DataSetFilters):
             if dimensions is not None:
                 dimensions_ = np.array(dimensions)
                 dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+                reference_image.dimensions = dimensions_
             new_dimensions = np.array(reference_image.dimensions)
 
         # Compute the magnification factors to use with the filter
