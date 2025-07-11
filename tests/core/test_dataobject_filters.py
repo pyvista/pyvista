@@ -511,8 +511,9 @@ def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
     with pytest.warns(PyVistaDeprecationWarning):
         qual = mesh.compute_cell_quality(progress_bar=True)
-        assert 'CellQuality' in qual.array_names
-        with pytest.raises(KeyError):
+    assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        with pytest.warns(PyVistaDeprecationWarning):
             qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 

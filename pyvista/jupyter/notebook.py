@@ -48,7 +48,7 @@ def handle_plotter(
 
     try:
         if backend in ['server', 'client', 'trame', 'html']:
-            from pyvista.trame.jupyter import show_trame
+            from pyvista.trame.jupyter import show_trame  # noqa: PLC0415
 
             return show_trame(plotter, mode=backend, **kwargs)
 
@@ -65,7 +65,7 @@ def show_static_image(
     screenshot: str | Path | io.BytesIO | bool | None,  # noqa: FBT001
 ) -> Image:  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
-    import PIL.Image
+    import PIL.Image  # noqa: PLC0415
 
     if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.

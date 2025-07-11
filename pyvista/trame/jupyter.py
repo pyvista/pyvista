@@ -421,7 +421,7 @@ def show_trame(
     )
 
     if jupyter_extension_enabled:  # pragma: no cover
-        from trame_client.ui.core import iframe_url_builder_jupyter_extension
+        from trame_client.ui.core import iframe_url_builder_jupyter_extension  # noqa: PLC0415
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
         src = iframe_attrs['src']
@@ -431,7 +431,7 @@ def show_trame(
         iframe_attrs = {}
         src = build_url(
             server,
-            ui=plotter._id_name,  # type: ignore[has-type]
+            ui=plotter._id_name,
             server_proxy_enabled=server_proxy_enabled,
             server_proxy_prefix=server_proxy_prefix,
             host=kwargs.get('host', 'localhost'),
@@ -466,7 +466,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     """
     try:
-        import nest_asyncio
+        import nest_asyncio  # noqa: PLC0415
     except ImportError:
         msg = (
             'Please install `nest_asyncio` to automagically launch the trame server '

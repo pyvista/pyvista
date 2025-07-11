@@ -15,6 +15,7 @@ from typing_extensions import ParamSpec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+from pyvista._version import version_info
 
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
@@ -62,8 +63,6 @@ def _deprecate_positional_args(
     """
 
     def _inner_deprecate_positional_args(f: Callable[P, T]) -> Callable[P, T]:
-        from pyvista._version import version_info
-
         def qualified_name() -> str:
             return f.__qualname__ if hasattr(f, '__qualname__') else f.__name__
 
@@ -228,7 +227,7 @@ def _deprecate_positional_args(
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
-                        from pyvista.core.errors import PyVistaDeprecationWarning
+                        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
                         msg = (
                             f'\n{call_site()}: '

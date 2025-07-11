@@ -631,7 +631,7 @@ def check_shape(
     if not isinstance(shape, list):
         shape = [shape]
 
-    array_shape = np.shape(array)
+    array_shape = np.shape(array)  # type: ignore[arg-type]
     for input_shape in shape:
         valid_shape = _validate_shape_value(input_shape)
         if _shape_is_allowed(array_shape, valid_shape):
@@ -1217,7 +1217,7 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     if _is_valid_dim(shape):
         return (cast('int', shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast('_Shape', shape)
+        return shape
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error

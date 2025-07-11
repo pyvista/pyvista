@@ -212,7 +212,7 @@ class _PointSet(DataSet):
 
         """
         if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)  # type: ignore[assignment]
+            self.points = self.points.astype(np.double)
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
@@ -257,7 +257,7 @@ class _PointSet(DataSet):
 
         """
         if inplace:
-            self.points += np.asarray(xyz)  # type: ignore[misc]
+            self.points += np.asarray(xyz)
             return self
         return pyvista.DataObjectFilters.translate(
             self,
@@ -412,14 +412,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
     @wraps(DataSet.plot)  # type: ignore[has-type]
-    def plot(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
     @wraps(PolyDataFilters.threshold)  # type: ignore[has-type]
-    def threshold(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -427,7 +427,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.threshold_percent)  # type:ignore[has-type]
-    def threshold_percent(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -437,7 +437,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         )
 
     @wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -446,7 +446,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.delaunay_3d)  # type: ignore[has-type]
-    def delaunay_3d(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
@@ -2603,7 +2603,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput  # type: ignore[assignment]
+            self.points = uinput
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -2925,7 +2925,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             for key in s1:
                 grid.cell_data.pop(key, None)
 
-        return grid  # type: ignore[return-value]
+        return grid
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
@@ -3114,7 +3114,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             raise ValueError(msg)
 
         else:
-            n_cells = np.prod([n - 1 for n in dims])
+            n_cells = np.prod([n - 1 for n in dims])  # type: ignore[arg-type]
 
         if isinstance(cells, dict):
             celltypes = list(cells)
