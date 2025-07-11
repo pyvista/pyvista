@@ -268,16 +268,6 @@ class DataObjectFilters:
         _update_alg(f, progress_bar=progress_bar, message='Transforming')
         vtk_filter_output = pyvista.core.filters._get_output(f)
 
-        def _restore_active_scalars(input_: _DataSetType, output_: _DataSetType):
-            # make the previously active scalars active again
-            input_.point_data.active_scalars_name = active_point_scalars_name
-            input_.cell_data.active_scalars_name = active_cell_scalars_name
-
-            # Only update output if necessary
-            if input_ is not output_:
-                output_.point_data.active_scalars_name = active_point_scalars_name
-                output_.cell_data.active_scalars_name = active_cell_scalars_name
-
         output = self if inplace else self.__class__()
 
         if isinstance(output, pyvista.ImageData):
