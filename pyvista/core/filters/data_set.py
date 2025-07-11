@@ -1175,7 +1175,7 @@ class DataSetFilters(DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation
+        from pyvista.core import _validation  # noqa: PLC0415
 
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
@@ -3606,7 +3606,7 @@ class DataSetFilters(DataObjectFilters):
         See the :ref:`plot_over_line_example` example.
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
@@ -3959,7 +3959,7 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
@@ -4100,7 +4100,7 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
@@ -7236,10 +7236,10 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Lazy import since these are from plotting module
-        import matplotlib.colors
+        import matplotlib.colors  # noqa: PLC0415
 
-        from pyvista.core._validation.validate import _validate_color_sequence
-        from pyvista.plotting.colors import get_cmap_safe
+        from pyvista.core._validation.validate import _validate_color_sequence  # noqa: PLC0415
+        from pyvista.plotting.colors import get_cmap_safe  # noqa: PLC0415
 
         def _local_validate_color_sequence(
             seq: ColorLike | Sequence[ColorLike],

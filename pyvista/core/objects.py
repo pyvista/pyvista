@@ -335,7 +335,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         """
         try:
-            import pandas as pd
+            import pandas as pd  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Install ``pandas`` to use this feature.'
             raise ImportError(msg)
