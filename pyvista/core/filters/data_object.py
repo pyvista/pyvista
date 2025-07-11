@@ -266,7 +266,7 @@ class DataObjectFilters:
         f.SetTransformAllInputVectors(transform_all_input_vectors)
 
         _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        res = pyvista.core.filters._get_output(f)
+        vtk_filter_output = pyvista.core.filters._get_output(f)
 
         def _restore_active_scalars(input_: _DataSetType, output_: _DataSetType):
             # make the previously active scalars active again
@@ -290,11 +290,9 @@ class DataObjectFilters:
             new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
 
-            output.point_data.update(res.point_data, copy=False)
-            output.cell_data.update(res.cell_data, copy=False)
-            output.field_data.update(res.field_data, copy=False)
-            _restore_active_scalars(self, output)
-            return output
+            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
+            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
+            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
         elif isinstance(output, pyvista.RectilinearGrid):
             # vtkTransformFilter returns a StructuredGrid, but we can return
@@ -331,21 +329,26 @@ class DataObjectFilters:
             output.z = self.z * sz + tz
 
             # Copy data arrays from the vtkTransformFilter's output
-            output.point_data.update(res.point_data, copy=False)
-            output.cell_data.update(res.cell_data, copy=False)
-            output.field_data.update(res.field_data, copy=False)
-            _restore_active_scalars(self, output)
-            return output
+            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
+            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
+            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
-        _restore_active_scalars(self, res)
-
-        # The output from the transform filter contains a shallow copy
-        # of the original dataset except for the point arrays.  Here
-        # we perform a copy so the two are completely unlinked.
-        if inplace:
-            output.copy_from(res, deep=False)
+        elif inplace:
+            output.copy_from(vtk_filter_output, deep=False)
         else:
-            output.copy_from(res, deep=True)
+            # The output from the transform filter contains a shallow copy
+            # of the original dataset except for the point arrays.  Here
+            # we perform a copy so the two are completely unlinked.
+            output.copy_from(vtk_filter_output, deep=True)
+
+        # Make the previously active scalars active again
+        self.point_data.active_scalars_name = active_point_scalars_name
+        if output is not self:
+            output.point_data.active_scalars_name = active_point_scalars_name
+        self.cell_data.active_scalars_name = active_cell_scalars_name
+        if output is not self:
+            output.cell_data.active_scalars_name = active_cell_scalars_name
+
         return output
 
     @overload

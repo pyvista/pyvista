@@ -719,13 +719,27 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-def test_transform_inplace_rectilinear(rectilinear):
-    copied = rectilinear.copy()
+def test_transform_inplace(datasets):
     tf = pv.Transform().scale(1, 2, 3)
-    inplace = copied.transform(tf, inplace=True)
-    assert inplace is copied
-    not_inplace = rectilinear.transform(tf, inplace=False)
-    assert inplace == not_inplace
+    for dataset in datasets:
+        dataset.clear_data()
+        pdata_array = np.arange(dataset.n_points)
+        cdata_array = np.arange(dataset.n_cells)
+        pdata_name = 'pdata'
+        cdata_name = 'cdata'
+        dataset[pdata_name] = pdata_array
+        dataset[cdata_name] = cdata_array
+
+        copied = dataset.copy()
+        inplace = copied.transform(tf, inplace=True)
+        assert inplace is copied
+        assert np.shares_memory(inplace[pdata_name], copied[pdata_name])
+        assert np.shares_memory(inplace[cdata_name], copied[cdata_name])
+
+        not_inplace = dataset.transform(tf, inplace=False)
+        assert inplace == not_inplace
+        assert not np.shares_memory(not_inplace[pdata_name], copied[pdata_name])
+        assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
 
 
 def test_transform_rectilinear_warns(rectilinear):
