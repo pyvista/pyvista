@@ -1438,7 +1438,7 @@ def test_streamlines_max_length():
             max_time=1,
             max_step_length=0.1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
     with pytest.warns(
@@ -1452,7 +1452,7 @@ def test_streamlines_max_length():
             max_time=5,
             max_length=1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
 
