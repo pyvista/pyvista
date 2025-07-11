@@ -7,6 +7,7 @@ import itertools
 import re
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeVar
 from typing import cast
 from typing import overload
 import warnings
@@ -41,6 +42,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
+    _MultiBlockType = TypeVar('_MultiBlockType', bound=MultiBlock)
+
 
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
@@ -49,12 +52,12 @@ class DataObjectFilters:
 
     @overload
     def transform(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         trans: TransformLike,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool | None = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def transform(  # type: ignore[misc]
         self: _DataSetType,
@@ -349,13 +352,13 @@ class DataObjectFilters:
 
     @overload
     def reflect(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
         inplace: bool = ...,  # noqa: FBT001
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def reflect(  # type: ignore[misc]
         self: _DataSetType,
@@ -427,12 +430,12 @@ class DataObjectFilters:
 
     @overload
     def rotate_x(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         angle: float,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def rotate_x(  # type: ignore[misc]
         self: _DataSetType,
@@ -509,12 +512,12 @@ class DataObjectFilters:
 
     @overload
     def rotate_y(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         angle: float,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def rotate_y(  # type: ignore[misc]
         self: _DataSetType,
@@ -590,12 +593,12 @@ class DataObjectFilters:
 
     @overload
     def rotate_z(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         angle: float,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def rotate_z(  # type: ignore[misc]
         self: _DataSetType,
@@ -672,13 +675,13 @@ class DataObjectFilters:
 
     @overload
     def rotate_vector(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def rotate_vector(  # type: ignore[misc]
         self: _DataSetType,
@@ -760,12 +763,12 @@ class DataObjectFilters:
 
     @overload
     def rotate(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         rotation: RotationLike,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def rotate(  # type: ignore[misc]
         self: _DataSetType,
@@ -852,11 +855,11 @@ class DataObjectFilters:
 
     @overload
     def translate(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def translate(  # type: ignore[misc]
         self: _DataSetType,
@@ -923,12 +926,12 @@ class DataObjectFilters:
 
     @overload
     def scale(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
         point: VectorLike[float] | None = ...,
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def scale(  # type: ignore[misc]
         self: _DataSetType,
@@ -1011,11 +1014,11 @@ class DataObjectFilters:
 
     @overload
     def flip_x(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def flip_x(  # type: ignore[misc]
         self: _DataSetType,
@@ -1089,11 +1092,11 @@ class DataObjectFilters:
 
     @overload
     def flip_y(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def flip_y(  # type: ignore[misc]
         self: _DataSetType,
@@ -1167,11 +1170,11 @@ class DataObjectFilters:
 
     @overload
     def flip_z(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def flip_z(  # type: ignore[misc]
         self: _DataSetType,
@@ -1245,12 +1248,12 @@ class DataObjectFilters:
 
     @overload
     def flip_normal(  # type: ignore[misc]
-        self: MultiBlock,
+        self: _MultiBlockType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
-    ) -> MultiBlock: ...
+    ) -> _MultiBlockType: ...
     @overload
     def flip_normal(  # type: ignore[misc]
         self: _DataSetType,
