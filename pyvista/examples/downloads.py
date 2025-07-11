@@ -7973,6 +7973,9 @@ def download_whole_body_ct_male(
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
+        :ref:`crop_labeled_example:`
+            Example cropping this dataset using a segmentation mask.
+
         :ref:`volume_with_mask_example`
             See additional examples using this dataset.
 
@@ -8225,6 +8228,9 @@ def download_whole_body_ct_female(
 
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        :ref:`crop_labeled_example:`
+            Example cropping this dataset using a segmentation mask.
 
         :ref:`volume_with_mask_example`
             See additional examples using this dataset.

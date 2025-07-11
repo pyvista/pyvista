@@ -426,6 +426,9 @@ class ImageDataFilters(DataSetFilters):
         select_values
             Threshold-like filter which may be used to generate a mask for cropping.
 
+        :ref:`crop_labeled_example`
+            Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
+
         Examples
         --------
         Load a grayscale image and pad it to create a black border.
