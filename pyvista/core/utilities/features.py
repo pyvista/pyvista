@@ -202,7 +202,7 @@ def voxelize(  # noqa: PLR0917
         # Normalise cells to unit size
         ugrid_norm = ugrid.copy()
         surface_norm = surface.copy()
-        ugrid_norm.points /= np.array(density)  # type: ignore[misc]
+        ugrid_norm.points /= np.array(density)
         surface_norm.points /= np.array(density)
         # Select cells if they're within one unit of the surface
         ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
@@ -741,7 +741,7 @@ def sample_function(  # noqa: PLR0917
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
     compute_normals: bool = False,  # noqa: FBT001, FBT002
-    output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
+    output_type: np.dtype = np.double,  # type: ignore[assignment]
     capping: bool = False,  # noqa: FBT001, FBT002
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
@@ -836,7 +836,7 @@ def sample_function(  # noqa: PLR0917
 
     """
     # internal import to avoide circular dependency
-    from pyvista.core.filters import _update_alg
+    from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)

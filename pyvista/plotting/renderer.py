@@ -179,7 +179,7 @@ def make_legend_face(face) -> PolyData:
     # This is needed for asymmetric shapes (like a line) because otherwise the legend actor
     # will do its own scaling and skew the shape
     rect = normalize(pyvista.Rectangle())
-    legendface.points = np.append(legendface.points, rect.points, axis=0)  # type: ignore[assignment]
+    legendface.points = np.append(legendface.points, rect.points, axis=0)
     return legendface
 
 
@@ -270,6 +270,8 @@ class CameraPosition:
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
         return self.to_list() == other
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
     def position(self):  # numpydoc ignore=RT01
@@ -513,7 +515,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     @camera.setter
     def camera(self, source) -> None:
         self._camera = source
-        self.SetActiveCamera(self._camera)  # type: ignore[arg-type]
+        self.SetActiveCamera(self._camera)
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
@@ -778,7 +780,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
 
         poly = pyvista.PolyData()
-        poly.points = points  # type: ignore[assignment]
+        poly.points = points
         poly.lines = lines
 
         coordinate = _vtk.vtkCoordinate()
