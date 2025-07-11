@@ -4209,3 +4209,27 @@ def test_compute_pca_statistics():
     # Test error handling for non-existent scalar in cell data
     with pytest.raises(KeyError, match="Array 'nonexistent' not found in cell data"):
         mesh_with_cell_data.compute_pca_statistics(scalars='nonexistent', preference='cell')
+
+    # Test specific scalar array with cell data
+    pca_result_cell_scalar = mesh_with_cell_data.compute_pca_statistics(
+        scalars='cell_x', preference='cell'
+    )
+    assert isinstance(pca_result_cell_scalar, pv.Table)
+
+    # Test that results contain expected fields
+    if pca_result.n_rows > 0:
+        assert 'means' in pca_result.keys()
+        assert 'variances' in pca_result.keys()
+        assert 'column_names' in pca_result.keys()
+
+        # Check that means and variances have correct shape
+        means = pca_result['means']
+        variances = pca_result['variances']
+        col_names = pca_result['column_names']
+        assert len(means) == len(col_names)
+        assert len(variances) == len(col_names)
+
+    # Test with empty data arrays
+    empty_mesh = pv.PolyData(np.empty((0, 3)))
+    pca_empty = empty_mesh.compute_pca_statistics()
+    assert isinstance(pca_empty, pv.Table)
