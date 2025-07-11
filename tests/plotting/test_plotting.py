@@ -753,6 +753,25 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
+
+    def _test_update_scalars_with_invalid_array():
+        plotter.update_scalars(np.arange(5))
+        if pv._version.version_info[:2] > (0, 46):
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
+
+    def _test_update_scalars_with_valid_array():
+        plotter.update_scalars(np.arange(sphere.n_faces_strict))
+        if pv._version.version_info[:2] > (0, 46):
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
+
     with (
         pytest.raises(ValueError, match='Number of scalars'),
         pytest.warns(
@@ -760,13 +779,7 @@ def test_plot_no_active_scalars(sphere):
             match='This method is deprecated and will be removed in a future version',
         ),
     ):
-        plotter.update_scalars(np.arange(5))
-    if pv._version.version_info[:2] > (0, 46):
-        msg = 'Convert error this method'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Remove this method'
-        raise RuntimeError(msg)
+        _test_update_scalars_with_invalid_array()
     with (
         pytest.raises(ValueError, match='No active scalars'),
         pytest.warns(
@@ -774,13 +787,7 @@ def test_plot_no_active_scalars(sphere):
             match='This method is deprecated and will be removed in a future version',
         ),
     ):
-        plotter.update_scalars(np.arange(sphere.n_faces_strict))
-    if pv._version.version_info[:2] > (0, 46):
-        msg = 'Convert error this method'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Remove this method'
-        raise RuntimeError(msg)
+        _test_update_scalars_with_valid_array()
 
 
 def test_plot_show_bounds(sphere):
@@ -1273,34 +1280,42 @@ def test_axes():
 
 def test_box_axes():
     plotter = pv.Plotter()
+
+    def _test_add_axes_box():
+        plotter.add_axes(box=True)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
     with pytest.warns(
         pv.PyVistaDeprecationWarning,
         match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
     ):
-        plotter.add_axes(box=True)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Convert error this function'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this function'
-        raise RuntimeError(msg)
+        _test_add_axes_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
+
+    def _test_add_axes_color_box():
+        plotter.add_axes(box=True, box_args={'color_box': True})
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
     with pytest.warns(
         pv.PyVistaDeprecationWarning,
         match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
     ):
-        plotter.add_axes(box=True, box_args={'color_box': True})
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Convert error this function'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this function'
-        raise RuntimeError(msg)
+        _test_add_axes_color_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 

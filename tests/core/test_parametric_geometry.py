@@ -145,9 +145,9 @@ def test_parametric_random_hills():
         match=r'`numberofhills` argument is deprecated. Please use `number_of_hills`.',
     ):
         geom = pv.ParametricRandomHills(numberofhills=30)
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated parameter'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Remove this deprecated parameter'
+        raise RuntimeError(msg)
     with pytest.warns(
         PyVistaDeprecationWarning,
         match=r'`hillxvariance` argument is deprecated. Please use `hill_x_variance`.',
@@ -204,9 +204,9 @@ def test_parametric_random_hills():
         r'Please use `amplitude_scale_factor`.',
     ):
         geom = pv.ParametricRandomHills(amplitudescalefactor=13)
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated parameter'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 46):
+        msg = 'Remove this deprecated parameter'
+        raise RuntimeError(msg)
     geom = pv.ParametricRandomHills(
         number_of_hills=30,
         hill_x_variance=30,

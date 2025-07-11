@@ -1437,12 +1437,12 @@ def test_n_faces_etc_deprecated(cells: str):
         match=f'`PolyData` constructor parameter `{n_cells}` is deprecated and no longer used',
     ):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
+        raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
