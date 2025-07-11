@@ -645,13 +645,21 @@ def test_plotter_shape_invalid():
         pv.Plotter(shape={1, 2})
 
 
-def test_plot_bounds_axes_with_no_data():
+def test_plot_bounds_axes_with_no_data(verify_image_cache):
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
     plotter.show_bounds()
     plotter.show()
 
 
-def test_plot_show_grid(sphere):
+def test_plot_show_grid(sphere, verify_image_cache):
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
 
     with pytest.raises(ValueError, match='Value of location'):
@@ -786,7 +794,11 @@ def test_plot_show_bounds(sphere):
     plotter.show()
 
 
-def test_plot_label_fmt(sphere):
+def test_plot_label_fmt(sphere, verify_image_cache):
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
@@ -1691,7 +1703,11 @@ def test_camera(sphere):
     plotter.show()
 
 
-def test_multi_renderers():
+def test_multi_renderers(verify_image_cache):
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter(shape=(2, 2))
 
     plotter.subplot(0, 0)
@@ -4958,7 +4974,7 @@ def test_contour_labels_smoothing_constraint(
     # the scale of the smoothing applied by the smoothing constraints
     plot.enable_parallel_projection()
     plot.view_yz()
-    plot.show_grid()
+    plot.show_grid(xtitle='', ytitle='', ztitle='')
     plot.reset_camera()
     plot.camera.zoom(1.5)
     plot.show()
