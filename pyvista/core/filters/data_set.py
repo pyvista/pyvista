@@ -5992,10 +5992,6 @@ class DataSetFilters(DataObjectFilters):
         # Create result table
         result_table = pyvista.Table(result_data)
 
-        # If no meaningful data was extracted, return the multiblock as-is
-        if result_table.n_arrays == 0:
-            return wrap(multiblock_output)
-
         return result_table
 
     @_deprecate_positional_args(allowed=['shrink_factor'])
