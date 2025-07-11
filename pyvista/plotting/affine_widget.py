@@ -212,7 +212,7 @@ class AffineWidget3D:
         self._arrows = []  # type: ignore[var-annotated]
         self._circles = []  # type: ignore[var-annotated]
         self._pressing_down = False
-        origin = origin if origin else actor.center
+        origin = origin or actor.center
         self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (

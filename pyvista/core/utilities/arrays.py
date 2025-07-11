@@ -762,7 +762,7 @@ def convert_string_array(
             # setting the object name
             _set_string_scalar_object_name(vtkarr)
 
-        ########### OPTIMIZE ###########
+        # OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
         ################################
@@ -770,7 +770,7 @@ def convert_string_array(
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    ############### OPTIMIZE ###############
+    # OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
     try:
