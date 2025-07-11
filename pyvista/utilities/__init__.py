@@ -6,7 +6,6 @@ import importlib
 import inspect
 import warnings
 
-
 # Places to look for the utility
 _MODULES = [
     'pyvista.core.utilities',
