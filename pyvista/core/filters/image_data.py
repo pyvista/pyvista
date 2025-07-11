@@ -316,8 +316,8 @@ class ImageDataFilters(DataSetFilters):
            :attr:`~pyvista.ImageData.dimensions` and :attr:`~pyvista.ImageData.offset`.
         #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
-        #. Use ``mask``, ``padding``, and ``background_value`` to crop the foreground using scalar
-           values.
+        #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh to the mask's
+           foreground values.
 
         These methods are all independent, e.g. it is not possible to specify both ``factor`` and
         ``margin``.
@@ -367,9 +367,9 @@ class ImageDataFilters(DataSetFilters):
             the cropping region.
 
         normalized_bounds : VectorLike[float], optional
-            Normalized bounds relative to the input. These are floats between ``0.0``
-            and ``1.0`` that define a box relative to the input size. Has the form
-            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
+            that define a box relative to the input size. The input is cropped such that it fully
+            fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         mask : str | ImageData | NumpyArray[float] | bool, optional
             Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
@@ -431,59 +431,83 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a grayscale image and pad it to create a black border.
+        Load a grayscale image.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> gray_image = examples.download_cake_easy().pad_image(pad_size=20)
+        >>> gray_image = examples.download_yinyang()
         >>> gray_image.dimensions
-        (140, 140, 1)
+        (512, 342, 1)
 
-        Define a custom plotting helper to show images as RGB pixel cells.
+        Define a custom plotting helper to show the image as pixel cells.
 
         >>> def image_plotter(image):
-        ...     pl = pv.Plotter()
-        ...     pixels = image.points_to_cells()
-        ...     # Convert single-channel image to RGB
-        ...     array = pixels.active_scalars
-        ...     if array.ndim == 1:
-        ...         array = np.tile(array[:, np.newaxis], (1, 3))
-        ...     pl.add_mesh(pixels, scalars=array, lighting=False, rgb=True)
+        ...     pixel_cells = image.points_to_cells()
+        ...
+        ...     pl = pv.Plotter(off_screen=False)
+        ...     pl.add_mesh(
+        ...         pixel_cells,
+        ...         cmap='gray',
+        ...         clim=[0, 255],
+        ...         lighting=False,
+        ...         show_scalar_bar=False,
+        ...     )
         ...     pl.view_xy()
         ...     pl.camera.tight()
         ...     return pl
 
-        Visualize the padded image.
+        Plot the image for context.
 
         >>> image_plotter(gray_image).show()
 
-        Crop the image as a mask. The padded background values are removed and the foreground is
-        cropped.
+        Crop the white border around the image by using itself as mask. Here we specify a
+        background value of ``255`` to correspond to white pixels. If this was an RGB image, we
+        could also specify ``(255, 255, 255)`` as the background value.
 
-        >>> cropped = gray_image.crop(mask=True)
+        >>> cropped = gray_image.crop(mask=True, background_value=255)
+        >>> cropped.dimensions
+        (237, 238, 1)
         >>> image_plotter(cropped).show()
 
-        Remove 10 and 20 pixels from each side of the x- and y-axis, respectively.
+        Use ``margin`` instead to remove 100 and 20 pixels from each side of the x- and y-axis,
+        respectively.
 
-        >>> cropped = gray_image.crop(margin=(10, 20))
+        >>> cropped = gray_image.crop(margin=(100, 20))
+        >>> cropped.dimensions
+        (312, 302, 1)
         >>> image_plotter(cropped).show()
 
-        Crop 80% of the image.
+        Use ``offset`` to select a starting location for the crop (from the origin at the
+        bottom-left corner) along with ``dimensions`` to define the crop size.
 
-        >>> cropped = gray_image.crop(factor=0.80)
+        >>> cropped = gray_image.crop(offset=(50, 20, 0), dimensions=(300, 200, 1))
+        >>> cropped.dimensions
+        (300, 200, 1)
         >>> image_plotter(cropped).show()
 
-        Crop a 100 by 70 section from the corner of the image. Use -20 offset to account
-        for the initial padding that was added.
+        Use ``extent`` directly instead of using ``dimensions`` and ``offset`` to yield the same
+        result as above.
 
-        >>> cropped = gray_image.crop(offset=(-20, -20, 0), dimensions=(100, 70, 1))
+        >>> cropped = gray_image.crop(extent=(50, 349, 20, 219, 0, 0))
+        >>> cropped.extent
+        (50, 349, 20, 219, 0, 0)
         >>> image_plotter(cropped).show()
 
-        Crop from 40% to 100% of the image along the x-axis, and from 20% to 50% of the
-        image along the y-axis.
+        Use ``factor`` to crop 40% of the image. This `keeps` 40% of the pixels along each axis,
+        and `removes` 60% (i.e. 30% from each side).
 
-        >>> cropped = gray_image.crop(normalized_bounds=[0.4, 1.0, 0.2, 0.5, 0.0, 0.0])
+        >>> cropped = gray_image.crop(factor=0.4)
+        >>> cropped.dimensions
+        (204, 136, 1)
+        >>> image_plotter(cropped).show()
+
+        Use ``normalized_bounds`` to crop from 40% to 80% of the image along the x-axis, and
+        from 30% to 90% of the image along the y-axis.
+
+        >>> cropped = gray_image.crop(normalized_bounds=[0.4, 0.8, 0.3, 0.9, 0.0, 1.0])
+        >>> cropped.extent
+        (205, 408, 103, 306, 0, 0)
         >>> image_plotter(cropped).show()
 
         """
@@ -600,21 +624,22 @@ class ImageDataFilters(DataSetFilters):
             )
 
             dims = np.array(self.dimensions)
+            eps = 1e-6  # small tolerance for numerical robustness
 
-            # Compute ijk indices
-            starts = np.floor(bounds[::2] * dims).astype(int)
-            stops = np.floor(bounds[1::2] * dims).astype(int) - 1  # inclusive
+            # Compute IJK bounds directly
+            norm_starts = bounds[::2]
+            norm_stops = bounds[1::2]
 
-            # Clamp to image bounds
-            starts = np.maximum(starts, 0)
-            stops = np.minimum(stops, dims - 1)
+            starts = np.ceil(norm_starts * dims - eps).astype(int)
+            stops = np.floor(norm_stops * dims + eps).astype(int) - 1  # inclusive
 
-            # Adjust by image offset
-            starts += self.offset
-            stops += self.offset
+            # Ensure at least one voxel is included
+            stops = np.maximum(stops, starts)
 
-            xmin, ymin, zmin = starts
-            xmax, ymax, zmax = stops
+            # Apply image offset
+            offset = self.offset
+            xmin, ymin, zmin = starts + offset
+            xmax, ymax, zmax = stops + offset
 
             return xmin, xmax, ymin, ymax, zmin, zmax
 

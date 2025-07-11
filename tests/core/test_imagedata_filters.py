@@ -1657,24 +1657,35 @@ def test_crop_margin(margin, dimensions_in, dimensions_out):
 
 @pytest.mark.parametrize('dimensionality', ['2D', '3D'])
 @pytest.mark.parametrize(
-    ('bounds', 'dimensions_in', 'dimensions_out'),
+    ('bounds', 'dimensions_in', 'dimensions_out', 'offset_out'),
     [
-        ([0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [10, 10, 10], [10, 10, 10]),
-        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [10, 10, 10], [1, 2, 3]),
-        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [11, 11, 11], [1, 2, 3]),
-        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [9, 9, 9], [1, 2, 3]),
+        ([0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [10, 10, 10], [10, 10, 10], [0, 0, 0]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [10, 10, 10], [1, 2, 3], [1, 2, 4]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [11, 11, 11], [1, 1, 2], [2, 3, 5]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [9, 9, 9], [1, 1, 2], [1, 2, 4]),
     ],
 )
-def test_crop_normalized_bounds(bounds, dimensions_in, dimensions_out, dimensionality):
+def test_crop_normalized_bounds(bounds, dimensions_in, dimensions_out, offset_out, dimensionality):
     if dimensionality == '2D':
-        bounds[4:6] = [0.0, 0.0]
-        dimensions_in[2] = 1
-        dimensions_out[2] = 1
+        bounds = (*bounds[0:4], 0.0, 1.0)
+        dimensions_in = (*dimensions_in[0:2], 1)
+        dimensions_out = (*dimensions_out[0:2], 1)
+        offset_out = (*offset_out[0:2], 0)
 
     mesh = pv.ImageData(dimensions=dimensions_in)
     cropped = mesh.crop(normalized_bounds=bounds)
-    dimensions = cropped.dimensions
-    assert np.array_equal(dimensions, dimensions_out)
+    actual_dimensions = np.array(cropped.dimensions)
+    assert np.array_equal(actual_dimensions, dimensions_out)
+    actual_offset = np.array(cropped.offset)
+    assert np.array_equal(actual_offset, offset_out)
+
+    actual_lower_bound = actual_offset / dimensions_in
+    expected_lower_bound = np.array(bounds[::2])
+    assert np.all(actual_lower_bound >= expected_lower_bound)
+
+    actual_upper_bound = (actual_offset + actual_dimensions) / dimensions_in
+    expected_upper_bound = np.array(bounds[1::2])
+    assert np.all((actual_upper_bound <= expected_upper_bound) | (actual_dimensions == 1))
 
 
 @pytest.mark.parametrize('dimensionality', ['2D', '3D'])
