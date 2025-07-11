@@ -5863,7 +5863,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> pyvista.Table:
         """Compute Principal Component Analysis (PCA) statistics on the dataset.
 
         This method performs PCA on the specified scalar arrays to identify
@@ -5888,10 +5888,9 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.Table
             A table containing the PCA results including:
-            - Eigenvalues
-            - Eigenvectors
-            - Mean values
-            - Statistical measures
+            - Mean values for each variable
+            - Variance values for each variable
+            - Column names of the analyzed variables
 
         Examples
         --------
@@ -5907,8 +5906,8 @@ class DataSetFilters(DataObjectFilters):
         >>> mesh['xy_sum'] = mesh.points[:, 0] + mesh.points[:, 1]
         >>> # Compute PCA statistics
         >>> pca_results = mesh.compute_pca_statistics()
-        >>> # Access eigenvalues
-        >>> eigenvalues = pca_results['eigenvalues']
+        >>> # Access means and variances
+        >>> means = pca_results['means']
 
         """
         # Convert dataset to table for PCA analysis
