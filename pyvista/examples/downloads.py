@@ -8770,3 +8770,48 @@ def download_biplane(load=True):  # noqa: FBT002
 
 
 _dataset_biplane = _SingleFileDownloadableDatasetLoader('biplane_rms_pressure_bs.exo')
+
+
+def download_yinyang(*, load=True):
+    """Download yinyang dataset.
+
+    .. versionadded:: 0.46.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the image and plot it as grayscale pixel cells.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_yinyang()
+    >>> pixel_cells = dataset.points_to_cells()
+    >>> pixel_cells.plot(
+    ...     cmap='gray',
+    ...     clim=[0, 255],
+    ...     cpos='xy',
+    ...     zoom='tight',
+    ...     lighting=False,
+    ...     show_scalar_bar=False,
+    ...     show_axes=False,
+    ... )
+
+    .. seealso::
+
+        :ref:`Yinyang Dataset <yinyang_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_yinyang, load=load)
+
+
+_dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
