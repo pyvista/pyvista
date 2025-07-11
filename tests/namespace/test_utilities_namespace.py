@@ -89,6 +89,7 @@ def test_common_utilities_import_paths():
     with pytest.warns(PyVistaDeprecationWarning):
         _import_all_utilities()
 
+
 def test_failure_to_find():
     module = importlib.import_module('pyvista.utilities')
     with pytest.raises(
