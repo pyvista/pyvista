@@ -255,7 +255,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
     ) -> None:
         super().__init__()
         self.multiply_mode = multiply_mode
-        self.point = point
+        self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
@@ -266,7 +266,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                     # Init from sequence of transformations
                     [self.compose(t) for t in trans]
             else:
-                self.matrix = trans
+                self.matrix = trans  # type: ignore[assignment]
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""

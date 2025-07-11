@@ -85,7 +85,7 @@ def translate(
 
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)
+        surf.points = surf.points + np.array(center, dtype=surf.points.dtype)  # type: ignore[assignment]
 
 
 if _vtk.vtk_version_info < (9, 3):
@@ -1201,7 +1201,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center
+        out.points = out.points - out.center  # type: ignore[assignment]
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1210,7 +1210,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center
+            out.points = out.points + self.center  # type: ignore[assignment]
 
 
 @no_new_attr
@@ -3760,7 +3760,7 @@ class AxesGeometrySource:
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
         # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
-        part.points -= part.center
+        part.points = part.points - part.center  # type: ignore[assignment]
 
         # Scale so bounding box edges have length one
         bnds = part.bounds

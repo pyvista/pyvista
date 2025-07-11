@@ -258,7 +258,7 @@ class _PointSet(DataSet):
 
         """
         if inplace:
-            self.points += np.asarray(xyz)
+            self.points = self.points + np.asarray(xyz)  # type: ignore[assignment]
             return self
         return pyvista.DataObjectFilters.translate(
             self,
