@@ -14,14 +14,14 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a dataset with a CT image with segmentation labels. Here we load
+# Load a dataset with a CT image and segmentation labels. Here we load
 # :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
 dataset = examples.download_whole_body_ct_male()
 
 # %%
-# Get the :class:`~pyvista.ImageData` with the CT data a segmentation mask. For
-# this example we choose a mask of the scapula.
+# Get the :class:`~pyvista.ImageData` for the CT data and one of the segmentation masks.
+# For this example we choose a mask of the skull.
 
 ct = dataset['ct']
 skull = dataset['segmentations']['skull']
