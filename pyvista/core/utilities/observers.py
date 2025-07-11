@@ -267,7 +267,7 @@ class ProgressMonitor:
 
     def __enter__(self):
         """Enter event for ``with`` context."""
-        from tqdm import tqdm
+        from tqdm import tqdm  # noqa: PLC0415
 
         # check if in main thread
         if threading.current_thread().__class__.__name__ == '_MainThread':

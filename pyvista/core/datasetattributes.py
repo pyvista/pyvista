@@ -444,7 +444,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             'Use `DataSetAttributes.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
+        self.active_texture_coordinates = t_coords
 
     @property
     def active_t_coords_name(self: Self) -> str | None:
@@ -1359,6 +1359,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     return False
 
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
     def active_normals(self: Self) -> pyvista_ndarray | None:

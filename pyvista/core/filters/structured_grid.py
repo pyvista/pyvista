@@ -195,7 +195,7 @@ class StructuredGridFilters(DataSetFilters):
         # assemble output
         joined = pyvista.StructuredGrid()
         joined.dimensions = list(new_dims)
-        joined.points = new_points.reshape((-1, 3), order='F')  # type: ignore[assignment]
+        joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)
         joined.cell_data.update(new_cell_data)
 
