@@ -745,9 +745,9 @@ def test_transform_inplace(datasets):
 def test_transform_rectilinear_warns(rectilinear):
     tf = pv.Transform().rotate_x(30)
     match = (
-        'The transformation matrix has a non-diagonal rotation component which has\n'
-        'been removed. Rotation is not supported by RectilinearGrid; cast to\n'
-        'StructuredGrid first to fully support rotation transformations.'
+        'The transformation has a non-diagonal rotation component which has been removed. '
+        'Rotation is\nnot supported by RectilinearGrid; cast to StructuredGrid first to fully '
+        'support rotations.'
     )
     with pytest.warns(UserWarning, match=match):
         rectilinear.transform(tf, inplace=False)
@@ -756,9 +756,9 @@ def test_transform_rectilinear_warns(rectilinear):
     matrix[0, 1] = 0.1
     matrix[1, 0] = 0.1
     match = (
-        'The transformation matrix has a shear component which has been removed.\n'
-        'Shear is not supported by RectilinearGrid; cast to StructuredGrid first\n'
-        'to support shear transformations.'
+        'The transformation has a shear component which has been removed. Shear is not '
+        'supported\nby RectilinearGrid; cast to StructuredGrid first to support shear '
+        'transformations.'
     )
     with pytest.warns(UserWarning, match=match):
         rectilinear.transform(matrix, inplace=False)

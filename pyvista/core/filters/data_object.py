@@ -302,9 +302,9 @@ class DataObjectFilters:
 
             if not np.allclose(K, np.eye(3)):
                 msg = (
-                    'The transformation matrix has a shear component which has been removed.\n'
-                    'Shear is not supported by RectilinearGrid; cast to StructuredGrid first\n'
-                    'to support shear transformations.'
+                    'The transformation has a shear component which has been removed. Shear is '
+                    'not supported\nby RectilinearGrid; cast to StructuredGrid first to support '
+                    'shear transformations.'
                 )
                 warnings.warn(msg)
 
@@ -312,9 +312,9 @@ class DataObjectFilters:
             scale = S * N
             if not np.allclose(np.abs(R), np.eye(3)):
                 msg = (
-                    'The transformation matrix has a non-diagonal rotation component which has\n'
-                    'been removed. Rotation is not supported by RectilinearGrid; cast to\n'
-                    'StructuredGrid first to fully support rotation transformations.'
+                    'The transformation has a non-diagonal rotation component which has been '
+                    'removed. Rotation is\nnot supported by RectilinearGrid; cast to '
+                    'StructuredGrid first to fully support rotations.'
                 )
                 warnings.warn(msg)
             else:
