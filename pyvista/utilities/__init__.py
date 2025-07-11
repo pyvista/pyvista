@@ -6,6 +6,18 @@ import importlib
 import inspect
 import warnings
 
+# Import and issue deprecation warning at module level
+from pyvista.core.errors import PyVistaDeprecationWarning
+
+warnings.warn(
+    'The `pyvista.utilities` module has been deprecated. Most utilities have been moved to other '
+    'locations in the PyVista package.',
+    PyVistaDeprecationWarning,
+)
+
+# Remove from globals to ensure __getattr__ is called for it
+del PyVistaDeprecationWarning
+
 # Places to look for the utility
 _MODULES = [
     'pyvista.core.utilities',

@@ -16,8 +16,14 @@ with namespace_data.open() as f:
 
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
+    import sys
+
+    # Clear module cache to ensure warnings are emitted for each test
+    if 'pyvista.utilities' in sys.modules:
+        del sys.modules['pyvista.utilities']
+
     with pytest.warns(
-        PyVistaDeprecationWarning, match='The `pyvista.utilities` module has been deprecated'
+        PyVistaDeprecationWarning, match=r'The `pyvista\.utilities` module has been deprecated'
     ):
         import pyvista.utilities as utilities  # noqa: PLR0402
 
@@ -89,9 +95,15 @@ def _import_all_utilities():
 def test_common_utilities_import_paths():
     # These are `pyvista.utilities` imports found via search on GitHub
     # across multiple public repositories
+    import sys
+
+    # Clear module cache to ensure warnings are emitted
+    if 'pyvista.utilities' in sys.modules:
+        del sys.modules['pyvista.utilities']
+
     # Test the first import to ensure deprecation warning is raised
     with pytest.warns(
-        PyVistaDeprecationWarning, match='The `pyvista.utilities` module has been deprecated'
+        PyVistaDeprecationWarning, match=r'The `pyvista\.utilities` module has been deprecated'
     ):
         from pyvista.utilities import NORMALS  # noqa: F401
 
