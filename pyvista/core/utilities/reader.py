@@ -2613,7 +2613,7 @@ class HDFReader(BaseReader):
         super().__init__(path)
 
     @wraps(BaseReader.read)
-    def read(self):  # type: ignore[override]
+    def read(self):
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
             with pyvista.VtkErrorCatcher(raise_errors=True):
@@ -2685,10 +2685,11 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')
+            if self._data_object is not None:
+                self._data_object.point_data.set_array(data, f'frame{i}')
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
+        if self._data_object is not None and 'frame0' in self._data_object.point_data:
             self._data_object.point_data.active_scalars_name = 'frame0'
 
         img.close()
