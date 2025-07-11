@@ -5990,9 +5990,7 @@ class DataSetFilters(DataObjectFilters):
                     result_data['column_names'] = np.array(column_names, dtype=object)
 
         # Create result table
-        result_table = pyvista.Table(result_data)
-
-        return result_table
+        return pyvista.Table(result_data)
 
     @_deprecate_positional_args(allowed=['shrink_factor'])
     def shrink(  # type: ignore[misc]
