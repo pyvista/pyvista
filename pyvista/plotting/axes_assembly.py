@@ -158,13 +158,13 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
-        self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
+        self.position = position
+        self.orientation = orientation
+        self.scale = scale
+        self.origin = origin
+        self.user_matrix = user_matrix
 
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
     @property
     def parts(self):
@@ -1583,10 +1583,10 @@ class PlanesAssembly(_XYZAssembly):
             name=name,
         )
 
-        self.opacity = opacity  # type: ignore[assignment]
+        self.opacity = opacity
         self.label_mode = label_mode
         self.label_offset = label_offset
-        self.label_edge = label_edge  # type: ignore[assignment]
+        self.label_edge = label_edge
 
         # Set default properties
         for actor in self._plane_actors:

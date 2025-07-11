@@ -515,7 +515,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set camera position to a three.js viewing perspective
         if set_camera:
-            self.camera_position = 'xy'  # type: ignore[assignment]
+            self.camera_position = 'xy'
 
     def import_vrml(self, filename: str | Path) -> None:
         """Import a VRML file into the plotter.
@@ -1975,7 +1975,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         size_before = self.window_size
         if window_size is not None:
-            self.window_size = window_size  # type: ignore[assignment]
+            self.window_size = window_size
         try:
             yield self
         finally:
@@ -3605,7 +3605,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
-            self.mapper = DataSetMapper(theme=self.theme)  # type: ignore[assignment]
+            self.mapper = DataSetMapper(theme=self.theme)
 
         if render_lines_as_tubes and show_edges:
             warnings.warn(
@@ -3749,7 +3749,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
                 silhouette_actor = self.add_silhouette(algo or mesh)
-            silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
+            silhouette_actor.user_matrix = user_matrix
 
         scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
@@ -3837,7 +3837,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
-        actor.user_matrix = user_matrix  # type: ignore[assignment]
+        actor.user_matrix = user_matrix
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -4543,7 +4543,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'{", ".join(mappers_lookup.keys())}'
             )
             raise TypeError(msg)
-        self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
+        self.mapper = mappers_lookup[mapper](theme=self._theme)
 
         # Set scalars range
         min_, max_ = None, None
@@ -4599,7 +4599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.volume = Volume()
         self.volume.mapper = self.mapper
-        self.volume.user_matrix = user_matrix  # type: ignore[assignment]
+        self.volume.user_matrix = user_matrix
 
         self.volume.prop = VolumeProperty(
             lookup_table=self.mapper.lookup_table,
@@ -4759,7 +4759,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not hasattr(self, 'mapper'):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
-            self.mapper.scalar_range = clim  # type: ignore[assignment]
+            self.mapper.scalar_range = clim
             return
 
         try:
@@ -4790,7 +4790,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
+        self.mapper = None
 
     def link_views(self, views: int | Iterable[int] | None = 0) -> None:
         """Link the views' cameras.
@@ -5095,7 +5095,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bars
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -5133,8 +5133,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
-        self.volume = None  # type: ignore[assignment]
+        self.mapper = None
+        self.volume = None
         self.text: pyvista.CornerAnnotation | Text | None = None
 
     @_deprecate_positional_args(allowed=['text'])
@@ -5528,7 +5528,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
 
         if fill_value is not None:
-            zval[self._image_depth_null] = fill_value  # type: ignore[index]
+            zval[self._image_depth_null] = fill_value
 
         return zval
 
@@ -6977,7 +6977,7 @@ class Plotter(BasePlotter):
             interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)  # type: ignore[assignment]
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
         self.iren.set_render_window(self.render_window)  # type: ignore[attr-defined]
         self.reset_key_events()
         self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
@@ -7229,7 +7229,7 @@ class Plotter(BasePlotter):
             self.render_window.SetSize(window_size[0], window_size[1])
 
         # reset unless camera for the first render unless camera is set
-        self.camera_position = cpos  # type: ignore[assignment]
+        self.camera_position = cpos
         self._on_first_render_request()
 
         # handle plotter notebook

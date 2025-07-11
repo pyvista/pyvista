@@ -308,7 +308,7 @@ def CylinderStructured(  # noqa: PLR0917
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Center at origin
-    grid.points = grid.points - np.array(grid.center)  # type: ignore[assignment]
+    grid.points = grid.points - np.array(grid.center)
 
     # rotate initially to face +X direction
     grid.rotate_y(90, inplace=True)
@@ -387,7 +387,7 @@ def Arrow(  # noqa: PLR0917
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
     if isinstance(scale, (float, int)):
-        surf.points = surf.points * scale  # type: ignore[assignment]
+        surf.points = surf.points * scale
     elif scale is not None:
         msg = "Scale must be either float, int or 'auto'."  # type: ignore[unreachable]
         raise TypeError(msg)
@@ -2297,7 +2297,7 @@ def PlatonicSolid(
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
     solid.scale(radius, inplace=True)
-    solid.points = solid.points + (np.asanyarray(center) - solid.center)  # type: ignore[assignment]
+    solid.points = solid.points + (np.asanyarray(center) - solid.center)
     return solid
 
 

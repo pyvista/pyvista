@@ -2613,7 +2613,7 @@ class HDFReader(BaseReader):
         super().__init__(path)
 
     @wraps(BaseReader.read)
-    def read(self):
+    def read(self) -> Any:
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
             with pyvista.VtkErrorCatcher(raise_errors=True):

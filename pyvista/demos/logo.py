@@ -120,7 +120,7 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
+    mesh_letters = pyvista.PolyData() if merge else {}
 
     # spacing between letters
     space_factor = 0.9
@@ -314,7 +314,7 @@ def plot_logo(  # noqa: PLR0917
 
     # finalize plot and show it
     plotter.set_background(kwargs.pop('background', 'white'))
-    plotter.camera_position = 'xy'  # type: ignore[assignment]
+    plotter.camera_position = 'xy'
     if 'zoom' in kwargs:
         plotter.camera.zoom(kwargs.pop('zoom'))
 

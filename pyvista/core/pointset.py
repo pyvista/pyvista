@@ -213,7 +213,7 @@ class _PointSet(DataSet):
 
         """
         if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)  # type: ignore[assignment]
+            self.points = self.points.astype(np.double)
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
@@ -258,7 +258,7 @@ class _PointSet(DataSet):
 
         """
         if inplace:
-            self.points = self.points + np.asarray(xyz)  # type: ignore[assignment]
+            self.points = self.points + np.asarray(xyz)
             return self
         return pyvista.DataObjectFilters.translate(
             self,
