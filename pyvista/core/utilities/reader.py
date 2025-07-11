@@ -40,8 +40,8 @@ def _lazy_vtk_instantiation(module_name, class_name):
 
 def lazy_vtkPOpenFOAMReader():
     """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
-    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
-    from vtkmodules.vtkParallelCore import vtkDummyController
+    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader  # noqa: PLC0415
+    from vtkmodules.vtkParallelCore import vtkDummyController  # noqa: PLC0415
 
     # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
     reader = vtkPOpenFOAMReader()
@@ -306,7 +306,7 @@ class BaseReader:
         else:
             # edge case where some class customization is needed on instantiation
             self._reader = self._class_reader()
-        self._filename = None
+        self._filename: str | None = None
         self._progress_bar = False
         self._progress_msg = None
         self.__directory = None
@@ -421,7 +421,7 @@ class BaseReader:
             PyVista Dataset.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import
+        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
@@ -2613,7 +2613,7 @@ class HDFReader(BaseReader):
         super().__init__(path)
 
     @wraps(BaseReader.read)
-    def read(self):
+    def read(self):  # type: ignore[override]
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
             with pyvista.VtkErrorCatcher(raise_errors=True):
@@ -2674,8 +2674,8 @@ class _GIFReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the GIF and store internally to `_data_object`."""
-        from PIL import Image
-        from PIL import ImageSequence
+        from PIL import Image  # noqa: PLC0415
+        from PIL import ImageSequence  # noqa: PLC0415
 
         img = Image.open(self._filename)
         self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
@@ -2685,11 +2685,11 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[union-attr]
+            self._data_object.point_data.set_array(data, f'frame{i}')
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:  # type: ignore[union-attr]
-            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[union-attr]
+        if 'frame0' in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = 'frame0'
 
         img.close()
 
@@ -2875,7 +2875,7 @@ class GaussianCubeReader(BaseReader):
             Output as a grid if ``True``, otherwise return the polydata.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import
+        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = (

@@ -15,7 +15,7 @@ def _download_dataset_texture(
 ):
     dataset = _download_dataset(loader, load=load)
     if texture:
-        from pyvista.plotting.texture import Texture
+        from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
         return Texture(dataset)  # type: ignore[abstract]
     return dataset
@@ -50,7 +50,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     texture_coords = np.empty((sphere.n_points, 2))
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
-    sphere.active_texture_coordinates = texture_coords  # type: ignore[assignment]
+    sphere.active_texture_coordinates = texture_coords
     return sphere.extract_surface(pass_pointid=False, pass_cellid=False)
 
 
@@ -471,7 +471,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
     texture_coordinates[:, 0] = (radius - inner) / (outer - inner)
     texture_coordinates[:, 1] = 0.0
-    disc.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+    disc.active_texture_coordinates = texture_coordinates
     return disc
 
 

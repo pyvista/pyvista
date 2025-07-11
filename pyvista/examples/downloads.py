@@ -28,6 +28,7 @@ import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
+import pickle
 import shutil
 import sys
 from typing import cast
@@ -5530,8 +5531,6 @@ def download_osmnx_graph(load=True):  # noqa: FBT002
 
 
 def _osmnx_graph_read_func(filename):
-    import pickle
-
     return pickle.load(Path(filename).open('rb'))
 
 
@@ -7993,7 +7992,7 @@ class _WholeBodyCTUtilities:
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)  # type:ignore[union-attr]
-            from colors import colors
+            from colors import colors  # noqa: PLC0415
 
             return dict(sorted(colors.items()))
         else:
