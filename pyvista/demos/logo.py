@@ -83,7 +83,7 @@ def text_3d(string, depth=0.5):
     :ref:`create_pixel_art_example`
 
     """
-    from vtkmodules.vtkRenderingFreeType import vtkVectorText
+    from vtkmodules.vtkRenderingFreeType import vtkVectorText  # noqa: PLC0415
 
     vec_text = vtkVectorText()
     vec_text.SetText(string)
@@ -315,7 +315,7 @@ def plot_logo(  # noqa: PLR0917
 
     # finalize plot and show it
     plotter.set_background(kwargs.pop('background', 'white'))
-    plotter.camera_position = 'xy'  # type: ignore[assignment]
+    plotter.camera_position = 'xy'
     if 'zoom' in kwargs:
         plotter.camera.zoom(kwargs.pop('zoom'))
 
