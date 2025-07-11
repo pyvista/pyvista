@@ -4201,3 +4201,11 @@ def test_compute_pca_statistics():
     # Test error handling for invalid preference
     with pytest.raises(ValueError, match="preference must be 'point' or 'cell'"):
         mesh.compute_pca_statistics(preference='invalid')
+
+    # Test error handling for non-existent scalar in point data
+    with pytest.raises(KeyError, match="Array 'nonexistent' not found in point data"):
+        mesh.compute_pca_statistics(scalars='nonexistent', preference='point')
+
+    # Test error handling for non-existent scalar in cell data
+    with pytest.raises(KeyError, match="Array 'nonexistent' not found in cell data"):
+        mesh_with_cell_data.compute_pca_statistics(scalars='nonexistent', preference='cell')
