@@ -33,7 +33,7 @@ skull = dataset['segmentations']['skull']
 cropped_ct = ct.crop(mask=skull, padding=10)
 
 # %%
-# Use :meth:`~pyvista.ImageData.points_to_cells` to plot the cropped image
+# Use :meth:`~pyvista.ImageDataFilters.points_to_cells` to plot the cropped image
 # as :attr:`~pyvista.CellType.VOXEL` cells.
 
 cpos = [(687.5, 763.6, 471.3), (231.8, 296.3, 677.0), (0.107, 0.311, 0.944)]
