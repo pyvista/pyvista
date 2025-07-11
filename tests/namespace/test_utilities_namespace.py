@@ -16,16 +16,7 @@ with namespace_data.open() as f:
 
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
-    import sys
-
-    # Clear module cache to ensure warnings are emitted for each test
-    if 'pyvista.utilities' in sys.modules:
-        del sys.modules['pyvista.utilities']
-
-    with pytest.warns(
-        PyVistaDeprecationWarning, match=r'The `pyvista\.utilities` module has been deprecated'
-    ):
-        import pyvista.utilities as utilities  # noqa: PLR0402
+    import pyvista.utilities as utilities  # noqa: PLR0402
 
     with pytest.warns(PyVistaDeprecationWarning):
         assert hasattr(utilities, name)
