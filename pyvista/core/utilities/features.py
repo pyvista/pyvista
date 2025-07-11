@@ -836,7 +836,7 @@ def sample_function(  # noqa: PLR0917
 
     """
     # internal import to avoide circular dependency
-    from pyvista.core.filters import _update_alg
+    from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
