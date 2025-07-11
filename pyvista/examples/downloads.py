@@ -8779,7 +8779,7 @@ def download_yinyang(*, load=True):
 
     Returns
     -------
-    ImageData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
