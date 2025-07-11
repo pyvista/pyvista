@@ -89,33 +89,60 @@ def _import_all_utilities():
 def test_common_utilities_import_paths():
     # These are `pyvista.utilities` imports found via search on GitHub
     # across multiple public repositories
+    # Test the first import to ensure deprecation warning is raised
     with pytest.warns(
         PyVistaDeprecationWarning, match='The `pyvista.utilities` module has been deprecated'
     ):
         from pyvista.utilities import NORMALS  # noqa: F401
+
+    # Test remaining imports (PT031 requires single statements per pytest.warns block)
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import abstract_class  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import assert_empty_kwargs  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import conditional_decorator  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import convert_string_array  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import generate_plane  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import get_array  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import get_array_association  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import get_vtk_type  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import threaded  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import try_callback  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities import xvfb  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.algorithms import add_ids_algorithm  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.algorithms import algorithm_to_mesh_handler  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.algorithms import crinkle_algorithm  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.algorithms import outline_algorithm  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.algorithms import pointset_to_polydata_algorithm  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.algorithms import set_algorithm_input  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.errors import GPUInfo  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.geometric_objects import Arrow  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.geometric_objects import Cylinder  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.geometric_objects import PlatonicSolid  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.helpers import vtk_id_list_to_array  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper  # noqa: F401
+    with pytest.warns(PyVistaDeprecationWarning):
         from pyvista.utilities.xvfb import start_xvfb  # noqa: F401
 
 
