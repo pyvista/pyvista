@@ -55,21 +55,20 @@ pl.camera_position = cpos
 pl.show()
 
 # %%
-# After cropping, the CT image's dimensions differ from the mask.
+# After cropping, the CT image's dimensions are smaller than the mask's.
 
-cropped_ct.dimensions
-
-skull.dimensions
+cropped_ct.dimensions == skull.dimensions
 
 # %%
 # To keep dimension the same, either
 #
 # #. crop the mask itself; the meshes will have smaller dimensions relative to the input
-# #. pad the CT image as part of the crop; the meshes will have the same dimensions as the input
+# #. pad the CT image as part of the initial crop; the meshes will have the same dimensions
+#    as the input
 #
-# To crop the mask itself, you can set ``mask=True``.
+# To crop the mask itself, you can perfrom a similar crop as before using ``mask=True``.
 
-cropped_skull = skull.crop(mask=True)
+cropped_skull = skull.crop(mask=True, padding=10)
 cropped_skull.dimensions
 
 # %%
