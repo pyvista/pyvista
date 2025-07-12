@@ -531,7 +531,9 @@ def test_merge(hexbeam):
 def test_merge_not_main(hexbeam):
     grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning, match=r"The keyword 'main_has_priority' is deprecated"
+    ):
         unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
 
     grid.merge(hexbeam, inplace=True, merge_points=True)

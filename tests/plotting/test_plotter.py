@@ -830,7 +830,10 @@ def test_plotter_update_coordinates(sphere):
             msg = 'Remove this method'
             raise RuntimeError(msg)
 
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This method is deprecated and will be removed in a future version',
+    ):
         _test_update_coordinates()
 
 
