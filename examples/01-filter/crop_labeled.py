@@ -16,7 +16,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load a dataset with a CT image and segmentation labels. Here we load
+# Load a dataset with a CT image and corresponding segmentation labels. Here we load
 # :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
 dataset = examples.download_whole_body_ct_male()
@@ -30,7 +30,7 @@ skull = dataset['segmentations']['skull']
 
 # %%
 # Crop the CT image using the segmentation mask. Use ``padding`` to include additional data
-# points around the masked region in the output.
+# points around the masked region.
 
 cropped_ct = ct.crop(mask=skull, padding=10)
 
@@ -53,3 +53,35 @@ pl.add_mesh(skull_surface, color='white')
 pl.add_volume(cropped_ct_voxels)
 pl.camera_position = cpos
 pl.show()
+
+# %%
+# After cropping, the CT image's dimensions differ from the mask.
+
+cropped_ct.dimensions
+
+skull.dimensions
+
+# %%
+# To keep dimension the same, either
+#
+# #. crop the mask itself; the meshes will have smaller dimensions relative to the input
+# #. pad the CT image as part of the crop; the meshes will have the same dimensions as the input
+#
+# To crop the mask itself, you can set ``mask=True``.
+
+cropped_skull = skull.crop(mask=True)
+cropped_skull.dimensions
+
+# %%
+# However, computationally it is more efficient to crop using ``extent`` directly.
+
+cropped_skull = skull.crop(extent=cropped_ct.extent)
+cropped_skull.dimensions
+
+# %%
+# Alternatively, use ``keep_dimensions`` and ``fill_value`` when initially cropping the image so
+# that the output dimensions match the input. A value of ``-1000`` is used, which may represent
+# air in the scan.
+
+cropped_ct = ct.crop(mask=skull, keep_dimensions=True, fill_value=-1000)
+cropped_ct.dimensions
