@@ -156,7 +156,7 @@ def test_clip_box(datasets):
 
     # crinkle clip
     surf = pv.Sphere(radius=3)
-    vol = pv.voxelize(surf)
+    vol = surf.voxelize()
     cube = pv.Cube().rotate_x(33, inplace=False)
     clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
     assert clp is not None
