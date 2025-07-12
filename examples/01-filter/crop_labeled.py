@@ -66,7 +66,7 @@ cropped_ct.dimensions == skull.dimensions
 # #. pad the CT image as part of the initial crop; the meshes will have the same dimensions
 #    as the input
 #
-# To crop the mask itself, you can perfrom a similar crop as before using ``mask=True``.
+# To crop the mask itself, you can perform a similar crop as before using ``mask=True``.
 
 cropped_skull = skull.crop(mask=True, padding=10)
 cropped_skull.dimensions
