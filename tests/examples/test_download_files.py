@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-import re
 import warnings
 
 import numpy as np
@@ -1106,22 +1105,6 @@ def test_download_head2():
 
     biplane = examples.download_head_2()
     assert isinstance(biplane, pv.ImageData)
-
-
-def test_download_frog_tissue():
-    match = re.escape(
-        'This example is deprecated and will be removed in v0.47.0. '
-        'Use `load_frog_tissues` instead.'
-    )
-    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-        filename = examples.download_frog_tissue(load=False)
-    assert (p := Path(filename)).is_file()
-    assert p.suffix == '.mhd'
-
-    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-        frog = examples.download_frog_tissue()
-
-    assert isinstance(frog, pv.ImageData)
 
 
 def test_download_great_white_shark():
