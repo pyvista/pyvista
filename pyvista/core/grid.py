@@ -701,7 +701,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         *,
         indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
-    ) -> tuple[int, int, int, int, int, int]:
+    ) -> NumpyArray[int]:
         """Compute VOI extents from indexing values."""
         _validation.check_contains(
             ['extent', 'dimensions'], must_contain=indexing_range, name='indexing_range'
