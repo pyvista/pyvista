@@ -4408,8 +4408,8 @@ class ImageDataFilters(DataSetFilters):
             min_ind = axis * 2
             max_ind = axis * 2 + 1
 
-            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))
-            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
         return out
 
 
