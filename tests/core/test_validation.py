@@ -807,8 +807,6 @@ def test_check_sorted(shape, axis, ascending, strict):
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
     # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
     try:
         AxisError = np.exceptions.AxisError
     except AttributeError:

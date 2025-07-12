@@ -3065,8 +3065,6 @@ def test_plot_complex_value(plane, verify_image_cache):
     data += np.linspace(0, 1, plane.n_points) * -1j
 
     # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
@@ -3272,7 +3270,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 
 @pytest.mark.skip_windows('Test fails on Windows because of opacity')
 @skip_lesser_9_4_X
-def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
+def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):  # noqa: ARG001
     pl = pv.Plotter()
 
     actor, mapper = pl.add_composite(
@@ -3289,9 +3287,6 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
 
     pl.camera_position = 'xy'
 
-    # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
-    # also opaque. Don't verify the image of that version.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     pl.show()
 
 
@@ -3319,12 +3314,9 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
         lighting=False,
     )
 
-    # Note: set the camera position before making the blocks invisible to be
-    # consistent between 9.0.3 and 9.1+
+    # Note: set the camera position before making the blocks invisible
     #
-    # 9.0.3 still considers invisible blocks when determining camera bounds, so
-    # there will be some empty space where the invisible block is for 9.0.3,
-    # while 9.1.0 ignores invisible blocks when computing camera bounds.
+    # VTK 9.1.0+ ignores invisible blocks when computing camera bounds.
     pl.camera_position = 'xy'
     mapper.block_attr[2].color = 'blue'
     mapper.block_attr[3].visible = False
@@ -3388,8 +3380,6 @@ def test_plot_composite_poly_complex(multiblock_poly):
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
     # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
@@ -3608,7 +3598,7 @@ def test_charts_sin():
     chart.show()
 
 
-def test_lookup_table(verify_image_cache):
+def test_lookup_table(verify_image_cache):  # noqa: ARG001
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3616,26 +3606,20 @@ def test_lookup_table(verify_image_cache):
     lut.nan_color = 'r'
     lut.nan_opacity = 0.5
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
-def test_lookup_table_nan_hidden(verify_image_cache):
+def test_lookup_table_nan_hidden(verify_image_cache):  # noqa: ARG001
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
     lut.above_range_color = 'grey'
     lut.nan_opacity = 0
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
-def test_lookup_table_above_below_opacity(verify_image_cache):
+def test_lookup_table_above_below_opacity(verify_image_cache):  # noqa: ARG001
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'blue'
@@ -3645,9 +3629,6 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.nan_color = 'r'
     lut.nan_opacity = 0.5
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 

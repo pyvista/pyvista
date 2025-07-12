@@ -117,8 +117,6 @@ def _cast_to_numpy(
 
     """
     # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
     except AttributeError:

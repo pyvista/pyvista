@@ -205,7 +205,7 @@ jobs:
         run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Limit Matplotlib for VTK<9.2.2
-        if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
+        if: ${{ matrix.vtk-version == '9.1' }}
         run: pip install 'matplotlib<3.6'
 
       - name: Install latest numpy 2.0 beta/rc
