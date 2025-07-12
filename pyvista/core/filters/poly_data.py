@@ -1981,7 +1981,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined, arg-type]
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined]
                 'pyvistaOriginalPointIds',
             )
 
@@ -2616,7 +2616,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError(msg)
 
         try:
-            import trimesh
+            import trimesh  # noqa: PLC0415
 
             if not trimesh.ray.has_embree:
                 raise ImportError
@@ -3234,7 +3234,7 @@ class PolyDataFilters(DataSetFilters):
         >>> squar = squar.rotate_z(45, inplace=False)
         >>> circ0 = pv.Polygon(center=(2, 3, 0), n_sides=30, radius=1)
         >>> circ1 = pv.Polygon(center=(-2, -3, 0), n_sides=30, radius=1)
-        >>> comb = circ0 + circ1 + squar
+        >>> comb = circ0.append_polydata(circ1, squar)
         >>> tess = comb.delaunay_2d(edge_source=comb)
         >>> tess.plot(cpos='xy', show_edges=True)
 

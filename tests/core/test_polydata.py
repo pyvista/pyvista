@@ -585,7 +585,7 @@ def test_merge_main_has_priority(input_, main_has_priority):
             for j in (this.points == point).all(-1).nonzero()
         )
 
-    if pv.vtk_version_info > (9, 5, 0):
+    if pv.vtk_version_info >= (9, 5, 0):
         merged = mesh.merge(other)
         expected_to_match = mesh
     else:
@@ -602,7 +602,7 @@ def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
         "The keyword 'main_has_priority' is deprecated and should not be used.\n"
         'The main mesh will always have priority in a future version.'
     )
-    if main_has_priority is False and pv.vtk_version_info > (9, 5, 0):
+    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
@@ -1426,12 +1426,12 @@ def test_n_faces_etc_deprecated(cells: str):
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
+        raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('inplace', [True, False])

@@ -414,6 +414,15 @@ def test_contour_labels_raises_vtkversionerror():
         pv.ImageData().contour_labels()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_empty_input(frog_tissues):
+    voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
+    background_value = 0
+    assert np.allclose(voi.active_scalars, background_value)
+    surface = voi.contour_labels(background_value=background_value)
+    assert surface.is_empty
+
+
 @pytest.fixture
 def uniform_many_scalars(uniform):
     uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
@@ -911,24 +920,24 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Passing `pad_singleton_dims` should raise an error.'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `pad_singleton_dims`.'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Passing `pad_singleton_dims` should raise an error.'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `pad_singleton_dims`.'
+        raise RuntimeError(msg)
 
     match = (
         'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
     )
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Passing `pad_singleton_dims` should raise an error.'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `pad_singleton_dims`.'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Passing `pad_singleton_dims` should raise an error.'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `pad_singleton_dims`.'
+        raise RuntimeError(msg)
 
 
 @pytest.fixture
