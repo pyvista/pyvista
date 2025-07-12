@@ -18,6 +18,7 @@ from collections.abc import Sequence
 from collections.abc import Sized
 from numbers import Number
 import reprlib
+import types
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
@@ -910,7 +911,8 @@ def check_instance(
         raise TypeError(msg)
 
     # Get class info from generics
-    if get_origin(classinfo) is Union:
+    origin = get_origin(classinfo)
+    if origin is Union or origin is types.UnionType:
         classinfo = get_args(classinfo)
 
     # Count num classes
