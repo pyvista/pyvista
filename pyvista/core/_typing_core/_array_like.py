@@ -26,7 +26,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TypeAlias
 from typing import TypeVar
-from typing import Union
 
 import numpy as np
 import numpy.typing as npt
@@ -47,18 +46,6 @@ _NumberType = TypeVar(  # noqa: PYI018
 
 NumpyArray: TypeAlias = npt.NDArray[NumberType]
 
-_FiniteNestedList: TypeAlias = (
-    list[NumberType]
-    | list[list[NumberType]]
-    | list[list[list[NumberType]]]
-    | list[list[list[list[NumberType]]]]
-)
-_FiniteNestedTuple: TypeAlias = (
-    tuple[NumberType]
-    | tuple[tuple[NumberType]]
-    | tuple[tuple[tuple[NumberType]]]
-    | tuple[tuple[tuple[tuple[NumberType]]]]
-)
 
 _ArrayLike1D: TypeAlias = (
     NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
@@ -78,7 +65,8 @@ _ArrayLike4D: TypeAlias = (
     | Sequence[Sequence[Sequence[Sequence[NumberType]]]]
     | Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]]
 )
-_ArrayLike: TypeAlias = (
+
+_ArrayLike: TypeAlias = (  # noqa: PYI047
     _ArrayLike1D[NumberType]
     | _ArrayLike2D[NumberType]
     | _ArrayLike3D[NumberType]

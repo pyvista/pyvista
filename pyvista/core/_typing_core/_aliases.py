@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
 from typing import TypeAlias
-from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -98,4 +97,4 @@ CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]  # noqa: PYI047
 
-InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
+InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
