@@ -495,8 +495,8 @@ def plot_datasets(dataset_type=None):
     # structured grid
     ang = np.linspace(0, np.pi / 2, 10)
     r = np.linspace(6, 10, 8)
-    z = [0]
-    ang, r, z = np.meshgrid(ang, r, z)  # type: ignore[assignment]
+    z_vals = [0]
+    ang, r, z = np.meshgrid(ang, r, z_vals)
 
     x = r * np.sin(ang)
     y = r * np.cos(ang)

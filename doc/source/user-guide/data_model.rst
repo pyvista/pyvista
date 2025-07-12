@@ -677,7 +677,7 @@ Vectors, Texture Coords, and Normals Attributes
 Both cell and point data can also store the following "special" attributes in addition to :attr:`active_scalars <pyvista.DataSet.active_scalars>`:
 
 * :attr:`active_normals <pyvista.DataSet.active_normals>`
-* :attr:`active_t_coords <pyvista.DataSet.active_t_coords>`
+* :attr:`active_texture_coordinates <pyvista.DataSet.active_texture_coordinates>`
 * :attr:`active_vectors <pyvista.DataSet.active_vectors>`
 
 
@@ -694,8 +694,8 @@ it will be computed.
 
 Active Texture Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :attr:`active_t_coords
-<pyvista.DataSet.active_t_coords>` array is used for
+The :attr:`active_texture_coordinates
+<pyvista.DataSet.active_texture_coordinates>` array is used for
 rendering textures. See :ref:`texture_example` for examples using
 this array.
 

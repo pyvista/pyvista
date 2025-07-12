@@ -85,7 +85,7 @@ def translate(
 
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)
+        surf.points = surf.points + np.array(center, dtype=surf.points.dtype)
 
 
 if _vtk.vtk_version_info < (9, 3):
@@ -1201,7 +1201,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center
+        out.points = out.points - out.center
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1210,7 +1210,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center
+            out.points = out.points + self.center
 
 
 @no_new_attr
@@ -3760,7 +3760,7 @@ class AxesGeometrySource:
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
         # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
-        part.points -= part.center
+        part.points = part.points - part.center
 
         # Scale so bounding box edges have length one
         bnds = part.bounds
@@ -4200,7 +4200,14 @@ class CubeFacesSource(CubeSource):
         frame_width: float | None = None,
         shrink_factor: float | None = None,
         explode_factor: float | None = None,
-        names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
+        names: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str] = (
+            '+X',
+            '-X',
+            '+Y',
+            '-Y',
+            '+Z',
+            '-Z',
+        ),
         point_dtype: str = 'float32',
     ) -> None:
         # Init CubeSource
@@ -4219,7 +4226,7 @@ class CubeFacesSource(CubeSource):
         self.frame_width = frame_width
         self.shrink_factor = shrink_factor
         self.explode_factor = explode_factor
-        self.names = names  # type: ignore[assignment]
+        self.names = names
 
     @property
     def frame_width(self: CubeFacesSource) -> float | None:  # numpydoc ignore=RT01

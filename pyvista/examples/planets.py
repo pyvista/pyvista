@@ -17,7 +17,7 @@ def _download_dataset_texture(
     if texture:
         from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
-        return Texture(dataset)  # type: ignore[abstract]
+        return Texture(dataset)
     return dataset
 
 
@@ -42,7 +42,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     """
     # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
-    theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, 0 : 2 * np.pi : lon_resolution * 1j]  # type: ignore[misc]
+    theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, 0 : 2 * np.pi : lon_resolution * 1j]
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)

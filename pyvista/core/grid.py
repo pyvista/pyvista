@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from collections.abc import Sequence
-from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -176,11 +176,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """
 
     _WRITERS: ClassVar[
-        dict[
+        Mapping[
             str,
             type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
         ]
-    ] = {  # type: ignore[assignment]
+    ] = {
         '.vtk': _vtk.vtkRectilinearGridWriter,
         '.vtr': _vtk.vtkXMLRectilinearGridWriter,
     }
@@ -206,8 +206,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (np.ndarray, Sequence)):
                 self._from_arrays(
                     x=np.asanyarray(args[0]),
-                    y=None,  # type: ignore[arg-type]
-                    z=None,  # type: ignore[arg-type]
+                    y=None,
+                    z=None,
                     check_duplicates=check_duplicates,
                 )
             else:
@@ -223,14 +223,14 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                 self._from_arrays(
                     x=np.asanyarray(args[0]),
                     y=np.asanyarray(args[1]),
-                    z=np.asanyarray(args[2]),  # type: ignore[misc]
+                    z=np.asanyarray(args[2]),
                     check_duplicates=check_duplicates,
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
                     x=np.asanyarray(args[0]),
                     y=np.asanyarray(args[1]),
-                    z=None,  # type: ignore[arg-type]
+                    z=None,
                     check_duplicates=check_duplicates,
                 )
             else:
@@ -327,7 +327,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
-    @property  # type: ignore[override]
+    @property
     def points(self: Self) -> NumpyArray[float]:
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
@@ -492,7 +492,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self._update_dimensions()
         self.Modified()
 
-    @Grid.dimensions.setter  # type: ignore[attr-defined]
+    @Grid.dimensions.setter
     def dimensions(self: Self, _dims: VectorLike[int]) -> None:
         """Set Dimensions.
 
@@ -620,7 +620,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {  # type: ignore[assignment]
+    _WRITERS: ClassVar[Mapping[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {
         '.vtk': _vtk.vtkDataSetWriter,
         '.vti': _vtk.vtkXMLImageDataWriter,
     }
@@ -649,7 +649,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             elif isinstance(uinput, (str, Path)):
                 self._from_file(uinput)
             else:
-                msg = (  # type: ignore[unreachable]
+                msg = (
                     'First argument, ``uinput`` must be either ``vtkImageData`` '
                     f'or a path, not {type(uinput)}.  Use keyword arguments to '
                     'specify dimensions, spacing, and origin. For example:\n\n'
@@ -678,7 +678,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    @property  # type: ignore[override]
+    @property
     def points(self: Self) -> NumpyArray[float]:
         """Build a copy of the implicitly defined points as a numpy array.
 
@@ -823,7 +823,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> pl.show()
 
         """
-        return self.GetOrigin()  # type: ignore[return-value]
+        return self.GetOrigin()
 
     @origin.setter
     def origin(self: Self, origin: VectorLike[float]) -> None:
@@ -1051,7 +1051,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)  # type:ignore[has-type]
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
