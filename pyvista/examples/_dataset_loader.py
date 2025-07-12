@@ -41,7 +41,6 @@ from typing import Any
 from typing import Generic
 from typing import Protocol
 from typing import TypeVar
-from typing import Union
 from typing import cast
 from typing import final
 from typing import runtime_checkable
@@ -70,13 +69,8 @@ _FilePropIntType_co = TypeVar(
     covariant=True,
 )
 
-DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetType = Union[
-    type[pv.DataSet],
-    type[pv.Texture],
-    type[NumpyArray[Any]],
-    type[pv.MultiBlock],
-]
+DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
+DatasetType = type[pv.DataSet] | type[pv.Texture] | type[NumpyArray[Any]] | type[pv.MultiBlock]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
@@ -170,7 +164,8 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         url = self.base_url
         base_url_iter = [url] if isinstance(url, str) else url
         url_raw = [
-            os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)
+            os.path.join(base_url, name)
+            for base_url, name in zip(base_url_iter, name_iter, strict=False)
         ]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
@@ -711,7 +706,7 @@ def _load_as_multiblock(
             for path in paths
         ]
 
-    for file, name in zip(files, names):
+    for file, name in zip(files, names, strict=False):
         if not isinstance(file, _DatasetLoader):
             continue  # type: ignore[unreachable]
         loaded = file.load()

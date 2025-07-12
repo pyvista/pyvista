@@ -188,7 +188,7 @@ computed_freqs_kHz, mode_indices = get_first_N_above_thresh(  # noqa: N816
     N=8, freqs=freqs / 1e3, thresh=1, decimals=1
 )
 print('found the following first unique eigenfrequencies:')
-for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
+for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz, strict=False)):
     error = np.abs(freq2 - freq1) / freq1 * 100.0
     print(f'freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %')
 
@@ -218,7 +218,7 @@ vol.dimensions = [*grid.dimensions[0:2], nz]
 for i, mode_index in enumerate(mode_indices):
     eigenvector = vr[:, mode_index]
     displacement_points = np.zeros_like(vol.points)
-    for weight, (component, p, q, r) in zip(eigenvector, quadruplets):
+    for weight, (component, p, q, r) in zip(eigenvector, quadruplets, strict=False):
         displacement_points[:, component] += (
             weight * vol.points[:, 0] ** p * vol.points[:, 1] ** q * vol.points[:, 2] ** r
         )
