@@ -224,6 +224,7 @@ class ImageDataFilters(DataSetFilters):
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
+        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -256,6 +257,22 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
+        rebase_coordinates : bool, default: True
+            If ``True`` (default), reset the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
+
+            .. versionadded:: 0.46
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -272,17 +289,12 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
-        # Adjust for the confusing issue with the extents
-        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
-        fixed.origin = result.bounds[::2]
-        fixed.spacing = result.spacing
-        fixed.dimensions = result.dimensions
-        fixed.point_data.update(result.point_data)
-        fixed.cell_data.update(result.cell_data)
-        fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result, deep=True)
-        return fixed
+        if rebase_coordinates:
+            # Adjust for the confusing issue with the extents
+            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+            result.origin = result.bounds[::2]
+            result.offset = (0, 0, 0)
+        return result
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
