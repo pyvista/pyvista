@@ -1249,3 +1249,12 @@ def test_download_fea_bracket():
 
     mesh = examples.download_fea_bracket()
     assert isinstance(mesh, pv.UnstructuredGrid)
+
+
+def test_download_yinyang():
+    filename = examples.download_yinyang(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.png'
+
+    mesh = examples.download_yinyang()
+    assert isinstance(mesh, pv.ImageData)

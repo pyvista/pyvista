@@ -81,7 +81,7 @@ def test_init_from_arrays(faces_is_cell_array):
     assert not np.allclose(vertices[0], mesh.points[0])
 
     # ensure that polydata raises a warning when inputting non-float dtype
-    with pytest.warns(Warning):
+    with pytest.warns((UserWarning, DeprecationWarning)):
         mesh = pv.PolyData(vertices.astype(np.int32), faces)
 
     # array must be immutable
