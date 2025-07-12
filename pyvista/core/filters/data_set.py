@@ -58,7 +58,7 @@ class DataSetFilters(DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     @_deprecate_positional_args(allowed=['target'])
-    def align(  # type: ignore[misc]  # noqa: PLR0917
+    def align(  # noqa: PLR0917
         self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         max_landmarks: int = 100,
@@ -165,7 +165,7 @@ class DataSetFilters(DataObjectFilters):
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
 
-    def align_xyz(  # type: ignore[misc]
+    def align_xyz(
         self: _DataSetType,
         *,
         centered: bool = True,
@@ -402,7 +402,7 @@ class DataSetFilters(DataObjectFilters):
         return aligned
 
     @_deprecate_positional_args(allowed=['surface'])
-    def compute_implicit_distance(  # type: ignore[misc]
+    def compute_implicit_distance(
         self: _DataSetType,
         surface: DataSet | _vtk.vtkDataSet,
         inplace: bool = False,  # noqa: FBT001, FBT002
@@ -493,7 +493,7 @@ class DataSetFilters(DataObjectFilters):
         return result
 
     @_deprecate_positional_args
-    def clip_scalar(  # type: ignore[misc]  # noqa: PLR0917
+    def clip_scalar(  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
@@ -563,7 +563,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
+            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
 
@@ -589,12 +589,12 @@ class DataSetFilters(DataObjectFilters):
             if isinstance(self, _vtk.vtkPolyData):
                 # For some reason vtkClipPolyData with SetGenerateClippedOutput on
                 # leaves unreferenced vertices
-                result0, result1 = (r.clean() for r in (result0, result1))  # type: ignore[unreachable]
+                result0, result1 = (r.clean() for r in (result0, result1))
             return result0, result1
         return result0
 
     @_deprecate_positional_args(allowed=['surface'])
-    def clip_surface(  # type: ignore[misc]  # noqa: PLR0917
+    def clip_surface(  # noqa: PLR0917
         self: _DataSetType,
         surface: DataSet | _vtk.vtkDataSet,
         invert: bool = True,  # noqa: FBT001, FBT002
@@ -677,7 +677,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args(allowed=['value'])
-    def threshold(  # type: ignore[misc]  # noqa: PLR0917
+    def threshold(  # noqa: PLR0917
         self: _DataSetType,
         value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
@@ -869,7 +869,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
             if not isinstance(component, (int, np.integer)):
-                msg = 'component must be int'  # type: ignore[unreachable]
+                msg = 'component must be int'
                 raise TypeError(msg)
             if component > (dim - 1) or component < 0:
                 msg = f'scalars has {dim} components: supplied component {component} not in range'
@@ -880,7 +880,7 @@ class DataSetFilters(DataObjectFilters):
         elif component_mode == 'any':
             alg.SetComponentModeToUseAny()
         else:
-            msg = f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"  # type: ignore[unreachable]
+            msg = f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
             raise ValueError(msg)
 
         # Run the threshold
@@ -888,7 +888,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['percent'])
-    def threshold_percent(  # type: ignore[misc]  # noqa: PLR0917
+    def threshold_percent(  # noqa: PLR0917
         self: _DataSetType,
         percent: float = 0.50,
         scalars: str | None = None,
@@ -1027,7 +1027,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args
-    def outline(  # type: ignore[misc]
+    def outline(
         self: _DataObjectType,
         generate_faces: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -1072,7 +1072,7 @@ class DataSetFilters(DataObjectFilters):
         return wrap(alg.GetOutputDataObject(0))
 
     @_deprecate_positional_args
-    def outline_corners(  # type: ignore[misc]
+    def outline_corners(
         self: _DataObjectType,
         factor: float = 0.2,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -1110,7 +1110,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def gaussian_splatting(  # type: ignore[misc]
+    def gaussian_splatting(
         self: _DataSetType,
         *,
         radius: float = 0.1,
@@ -1188,7 +1188,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def extract_geometry(  # type: ignore[misc]
+    def extract_geometry(
         self: _DataSetType,
         extent: VectorLike[float] | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -1245,7 +1245,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['isosurfaces', 'scalars'])
-    def contour(  # type: ignore[misc]  # noqa: PLR0917
+    def contour(  # noqa: PLR0917
         self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
         scalars: str | NumpyArray[float] | None = None,
@@ -1363,11 +1363,11 @@ class DataSetFilters(DataObjectFilters):
         if method == 'contour':
             alg = _vtk.vtkContourFilter()
         elif method == 'marching_cubes':
-            alg = _vtk.vtkMarchingCubes()  # type: ignore[assignment]
+            alg = _vtk.vtkMarchingCubes()
         elif method == 'flying_edges':
-            alg = _vtk.vtkFlyingEdges3D()  # type: ignore[assignment]
+            alg = _vtk.vtkFlyingEdges3D()
         else:
-            msg = f"Method '{method}' is not supported"  # type: ignore[unreachable]
+            msg = f"Method '{method}' is not supported"
             raise ValueError(msg)
 
         if isinstance(scalars, str):
@@ -1432,7 +1432,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args
-    def texture_map_to_plane(  # type: ignore[misc]  # noqa: PLR0917
+    def texture_map_to_plane(  # noqa: PLR0917
         self: _DataSetType,
         origin: VectorLike[float] | None = None,
         point_u: VectorLike[float] | None = None,
@@ -1519,7 +1519,7 @@ class DataSetFilters(DataObjectFilters):
         return self
 
     @_deprecate_positional_args
-    def texture_map_to_sphere(  # type: ignore[misc]  # noqa: PLR0917
+    def texture_map_to_sphere(  # noqa: PLR0917
         self: _DataSetType,
         center: VectorLike[float] | None = None,
         prevent_seam: bool = True,  # noqa: FBT001, FBT002
@@ -1594,7 +1594,7 @@ class DataSetFilters(DataObjectFilters):
         return self
 
     @_deprecate_positional_args
-    def glyph(  # type: ignore[misc]  # noqa: PLR0917
+    def glyph(  # noqa: PLR0917
         self: _DataSetType,
         orient: bool | str = True,  # noqa: FBT001, FBT002
         scale: bool | str = True,  # noqa: FBT001, FBT002
@@ -1725,7 +1725,7 @@ class DataSetFilters(DataObjectFilters):
             # use default "categorical" indices
             indices = np.arange(len(geoms))
         elif not isinstance(indices, (np.ndarray, Sequence)):
-            msg = (  # type: ignore[unreachable]
+            msg = (
                 'If "geom" is a sequence then "indices" must also be a '
                 'sequence of the same length.'
             )
@@ -1788,7 +1788,7 @@ class DataSetFilters(DataObjectFilters):
                 prefer = 'cell'
             else:
                 prefer = 'point'
-            dataset.set_active_vectors(orient, preference=prefer)  # type: ignore[arg-type]
+            dataset.set_active_vectors(orient, preference=prefer)
             orient = True
 
         if orient:
@@ -1853,7 +1853,7 @@ class DataSetFilters(DataObjectFilters):
         elif color_mode == 'vector':
             alg.SetColorModeToColorByVector()
         else:
-            msg = f"Invalid color mode '{color_mode}'"  # type: ignore[unreachable]
+            msg = f"Invalid color mode '{color_mode}'"
             raise ValueError(msg)
 
         if rng is not None:
@@ -1874,7 +1874,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args(allowed=['extraction_mode', 'variable_input'])
-    def connectivity(  # type: ignore[misc]  # noqa: PLR0917
+    def connectivity(  # noqa: PLR0917
         self: _DataSetType,
         extraction_mode: Literal[
             'all',
@@ -2124,7 +2124,7 @@ class DataSetFilters(DataObjectFilters):
             elif isinstance(scalar_range, Sequence):
                 num_elements = len(scalar_range)
             else:
-                msg = 'Scalar range must be a numpy array or a sequence.'  # type: ignore[unreachable]
+                msg = 'Scalar range must be a numpy array or a sequence.'
                 raise TypeError(msg)
             if num_elements != 2:
                 msg = 'Scalar range must have two elements defining the min and max.'
@@ -2236,7 +2236,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetClosestPoint(*closest_point)
 
         else:
-            msg = (  # type: ignore[unreachable]
+            msg = (
                 f"Invalid value for `extraction_mode` '{extraction_mode}'. "
                 f"Expected one of the following: 'all', 'largest', 'specified', "
                 f"'cell_seed', 'point_seed', or 'closest'"
@@ -2308,7 +2308,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args
-    def extract_largest(  # type: ignore[misc]
+    def extract_largest(
         self: _DataSetType,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2357,7 +2357,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args
-    def split_bodies(  # type: ignore[misc]
+    def split_bodies(
         self: _DataSetType,
         label: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2422,7 +2422,7 @@ class DataSetFilters(DataObjectFilters):
         return bodies
 
     @_deprecate_positional_args(allowed=['scalars'])
-    def warp_by_scalar(  # type: ignore[misc]  # noqa: PLR0917
+    def warp_by_scalar(  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         factor: float = 1.0,
@@ -2507,14 +2507,14 @@ class DataSetFilters(DataObjectFilters):
         output = _get_output(alg)
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
-                msg = 'This filter cannot be applied inplace for this mesh type.'  # type: ignore[unreachable]
+                msg = 'This filter cannot be applied inplace for this mesh type.'
                 raise TypeError(msg)
             self.copy_from(output, deep=False)
             return self
         return output
 
     @_deprecate_positional_args(allowed=['vectors'])
-    def warp_by_vector(  # type: ignore[misc]  # noqa: PLR0917
+    def warp_by_vector(  # noqa: PLR0917
         self: _DataSetType,
         vectors: str | None = None,
         factor: float = 1.0,
@@ -2597,7 +2597,7 @@ class DataSetFilters(DataObjectFilters):
             return warped_mesh
 
     @_deprecate_positional_args
-    def delaunay_3d(  # type: ignore[misc]  # noqa: PLR0917
+    def delaunay_3d(  # noqa: PLR0917
         self: _DataSetType,
         alpha: float = 0.0,
         tol: float = 0.001,
@@ -2658,7 +2658,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['surface'])
-    def select_enclosed_points(  # type: ignore[misc]  # noqa: PLR0917
+    def select_enclosed_points(  # noqa: PLR0917
         self: _DataSetType,
         surface: PolyData,
         tolerance: float = 0.001,
@@ -2738,7 +2738,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if not isinstance(surface, pyvista.PolyData):
-            msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
+            msg = '`surface` must be `pyvista.PolyData`'
             raise TypeError(msg)
         if check_surface and surface.n_open_edges > 0:
             msg = (
@@ -2762,7 +2762,7 @@ class DataSetFilters(DataObjectFilters):
         return out
 
     @_deprecate_positional_args(allowed=['target'])
-    def interpolate(  # type: ignore[misc]  # noqa: PLR0917
+    def interpolate(  # noqa: PLR0917
         self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         sharpness: float = 2.0,
@@ -2906,7 +2906,7 @@ class DataSetFilters(DataObjectFilters):
         elif strategy == 'closest_point':
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
-            msg = f'strategy `{strategy}` not supported.'  # type: ignore[unreachable]
+            msg = f'strategy `{strategy}` not supported.'
             raise ValueError(msg)
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
@@ -2914,7 +2914,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(interpolator)
 
     @_deprecate_positional_args(allowed=['vectors'])
-    def streamlines(  # type: ignore[misc]  # noqa: PLR0917
+    def streamlines(  # noqa: PLR0917
         self: _DataSetType,
         vectors: str | None = None,
         source_center: VectorLike[float] | None = None,
@@ -3036,7 +3036,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args(allowed=['source', 'vectors'])
-    def streamlines_from_source(  # type: ignore[misc]  # noqa: PLR0917
+    def streamlines_from_source(  # noqa: PLR0917
         self: _DataSetType,
         source: _vtk.vtkDataSet,
         vectors: str | None = None,
@@ -3254,7 +3254,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['vectors'])
-    def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802, PLR0917
+    def streamlines_evenly_spaced_2D(  # noqa: N802, PLR0917
         self: _DataSetType,
         vectors: str | None = None,
         start_position: VectorLike[float] | None = None,
@@ -3438,7 +3438,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['target_reduction'])
-    def decimate_boundary(  # type: ignore[misc]
+    def decimate_boundary(
         self: _DataSetType,
         target_reduction: float = 0.5,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -3475,7 +3475,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args(allowed=['pointa', 'pointb'])
-    def sample_over_line(  # type: ignore[misc]  # noqa: PLR0917
+    def sample_over_line(  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3539,7 +3539,7 @@ class DataSetFilters(DataObjectFilters):
         return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['pointa', 'pointb'])
-    def plot_over_line(  # type: ignore[misc]  # noqa: PLR0917
+    def plot_over_line(  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3648,7 +3648,7 @@ class DataSetFilters(DataObjectFilters):
             plt.show()
 
     @_deprecate_positional_args(allowed=['points'])
-    def sample_over_multiple_lines(  # type: ignore[misc]
+    def sample_over_multiple_lines(
         self: _DataSetType,
         points: MatrixLike[float],
         tolerance: float | None = None,
@@ -3703,7 +3703,7 @@ class DataSetFilters(DataObjectFilters):
         return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     @_deprecate_positional_args
-    def sample_over_circular_arc(  # type: ignore[misc]  # noqa: PLR0917
+    def sample_over_circular_arc(  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -3785,7 +3785,7 @@ class DataSetFilters(DataObjectFilters):
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     @_deprecate_positional_args
-    def sample_over_circular_arc_normal(  # type: ignore[misc]  # noqa: PLR0917
+    def sample_over_circular_arc_normal(  # noqa: PLR0917
         self: _DataSetType,
         center: VectorLike[float],
         resolution: int | None = None,
@@ -3873,7 +3873,7 @@ class DataSetFilters(DataObjectFilters):
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     @_deprecate_positional_args
-    def plot_over_circular_arc(  # type: ignore[misc]  # noqa: PLR0917
+    def plot_over_circular_arc(  # noqa: PLR0917
         self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
@@ -4002,7 +4002,7 @@ class DataSetFilters(DataObjectFilters):
             plt.show()
 
     @_deprecate_positional_args
-    def plot_over_circular_arc_normal(  # type: ignore[misc]  # noqa: PLR0917
+    def plot_over_circular_arc_normal(  # noqa: PLR0917
         self: _DataSetType,
         center: VectorLike[float],
         resolution: int | None = None,
@@ -4144,7 +4144,7 @@ class DataSetFilters(DataObjectFilters):
             plt.show()
 
     @_deprecate_positional_args(allowed=['ind'])
-    def extract_cells(  # type: ignore[misc]
+    def extract_cells(
         self: _DataSetType,
         ind: int | VectorLike[int],
         invert: bool = False,  # noqa: FBT001, FBT002
@@ -4188,7 +4188,7 @@ class DataSetFilters(DataObjectFilters):
         """
         if invert:
             ind_: VectorLike[int]
-            _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
+            _, ind_ = numpy_to_idarr(ind, return_ind=True)
             mask = np.ones(self.n_cells, bool)
             mask[ind_] = False
             ids = numpy_to_idarr(mask)
@@ -4219,7 +4219,7 @@ class DataSetFilters(DataObjectFilters):
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
-    def extract_points(  # type: ignore[misc]  # noqa: PLR0917
+    def extract_points(  # noqa: PLR0917
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,  # noqa: FBT001, FBT002
@@ -4295,7 +4295,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         return _get_output(extract_sel)
 
-    def split_values(  # type: ignore[misc]
+    def split_values(
         self: _DataSetType,
         values: None
         | (
@@ -4446,7 +4446,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if values is None and ranges is None:
-            values = '_unique'  # type: ignore[assignment]
+            values = '_unique'
         return self.extract_values(
             values=values,
             ranges=ranges,
@@ -4457,7 +4457,7 @@ class DataSetFilters(DataObjectFilters):
             **kwargs,
         )
 
-    def extract_values(  # type: ignore[misc]
+    def extract_values(
         self: _DataSetType,
         values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
@@ -4801,7 +4801,7 @@ class DataSetFilters(DataObjectFilters):
 
         return self._extract_values(**kwargs)
 
-    def _validate_extract_values(  # type: ignore[misc]
+    def _validate_extract_values(
         self: _DataSetType,
         *,
         values,
@@ -5001,7 +5001,7 @@ class DataSetFilters(DataObjectFilters):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
-    def _apply_component_logic_to_array(  # type: ignore[misc]
+    def _apply_component_logic_to_array(
         self: _DataSetType,
         *,
         values,
@@ -5044,7 +5044,7 @@ class DataSetFilters(DataObjectFilters):
 
         return np.invert(id_mask) if invert else id_mask
 
-    def _extract_values(  # type: ignore[misc]
+    def _extract_values(
         self: _DataSetType,
         *,
         values,
@@ -5090,7 +5090,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args
-    def extract_surface(  # type: ignore[misc]  # noqa: PLR0917
+    def extract_surface(  # noqa: PLR0917
         self: _DataSetType,
         pass_pointid: bool = True,  # noqa: FBT001, FBT002
         pass_cellid: bool = True,  # noqa: FBT001, FBT002
@@ -5190,7 +5190,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(surf_filter)
 
     @_deprecate_positional_args
-    def surface_indices(  # type: ignore[misc]
+    def surface_indices(
         self: _DataSetType,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -5221,7 +5221,7 @@ class DataSetFilters(DataObjectFilters):
         return surf.point_data['vtkOriginalPointIds']
 
     @_deprecate_positional_args(allowed=['feature_angle'])
-    def extract_feature_edges(  # type: ignore[misc]  # noqa: PLR0917
+    def extract_feature_edges(  # noqa: PLR0917
         self: _DataSetType,
         feature_angle: float = 30.0,
         boundary_edges: bool = True,  # noqa: FBT001, FBT002
@@ -5306,7 +5306,7 @@ class DataSetFilters(DataObjectFilters):
         return output
 
     @_deprecate_positional_args
-    def merge_points(  # type: ignore[misc]
+    def merge_points(
         self: _DataSetType,
         tolerance: float = 0.0,
         inplace: bool = False,  # noqa: FBT001, FBT002
@@ -5361,7 +5361,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args(allowed=['grid'])
-    def merge(  # type: ignore[misc]  # noqa: PLR0917
+    def merge(  # noqa: PLR0917
         self: _DataSetType,
         grid: DataSet
         | _vtk.vtkDataSet
@@ -5508,15 +5508,11 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
         return merged
 
-    def __add__(  # type: ignore[misc]
-        self: _DataSetType, dataset
-    ):
+    def __add__(self: _DataSetType, dataset):
         """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(self, dataset)
 
-    def __iadd__(  # type: ignore[misc]
-        self: _DataSetType, dataset
-    ):
+    def __iadd__(self: _DataSetType, dataset):
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
@@ -5536,7 +5532,7 @@ class DataSetFilters(DataObjectFilters):
         return merged
 
     @_deprecate_positional_args(allowed=['quality_measure'])
-    def compute_cell_quality(  # type: ignore[misc]
+    def compute_cell_quality(
         self: _DataSetType,
         quality_measure: str = 'scaled_jacobian',
         null_value: float = -1.0,
@@ -5693,9 +5689,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Quality')
         return _get_output(alg)
 
-    def compute_boundary_mesh_quality(  # type: ignore[misc]
-        self: _DataSetType, *, progress_bar: bool = False
-    ):
+    def compute_boundary_mesh_quality(self: _DataSetType, *, progress_bar: bool = False):
         """Compute metrics on the boundary faces of a mesh.
 
         The metrics that can be computed on the boundary faces of the mesh and are:
@@ -5744,7 +5738,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['scalars'])
-    def compute_derivative(  # type: ignore[misc]  # noqa: PLR0917
+    def compute_derivative(  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         gradient: bool | str = True,  # noqa: FBT001, FBT002
@@ -5830,7 +5824,7 @@ class DataSetFilters(DataObjectFilters):
         # Check if scalars array given
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         if not isinstance(scalars_, str):
-            msg = 'scalars array must be given as a string name'  # type: ignore[unreachable]
+            msg = 'scalars array must be given as a string name'
             raise TypeError(msg)
         if not any((gradient, divergence, vorticity, qcriterion)):
             msg = 'must set at least one of gradient, divergence, vorticity, or qcriterion'
@@ -5858,7 +5852,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['shrink_factor'])
-    def shrink(  # type: ignore[misc]
+    def shrink(
         self: _DataSetType,
         shrink_factor: float = 1.0,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -5908,11 +5902,11 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Shrinking Mesh')
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
-            return output.extract_surface()  # type: ignore[unreachable]
+            return output.extract_surface()
         return output
 
     @_deprecate_positional_args
-    def tessellate(  # type: ignore[misc]
+    def tessellate(
         self: _DataSetType,
         max_n_subdivide: int = 3,
         merge_points: bool = True,  # noqa: FBT001, FBT002
@@ -5973,7 +5967,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            msg = 'Tessellate filter is not supported for PolyData objects.'  # type: ignore[unreachable]
+            msg = 'Tessellate filter is not supported for PolyData objects.'
             raise TypeError(msg)
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
@@ -5983,7 +5977,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def integrate_data(  # type: ignore[misc]
+    def integrate_data(
         self: _DataSetType,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -6036,7 +6030,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['n_partitions'])
-    def partition(  # type: ignore[misc]
+    def partition(
         self: _DataSetType,
         n_partitions: int,
         generate_global_id: bool = False,  # noqa: FBT001, FBT002
@@ -6130,7 +6124,7 @@ class DataSetFilters(DataObjectFilters):
             return pyvista.merge(list(output), merge_points=False)
         return output
 
-    def oriented_bounding_box(  # type: ignore[misc]
+    def oriented_bounding_box(
         self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
@@ -6309,7 +6303,7 @@ class DataSetFilters(DataObjectFilters):
             as_composite=as_composite,
         )
 
-    def bounding_box(  # type: ignore[misc]
+    def bounding_box(
         self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
@@ -6466,7 +6460,7 @@ class DataSetFilters(DataObjectFilters):
                 as_composite=as_composite,
             )
 
-    def _bounding_box(  # type: ignore[misc]
+    def _bounding_box(
         self: _DataSetType,
         *,
         matrix: NumpyArray[float] | None,
@@ -6506,7 +6500,7 @@ class DataSetFilters(DataObjectFilters):
             else:
                 matrix = cast('NumpyArray[float]', matrix)
                 inverse_matrix = cast('NumpyArray[float]', inverse_matrix)
-                axes = matrix[:3, :3]  # type: ignore[assignment]
+                axes = matrix[:3, :3]
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box
@@ -6544,9 +6538,7 @@ class DataSetFilters(DataObjectFilters):
             return alg_output, point, axes
         return alg_output
 
-    def explode(  # type: ignore[misc]
-        self: _DataSetType, factor: float = 0.1
-    ):
+    def explode(self: _DataSetType, factor: float = 0.1):
         """Push each individual cell away from the center of the dataset.
 
         Parameters
@@ -6586,7 +6578,7 @@ class DataSetFilters(DataObjectFilters):
         split.points += np.repeat(vec, np.diff(split.offset), axis=0)
         return split
 
-    def separate_cells(  # type: ignore[misc]
+    def separate_cells(
         self: _DataSetType,
     ):
         """Return a copy of the dataset with separated cells with no shared points.
@@ -6621,7 +6613,7 @@ class DataSetFilters(DataObjectFilters):
         return self.shrink(1.0)
 
     @_deprecate_positional_args(allowed=['cell_types'])
-    def extract_cells_by_type(  # type: ignore[misc]
+    def extract_cells_by_type(
         self: _DataSetType,
         cell_types: int | VectorLike[int],
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -6697,7 +6689,7 @@ class DataSetFilters(DataObjectFilters):
         return _get_output(alg)
 
     @_deprecate_positional_args(allowed=['scalars'])
-    def sort_labels(  # type: ignore[misc]  # noqa: PLR0917
+    def sort_labels(  # noqa: PLR0917
         self: _DataSetType,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
@@ -6788,7 +6780,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
     @_deprecate_positional_args
-    def pack_labels(  # type: ignore[misc]  # noqa: PLR0917
+    def pack_labels(  # noqa: PLR0917
         self: _DataSetType,
         sort: bool = False,  # noqa: FBT001, FBT002
         scalars: str | None = None,
@@ -6892,7 +6884,7 @@ class DataSetFilters(DataObjectFilters):
         if output_scalars is None:
             output_scalars = default_output_scalars
         if not isinstance(output_scalars, str):
-            msg = f'Output scalars must be a string, got {type(output_scalars)} instead.'  # type: ignore[unreachable]
+            msg = f'Output scalars must be a string, got {type(output_scalars)} instead.'
             raise TypeError(msg)
 
         # Do packing
@@ -6948,11 +6940,11 @@ class DataSetFilters(DataObjectFilters):
                 result.cell_data[output_scalars] = packed_array
 
             # vtkPackLabels sets active scalars by default, so do the same here
-            result.set_active_scalars(output_scalars, preference=field)  # type: ignore[arg-type]
+            result.set_active_scalars(output_scalars, preference=field)
 
             return result
 
-    def color_labels(  # type: ignore[misc]
+    def color_labels(
         self: DataSet,
         colors: str
         | ColorLike
@@ -7392,7 +7384,7 @@ class DataSetFilters(DataObjectFilters):
             return output_mesh, mapping
         return output_mesh
 
-    def voxelize_binary_mask(  # type: ignore[misc]
+    def voxelize_binary_mask(
         self: DataSet,
         *,
         background_value: int | float = 0,  # noqa: PYI041
@@ -7788,7 +7780,7 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
-            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            reference_volume.dimensions = dimensions
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds
@@ -7820,7 +7812,7 @@ class DataSetFilters(DataObjectFilters):
             if background_value == 0
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
@@ -7829,7 +7821,7 @@ class DataSetFilters(DataObjectFilters):
         poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
         poly_to_stencil.SetInputData(poly_ijk)
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
         _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
 

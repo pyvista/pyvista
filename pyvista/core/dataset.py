@@ -170,7 +170,7 @@ class ActiveArrayInfo:
             return self.name == other.name and same_association
         return False
 
-    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
+    __hash__ = None  # https://github.com/pyvista/pyvista/pull/7671
 
 
 @promote_type(_vtk.vtkDataSet)
@@ -449,7 +449,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property  # type: ignore[override]
+    @property
     def active_scalars_name(self: Self) -> str | None:
         """Return the name of the active scalars.
 
@@ -850,7 +850,7 @@ class DataSet(DataSetFilters, DataObject):
         # Update the array's name before reassigning. This prevents taking a copy of the array in
         # `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
         # See issue #5244.
-        arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
+        arr.VTKObject.SetName(new_name)
         data[new_name] = arr
 
         if was_active and field != FieldAssociation.NONE:
@@ -911,7 +911,7 @@ class DataSet(DataSetFilters, DataObject):
             return self.point_data.active_normals
         return self.cell_data.active_normals
 
-    def get_data_range(  # type: ignore[override]
+    def get_data_range(
         self: Self,
         arr_var: str | NumpyArray[float] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
@@ -944,7 +944,7 @@ class DataSet(DataSetFilters, DataObject):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
         else:
-            arr = arr_var  # type: ignore[assignment]
+            arr = arr_var
 
         # If array has no tuples return a NaN range
         if arr is None:
@@ -1466,7 +1466,7 @@ class DataSet(DataSetFilters, DataObject):
             name = index
             preference = 'cell'
         else:
-            msg = (  # type: ignore[unreachable]
+            msg = (
                 f'Index ({index}) not understood.'
                 ' Index must be a string name or a tuple of string name and string preference.'
             )
@@ -1491,7 +1491,7 @@ class DataSet(DataSetFilters, DataObject):
         #   there would be the same number of cells as points but we'd want
         #   the data to be on the nodes.
         if scalars is None:
-            msg = 'Empty array unable to be added.'  # type: ignore[unreachable]
+            msg = 'Empty array unable to be added.'
             raise TypeError(msg)
         else:
             scalars = np.asanyarray(scalars)
@@ -1609,10 +1609,10 @@ class DataSet(DataSetFilters, DataObject):
                 if isinstance(arr, str):
                     # Convert string scalar into a numpy array. Otherwise, get_data_range
                     # will treat the string as an array name, not an array value.
-                    arr = pyvista.pyvista_ndarray(arr)  # type: ignore[arg-type]
+                    arr = pyvista.pyvista_ndarray(arr)
                 dl, dh = self.get_data_range(arr)
-                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
-                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
+                dl = pyvista.FLOAT_FORMAT.format(dl)
+                dh = pyvista.FLOAT_FORMAT.format(dh)
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1
@@ -1670,7 +1670,7 @@ class DataSet(DataSetFilters, DataObject):
                 f'compatible with the one being overwritten {type(self)}'
             )
             raise TypeError(msg)
-        if deep:  # type: ignore[unreachable]
+        if deep:
             self.deep_copy(mesh)
         else:
             self.shallow_copy(mesh)
@@ -1862,7 +1862,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Given point must be a length three sequence.'
             raise TypeError(msg)
         if not isinstance(n, int):
-            msg = '`n` must be a positive integer.'  # type: ignore[unreachable]
+            msg = '`n` must be a positive integer.'
             raise TypeError(msg)
         if n < 1:
             msg = '`n` must be a positive integer.'
@@ -1873,9 +1873,9 @@ class DataSet(DataSetFilters, DataObject):
         locator.BuildLocator()
         if n > 1:
             id_list = _vtk.vtkIdList()
-            locator.FindClosestNPoints(n, point, id_list)  # type: ignore[arg-type]
+            locator.FindClosestNPoints(n, point, id_list)
             return vtk_id_list_to_array(id_list)
-        return locator.FindClosestPoint(point)  # type: ignore[arg-type]
+        return locator.FindClosestPoint(point)
 
     @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
@@ -1999,7 +1999,7 @@ class DataSet(DataSetFilters, DataObject):
             sub_id = _vtk.mutable(0)
             dist2 = _vtk.mutable(0.0)
 
-            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)  # type: ignore[call-overload]
+            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
@@ -2456,7 +2456,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if isinstance(self, _vtk.vtkExplicitStructuredGrid):
-            msg = 'For an ExplicitStructuredGrid, use the `neighbors` method'  # type: ignore[unreachable]
+            msg = 'For an ExplicitStructuredGrid, use the `neighbors` method'
             raise TypeError(msg)
 
         # Build links as recommended:
@@ -2868,7 +2868,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if not isinstance(ind, (int, np.integer)):
-            msg = f'ind must be an int, got {type(ind)}'  # type: ignore[unreachable]
+            msg = f'ind must be an int, got {type(ind)}'
             raise TypeError(msg)
 
         if not 0 <= ind < self.n_cells:
@@ -2938,7 +2938,7 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
 
         """
-        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+        self.point_data.active_texture_coordinates = texture_coordinates
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01

@@ -160,11 +160,11 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
 
         self.position = position
         self.orientation = orientation
-        self.scale = scale
+        self.scale = scale  # type: ignore[assignment]
         self.origin = origin
         self.user_matrix = user_matrix
 
-        self._name = name
+        self._name = name or ''
 
     @property
     def parts(self):
@@ -183,7 +183,7 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
             if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
                 part.user_matrix, new_matrix
             ):
-                part.user_matrix = new_matrix  # type: ignore[misc]
+                part.user_matrix = new_matrix
 
     def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         return BoundsTuple(*self.GetBounds())
@@ -482,7 +482,7 @@ class AxesAssembly(_XYZAssembly):
 
         _XYZAssembly.__init__(
             self,
-            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),
             xyz_label_actors=self._label_actors,
             x_label=x_label,
             y_label=y_label,
@@ -693,7 +693,7 @@ class AxesAssembly(_XYZAssembly):
 
     @x_color.setter
     def x_color(self, color: ColorLike | Sequence[ColorLike]):
-        self.set_actor_prop('color', color, axis=_AxisEnum.x.value)  # type: ignore[arg-type]
+        self.set_actor_prop('color', color, axis=_AxisEnum.x.value)
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -702,7 +702,7 @@ class AxesAssembly(_XYZAssembly):
 
     @y_color.setter
     def y_color(self, color: ColorLike | Sequence[ColorLike]):
-        self.set_actor_prop('color', color, axis=_AxisEnum.y.value)  # type: ignore[arg-type]
+        self.set_actor_prop('color', color, axis=_AxisEnum.y.value)
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -711,7 +711,7 @@ class AxesAssembly(_XYZAssembly):
 
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):
-        self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
+        self.set_actor_prop('color', color, axis=_AxisEnum.z.value)
 
     @_deprecate_positional_args(allowed=['name', 'value'])
     def set_actor_prop(  # noqa: PLR0917
@@ -859,7 +859,7 @@ class AxesAssembly(_XYZAssembly):
                 n_values = 3
             else:
                 n_values = 1
-            values = _validate_color_sequence(value, n_values)  # type: ignore[arg-type]
+            values = _validate_color_sequence(value, n_values)
         elif isinstance(value, Sequence) and not isinstance(value, str):
             # Number sequence
             values = value
@@ -1129,8 +1129,8 @@ class AxesAssemblySymmetric(AxesAssembly):
 
         _XYZAssembly.__init__(
             self,
-            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
-            xyz_label_actors=tuple(zip(self._label_actors, self._label_actors_symmetric)),  # type: ignore[arg-type]
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),
+            xyz_label_actors=tuple(zip(self._label_actors, self._label_actors_symmetric)),
             x_label=x_label,
             y_label=y_label,
             z_label=z_label,
@@ -1151,7 +1151,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         )
         self._set_default_label_props()
 
-    @property  # type: ignore[override]
+    @property
     def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
         """Return or set the axes labels.
 
@@ -1216,7 +1216,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         self._label_actors[axis].input = label_plus
         self._label_actors_symmetric[axis].input = label_minus
 
-    @property  # type: ignore[override]
+    @property
     def x_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
         """Return or set the labels for the positive and negative x-axis.
 
@@ -1248,7 +1248,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     def x_label(self, label: str | list[str] | tuple[str, str]):
         self._set_axis_label(_AxisEnum.x, label)
 
-    @property  # type: ignore[override]
+    @property
     def y_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
         """Return or set the labels for the positive and negative y-axis.
 
@@ -1280,7 +1280,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     def y_label(self, label: str | list[str] | tuple[str, str]):
         self._set_axis_label(_AxisEnum.y, label)
 
-    @property  # type: ignore[override]
+    @property
     def z_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
         """Return or set the labels for the positive and negative z-axis.
 
@@ -1583,7 +1583,7 @@ class PlanesAssembly(_XYZAssembly):
             name=name,
         )
 
-        self.opacity = opacity
+        self.opacity = opacity  # type: ignore[assignment]
         self.label_mode = label_mode
         self.label_offset = label_offset
         self.label_edge = label_edge

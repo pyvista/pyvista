@@ -71,7 +71,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
 
     @scale.setter
     def scale(self, value: float | VectorLike[float]) -> None:
-        self.SetScale(value)  # type: ignore[arg-type]
+        self.SetScale(value)
 
     @property
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -96,7 +96,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
 
     @position.setter
     def position(self, value: VectorLike[float]) -> None:
-        self.SetPosition(value)  # type: ignore[call-overload]
+        self.SetPosition(value)
 
     def rotate_x(self, angle: float) -> None:
         """Rotate the entity about the x-axis.
@@ -268,7 +268,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
 
     @orientation.setter
     def orientation(self, value: VectorLike[float]) -> None:
-        self.SetOrientation(value)  # type: ignore[call-overload]
+        self.SetOrientation(value)
 
     @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -283,7 +283,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
 
     @origin.setter
     def origin(self, value: VectorLike[float]) -> None:
-        self.SetOrigin(value)  # type: ignore[arg-type]
+        self.SetOrigin(value)
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -507,7 +507,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         (0.0, -180.0, -89.99999999999999)
 
         """
-        self.orientation = _rotation_matrix_as_orientation(rotation)  # type: ignore[arg-type]
+        self.orientation = _rotation_matrix_as_orientation(rotation)
 
 
 def _rotation_matrix_as_orientation(
@@ -578,63 +578,63 @@ class _Prop3DMixin(ABC):
         self._prop3d = Actor()
 
     @property
-    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.scale.fget)
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.scale."""
         return self._prop3d.scale
 
     @scale.setter
-    @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
+    @wraps(Prop3D.scale.fset)
     def scale(self, scale: VectorLike[float]) -> None:
-        self._prop3d.scale = scale  # type: ignore[assignment]
+        self._prop3d.scale = scale
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.position.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.position.fget)
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.position."""
         return self._prop3d.position
 
     @position.setter
-    @wraps(Prop3D.position.fset)  # type: ignore[attr-defined]
+    @wraps(Prop3D.position.fset)
     def position(self, position: VectorLike[float]) -> None:
-        self._prop3d.position = position  # type: ignore[assignment]
+        self._prop3d.position = position
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.orientation.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.orientation.fget)
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.orientation."""
         return self._prop3d.orientation
 
     @orientation.setter
-    @wraps(Prop3D.orientation.fset)  # type: ignore[attr-defined]
+    @wraps(Prop3D.orientation.fset)
     def orientation(self, orientation: VectorLike[float]) -> None:
-        self._prop3d.orientation = orientation  # type: ignore[assignment]
+        self._prop3d.orientation = orientation
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.origin.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.origin.fget)
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.origin."""
         return self._prop3d.origin
 
     @origin.setter
-    @wraps(Prop3D.origin.fset)  # type: ignore[attr-defined]
+    @wraps(Prop3D.origin.fset)
     def origin(self, origin: VectorLike[float]) -> None:
-        self._prop3d.origin = origin  # type: ignore[assignment]
+        self._prop3d.origin = origin
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.user_matrix.fget)
     def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.user_matrix."""
         return self._prop3d.user_matrix
 
     @user_matrix.setter
-    @wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
+    @wraps(Prop3D.user_matrix.fset)
     def user_matrix(self, matrix: TransformLike) -> None:
-        self._prop3d.user_matrix = matrix  # type: ignore[assignment]
+        self._prop3d.user_matrix = matrix
         self._post_set_update()
 
     @property
@@ -657,13 +657,13 @@ class _Prop3DMixin(ABC):
         """Return the object's 3D bounds."""
 
     @property
-    @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.bounds.fget)
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.bounds`."""
         return BoundsTuple(*self._get_bounds())
 
     @property
-    @wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.center.fget)
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.center."""
         bnds = self.bounds
@@ -674,7 +674,7 @@ class _Prop3DMixin(ABC):
         )
 
     @property
-    @wraps(Prop3D.length.fget)  # type: ignore[attr-defined]
+    @wraps(Prop3D.length.fget)
     def length(self) -> float:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.length."""
         bnds = self.bounds

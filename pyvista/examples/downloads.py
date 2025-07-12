@@ -2237,9 +2237,6 @@ def download_frog(load=True):  # noqa: FBT002
         :ref:`Frog Dataset <frog_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
-            Segmentation labels associated with this dataset.
-
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 

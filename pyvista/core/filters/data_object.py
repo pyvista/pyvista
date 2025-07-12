@@ -50,7 +50,7 @@ class DataObjectFilters:
     points: pyvista_ndarray
 
     @overload
-    def transform(  # type: ignore[misc]
+    def transform(
         self: RectilinearGrid,
         trans: TransformLike,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
@@ -58,7 +58,7 @@ class DataObjectFilters:
         progress_bar: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def transform(  # type: ignore[misc]
+    def transform(
         self: _DataSetOrMultiBlockType,
         trans: TransformLike,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
@@ -66,7 +66,7 @@ class DataObjectFilters:
         progress_bar: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['trans'])
-    def transform(  # type: ignore[misc]  # noqa: PLR0917
+    def transform(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -208,7 +208,7 @@ class DataObjectFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)  # type: ignore[misc]
+            self.points = self.points.astype(np.float32)
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
@@ -284,7 +284,7 @@ class DataObjectFilters:
             # but VTK 9+ supports oriented images.
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
             # from the filter output but manually transform the structure
-            output.copy_structure(self)  # type: ignore[arg-type]
+            output.copy_structure(self)
             current_matrix = output.index_to_physical_matrix
             new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
@@ -307,7 +307,7 @@ class DataObjectFilters:
         return output
 
     @overload
-    def reflect(  # type: ignore[misc]
+    def reflect(
         self: RectilinearGrid,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
@@ -316,7 +316,7 @@ class DataObjectFilters:
         progress_bar: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def reflect(  # type: ignore[misc]
+    def reflect(
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
@@ -325,7 +325,7 @@ class DataObjectFilters:
         progress_bar: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['normal'])
-    def reflect(  # type: ignore[misc]  # noqa: PLR0917
+    def reflect(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -385,7 +385,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_x(  # type: ignore[misc]
+    def rotate_x(
         self: RectilinearGrid,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -393,7 +393,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def rotate_x(  # type: ignore[misc]
+    def rotate_x(
         self: _DataSetOrMultiBlockType,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -401,7 +401,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_x(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_x(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -467,7 +467,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_y(  # type: ignore[misc]
+    def rotate_y(
         self: RectilinearGrid,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -475,7 +475,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def rotate_y(  # type: ignore[misc]
+    def rotate_y(
         self: _DataSetOrMultiBlockType,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -483,7 +483,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_y(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_y(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -548,7 +548,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_z(  # type: ignore[misc]
+    def rotate_z(
         self: RectilinearGrid,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -556,7 +556,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def rotate_z(  # type: ignore[misc]
+    def rotate_z(
         self: _DataSetOrMultiBlockType,
         angle: float,
         point: VectorLike[float] | None = ...,
@@ -564,7 +564,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['angle'])
-    def rotate_z(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_z(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -630,7 +630,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate_vector(  # type: ignore[misc]
+    def rotate_vector(
         self: RectilinearGrid,
         vector: VectorLike[float],
         angle: float,
@@ -639,7 +639,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def rotate_vector(  # type: ignore[misc]
+    def rotate_vector(
         self: _DataSetOrMultiBlockType,
         vector: VectorLike[float],
         angle: float,
@@ -648,7 +648,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['vector', 'angle'])
-    def rotate_vector(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate_vector(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         vector: VectorLike[float],
         angle: float,
@@ -718,7 +718,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def rotate(  # type: ignore[misc]
+    def rotate(
         self: RectilinearGrid,
         rotation: RotationLike,
         point: VectorLike[float] | None = ...,
@@ -726,7 +726,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def rotate(  # type: ignore[misc]
+    def rotate(
         self: _DataSetOrMultiBlockType,
         rotation: RotationLike,
         point: VectorLike[float] | None = ...,
@@ -734,7 +734,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['rotation'])
-    def rotate(  # type: ignore[misc]  # noqa: PLR0917
+    def rotate(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
@@ -810,20 +810,20 @@ class DataObjectFilters:
         )
 
     @overload
-    def translate(  # type: ignore[misc]
+    def translate(
         self: RectilinearGrid,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def translate(  # type: ignore[misc]
+    def translate(
         self: _DataSetOrMultiBlockType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
-    def translate(  # type: ignore[misc]
+    def translate(
         self: DataSet | MultiBlock,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -881,7 +881,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def scale(  # type: ignore[misc]
+    def scale(
         self: RectilinearGrid,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
@@ -889,7 +889,7 @@ class DataObjectFilters:
         point: VectorLike[float] | None = ...,
     ) -> StructuredGrid: ...
     @overload
-    def scale(  # type: ignore[misc]
+    def scale(
         self: _DataSetOrMultiBlockType,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
@@ -897,7 +897,7 @@ class DataObjectFilters:
         point: VectorLike[float] | None = ...,
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['xyz'])
-    def scale(  # type: ignore[misc]  # noqa: PLR0917
+    def scale(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -969,21 +969,21 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_x(  # type: ignore[misc]
+    def flip_x(
         self: RectilinearGrid,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def flip_x(  # type: ignore[misc]
+    def flip_x(
         self: _DataSetOrMultiBlockType,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args
-    def flip_x(  # type: ignore[misc]
+    def flip_x(
         self: DataSet | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1047,21 +1047,21 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_y(  # type: ignore[misc]
+    def flip_y(
         self: RectilinearGrid,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def flip_y(  # type: ignore[misc]
+    def flip_y(
         self: _DataSetOrMultiBlockType,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args
-    def flip_y(  # type: ignore[misc]
+    def flip_y(
         self: DataSet | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1125,21 +1125,21 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_z(  # type: ignore[misc]
+    def flip_z(
         self: RectilinearGrid,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def flip_z(  # type: ignore[misc]
+    def flip_z(
         self: _DataSetOrMultiBlockType,
         point: VectorLike[float] | None = ...,
         transform_all_input_vectors: bool = ...,  # noqa: FBT001
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args
-    def flip_z(  # type: ignore[misc]
+    def flip_z(
         self: DataSet | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
@@ -1203,7 +1203,7 @@ class DataObjectFilters:
         )
 
     @overload
-    def flip_normal(  # type: ignore[misc]
+    def flip_normal(
         self: RectilinearGrid,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
@@ -1211,7 +1211,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> StructuredGrid: ...
     @overload
-    def flip_normal(  # type: ignore[misc]
+    def flip_normal(
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = ...,
@@ -1219,7 +1219,7 @@ class DataObjectFilters:
         inplace: bool = ...,  # noqa: FBT001
     ) -> _DataSetOrMultiBlockType: ...
     @_deprecate_positional_args(allowed=['normal'])
-    def flip_normal(  # type: ignore[misc]  # noqa: PLR0917
+    def flip_normal(  # noqa: PLR0917
         self: DataSet | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -1286,7 +1286,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def _clip_with_function(  # type: ignore[misc]
+    def _clip_with_function(
         self: _DataSetOrMultiBlockType,
         function: _vtk.vtkImplicitFunction,
         *,
@@ -1377,7 +1377,7 @@ class DataObjectFilters:
             # Add Cell IDs to all blocks and keep track of scalars to restore later
             active_scalars_info = []
             if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
+                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)
             else:
                 blocks = [self]
             for block in blocks:
@@ -1422,7 +1422,7 @@ class DataObjectFilters:
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
-    def clip(  # type: ignore[misc]  # noqa: PLR0917
+    def clip(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
@@ -1522,7 +1522,7 @@ class DataObjectFilters:
         return result
 
     @_deprecate_positional_args(allowed=['bounds'])
-    def clip_box(  # type: ignore[misc]  # noqa: PLR0917
+    def clip_box(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,  # noqa: FBT001, FBT002
@@ -1646,7 +1646,7 @@ class DataObjectFilters:
         return clipped
 
     @_deprecate_positional_args(allowed=['implicit_function'])
-    def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
+    def slice_implicit(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         implicit_function: _vtk.vtkImplicitFunction,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
@@ -1708,7 +1708,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args(allowed=['normal'])
-    def slice(  # type: ignore[misc]  # noqa: PLR0917
+    def slice(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
@@ -1776,7 +1776,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args
-    def slice_orthogonal(  # type: ignore[misc]  # noqa: PLR0917
+    def slice_orthogonal(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         x: float | None = None,
         y: float | None = None,
@@ -1880,7 +1880,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args(allowed=['n', 'axis'])
-    def slice_along_axis(  # type: ignore[misc]  # noqa: PLR0917
+    def slice_along_axis(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
@@ -2016,7 +2016,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args(allowed=['line'])
-    def slice_along_line(  # type: ignore[misc]  # noqa: PLR0917
+    def slice_along_line(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         line: pyvista.PolyData,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
@@ -2103,7 +2103,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args
-    def extract_all_edges(  # type: ignore[misc]
+    def extract_all_edges(
         self: _DataSetOrMultiBlockType,
         use_all_points: bool = False,  # noqa: FBT001, FBT002
         clear_data: bool = False,  # noqa: FBT001, FBT002
@@ -2172,7 +2172,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args
-    def elevation(  # type: ignore[misc]  # noqa: PLR0917
+    def elevation(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
@@ -2285,7 +2285,7 @@ class DataObjectFilters:
         return output
 
     @_deprecate_positional_args
-    def compute_cell_sizes(  # type: ignore[misc]  # noqa: PLR0917
+    def compute_cell_sizes(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         length: bool = True,  # noqa: FBT001, FBT002
         area: bool = True,  # noqa: FBT001, FBT002
@@ -2345,7 +2345,7 @@ class DataObjectFilters:
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cell_centers(  # type: ignore[misc]
+    def cell_centers(
         self: _DataSetOrMultiBlockType,
         vertex: bool = True,  # noqa: FBT001, FBT002
         pass_cell_data: bool = True,  # noqa: FBT001, FBT002
@@ -2402,7 +2402,7 @@ class DataObjectFilters:
         return _get_output(alg)
 
     @_deprecate_positional_args
-    def cell_data_to_point_data(  # type: ignore[misc]
+    def cell_data_to_point_data(
         self: _DataSetOrMultiBlockType,
         pass_cell_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2470,7 +2470,7 @@ class DataObjectFilters:
         return _get_output(alg, active_scalars=active_scalars)
 
     @_deprecate_positional_args
-    def ctp(  # type: ignore[misc]
+    def ctp(
         self: _DataSetOrMultiBlockType,
         pass_cell_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2509,7 +2509,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args
-    def point_data_to_cell_data(  # type: ignore[misc]
+    def point_data_to_cell_data(
         self: _DataSetOrMultiBlockType,
         pass_point_data: bool = False,  # noqa: FBT001, FBT002
         categorical: bool = False,  # noqa: FBT001, FBT002
@@ -2591,7 +2591,7 @@ class DataObjectFilters:
         return _get_output(alg, active_scalars=active_scalars)
 
     @_deprecate_positional_args
-    def ptc(  # type: ignore[misc]
+    def ptc(
         self: _DataSetOrMultiBlockType,
         pass_point_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2630,7 +2630,7 @@ class DataObjectFilters:
         )
 
     @_deprecate_positional_args
-    def triangulate(  # type: ignore[misc]
+    def triangulate(
         self: _DataSetOrMultiBlockType,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2678,7 +2678,7 @@ class DataObjectFilters:
         return mesh
 
     @_deprecate_positional_args(allowed=['target'])
-    def sample(  # type: ignore[misc]  # noqa: PLR0917
+    def sample(  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
         target: DataSet | _vtk.vtkDataSet,
         tolerance: float | None = None,
@@ -2838,7 +2838,7 @@ class DataObjectFilters:
         )
         return _get_output(alg)
 
-    def cell_quality(  # type: ignore[misc]
+    def cell_quality(
         self: _DataSetOrMultiBlockType,
         quality_measure: Literal['all', 'all_valid']
         | _CellQualityLiteral
@@ -2967,12 +2967,12 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
         return (
-            self.generic_filter(cell_quality)  # type: ignore[return-value]
+            self.generic_filter(cell_quality)
             if isinstance(self, pyvista.MultiBlock)
             else cell_quality(self)
         )
 
-    def _dataset_cell_quality(  # type: ignore[misc]
+    def _dataset_cell_quality(
         self: _DataSetType,
         *,
         measures_requested,

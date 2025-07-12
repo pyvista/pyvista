@@ -118,7 +118,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
-                msg = f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}'  # type: ignore[unreachable]
+                msg = f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}'
                 raise TypeError(msg)
             # cell type must be set first before deep or shallow copy
             if cell_type is None:
@@ -420,7 +420,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
         # must deep copy here as multiple sequental calls to GetEdge overwrite
         # the underlying pointer
-        return Cell(self.GetEdge(index), deep=True)  # type: ignore[abstract]
+        return Cell(self.GetEdge(index), deep=True)
 
     @property
     def edges(self: Self) -> list[Cell]:
@@ -497,7 +497,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
         cell = self.GetFace(index)
-        return Cell(cell, deep=True, cell_type=cast('CellType', cell.GetCellType()))  # type: ignore[abstract]
+        return Cell(cell, deep=True, cell_type=cast('CellType', cell.GetCellType()))
 
     @property
     def bounds(self: Self) -> BoundsTuple:
@@ -545,7 +545,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         para_center = [0.0, 0.0, 0.0]
         sub_id = self.GetParametricCenter(para_center)
         # EvaluateLocation requires mutable sub_id
-        sub_id = _vtk.mutable(sub_id)  # type: ignore[assignment]
+        sub_id = _vtk.mutable(sub_id)
         # center and weights are returned from EvaluateLocation
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
@@ -556,16 +556,16 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('Type', repr(self.type), '{}' * len(repr(self.type))))
-        attrs.append(('Linear', self.is_linear, '{}'))  # type: ignore[arg-type]
-        attrs.append(('Dimension', self.dimension, '{}'))  # type: ignore[arg-type]
-        attrs.append(('N Points', self.n_points, '{}'))  # type: ignore[arg-type]
-        attrs.append(('N Faces', self.n_faces, '{}'))  # type: ignore[arg-type]
-        attrs.append(('N Edges', self.n_edges, '{}'))  # type: ignore[arg-type]
+        attrs.append(('Linear', self.is_linear, '{}'))
+        attrs.append(('Dimension', self.dimension, '{}'))
+        attrs.append(('N Points', self.n_points, '{}'))
+        attrs.append(('N Faces', self.n_faces, '{}'))
+        attrs.append(('N Edges', self.n_edges, '{}'))
         bds = self.bounds
         fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
-        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))  # type: ignore[arg-type]
-        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))  # type: ignore[arg-type]
-        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))  # type: ignore[arg-type]
+        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))
+        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))
+        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))
 
         return attrs
 
@@ -667,7 +667,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         self.__offsets: _vtk.vtkIdTypeArray | None = None
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
-            self.cells = cells  # type: ignore[assignment]
+            self.cells = cells
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
@@ -857,7 +857,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
         connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
-        return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
+        return cls.from_arrays(offsets, connectivity)
 
 
 # The following methods would be much nicer bound to CellArray,

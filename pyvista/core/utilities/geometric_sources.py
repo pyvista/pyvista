@@ -4200,7 +4200,14 @@ class CubeFacesSource(CubeSource):
         frame_width: float | None = None,
         shrink_factor: float | None = None,
         explode_factor: float | None = None,
-        names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
+        names: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str] = (
+            '+X',
+            '-X',
+            '+Y',
+            '-Y',
+            '+Z',
+            '-Z',
+        ),
         point_dtype: str = 'float32',
     ) -> None:
         # Init CubeSource

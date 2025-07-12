@@ -51,7 +51,7 @@ class lookup_table_ndarray(np.ndarray):  # noqa: N801
 
     def __array_finalize__(self, obj):
         """Finalize array (associate with parent metadata)."""
-        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
+        _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
             self.table = getattr(obj, 'table', None)
             self.VTKObject = getattr(obj, 'VTKObject', None)
@@ -549,7 +549,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         color = self.nan_color
-        return color.opacity  # type: ignore[union-attr]
+        return color.opacity
 
     @nan_opacity.setter
     def nan_opacity(self, value):
@@ -674,7 +674,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         color = self.above_range_color
-        return color.opacity  # type: ignore[union-attr]
+        return color.opacity
 
     @above_range_opacity.setter
     def above_range_opacity(self, value):
@@ -738,7 +738,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         color = self.below_range_color
-        return color.opacity  # type: ignore[union-attr]
+        return color.opacity
 
     @below_range_opacity.setter
     def below_range_opacity(self, value):
@@ -789,7 +789,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         if flip:
             values = values[::-1]
 
-        self.values = values  # type: ignore[assignment]
+        self.values = values
         self._values_manual = False
 
         # reapply the opacity
@@ -958,9 +958,9 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
-            return {}  # type: ignore[unreachable]
+            return {}
         n_items = vtk_values.GetSize()
-        keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
+        keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]
 
         vtk_str = self.GetAnnotations()
         values = [str(vtk_str.GetValue(ii)) for ii in range(n_items)]
@@ -971,7 +971,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
-                self.SetAnnotation(float(val), str(anno))  # type: ignore[call-overload]
+                self.SetAnnotation(float(val), str(anno))
 
     @property
     def _lookup_type(self) -> str:

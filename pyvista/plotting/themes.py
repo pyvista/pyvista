@@ -155,8 +155,8 @@ class _ForceSlots(type):
     """Metaclass to force classes and subclasses to have __slots__."""
 
     @classmethod
-    def __prepare__(cls, name, bases, **kwargs):  # type: ignore[override]
-        super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
+    def __prepare__(cls, name, bases, **kwargs):
+        super_prepared = super().__prepare__(cls, name, bases, **kwargs)
         super_prepared['__slots__'] = ()
         return super_prepared
 
@@ -212,7 +212,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
         return True
 
-    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
+    __hash__ = None  # https://github.com/pyvista/pyvista/pull/7671
 
     def __getitem__(self, key):
         """Get a value via a key.
@@ -232,7 +232,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
     def _all__slots__(cls):
         """Get all slots including parent classes."""
         mro = cls.mro()
-        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
+        return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
 
 
 class _LightingConfig(_ThemeConfig):
@@ -629,7 +629,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @line_width.setter
     def line_width(self, line_width: float):
-        self._line_width = float(line_width)  # type: ignore[assignment]
+        self._line_width = float(line_width)
 
     @property
     def opacity(self) -> float:  # numpydoc ignore=RT01
@@ -676,7 +676,7 @@ class _SilhouetteConfig(_ThemeConfig):
         >>> pv.global_theme.silhouette.decimate = 0.9
 
         """
-        return self._decimate  # type: ignore[return-value]
+        return self._decimate
 
     @decimate.setter
     def decimate(self, decimate: float | None):
@@ -731,7 +731,7 @@ class _ColorbarConfig(_ThemeConfig):
         >>> pv.global_theme.colorbar_horizontal.width = 0.2
 
         """
-        return self._width  # type: ignore[return-value]
+        return self._width
 
     @width.setter
     def width(self, width: float):
@@ -747,7 +747,7 @@ class _ColorbarConfig(_ThemeConfig):
         >>> pv.global_theme.colorbar_horizontal.height = 0.2
 
         """
-        return self._height  # type: ignore[return-value]
+        return self._height
 
     @height.setter
     def height(self, height: float):
@@ -763,7 +763,7 @@ class _ColorbarConfig(_ThemeConfig):
         >>> pv.global_theme.colorbar_horizontal.position_x = 0.2
 
         """
-        return self._position_x  # type: ignore[return-value]
+        return self._position_x
 
     @position_x.setter
     def position_x(self, position_x: float):
@@ -779,7 +779,7 @@ class _ColorbarConfig(_ThemeConfig):
         >>> pv.global_theme.colorbar_horizontal.position_y = 0.2
 
         """
-        return self._position_y  # type: ignore[return-value]
+        return self._position_y
 
     @position_y.setter
     def position_y(self, position_y: float):
@@ -1081,7 +1081,7 @@ class _Font(_ThemeConfig):
         >>> pv.global_theme.font.title_size = 20
 
         """
-        return self._title_size  # type: ignore[return-value]
+        return self._title_size
 
     @title_size.setter
     def title_size(self, title_size: int | None):
@@ -1102,7 +1102,7 @@ class _Font(_ThemeConfig):
         >>> pv.global_theme.font.label_size = 20
 
         """
-        return self._label_size  # type: ignore[return-value]
+        return self._label_size
 
     @label_size.setter
     def label_size(self, label_size: int | None):
@@ -1139,7 +1139,7 @@ class _Font(_ThemeConfig):
         >>> pv.global_theme.font.fmt = '%.6e'
 
         """
-        return self._fmt  # type: ignore[return-value]
+        return self._fmt
 
     @fmt.setter
     def fmt(self, fmt: str):
@@ -1176,7 +1176,7 @@ class _SliderStyleConfig(_ThemeConfig):
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Return the name of the slider style configuration."""
-        return self._name  # type: ignore[return-value]
+        return self._name
 
     @name.setter
     def name(self, name: str):
@@ -1192,7 +1192,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.cap_width = 0.02
 
         """
-        return self._cap_width  # type: ignore[return-value]
+        return self._cap_width
 
     @cap_width.setter
     def cap_width(self, cap_width: float):
@@ -1208,7 +1208,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.cap_length = 0.01
 
         """
-        return self._cap_length  # type: ignore[return-value]
+        return self._cap_length
 
     @cap_length.setter
     def cap_length(self, cap_length: float):
@@ -1224,7 +1224,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.cap_opacity = 1.0
 
         """
-        return self._cap_opacity  # type: ignore[return-value]
+        return self._cap_opacity
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
@@ -1241,7 +1241,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.tube_color = 'black'
 
         """
-        return self._tube_color  # type: ignore[return-value]
+        return self._tube_color
 
     @tube_color.setter
     def tube_color(self, tube_color: ColorLike):
@@ -1257,7 +1257,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.tube_width = 0.005
 
         """
-        return self._tube_width  # type: ignore[return-value]
+        return self._tube_width
 
     @tube_width.setter
     def tube_width(self, tube_width: float):
@@ -1273,7 +1273,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.slider_color = 'grey'
 
         """
-        return self._slider_color  # type: ignore[return-value]
+        return self._slider_color
 
     @slider_color.setter
     def slider_color(self, slider_color: ColorLike):
@@ -1289,7 +1289,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.slider_width = 0.04
 
         """
-        return self._slider_width  # type: ignore[return-value]
+        return self._slider_width
 
     @slider_width.setter
     def slider_width(self, slider_width: float):
@@ -1305,7 +1305,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_styles.modern.slider_length = 0.02
 
         """
-        return self._slider_length  # type: ignore[return-value]
+        return self._slider_length
 
     @slider_length.setter
     def slider_length(self, slider_length: float):
@@ -1368,9 +1368,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'  # type: ignore[assignment]
+        self._classic.slider_color = 'gray'
         self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'  # type: ignore[assignment]
+        self._classic.tube_color = 'white'
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1379,9 +1379,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (110, 113, 117)  # type: ignore[assignment]
+        self._modern.slider_color = (110, 113, 117)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (178, 179, 181)  # type: ignore[assignment]
+        self._modern.tube_color = (178, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -1394,7 +1394,7 @@ class _SliderConfig(_ThemeConfig):
     @classic.setter
     def classic(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_SliderStyleConfig`'
             raise TypeError(msg)
         self._classic = config
 
@@ -1406,7 +1406,7 @@ class _SliderConfig(_ThemeConfig):
     @modern.setter
     def modern(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_SliderStyleConfig`'
             raise TypeError(msg)
         self._modern = config
 
@@ -1495,7 +1495,7 @@ class _TrameConfig(_ThemeConfig):
 
     @interactive_ratio.setter
     def interactive_ratio(self, interactive_ratio: float):
-        self._interactive_ratio = interactive_ratio  # type: ignore[assignment]
+        self._interactive_ratio = interactive_ratio
 
     @property
     def still_ratio(self) -> float:  # numpydoc ignore=RT01
@@ -1511,7 +1511,7 @@ class _TrameConfig(_ThemeConfig):
 
     @still_ratio.setter
     def still_ratio(self, still_ratio: float):
-        self._still_ratio = still_ratio  # type: ignore[assignment]
+        self._still_ratio = still_ratio
 
     @property
     def jupyter_server_name(self):  # numpydoc ignore=RT01
@@ -1650,7 +1650,7 @@ class _CameraConfig(_ThemeConfig):
 
     @position.setter
     def position(self, position: VectorLike[float]):
-        self._position = position  # type: ignore[assignment]
+        self._position = position
 
     @property
     def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
@@ -1668,7 +1668,7 @@ class _CameraConfig(_ThemeConfig):
 
     @viewup.setter
     def viewup(self, viewup: VectorLike[float]):
-        self._viewup = viewup  # type: ignore[assignment]
+        self._viewup = viewup
 
     @property
     def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
@@ -1700,7 +1700,7 @@ class _CameraConfig(_ThemeConfig):
         >>> pv.global_theme.camera.parallel_scale = 2.0
 
         """
-        return self._parallel_scale  # type: ignore[return-value]
+        return self._parallel_scale
 
     @parallel_scale.setter
     def parallel_scale(self, value: bool) -> None:
@@ -1852,8 +1852,8 @@ class Theme(_ThemeConfig):
         # Grab system flag for auto-closing
         self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
 
-        self._jupyter_backend: JupyterBackendOptions = (
-            os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')  # type: ignore[assignment]
+        self._jupyter_backend: JupyterBackendOptions = os.environ.get(
+            'PYVISTA_JUPYTER_BACKEND', 'trame'
         )
         self._trame = _TrameConfig()
 
@@ -2141,7 +2141,7 @@ class Theme(_ThemeConfig):
     @trame.setter
     def trame(self, config: _TrameConfig):
         if not isinstance(config, _TrameConfig):
-            msg = 'Configuration type must be `_TrameConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_TrameConfig`.'
             raise TypeError(msg)
         self._trame = config
 
@@ -2325,7 +2325,7 @@ class Theme(_ThemeConfig):
     @font.setter
     def font(self, config: _Font):
         if not isinstance(config, _Font):
-            msg = 'Configuration type must be `_Font`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_Font`.'
             raise TypeError(msg)
         self._font = config
 
@@ -2564,7 +2564,7 @@ class Theme(_ThemeConfig):
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_ColorbarConfig`.'
             raise TypeError(msg)
         self._colorbar_horizontal = config
 
@@ -2590,7 +2590,7 @@ class Theme(_ThemeConfig):
     @colorbar_vertical.setter
     def colorbar_vertical(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_ColorbarConfig`.'
             raise TypeError(msg)
         self._colorbar_vertical = config
 
@@ -2791,10 +2791,10 @@ class Theme(_ThemeConfig):
                 msg = 'anti_aliasing must be either "ssaa", "msaa", or "fxaa"'
                 raise ValueError(msg)
         elif anti_aliasing is not None:
-            msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'  # type: ignore[unreachable]
+            msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'
             raise TypeError(msg)
 
-        self._anti_aliasing = anti_aliasing  # type: ignore[assignment]
+        self._anti_aliasing = anti_aliasing
 
     @property
     def multi_samples(self) -> int:  # numpydoc ignore=RT01
@@ -2832,7 +2832,7 @@ class Theme(_ThemeConfig):
         >>> pv.global_theme.multi_rendering_splitting_position = 0.5
 
         """
-        return self._multi_rendering_splitting_position  # type: ignore[return-value]
+        return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
@@ -2913,7 +2913,7 @@ class Theme(_ThemeConfig):
     @depth_peeling.setter
     def depth_peeling(self, config: _DepthPeelingConfig):
         if not isinstance(config, _DepthPeelingConfig):
-            msg = 'Configuration type must be `_DepthPeelingConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_DepthPeelingConfig`.'
             raise TypeError(msg)
         self._depth_peeling = config
 
@@ -2936,7 +2936,7 @@ class Theme(_ThemeConfig):
     @silhouette.setter
     def silhouette(self, config: _SilhouetteConfig):
         if not isinstance(config, _SilhouetteConfig):
-            msg = 'Configuration type must be `_SilhouetteConfig`'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_SilhouetteConfig`'
             raise TypeError(msg)
         self._silhouette = config
 
@@ -2948,7 +2948,7 @@ class Theme(_ThemeConfig):
     @slider_styles.setter
     def slider_styles(self, config: _SliderConfig):
         if not isinstance(config, _SliderConfig):
-            msg = 'Configuration type must be `_SliderConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_SliderConfig`.'
             raise TypeError(msg)
         self._slider_styles = config
 
@@ -2978,7 +2978,7 @@ class Theme(_ThemeConfig):
     @axes.setter
     def axes(self, config: _AxesConfig):
         if not isinstance(config, _AxesConfig):
-            msg = 'Configuration type must be `_AxesConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_AxesConfig`.'
             raise TypeError(msg)
         self._axes = config
 
@@ -2987,7 +2987,7 @@ class Theme(_ThemeConfig):
         self,
     ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
-        return self._before_close_callback  # type: ignore[return-value]
+        return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
@@ -3029,7 +3029,7 @@ class Theme(_ThemeConfig):
         >>> pv.global_theme.restore_defaults()
 
         """
-        self.__init__()  # type: ignore[misc]
+        self.__init__()
 
     def __repr__(self):
         """User friendly representation of the current theme."""
@@ -3221,7 +3221,7 @@ class Theme(_ThemeConfig):
     @lighting_params.setter
     def lighting_params(self, config: _LightingConfig):
         if not isinstance(config, _LightingConfig):
-            msg = 'Configuration type must be `_LightingConfig`.'  # type: ignore[unreachable]
+            msg = 'Configuration type must be `_LightingConfig`.'
             raise TypeError(msg)
         self._lighting_params = config
 
@@ -3326,16 +3326,16 @@ class DarkTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'dark'
-        self.background = 'black'  # type: ignore[assignment]
+        self.background = 'black'
         self.cmap = 'viridis'
-        self.font.color = 'white'  # type: ignore[assignment]
+        self.font.color = 'white'
         self.show_edges = False
-        self.color = 'lightblue'  # type: ignore[assignment]
-        self.outline_color = 'white'  # type: ignore[assignment]
-        self.edge_color = 'white'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
-        self.axes.z_color = 'blue'  # type: ignore[assignment]
+        self.color = 'lightblue'
+        self.outline_color = 'white'
+        self.edge_color = 'white'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class ParaViewTheme(Theme):
@@ -3359,18 +3359,18 @@ class ParaViewTheme(Theme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = 'paraview'  # type: ignore[assignment]
+        self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16
-        self.font.color = 'white'  # type: ignore[assignment]
+        self.font.color = 'white'
         self.show_edges = False
-        self.color = 'white'  # type: ignore[assignment]
-        self.outline_color = 'white'  # type: ignore[assignment]
-        self.edge_color = 'black'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'gold'  # type: ignore[assignment]
-        self.axes.z_color = 'green'  # type: ignore[assignment]
+        self.color = 'white'
+        self.outline_color = 'white'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'gold'
+        self.axes.z_color = 'green'
 
 
 class DocumentTheme(Theme):
@@ -3404,19 +3404,19 @@ class DocumentTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'document'
-        self.background = 'white'  # type: ignore[assignment]
+        self.background = 'white'
         self.cmap = 'viridis'
         self.font.size = 18
         self.font.title_size = 18
         self.font.label_size = 18
-        self.font.color = 'black'  # type: ignore[assignment]
+        self.font.color = 'black'
         self.show_edges = False
-        self.color = 'lightblue'  # type: ignore[assignment]
-        self.outline_color = 'black'  # type: ignore[assignment]
-        self.edge_color = 'black'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
-        self.axes.z_color = 'blue'  # type: ignore[assignment]
+        self.color = 'lightblue'
+        self.outline_color = 'black'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class DocumentProTheme(DocumentTheme):

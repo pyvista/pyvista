@@ -6,7 +6,6 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 import enum
-from functools import wraps
 import importlib
 import os
 from pathlib import Path
@@ -2612,7 +2611,6 @@ class HDFReader(BaseReader):
 
         super().__init__(path)
 
-    @wraps(BaseReader.read)
     def read(self) -> Any:
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:

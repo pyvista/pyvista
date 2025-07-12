@@ -107,7 +107,7 @@ class RenderWindowInteractor:
         # Map of observers to events
         self._observers = {}
         self._key_press_event_callbacks = defaultdict(list)
-        self._click_event_callbacks = {  # type: ignore[var-annotated]
+        self._click_event_callbacks = {
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ('LeftButtonPressEvent', 'RightButtonPressEvent')
         }
@@ -373,7 +373,7 @@ class RenderWindowInteractor:
         double = dp < self._MAX_CLICK_DELTA and dt < self._MAX_CLICK_DELAY
         # Reset click time in case of a double click, otherwise a subsequent third click
         # is considered to be a double click as well.
-        self._click_time = 0 if double else t  # type: ignore[assignment]
+        self._click_time = 0 if double else t
 
         for callback in self._click_event_callbacks[event][double, False]:
             callback(self._plotter.pick_click_position())
@@ -527,7 +527,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[misc]
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -576,8 +576,8 @@ class RenderWindowInteractor:
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
-            self._style = self._prev_style  # type: ignore[has-type]
-            self.style = self._prev_style_class  # type: ignore[has-type]
+            self._style = self._prev_style
+            self.style = self._prev_style_class
             self._prev_style = None
             self._prev_style_class = None
         elif scene is not None and self._style != 'Context':
@@ -1117,12 +1117,12 @@ class RenderWindowInteractor:
                 """Trigger left mouse panning if shift is pressed."""
                 if event == 'LeftButtonPressEvent':
                     if self.interactor.GetShiftKey():
-                        self.style.StartPan()  # type: ignore[union-attr]
-                    self.style.OnLeftButtonDown()  # type: ignore[union-attr]
+                        self.style.StartPan()
+                    self.style.OnLeftButtonDown()
                 elif event == 'LeftButtonReleaseEvent':
                     # always stop panning on release
-                    self.style.EndPan()  # type: ignore[union-attr]
-                    self.style.OnLeftButtonUp()  # type: ignore[union-attr]
+                    self.style.EndPan()
+                    self.style.OnLeftButtonUp()
 
             callback = partial(try_callback, pan_on_shift_callback)
 
@@ -1587,7 +1587,7 @@ class RenderWindowInteractor:
 
         self.terminate_app()
         self.interactor = None
-        self._click_event_callbacks = None  # type: ignore[assignment]
+        self._click_event_callbacks = None
         self._timer_event = None
 
 
@@ -1609,11 +1609,11 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
         # Ignore typing.
         self._observers = []
         self._observers.append(
-            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),  # type: ignore[arg-type]
+            self.AddObserver('LeftButtonPressEvent', partial(try_callback, self._press)),
         )
         self._observers.append(
             self.AddObserver(
-                'LeftButtonReleaseEvent',  # type: ignore[arg-type]
+                'LeftButtonReleaseEvent',
                 partial(try_callback, self._release),
             ),
         )
@@ -1623,17 +1623,17 @@ class InteractorStyleCaptureMixin(DisableVtkSnakeCase, _vtk.vtkInteractorStyle):
         # others
         self.OnLeftButtonDown()
         parent = self._parent()
-        if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
-            click_pos = parent.get_event_position()  # type: ignore[union-attr]
-            for renderer in parent._plotter.renderers:  # type: ignore[union-attr]
+        if len(parent._plotter.renderers) > 1:
+            click_pos = parent.get_event_position()
+            for renderer in parent._plotter.renderers:
                 interact = renderer.IsInViewport(*click_pos)
                 renderer.SetInteractive(interact)
 
     def _release(self, *_):
         self.OnLeftButtonUp()
         parent = self._parent()
-        if len(parent._plotter.renderers) > 1:  # type: ignore[union-attr]
-            for renderer in parent._plotter.renderers:  # type: ignore[union-attr]
+        if len(parent._plotter.renderers) > 1:
+            for renderer in parent._plotter.renderers:
                 renderer.SetInteractive(True)
 
     def add_observer(self, event, callback):

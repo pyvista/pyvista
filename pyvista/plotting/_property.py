@@ -304,7 +304,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         if new_style == 'wireframe':
             self.SetRepresentationToWireframe()
             if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
+                self.color = self._theme.outline_color
         elif new_style == 'points':
             self.SetRepresentationToPoints()
         elif new_style == 'surface':
@@ -354,8 +354,8 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     @color.setter
     def color(self, value):
         self._color_set = value is not None
-        rgb_color = Color(value, default_color=self._theme.color)  # type: ignore[union-attr]
-        self.SetColor(rgb_color.float_rgb)  # type: ignore[call-overload]
+        rgb_color = Color(value, default_color=self._theme.color)
+        self.SetColor(rgb_color.float_rgb)
 
     @property
     def edge_color(self) -> Color:  # numpydoc ignore=RT01
@@ -387,7 +387,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @edge_color.setter
     def edge_color(self, value):
-        rgb_color = Color(value, default_color=self._theme.edge_color)  # type: ignore[union-attr]
+        rgb_color = Color(value, default_color=self._theme.edge_color)
         self.SetEdgeColor(rgb_color.float_rgb)
 
     @property
@@ -527,7 +527,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     @lighting.setter
     def lighting(self, value: bool | None):
         if value is None:
-            value = self._theme.lighting  # type: ignore[union-attr]
+            value = self._theme.lighting
         self.SetLighting(value)
 
     @property
@@ -827,7 +827,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
         else:
-            self.SetInterpolation(value)  # type: ignore[arg-type]
+            self.SetInterpolation(value)
 
     @property
     def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01
@@ -1238,7 +1238,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 
-        pl.camera_position = 'xy'  # type: ignore[assignment]
+        pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
 
     def copy(self) -> Property:

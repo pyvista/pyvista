@@ -123,27 +123,27 @@ class StructuredGridFilters(DataSetFilters):
             raise RuntimeError(msg)
 
         # check dimensions are compatible
-        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions)):  # type: ignore[attr-defined]
+        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions)):
             if i == axis:
                 continue
             if dim1 != dim2:
                 msg = (
-                    f'StructuredGrids with dimensions {self.dimensions} and {other.dimensions} '  # type: ignore[attr-defined]
+                    f'StructuredGrids with dimensions {self.dimensions} and {other.dimensions} '
                     'are not compatible.'
                 )
                 raise ValueError(msg)
 
         # check point/cell variables are the same
-        if set(self.point_data.keys()) != set(other.point_data.keys()):  # type: ignore[attr-defined]
+        if set(self.point_data.keys()) != set(other.point_data.keys()):
             msg = 'Grid to concatenate has different point array names.'
             raise RuntimeError(msg)
-        if set(self.cell_data.keys()) != set(other.cell_data.keys()):  # type: ignore[attr-defined]
+        if set(self.cell_data.keys()) != set(other.cell_data.keys()):
             msg = 'Grid to concatenate has different cell array names.'
             raise RuntimeError(msg)
 
         # check that points are coincident (within tolerance) along seam
         if not np.allclose(
-            np.take(self.points_matrix, indices=-1, axis=axis),  # type: ignore[attr-defined]
+            np.take(self.points_matrix, indices=-1, axis=axis),
             np.take(other.points_matrix, indices=0, axis=axis),
             atol=tolerance,
         ):
@@ -156,18 +156,18 @@ class StructuredGridFilters(DataSetFilters):
         # slice to cut off the repeated grid face
         slice_spec = [slice(None, None, None)] * 3
         slice_spec[axis] = slice(0, -1, None)
-        slice_spec = tuple(slice_spec)  # type: ignore[assignment] # trigger basic indexing
+        slice_spec = tuple(slice_spec)  # trigger basic indexing
 
         # concatenate points, cutting off duplicate
         new_points = np.concatenate(
-            (self.points_matrix[slice_spec], other.points_matrix),  # type: ignore[attr-defined]
+            (self.points_matrix[slice_spec], other.points_matrix),
             axis=axis,
         )
 
         # concatenate point arrays, cutting off duplicate
         new_point_data = {}
-        for name, point_array in self.point_data.items():  # type: ignore[attr-defined]
-            arr_1 = self._reshape_point_array(point_array)  # type: ignore[attr-defined]
+        for name, point_array in self.point_data.items():
+            arr_1 = self._reshape_point_array(point_array)
             arr_2 = other._reshape_point_array(other.point_data[name])
             if not np.array_equal(
                 np.take(arr_1, indices=-1, axis=axis),
@@ -182,20 +182,20 @@ class StructuredGridFilters(DataSetFilters):
                 order='F',
             )
 
-        new_dims = np.array(self.dimensions)  # type: ignore[attr-defined]
+        new_dims = np.array(self.dimensions)
         new_dims[axis] += other.dimensions[axis] - 1
 
         # concatenate cell arrays
         new_cell_data = {}
-        for name, cell_array in self.cell_data.items():  # type: ignore[attr-defined]
-            arr_1 = self._reshape_cell_array(cell_array)  # type: ignore[attr-defined]
+        for name, cell_array in self.cell_data.items():
+            arr_1 = self._reshape_cell_array(cell_array)
             arr_2 = other._reshape_cell_array(other.cell_data[name])
             new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
         joined = pyvista.StructuredGrid()
         joined.dimensions = list(new_dims)
-        joined.points = new_points.reshape((-1, 3), order='F')  # type: ignore[misc]
+        joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)
         joined.cell_data.update(new_cell_data)
 
