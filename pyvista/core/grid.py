@@ -758,7 +758,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             voi[axis * 2] = index_offset + start
             voi[axis * 2 + 1] = index_offset + stop - 1
 
-        clipped = self._clip_voi(voi)
+        clipped = pyvista.ImageDataFilters._clip_extent(voi, clip_to=self.extent)
         if strict_index and (
             any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2]))
             or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2]))
