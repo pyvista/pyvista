@@ -378,6 +378,9 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
 
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -418,6 +421,9 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
 
 def test_plot_helper_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
 
     uniform.plot(
         volume=True,
