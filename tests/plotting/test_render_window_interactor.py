@@ -319,8 +319,8 @@ def test_poked_subplot_context():
 
 @pytest.mark.skip_plotting
 def test_add_pick_observer():
+    pl = pv.Plotter()
     with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
-        pl = pv.Plotter()
         pl.iren.add_pick_obeserver(empty_callback)
     pl = pv.Plotter()
     pl.iren.add_pick_observer(empty_callback)

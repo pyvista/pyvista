@@ -995,7 +995,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1601,7 +1601,7 @@ class ImageDataFilters(DataSetFilters):
                 alg_.SmoothingOff()
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1714,15 +1714,27 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
-            # Orient the faces but discard the normals array
-            output.compute_normals(
-                cell_normals=True,
-                point_normals=False,
-                consistent_normals=True,
-                auto_orient_normals=True,
-                inplace=True,
-            )
-            del output.cell_data['Normals']
+            if pyvista.vtk_version_info >= (9, 4):
+                filter_ = _vtk.vtkOrientPolyData()
+                filter_.SetInputData(output)
+                filter_.ConsistencyOn()
+                filter_.AutoOrientNormalsOn()
+                filter_.NonManifoldTraversalOn()
+                filter_.Update()
+                oriented = wrap(filter_.GetOutput())
+                output.points = oriented.points
+                output.faces = oriented.faces
+            else:
+                # Orient the faces but discard the normals array
+                output.compute_normals(
+                    cell_normals=True,
+                    point_normals=False,
+                    consistent_normals=True,
+                    auto_orient_normals=True,
+                    non_manifold_traversal=True,
+                    inplace=True,
+                )
+                del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
