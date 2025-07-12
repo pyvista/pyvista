@@ -25,7 +25,10 @@ def test_start_xvfb():
             msg = 'Remove this method'
             raise RuntimeError(msg)
 
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This function is deprecated and will be removed in future version',
+    ):
         _test_start_xvfb()
 
 
@@ -33,7 +36,10 @@ def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixtur
     monkeypatch.setattr(os, 'name', 'foo')
     with (
         pytest.raises(OSError, match='`start_xvfb` is only supported on Linux'),
-        pytest.warns(PyVistaDeprecationWarning),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This function is deprecated and will be removed in future version',
+        ),
     ):
         pv.start_xvfb()
 
@@ -44,7 +50,10 @@ def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixtur
 
     with (
         pytest.raises(OSError, match=re.escape(xvfb.XVFB_INSTALL_NOTES)),
-        pytest.warns(PyVistaDeprecationWarning),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This function is deprecated and will be removed in future version',
+        ),
     ):
         pv.start_xvfb()
 

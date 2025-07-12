@@ -225,7 +225,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
-      - uses: awalsh128/cache-apt-pkgs-action@7ca5f46d061ad9aa95863cd9b214dd48edef361d
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
         with:
           packages: xvfb
@@ -327,7 +327,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
-      - uses: awalsh128/cache-apt-pkgs-action@7ca5f46d061ad9aa95863cd9b214dd48edef361d
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
         with:
           packages: xvfb
