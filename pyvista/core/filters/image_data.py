@@ -316,8 +316,8 @@ class ImageDataFilters(DataSetFilters):
            :attr:`~pyvista.ImageData.dimensions` and :attr:`~pyvista.ImageData.offset`.
         #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
-        #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh to the mask's
-           foreground values.
+        #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
+           values to define the cropping region.
 
         These methods are all independent, e.g. it is not possible to specify both ``factor`` and
         ``margin``.
@@ -372,14 +372,17 @@ class ImageDataFilters(DataSetFilters):
             fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         mask : str | ImageData | NumpyArray[float] | bool, optional
-            Name of scalars from this mesh to use as a mask. Alternatively, a separate image may
-            be used, in which case the other image's active scalars are used as the mask. A 1D or
-            2D (multi-component) array is also supported, where the array has the same length as
-            the number of points.
+            Scalar values that define the cropping region. Set this option to:
 
-            This mesh will be cropped to the foreground values of the array, i.e. values that are
-            not equal to the specified ``background_value``. Set this to ``True`` to use this
-            mesh's default scalars as the mask.
+            - a string denoting the name of scalars belonging to this mesh
+            - ``True`` to use this mesh's default scalars
+            - a separate image, in which case the other image's active scalars are used
+            - a 1D or 2D (multi-component) array
+
+            The length of the scalar array must equal the number of points.
+
+            This mesh will be cropped to the bounds of the foreground values of the array, i.e.
+            values that are not equal to the specified ``background_value``.
 
         padding : int | VectorLike[int], optional
             Padding to add to foreground region `before` cropping. Only valid when using a mask to
