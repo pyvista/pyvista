@@ -4964,7 +4964,12 @@ def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
     smoothing_scale,
+    verify_image_cache,
 ):
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
