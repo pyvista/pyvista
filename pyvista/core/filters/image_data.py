@@ -452,7 +452,7 @@ class ImageDataFilters(DataSetFilters):
         >>> def image_plotter(image):
         ...     pixel_cells = image.points_to_cells()
         ...
-        ...     pl = pv.Plotter(off_screen=False)
+        ...     pl = pv.Plotter()
         ...     pl.add_mesh(
         ...         pixel_cells,
         ...         cmap='gray',
