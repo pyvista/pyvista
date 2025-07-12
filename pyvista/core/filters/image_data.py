@@ -398,6 +398,10 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
 
+            The specified value is the `maximum` padding that may be applied. If the padding
+            extends beyond the actual extents of this mesh, it is clipped and does not extend
+            outside the bounds of the image.
+
         background_value : float | VectorLike[float], optional
             Value or multi-component vector considered to be the background. Only valid when using
             a mask to crop the image.
@@ -614,7 +618,9 @@ class ImageDataFilters(DataSetFilters):
             voi_array[[0, 1]] += mesh.offset[0]
             voi_array[[2, 3]] += mesh.offset[1]
             voi_array[[4, 5]] += mesh.offset[2]
-            return voi_array
+
+            # Clip voi so it doesn't extend beyond the image's extent
+            return _clip_extent(voi_array, clip_to=self.extent)
 
         def _voi_from_normalized_bounds(normalized_bounds_):
             _raise_error_kwargs_not_none('normalized_bounds')
@@ -4444,3 +4450,16 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
+
+
+def _clip_extent(  # type: ignore[misc]
+    extent: VectorLike[int], *, clip_to: VectorLike[int]
+) -> tuple[int, int, int, int, int, int]:
+    out = np.array(extent)
+    for axis in range(3):
+        min_ind = axis * 2
+        max_ind = axis * 2 + 1
+
+        out[min_ind] = max(clip_to[min_ind], extent[min_ind])
+        out[max_ind] = min(clip_to[max_ind], extent[max_ind])
+    return cast('tuple[int, int, int, int, int, int]', tuple(out.tolist()))
