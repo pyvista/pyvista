@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 import numbers
@@ -86,7 +87,7 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {
+    _WRITERS: ClassVar[Mapping[str, type[_vtk.vtkSimplePointsWriter]]] = {
         '.xyz': _vtk.vtkSimplePointsWriter,
     }
 
@@ -118,7 +119,7 @@ class _PointSet(DataSet):
         alg.Update()
         return np.array(alg.GetCenter())
 
-    def shallow_copy(self, to_copy: DataSet) -> None:
+    def shallow_copy(self, to_copy: DataSet | _vtk.vtkDataObject) -> None:
         """Create a shallow copy from a different dataset into this one.
 
         This method mutates this dataset and returns ``None``.
@@ -753,7 +754,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS: ClassVar[
-        dict[
+        Mapping[
             str,
             (type[_PolyDataWriterAlias]),
         ]
@@ -855,15 +856,16 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             setattr(self, k, v)
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (
+        for dep_k, dep_v in (
             ('n_verts', n_verts),
             ('n_strips', n_strips),
             ('n_faces', n_faces),
             ('n_lines', n_lines),
         ):
-            if v is not None:
+            if dep_v is not None:
                 warnings.warn(
-                    f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
+                    f'`PolyData` constructor parameter `{dep_k}` is deprecated '
+                    'and no longer used.',
                     PyVistaDeprecationWarning,
                 )
 
@@ -1840,7 +1842,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     """
 
     _WRITERS: ClassVar[
-        dict[
+        Mapping[
             str,
             type[_UnstructuredGridWriterAlias],
         ]
@@ -2092,8 +2094,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self._get_cells().ImportLegacyFormat(vtk_idarr)
 
     def _get_cells(self):
-        cells = self.GetCells()
-        return _vtk.vtkCellArray() if cells is None else cells
+        return self.GetCells()
 
     @property
     def faces(self) -> NumpyArray[int]:
@@ -2125,10 +2126,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """
         if pyvista.vtk_version_info < (9, 4):
             polyhedron_faces = pyvista.convert_array(self.GetFaces())
-
-            if polyhedron_faces is None:
-                return np.array([], dtype=int)
-
             cell_faces = []
             i = 0
 
@@ -2148,8 +2145,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         else:
             faces = self.GetPolyhedronFaces()  # vtkCellArray
-            if faces is None:
-                return np.array([], dtype=int)
             return convert_array(faces.GetData())
 
     @property
@@ -2182,10 +2177,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """
         if pyvista.vtk_version_info < (9, 4):
             polyhedron_faces = pyvista.convert_array(self.GetFaces())
-
-            if polyhedron_faces is None:
-                return np.array([], dtype=int)
-
             i, face_counts = 0, []
 
             while i < len(polyhedron_faces):
@@ -2211,8 +2202,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         else:
             faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
-            if faces is None:
-                return np.array([], dtype=int)
             return convert_array(faces.GetData())
 
     @property
@@ -2571,7 +2560,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """
 
     _WRITERS: ClassVar[
-        dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
+        Mapping[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
     ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep: bool = False, **kwargs) -> None:
@@ -2988,7 +2977,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     """
 
     _WRITERS: ClassVar[
-        dict[
+        Mapping[
             str,
             type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
@@ -3580,7 +3569,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         else:
             if isinstance(coords[0], np.ndarray):
                 return np.stack(coords, axis=1)
-            return np.asanyarray(coords)
+            else:
+                return np.asanyarray(coords)
 
     def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.

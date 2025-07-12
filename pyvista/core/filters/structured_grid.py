@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista
@@ -10,6 +12,9 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista.core.pointset import StructuredGrid
 
 
 @abstract_class
@@ -79,7 +84,7 @@ class StructuredGridFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
-    def concatenate(self, other, axis, tolerance=0.0):
+    def concatenate(self: StructuredGrid, other, axis, tolerance=0.0):
         """Concatenate a structured grid to this grid.
 
         Joins structured grids into a single structured grid.  Grids
