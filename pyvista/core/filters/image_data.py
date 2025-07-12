@@ -620,7 +620,7 @@ class ImageDataFilters(DataSetFilters):
             voi_array[[4, 5]] += mesh.offset[2]
 
             # Clip voi so it doesn't extend beyond the image's extent
-            return _clip_extent(voi_array, clip_to=self.extent)
+            return ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
 
         def _voi_from_normalized_bounds(normalized_bounds_):
             _raise_error_kwargs_not_none('normalized_bounds')
@@ -4401,6 +4401,17 @@ class ImageDataFilters(DataSetFilters):
         output[array_name] = array_out
         return output
 
+    @staticmethod
+    def _clip_extent(extent: VectorLike[int], *, clip_to: VectorLike[int]) -> NumpyArray[int]:
+        out = np.array(extent)
+        for axis in range(3):
+            min_ind = axis * 2
+            max_ind = axis * 2 + 1
+
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))
+        return out
+
 
 def _validate_padding(pad_size):
     # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
@@ -4450,16 +4461,3 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
-
-
-def _clip_extent(  # type: ignore[misc]
-    extent: VectorLike[int], *, clip_to: VectorLike[int]
-) -> tuple[int, int, int, int, int, int]:
-    out = np.array(extent)
-    for axis in range(3):
-        min_ind = axis * 2
-        max_ind = axis * 2 + 1
-
-        out[min_ind] = max(clip_to[min_ind], extent[min_ind])
-        out[max_ind] = min(clip_to[max_ind], extent[max_ind])
-    return cast('tuple[int, int, int, int, int, int]', tuple(out.tolist()))
