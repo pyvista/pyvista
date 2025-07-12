@@ -509,10 +509,13 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match='This filter is deprecated. Use `cell_quality` instead'
+    ):
         qual = mesh.compute_cell_quality(progress_bar=True)
-        assert 'CellQuality' in qual.array_names
-        with pytest.raises(KeyError):
+    assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        with pytest.warns(PyVistaDeprecationWarning):
             qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
@@ -760,8 +763,8 @@ def test_transform_imagedata_warns_with_shear(uniform):
 
     with pytest.warns(
         Warning,
-        match='The transformation matrix has a shear component which has been removed. \n'
-        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+        match=r'The transformation matrix has a shear component which has been removed\. \n'
+        r'Shear is not supported when setting `ImageData` `index_to_physical_matrix`\.',
     ):
         uniform.transform(shear, inplace=True)
 
@@ -1105,7 +1108,7 @@ def test_transform_integers():
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
 
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match=r'Integer points.*converted.*float32'):
         poly.rotate_x(angle=10, inplace=True)
 
     # check that points were converted and transformed correctly
