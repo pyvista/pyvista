@@ -8,6 +8,8 @@ Use :meth:`~pyvista.ImageDataFilters.crop` to crop labeled data such as segmente
 
 """
 
+# sphinx_gallery_thumbnail_number = 2
+
 from __future__ import annotations
 
 import pyvista as pv
