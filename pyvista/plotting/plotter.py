@@ -5017,58 +5017,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-    @_deprecate_positional_args(allowed=['points'])
-    def update_coordinates(
-        self,
-        points: MatrixLike[float] | VectorLike[float],
-        mesh: _vtk.vtkPolyData | _vtk.vtkUnstructuredGrid | None = None,
-        render: bool | None = True,  # noqa: FBT001, FBT002
-    ) -> None:
-        """Update the points of an object in the plotter.
-
-        .. deprecated:: 0.43.0
-            This method is deprecated and will be removed in a future version of
-            PyVista. It is functionally equivalent to directly modifying the
-            points of a mesh in-place.
-
-            .. code-block:: python
-
-                # Modify the points in place
-                mesh.points = points
-                # Explicitly call render if needed
-                plotter.render()
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Points to replace existing points.
-
-        mesh : vtk.PolyData | vtk.UnstructuredGrid, optional
-            Object that has already been added to the Plotter.  If ``None``, uses
-            last added mesh.
-
-        render : bool, default: True
-            Force a render when True.
-
-        """
-        # Deprecated on 0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            'This method is deprecated and will be removed in a future version of '
-            'PyVista. Directly modify the points of a mesh in-place instead.',
-            PyVistaDeprecationWarning,
-        )
-        if mesh is None:
-            mesh = self.mesh  # type: ignore[assignment]
-
-        mesh.points = points  # type: ignore[union-attr]
-
-        # only render when the plotter has already been shown
-        if render is None:
-            render = not self._first_time
-
-        if render:
-            self.render()
-
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
