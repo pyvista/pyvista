@@ -206,6 +206,8 @@ omit = [
   'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
+source = ['tests/conftest.py']
+
 [tool.coverage.report]
 exclude_also = ['^\s*@overload.*\n\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
 
