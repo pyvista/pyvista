@@ -468,7 +468,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> image_plotter(gray_image).show()
 
-        Crop the white border around the image by using itself as mask. Here we specify a
+        Crop the white border around the image by the active scalars as a mask. Here we specify a
         background value of ``255`` to correspond to white pixels. If this was an RGB image, we
         could also specify ``(255, 255, 255)`` as the background value.
 
@@ -631,18 +631,17 @@ class ImageDataFilters(DataSetFilters):
                 must_have_length=6,
                 name='normalized_bounds',
             )
-
+            # Compute IJK bounds from normalized bounds
+            # A small bias is added to account for numerical error
+            # e.g. we want floor(0.29999999 * 10 + eps) = 3, not 2
             dims = np.array(self.dimensions)
-            eps = 1e-6  # small tolerance for numerical robustness
-
-            # Compute IJK bounds directly
+            eps = 1e-6
             norm_starts = bounds[::2]
             norm_stops = bounds[1::2]
-
             starts = np.ceil(norm_starts * dims - eps).astype(int)
-            stops = np.floor(norm_stops * dims + eps).astype(int) - 1  # inclusive
+            stops = np.floor(norm_stops * dims + eps).astype(int) - 1
 
-            # Ensure at least one voxel is included
+            # Ensure dimensions are not set to 0
             stops = np.maximum(stops, starts)
 
             # Apply image offset
