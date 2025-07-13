@@ -452,6 +452,17 @@ class ImageDataFilters(DataSetFilters):
             out[max_ind] = min(voi[max_ind], extent[max_ind])
         return cast('tuple[int, int, int, int, int, int]', tuple(out))
 
+    @staticmethod
+    def _clip_extent(extent: VectorLike[int], *, clip_to: VectorLike[int]) -> NumpyArray[int]:
+        out = np.array(extent)
+        for axis in range(3):
+            min_ind = axis * 2
+            max_ind = axis * 2 + 1
+
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
+        return out
+
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
         self,
@@ -4119,14 +4130,3 @@ class ImageDataFilters(DataSetFilters):
         output.copy_structure(self)
         output[array_name] = array_out
         return output
-
-    @staticmethod
-    def _clip_extent(extent: VectorLike[int], *, clip_to: VectorLike[int]) -> NumpyArray[int]:
-        out = np.array(extent)
-        for axis in range(3):
-            min_ind = axis * 2
-            max_ind = axis * 2 + 1
-
-            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
-            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
-        return out
