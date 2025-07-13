@@ -34,16 +34,7 @@ env:
   CACHE_FOLDER_NAME: vtk-data
   PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
-    -v --cov=pyvista --cov-append --cov-report=xml --cov-branch
-    --fail_extra_image_cache --generated_image_dir debug_images
-  PLOTTING_TEST_MODULES_CHARTS: "tests/plotting/test_charts.py"
-  PLOTTING_TEST_MODULES_NO_CHARTS: >
-    --ignore=tests/core
-    --ignore=tests/doc
-    --ignore=tests/examples
-    --ignore=tests/namespace
-    --ignore=tests/plotting/test_charts.py
-    --ignore=tests/typing
+    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch --disallow_unused_cache
 
 permissions:
   id-token: none
@@ -129,14 +120,21 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: pytest -v tests/plotting --disallow_unused_cache
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _generated_test_images
 
   Linux:
     name: Linux Unit Testing
@@ -227,7 +225,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
         with:
           packages: xvfb
@@ -240,22 +238,21 @@ jobs:
       - name: Plotting Testing (uses GL)
         if: always()
         run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_NO_CHARTS \
-            $LINUX_PLOTTING_ARGS
+          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
 
-      - name: Plotting Testing (charts only)
-        run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_CHARTS \
-            $LINUX_PLOTTING_ARGS
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
 
       - name: Software Report
         if: always()
@@ -264,7 +261,7 @@ jobs:
           which python
           pip list
 
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -330,7 +327,7 @@ jobs:
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
         with:
           packages: xvfb
@@ -343,22 +340,21 @@ jobs:
       - name: Plotting Testing (uses GL)
         if: always()
         run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_NO_CHARTS \
-            $LINUX_PLOTTING_ARGS
+          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
 
-      - name: Plotting Testing (charts only)
-        run: |
-          xvfb-run -s '-maxclients 2048' -a python -m pytest \
-            $PLOTTING_TEST_MODULES_CHARTS \
-            $LINUX_PLOTTING_ARGS
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
 
       - name: Software Report
         if: always()
@@ -398,7 +394,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v4.2
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Install PyVista test dependencies
         run: |
@@ -413,11 +409,18 @@ jobs:
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: python -m pytest -v tests/plotting --disallow_unused_cache
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images

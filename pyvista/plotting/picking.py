@@ -312,7 +312,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         if self.click_position is None:  # type: ignore[attr-defined]
             self.store_click_position()  # type: ignore[attr-defined]
         renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        self.iren.picker.Pick(self.click_position[0], self.click_position[1], 0, renderer)  # type: ignore[attr-defined]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def pick_mouse_position(self):
@@ -327,7 +327,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         if self.mouse_position is None:  # type: ignore[attr-defined]
             self.store_mouse_position()  # type: ignore[attr-defined]
         renderer = self.iren.get_poked_renderer()  # type: ignore[attr-defined]
-        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined, index]
+        self.iren.picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, renderer)  # type: ignore[attr-defined]
         return self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
 
     def _init_click_picking_callback(self, *, left_clicking=False):
@@ -342,7 +342,7 @@ class PickingInterface:  # numpydoc ignore=PR01
                 partial(try_callback, _launch_pick_event),
             )
 
-    def disable_picking(self):
+    def disable_picking(self) -> None:
         """Disable any active picking and remove observers.
 
         Examples
@@ -756,7 +756,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         return self._picked_block_index
 
     @wraps(PickingInterface.disable_picking)
-    def disable_picking(self):
+    def disable_picking(self) -> None:  # type: ignore[override]
         """Disable picking."""
         super().disable_picking()
         # remove any picking text
@@ -1610,7 +1610,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         """
         # use a weak reference to enable garbage collection
-        renderer_ = weakref.ref(self.renderer)  # type: ignore[attr-defined]
         self_ = weakref.ref(self)
 
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
@@ -1619,9 +1618,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
             """Get the picked block and pass it to the user callback."""
             x, y = self.mouse_position  # type: ignore[attr-defined]
+            loc = self_().iren.get_event_subplot_loc()  # type: ignore[union-attr]
+            index = self_().renderers.loc_to_index(loc)  # type: ignore[union-attr]
+            renderer = self_().renderers[index]  # type: ignore[union-attr]
+
             selector = _vtk.vtkOpenGLHardwareSelector()
-            selector.SetRenderer(renderer_())  # type: ignore[arg-type]
-            selector.SetArea(x, y, x, y)  # single pixel
+            selector.SetRenderer(renderer)
+            selector.SetArea(x, y, x, y)
             selection = selector.Select()
 
             for ii in range(selection.GetNumberOfNodes()):

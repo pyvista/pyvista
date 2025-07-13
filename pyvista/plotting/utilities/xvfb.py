@@ -51,7 +51,7 @@ def start_xvfb(wait=3, window_size=None):
         PyVistaDeprecationWarning,
     )
 
-    from pyvista import global_theme
+    from pyvista import global_theme  # noqa: PLC0415
 
     if os.name != 'posix':
         msg = '`start_xvfb` is only supported on Linux'

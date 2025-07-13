@@ -192,7 +192,7 @@ def lines_from_points(
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)  # type: ignore[assignment]
+        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
     poly.lines = cells
     return poly
 

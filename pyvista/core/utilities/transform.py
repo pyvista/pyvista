@@ -255,7 +255,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
     ) -> None:
         super().__init__()
         self.multiply_mode = multiply_mode
-        self.point = point  # type: ignore[assignment]
+        self.point = point
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
@@ -266,7 +266,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
                     # Init from sequence of transformations
                     [self.compose(t) for t in trans]
             else:
-                self.matrix = trans  # type: ignore[assignment]
+                self.matrix = trans
 
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
@@ -2379,7 +2379,9 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         >>> rot = transform.as_rotation()
         >>> rot
-        <scipy.spatial.transform._rotation.Rotation ...>
+        Rotation.from_matrix(array([[ 0., -1.,  0.],
+                                    [ 1.,  0.,  0.],
+                                    [ 0.,  0.,  1.]]))
 
         Represent the rotation as a quaternion.
 
@@ -2416,7 +2418,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
 
         """
         try:
-            from scipy.spatial.transform import Rotation
+            from scipy.spatial.transform import Rotation  # noqa: PLC0415
         except ImportError:
             msg = "The 'scipy' package must be installed to use `as_rotation`"
             raise ImportError(msg)
