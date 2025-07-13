@@ -2261,62 +2261,6 @@ _dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
 
 
 @_deprecate_positional_args
-def download_frog_tissue(load=True):  # noqa: FBT002
-    """Download frog tissue dataset.
-
-    This dataset contains tissue segmentation labels for the frog dataset.
-
-    .. deprecated:: 0.44.0
-
-        This example does not load correctly on some systems and has been deprecated.
-        Use :func:`~pyvista.examples.examples.load_frog_tissues` instead.
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.ImageData | str
-        DataSet or filename depending on ``load``.
-
-    .. seealso::
-
-        :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`Frog Dataset <frog_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-    """
-    # Deprecated on v0.44.0, estimated removal on v0.47.0
-    warnings.warn(
-        'This example is deprecated and will be removed in v0.47.0. '
-        'Use `load_frog_tissues` instead.',
-        PyVistaDeprecationWarning,
-    )
-    if pyvista._version.version_info >= (0, 47):
-        msg = 'Remove this deprecated function'
-        raise RuntimeError(msg)
-
-    return _download_dataset(_dataset_frog_tissue, load=load)
-
-
-def _frog_tissue_files_func():
-    # Multiple files needed for read, but only one gets loaded
-    frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
-    frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
-    return frog_tissue_mhd, frog_tissue_zraw
-
-
-_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(_frog_tissue_files_func)
-
-
-@_deprecate_positional_args
 def download_chest(load=True):  # noqa: FBT002
     """Download chest dataset.
 
