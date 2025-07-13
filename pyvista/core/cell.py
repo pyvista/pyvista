@@ -20,7 +20,6 @@ from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from typing import Any
 
     from typing_extensions import Self
@@ -30,7 +29,6 @@ if TYPE_CHECKING:
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
-    from ._typing_core import VectorLike
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:
@@ -669,7 +667,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         self.__offsets: _vtk.vtkIdTypeArray | None = None
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
-            self.cells = cells  # type: ignore[assignment]
+            self.cells = cells
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
@@ -842,9 +840,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         return cellarr
 
     @classmethod
-    def from_irregular_cells(
-        cls: type[CellArray], cells: Sequence[VectorLike[int]]
-    ) -> pyvista.CellArray:
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -861,7 +857,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
         connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
-        return cls.from_arrays(offsets, connectivity)
+        return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
 # The following methods would be much nicer bound to CellArray,

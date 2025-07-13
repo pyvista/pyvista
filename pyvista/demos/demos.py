@@ -257,7 +257,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     # Make data
     X = np.arange(-10, 10, 0.25)
     Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)  # type: ignore[assignment]
+    X, Y = np.meshgrid(X, Y)
     R = np.sqrt(X**2 + Y**2)
     Z = np.sin(R)
 
@@ -508,20 +508,20 @@ def plot_datasets(dataset_type=None):
     points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pyvista.Line()
-    line.points += np.array((2, 0, 0))  # type: ignore[misc]
+    line.points += np.array((2, 0, 0))
     line.clear_data()
 
     tri = pyvista.Triangle()
-    tri.points += np.array([0, 1, 0])  # type: ignore[misc]
+    tri.points += np.array([0, 1, 0])
     circ = pyvista.Circle()
-    circ.points += np.array([1.5, 1.5, 0])  # type: ignore[misc]
+    circ.points += np.array([1.5, 1.5, 0])
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
     pyr = pyvista.Pyramid()
-    pyr.points *= 0.7  # type: ignore[misc]
+    pyr.points *= 0.7
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
@@ -552,7 +552,7 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'ImageData']:
         pl.add_mesh(image)
         pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'  # type: ignore[assignment]
+        pl.camera_position = 'xy'
 
     # RectilinearGrid
     if dataset_type is None:
@@ -561,7 +561,7 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'RectilinearGrid']:
         pl.add_mesh(rec_grid)
         pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'  # type: ignore[assignment]
+        pl.camera_position = 'xy'
 
     # StructuredGrid
     if dataset_type is None:
@@ -570,6 +570,6 @@ def plot_datasets(dataset_type=None):
     if dataset_type in [None, 'StructuredGrid']:
         pl.add_mesh(struct_grid)
         pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'  # type: ignore[assignment]
+        pl.camera_position = 'xy'
 
     pl.show()

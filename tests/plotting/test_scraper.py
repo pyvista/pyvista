@@ -21,7 +21,8 @@ class QApplication:
         pass
 
 
-def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
+def test_scraper_with_app(tmpdir, monkeypatch):
+    n_win = 2
     pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()

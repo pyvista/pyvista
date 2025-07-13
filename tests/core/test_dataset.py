@@ -1533,24 +1533,10 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert len(ids) > 0
 
 
-def test_active_t_coords_deprecated(globe):
-    mesh = globe
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        t_coords = mesh.active_t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.active_t_coords = t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-
-
 def test_active_array_info_deprecated():
     match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove this deprecated class'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove this deprecated class'
+        raise RuntimeError(msg)

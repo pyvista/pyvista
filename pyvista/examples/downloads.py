@@ -28,6 +28,7 @@ import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
+import pickle
 import shutil
 import sys
 from typing import cast
@@ -5530,8 +5531,6 @@ def download_osmnx_graph(load=True):  # noqa: FBT002
 
 
 def _osmnx_graph_read_func(filename):
-    import pickle
-
     return pickle.load(Path(filename).open('rb'))
 
 
@@ -7993,7 +7992,7 @@ class _WholeBodyCTUtilities:
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)  # type:ignore[union-attr]
-            from colors import colors
+            from colors import colors  # noqa: PLC0415
 
             return dict(sorted(colors.items()))
         else:
@@ -8765,3 +8764,48 @@ def download_biplane(load=True):  # noqa: FBT002
 
 
 _dataset_biplane = _SingleFileDownloadableDatasetLoader('biplane_rms_pressure_bs.exo')
+
+
+def download_yinyang(*, load=True):
+    """Download yinyang dataset.
+
+    .. versionadded:: 0.46.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the image and plot it as grayscale pixel cells.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_yinyang()
+    >>> pixel_cells = dataset.points_to_cells()
+    >>> pixel_cells.plot(
+    ...     cmap='gray',
+    ...     clim=[0, 255],
+    ...     cpos='xy',
+    ...     zoom='tight',
+    ...     lighting=False,
+    ...     show_scalar_bar=False,
+    ...     show_axes=False,
+    ... )
+
+    .. seealso::
+
+        :ref:`Yinyang Dataset <yinyang_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_yinyang, load=load)
+
+
+_dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
