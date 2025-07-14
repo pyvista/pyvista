@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
@@ -42,8 +43,13 @@ if TYPE_CHECKING:
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(
-        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar: bool = False
+    @_deprecate_positional_args
+    def gaussian_smooth(  # noqa: PLR0917
+        self,
+        radius_factor=1.5,
+        std_dev=2.0,
+        scalars=None,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Smooth the data with a Gaussian kernel.
 
@@ -83,7 +89,9 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pv.sample_function(
+        ...     noise, bounds=[0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -122,15 +130,16 @@ class ImageDataFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev)  # type: ignore[call-overload]
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
-        _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    def median_smooth(
+    @_deprecate_positional_args
+    def median_smooth(  # noqa: PLR0917
         self,
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Smooth data using a median filter.
 
@@ -180,7 +189,9 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
+        >>> grid = pv.sample_function(
+        ...     noise, bounds=[0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
+        ... )
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -204,11 +215,17 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
-        _update_alg(alg, progress_bar, 'Performing Median Smoothing')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
-    def extract_subset(
-        self, voi, rate=(1, 1, 1), boundary: bool = False, progress_bar: bool = False
+    @_deprecate_positional_args(allowed=['voi', 'rate'])
+    def extract_subset(  # noqa: PLR0917
+        self,
+        voi,
+        rate=(1, 1, 1),
+        boundary: bool = False,  # noqa: FBT001, FBT002
+        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
 
@@ -240,6 +257,22 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
+        rebase_coordinates : bool, default: True
+            If ``True`` (default), reset the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
+
+            .. versionadded:: 0.46
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -254,27 +287,23 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
-        _update_alg(alg, progress_bar, 'Extracting Subset')
+        _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
-        # Adjust for the confusing issue with the extents
-        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
-        fixed.origin = result.bounds[::2]
-        fixed.spacing = result.spacing
-        fixed.dimensions = result.dimensions
-        fixed.point_data.update(result.point_data)
-        fixed.cell_data.update(result.cell_data)
-        fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result, deep=True)
-        return fixed
+        if rebase_coordinates:
+            # Adjust for the confusing issue with the extents
+            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+            result.origin = result.bounds[::2]
+            result.offset = (0, 0, 0)
+        return result
 
-    def image_dilate_erode(
+    @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
+    def image_dilate_erode(  # noqa: PLR0917
         self,
         dilate_value=1.0,
         erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Dilates one value and erodes another.
 
@@ -359,17 +388,18 @@ class ImageDataFilters(DataSetFilters):
         alg.SetKernelSize(*kernel_size)
         alg.SetDilateValue(dilate_value)
         alg.SetErodeValue(erode_value)
-        _update_alg(alg, progress_bar, 'Performing Dilation and Erosion')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
 
-    def image_threshold(
+    @_deprecate_positional_args(allowed=['threshold'])
+    def image_threshold(  # noqa: PLR0917
         self,
         threshold,
         in_value=1.0,
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -484,14 +514,15 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SetReplaceOut(False)
         # run the algorithm
-        _update_alg(alg, progress_bar, 'Performing Image Thresholding')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Image Thresholding')
         output = _get_output(alg)
         if cast_dtype:
             self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
-    def fft(self, output_scalars_name=None, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def fft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -565,7 +596,7 @@ class ImageDataFilters(DataSetFilters):
 
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Fast Fourier Transform')
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -574,7 +605,8 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def rfft(self, output_scalars_name=None, progress_bar: bool = False):
+    @_deprecate_positional_args
+    def rfft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -637,7 +669,9 @@ class ImageDataFilters(DataSetFilters):
         self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Performing Reverse Fast Fourier Transform.'
+        )
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -646,14 +680,15 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def low_pass(
+    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
+    def low_pass(  # noqa: PLR0917
         self,
         x_cutoff,
         y_cutoff,
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -717,7 +752,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
-        _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Low Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -726,14 +761,15 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def high_pass(
+    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
+    def high_pass(  # noqa: PLR0917
         self,
         x_cutoff,
         y_cutoff,
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
@@ -797,7 +833,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
-        _update_alg(alg, progress_bar, 'Performing High Pass Filter')
+        _update_alg(alg, progress_bar=progress_bar, message='Performing High Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -857,17 +893,18 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast('pyvista.ImageData', wrap(alg.GetOutput()))
 
-    def contour_labeled(
+    @_deprecate_positional_args
+    def contour_labeled(  # noqa: PLR0917
         self,
         n_labels: int | None = None,
-        smoothing: bool = False,
+        smoothing: bool = False,  # noqa: FBT001, FBT002
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: float = 1,
         output_mesh_type: Literal['quads', 'triangles'] = 'quads',
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
@@ -970,7 +1007,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1025,7 +1062,9 @@ class ImageDataFilters(DataSetFilters):
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         with pyvista.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+            _update_alg(
+                alg, progress_bar=progress_bar, message='Performing Labeled Surface Extraction'
+            )
         return wrap(alg.GetOutput())
 
     def contour_labels(  # type: ignore[misc]
@@ -1486,6 +1525,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _configure_boundaries(
             alg_: _vtk.vtkSurfaceNets3D,
+            *,
             array_: pyvista_ndarray,
             select_inputs_: int | VectorLike[int] | None,
             select_outputs_: int | VectorLike[int] | None,
@@ -1541,6 +1581,7 @@ class ImageDataFilters(DataSetFilters):
 
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
+            *,
             spacing_: tuple[float, float, float],
             iterations_: int,
             relaxation_: float,
@@ -1572,7 +1613,7 @@ class ImageDataFilters(DataSetFilters):
                 alg_.SmoothingOff()
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1589,6 +1630,10 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
+        active_scalars = cast('pyvista.pyvista_ndarray', alg_input.active_scalars)
+        if np.allclose(active_scalars, background_value):
+            # Empty input, no contour will be generated
+            return pyvista.PolyData()
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
@@ -1606,23 +1651,23 @@ class ImageDataFilters(DataSetFilters):
         else:
             _configure_boundaries(
                 alg,
-                cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
-                select_inputs,
-                select_outputs,
+                array_=cast('pyvista.pyvista_ndarray', alg_input.active_scalars),
+                select_inputs_=select_inputs,
+                select_outputs_=select_outputs,
             )
         _configure_smoothing(
             alg,
-            alg_input.spacing,
-            smoothing_iterations,
-            smoothing_relaxation,
-            smoothing_scale,
-            smoothing_distance,
+            spacing_=alg_input.spacing,
+            iterations_=smoothing_iterations,
+            relaxation_=smoothing_relaxation,
+            scale_=smoothing_scale,
+            distance_=smoothing_distance,
         )
 
         # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         with pyvista.vtk_verbosity('off'):
-            _update_alg(alg, progress_bar, 'Generating label contours')
+            _update_alg(alg, progress_bar=progress_bar, message='Generating label contours')
 
         output: pyvista.PolyData = _get_output(alg)
 
@@ -1681,15 +1726,27 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
-            # Orient the faces but discard the normals array
-            output.compute_normals(
-                cell_normals=True,
-                point_normals=False,
-                consistent_normals=True,
-                auto_orient_normals=True,
-                inplace=True,
-            )
-            del output.cell_data['Normals']
+            if pyvista.vtk_version_info >= (9, 4):
+                filter_ = _vtk.vtkOrientPolyData()
+                filter_.SetInputData(output)
+                filter_.ConsistencyOn()
+                filter_.AutoOrientNormalsOn()
+                filter_.NonManifoldTraversalOn()
+                filter_.Update()
+                oriented = wrap(filter_.GetOutput())
+                output.points = oriented.points
+                output.faces = oriented.faces
+            else:
+                # Orient the faces but discard the normals array
+                output.compute_normals(
+                    cell_normals=True,
+                    point_normals=False,
+                    consistent_normals=True,
+                    auto_orient_normals=True,
+                    non_manifold_traversal=True,
+                    inplace=True,
+                )
+                del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -2056,6 +2113,7 @@ class ImageDataFilters(DataSetFilters):
 
     def _remesh_points_cells(  # type: ignore[misc]
         self: ImageData,
+        *,
         points_to_cells: bool,
         scalars: str | None,
         dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
@@ -2430,7 +2488,7 @@ class ImageDataFilters(DataSetFilters):
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
@@ -2474,6 +2532,7 @@ class ImageDataFilters(DataSetFilters):
                     f"match the number components ({num_input_components}) in array '{scalars}'."
                 )
                 raise ValueError(msg)
+            val = np.broadcast_to(val, (num_input_components,))
             if num_input_components > 1:
                 pad_multi_component = True
                 data = self.point_data  # type: ignore[attr-defined]
@@ -2508,7 +2567,7 @@ class ImageDataFilters(DataSetFilters):
             """
 
             def _update_and_get_output():
-                _update_alg(alg, progress_bar, 'Padding image')
+                _update_alg(alg, progress_bar=progress_bar, message='Padding image')
                 return _get_output(alg)
 
             # Set scalars since the filter only operates on the active scalars
@@ -2783,7 +2842,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,  # type: ignore[arg-type]
+            scalars,
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':
@@ -2832,7 +2891,9 @@ class ImageDataFilters(DataSetFilters):
             msg = f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'  # type: ignore[unreachable]
             raise ValueError(msg)
 
-        _update_alg(alg, progress_bar, 'Identifying and Labelling Connected Regions')
+        _update_alg(
+            alg, progress_bar=progress_bar, message='Identifying and Labelling Connected Regions'
+        )
 
         output = _get_output(alg)
 
@@ -3485,7 +3546,7 @@ class ImageDataFilters(DataSetFilters):
             if dimensions is not None:
                 dimensions_ = np.array(dimensions)
                 dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+                reference_image.dimensions = dimensions_
             new_dimensions = np.array(reference_image.dimensions)
 
         # Compute the magnification factors to use with the filter

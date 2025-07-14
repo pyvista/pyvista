@@ -109,6 +109,26 @@ def test_unstructured_grid_eq(hexbeam):
     assert hexbeam != copy
 
 
+def test_eq_nan_points():
+    poly = pv.PolyData([np.nan, np.nan, np.nan])
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_nan_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = [np.nan]
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
+def test_eq_string_array():
+    poly = pv.PolyData()
+    poly.field_data['data'] = ['abc']
+    poly2 = poly.copy()
+    assert poly == poly2
+
+
 def test_metadata_save(hexbeam, tmpdir):
     """Test if complex and bool metadata is saved and restored."""
     filename = tmpdir.join('hexbeam.vtk')
@@ -245,9 +265,16 @@ def test_user_dict_values(ant, value):
 
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
-    [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
+    [
+        (pv.MultiBlock([examples.load_ant()]), '.vtm'),
+        (examples.load_ant(), '.vtp'),
+        (examples.load_ant(), '.vtkhdf'),
+    ],
 )
 def test_user_dict_write_read(tmp_path, data_object, ext):
+    if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
+        return  # can't use VTKHDF on VTK<9.4.0
+
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
     data_object.user_dict = dict_data

@@ -54,7 +54,7 @@ jobs:
           pip install --upgrade pip
           pip install . --group test
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         with:
           packages: xvfb
           version: 3.0
@@ -64,7 +64,7 @@ jobs:
           pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista -v tests/core tests/examples
+        run: python -m pytest --cov=pyvista -v tests/core tests/examples --test_downloads
 
       - name: Plotting Testing (uses GL)
         run: xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images

@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 
 if TYPE_CHECKING:
@@ -203,7 +204,12 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], (np.ndarray, Sequence)):
-                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)  # type: ignore[arg-type]
+                self._from_arrays(
+                    x=np.asanyarray(args[0]),
+                    y=None,  # type: ignore[arg-type]
+                    z=None,  # type: ignore[arg-type]
+                    check_duplicates=check_duplicates,
+                )
             else:
                 msg = f'Type ({type(args[0])}) not understood by `RectilinearGrid`'
                 raise TypeError(msg)
@@ -215,17 +221,17 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    np.asanyarray(args[2]),  # type: ignore[misc]
-                    check_duplicates,
+                    x=np.asanyarray(args[0]),
+                    y=np.asanyarray(args[1]),
+                    z=np.asanyarray(args[2]),  # type: ignore[misc]
+                    check_duplicates=check_duplicates,
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]),
-                    np.asanyarray(args[1]),
-                    None,  # type: ignore[arg-type]
-                    check_duplicates,
+                    x=np.asanyarray(args[0]),
+                    y=np.asanyarray(args[1]),
+                    z=None,  # type: ignore[arg-type]
+                    check_duplicates=check_duplicates,
                 )
             else:
                 msg = 'Arguments not understood by `RectilinearGrid`.'
@@ -245,6 +251,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     def _from_arrays(
         self: Self,
+        *,
         x: NumpyArray[float],
         y: NumpyArray[float],
         z: NumpyArray[float],
@@ -320,7 +327,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             out = cast('tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]', out)
         return out
 
-    @property  # type: ignore[explicit-override, override]
+    @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
@@ -618,13 +625,14 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         '.vti': _vtk.vtkXMLImageDataWriter,
     }
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['uinput'])
+    def __init__(  # noqa: PLR0917
         self: Self,
         uinput: ImageData | str | Path | None = None,
-        dimensions: VectorLike[float] | None = None,
+        dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
     ) -> None:
@@ -654,13 +662,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 raise TypeError(msg)
         else:
             if dimensions is not None:
-                self.dimensions = dimensions  # type: ignore[assignment]
-            self.origin = origin  # type: ignore[assignment]
-            self.spacing = spacing  # type: ignore[assignment]
+                self.dimensions = dimensions
+            self.origin = origin
+            self.spacing = spacing
             if direction_matrix is not None:
-                self.direction_matrix = direction_matrix  # type: ignore[assignment]
+                self.direction_matrix = direction_matrix
             if offset is not None:
-                self.offset = offset  # type: ignore[assignment]
+                self.offset = offset
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -670,7 +678,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    @property  # type: ignore[explicit-override, override]
+    @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
         """Build a copy of the implicitly defined points as a numpy array.
 
@@ -907,13 +915,27 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             Rectilinear coordinates over the three dimensions.
 
         """
-        # Use linspace to avoid rounding error accumulation
         dims = self.dimensions
         spacing = self.spacing
         origin = self.origin
-        return [
-            (np.linspace(0, (dims[i] - 1) * spacing[i], dims[i]) + origin[i]) for i in range(3)
-        ]
+        offset = self.offset
+        direction = self.direction_matrix
+
+        # Off-axis rotation is not supported by RectilinearGrid
+        if np.allclose(np.abs(direction), np.eye(3)):
+            sign = np.diagonal(direction)
+        else:
+            sign = np.array((1.0, 1.0, 1.0))
+            msg = (
+                'The direction matrix is not a diagonal matrix and cannot be used when casting to '
+                'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid '
+                'instead.'
+            )
+            warnings.warn(msg, RuntimeWarning)
+
+        # Use linspace to avoid rounding error accumulation
+        ijk = [np.linspace(offset[i], offset[i] + dims[i] - 1, dims[i]) for i in range(3)]
+        return [ijk[axis] * spacing[axis] * sign[axis] + origin[axis] for axis in range(3)]
 
     @property
     def extent(
@@ -1029,7 +1051,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @wraps(RectilinearGridFilters.to_tetrahedra)
+    @wraps(RectilinearGridFilters.to_tetrahedra)  # type:ignore[has-type]
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
@@ -1087,9 +1109,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.'
             )
 
-        self.origin = T  # type: ignore[assignment]
+        self.origin = T
         self.direction_matrix = R * N
-        self.spacing = S  # type: ignore[assignment]
+        self.spacing = S
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:

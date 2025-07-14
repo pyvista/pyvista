@@ -328,6 +328,12 @@ def test_cell_centers(datasets):
         assert isinstance(result, pv.PolyData)
 
 
+def test_cell_centers_no_cell_data(cube):
+    # test passing cell data kwarg works
+    assert cube.cell_centers(pass_cell_data=True).cell_data
+    assert not cube.cell_centers(pass_cell_data=False).cell_data
+
+
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_cell_center_pointset(airplane):
     pointset = airplane.cast_to_pointset()
@@ -503,10 +509,13 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match='This filter is deprecated. Use `cell_quality` instead'
+    ):
         qual = mesh.compute_cell_quality(progress_bar=True)
-        assert 'CellQuality' in qual.array_names
-        with pytest.raises(KeyError):
+    assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        with pytest.warns(PyVistaDeprecationWarning):
             qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
@@ -754,8 +763,8 @@ def test_transform_imagedata_warns_with_shear(uniform):
 
     with pytest.warns(
         Warning,
-        match='The transformation matrix has a shear component which has been removed. \n'
-        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+        match=r'The transformation matrix has a shear component which has been removed\. \n'
+        r'Shear is not supported when setting `ImageData` `index_to_physical_matrix`\.',
     ):
         uniform.transform(shear, inplace=True)
 
@@ -858,7 +867,7 @@ def test_transform_inplace_bad_types_2(rectilinear):
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
-def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
+def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, hexbeam):
     trans = pv.Transform()
     trans.check_finite = False
     trans.RotateWXYZ(*rotate_amounts)
@@ -866,11 +875,11 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
     trans.Update()
 
     # Apply transform with pyvista filter
-    grid_a = grid.copy()
+    grid_a = hexbeam.copy()
     grid_a.transform(trans, inplace=True)
 
     # Apply transform with vtk filter
-    grid_b = grid.copy()
+    grid_b = hexbeam.copy()
     f = vtk.vtkTransformFilter()
     f.SetInputDataObject(grid_b)
     f.SetTransform(trans)
@@ -884,27 +893,27 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4))
-def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
+def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, hexbeam):
     # test non homogeneous transform
     trans_rotate_only = pv.Transform()
     trans_rotate_only.check_finite = False
     trans_rotate_only.RotateWXYZ(*rotate_amounts)
     trans_rotate_only.Update()
 
-    grid_copy = grid.copy()
+    grid_copy = hexbeam.copy()
     grid_copy.transform(trans_rotate_only, inplace=True)
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
     trans_arr = trans_rotate_only.matrix[:3, :3]
-    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
+    trans_pts = apply_transformation_to_points(trans_arr, hexbeam.points)
     assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
 
 
-def test_translate_should_not_fail_given_none(grid):
-    bounds = grid.bounds
-    grid.transform(None, inplace=True)
-    assert grid.bounds == bounds
+def test_translate_should_not_fail_given_none(hexbeam):
+    bounds = hexbeam.bounds
+    hexbeam.transform(None, inplace=True)
+    assert hexbeam.bounds == bounds
 
 
 def test_translate_should_fail_bad_points_or_transform():
@@ -924,19 +933,19 @@ def test_translate_should_fail_bad_points_or_transform():
     max_examples=HYPOTHESIS_MAX_EXAMPLES,
 )
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
-def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
+def test_transform_should_fail_given_wrong_numpy_shape(array, hexbeam):
     assume(array.shape not in [(3, 3), (4, 4)])
     match = 'Shape must be one of [(3, 3), (4, 4)]'
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid.transform(array, inplace=True)
+        hexbeam.transform(array, inplace=True)
 
 
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
-def test_translate_should_translate_grid(grid, axis_amounts):
-    grid_copy = grid.copy()
+def test_translate_should_translate_grid(hexbeam, axis_amounts):
+    grid_copy = hexbeam.copy()
     grid_copy.translate(axis_amounts, inplace=True)
 
-    grid_points = grid.points.copy() + np.array(axis_amounts)
+    grid_points = hexbeam.points.copy() + np.array(axis_amounts)
     assert np.allclose(grid_copy.points, grid_points)
 
 
@@ -946,18 +955,18 @@ def test_translate_should_translate_grid(grid, axis_amounts):
 )
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
-def test_rotate_should_match_vtk_rotation(angle, axis, grid):
+def test_rotate_should_match_vtk_rotation(angle, axis, hexbeam):
     trans = vtk.vtkTransform()
     getattr(trans, f'Rotate{axis.upper()}')(angle)
     trans.Update()
 
     trans_filter = vtk.vtkTransformFilter()
     trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
+    trans_filter.SetInputData(hexbeam)
     trans_filter.Update()
     grid_a = pv.UnstructuredGrid(trans_filter.GetOutput())
 
-    grid_b = grid.copy()
+    grid_b = hexbeam.copy()
     getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
@@ -1099,7 +1108,7 @@ def test_transform_integers():
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
 
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match=r'Integer points.*converted.*float32'):
         poly.rotate_x(angle=10, inplace=True)
 
     # check that points were converted and transformed correctly

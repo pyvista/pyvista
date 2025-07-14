@@ -8,6 +8,8 @@ import sys
 
 import scooby
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 _cmd = """\
 import pyvista; \
 plotter = pyvista.Plotter(notebook=False, off_screen=True); \
@@ -158,11 +160,19 @@ class Report(scooby.Report):
 
     """
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False, gpu=True):
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
+        self,
+        additional=None,
+        ncol=3,
+        text_width=80,
+        sort=False,  # noqa: FBT002
+        gpu=True,  # noqa: FBT002
+    ):
         """Generate a :class:`scooby.Report` instance."""
-        from vtkmodules.vtkRenderingCore import vtkRenderWindow
+        from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
 
-        from pyvista.plotting.tools import check_math_text_support
+        from pyvista.plotting.tools import check_math_text_support  # noqa: PLC0415
 
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']

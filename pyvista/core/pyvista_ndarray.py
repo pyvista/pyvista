@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 
-class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02  # noqa: N801
+class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
     """A ndarray which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
@@ -119,7 +119,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204
+    def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819

@@ -974,6 +974,12 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
+def test_hdf_reader_raises(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0))
+    with pytest.raises(pv.VTKVersionError):
+        pv.HDFReader('foo')
+
+
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 

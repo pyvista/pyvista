@@ -15,6 +15,7 @@ import weakref
 import numpy as np
 
 from pyvista import vtk_version_info
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import abstract_class
@@ -87,7 +88,14 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
+    @_deprecate_positional_args(allowed=['plotter'])
+    def __init__(  # noqa: PLR0917
+        self,
+        plotter,
+        desired_update_rate=30,
+        light_follow_camera=True,  # noqa: FBT002
+        interactor=None,
+    ):
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -201,7 +209,8 @@ class RenderWindowInteractor:
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    def add_observer(self, event, call, interactor_style_fallback=True):
+    @_deprecate_positional_args(allowed=['event', 'call'])
+    def add_observer(self, event, call, interactor_style_fallback=True):  # noqa: FBT002
         """Add an observer for the given event.
 
         Parameters
@@ -302,7 +311,8 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key, raise_on_missing=False):
+    @_deprecate_positional_args(allowed=['key'])
+    def clear_events_for_key(self, key, raise_on_missing=False):  # noqa: FBT002
         """Remove the callbacks associated to the key.
 
         Parameters
@@ -370,7 +380,14 @@ class RenderWindowInteractor:
         for callback in self._click_event_callbacks[event][double, True]:
             callback(self._plotter.click_position)
 
-    def track_click_position(self, callback=None, side='right', double=False, viewport=False):
+    @_deprecate_positional_args(allowed=['callback', 'side'])
+    def track_click_position(  # noqa: PLR0917,
+        self,
+        callback=None,
+        side='right',
+        double=False,  # noqa: FBT002
+        viewport=False,  # noqa: FBT002
+    ):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -510,7 +527,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -604,7 +621,8 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleTrackballCamera(self)
 
-    def enable_custom_trackball_style(
+    @_deprecate_positional_args
+    def enable_custom_trackball_style(  # noqa: PLR0917
         self,
         left='rotate',
         shift_left='pan',
@@ -724,7 +742,7 @@ class RenderWindowInteractor:
             'right': self.style.OnRightButtonUp,
         }
 
-        def _setup_callbacks(button, click, control, shift):
+        def _setup_callbacks(*, button, click, control, shift):
             """Return callbacks for press and release events.
 
             Callbacks are formed for a button and action for a click,
@@ -760,28 +778,28 @@ class RenderWindowInteractor:
             return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
-            'left',
-            left,
-            control_left,
-            shift_left,
+            button='left',
+            click=left,
+            control=control_left,
+            shift=shift_left,
         )
         self.style.add_observer('LeftButtonPressEvent', _left_button_press_callback)
         self.style.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
-            'middle',
-            middle,
-            control_middle,
-            shift_middle,
+            button='middle',
+            click=middle,
+            control=control_middle,
+            shift=shift_middle,
         )
         self.style.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
         self.style.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
-            'right',
-            right,
-            control_right,
-            shift_right,
+            button='right',
+            click=right,
+            control=control_right,
+            shift=shift_right,
         )
         self.style.add_observer('RightButtonPressEvent', _right_button_press_callback)
         self.style.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
@@ -979,8 +997,11 @@ class RenderWindowInteractor:
         """
         self.style = InteractorStyleZoom(self)
 
+    @_deprecate_positional_args
     def enable_terrain_style(
-        self, mouse_wheel_zooms: bool | float = True, shift_pans: bool = True
+        self,
+        mouse_wheel_zooms: bool | float = True,  # noqa: FBT001, FBT002
+        shift_pans: bool = True,  # noqa: FBT001, FBT002
     ):
         """Set the interactive style to Terrain.
 
@@ -1379,7 +1400,8 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_timer(self, duration, repeating=True):
+    @_deprecate_positional_args(allowed=['duration'])
+    def create_timer(self, duration, repeating=True):  # noqa: FBT002
         """Create a timer.
 
         Parameters

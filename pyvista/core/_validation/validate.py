@@ -708,7 +708,7 @@ def validate_transform3x3(
             pass
         except TypeError:
             try:
-                from scipy.spatial.transform import Rotation
+                from scipy.spatial.transform import Rotation  # noqa: PLC0415
             except ModuleNotFoundError:  # pragma: no cover
                 pass
             else:
@@ -1277,11 +1277,11 @@ def _validate_color_sequence(
 
     If `n_colors` is None, no broadcasting or length-checking is performed.
     """
-    from pyvista.plotting.colors import Color
+    from pyvista.plotting.colors import Color  # noqa: PLC0415
 
     try:
         # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
+        color_list = [Color(color)]
         n_colors = 1 if n_colors is None else n_colors
         return tuple(color_list * n_colors)
     except ValueError:

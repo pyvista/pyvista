@@ -8,7 +8,7 @@ import os.path as op
 import sys
 
 
-def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:
+def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001, FBT002
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -37,7 +37,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
 
     """
-    import pyvista
+    import pyvista  # noqa: PLC0415
 
     if domain != 'py':
         return None
@@ -99,7 +99,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
-def pv_html_page_context(
+def pv_html_page_context(  # noqa: PLR0917
     app,  # noqa: ARG001
     pagename: str,
     templatename: str,  # noqa: ARG001

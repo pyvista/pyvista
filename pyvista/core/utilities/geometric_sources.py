@@ -19,6 +19,7 @@ import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
@@ -84,13 +85,13 @@ def translate(
 
     surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)  # type: ignore[misc]
+        surf.points += np.array(center, dtype=surf.points.dtype)
 
 
 if _vtk.vtk_version_info < (9, 3):
 
     @no_new_attr
-    class CapsuleSource(_vtk.vtkCapsuleSource):
+    class CapsuleSource(_vtk.vtkCapsuleSource):  # type: ignore[misc]
         """Capsule source algorithm class.
 
         .. versionadded:: 0.44.0
@@ -129,7 +130,8 @@ if _vtk.vtk_version_info < (9, 3):
 
         _new_attr_exceptions: ClassVar[list[str]] = ['_direction', 'direction']
 
-        def __init__(
+        @_deprecate_positional_args
+        def __init__(  # noqa: PLR0917
             self: CapsuleSource,
             center: VectorLike[float] = (0.0, 0.0, 0.0),
             direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -140,8 +142,8 @@ if _vtk.vtk_version_info < (9, 3):
         ) -> None:
             """Initialize the capsule source class."""
             super().__init__()
-            self.center = center  # type: ignore[assignment]
-            self.direction = direction  # type: ignore[assignment]
+            self.center = center
+            self.direction = direction
             self.radius = radius
             self.cylinder_length = cylinder_length
             self.theta_resolution = theta_resolution
@@ -353,20 +355,21 @@ class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: ConeSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         height: float = 1.0,
         radius: float | None = None,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001, FBT002
         angle: float | None = None,
         resolution: int = 6,
     ) -> None:
         """Initialize the cone source class."""
         super().__init__()
-        self.center = center  # type: ignore[assignment]
-        self.direction = direction  # type: ignore[assignment]
+        self.center = center
+        self.direction = direction
         self.height = height
         self.capping = capping
         if angle is not None and radius is not None:
@@ -632,19 +635,20 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
         'direction',
     ]
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: CylinderSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         radius: float = 0.5,
         height: float = 1.0,
-        capping: bool = True,
+        capping: bool = True,  # noqa: FBT001, FBT002
         resolution: int = 100,
     ) -> None:
         """Initialize the cylinder source class."""
         super().__init__()
-        self.center = center  # type: ignore[assignment]
-        self.direction = direction  # type: ignore[assignment]
+        self.center = center
+        self.direction = direction
         self.radius = radius
         self.height = height
         self.resolution = resolution
@@ -858,7 +862,7 @@ class MultipleLinesSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
         if points is None:
             points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         super().__init__()
-        self.points = points  # type: ignore[assignment]
+        self.points = points
 
     @property
     def points(self: MultipleLinesSource) -> NumpyArray[float]:
@@ -956,7 +960,8 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         '_modified',
     ]
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['string'])
+    def __init__(  # noqa: PLR0917
         self: Text3DSource,
         string: str | None = None,
         depth: float | None = None,
@@ -964,7 +969,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         height: float | None = None,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
-        process_empty_string: bool = True,
+        process_empty_string: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -974,8 +979,8 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         # Set params
         self.string = '' if string is None else string
         self._process_empty_string = process_empty_string
-        self.center = center  # type: ignore[assignment]
-        self.normal = normal  # type: ignore[assignment]
+        self.center = center
+        self.normal = normal
         self._height = height
         self._width = width
         self._depth = depth
@@ -1127,7 +1132,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
             if is_empty_string and self.process_empty_string:
                 # Add a single point to 'fix' the bounds
-                self._output.points = (0.0, 0.0, 0.0)  # type: ignore[assignment]
+                self._output.points = (0.0, 0.0, 0.0)
 
             self._transform_output()
             self._modified = False
@@ -1196,7 +1201,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center  # type: ignore[misc]
+        out.points -= out.center
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1205,7 +1210,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center  # type: ignore[misc]
+            out.points += self.center
 
 
 @no_new_attr
@@ -1252,7 +1257,8 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
         '_bounds',
     ]
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: CubeSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         x_length: float = 1.0,
@@ -1264,9 +1270,9 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
         """Initialize the cube source class."""
         super().__init__()
         if bounds is not None:
-            self.bounds = bounds  # type: ignore[assignment]
+            self.bounds = bounds
         else:
-            self.center = center  # type: ignore[assignment]
+            self.center = center
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
@@ -1476,7 +1482,8 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: DiscSource,
         center: VectorLike[float] | None = None,
         inner: float = 0.25,
@@ -1487,7 +1494,7 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
         """Initialize the disc source class."""
         super().__init__()
         if center is not None:
-            self.center = center  # type: ignore[assignment]
+            self.center = center
         self.inner = inner
         self.outer = outer
         self.r_res = r_res
@@ -1521,7 +1528,7 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             self.SetCenter(*center)
         else:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
             raise VTKVersionError(msg)
@@ -1663,8 +1670,8 @@ class LineSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     ) -> None:
         """Initialize source."""
         super().__init__()
-        self.pointa = pointa  # type: ignore[assignment]
-        self.pointb = pointb  # type: ignore[assignment]
+        self.pointa = pointa
+        self.pointb = pointb
         self.resolution = resolution
 
     @property
@@ -1815,7 +1822,8 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: SphereSource,
         radius: float = 0.5,
         center: VectorLike[float] | None = None,
@@ -1830,7 +1838,7 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
         super().__init__()
         self.radius = radius
         if center is not None:  # pragma: no cover
-            self.center = center  # type: ignore[assignment]
+            self.center = center
         self.theta_resolution = theta_resolution
         self.phi_resolution = phi_resolution
         self.start_theta = start_theta
@@ -1866,7 +1874,7 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
         if pyvista.vtk_version_info >= (9, 2):
             self.SetCenter(*center)
         else:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
             raise VTKVersionError(msg)
@@ -2087,19 +2095,20 @@ class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: PolygonSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         radius: float = 1.0,
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
         n_sides: int = 6,
-        fill: bool = True,
+        fill: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the polygon source class."""
         super().__init__()
-        self.center = center  # type: ignore[assignment]
+        self.center = center
         self.radius = radius
-        self.normal = normal  # type: ignore[assignment]
+        self.normal = normal
         self.n_sides = n_sides
         self.fill = fill
 
@@ -2375,7 +2384,8 @@ class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: PlaneSource,
         i_resolution: int = 10,
         j_resolution: int = 10,
@@ -2388,10 +2398,10 @@ class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
-        self.center = center  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.point_a = point_a  # type: ignore[assignment]
-        self.point_b = point_b  # type: ignore[assignment]
+        self.center = center
+        self.origin = origin
+        self.point_a = point_a
+        self.point_b = point_b
 
     @property
     def i_resolution(self: PlaneSource) -> int:
@@ -2606,7 +2616,8 @@ class ArrowSource(_vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: ArrowSource,
         tip_length: float = 0.25,
         tip_radius: float = 0.1,
@@ -2781,15 +2792,16 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
         '_bounds',
     ]
 
+    @_deprecate_positional_args(allowed=['bounds'])
     def __init__(
         self: BoxSource,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         level: int = 0,
-        quads: bool = True,
+        quads: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize source."""
         super().__init__()
-        self.bounds = bounds  # type: ignore[assignment]
+        self.bounds = bounds
         self.level = level
         self.quads = quads
 
@@ -2915,7 +2927,8 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
 
     """
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self: SuperquadricSource,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: VectorLike[float] = (1.0, 1.0, 1.0),
@@ -2924,13 +2937,13 @@ class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
         phi_roundness: float = 1.0,
         theta_resolution: int = 16,
         phi_resolution: int = 16,
-        toroidal: bool = False,
+        toroidal: bool = False,  # noqa: FBT001, FBT002
         thickness: float = 1 / 3,
     ) -> None:
         """Initialize source."""
         super().__init__()
-        self.center = center  # type: ignore[assignment]
-        self.scale = scale  # type: ignore[assignment]
+        self.center = center
+        self.scale = scale
         self.size = size
         self.theta_roundness = theta_roundness
         self.phi_roundness = phi_roundness
@@ -3289,12 +3302,12 @@ class AxesGeometrySource:
         self._tip_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
 
         # Set geometry-dependent params
-        self.shaft_type = shaft_type  # type: ignore[assignment]
+        self.shaft_type = shaft_type
         self.shaft_radius = shaft_radius
-        self.shaft_length = shaft_length  # type: ignore[assignment]
-        self.tip_type = tip_type  # type: ignore[assignment]
+        self.shaft_length = shaft_length
+        self.tip_type = tip_type
         self.tip_radius = tip_radius
-        self.tip_length = tip_length  # type: ignore[assignment]
+        self.tip_length = tip_length
 
         # Set flags
         self._symmetric = symmetric
@@ -3664,7 +3677,7 @@ class AxesGeometrySource:
                 new_face = [3, point_id, point_id, point_id]
 
                 # Update mesh
-                part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[assignment]
+                part.points = np.append(part.points, flipped_point, axis=0)
                 part.faces = np.append(part.faces, new_face)
 
     def update(self: AxesGeometrySource) -> None:
@@ -3747,7 +3760,7 @@ class AxesGeometrySource:
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
         # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
-        part.points -= part.center  # type: ignore[misc]
+        part.points -= part.center
 
         # Scale so bounding box edges have length one
         bnds = part.bounds
@@ -3849,10 +3862,10 @@ class OrthogonalPlanesSource:
         self.sources = tuple(pyvista.PlaneSource() for _ in range(3))
 
         # Init properties
-        self.bounds = bounds  # type: ignore[assignment]
-        self.resolution = resolution  # type: ignore[assignment]
-        self.normal_sign = normal_sign  # type: ignore[assignment]
-        self.names = names  # type: ignore[assignment]
+        self.bounds = bounds
+        self.resolution = resolution
+        self.normal_sign = normal_sign
+        self.names = names
 
     @property
     def normal_sign(
@@ -3917,7 +3930,7 @@ class OrthogonalPlanesSource:
         return self._bounds
 
     @bounds.setter
-    def bounds(self: OrthogonalPlanesSource, bounds: BoundsTuple) -> None:
+    def bounds(self: OrthogonalPlanesSource, bounds: VectorLike[float]) -> None:
         bounds_tuple = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )

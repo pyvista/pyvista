@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover
 
 from typing import TYPE_CHECKING
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
@@ -144,7 +145,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    def __init__(
+    @_deprecate_positional_args
+    def __init__(  # noqa: PLR0917
         self,
         position=None,
         focal_point=None,
@@ -153,7 +155,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         intensity=None,
         positional=None,
         cone_angle=None,
-        show_actor=False,
+        show_actor=False,  # noqa: FBT002
         exponent=None,
         shadow_attenuation=None,
         attenuation_values=None,
@@ -260,6 +262,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
                     if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
                         return False
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __del__(self):
         """Clean up when the light is being destroyed."""
@@ -635,7 +639,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -684,7 +688,7 @@ class Light(DisableVtkSnakeCase, vtkLight):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(lighting='none')
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color='white')
+        ...     _ = plotter.add_mesh(pv.Plane(center=(offset, 0, 0)), color='white')
         ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
@@ -993,7 +997,8 @@ class Light(DisableVtkSnakeCase, vtkLight):
         phi = np.radians(azim)
         self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
-    def copy(self, deep=True):
+    @_deprecate_positional_args
+    def copy(self, deep=True):  # noqa: FBT002
         """Return a shallow or a deep copy of the light.
 
         The only mutable attribute of :class:`pyvista.Light` is the

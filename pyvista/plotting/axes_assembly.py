@@ -15,6 +15,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import BoundsTuple
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
@@ -157,18 +158,18 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
+        self.position = position
+        self.orientation = orientation
         self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
+        self.origin = origin
+        self.user_matrix = user_matrix
 
         self._name = name  # type: ignore[assignment]
 
     @property
     def parts(self):
         collection = self.GetParts()
-        return tuple([collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())])
+        return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 
     @property
     def _label_actor_iterator(self) -> Iterator[Label]:
@@ -182,7 +183,7 @@ class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkP
             if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
                 part.user_matrix, new_matrix
             ):
-                part.user_matrix = new_matrix  # type: ignore[method-assign]
+                part.user_matrix = new_matrix
 
     def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         return BoundsTuple(*self.GetBounds())
@@ -712,7 +713,8 @@ class AxesAssembly(_XYZAssembly):
     def z_color(self, color: ColorLike | Sequence[ColorLike]):
         self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
-    def set_actor_prop(
+    @_deprecate_positional_args(allowed=['name', 'value'])
+    def set_actor_prop(  # noqa: PLR0917
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],
@@ -1584,7 +1586,7 @@ class PlanesAssembly(_XYZAssembly):
         self.opacity = opacity  # type: ignore[assignment]
         self.label_mode = label_mode
         self.label_offset = label_offset
-        self.label_edge = label_edge  # type: ignore[assignment]
+        self.label_edge = label_edge
 
         # Set default properties
         for actor in self._plane_actors:
@@ -1870,7 +1872,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_offset
 
     @label_offset.setter
-    def label_offset(self, offset: int):
+    def label_offset(self, offset: float):
         self._label_offset = _validation.validate_number(offset, dtype_out=float)
         self._update_label_positions()
 

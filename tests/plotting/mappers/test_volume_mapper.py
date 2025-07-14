@@ -15,12 +15,12 @@ def volume_mapper():
     return actor.mapper
 
 
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 def test_volume_mapper_dataset(volume_mapper):
     assert isinstance(volume_mapper.dataset, pv.ImageData)
 
 
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 def test_volume_mapper_blend_mode(volume_mapper):
     assert isinstance(volume_mapper.blend_mode, str)
 

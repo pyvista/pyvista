@@ -12,6 +12,7 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
@@ -45,20 +46,27 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 
 @overload
 def numpy_to_idarr(
-    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[True] = True
+    ind: int | ArrayLike[int],
+    deep: bool = ...,  # noqa: FBT001
+    return_ind: Literal[True] = True,  # noqa: FBT002
 ) -> _vtk.vtkIdTypeArray: ...
 @overload
 def numpy_to_idarr(
-    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[False] = False
+    ind: int | ArrayLike[int],
+    deep: bool = ...,  # noqa: FBT001
+    return_ind: Literal[False] = False,  # noqa: FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
 @overload
 def numpy_to_idarr(
-    ind: int | ArrayLike[int], deep: bool = ..., return_ind: bool = ...
+    ind: int | ArrayLike[int],
+    deep: bool = ...,  # noqa: FBT001
+    return_ind: bool = ...,  # noqa: FBT001
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
+@_deprecate_positional_args(allowed=['ind'])
 def numpy_to_idarr(
     ind: int | ArrayLike[int],
-    deep: bool = False,
-    return_ind: bool = False,
+    deep: bool = False,  # noqa: FBT001, FBT002
+    return_ind: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a numpy array to a :vtk:`vtkIdTypeArray`.
 
@@ -162,7 +170,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     ... )
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map
+    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
 
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         msg = 'Found unknown or unsupported VTK cell type in your requested cells'
@@ -229,6 +237,11 @@ def get_mixed_cells(vtkobj):
     arrays of size [N, D], where N is the number of cells and D is the
     size of the cells for the given type (e.g. 3 for triangles).
 
+    .. versionchanged:: 0.46
+
+        An empty dict ``{}`` is returned instead of ``None`` if the input
+        is empty.
+
     Parameters
     ----------
     vtkobj : pyvista.UnstructuredGrid
@@ -247,9 +260,9 @@ def get_mixed_cells(vtkobj):
         like VTK_POLYGON.
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map
+    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
 
-    return_dict = {}
+    return_dict = {}  # type: ignore[var-annotated]
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
         msg = 'Expected a pyvista object'
@@ -257,7 +270,7 @@ def get_mixed_cells(vtkobj):
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
-        return None
+        return return_dict
 
     cell_types = vtkobj.celltypes
     cells = vtkobj.cells

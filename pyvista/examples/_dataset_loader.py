@@ -300,7 +300,7 @@ class _SingleFile(_SingleFilePropsProtocol):
     """Wrap a single file."""
 
     def __init__(self, path):
-        from pyvista.examples.downloads import USER_DATA_PATH
+        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
 
         self._path = (
             path if path is None or os.path.isabs(path) else os.path.join(USER_DATA_PATH, path)
@@ -424,12 +424,12 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     ):
         _SingleFile.__init__(self, path)
 
-        from pyvista.examples.downloads import SOURCE
-        from pyvista.examples.downloads import USER_DATA_PATH
-        from pyvista.examples.downloads import _download_archive_file_or_folder
-        from pyvista.examples.downloads import download_file
-        from pyvista.examples.downloads import file_from_files
-        from pyvista.examples.examples import dir_path
+        from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
+        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+        from pyvista.examples.downloads import _download_archive_file_or_folder  # noqa: PLC0415
+        from pyvista.examples.downloads import download_file  # noqa: PLC0415
+        from pyvista.examples.downloads import file_from_files  # noqa: PLC0415
+        from pyvista.examples.examples import dir_path  # noqa: PLC0415
 
         if Path(path).is_absolute():
             # Absolute path must point to a built-in dataset
@@ -497,7 +497,7 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         path: str,
         read_func: Callable[[str], DatasetType] | None = None,
@@ -565,11 +565,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     @property
     def path_loadable(self) -> tuple[str, ...]:
         return tuple(
-            [
-                file.path
-                for file in self._file_objects
-                if isinstance(file, _SingleFileDatasetLoader)
-            ],
+            file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)
         )
 
     @property
@@ -580,11 +576,11 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def _filesize_format(self) -> tuple[str, ...]:
-        return tuple([_format_file_size(size) for size in self._filesize_bytes])
+        return tuple(_format_file_size(size) for size in self._filesize_bytes)
 
     @property
     def _total_size_bytes(self) -> int:
-        return sum([file._total_size_bytes for file in self._file_objects])
+        return sum(file._total_size_bytes for file in self._file_objects)
 
     @property
     def total_size(self) -> str:
@@ -647,6 +643,7 @@ def _flatten_nested_sequence(nested: Sequence[_ScalarType | Sequence[_ScalarType
 
 def _download_dataset(
     dataset_loader: _SingleFileDownloadableDatasetLoader | _MultiFileDownloadableDatasetLoader,
+    *,
     load: bool = True,
     metafiles: bool = False,
 ):
@@ -786,7 +783,7 @@ def _get_file_or_folder_ext(path: str):
     return ext
 
 
-def _get_all_nested_filepaths(filepath, exclude_readme=True):
+def _get_all_nested_filepaths(filepath, *, exclude_readme=True):
     """Walk through directory and get all file paths.
 
     Optionally exclude any readme files (if any).

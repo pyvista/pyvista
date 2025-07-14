@@ -18,6 +18,7 @@ from pyvista import examples
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
+from pyvista.examples import cells
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -345,7 +346,7 @@ def test_cells_dict_variable_length():
 
 def test_cells_dict_empty_grid():
     grid = pv.UnstructuredGrid()
-    assert grid.cells_dict is None
+    assert grid.cells_dict == {}
 
 
 def test_cells_dict_alternating_cells():
@@ -391,7 +392,12 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    hexbeam.save(filename, binary)
+    if extension == '.vtkhdf' and not binary:
+        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+            hexbeam.save(filename, binary=binary)
+        return
+
+    hexbeam.save(filename, binary=binary)
 
     grid = pv.UnstructuredGrid(filename)
     assert grid.cells.shape == hexbeam.cells.shape
@@ -433,10 +439,24 @@ def test_save_bad_extension():
         pv.UnstructuredGrid('file.abc')
 
 
-def test_linear_copy(hexbeam):
-    # need a grid with quadratic cells
-    lgrid = hexbeam.linear_copy()
-    assert np.all(lgrid.celltypes < 20)
+@pytest.mark.parametrize(
+    ('nonlinear_input', 'linear_output'),
+    [
+        (cells.QuadraticQuadrilateral(), cells.Quadrilateral()),
+        (cells.QuadraticTriangle(), cells.Triangle()),
+        (cells.QuadraticTetrahedron(), cells.Tetrahedron()),
+        (cells.QuadraticPyramid(), cells.Pyramid()),
+        (cells.QuadraticWedge(), cells.Wedge()),
+        (cells.QuadraticHexahedron(), cells.Hexahedron()),
+    ],
+)
+def test_linear_copy(nonlinear_input, linear_output):
+    assert not nonlinear_input.get_cell(0).IsLinear()
+    lgrid = nonlinear_input.linear_copy()
+    assert lgrid.get_cell(0).IsLinear()
+    assert lgrid.n_points == nonlinear_input.n_points
+    assert lgrid.n_points != linear_output.n_points
+    assert lgrid.n_cells == linear_output.n_cells
 
 
 def test_linear_copy_surf_elem():
@@ -505,14 +525,45 @@ def test_merge(hexbeam):
     assert grid.n_points < unmerged.n_points
 
 
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 5, 0), reason='Main always has priority for vtk >= 9.5.'
+)
 def test_merge_not_main(hexbeam):
     grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning, match=r"The keyword 'main_has_priority' is deprecated"
+    ):
+        unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
 
     grid.merge(hexbeam, inplace=True, merge_points=True)
     assert grid.n_points > hexbeam.n_points
     assert grid.n_points < unmerged.n_points
+
+
+def test_merge_order():
+    key = 'data'
+    main = examples.cells.Quadrilateral()
+    main_array = [0, 0, 0, 0]
+    main.point_data[key] = main_array
+    main_celltype = main.celltypes[0]
+
+    other = examples.cells.Pixel()
+    other_array = [1, 1, 1, 1]
+    other.point_data[key] = other_array
+    other_celltype = other.celltypes[0]
+
+    merged = main.merge(other)
+    expected_array = main_array
+    actual_array = merged.point_data[key]
+    assert np.array_equal(actual_array, expected_array)
+
+    if pv.vtk_version_info >= (9, 5, 0):
+        expected_celltypes = [main_celltype, other_celltype]
+    else:
+        expected_celltypes = [other_celltype, main_celltype]
+    actual_celltypes = merged.celltypes
+    assert np.array_equal(actual_celltypes, expected_celltypes)
 
 
 def test_merge_list(hexbeam):
@@ -723,7 +774,7 @@ def test_invalid_init_structured():
 @pytest.mark.parametrize('extension', pv.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    struct_grid.save(filename, binary)
+    struct_grid.save(filename, binary=binary)
 
     grid = pv.StructuredGrid(filename)
     assert grid.x.shape == struct_grid.y.shape
@@ -1008,9 +1059,25 @@ def test_cast_uniform_to_structured():
 
 def test_cast_uniform_to_rectilinear():
     grid = examples.load_uniform()
+    grid.offset = (1, 2, 3)
+    grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))
+    grid.spacing = (1.1, 2.2, 3.3)
     rectilinear = grid.cast_to_rectilinear_grid()
     assert rectilinear.n_points == grid.n_points
     assert rectilinear.n_arrays == grid.n_arrays
+    assert rectilinear.bounds == grid.bounds
+
+    grid.direction_matrix = pv.Transform().rotate_x(30).matrix[:3, :3]
+    match = (
+        'The direction matrix is not a diagonal matrix and cannot be used when casting to '
+        'RectilinearGrid.\nThe direction is ignored. Consider casting to StructuredGrid instead.'
+    )
+    with pytest.warns(RuntimeWarning, match=match):
+        rectilinear = grid.cast_to_rectilinear_grid()
+    # Input has orientation, output does not
+    assert rectilinear.bounds != grid.bounds
+    # Test output has orientation component removed
+    grid.direction_matrix = np.eye(3)
     assert rectilinear.bounds == grid.bounds
 
 
@@ -1103,7 +1170,7 @@ def test_fft_high_pass(noise_2d):
 def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
-    ogrid.save(filename, binary)
+    ogrid.save(filename, binary=binary)
     grid = pv.RectilinearGrid(filename)
     assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
@@ -1135,9 +1202,9 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
             '\nUse the `.vti` extension instead (XML format).'
         )
         with pytest.warns(UserWarning, match=match):
-            uniform.save(filename, binary)
+            uniform.save(filename, binary=binary)
     else:
-        uniform.save(filename, binary)
+        uniform.save(filename, binary=binary)
 
     grid = reader(filename)
 

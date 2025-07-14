@@ -345,7 +345,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         return self.to_image().active_scalars.reshape(
-            list(self.dimensions)[::-1] + [self.n_components],
+            [*list(self.dimensions)[::-1], self.n_components]
         )[::-1]
 
     def rotate_cw(self) -> Texture:
@@ -517,12 +517,12 @@ class Texture(DataObject, _vtk.vtkTexture):
         lighting = kwargs.pop('lighting', None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, True)  # type: ignore[arg-type]
+        pl.set_environment_texture(self, is_srgb=True)
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
-            pl.show_axes()  # type: ignore[call-arg]
+            pl.show_axes()
         pl.show(**kwargs)
 
     @property
@@ -590,7 +590,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         if not hasattr(self, 'GetWrap'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = '`wrap` requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -600,7 +600,7 @@ class Texture(DataObject, _vtk.vtkTexture):
     @wrap.setter
     def wrap(self, value: Texture.WrapType | int):
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = '`wrap` requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)

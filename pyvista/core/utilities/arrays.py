@@ -19,6 +19,7 @@ import numpy as np
 import numpy.typing as npt
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -31,6 +32,26 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+
+# Mapping from types in `vtkType.h` to the corresponding array class
+VTK_ARRAY_TYPES = {
+    _vtk.VTK_BIT: _vtk.vtkBitArray,
+    _vtk.VTK_CHAR: _vtk.vtkCharArray,
+    _vtk.VTK_SIGNED_CHAR: _vtk.vtkSignedCharArray,
+    _vtk.VTK_UNSIGNED_CHAR: _vtk.vtkUnsignedCharArray,
+    _vtk.VTK_SHORT: _vtk.vtkShortArray,
+    _vtk.VTK_UNSIGNED_SHORT: _vtk.vtkUnsignedShortArray,
+    _vtk.VTK_INT: _vtk.vtkIntArray,
+    _vtk.VTK_UNSIGNED_INT: _vtk.vtkUnsignedIntArray,
+    _vtk.VTK_LONG: _vtk.vtkLongArray,
+    _vtk.VTK_UNSIGNED_LONG: _vtk.vtkUnsignedLongArray,
+    _vtk.VTK_FLOAT: _vtk.vtkFloatArray,
+    _vtk.VTK_DOUBLE: _vtk.vtkDoubleArray,
+    _vtk.VTK_ID_TYPE: _vtk.vtkIdTypeArray,
+    _vtk.VTK_STRING: _vtk.vtkStringArray,
+    _vtk.VTK_LONG_LONG: _vtk.vtkLongLongArray,
+    _vtk.VTK_UNSIGNED_LONG_LONG: _vtk.vtkUnsignedLongLongArray,
+}
 
 
 class FieldAssociation(enum.Enum):
@@ -111,6 +132,7 @@ def parse_field_choice(
 
 def _coerce_pointslike_arg(
     points: MatrixLike[float] | VectorLike[float],
+    *,
     copy: bool = False,
 ) -> tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
@@ -164,7 +186,8 @@ def _coerce_pointslike_arg(
 _vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)  # noqa: N816
 
 
-def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
+@_deprecate_positional_args(allowed=['array'])
+def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:  # noqa: FBT001, FBT002
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -199,7 +222,18 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
         msg = f'Invalid type {type(array)}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    new_array = type(array)()
+    try:
+        new_array = type(array)()
+    except TypeError:
+        # Array appears abstract and is likely implicit
+        # Init array from the array type instead
+        array_type = array.GetArrayType()
+        vtk_array_class = VTK_ARRAY_TYPES.get(array_type)
+        if vtk_array_class is None:  # pragma: no cover
+            msg = f'Array could not be copied, unsupported array type code: {array_type}'
+            raise TypeError(msg)
+        new_array = vtk_array_class()  # type: ignore[assignment]
+
     if deep:
         new_array.DeepCopy(array)
     else:
@@ -249,24 +283,28 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
 def convert_array(
     arr: _vtk.vtkAbstractArray,
     name: str | None = ...,
-    deep: bool = ...,
+    deep: bool = ...,  # noqa: FBT001
     array_type: int | None = None,
 ) -> npt.NDArray[Any]: ...
 @overload
 def convert_array(
-    arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None
+    arr: npt.ArrayLike,
+    name: str | None = ...,
+    deep: bool = ...,  # noqa: FBT001
+    array_type: int | None = None,
 ) -> _vtk.vtkAbstractArray: ...
 @overload
 def convert_array(
     arr: None,
     name: str | None = ...,
-    deep: bool = ...,
+    deep: bool = ...,  # noqa: FBT001
     array_type: int | None = ...,
 ) -> None: ...
-def convert_array(
+@_deprecate_positional_args(allowed=['arr', 'name'])
+def convert_array(  # noqa: PLR0917
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
-    deep: bool = False,
+    deep: bool = False,  # noqa: FBT001, FBT002
     array_type: int | None = None,
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
@@ -325,11 +363,12 @@ def convert_array(
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(
+@_deprecate_positional_args(allowed=['mesh', 'name'])
+def get_array(  # noqa: PLR0917
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,
+    err: bool = False,  # noqa: FBT001, FBT002
 ) -> pyvista_ndarray | None:
     """Search point, cell and field data for an array.
 
@@ -379,7 +418,7 @@ def get_array(
         parr = point_array(mesh, name)
         carr = cell_array(mesh, name)
         farr = field_array(mesh, name)
-        if sum([array is not None for array in (parr, carr, farr)]) > 1:
+        if sum(array is not None for array in (parr, carr, farr)) > 1:
             if preference_ == FieldAssociation.CELL:
                 out = carr
             elif preference_ == FieldAssociation.POINT:
@@ -400,11 +439,12 @@ def get_array(
         return out
 
 
-def get_array_association(
+@_deprecate_positional_args(allowed=['mesh', 'name'])
+def get_array_association(  # noqa: PLR0917
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,
+    err: bool = False,  # noqa: FBT001, FBT002
 ) -> FieldAssociation:
     """Return the array association.
 
@@ -835,7 +875,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
         The field and name of the active array.
 
     """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_vectors_name is None:
         point_data = mesh.point_data
@@ -903,7 +943,7 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
         The field and name of the active array.
 
     """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_scalars_name is None:
         point_data = mesh.point_data

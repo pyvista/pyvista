@@ -10,6 +10,7 @@ import matplotlib as mpl
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -26,7 +27,7 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
+class lookup_table_ndarray(np.ndarray):  # noqa: N801
     """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
@@ -75,7 +76,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg] # noqa: N801
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
@@ -208,11 +209,12 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
-    def __init__(
+    @_deprecate_positional_args(allowed=['cmap', 'n_values'])
+    def __init__(  # noqa: PLR0917
         self,
         cmap=None,
         n_values=256,
-        flip: bool = False,
+        flip: bool = False,  # noqa: FBT001, FBT002
         values=None,
         value_range=None,
         hue_range=None,
@@ -745,11 +747,12 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
+    @_deprecate_positional_args(allowed=['cmap', 'n_values'])
     def apply_cmap(
         self,
         cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
         n_values: int = 256,
-        flip: bool = False,
+        flip: bool = False,  # noqa: FBT001, FBT002
     ):
         """Assign a colormap to this lookup table.
 
@@ -790,12 +793,14 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         self._values_manual = False
 
         # reapply the opacity
-        if self._opacity_parm[0] is not None:
-            self.apply_opacity(*self._opacity_parm)
+        opacity, interpolate, kind = self._opacity_parm
+        if opacity is not None:
+            self.apply_opacity(opacity=opacity, interpolate=interpolate, kind=kind)
 
         self._cmap = cmap_obj
 
-    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
+    @_deprecate_positional_args(allowed=['opacity'])
+    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):  # noqa: FBT001, FBT002
         """Assign custom opacity to this lookup table.
 
         Parameters
@@ -1032,7 +1037,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         label_level += self._nan_color_set
 
-        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)  # type: ignore[arg-type]
+        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)
         scalar_bar.SetLookupTable(self)
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
@@ -1065,11 +1070,14 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         mn, mx = self.scalar_range
         for value in np.linspace(mn, mx, self.n_values):
             # Be sure to index the point by the value to map the scalar range
-            color_tf.AddRGBPoint(value, *self.map_value(value, False))
+            color_tf.AddRGBPoint(value, *self.map_value(value, opacity=False))
         return color_tf
 
+    @_deprecate_positional_args
     def to_opacity_tf(
-        self, clamping: bool = True, max_clip: float = 0.998
+        self,
+        clamping: bool = True,  # noqa: FBT001, FBT002
+        max_clip: float = 0.998,
     ) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
 
@@ -1113,10 +1121,11 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
             opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
+    @_deprecate_positional_args(allowed=['value'])
     def map_value(
         self,
         value: float,
-        opacity: bool = True,
+        opacity: bool = True,  # noqa: FBT001, FBT002
     ) -> tuple[float, float, float] | tuple[float, float, float, float]:
         """Map a single value through the lookup table, returning an RBG(A) color.
 

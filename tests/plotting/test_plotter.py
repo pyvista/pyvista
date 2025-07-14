@@ -18,7 +18,6 @@ import vtk
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 
@@ -388,23 +387,23 @@ def test_plotter_line_point_smoothing():
 
 def test_enable_hidden_line_removal():
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(False)
+    plotter.enable_hidden_line_removal(all_renderers=False)
     assert plotter.renderers[0].GetUseHiddenLineRemoval()
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.enable_hidden_line_removal(True)
+    plotter.enable_hidden_line_removal(all_renderers=True)
     assert plotter.renderers[1].GetUseHiddenLineRemoval()
 
 
 def test_disable_hidden_line_removal():
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.enable_hidden_line_removal(True)
+    plotter.enable_hidden_line_removal(all_renderers=True)
 
-    plotter.disable_hidden_line_removal(False)
+    plotter.disable_hidden_line_removal(all_renderers=False)
     assert not plotter.renderers[0].GetUseHiddenLineRemoval()
     assert plotter.renderers[1].GetUseHiddenLineRemoval()
 
-    plotter.disable_hidden_line_removal(True)
+    plotter.disable_hidden_line_removal(all_renderers=True)
     assert not plotter.renderers[1].GetUseHiddenLineRemoval()
 
 
@@ -448,7 +447,14 @@ def test_plotter_image_scale():
 
 def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
-    mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        mesh=globe,
+        scalars=None,
+        texture=True,
+        split_sharp_edges=True,
+        feature_angle=False,
+        preference=None,
+    )
     assert scalars is None
     assert 'Normals' in mesh.point_data
     assert 'Texture Coordinates' in mesh.point_data
@@ -458,7 +464,14 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     """Test edge cases for smooth shading"""
     scalars_name = 'sample_point_scalars'
     scalars = hexbeam.point_data[scalars_name]
-    mesh, scalars = _plotting.prepare_smooth_shading(hexbeam, scalars, False, True, True, None)
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        mesh=hexbeam,
+        scalars=scalars,
+        texture=False,
+        split_sharp_edges=True,
+        feature_angle=True,
+        preference=None,
+    )
 
     assert 'Normals' in mesh.point_data
 
@@ -475,12 +488,12 @@ def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
     point_cloud = pv.PolyData([0.0, 0.0, 0.0])
     assert point_cloud.n_verts == point_cloud.n_cells
     mesh, scalars = _plotting.prepare_smooth_shading(
-        point_cloud,
-        None,
-        True,
-        split_sharp_edges,
-        False,
-        None,
+        mesh=point_cloud,
+        scalars=None,
+        texture=True,
+        split_sharp_edges=split_sharp_edges,
+        feature_angle=False,
+        preference=None,
     )
     assert scalars is None
     assert 'Normals' not in mesh.point_data
@@ -803,19 +816,6 @@ def test_plotter_reset_key_events():
     pl.reset_key_events()
 
 
-def test_plotter_update_coordinates(sphere):
-    with pytest.warns(PyVistaDeprecationWarning):
-        pl = pv.Plotter()
-        pl.add_mesh(sphere)
-        pl.update_coordinates(sphere.points * 2.0)
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
-
-
 @pytest.mark.usefixtures('global_variables_reset')
 def test_only_screenshots_flag(sphere, tmpdir):
     pv.FIGURE_PATH = str(tmpdir)
@@ -857,7 +857,7 @@ def test_legend_font(sphere):
 @pytest.mark.needs_vtk_version(9, 3, reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
-    pl = pv.Plotter(sphere)
+    pl = pv.Plotter()
     actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
     assert actor.prop.edge_opacity == edge_opacity
 

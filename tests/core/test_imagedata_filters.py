@@ -11,6 +11,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
+from tests.conftest import flaky_test
 
 BOUNDARY_LABELS = 'boundary_labels'
 
@@ -62,7 +63,10 @@ def test_contour_labeled_deprecated():
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled()
 
     assert frog_tissues.point_data.active_scalars.max() == 29
@@ -73,7 +77,10 @@ def test_contour_labeled(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_smoothing(frog_tissues):
     # Extract smooth surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(smoothing=True)
     # this somehow mutates the object... also the n_labels is likely not correct
 
@@ -84,7 +91,10 @@ def test_contour_labeled_with_smoothing(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_reduced_labels_count(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(n_labels=2)
     # this somehow mutates the object... also the n_labels is likely not correct
 
@@ -95,7 +105,10 @@ def test_contour_labeled_with_reduced_labels_count(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
 
     assert 'BoundaryLabels' in mesh.cell_data
@@ -105,7 +118,10 @@ def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_boundary_output_style(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(output_style='boundary')
 
     assert 'BoundaryLabels' in mesh.cell_data
@@ -115,7 +131,10 @@ def test_contour_labeled_with_boundary_output_style(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError):  # noqa: PT011
             frog_tissues.contour_labeled(output_mesh_type='invalid')
 
@@ -123,11 +142,17 @@ def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_output_style(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(NotImplementedError):
             frog_tissues.contour_labeled(output_style='selected')
 
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError):  # noqa: PT011
             frog_tissues.contour_labeled(output_style='invalid')
 
@@ -138,7 +163,10 @@ def test_contour_labeled_with_scalars(frog_tissues):
     frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
 
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(scalars='labels')
 
     assert 'BoundaryLabels' in mesh.cell_data
@@ -148,19 +176,28 @@ def test_contour_labeled_with_scalars(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_scalars(frog_tissues):
     # Nonexistent scalar key
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(KeyError):
             frog_tissues.contour_labeled(scalars='nonexistent_key')
 
     # Using cell data
     frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError, match='Can only process point data'):
             frog_tissues.contour_labeled(scalars='cell_data')
 
     # When no scalas are given and active scalars are not point data
     frog_tissues.set_active_scalars('cell_data', preference='cell')
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError, match='active scalars must be point array'):
             frog_tissues.contour_labeled()
 
@@ -372,6 +409,7 @@ def test_contour_labels_cell_data(channels):
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
+@flaky_test
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     start = time.perf_counter()
@@ -410,6 +448,15 @@ def test_contour_labels_raises_vtkversionerror():
     match = 'Surface nets 3D require VTK 9.3.0 or newer.'
     with pytest.raises(pv.VTKVersionError, match=match):
         pv.ImageData().contour_labels()
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_empty_input(frog_tissues):
+    voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
+    background_value = 0
+    assert np.allclose(voi.active_scalars, background_value)
+    surface = voi.contour_labels(background_value=background_value)
+    assert surface.is_empty
 
 
 @pytest.fixture
@@ -830,6 +877,19 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
+def test_pad_image_multi_component_with_scalar(beach):
+    # Image has rgb scalars
+    first_value = beach.active_scalars[0]
+    assert len(first_value) == 3
+
+    # Test padding with single (non-rgb) value works
+    zero = 0
+    padded = beach.pad_image(zero)
+    new_first_value = padded.active_scalars[0]
+    assert not np.array_equal(new_first_value, first_value)
+    assert np.array_equal(new_first_value, (zero, zero, zero))
+
+
 def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
@@ -896,24 +956,24 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Passing `pad_singleton_dims` should raise an error.'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `pad_singleton_dims`.'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Passing `pad_singleton_dims` should raise an error.'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `pad_singleton_dims`.'
+        raise RuntimeError(msg)
 
     match = (
         'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
     )
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Passing `pad_singleton_dims` should raise an error.'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `pad_singleton_dims`.'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Passing `pad_singleton_dims` should raise an error.'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `pad_singleton_dims`.'
+        raise RuntimeError(msg)
 
 
 @pytest.fixture

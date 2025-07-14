@@ -94,7 +94,7 @@ def path(y):
 x, y = path(np.arange(model.bounds.y_min, model.bounds.y_max, 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
-spline = pv.Spline(points, 15)
+spline = pv.Spline(points, n_points=15)
 spline
 
 
@@ -130,7 +130,7 @@ b = mesh.center - normal * mesh.length / 3.0
 
 # Define the line/points for the slices
 n_slices = 5
-line = pv.Line(a, b, n_slices)
+line = pv.Line(a, b, resolution=n_slices)
 
 # Generate all of the slices
 slices = pv.MultiBlock()

@@ -19,6 +19,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
@@ -41,8 +42,14 @@ if TYPE_CHECKING:
 
 PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
-_VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
-_VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
+if TYPE_CHECKING:
+    _VTKWriterAlias = Union[
+        _vtk.vtkXMLPartitionedDataSetWriter,
+        _vtk.vtkXMLWriter,
+        _vtk.vtkDataWriter,
+        _vtk.vtkHDFWriter,
+    ]
+    _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')
 
@@ -126,7 +133,8 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
-def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:
+@_deprecate_positional_args(allowed=['vtk_writer'])
+def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001, FBT002
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -144,9 +152,9 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
         The configured vtk writer instance.
 
     """
-    from vtkmodules.vtkIOGeometry import vtkSTLWriter
-    from vtkmodules.vtkIOLegacy import vtkDataWriter
-    from vtkmodules.vtkIOPLY import vtkPLYWriter
+    from vtkmodules.vtkIOGeometry import vtkSTLWriter  # noqa: PLC0415
+    from vtkmodules.vtkIOLegacy import vtkDataWriter  # noqa: PLC0415
+    from vtkmodules.vtkIOPLY import vtkPLYWriter  # noqa: PLC0415
 
     if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
@@ -161,11 +169,12 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     return vtk_writer
 
 
-def read(  # noqa: PLR0911
+@_deprecate_positional_args(allowed=['filename'])
+def read(  # noqa: PLR0911, PLR0917
     filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
-    progress_bar: bool = False,
+    progress_bar: bool = False,  # noqa: FBT001, FBT002
 ) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
@@ -282,7 +291,7 @@ def read(  # noqa: PLR0911
         if force_ext is not None:
             msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
-        from meshio._exceptions import ReadError
+        from meshio._exceptions import ReadError  # noqa: PLC0415
 
         try:
             return read_meshio(filename)
@@ -332,7 +341,8 @@ def _apply_attrs_to_reader(
             attr()
 
 
-def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:
+@_deprecate_positional_args(allowed=['filename'])
+def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001, FBT002
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -381,13 +391,14 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:
     return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
-def read_exodus(
+@_deprecate_positional_args(allowed=['filename'])
+def read_exodus(  # noqa: PLR0917
     filename: str | Path,
-    animate_mode_shapes: bool = True,
-    apply_displacements: bool = True,
+    animate_mode_shapes: bool = True,  # noqa: FBT001, FBT002
+    apply_displacements: bool = True,  # noqa: FBT001, FBT002
     displacement_magnitude: float = 1.0,
-    read_point_data: bool = True,
-    read_cell_data: bool = True,
+    read_point_data: bool = True,  # noqa: FBT001, FBT002
+    read_cell_data: bool = True,  # noqa: FBT001, FBT002
     enabled_sidesets: Iterable[str | int] | None = None,
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -433,13 +444,13 @@ def read_exodus(
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
-    from .helpers import wrap
+    from .helpers import wrap  # noqa: PLC0415
 
     # lazy import here to avoid loading module on import pyvista
     try:
-        from vtkmodules.vtkIOExodus import vtkExodusIIReader
+        from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
     except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]
+        from vtk import vtkExodusIIReader  # type: ignore[no-redef]  # noqa: PLC0415
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -472,9 +483,10 @@ def read_exodus(
     return cast('pyvista.DataSet', wrap(reader.GetOutput()))
 
 
+@_deprecate_positional_args(allowed=['filename'])
 def read_grdecl(
     filename: str | Path,
-    elevation: bool = True,
+    elevation: bool = True,  # noqa: FBT001, FBT002
     other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
@@ -524,14 +536,19 @@ def read_grdecl(
 
     @overload
     def read_keyword(
-        f: TextIO, split: Literal[True] = True, converter: type = ...
+        f: TextIO,
+        split: Literal[True] = True,  # noqa: FBT002
+        converter: type = ...,
     ) -> list[str]: ...
     @overload
-    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...
+    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...  # noqa: FBT002
     @overload
-    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...
+    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...  # noqa: FBT001
+    @_deprecate_positional_args(allowed=['f'])
     def read_keyword(
-        f: TextIO, split: bool = True, converter: type | None = None
+        f: TextIO,
+        split: bool = True,  # noqa: FBT001, FBT002
+        converter: type | None = None,
     ) -> str | list[str]:
         """Read a keyword.
 
@@ -798,7 +815,7 @@ def read_grdecl(
         grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
 
     # Store unused keywords in user dict
-    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}  # type: ignore[assignment]
+    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
 
     return grid
 
@@ -928,7 +945,7 @@ def is_meshio_mesh(obj: object) -> bool:
 
     """
     try:
-        import meshio
+        import meshio  # noqa: PLC0415
 
         return isinstance(obj, meshio.Mesh)
     except ImportError:
@@ -955,11 +972,11 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
     """
     try:  # meshio<5.0 compatibility
-        from meshio.vtk._vtk import meshio_to_vtk_type
-        from meshio.vtk._vtk import vtk_type_to_numnodes
+        from meshio.vtk._vtk import meshio_to_vtk_type  # noqa: PLC0415
+        from meshio.vtk._vtk import vtk_type_to_numnodes  # noqa: PLC0415
     except ImportError:  # pragma: no cover
-        from meshio._vtk_common import meshio_to_vtk_type
-        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+        from meshio._vtk_common import meshio_to_vtk_type  # noqa: PLC0415
+        from meshio.vtk._vtk_42 import vtk_type_to_numnodes  # noqa: PLC0415
 
     if len(mesh.cells) == 0:
         # Empty mesh
@@ -1062,17 +1079,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     """
     try:
-        import meshio
+        import meshio  # noqa: PLC0415
 
     except ImportError:  # pragma: no cover
         msg = 'To use this feature install meshio with:\n\npip install meshio'
         raise ImportError(msg)
 
     try:  # for meshio<5.0 compatibility
-        from meshio.vtk._vtk import vtk_to_meshio_type
+        from meshio.vtk._vtk import vtk_to_meshio_type  # noqa: PLC0415
 
     except:  # pragma: no cover
-        from meshio._vtk_common import vtk_to_meshio_type
+        from meshio._vtk_common import vtk_to_meshio_type  # noqa: PLC0415
 
     # Cast to unstructured grid
     mesh = mesh.cast_to_unstructured_grid()
@@ -1206,7 +1223,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     """
     try:
-        import meshio
+        import meshio  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         msg = 'To use this feature install meshio with:\n\npip install meshio'
         raise ImportError(msg)
@@ -1281,7 +1298,7 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
 
     """
     try:
-        from imageio.v2 import imread
+        from imageio.v2 import imread  # noqa: PLC0415
     except ModuleNotFoundError:  # pragma: no cover
         msg = (
             'Problem reading the image with VTK. Install imageio to try to read the '

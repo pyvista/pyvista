@@ -22,19 +22,20 @@ updates:
     labels:
       - "maintenance"
       - "dependencies"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 2
     groups:
-      artifacts:
+      gha:
         patterns:
-          - "actions/upload-artifact"
-          - "actions/download-artifact"
+          - "*"
     labels:
       - "maintenance"
       - "dependencies"
+
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:

@@ -7,6 +7,7 @@ import shutil
 from typing import TYPE_CHECKING
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -38,8 +39,8 @@ def html_rst(
     srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
-    from sphinx_gallery.scrapers import _get_srcset_st
-    from sphinx_gallery.scrapers import figure_rst
+    from sphinx_gallery.scrapers import _get_srcset_st  # noqa: PLC0415
+    from sphinx_gallery.scrapers import figure_rst  # noqa: PLC0415
 
     if srcsetpaths is None:
         # this should never happen, but figure_rst is public, so
@@ -84,7 +85,8 @@ def _process_events_before_scraping(plotter):
         plotter.update()
 
 
-def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:
+@_deprecate_positional_args(allowed=['image_path_iterator'])
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:  # noqa: FBT001, FBT002
     """Generate images from the current plotters.
 
     The file names are taken from the ``image_path_iterator`` iterator.
@@ -159,7 +161,7 @@ class Scraper:
         Called by sphinx-gallery.
 
         """
-        from sphinx_gallery.scrapers import figure_rst
+        from sphinx_gallery.scrapers import figure_rst  # noqa: PLC0415
 
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)

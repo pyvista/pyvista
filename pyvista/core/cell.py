@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -19,7 +20,6 @@ from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from typing import Any
 
     from typing_extensions import Self
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
-    from ._typing_core import VectorLike
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:
@@ -108,11 +107,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     """
 
+    @_deprecate_positional_args(allowed=['vtk_cell', 'cell_type'])
     def __init__(
         self: Self,
         vtk_cell: _vtk.vtkCell | None = None,
         cell_type: CellType | None = None,
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize the cell."""
         super().__init__()
@@ -577,7 +577,8 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy(self: Self, deep: bool = True) -> Self:
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the cell.
 
         Parameters
@@ -654,18 +655,19 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
 
     """
 
+    @_deprecate_positional_args(allowed=['cells'])
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
         n_cells: int | None = None,
-        deep: bool | None = None,
+        deep: bool | None = None,  # noqa: FBT001
     ) -> None:
         """Initialize a :vtk:`vtkCellArray`."""
         super().__init__()
         self.__offsets: _vtk.vtkIdTypeArray | None = None
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
-            self.cells = cells  # type: ignore[assignment]
+            self.cells = cells
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
@@ -746,6 +748,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         self: Self,
         offsets: MatrixLike[int],
         connectivity: MatrixLike[int],
+        *,
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
@@ -759,10 +762,11 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         self.__connectivity = vtk_connectivity
 
     @staticmethod
+    @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
     def from_arrays(
         offsets: MatrixLike[int],
         connectivity: MatrixLike[int],
-        deep: bool = False,
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
 
@@ -806,8 +810,11 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         return _get_regular_cells(self)
 
     @classmethod
+    @_deprecate_positional_args(allowed=['cells'])
     def from_regular_cells(
-        cls: type[CellArray], cells: MatrixLike[int], deep: bool = False
+        cls: type[CellArray],
+        cells: MatrixLike[int],
+        deep: bool = False,  # noqa: FBT001, FBT002
     ) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
@@ -833,9 +840,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         return cellarr
 
     @classmethod
-    def from_irregular_cells(
-        cls: type[CellArray], cells: Sequence[VectorLike[int]]
-    ) -> pyvista.CellArray:
+    def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -852,7 +857,7 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
         connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
-        return cls.from_arrays(offsets, connectivity)
+        return cls.from_arrays(offsets, connectivity)  # type: ignore[arg-type]
 
 
 # The following methods would be much nicer bound to CellArray,

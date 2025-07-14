@@ -10,6 +10,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 from .helpers import view_vectors
@@ -52,7 +53,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
                 raise TypeError(msg)
             self._renderer = proxy(renderer)
         else:
-            self._renderer = None
+            self._renderer = None  # type: ignore[assignment]
 
     def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
@@ -80,6 +81,8 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
             # either but not both are None
             return False
         return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""
@@ -268,7 +271,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
-        if self._renderer:
+        if self._renderer:  # type: ignore[truthy-bool]
             self.reset_clipping_range()
         self.is_set = True
 
@@ -286,7 +289,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'  # type: ignore[unreachable]
             raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
@@ -795,8 +798,13 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
 
         return new_camera
 
-    def tight(
-        self, padding=0.0, adjust_render_window: bool = True, view='xy', negative: bool = False
+    @_deprecate_positional_args
+    def tight(  # noqa: PLR0917
+        self,
+        padding=0.0,
+        adjust_render_window: bool = True,  # noqa: FBT001, FBT002
+        view='xy',
+        negative: bool = False,  # noqa: FBT001, FBT002
     ):
         """Adjust the camera position so that the actors fill the entire renderer.
 
@@ -863,7 +871,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         objects_size = position1 - position0
         position = position0 + objects_size / 2
 
-        direction, viewup = view_vectors(view, negative)
+        direction, viewup = view_vectors(view, negative=negative)
         horizontal = np.cross(direction, viewup)
 
         vert_dist = abs(objects_size @ viewup)

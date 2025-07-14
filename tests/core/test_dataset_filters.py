@@ -18,6 +18,7 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
@@ -31,7 +32,6 @@ from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-    import vtk
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -499,6 +499,18 @@ def test_outline_corners_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.parametrize('dataset', [examples.download_bunny()])
+def test_gaussian_splatting(dataset):
+    output = dataset.gaussian_splatting(progress_bar=True)
+    assert output is not None
+    assert isinstance(output, pv.ImageData)
+    assert output.dimensions == (50, 50, 50)
+
+    dimensions = (10, 11, 12)
+    output = dataset.gaussian_splatting(dimensions=dimensions)
+    assert output.dimensions == dimensions
+
+
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         geom = dataset.extract_geometry(progress_bar=True)
@@ -655,13 +667,17 @@ def test_glyph(datasets, sphere):
     )
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
 
-    with pytest.warns(Warning):  # tries to orient but no orientation vector available
-        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # tries to orient but no orientation vector available
+    with pytest.warns(UserWarning, match=r'No vector-like data to use for orient'):
+        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
-    with pytest.warns(Warning):  # tries to orient but multiple orientation vectors are possible
-        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # tries to orient but multiple orientation vectors are possible
+    with pytest.warns(
+        UserWarning, match=r'It is unclear which one to use. orient will be set to False'
+    ):
+        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     with pytest.raises(TypeError):
         # wrong type for the glyph
@@ -676,8 +692,14 @@ def test_glyph(datasets, sphere):
 
 def test_glyph_warns_ambiguous_data(sphere):
     sphere.compute_normals(inplace=True)
-    with pytest.warns(Warning):
+    with pytest.warns(UserWarning, match='It is unclear which one to use') as warning_info:
         sphere.glyph(scale=True)
+    # Check that at least one of the expected warnings is raised
+    warning_messages = [str(w.message) for w in warning_info]
+    assert any(
+        'It is unclear which one to use. scale will be set to False' in msg
+        for msg in warning_messages
+    )
 
 
 def test_glyph_cell_point_data(sphere):
@@ -1426,7 +1448,7 @@ def test_streamlines_max_length():
             max_time=1,
             max_step_length=0.1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
     with pytest.warns(
@@ -1440,7 +1462,7 @@ def test_streamlines_max_length():
             max_time=5,
             max_length=1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
 
@@ -1562,10 +1584,10 @@ def test_sample_over_line():
     """Test that we get a sampled line."""
     name = 'values'
 
-    line = pv.Line([0, 0, 0], [0, 0, 10], 9)
+    line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
     line[name] = np.linspace(0, 10, 10)
 
-    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2, progress_bar=True)
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], resolution=2, progress_bar=True)
 
     expected_result = np.array([0.5, 1, 1.5])
     assert np.allclose(sampled_line[name], expected_result)
@@ -1618,7 +1640,7 @@ def test_sample_over_multiple_lines():
     """Test that"""
     name = 'values'
 
-    line = pv.Line([0, 0, 0], [0, 0, 10], 9)
+    line = pv.Line([0, 0, 0], [0, 0, 10], resolution=9)
     line[name] = np.linspace(0, 10, 10)
 
     sampled_multiple_lines = line.sample_over_multiple_lines(
@@ -1646,7 +1668,9 @@ def test_sample_over_circular_arc():
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
-    sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center, 2, progress_bar=True)
+    sampled_arc = uniform.sample_over_circular_arc(
+        pointa=pointa, pointb=pointb, center=center, resolution=2, progress_bar=True
+    )
 
     expected_result = zmin + (zmax - zmin) * np.sin([np.pi / 2.0, np.pi / 4.0, 0.0])
     assert np.allclose(sampled_arc[name], expected_result)
@@ -1655,9 +1679,9 @@ def test_sample_over_circular_arc():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc(
-        [3, 1, 1],
-        [-3, -1, -1],
-        [0, 0, 0],
+        pointa=[3, 1, 1],
+        pointb=[-3, -1, -1],
+        center=[0, 0, 0],
         progress_bar=True,
     )
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
@@ -1684,7 +1708,7 @@ def test_sample_over_circular_arc_normal():
     resolution = np.random.default_rng().integers(10000)
     center = [xmin, ymin, zmin]
     sampled_arc_normal = uniform.sample_over_circular_arc_normal(
-        center,
+        center=center,
         resolution=resolution,
         normal=normal,
         polar=polar,
@@ -1700,7 +1724,7 @@ def test_sample_over_circular_arc_normal():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc_normal(
-        [0, 0, 0],
+        center=[0, 0, 0],
         polar=[3, 1, 1],
         angle=180,
         progress_bar=True,
@@ -1721,9 +1745,9 @@ def test_plot_over_circular_arc(tmpdir):
     b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
     center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
-        a,
-        b,
-        center,
+        pointa=a,
+        pointb=b,
+        center=center,
         resolution=1000,
         show=False,
         fname=filename,
@@ -1734,9 +1758,9 @@ def test_plot_over_circular_arc(tmpdir):
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc(
-        a,
-        b,
-        center,
+        pointa=a,
+        pointb=b,
+        center=center,
         resolution=None,
         scalars='foo',
         title='My Stuff',
@@ -1748,9 +1772,9 @@ def test_plot_over_circular_arc(tmpdir):
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_circular_arc(
-            a,
-            b,
-            center,
+            pointa=a,
+            pointb=b,
+            center=center,
             resolution=None,
             scalars='invalid_array_name',
             title='My Stuff',
@@ -1770,7 +1794,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     angle = 90
     center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
-        center,
+        center=center,
         polar=polar,
         angle=angle,
         show=False,
@@ -1782,7 +1806,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
     mesh.plot_over_circular_arc_normal(
-        center,
+        center=center,
         polar=polar,
         angle=angle,
         resolution=None,
@@ -1796,7 +1820,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_circular_arc_normal(
-            center,
+            center=center,
             polar=polar,
             angle=angle,
             resolution=None,
@@ -2050,10 +2074,17 @@ BIG_VOLUME = 2**3
 
 @pytest.fixture
 def labeled_data():
+    def append(mesh1, mesh2):
+        filter_ = vtk.vtkAppendFilter()
+        filter_.AddInputData(mesh1)
+        filter_.AddInputData(mesh2)
+        filter_.Update()
+        return pv.wrap(filter_.GetOutput())
+
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = (small_box + big_box).extract_geometry().connectivity()
+    labeled = append(big_box, small_box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
@@ -2188,9 +2219,8 @@ def test_split_values_extract_values_component(
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
     assert expected_n_blocks == len(expected_volume)
-    assert all(
-        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
-    )
+    for block, volume in zip(multiblock, expected_volume):
+        assert np.isclose(block.volume, volume)
 
 
 def test_extract_values_split_ranges_values(labeled_data):
@@ -2751,13 +2781,36 @@ def test_compute_derivatives(random_hills):
         derv = mesh.compute_derivative()
 
 
-def test_extract_subset():
-    volume = examples.load_uniform()
-    voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=True)
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset(uniform, rebase_coordinates):
+    offset = (1, 2, 3)
+    dict_ = {'foo': 'bar'}
+    origin = (1.1, 2.2, 3.3)
+    uniform.user_dict = dict_
+    uniform.offset = offset
+    uniform.origin = origin
+
+    new_offset = (2, 4, 6)
+    new_dims = 4, 3, 2
+    extent = pv.ImageData(dimensions=new_dims, offset=new_offset).extent
+    voi = uniform.extract_subset(extent, progress_bar=True, rebase_coordinates=rebase_coordinates)
     assert isinstance(voi, pv.ImageData)
-    # Test that we fix the confusing issue from extents in
-    #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-    assert voi.origin == voi.bounds[::2]
+    assert voi is not uniform
+    assert voi.spacing == uniform.spacing
+    assert voi.dimensions == new_dims
+    assert voi.array_names == uniform.array_names
+    assert voi.user_dict == dict_
+
+    if rebase_coordinates:
+        # Test that we fix the confusing issue from extents in
+        #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+        assert voi.origin != origin
+        assert voi.origin == voi.bounds[::2]
+        assert voi.offset != new_offset
+        assert voi.offset == (0, 0, 0)
+    else:
+        assert voi.origin == origin
+        assert voi.offset == new_offset
 
 
 def test_gaussian_smooth_output_type():
@@ -3289,7 +3342,14 @@ def test_extrude_trim_inplace():
 @pytest.mark.parametrize('inplace', [True, False])
 def test_subdivide_adaptive(sphere, inplace):
     orig_n_faces = sphere.n_faces_strict
-    sub = sphere.subdivide_adaptive(0.01, 0.001, 100000, 2, inplace=inplace, progress_bar=True)
+    sub = sphere.subdivide_adaptive(
+        max_edge_len=0.01,
+        max_tri_area=0.001,
+        max_n_tris=100000,
+        max_n_passes=2,
+        inplace=inplace,
+        progress_bar=True,
+    )
     assert sub.n_faces_strict > orig_n_faces
     if inplace:
         assert sphere.n_faces_strict == sub.n_faces_strict
@@ -3643,12 +3703,8 @@ def test_merge_points():
     celltypes = [pv.CellType.LINE]
     points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
     pdata = pv.UnstructuredGrid(cells, celltypes, points)
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=1.0).n_points == 1
-    )
-    assert (
-        pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
-    )
+    assert pdata.merge(pdata, merge_points=True, tolerance=1.0).n_points == 1
+    assert pdata.merge(pdata, merge_points=True, tolerance=0.1).n_points == 2
 
 
 @pytest.mark.parametrize('inplace', [True, False])

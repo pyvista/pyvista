@@ -318,7 +318,7 @@ def test_from_vtk():
     with pytest.raises(TypeError):
         pv.Light.from_vtk('invalid')
     with pytest.raises(TypeError):
-        pv.Light('invalid')
+        pv.Light(position='invalid')
 
 
 def test_add_vtk_light():
