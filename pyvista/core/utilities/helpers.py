@@ -243,7 +243,7 @@ def wrap(  # noqa: PLR0911
             faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
-        if hasattr(dataset.visual, 'uv'):
+        if hasattr(dataset.visual, 'uv') and dataset.visual.uv is not None:
             polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
