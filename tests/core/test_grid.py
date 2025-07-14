@@ -2072,8 +2072,8 @@ def test_slice_index_indexing_range():
     offset = (1, 2, 3)
     mesh.offset = offset
 
-    sliced_dimensions = mesh.slice_index(*index, indexing_range='dimensions')
-    sliced_extent = mesh.slice_index(*(index + offset), indexing_range='extent')
+    sliced_dimensions = mesh.slice_index(*index, index_mode='dimensions')
+    sliced_extent = mesh.slice_index(*(index + offset), index_mode='extent')
     assert sliced_dimensions == sliced_extent
 
 
@@ -2104,12 +2104,10 @@ def test_imagedata_getitem_raises(uniform):
         uniform[uniform.dimensions[0], 0, 0]
 
     uniform.offset = [1, 1, 1]
-    _ = uniform.slice_index(uniform.dimensions[0], indexing_range='extent')
+    _ = uniform.slice_index(uniform.dimensions[0], index_mode='extent')
     match = (
         'index 11 is out of bounds for axis 0 with size 10.\n'
         'Valid range of valid index values (inclusive) is [-9, 10].'
     )
     with pytest.raises(IndexError, match=re.escape(match)):
-        uniform.slice_index(
-            uniform.dimensions[0] + uniform.offset[0], 0, 0, indexing_range='extent'
-        )
+        uniform.slice_index(uniform.dimensions[0] + uniform.offset[0], 0, 0, index_mode='extent')

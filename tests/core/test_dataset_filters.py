@@ -2817,7 +2817,7 @@ def test_extract_subset(uniform, rebase_coordinates):
         [extent[0], extent[1] + 1],
         [extent[2], extent[3] + 1],
         [extent[4], extent[5] + 1],
-        indexing_range='extent',
+        index_mode='extent',
         rebase_coordinates=rebase_coordinates,
     )
     assert cropped == voi

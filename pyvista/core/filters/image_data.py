@@ -224,7 +224,7 @@ class ImageDataFilters(DataSetFilters):
         y: int | VectorLike[int] | slice | None = None,
         z: int | VectorLike[int] | slice | None = None,
         *,
-        indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
         rebase_coordinates: bool = False,
         progress_bar: bool = False,
@@ -245,7 +245,7 @@ class ImageDataFilters(DataSetFilters):
         ----------
         x, y, z : int | sequence[int], optional
             Indices to slice along the X, Y, and Z axes, respectively. Specify an integer for
-            a single index, or two integers ``(start, stop)`` for a range of indices.
+            a single index, or two integers ``[start, stop)`` for a range of indices.
 
             .. note::
 
@@ -260,14 +260,14 @@ class ImageDataFilters(DataSetFilters):
                   the index is out-of-bounds. This default can be overridden by setting
                   ``strict_index=True``.
 
-        indexing_range : 'extent' | 'dimensions', default: 'dimensions'
-            Select the range of values available for indexing.
+        index_mode : 'extent' | 'dimensions', default: 'dimensions'
+            Mode to use when determining the range of values to index from.
 
             - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
             - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
               i.e. ``[offset, offset + dimensions - 1]``.
 
-            The main difference between these ranges is the inclusion or exclusion of the
+            The main difference between these modes is the inclusion or exclusion of the
             :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
             object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
             definition of ``extent`` and considers the object's geometry.
@@ -371,13 +371,13 @@ class ImageDataFilters(DataSetFilters):
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
 
-        lower = (0, 0, 0) if indexing_range == 'dimensions' else self.offset
+        lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
             for slc, low, dim in zip((x, y, z), lower, self.dimensions)
         )
         voi = self._compute_voi_from_index(
-            indices, indexing_range=indexing_range, strict_index=strict_index
+            indices, indexing_range=index_mode, strict_index=strict_index
         )
         return self.extract_subset(
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
