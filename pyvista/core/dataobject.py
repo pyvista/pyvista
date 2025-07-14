@@ -472,7 +472,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             # Only check equality for attributes defined by PyVista
             # (i.e. ignore any default vtk snake_case attributes)
             if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
-                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
+                if not np.array_equal(getattr(self, attr), getattr(other, attr), equal_nan=True):
                     return False
 
         # these attrs can be directly compared
@@ -483,6 +483,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                     return False
 
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
     def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002

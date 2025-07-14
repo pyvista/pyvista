@@ -319,7 +319,7 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
         """Return or set the distance between title and labels."""
         if (9, 3, 0) <= pyvista.vtk_version_info < (9, 5, 0):
             offx, offy = (_vtk.reference(0.0), _vtk.reference(0.0))
-            self.GetTitleOffset(offx, offy)  # type: ignore[call-overload]
+            self.GetTitleOffset(offx, offy)  # type: ignore[call-arg]
             return offx, offy  # type: ignore[return-value]
 
         return self.GetTitleOffset()
@@ -347,10 +347,10 @@ class CubeAxesActor(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor):
                 f'Considering only the second value (ie. y-offset) of {(y := offset[1])}'
             )
             warnings.warn(msg, UserWarning)
-            self.SetTitleOffset(y)
+            self.SetTitleOffset(y)  # type: ignore[arg-type]
             return
 
-        self.SetTitleOffset(offset)
+        self.SetTitleOffset(offset)  # type: ignore[arg-type]
 
     @property
     def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01

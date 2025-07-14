@@ -224,6 +224,7 @@ class ImageDataFilters(DataSetFilters):
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
+        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -256,6 +257,22 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
+        rebase_coordinates : bool, default: True
+            If ``True`` (default), reset the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
+
+            .. versionadded:: 0.46
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -272,17 +289,12 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
-        # Adjust for the confusing issue with the extents
-        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
-        fixed.origin = result.bounds[::2]
-        fixed.spacing = result.spacing
-        fixed.dimensions = result.dimensions
-        fixed.point_data.update(result.point_data)
-        fixed.cell_data.update(result.cell_data)
-        fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result, deep=True)
-        return fixed
+        if rebase_coordinates:
+            # Adjust for the confusing issue with the extents
+            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+            result.origin = result.bounds[::2]
+            result.offset = (0, 0, 0)
+        return result
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
@@ -995,7 +1007,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1601,7 +1613,7 @@ class ImageDataFilters(DataSetFilters):
                 alg_.SmoothingOff()
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1618,6 +1630,10 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
+        active_scalars = cast('pyvista.pyvista_ndarray', alg_input.active_scalars)
+        if np.allclose(active_scalars, background_value):
+            # Empty input, no contour will be generated
+            return pyvista.PolyData()
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
@@ -1710,15 +1726,27 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
-            # Orient the faces but discard the normals array
-            output.compute_normals(
-                cell_normals=True,
-                point_normals=False,
-                consistent_normals=True,
-                auto_orient_normals=True,
-                inplace=True,
-            )
-            del output.cell_data['Normals']
+            if pyvista.vtk_version_info >= (9, 4):
+                filter_ = _vtk.vtkOrientPolyData()
+                filter_.SetInputData(output)
+                filter_.ConsistencyOn()
+                filter_.AutoOrientNormalsOn()
+                filter_.NonManifoldTraversalOn()
+                filter_.Update()
+                oriented = wrap(filter_.GetOutput())
+                output.points = oriented.points
+                output.faces = oriented.faces
+            else:
+                # Orient the faces but discard the normals array
+                output.compute_normals(
+                    cell_normals=True,
+                    point_normals=False,
+                    consistent_normals=True,
+                    auto_orient_normals=True,
+                    non_manifold_traversal=True,
+                    inplace=True,
+                )
+                del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -2460,7 +2488,7 @@ class ImageDataFilters(DataSetFilters):
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
@@ -2504,6 +2532,7 @@ class ImageDataFilters(DataSetFilters):
                     f"match the number components ({num_input_components}) in array '{scalars}'."
                 )
                 raise ValueError(msg)
+            val = np.broadcast_to(val, (num_input_components,))
             if num_input_components > 1:
                 pad_multi_component = True
                 data = self.point_data  # type: ignore[attr-defined]
@@ -2813,7 +2842,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,  # type: ignore[arg-type]
+            scalars,
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':
@@ -3517,7 +3546,7 @@ class ImageDataFilters(DataSetFilters):
             if dimensions is not None:
                 dimensions_ = np.array(dimensions)
                 dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+                reference_image.dimensions = dimensions_
             new_dimensions = np.array(reference_image.dimensions)
 
         # Compute the magnification factors to use with the filter

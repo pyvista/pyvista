@@ -170,9 +170,9 @@ class Report(scooby.Report):
         gpu=True,  # noqa: FBT002
     ):
         """Generate a :class:`scooby.Report` instance."""
-        from vtkmodules.vtkRenderingCore import vtkRenderWindow
+        from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
 
-        from pyvista.plotting.tools import check_math_text_support
+        from pyvista.plotting.tools import check_math_text_support  # noqa: PLC0415
 
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']

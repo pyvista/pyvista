@@ -173,7 +173,7 @@ def create_mixed_cells(
     ... )
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map
+    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
 
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         msg = 'Found unknown or unsupported VTK cell type in your requested cells'
@@ -263,7 +263,7 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
         like VTK_POLYGON.
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map
+    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
 
     return_dict: dict[np.uint8, NumpyArray[int]] = {}
 
