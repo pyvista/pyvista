@@ -362,9 +362,9 @@ def test_cells_dict_alternating_cells():
 
 
 def test_destructor():
-    ugrid = examples.load_hexbeam()
-    ref = weakref.ref(ugrid)
-    del ugrid
+    grid = pv.UnstructuredGrid()
+    ref = weakref.ref(grid)
+    del grid
     assert ref() is None
 
 
@@ -869,8 +869,8 @@ def test_create_rectilinear_after_init():
     assert np.allclose(grid.z, z)
 
 
-def test_create_rectilinear_grid_from_file():
-    grid = examples.load_rectilinear()
+def test_create_rectilinear_grid_from_file(rectilinear):
+    grid = rectilinear
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == (-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0)
@@ -1007,8 +1007,8 @@ def test_uniform_setters():
     assert grid.origin == (6, 27.7, 19.8)
 
 
-def test_create_image_data_from_file():
-    grid = examples.load_uniform()
+def test_create_image_data_from_file(uniform):
+    grid = uniform
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
@@ -1034,15 +1034,16 @@ def test_read_image_data_from_pathlib():
     assert grid.dimensions == (10, 10, 10)
 
 
-def test_cast_uniform_to_structured():
-    grid = examples.load_uniform()
+def test_cast_uniform_to_structured(uniform):
+    grid = uniform
     structured = grid.cast_to_structured_grid()
     assert structured.n_points == grid.n_points
     assert structured.n_arrays == grid.n_arrays
     assert structured.bounds == grid.bounds
 
 
-def test_cast_uniform_to_rectilinear():
+def test_cast_uniform_to_rectilinear(uniform):
+    grid = uniform
     grid = examples.load_uniform()
     grid.offset = (1, 2, 3)
     grid.direction_matrix = np.diag((-1.0, 1.0, 1.0))
@@ -1152,9 +1153,9 @@ def test_fft_high_pass(noise_2d):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
-def test_save_rectilinear(extension, binary, tmpdir):
+def test_save_rectilinear(extension, binary, tmpdir, rectilinear):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    ogrid = examples.load_rectilinear()
+    ogrid = rectilinear
     ogrid.save(filename, binary=binary)
     grid = pv.RectilinearGrid(filename)
     assert grid.n_cells == ogrid.n_cells
@@ -1331,8 +1332,7 @@ def test_grid_extract_selection_points(struct_grid):
     assert sub_grid.n_cells > 1
 
 
-def test_gaussian_smooth():
-    uniform = examples.load_uniform()
+def test_gaussian_smooth(uniform):
     active = uniform.active_scalars_name
     values = uniform.active_scalars
 
@@ -1423,8 +1423,13 @@ def test_imagedata_offset():
     assert grid.dimensions == actual_dimensions
 
 
-def test_unstructured_grid_cast_to_explicit_structured_grid():
-    grid = examples.load_explicit_structured()
+@pytest.fixture
+def explicit_structured_grid():
+    return examples.load_explicit_structured()
+
+
+def test_unstructured_grid_cast_to_explicit_structured_grid(explicit_structured_grid):
+    grid = explicit_structured_grid
     grid = grid.hide_cells(range(80, 120))
     grid = grid.cast_to_unstructured_grid()
     grid = grid.cast_to_explicit_structured_grid()
@@ -1446,8 +1451,8 @@ def test_unstructured_grid_cast_to_explicit_structured_grid_raises():
         pv.UnstructuredGrid().cast_to_explicit_structured_grid()
 
 
-def test_explicit_structured_grid_init():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_init(explicit_structured_grid):
+    grid = explicit_structured_grid
     assert isinstance(grid, pv.ExplicitStructuredGrid)
     assert grid.n_cells == 120
     assert grid.n_points == 210
@@ -1482,7 +1487,7 @@ def test_explicit_structured_grid_init():
     assert grid.n_points == 16
 
 
-def test_explicit_structured_grid_cast_to_unstructured_grid():
+def test_explicit_structured_grid_cast_to_unstructured_grid(explicit_structured_grid):
     block_i = np.fromstring(
         """
         0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0
@@ -1516,7 +1521,7 @@ def test_explicit_structured_grid_cast_to_unstructured_grid():
         dtype=int,
     )
 
-    grid = examples.load_explicit_structured()
+    grid = explicit_structured_grid
     grid = grid.cast_to_unstructured_grid()
     assert isinstance(grid, pv.UnstructuredGrid)
     assert 'BLOCK_I' in grid.cell_data
@@ -1527,8 +1532,8 @@ def test_explicit_structured_grid_cast_to_unstructured_grid():
     assert np.array_equal(grid.cell_data['BLOCK_K'], block_k)
 
 
-def test_explicit_structured_grid_save():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_save(explicit_structured_grid):
+    grid = explicit_structured_grid
     grid = grid.hide_cells(range(80, 120))
     grid.save('grid.vtu')
     grid = pv.ExplicitStructuredGrid('grid.vtu')
@@ -1539,12 +1544,12 @@ def test_explicit_structured_grid_save():
     Path('grid.vtu').unlink()
 
 
-def test_explicit_structured_grid_save_raises():
+def test_explicit_structured_grid_save_raises(explicit_structured_grid):
     with pytest.raises(ValueError, match='Cannot save texture of a pointset.'):
-        examples.load_explicit_structured().save('test.vtu', texture=np.array([]))
+        explicit_structured_grid.save('test.vtu', texture=np.array([]))
 
 
-def test_explicit_structured_grid_hide_cells():
+def test_explicit_structured_grid_hide_cells(explicit_structured_grid):
     ghost = np.asarray(
         """
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
@@ -1556,7 +1561,7 @@ def test_explicit_structured_grid_hide_cells():
         dtype=np.uint8,
     )
 
-    grid = examples.load_explicit_structured()
+    grid = explicit_structured_grid
 
     copy = grid.hide_cells(range(80, 120))
     assert isinstance(copy, pv.ExplicitStructuredGrid)
@@ -1570,8 +1575,8 @@ def test_explicit_structured_grid_hide_cells():
     assert np.array_equal(grid.cell_data['vtkGhostType'], ghost)
 
 
-def test_explicit_structured_grid_show_cells():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_show_cells(explicit_structured_grid):
+    grid = explicit_structured_grid
     grid.hide_cells(range(80, 120), inplace=True)
 
     copy = grid.show_cells()
@@ -1585,16 +1590,16 @@ def test_explicit_structured_grid_show_cells():
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 0
 
 
-def test_explicit_structured_grid_dimensions():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_dimensions(explicit_structured_grid):
+    grid = explicit_structured_grid
     assert isinstance(grid.dimensions, tuple)
     assert isinstance(grid.dimensions[0], int)
     assert len(grid.dimensions) == 3
     assert grid.dimensions == (5, 6, 7)
 
 
-def test_explicit_structured_grid_visible_bounds():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_visible_bounds(explicit_structured_grid):
+    grid = explicit_structured_grid
     grid = grid.hide_cells(range(80, 120))
     assert isinstance(grid.visible_bounds, tuple)
     assert all(isinstance(x, float) for x in grid.visible_bounds)
@@ -1602,8 +1607,8 @@ def test_explicit_structured_grid_visible_bounds():
     assert grid.visible_bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
 
 
-def test_explicit_structured_grid_cell_id():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_cell_id(explicit_structured_grid):
+    grid = explicit_structured_grid
 
     ind = grid.cell_id((3, 4, 0))
     assert np.issubdtype(ind, np.integer)
@@ -1615,8 +1620,8 @@ def test_explicit_structured_grid_cell_id():
     assert np.array_equal(ind, [19, 31, 41, 54])
 
 
-def test_explicit_structured_grid_cell_coords():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_cell_coords(explicit_structured_grid):
+    grid = explicit_structured_grid
 
     coords = grid.cell_coords(19)
     assert isinstance(coords, np.ndarray)
@@ -1629,8 +1634,8 @@ def test_explicit_structured_grid_cell_coords():
     assert np.array_equal(coords, [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)])
 
 
-def test_explicit_structured_grid_neighbors():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_neighbors(explicit_structured_grid):
+    grid = explicit_structured_grid
 
     with pytest.raises(ValueError, match='Invalid value for `rel`'):
         indices = grid.neighbors(0, rel='foo')
@@ -1651,7 +1656,7 @@ def test_explicit_structured_grid_neighbors():
     assert indices == [1, 4, 20]
 
 
-def test_explicit_structured_grid_compute_connectivity():
+def test_explicit_structured_grid_compute_connectivity(explicit_structured_grid):
     connectivity = np.asarray(
         """
     42 43 43 41 46 47 47 45 46 47 47 45 46 47 47 45 38 39 39 37 58 59 59 57
@@ -1663,7 +1668,7 @@ def test_explicit_structured_grid_compute_connectivity():
         dtype=int,
     )
 
-    grid = examples.load_explicit_structured()
+    grid = explicit_structured_grid
     assert 'ConnectivityFlags' not in grid.cell_data
 
     copy = grid.compute_connectivity()
@@ -1678,7 +1683,7 @@ def test_explicit_structured_grid_compute_connectivity():
     assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
-def test_explicit_structured_grid_compute_connections():
+def test_explicit_structured_grid_compute_connections(explicit_structured_grid):
     connections = np.asarray(
         """
     3 4 4 3 4 5 5 4 4 5 5 4 4 5 5 4 3 4 4 3 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4
@@ -1689,7 +1694,7 @@ def test_explicit_structured_grid_compute_connections():
         dtype=int,
     )
 
-    grid = examples.load_explicit_structured()
+    grid = explicit_structured_grid
     assert 'number_of_connections' not in grid.cell_data
 
     copy = grid.compute_connections()
@@ -1742,8 +1747,8 @@ def test_explicit_structured_grid_raise_init():
 @pytest.mark.needs_vtk_version(
     9, 2, 2, reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean'
 )
-def test_explicit_structured_grid_clean():
-    grid = examples.load_explicit_structured()
+def test_explicit_structured_grid_clean(explicit_structured_grid):
+    grid = explicit_structured_grid
 
     # Duplicate points
     ugrid = grid.cast_to_unstructured_grid().copy()
@@ -1761,9 +1766,14 @@ def test_explicit_structured_grid_clean():
     assert egrid.n_points == grid.n_points
 
 
+@pytest.fixture
+def office():
+    return examples.download_office()
+
+
 @pointsetmark
-def test_structured_grid_cast_to_explicit_structured_grid():
-    grid = examples.download_office()
+def test_structured_grid_cast_to_explicit_structured_grid(office):
+    grid = office
     grid = grid.hide_cells(np.arange(80, 120))
     grid = pv.ExplicitStructuredGrid(grid)
     assert grid.n_cells == 7220
