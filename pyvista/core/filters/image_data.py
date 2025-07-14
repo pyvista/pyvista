@@ -259,6 +259,8 @@ class ImageDataFilters(DataSetFilters):
                 - An ``IndexError`` is `not` raised when a range is specified as the index and
                   the index is out-of-bounds. This default can be overridden by setting
                   ``strict_index=True``.
+                - A copy of the data is returned (modifying the sliced output does `not` affect
+                  the input data).
 
         index_mode : 'extent' | 'dimensions', default: 'dimensions'
             Mode to use when determining the range of values to index from.
