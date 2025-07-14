@@ -465,19 +465,6 @@ class ImageDataFilters(DataSetFilters):
             result.offset = (0, 0, 0)
         return result
 
-    def _clip_voi(  # type: ignore[misc]
-        self: ImageData, voi: tuple[int, int, int, int, int, int] | list[int]
-    ) -> tuple[int, int, int, int, int, int]:
-        extent = self.extent
-        out = list(voi)
-        for axis in range(2):
-            min_ind = axis * 2
-            max_ind = axis * 2 + 1
-
-            out[min_ind] = max(voi[min_ind], extent[min_ind])
-            out[max_ind] = min(voi[max_ind], extent[max_ind])
-        return cast('tuple[int, int, int, int, int, int]', tuple(out))
-
     @staticmethod
     def _clip_extent(extent: VectorLike[int], *, clip_to: VectorLike[int]) -> NumpyArray[int]:
         out = np.array(extent)
