@@ -1592,7 +1592,7 @@ def test_crop(
     kwargs.update(optional_kwarg)
 
     cropped = uncropped_image.crop(**kwargs, keep_dimensions=keep_dimensions)
-    expected_output = uncropped_image._extract_voi(CROPPED_EXTENT)
+    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, rebase_coordinates=False)
 
     if keep_dimensions:
         expected_output = expected_output.pad_image(pad_size=PADDING)
@@ -1675,7 +1675,7 @@ def test_crop_mask_inputs(uncropped_image, mask):
     elif mask is True:
         uncropped_image.set_active_scalars('mask')
 
-    expected_output = uncropped_image._extract_voi(CROPPED_EXTENT)
+    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, rebase_coordinates=False)
 
     cropped = uncropped_image.crop(mask=mask)
     assert cropped == expected_output
