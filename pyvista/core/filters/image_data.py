@@ -3947,7 +3947,9 @@ class ImageDataFilters(DataSetFilters):
             array.ndim == 1
             and association == FieldAssociation.POINT
             and not invert
-            and values is None and len(ranges) == 1):
+            and values is None
+            and len(ranges) == 1
+        ):
             values = None if values is None else values[0]
             ranges = None if ranges is None else ranges[0]
             return self.image_threshold(
