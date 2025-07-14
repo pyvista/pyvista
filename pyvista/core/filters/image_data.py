@@ -226,6 +226,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
+        rebase_coordinates: bool = False,
         progress_bar: bool = False,
     ) -> ImageData:
         """Extract a subset using IJK indices.
@@ -275,6 +276,20 @@ class ImageDataFilters(DataSetFilters):
             Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
             ``IndexError`` is only raised if a single integer index is out of range, but not when
             a range of indices are specified; set this to ``True`` to raise in error in both cases.
+
+        rebase_coordinates : bool, default: False
+            Rebase the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -364,7 +379,9 @@ class ImageDataFilters(DataSetFilters):
         voi = self._compute_voi_from_index(
             indices, indexing_range=indexing_range, strict_index=strict_index
         )
-        return self._extract_voi(voi, progress_bar=progress_bar)
+        return self.extract_subset(
+            voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
+        )
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
@@ -372,6 +389,7 @@ class ImageDataFilters(DataSetFilters):
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
+        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -404,6 +422,22 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
+        rebase_coordinates : bool, default: True
+            If ``True`` (default), reset the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
+
+            .. versionadded:: 0.46
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -417,27 +451,19 @@ class ImageDataFilters(DataSetFilters):
         slice_index
 
         """
-        result = self._extract_voi(voi, rate=rate, boundary=boundary, progress_bar=progress_bar)
-        # Adjust for the confusing issue with the extents
-        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
-        fixed.origin = result.bounds[::2]
-        fixed.spacing = result.spacing
-        fixed.dimensions = result.dimensions
-        fixed.point_data.update(result.point_data)
-        fixed.cell_data.update(result.cell_data)
-        fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result, deep=True)
-        return fixed
-
-    def _extract_voi(self, voi, *, rate=(1, 1, 1), boundary=False, progress_bar=False):
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(self)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
-        return _get_output(alg)
+        result = _get_output(alg)
+        if rebase_coordinates:
+            # Adjust for the confusing issue with the extents
+            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+            result.origin = result.bounds[::2]
+            result.offset = (0, 0, 0)
+        return result
 
     def _clip_voi(  # type: ignore[misc]
         self: ImageData, voi: tuple[int, int, int, int, int, int] | list[int]

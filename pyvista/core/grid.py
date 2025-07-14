@@ -689,7 +689,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             isinstance(key, tuple) and len(key) > 0 and isinstance(key[0], str)  # type: ignore[redundant-expr]
         ):
             return super().__getitem__(key)
-        return self._extract_voi(self._compute_voi_from_index(key))
+        return self.extract_subset(self._compute_voi_from_index(key), rebase_coordinates=False)
 
     def _compute_voi_from_index(
         self,
