@@ -435,8 +435,8 @@ class ImageDataFilters(DataSetFilters):
             Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
             a single float or a multi-component vector (e.g. RGB vector).
 
-        rebase_coordinates : bool, default: True
-            If ``True`` (default), reset the coordinate reference of the extracted subset:
+        rebase_coordinates : bool, default: False
+            Rebase the coordinate reference of the extracted subset:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
@@ -784,7 +784,7 @@ class ImageDataFilters(DataSetFilters):
         voi[5] = max(voi[4:6])
 
         cropped = self.extract_subset(
-            voi, progress_bar=progress_bar, rebase_coordinates=rebase_coordinates
+            voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
         )
         if not keep_dimensions:
             return cropped
