@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
 from typing import cast
-from typing import overload
 import warnings
 
 import numpy as np
@@ -42,7 +41,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
-    _MultiBlockType = TypeVar('_MultiBlockType', bound=MultiBlock)
+    _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
 
 
 class DataObjectFilters:
@@ -50,30 +49,14 @@ class DataObjectFilters:
 
     points: pyvista_ndarray
 
-    @overload
-    def transform(  # type: ignore[misc]
-        self: _MultiBlockType,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool | None = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def transform(  # type: ignore[misc]
-        self: _DataSetType,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool | None = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['trans'])
     def transform(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool | None = None,  # noqa: FBT001
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Transform this mesh with a 4x4 transform.
 
         .. warning::
@@ -341,33 +324,15 @@ class DataObjectFilters:
 
         return output
 
-    @overload
-    def reflect(  # type: ignore[misc]
-        self: _MultiBlockType,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        inplace: bool = ...,  # noqa: FBT001
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def reflect(  # type: ignore[misc]
-        self: _DataSetType,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        inplace: bool = ...,  # noqa: FBT001
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['normal'])
     def reflect(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Reflect a dataset across a plane.
 
         Parameters
@@ -417,30 +382,14 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    @overload
-    def rotate_x(  # type: ignore[misc]
-        self: _MultiBlockType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def rotate_x(  # type: ignore[misc]
-        self: _DataSetType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['angle'])
     def rotate_x(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Rotate mesh about the x-axis.
 
         .. note::
@@ -497,30 +446,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate_y(  # type: ignore[misc]
-        self: _MultiBlockType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def rotate_y(  # type: ignore[misc]
-        self: _DataSetType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['angle'])
     def rotate_y(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Rotate mesh about the y-axis.
 
         .. note::
@@ -576,30 +509,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate_z(  # type: ignore[misc]
-        self: _MultiBlockType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def rotate_z(  # type: ignore[misc]
-        self: _DataSetType,
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['angle'])
     def rotate_z(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Rotate mesh about the z-axis.
 
         .. note::
@@ -656,33 +573,15 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate_vector(  # type: ignore[misc]
-        self: _MultiBlockType,
-        vector: VectorLike[float],
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def rotate_vector(  # type: ignore[misc]
-        self: _DataSetType,
-        vector: VectorLike[float],
-        angle: float,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['vector', 'angle'])
     def rotate_vector(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Rotate mesh about a vector.
 
         .. note::
@@ -742,30 +641,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def rotate(  # type: ignore[misc]
-        self: _MultiBlockType,
-        rotation: RotationLike,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def rotate(  # type: ignore[misc]
-        self: _DataSetType,
-        rotation: RotationLike,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['rotation'])
     def rotate(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
 
         .. note::
@@ -832,26 +715,12 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
     def translate(  # type: ignore[misc]
-        self: _MultiBlockType,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def translate(  # type: ignore[misc]
-        self: _DataSetType,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
-    def translate(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Translate the mesh.
 
         .. note::
@@ -901,30 +770,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def scale(  # type: ignore[misc]
-        self: _MultiBlockType,
-        xyz: float | VectorLike[float],
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-        point: VectorLike[float] | None = ...,
-    ) -> _MultiBlockType: ...
-    @overload
-    def scale(  # type: ignore[misc]
-        self: _DataSetType,
-        xyz: float | VectorLike[float],
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-        point: VectorLike[float] | None = ...,
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['xyz'])
     def scale(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
         point: VectorLike[float] | None = None,
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Scale the mesh.
 
         .. note::
@@ -987,27 +840,13 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def flip_x(  # type: ignore[misc]
-        self: _MultiBlockType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def flip_x(  # type: ignore[misc]
-        self: _DataSetType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args
     def flip_x(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Flip mesh about the x-axis.
 
         .. note::
@@ -1063,27 +902,13 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def flip_y(  # type: ignore[misc]
-        self: _MultiBlockType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def flip_y(  # type: ignore[misc]
-        self: _DataSetType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args
     def flip_y(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Flip mesh about the y-axis.
 
         .. note::
@@ -1139,27 +964,13 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def flip_z(  # type: ignore[misc]
-        self: _MultiBlockType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def flip_z(  # type: ignore[misc]
-        self: _DataSetType,
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args
     def flip_z(  # type: ignore[misc]
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Flip mesh about the z-axis.
 
         .. note::
@@ -1215,30 +1026,14 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    @overload
-    def flip_normal(  # type: ignore[misc]
-        self: _MultiBlockType,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _MultiBlockType: ...
-    @overload
-    def flip_normal(  # type: ignore[misc]
-        self: _DataSetType,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = ...,
-        transform_all_input_vectors: bool = ...,  # noqa: FBT001
-        inplace: bool = ...,  # noqa: FBT001
-    ) -> _DataSetType: ...
     @_deprecate_positional_args(allowed=['normal'])
     def flip_normal(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet | MultiBlock,
+        self: _MeshType_co,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> DataSet | MultiBlock:
+    ) -> _MeshType_co:
         """Flip mesh about the normal.
 
         .. note::
