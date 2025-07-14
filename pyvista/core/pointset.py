@@ -2289,10 +2289,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Converts the following cell types to their linear equivalents.
 
-        - ``QUADRATIC_TETRA      --> TETRA``
-        - ``QUADRATIC_PYRAMID    --> PYRAMID``
-        - ``QUADRATIC_WEDGE      --> WEDGE``
-        - ``QUADRATIC_HEXAHEDRON --> HEXAHEDRON``
+        - :attr:`~pyvista.CellType.QUADRATIC_TRIANGLE`   --> :attr:`~pyvista.CellType.TRIANGLE`
+        - :attr:`~pyvista.CellType.QUADRATIC_QUAD`       --> :attr:`~pyvista.CellType.QUAD`
+        - :attr:`~pyvista.CellType.QUADRATIC_TETRA`      --> :attr:`~pyvista.CellType.TETRA`
+        - :attr:`~pyvista.CellType.QUADRATIC_PYRAMID`    --> :attr:`~pyvista.CellType.PYRAMID`
+        - :attr:`~pyvista.CellType.QUADRATIC_WEDGE`      --> :attr:`~pyvista.CellType.WEDGE`
+        - :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` --> :attr:`~pyvista.CellType.HEXAHEDRON`
 
         Parameters
         ----------
@@ -2324,10 +2326,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         quad_tri_mask = celltype == CellType.QUADRATIC_TRIANGLE
         celltype[quad_tri_mask] = CellType.TRIANGLE
 
-        vtk_offset = self.GetCellLocationsArray()
         cells = _vtk.vtkCellArray()
         cells.DeepCopy(self._get_cells())
-        lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
+        if pyvista.vtk_version_info >= (9, 5):
+            face_locations = self.GetPolyhedronFaceLocations()
+            faces = self.GetPolyhedronFaces()
+            lgrid.SetPolyhedralCells(vtk_cell_type, cells, face_locations, faces)
+        else:
+            vtk_offset = self.GetCellLocationsArray()
+            lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):

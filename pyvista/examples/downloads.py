@@ -2237,6 +2237,8 @@ def download_frog(load=True):  # noqa: FBT002
         :ref:`Frog Dataset <frog_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
+            Segmentation labels associated with this dataset.
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
@@ -2257,7 +2259,6 @@ def _frog_files_func():
 _dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
 
 
-@_deprecate_positional_args
 @_deprecate_positional_args
 def download_chest(load=True):  # noqa: FBT002
     """Download chest dataset.
