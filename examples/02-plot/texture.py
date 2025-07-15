@@ -7,6 +7,15 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 from matplotlib.pyplot import get_cmap

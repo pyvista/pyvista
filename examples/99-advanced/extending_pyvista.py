@@ -22,6 +22,15 @@ classes are nearly always used for particular types of DataSets.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+#   "vtk",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

@@ -13,6 +13,14 @@ Notably, the mesh must be cast to an :class:`pyvista.UnstructuredGrid` type
 for this to work (use the ``cast_to_unstructured_grid`` filter).
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

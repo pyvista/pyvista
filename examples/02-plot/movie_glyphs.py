@@ -10,6 +10,14 @@ Create an animated GIF by generating glyphs using :func:`glyph()
 """
 
 # sphinx_gallery_thumbnail_number = 1
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

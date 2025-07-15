@@ -8,6 +8,14 @@ Use :meth:`~pyvista.Plotter.get_image_depth` to plot a depth image as viewed fro
 camera overlooking the :func:`~pyvista.examples.examples.load_random_hills` example mesh.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt

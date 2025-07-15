@@ -10,6 +10,13 @@ tends to perform much better than :func:`pyvista.DataSetFilters.delaunay_3d`.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

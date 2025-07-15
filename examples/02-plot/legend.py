@@ -7,6 +7,13 @@ Legends and glyphs
 Using custom legends and glyphs within PyVista.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

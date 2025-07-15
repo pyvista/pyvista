@@ -9,6 +9,14 @@ Calculate mass properties such as the volume or area of datasets
 """
 
 # sphinx_gallery_thumbnail_number = 4
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

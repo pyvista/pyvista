@@ -9,6 +9,14 @@ This example shows how to create meshes in different ways.
 """
 
 # sphinx_gallery_thumbnail_number = 5
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

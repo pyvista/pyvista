@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+#   "trame>=2.5.2",
+# ]
+# ///
+
 from __future__ import annotations
 
 from trame.app import get_server

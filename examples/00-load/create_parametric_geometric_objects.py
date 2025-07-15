@@ -7,6 +7,13 @@ Parametric Geometric Objects
 Creating parametric objects from :ref:`parametric_api`.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 from math import pi

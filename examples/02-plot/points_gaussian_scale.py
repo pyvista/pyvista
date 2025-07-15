@@ -8,6 +8,14 @@ style with :func:`~pyvista.Plotter.add_mesh` and scale them by a dynamic radius.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np
