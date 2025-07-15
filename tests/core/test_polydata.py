@@ -98,7 +98,14 @@ def test_init_from_arrays(faces_is_cell_array):
 @pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
     vertices = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]]
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0.5, 0.5, -1],
+            [0, 1.5, 1.5],
+        ]
     )
 
     # mesh faces
@@ -1205,7 +1212,11 @@ def test_is_all_triangles():
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]
+        [
+            [4, 0, 1, 2, 3],
+            [3, 0, 1, 4],
+            [3, 1, 2, 4],
+        ]
     )  # [square, triangle, triangle]
 
     mesh = pv.PolyData(vertices, faces)
@@ -1395,7 +1406,7 @@ def test_regular_faces_mutable():
 
 def _assert_irregular_faces_equal(faces, expected):
     assert len(faces) == len(expected)
-    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+    assert all(map(np.array_equal, faces, expected))
 
 
 def test_irregular_faces():
