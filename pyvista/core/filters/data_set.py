@@ -1209,22 +1209,22 @@ class DataSetFilters(DataObjectFilters):
 
             # Calculate scale factors (avoid division by zero)
             scale_factors = [
-                target_extents[i] / current_extents[i] if current_extents[i] != 0 else 1.0
+                float(target_extents[i] / current_extents[i]) if current_extents[i] != 0 else 1.0
                 for i in range(3)
             ]
 
             # Calculate current center
             current_center = [
-                (current_bounds[0] + current_bounds[1]) / 2,
-                (current_bounds[2] + current_bounds[3]) / 2,
-                (current_bounds[4] + current_bounds[5]) / 2,
+                float((current_bounds[0] + current_bounds[1]) / 2),
+                float((current_bounds[2] + current_bounds[3]) / 2),
+                float((current_bounds[4] + current_bounds[5]) / 2),
             ]
 
             # Calculate target center
             target_center = [
-                (bounds[0] + bounds[1]) / 2,
-                (bounds[2] + bounds[3]) / 2,
-                (bounds[4] + bounds[5]) / 2,
+                float((bounds[0] + bounds[1]) / 2),
+                float((bounds[2] + bounds[3]) / 2),
+                float((bounds[4] + bounds[5]) / 2),
             ]
 
             # Create PyVista transform: translate to origin, scale, translate to target center
@@ -1238,13 +1238,15 @@ class DataSetFilters(DataObjectFilters):
             if isinstance(scale_factor, numbers.Real):
                 scale_factors = [float(scale_factor)] * 3
             else:
-                scale_factors = _validation.validate_array(scale_factor, must_have_shape=3)
+                scale_factors = _validation.validate_array(
+                    scale_factor, must_have_shape=3
+                ).tolist()
 
             if center is None:
                 # Use dataset center as scaling center
-                center_point = self.center
+                center_point = list(self.center)
             else:
-                center_point = _validation.validate_array(center, must_have_shape=3)
+                center_point = _validation.validate_array(center, must_have_shape=3).tolist()
 
             # Create PyVista transform: translate to origin, scale, translate back
             transform = Transform()
