@@ -47,7 +47,7 @@ def _validate_jupyter_backend(
 
     if backend in ['server', 'client', 'trame', 'html']:
         try:
-            from pyvista.trame.jupyter import show_trame as show_trame
+            from pyvista.trame.jupyter import show_trame as show_trame  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)

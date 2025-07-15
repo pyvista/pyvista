@@ -1175,7 +1175,7 @@ class DataSetFilters(DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation
+        from pyvista.core import _validation  # noqa: PLC0415
 
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
@@ -1746,7 +1746,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms):
-                alg.SetSourceData(index, subgeom)  # type: ignore[call-overload]
+                alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -3606,7 +3606,7 @@ class DataSetFilters(DataObjectFilters):
         See the :ref:`plot_over_line_example` example.
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
@@ -3689,7 +3689,11 @@ class DataSetFilters(DataObjectFilters):
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_multiple_lines(
-        ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
+        ...     [
+        ...         [-0.5, -0.5, 0],
+        ...         [0.5, -0.5, 0],
+        ...         [0.5, 0.5, 0],
+        ...     ]
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
@@ -3959,7 +3963,7 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
@@ -4100,7 +4104,7 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
@@ -4992,11 +4996,11 @@ class DataSetFilters(DataObjectFilters):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
         if values is not None:
-            value_names = value_names if value_names else [None] * len(values)
+            value_names = value_names or [None] * len(values)
             for name, val in zip(value_names, values):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
-            range_names = range_names if range_names else [None] * len(ranges)
+            range_names = range_names or [None] * len(ranges)
             for name, rng in zip(range_names, ranges):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
@@ -6948,7 +6952,7 @@ class DataSetFilters(DataObjectFilters):
                 result.cell_data[output_scalars] = packed_array
 
             # vtkPackLabels sets active scalars by default, so do the same here
-            result.set_active_scalars(output_scalars, preference=field)
+            result.set_active_scalars(output_scalars, preference=field)  # type: ignore[arg-type]
 
             return result
 
@@ -7236,10 +7240,10 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Lazy import since these are from plotting module
-        import matplotlib.colors
+        import matplotlib.colors  # noqa: PLC0415
 
-        from pyvista.core._validation.validate import _validate_color_sequence
-        from pyvista.plotting.colors import get_cmap_safe
+        from pyvista.core._validation.validate import _validate_color_sequence  # noqa: PLC0415
+        from pyvista.plotting.colors import get_cmap_safe  # noqa: PLC0415
 
         def _local_validate_color_sequence(
             seq: ColorLike | Sequence[ColorLike],
@@ -7360,7 +7364,7 @@ class DataSetFilters(DataObjectFilters):
                 keys_ = np.arange(n_colors)
                 values_ = color_rgb_sequence
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))  # type: ignore[assignment]
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
                     values_.extend(values_[::-1])
                 keys = keys_
                 values = values_
@@ -7788,7 +7792,7 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
-            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            reference_volume.dimensions = dimensions
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds
@@ -7821,7 +7825,6 @@ class DataSetFilters(DataObjectFilters):
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
         binary_mask['mask'] = scalars  # type: ignore[assignment]
-
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
