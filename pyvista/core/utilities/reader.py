@@ -24,6 +24,7 @@ from pyvista.core import _vtk_core as _vtk
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
+from .misc import _NoNewAttributesMixinAutoFreeze
 from .misc import abstract_class
 
 if TYPE_CHECKING:
@@ -280,7 +281,7 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader:
+class BaseReader(_NoNewAttributesMixinAutoFreeze):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -444,7 +445,7 @@ class BaseReader:
         """Set defaults on reader post setting file, if needed."""
 
 
-class PointCellDataSelection:
+class PointCellDataSelection(_NoNewAttributesMixinAutoFreeze):
     """Mixin for readers that support data array selections.
 
     Examples
@@ -642,11 +643,11 @@ class PointCellDataSelection:
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
 
-class TimeReader(ABC):
+@abstract_class
+class TimeReader:
     """Abstract class for readers supporting time."""
 
     @property
-    @abstractmethod
     def number_time_points(self):
         """Return number of time points or iterations available to read.
 
@@ -655,8 +656,8 @@ class TimeReader(ABC):
         int
 
         """
+        raise NotImplementedError
 
-    @abstractmethod
     def time_point_value(self, time_point):
         """Value of time point or iteration by index.
 
@@ -670,6 +671,7 @@ class TimeReader(ABC):
         float
 
         """
+        raise NotImplementedError
 
     @property
     def time_values(self):
@@ -683,7 +685,6 @@ class TimeReader(ABC):
         return [self.time_point_value(idx) for idx in range(self.number_time_points)]
 
     @property
-    @abstractmethod
     def active_time_value(self):
         """Active time or iteration value.
 
@@ -692,8 +693,8 @@ class TimeReader(ABC):
         float
 
         """
+        raise NotImplementedError
 
-    @abstractmethod
     def set_active_time_value(self, time_value):
         """Set active time or iteration value.
 
@@ -703,8 +704,8 @@ class TimeReader(ABC):
             Time or iteration value to set as active.
 
         """
+        raise NotImplementedError
 
-    @abstractmethod
     def set_active_time_point(self, time_point):
         """Set active time or iteration by index.
 
@@ -714,6 +715,7 @@ class TimeReader(ABC):
             Time or iteration point index for setting active time.
 
         """
+        raise NotImplementedError
 
 
 class XMLImageDataReader(BaseReader, PointCellDataSelection):

@@ -396,6 +396,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+        self.text = None
 
     @property
     def suppress_rendering(self) -> bool:  # numpydoc ignore=RT01
@@ -5084,7 +5085,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mesh = None
         self.mapper = None  # type: ignore[assignment]
         self.volume = None  # type: ignore[assignment]
-        self.text: pyvista.CornerAnnotation | Text | None = None
+        if hasattr(self, 'text'):
+            self.text: pyvista.CornerAnnotation | Text | None = None
 
     @_deprecate_positional_args(allowed=['text'])
     def add_text(  # noqa: PLR0917
@@ -6868,6 +6870,10 @@ class Plotter(BasePlotter):
             theme=theme,
             image_scale=image_scale,
         )
+        self.mapper = None
+        self.volume = None
+        self.text = None
+
         # reset partial initialization flag
         self._initialized = False
 

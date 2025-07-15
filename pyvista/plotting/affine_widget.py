@@ -9,6 +9,7 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -107,7 +108,7 @@ def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa
     return start_point + t_value * direction
 
 
-class AffineWidget3D:
+class AffineWidget3D(_NoNewAttributesMixinAutoFreeze):
     """3D affine transform widget.
 
     This widget allows interactive transformations including translation and

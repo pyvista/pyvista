@@ -6,12 +6,14 @@ import weakref
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NoNewAttributesMixin
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 
 from . import _vtk
 
 
-class VolumeProperty(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
+class VolumeProperty(
+    _NoNewAttributesMixinAutoFreeze, _vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty
+):
     """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume

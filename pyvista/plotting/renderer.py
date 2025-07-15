@@ -22,6 +22,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -217,7 +218,7 @@ def scale_point(camera, point, invert=False):  # noqa: FBT002
     return (scaled[0], scaled[1], scaled[2])
 
 
-class CameraPosition:
+class CameraPosition(_NoNewAttributesMixinAutoFreeze):
     """Container to hold camera location attributes.
 
     Parameters
@@ -301,7 +302,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
+class Renderer(_NoNewAttributesMixinAutoFreeze, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -329,6 +330,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
+        self.axes_actor = None
+        self.axes_widget = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
         self._labels: dict[
@@ -360,6 +363,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.add_border(border_color, border_width)
 
         self.set_color_cycler(self._theme.color_cycler)
+        self._closed = False
 
     @property
     def camera_set(self) -> bool:  # numpydoc ignore=RT01
@@ -1128,7 +1132,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
     def _delete_axes_widget(self):
         """Remove and delete the current axes widget."""
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, 'axes_widget') and self.axes_widget is not None:
             self.axes_actor = None
             # HACK: set the viewport to a tiny value to hide the widget first
             # This is due to an issue with a blue box appearing after removal
@@ -3875,8 +3879,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._camera = None
-        self._bounding_box = None  # type: ignore[assignment]
-        self._marker_actor = None
+        if hasattr(self, '_bounding_box'):
+            self._bounding_box = None  # type: ignore[assignment]
+        if hasattr(self, '_marker_actor'):
+            self._marker_actor = None
         self._border_actor = None
         # remove reference to parent last
         self.parent = None

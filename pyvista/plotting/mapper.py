@@ -16,7 +16,7 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _NoNewAttributesMixin
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk
@@ -28,7 +28,9 @@ from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
-class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
+class _BaseMapper(
+    _NoNewAttributesMixinAutoFreeze, _vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper
+):
     """Base Mapper with methods common to other mappers."""
 
     def __init__(self, theme=None, **kwargs) -> None:
@@ -369,7 +371,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         self.Update()
 
 
-class _DataSetMapper(_NoNewAttributesMixin, _BaseMapper):
+class _DataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
 
     Parameters

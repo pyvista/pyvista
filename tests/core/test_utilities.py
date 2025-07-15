@@ -62,7 +62,7 @@ from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
-from pyvista.core.utilities.misc import _NoNewAttributesMixin
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
@@ -1286,7 +1286,7 @@ def test_fit_plane_to_points_success_with_many_points(one_million_points):
 
 @pytest.fixture
 def no_new_attributes_mixin_subclass():
-    class A(_NoNewAttributesMixin):
+    class A(_NoNewAttributesMixinAutoFreeze):
         def __init__(self):
             super().__init__()
             self.bar = 42

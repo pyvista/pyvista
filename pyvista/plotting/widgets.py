@@ -14,6 +14,7 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -75,7 +76,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     return event_map[interaction_event]
 
 
-class WidgetHelper:
+class WidgetHelper(_NoNewAttributesMixinAutoFreeze):
     """An internal class to manage widgets.
 
     It also manages and other helper methods involving widgets.

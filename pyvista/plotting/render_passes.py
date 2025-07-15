@@ -5,6 +5,7 @@ from __future__ import annotations
 import weakref
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
 
 from . import _vtk
 
@@ -22,7 +23,7 @@ POST_PASS = [
 ]
 
 
-class RenderPasses:
+class RenderPasses(_NoNewAttributesMixinAutoFreeze):
     """Class to support multiple render passes for a renderer.
 
     Notes
