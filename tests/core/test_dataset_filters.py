@@ -2812,6 +2812,10 @@ def test_extract_subset(uniform, rebase_coordinates):
         assert voi.origin == origin
         assert voi.offset == new_offset
 
+    # Test same output as using crop
+    cropped = uniform.crop(extent=extent, rebase_coordinates=rebase_coordinates)
+    assert cropped == voi
+
 
 def test_gaussian_smooth_output_type():
     volume = examples.load_uniform()
