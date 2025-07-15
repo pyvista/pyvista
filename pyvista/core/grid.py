@@ -699,12 +699,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             int | slice | tuple[int, int],
         ],
         *,
-        indexing_range: Literal['extent', 'dimensions'] = 'dimensions',
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
     ) -> NumpyArray[int]:
         """Compute VOI extents from indexing values."""
         _validation.check_contains(
-            ['extent', 'dimensions'], must_contain=indexing_range, name='indexing_range'
+            ['extent', 'dimensions'], must_contain=index_mode, name='indexing_range'
         )
         if not (isinstance(indices, tuple) and len(indices) == 3):  # type: ignore[redundant-expr]
             msg = 'Exactly 3 slices must be specified, one for each xyz-axis.'  # type: ignore[unreachable]
@@ -718,7 +718,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             _validation.check_instance(slicer, (int, tuple, list, slice), name='index')
 
             offset = extent[axis * 2]
-            index_offset = 0 if indexing_range == 'extent' else offset
+            index_offset = 0 if index_mode == 'extent' else offset
 
             if isinstance(slicer, (list, tuple)):
                 rng = _validation.validate_array(
@@ -742,7 +742,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
             else:  # isinstance(slicer, int)
                 min_allowed = offset - dims[axis] - index_offset
-                max_allowed = min_allowed + (dims[axis]) * 2 - 1
+                max_allowed = min_allowed + dims[axis] * 2 - 1
                 if slicer < min_allowed or slicer > max_allowed:
                     msg = (
                         f'index {slicer} is out of bounds for axis {axis} with size {dims[axis]}.'

@@ -293,7 +293,7 @@ class ImageDataFilters(DataSetFilters):
             reference frame is modified.
 
             Set this to ``False`` to leave the origin unmodified and keep the offset specified by
-            the ``voi`` parameter.
+            the indexing.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -305,6 +305,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        crop
         extract_subset
         :meth:`~pyvista.DataObjectFilters.slice`
         :meth:`~pyvista.DataObjectFilters.slice_implicit`
@@ -381,7 +382,7 @@ class ImageDataFilters(DataSetFilters):
             for slc, low, dim in zip((x, y, z), lower, self.dimensions)
         )
         voi = self._compute_voi_from_index(
-            indices, indexing_range=index_mode, strict_index=strict_index
+            indices, index_mode=index_mode, strict_index=strict_index
         )
         return self.extract_subset(
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
@@ -453,6 +454,7 @@ class ImageDataFilters(DataSetFilters):
         See Also
         --------
         slice_index
+        crop
 
         """
         alg = _vtk.vtkExtractVOI()
@@ -602,12 +604,12 @@ class ImageDataFilters(DataSetFilters):
             If ``True``, the cropped output is :meth:`padded <pad_image>` with ``fill_value`` to
             ensure the output dimensions match the input.
 
-        fill_value: float | VectorLike[float], optional
+        fill_value : float | VectorLike[float], optional
             Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
             a single float or a multi-component vector (e.g. RGB vector).
 
         rebase_coordinates : bool, default: False
-            Rebase the coordinate reference of the extracted subset:
+            Rebase the coordinate reference of the cropped output:
 
             - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
             - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
@@ -617,8 +619,8 @@ class ImageDataFilters(DataSetFilters):
             the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
             reference frame is modified.
 
-            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
-            the ``voi`` parameter.
+            Set this to ``False`` to leave the origin unmodified and keep the offset used by the
+            crop.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -638,6 +640,9 @@ class ImageDataFilters(DataSetFilters):
 
         select_values
             Threshold-like filter which may be used to generate a mask for cropping.
+
+        extract_subset
+            Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
 
         :ref:`crop_labeled_example`
             Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
@@ -674,7 +679,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> image_plotter(gray_image).show()
 
-        Crop the white border around the image by the active scalars as a mask. Here we specify a
+        Crop the white border around the image using active scalars as a mask. Here we specify a
         background value of ``255`` to correspond to white pixels. If this was an RGB image, we
         could also specify ``(255, 255, 255)`` as the background value.
 
