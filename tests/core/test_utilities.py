@@ -1309,17 +1309,29 @@ def test_no_new_attr_subclass(no_new_attr_subclass):
 
 @pytest.fixture
 def no_new_attributes_mixin_subclass():
-    class Foo(_NoNewAttributesMixin):
-        def __int__(self):
-            self.bar = 42  # OK
+    class A(_NoNewAttributesMixin):
+        def __init__(self):
+            super().__init__()
+            self.bar = 42
 
-    return Foo()
+    class B(A):
+        def __init__(self):
+            super().__init__()
+            self.baz = 42
+
+    return A(), B()
 
 
 def test_no_new_attributes_mixin(no_new_attributes_mixin_subclass):
-    match = "Attribute 'ham' cannot be added to class 'Foo'"
+    a, b = no_new_attributes_mixin_subclass
+
+    match = "Attribute 'ham' does not exist cannot be added to class 'A'"
     with pytest.raises(AttributeError, match=match):
-        no_new_attributes_mixin_subclass.ham = 'eggs'
+        a.ham = 'eggs'
+
+    match = "Attribute 'ham' does not exist cannot be added to class 'B'"
+    with pytest.raises(AttributeError, match=match):
+        b.ham = 'eggs'
 
 
 @pytest.fixture

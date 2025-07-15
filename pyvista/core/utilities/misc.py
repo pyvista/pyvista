@@ -288,7 +288,7 @@ class _AutoFreezeMeta(type):
     def __call__(cls: type[_T], *args, **kwargs) -> _T:
         obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
         if isinstance(obj, _NoNewAttributesMixin):
-            obj._freeze()
+            obj._freeze(cls)
         return obj
 
 
@@ -303,19 +303,27 @@ class _NoNewAttributesMixin(metaclass=_AutoFreezeMeta):
     `object.__setattr__(self, key, value)`.
     """
 
-    def _freeze(self) -> None:
+    def _freeze(self, freezing_class: type) -> None:
         """Prevent setting additional attributes."""
         object.__setattr__(self, '__frozen', True)
+        object.__setattr__(self, '__frozen_by_class', freezing_class)
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding any attribute via xxx.new_attribute = ..."""
-        # We need to check both 1.) cls.__dict__ and 2.) getattr(self, key) because
-        # 1.) getattr is false for attributes that raise errors
-        # 2.) cls.__dict__ doesn't traverse into base classes
-        if getattr(self, '__frozen', False) and not (
-            key in type(self).__dict__ or getattr(self, key, None) is not None
+        # Check if this class froze itself. Any frozen state already set by parent classes, e.g.
+        # by calling super().__init__(), will be ignored. This allows subclasses to set attributes
+        # during init without being affect by a parent class init.
+        frozen = self.__dict__.get('__frozen', False)
+        frozen_by = self.__dict__.get('__frozen_by_class', None)
+        if (
+            frozen
+            and frozen_by is type(self)
+            and not (key in type(self).__dict__ or hasattr(self, key))
         ):
-            msg = f'Attribute {key!r} cannot be added to class {self.__class__.__name__!r}'
+            msg = (
+                f'Attribute {key!r} does not exist cannot be added '
+                f'to class {self.__class__.__name__!r}'
+            )
             raise AttributeError(msg)
         object.__setattr__(self, key, value)
 
