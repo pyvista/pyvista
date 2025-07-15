@@ -3678,7 +3678,10 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
     hex_cells = combined.extract_cells_by_type(
-        [pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID]
+        [
+            pv.CellType.HEXAHEDRON,
+            pv.CellType.BEZIER_PYRAMID,
+        ]
     )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 

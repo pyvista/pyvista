@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from enum import auto
 import inspect
 import io
+from itertools import starmap
 import os
 from pathlib import Path
 import re
@@ -1403,7 +1404,7 @@ class ColormapTable(DocTable):
                 return colors[order]
 
             else:  # sort_by == 'hue':
-                hls = np.array([rgb_to_hls(*color) for color in colors])
+                hls = np.array(list(starmap(rgb_to_hls, colors)))
                 hue_sorted_indices = np.argsort(hls[:, 0])
                 return colors[hue_sorted_indices]
 
@@ -1421,7 +1422,7 @@ class ColormapTable(DocTable):
                 xyz = colour.sRGB_to_XYZ(rgb_sampled)
                 return colour.XYZ_to_CAM02UCS(xyz)
             else:  # sort_by == 'hue':
-                hls = np.array([rgb_to_hls(*color) for color in rgb_sampled])
+                hls = np.array(list(starmap(rgb_to_hls, rgb_sampled)))
                 return hls[:, 0]
 
         def compute_delta_between_swatches(swatch1, swatch2, weights):
@@ -1588,7 +1589,7 @@ def _get_fullname(typ: type[Any]) -> str:
 
 def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
     """Left-justify a list of lines."""
-    min_width = min_width if min_width else _max_width(lines)
+    min_width = min_width or _max_width(lines)
     return [line.ljust(min_width) for line in lines]
 
 
@@ -2269,7 +2270,7 @@ class DatasetCard:
 
         Any fields with a `None` value are completely excluded from the block.
         """
-        field_grids = [DatasetCard._generate_field_grid(name, value) for name, value in fields]
+        field_grids = list(starmap(DatasetCard._generate_field_grid, fields))
         block = '\n'.join([grid for grid in field_grids if grid])
         return _indent_multi_line_string(block, indent_level=indent_level)
 
