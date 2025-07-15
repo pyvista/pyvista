@@ -2128,7 +2128,7 @@ class ImageDataFilters(DataSetFilters):
 
                 # Dynamically calculate distance if not specified.
                 # This emulates the auto-constraint calc from vtkSurfaceNets3D
-                distance_ = distance_ if distance_ else np.linalg.norm(spacing_)
+                distance_ = distance_ or np.linalg.norm(spacing_)
                 alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
             else:
                 alg_.SmoothingOff()
@@ -2700,14 +2700,14 @@ class ImageDataFilters(DataSetFilters):
         new_image = pyvista.ImageData()
 
         if points_to_cells:
-            output_scalars = scalars if scalars else _get_output_scalars('point')
+            output_scalars = scalars or _get_output_scalars('point')
             # Enlarge image so points become cell centers
             origin_operator = operator.sub
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
         else:  # cells_to_points
-            output_scalars = scalars if scalars else _get_output_scalars('cell')
+            output_scalars = scalars or _get_output_scalars('cell')
             # Shrink image so cell centers become points
             origin_operator = operator.add
             dims_operator = operator.sub  # Decrease dimensions

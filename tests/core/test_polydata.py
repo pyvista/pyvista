@@ -98,7 +98,14 @@ def test_init_from_arrays(faces_is_cell_array):
 @pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
     vertices = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]]
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0.5, 0.5, -1],
+            [0, 1.5, 1.5],
+        ]
     )
 
     # mesh faces
@@ -1205,7 +1212,11 @@ def test_is_all_triangles():
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]
+        [
+            [4, 0, 1, 2, 3],
+            [3, 0, 1, 4],
+            [3, 1, 2, 4],
+        ]
     )  # [square, triangle, triangle]
 
     mesh = pv.PolyData(vertices, faces)
@@ -1294,44 +1305,54 @@ def test_n_faces_strict():
 
 @pytest.fixture
 def default_n_faces():
-    pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
     yield
-    pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
 
 
 def test_n_faces():
-    if pv._version.version_info[:2] > (0, 46):
-        msg = 'Convert non-strict n_faces use to error'
-        raise RuntimeError(msg)
+    if pv._version.version_info[:2] >= (0, 46):
+        # At version 0.46, n_faces should raise an error instead of warning
+        mesh = pv.PolyData(
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+            faces=[3, 0, 1, 2],
+            lines=[2, 0, 1],
+        )
+
+        # Should raise an AttributeError
+        with pytest.raises(
+            AttributeError,
+            match='The non-strict behavior of `pv.PolyData.n_faces` has been removed',
+        ):
+            _ = mesh.n_faces
+    else:
+        # Pre-0.46 behavior: warning
+        mesh = pv.PolyData(
+            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+            faces=[3, 0, 1, 2],
+            lines=[2, 0, 1],
+        )
+
+        # Should raise a warning the first time
+        with pytest.warns(
+            pv.PyVistaDeprecationWarning,
+            match='The current behavior of `pv.PolyData.n_faces` has been deprecated',
+        ):
+            nf = mesh.n_faces
+
+        # Current (deprecated) behavior is that n_faces is aliased to n_cells
+        assert nf == mesh.n_cells
+
+        # Shouldn't raise deprecation warning the second time
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            nf1 = mesh.n_faces
+
+        assert nf1 == nf
 
     if pv._version.version_info[:2] > (0, 49):
         msg = 'Convert default n_faces behavior to strict'
         raise RuntimeError(msg)
-
-    mesh = pv.PolyData(
-        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
-        faces=[3, 0, 1, 2],
-        lines=[2, 0, 1],
-    )
-
-    # Should raise a warning the first time
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match='The current behavior of `pv.PolyData.n_faces` has been deprecated',
-    ):
-        nf = mesh.n_faces
-
-    # Current (deprecated) behavior is that n_faces is aliased to n_cells
-    assert nf == mesh.n_cells
-
-    # Shouldn't raise deprecation warning the second time
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
-        nf1 = mesh.n_faces
-
-    assert nf1 == nf
 
 
 def test_opt_in_n_faces_strict():
@@ -1395,7 +1416,7 @@ def test_regular_faces_mutable():
 
 def _assert_irregular_faces_equal(faces, expected):
     assert len(faces) == len(expected)
-    assert all(np.array_equal(a, b) for (a, b) in zip(faces, expected))
+    assert all(map(np.array_equal, faces, expected))
 
 
 def test_irregular_faces():
