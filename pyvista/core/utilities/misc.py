@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from pyvista._typing_core import NumpyArray
     from pyvista._typing_core import VectorLike
 
+    _T = TypeVar('_T')
+
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
 
@@ -278,6 +280,44 @@ def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
             f'acceptable range {tuple(rng)}.'
         )
         raise ValueError(msg)
+
+
+class _AutoFreezeMeta(type):
+    """Metaclass to automatically freeze a class when called."""
+
+    def __call__(cls: type[_T], *args, **kwargs) -> _T:
+        obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
+        if isinstance(obj, _NoNewAttributesMixin):
+            obj._freeze()
+        return obj
+
+
+class _NoNewAttributesMixin(metaclass=_AutoFreezeMeta):
+    """Mixin to prevent adding new attributes.
+
+    Prevents additional attributes via xxx.attribute = "something" after a
+    call to `self._freeze()`. Mainly used to prevent the user from using
+    wrong attributes on an accessor.
+
+    If you really want to add a new attribute at a later time, you need to use
+    `object.__setattr__(self, key, value)`.
+    """
+
+    def _freeze(self) -> None:
+        """Prevent setting additional attributes."""
+        object.__setattr__(self, '__frozen', True)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """Prevent adding any attribute via xxx.new_attribute = ..."""
+        # We need to check both 1.) cls.__dict__ and 2.) getattr(self, key) because
+        # 1.) getattr is false for attributes that raise errors
+        # 2.) cls.__dict__ doesn't traverse into base classes
+        if getattr(self, '__frozen', False) and not (
+            key in type(self).__dict__ or getattr(self, key, None) is not None
+        ):
+            msg = f'Attribute {key!r} cannot be added to class {self.__class__.__name__!r}'
+            raise AttributeError(msg)
+        object.__setattr__(self, key, value)
 
 
 def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01

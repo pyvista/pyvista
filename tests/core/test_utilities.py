@@ -62,6 +62,7 @@ from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttributesMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
@@ -1304,6 +1305,21 @@ def test_no_new_attr_subclass(no_new_attr_subclass):
     msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
     with pytest.raises(AttributeError, match=msg):
         obj._eggs = 'ham'
+
+
+@pytest.fixture
+def no_new_attributes_mixin_subclass():
+    class Foo(_NoNewAttributesMixin):
+        def __int__(self):
+            self.bar = 42  # OK
+
+    return Foo()
+
+
+def test_no_new_attributes_mixin(no_new_attributes_mixin_subclass):
+    match = "Attribute 'ham' cannot be added to class 'Foo'"
+    with pytest.raises(AttributeError, match=match):
+        no_new_attributes_mixin_subclass.ham = 'eggs'
 
 
 @pytest.fixture
