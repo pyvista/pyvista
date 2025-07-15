@@ -1187,13 +1187,10 @@ class DataSetFilters(DataObjectFilters):
             msg = "Must specify either 'bounds' or 'scale_factor' for rescaling."
             raise ValueError(msg)
 
-        # Get the output dataset
-        output = self if inplace else self.copy()
-
         if bounds is not None:
             # Rescale to fit within specified bounds
             bounds = _validation.validate_array(bounds, must_have_shape=6)
-            current_bounds = output.bounds
+            current_bounds = self.bounds
 
             # Calculate current extents
             current_extents = [
@@ -1229,17 +1226,11 @@ class DataSetFilters(DataObjectFilters):
                 (bounds[4] + bounds[5]) / 2,
             ]
 
-            # Apply transformation: translate to origin, scale, translate to target center
-            points = output.points.copy()
-            for i in range(3):
-                # Translate to origin relative to current center
-                points[:, i] -= current_center[i]
-                # Scale
-                points[:, i] *= scale_factors[i]
-                # Translate to target center
-                points[:, i] += target_center[i]
-
-            output.points = points
+            # Create VTK transform: translate to origin, scale, translate to target center
+            transform = _vtk.vtkTransform()
+            transform.Translate(target_center)
+            transform.Scale(scale_factors)
+            transform.Translate([-c for c in current_center])
 
         else:
             # Rescale by scale factor
@@ -1250,23 +1241,28 @@ class DataSetFilters(DataObjectFilters):
 
             if center is None:
                 # Use dataset center as scaling center
-                center_point = output.center
+                center_point = self.center
             else:
                 center_point = _validation.validate_array(center, must_have_shape=3)
 
-            # Apply scaling about the center point
-            points = output.points.copy()
-            for i in range(3):
-                # Translate to origin relative to center
-                points[:, i] -= center_point[i]
-                # Scale
-                points[:, i] *= scale_factors[i]
-                # Translate back from center
-                points[:, i] += center_point[i]
+            # Create VTK transform: translate to origin, scale, translate back
+            transform = _vtk.vtkTransform()
+            transform.Translate(center_point)
+            transform.Scale(scale_factors)
+            transform.Translate([-c for c in center_point])
 
-            output.points = points
+        # Apply transformation using VTK's transform filter
+        alg = _vtk.vtkTransformFilter()
+        alg.SetInputDataObject(self)
+        alg.SetTransform(transform)
+        _update_alg(alg, progress_bar=False, message='Rescaling dataset')
 
-        return output
+        if inplace:
+            output = self
+            output.shallow_copy(_get_output(alg))
+            return output
+        else:
+            return _get_output(alg)
 
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
