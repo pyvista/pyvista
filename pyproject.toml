@@ -457,7 +457,6 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/partitioned.py' = ['ANN']
 'pyvista/core/pointset.py' = ['ANN']
 'pyvista/core/utilities/cell.py' = ['ANN']
-'pyvista/core/utilities/cells.py' = ['ANN']
 'pyvista/core/utilities/docs.py' = ['ANN']
 'pyvista/core/utilities/features.py' = ['ANN']
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
