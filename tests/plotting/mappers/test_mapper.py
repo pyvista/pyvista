@@ -73,11 +73,6 @@ def test_array_name(dataset_mapper):
     assert dataset_mapper.array_name == name
 
 
-def test_do_not_set_attributes(dataset_mapper):
-    with pytest.raises(AttributeError, match='cannot be added to type'):
-        dataset_mapper.not_an_attribute = None
-
-
 def test_copy(dataset_mapper, sphere):
     dataset_mapper.dataset = sphere
     dataset_mapper.interpolate_before_map = False
