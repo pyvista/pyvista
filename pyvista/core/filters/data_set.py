@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
+import numbers
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -1234,7 +1235,7 @@ class DataSetFilters(DataObjectFilters):
 
         else:
             # Rescale by scale factor
-            if isinstance(scale_factor, (int, float)):
+            if isinstance(scale_factor, numbers.Real):
                 scale_factors = [float(scale_factor)] * 3
             else:
                 scale_factors = _validation.validate_array(scale_factor, must_have_shape=3)
