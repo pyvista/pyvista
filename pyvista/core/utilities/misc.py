@@ -291,7 +291,7 @@ class _AutoFreezeMeta(type):
         return obj
 
 
-class _NoNewAttributesMixin(metaclass=_AutoFreezeMeta):
+class _NoNewAttributesMixin:
     """Mixin to prevent adding new attributes.
 
     Prevents additional attributes via xxx.attribute = "something" after a
@@ -327,28 +327,7 @@ class _NoNewAttributesMixin(metaclass=_AutoFreezeMeta):
         object.__setattr__(self, key, value)
 
 
-def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
-    """Override __setattr__ to not permit new attributes."""
-    if not hasattr(cls, '_new_attr_exceptions'):
-        cls._new_attr_exceptions = []
-
-    def __setattr__(self, name, value):  # noqa: ANN001, ANN202, N807
-        """Do not allow setting attributes."""
-        if (
-            hasattr(self, name)
-            or name in cls._new_attr_exceptions
-            or name in self._new_attr_exceptions
-        ):
-            object.__setattr__(self, name, value)
-        else:
-            msg = (
-                f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
-            raise AttributeError(msg)
-
-    cls.__setattr__ = __setattr__
-    return cls
+class _NoNewAttributesMixinAutoFreeze(_NoNewAttributesMixin, metaclass=_AutoFreezeMeta): ...
 
 
 def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
