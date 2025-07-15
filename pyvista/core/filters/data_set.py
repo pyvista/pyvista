@@ -1226,11 +1226,11 @@ class DataSetFilters(DataObjectFilters):
                 (bounds[4] + bounds[5]) / 2,
             ]
 
-            # Create VTK transform: translate to origin, scale, translate to target center
-            transform = _vtk.vtkTransform()
-            transform.Translate(target_center)
-            transform.Scale(scale_factors)
-            transform.Translate([-c for c in current_center])
+            # Create PyVista transform: translate to origin, scale, translate to target center
+            transform = Transform()
+            transform.translate(target_center)
+            transform.scale(scale_factors)
+            transform.translate([-c for c in current_center])
 
         else:
             # Rescale by scale factor
@@ -1245,24 +1245,14 @@ class DataSetFilters(DataObjectFilters):
             else:
                 center_point = _validation.validate_array(center, must_have_shape=3)
 
-            # Create VTK transform: translate to origin, scale, translate back
-            transform = _vtk.vtkTransform()
-            transform.Translate(center_point)
-            transform.Scale(scale_factors)
-            transform.Translate([-c for c in center_point])
+            # Create PyVista transform: translate to origin, scale, translate back
+            transform = Transform()
+            transform.translate(center_point)
+            transform.scale(scale_factors)
+            transform.translate([-c for c in center_point])
 
-        # Apply transformation using VTK's transform filter
-        alg = _vtk.vtkTransformFilter()
-        alg.SetInputDataObject(self)
-        alg.SetTransform(transform)
-        _update_alg(alg, progress_bar=False, message='Rescaling dataset')
-
-        if inplace:
-            output = self
-            output.shallow_copy(_get_output(alg))
-            return output
-        else:
-            return _get_output(alg)
+        # Apply transformation using PyVista's transform method
+        return self.transform(transform, inplace=inplace)
 
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
