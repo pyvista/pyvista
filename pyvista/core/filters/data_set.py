@@ -1110,6 +1110,164 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
+    def rescale(  # type: ignore[misc]
+        self: _DataSetType,
+        *,
+        bounds: VectorLike[float] | None = None,
+        scale_factor: float | VectorLike[float] | None = None,
+        center: VectorLike[float] | None = None,
+        inplace: bool = False,
+    ):
+        """Rescale the dataset coordinates to fit within specified bounds or by a scale factor.
+
+        This method provides a convenient way to rescale mesh coordinates either by
+        specifying target bounds or by applying a scale factor. This is useful for
+        normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
+
+        Parameters
+        ----------
+        bounds : VectorLike[float], optional
+            Target bounds for the rescaled dataset in the format
+            [xmin, xmax, ymin, ymax, zmin, zmax]. If provided, the dataset will be
+            scaled and translated to fit exactly within these bounds.
+            Cannot be used together with scale_factor.
+
+        scale_factor : float | VectorLike[float], optional
+            Scale factor(s) to apply to the coordinates. If a single float is provided,
+            uniform scaling is applied. If a 3-element vector is provided, different
+            scaling is applied along each axis [x_scale, y_scale, z_scale].
+            Cannot be used together with bounds.
+
+        center : VectorLike[float], optional
+            Center point for scaling operations in the format [x, y, z]. If not provided,
+            scaling is performed about the dataset's current center. This parameter
+            is only used when scale_factor is specified.
+
+        inplace : bool, default: False
+            If True, the dataset is modified in place. If False, a new dataset is returned.
+
+        Returns
+        -------
+        DataSet
+            The rescaled dataset. If inplace is True, returns self.
+
+        Examples
+        --------
+        Rescale a sphere to fit within unit bounds [-1, 1] in all dimensions.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(radius=5.0)
+        >>> rescaled = sphere.rescale(bounds=[-1, 1, -1, 1, -1, 1])
+        >>> rescaled.bounds
+        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+        Scale a mesh by a factor of 2.0 uniformly.
+
+        >>> mesh = pv.Cube()
+        >>> scaled = mesh.rescale(scale_factor=2.0)
+        >>> scaled.bounds[1] - scaled.bounds[0]  # x extent
+        2.0
+
+        Scale with different factors along each axis.
+
+        >>> mesh = pv.Cube()
+        >>> scaled = mesh.rescale(scale_factor=[2.0, 1.0, 0.5])
+
+        Scale about a specific center point.
+
+        >>> mesh = pv.Cube()
+        >>> scaled = mesh.rescale(scale_factor=2.0, center=[1, 1, 1])
+
+        """
+        if bounds is not None and scale_factor is not None:
+            msg = "Cannot specify both 'bounds' and 'scale_factor'. Choose one rescaling method."
+            raise ValueError(msg)
+
+        if bounds is None and scale_factor is None:
+            msg = "Must specify either 'bounds' or 'scale_factor' for rescaling."
+            raise ValueError(msg)
+
+        # Get the output dataset
+        output = self if inplace else self.copy()
+
+        if bounds is not None:
+            # Rescale to fit within specified bounds
+            bounds = _validation.validate_array(bounds, must_have_shape=6)
+            current_bounds = output.bounds
+
+            # Calculate current extents
+            current_extents = [
+                current_bounds[1] - current_bounds[0],  # x extent
+                current_bounds[3] - current_bounds[2],  # y extent
+                current_bounds[5] - current_bounds[4],  # z extent
+            ]
+
+            # Calculate target extents
+            target_extents = [
+                bounds[1] - bounds[0],  # x extent
+                bounds[3] - bounds[2],  # y extent
+                bounds[5] - bounds[4],  # z extent
+            ]
+
+            # Calculate scale factors (avoid division by zero)
+            scale_factors = [
+                target_extents[i] / current_extents[i] if current_extents[i] != 0 else 1.0
+                for i in range(3)
+            ]
+
+            # Calculate current center
+            current_center = [
+                (current_bounds[0] + current_bounds[1]) / 2,
+                (current_bounds[2] + current_bounds[3]) / 2,
+                (current_bounds[4] + current_bounds[5]) / 2,
+            ]
+
+            # Calculate target center
+            target_center = [
+                (bounds[0] + bounds[1]) / 2,
+                (bounds[2] + bounds[3]) / 2,
+                (bounds[4] + bounds[5]) / 2,
+            ]
+
+            # Apply transformation: translate to origin, scale, translate to target center
+            points = output.points.copy()
+            for i in range(3):
+                # Translate to origin relative to current center
+                points[:, i] -= current_center[i]
+                # Scale
+                points[:, i] *= scale_factors[i]
+                # Translate to target center
+                points[:, i] += target_center[i]
+
+            output.points = points
+
+        else:
+            # Rescale by scale factor
+            if isinstance(scale_factor, (int, float)):
+                scale_factors = [float(scale_factor)] * 3
+            else:
+                scale_factors = _validation.validate_array(scale_factor, must_have_shape=3)
+
+            if center is None:
+                # Use dataset center as scaling center
+                center_point = output.center
+            else:
+                center_point = _validation.validate_array(center, must_have_shape=3)
+
+            # Apply scaling about the center point
+            points = output.points.copy()
+            for i in range(3):
+                # Translate to origin relative to center
+                points[:, i] -= center_point[i]
+                # Scale
+                points[:, i] *= scale_factors[i]
+                # Translate back from center
+                points[:, i] += center_point[i]
+
+            output.points = points
+
+        return output
+
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
         *,
