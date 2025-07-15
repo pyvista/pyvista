@@ -1235,6 +1235,10 @@ class DataSetFilters(DataObjectFilters):
 
         else:
             # Rescale by scale factor
+            if scale_factor is None:
+                msg = 'scale_factor cannot be None when bounds is not provided.'
+                raise ValueError(msg)
+
             if isinstance(scale_factor, numbers.Real):
                 scale_factors = [float(scale_factor)] * 3
             else:
