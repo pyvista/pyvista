@@ -4595,7 +4595,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
-        self.mapper.blend_mode = blending  # type: ignore[union-attr]
+        self.mapper.blend_mode = blending
         self.mapper.update()
 
         self.volume = Volume()
