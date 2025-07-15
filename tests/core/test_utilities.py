@@ -66,7 +66,6 @@ from pyvista.core.utilities.misc import _NoNewAttributesMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
-from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
@@ -1286,28 +1285,6 @@ def test_fit_plane_to_points_success_with_many_points(one_million_points):
 
 
 @pytest.fixture
-def no_new_attr_subclass():
-    @no_new_attr
-    class A: ...
-
-    class B(A):
-        _new_attr_exceptions = 'eggs'
-
-        def __init__(self):
-            self.eggs = 'ham'
-
-    return B
-
-
-def test_no_new_attr_subclass(no_new_attr_subclass):
-    obj = no_new_attr_subclass()
-    assert obj
-    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
-    with pytest.raises(AttributeError, match=msg):
-        obj._eggs = 'ham'
-
-
-@pytest.fixture
 def no_new_attributes_mixin_subclass():
     class A(_NoNewAttributesMixin):
         def __init__(self):
@@ -2217,7 +2194,6 @@ def test_parse_interaction_event_raises_wrong_type():
 def test_classproperty():
     magic_number = 42
 
-    @no_new_attr
     class Foo:
         @_classproperty
         def prop(cls):  # noqa: N805

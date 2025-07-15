@@ -18,7 +18,6 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from typing import Any
-    from typing import ClassVar
 
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
@@ -408,9 +407,6 @@ class _NameMixin:
     .. versionadded:: 0.45
 
     """
-
-    # In case subclasses use @no_new_attr mixin
-    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01

@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttributesMixin
 
 from . import _vtk
 from .colors import Color
@@ -91,8 +91,7 @@ class lookup_table_ndarray(np.ndarray):  # noqa: N801
     __getattr__ = _vtk.VTKArray.__getattr__
 
 
-@no_new_attr
-class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
+class LookupTable(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When

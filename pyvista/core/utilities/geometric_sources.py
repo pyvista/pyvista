@@ -26,8 +26,8 @@ from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _NoNewAttributesMixin
 from pyvista.core.utilities.misc import _reciprocal
-from pyvista.core.utilities.misc import no_new_attr
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -90,8 +90,7 @@ def translate(
 
 if _vtk.vtk_version_info < (9, 3):
 
-    @no_new_attr
-    class CapsuleSource(_vtk.vtkCapsuleSource):  # type: ignore[misc]
+    class CapsuleSource(_NoNewAttributesMixin, _vtk.vtkCapsuleSource):  # type: ignore[misc]
         """Capsule source algorithm class.
 
         .. versionadded:: 0.44.0
@@ -127,8 +126,6 @@ if _vtk.vtk_version_info < (9, 3):
         >>> source.output.plot(show_edges=True, line_width=5)
 
         """
-
-        _new_attr_exceptions: ClassVar[list[str]] = ['_direction', 'direction']
 
         @_deprecate_positional_args
         def __init__(  # noqa: PLR0917
@@ -314,8 +311,7 @@ if _vtk.vtk_version_info < (9, 3):
             return wrap(self.GetOutput())
 
 
-@no_new_attr
-class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
+class ConeSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -573,8 +569,7 @@ class ConeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
+class CylinderSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -627,13 +622,6 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = [
-        '_center',
-        'center',
-        '_direction',
-        'direction',
-    ]
 
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
@@ -844,8 +832,7 @@ class CylinderSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class MultipleLinesSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
+class MultipleLinesSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -854,8 +841,6 @@ class MultipleLinesSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
         List of points defining a broken line.
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = ['points']
 
     def __init__(self: MultipleLinesSource, points: MatrixLike[float] | None = None) -> None:
         """Initialize the multiple lines source class."""
@@ -906,7 +891,7 @@ class MultipleLinesSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
-class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
+class Text3DSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, vtkVectorText):
     """3D text from a string.
 
     Generate 3D text from a string with a specified width, height or depth.
@@ -947,19 +932,6 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = [
-        'center',
-        '_center',
-        '_height',
-        '_width',
-        '_depth',
-        'normal',
-        '_normal',
-        '_process_empty_string',
-        '_output',
-        '_modified',
-    ]
-
     @_deprecate_positional_args(allowed=['string'])
     def __init__(  # noqa: PLR0917
         self: Text3DSource,
@@ -994,18 +966,8 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             if not np.array_equal(old_value, value):
                 object.__setattr__(self, name, value)
                 object.__setattr__(self, '_modified', True)
-        # Do not allow setting attributes.
-        # This is similar to using @no_new_attr decorator but without
-        # the __setattr__ override since this class defines its own override
-        # for setting the modified flag
-        elif name in Text3DSource._new_attr_exceptions:
-            object.__setattr__(self, name, value)
         else:
-            msg = (
-                f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
-            raise AttributeError(msg)
+            object.__setattr__(self, name, value)
 
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
@@ -1213,8 +1175,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
             out.points += self.center
 
 
-@no_new_attr
-class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
+class CubeSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1251,11 +1212,6 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
     >>> source.output.plot(show_edges=True, line_width=5)
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = [
-        'bounds',
-        '_bounds',
-    ]
 
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
@@ -1447,8 +1403,7 @@ class CubeSource(_vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
         self.SetOutputPointsPrecision(precision)
 
 
-@no_new_attr
-class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
+class DiscSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
     """Disc source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1479,8 +1434,6 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
     >>> source.output.plot(show_edges=True, line_width=5)
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
@@ -1643,8 +1596,7 @@ class DiscSource(_vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class LineSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
+class LineSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1763,8 +1715,7 @@ class LineSource(_vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
+class SphereSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2061,8 +2012,7 @@ class SphereSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
+class PolygonSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2246,8 +2196,9 @@ class PolygonSource(_vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class PlatonicSolidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource):
+class PlatonicSolidSource(
+    _NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource
+):
     """Platonic solid source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2275,8 +2226,6 @@ class PlatonicSolidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource)
     See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = ['_kinds']
 
     def __init__(self: PlatonicSolidSource, kind: str = 'tetrahedron') -> None:
         """Initialize the platonic solid source class."""
@@ -2350,8 +2299,7 @@ class PlatonicSolidSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource)
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
+class PlaneSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2591,8 +2539,7 @@ class PlaneSource(_vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
         self.center = (self.center + np.array(self.normal) * distance).tolist()
 
 
-@no_new_attr
-class ArrowSource(_vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
+class ArrowSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
     """Create a arrow source.
 
     .. versionadded:: 0.44
@@ -2766,8 +2713,7 @@ class ArrowSource(_vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
+class BoxSource(_NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2786,11 +2732,6 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
         triangle for a set of four points.
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = [
-        'bounds',
-        '_bounds',
-    ]
 
     @_deprecate_positional_args(allowed=['bounds'])
     def __init__(
@@ -2884,8 +2825,9 @@ class BoxSource(_vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
-class SuperquadricSource(_vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
+class SuperquadricSource(
+    _NoNewAttributesMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource
+):
     """Create superquadric source.
 
     .. versionadded:: 0.44
@@ -4027,7 +3969,6 @@ class OrthogonalPlanesSource:
         return self._output
 
 
-@no_new_attr
 class CubeFacesSource(CubeSource):
     """Generate the faces of a cube.
 
@@ -4166,20 +4107,6 @@ class CubeFacesSource(CubeSource):
     >>> pl.show()
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = [
-        '_output',
-        '_names',
-        'names',
-        '_frame_width',
-        'frame_width',
-        '_shrink_factor',
-        'shrink_factor',
-        '_explode_factor',
-        'explode_factor',
-        '_bounds',
-        'bounds',
-    ]
 
     class _FaceIndex(IntEnum):
         X_NEG = 0
