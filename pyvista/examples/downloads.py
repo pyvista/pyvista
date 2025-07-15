@@ -2237,7 +2237,7 @@ def download_frog(load=True):  # noqa: FBT002
         :ref:`Frog Dataset <frog_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
+        :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
             Segmentation labels associated with this dataset.
 
         :ref:`medical_dataset_gallery`
@@ -2258,62 +2258,6 @@ def _frog_files_func():
 
 
 _dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
-
-
-@_deprecate_positional_args
-def download_frog_tissue(load=True):  # noqa: FBT002
-    """Download frog tissue dataset.
-
-    This dataset contains tissue segmentation labels for the frog dataset.
-
-    .. deprecated:: 0.44.0
-
-        This example does not load correctly on some systems and has been deprecated.
-        Use :func:`~pyvista.examples.examples.load_frog_tissues` instead.
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.ImageData | str
-        DataSet or filename depending on ``load``.
-
-    .. seealso::
-
-        :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`Frog Dataset <frog_dataset>`
-
-        :ref:`medical_dataset_gallery`
-            Browse other medical datasets.
-
-    """
-    # Deprecated on v0.44.0, estimated removal on v0.47.0
-    warnings.warn(
-        'This example is deprecated and will be removed in v0.47.0. '
-        'Use `load_frog_tissues` instead.',
-        PyVistaDeprecationWarning,
-    )
-    if pyvista._version.version_info >= (0, 47):
-        msg = 'Remove this deprecated function'
-        raise RuntimeError(msg)
-
-    return _download_dataset(_dataset_frog_tissue, load=load)
-
-
-def _frog_tissue_files_func():
-    # Multiple files needed for read, but only one gets loaded
-    frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
-    frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
-    return frog_tissue_mhd, frog_tissue_zraw
-
-
-_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(_frog_tissue_files_func)
 
 
 @_deprecate_positional_args
@@ -7973,6 +7917,9 @@ def download_whole_body_ct_male(
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
+        :ref:`crop_labeled_example`
+            Example cropping this dataset using a segmentation mask.
+
         :ref:`volume_with_mask_example`
             See additional examples using this dataset.
 
@@ -8225,6 +8172,9 @@ def download_whole_body_ct_female(
 
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        :ref:`crop_labeled_example`
+            Example cropping this dataset using a segmentation mask.
 
         :ref:`volume_with_mask_example`
             See additional examples using this dataset.
@@ -8764,3 +8714,48 @@ def download_biplane(load=True):  # noqa: FBT002
 
 
 _dataset_biplane = _SingleFileDownloadableDatasetLoader('biplane_rms_pressure_bs.exo')
+
+
+def download_yinyang(*, load=True):
+    """Download yinyang dataset.
+
+    .. versionadded:: 0.46.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the image and plot it as grayscale pixel cells.
+
+    >>> from pyvista import examples
+    >>> dataset = examples.download_yinyang()
+    >>> pixel_cells = dataset.points_to_cells()
+    >>> pixel_cells.plot(
+    ...     cmap='gray',
+    ...     clim=[0, 255],
+    ...     cpos='xy',
+    ...     zoom='tight',
+    ...     lighting=False,
+    ...     show_scalar_bar=False,
+    ...     show_axes=False,
+    ... )
+
+    .. seealso::
+
+        :ref:`Yinyang Dataset <yinyang_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_yinyang, load=load)
+
+
+_dataset_yinyang = _SingleFileDownloadableDatasetLoader('yinyang/Yinyang.png')
