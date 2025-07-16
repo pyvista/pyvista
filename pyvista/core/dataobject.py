@@ -721,7 +721,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         if not hasattr(self, '_user_dict'):
             # Init
-            self._user_dict = _SerializedDictArray()
+            object.__setattr__(self, '_user_dict', _SerializedDictArray())
 
         if USER_DICT_KEY in field_data.keys():
             if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
