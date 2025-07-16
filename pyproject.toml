@@ -14,7 +14,6 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
-  'Programming Language :: Python :: 3.9',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
@@ -27,6 +26,7 @@ dependencies = [
   'vtk!=9.4.0',
   'vtk!=9.4.1',
   'vtk<9.6.0',
+  'vtk>=9.1.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -34,7 +34,7 @@ keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
-requires-python = '>=3.9'
+requires-python = '>=3.10'
 
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
@@ -250,9 +250,10 @@ xfail_strict = true
 
 [tool.mypy]
 check_untyped_defs = true
+disable_error_code = ['unused-ignore']
 disallow_any_generics = true
 disallow_subclassing_any = true
-enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
+enable_error_code = ['redundant-expr', 'truthy-bool']
 exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
@@ -550,6 +551,7 @@ keep-runtime-typing = true # Preserve types, even if a file imports `from __futu
 [tool.repo-review]
 ignore = [
   'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
+  'MY104', # temporarily disabled unused-ignore check after dropping Python 3.9/VTK 9.0.3 support
   'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
   'PY004', # we have a 'doc' folder, not 'docs'

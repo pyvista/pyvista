@@ -493,6 +493,7 @@ def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
     for array_in, array_out in zip(
         point_voxel_image.point_data.keys(),
         cell_voxel_image.cell_data.keys(),
+        strict=False,
     ):
         shares_memory = np.shares_memory(point_voxel_image[array_in], cell_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory
@@ -525,6 +526,7 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
     for array_in, array_out in zip(
         cell_voxel_image.cell_data.keys(),
         point_voxel_image.point_data.keys(),
+        strict=False,
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory

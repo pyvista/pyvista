@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -744,7 +744,7 @@ class ImageDataFilters(DataSetFilters):
             padding = _validate_padding(margin_)
             # Do not pad singleton dims
             singleton_dims = np.array(self.dimensions) == 1
-            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
+            mask = [x for pair in zip(singleton_dims, singleton_dims, strict=False) for x in pair]
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 

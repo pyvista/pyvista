@@ -60,7 +60,9 @@ def pytest_generate_tests(metafunc):
                 return any(base.__name__.startswith('vtk') for base in bases)
 
             inherits_from_vtk = {
-                name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
+                name: cls
+                for name, cls in zip(class_names, class_types, strict=False)
+                if inherits_from_vtk(cls)
             }
             assert inherits_from_vtk
             return inherits_from_vtk
