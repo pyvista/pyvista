@@ -1549,6 +1549,8 @@ class PlanesAssembly(_XYZAssembly):
         name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
+        self._camera = None
+
         # Init plane actors
         self._plane_actors = (Actor(), Actor(), Actor())
         # Init planes from source
@@ -1947,16 +1949,14 @@ class PlanesAssembly(_XYZAssembly):
     @property
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
-        if not hasattr(self, '_camera'):
-            msg = 'Camera has not been set.'
-            raise ValueError(msg)
         return self._camera
 
     @camera.setter
     def camera(self, camera):
         self._camera = camera
-        for axis in self._axis_actors:
-            axis.SetCamera(camera)
+        if camera is not None:
+            for axis in self._axis_actors:
+                axis.SetCamera(camera)
 
     @property
     def planes(self):
