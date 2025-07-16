@@ -119,7 +119,7 @@ def try_init_pyvista_object(class_):
     kwargs = get_default_class_init_kwargs(class_)
     try:
         instance = class_(**kwargs)
-    except VTKVersionError:
+    except (ImportError, VTKVersionError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:
         if 'abstract' in repr(e):
@@ -127,7 +127,7 @@ def try_init_pyvista_object(class_):
         raise
     return instance
 
-
+@pytest.mark.needs_vtk_version(9,2)
 def get_default_class_init_kwargs(pyvista_class):
     # Define kwargs as required for initializing some classes
     kwargs = {}
