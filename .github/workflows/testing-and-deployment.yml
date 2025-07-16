@@ -90,8 +90,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.config.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.config.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
@@ -102,7 +102,6 @@ jobs:
           path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
-          fail-on-cache-miss: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -115,6 +114,7 @@ jobs:
         run: tox run -e py${{ matrix.config.python-version }}-plotting --colored=yes
 
       - name: Upload Images for Failed Tests
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
@@ -175,7 +175,7 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
         with:
           packages: xvfb
@@ -256,7 +256,7 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         with:
           packages: xvfb
           version: 3.0
