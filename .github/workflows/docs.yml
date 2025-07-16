@@ -60,7 +60,7 @@ jobs:
       - name: Create example data path
         run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
@@ -179,7 +179,7 @@ jobs:
           path: .
 
       - name: Preview HTML documentation
-        uses: nwtgck/actions-netlify@v3.0
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: .
           production-deploy: ${{ github.ref == 'refs/heads/main' }}
@@ -205,7 +205,7 @@ jobs:
           path: .
 
       - name: Deploy Release Documentation
-        uses: nwtgck/actions-netlify@v3.0
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654
         with:
           publish-dir: .
           production-deploy: true
@@ -248,7 +248,7 @@ jobs:
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
         with:
           external_repository: pyvista/pyvista-examples
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}

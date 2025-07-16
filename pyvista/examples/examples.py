@@ -10,6 +10,7 @@ Examples
 
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
 
@@ -258,7 +259,7 @@ def load_structured():
 def _structured_load_func():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)  # type: ignore[assignment]
+    x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
@@ -473,7 +474,7 @@ def load_sphere_vectors():
 
 
 def _sphere_vectors_load_func() -> pyvista.PolyData:
-    sphere = pyvista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=math.pi)
 
     # make cool swirly pattern
     vectors = np.vstack(

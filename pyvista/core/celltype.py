@@ -1016,13 +1016,13 @@ class CellType(IntEnum):
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
 
-                points = _points_override if _points_override else cell.GetNumberOfPoints()
+                points = _points_override or cell.GetNumberOfPoints()
                 points_badge = _generate_points_badge(points)  # type: ignore[arg-type]
 
-                edges = _edges_override if _edges_override else cell.GetNumberOfEdges()
+                edges = _edges_override or cell.GetNumberOfEdges()
                 edges_badge = _generate_edges_badge(edges)  # type: ignore[arg-type]
 
-                faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
+                faces = _faces_override or cell.GetNumberOfFaces()
                 faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
 
                 badges = _indent_paragraph(

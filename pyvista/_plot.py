@@ -235,9 +235,9 @@ def plot(  # noqa: PLR0917
         show_axes = pl.theme.axes.show
     if show_axes:
         if pl.theme.axes.box:
-            pl.add_box_axes()  # type: ignore[call-arg]
+            pl.add_box_axes()
         else:
-            pl.add_axes()  # type: ignore[call-arg]
+            pl.add_axes()
 
     if anti_aliasing:
         if anti_aliasing is True:
@@ -287,25 +287,25 @@ def plot(  # noqa: PLR0917
         pl.add_text(text)
 
     if show_grid:
-        pl.show_grid()  # type: ignore[call-arg]
+        pl.show_grid()
     elif show_bounds:
-        pl.show_bounds()  # type: ignore[call-arg]
+        pl.show_bounds()
 
     if cpos is None:
-        cpos = pl.get_default_cam_pos()  # type: ignore[call-arg]
+        cpos = pl.get_default_cam_pos()
         pl.camera_position = cpos
         pl.camera_set = False
     else:
         pl.camera_position = cpos
 
     if eye_dome_lighting:
-        pl.enable_eye_dome_lighting()  # type: ignore[call-arg]
+        pl.enable_eye_dome_lighting()
 
     if parallel_projection:
-        pl.enable_parallel_projection()  # type: ignore[call-arg]
+        pl.enable_parallel_projection()
 
     if ssao:
-        pl.enable_ssao()  # type: ignore[call-arg]
+        pl.enable_ssao()
 
     if zoom is not None:
         pl.camera.zoom(zoom)
