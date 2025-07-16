@@ -22,7 +22,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 from .colors import Color
 
@@ -44,7 +44,7 @@ class LightType(IntEnum):
         return self.name.replace('_', ' ').title()
 
 
-class Light(_NoNewAttributesMixinAutoFreeze, DisableVtkSnakeCase, vtkLight):
+class Light(_NoNewAttributesMixinAuto, DisableVtkSnakeCase, vtkLight):
     """Light class.
 
     Parameters

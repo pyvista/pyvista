@@ -22,7 +22,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -218,7 +218,7 @@ def scale_point(camera, point, invert=False):  # noqa: FBT002
     return (scaled[0], scaled[1], scaled[2])
 
 
-class CameraPosition(_NoNewAttributesMixinAutoFreeze):
+class CameraPosition(_NoNewAttributesMixinAuto):
     """Container to hold camera location attributes.
 
     Parameters
@@ -302,7 +302,7 @@ class CameraPosition(_NoNewAttributesMixinAutoFreeze):
         self._viewup = value
 
 
-class Renderer(_NoNewAttributesMixinAutoFreeze, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
+class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute

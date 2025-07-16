@@ -11,13 +11,13 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_NoNewAttributesMixinAutoFreeze, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters

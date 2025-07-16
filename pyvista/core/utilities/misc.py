@@ -287,7 +287,7 @@ class _AutoFreezeMeta(type):
     def __call__(cls: type[_T], *args, **kwargs) -> _T:
         obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
         if isinstance(obj, _NoNewAttributesMixin):
-            obj._freeze(cls)
+            obj._no_new_attributes(cls)
         return obj
 
 
@@ -302,7 +302,7 @@ class _NoNewAttributesMixin:
     `object.__setattr__(self, key, value)`.
     """
 
-    def _freeze(self, freezing_class: type) -> None:
+    def _no_new_attributes(self, freezing_class: type) -> None:
         """Prevent setting additional attributes."""
         object.__setattr__(self, '__frozen', True)
         object.__setattr__(self, '__frozen_by_class', freezing_class)
@@ -327,7 +327,7 @@ class _NoNewAttributesMixin:
         object.__setattr__(self, key, value)
 
 
-class _NoNewAttributesMixinAutoFreeze(_NoNewAttributesMixin, metaclass=_AutoFreezeMeta): ...
+class _NoNewAttributesMixinAuto(_NoNewAttributesMixin, metaclass=_AutoFreezeMeta): ...
 
 
 def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:

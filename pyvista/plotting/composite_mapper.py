@@ -15,7 +15,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 from . import _vtk
 from .colors import Color
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from ._typing import ColorLike
 
 
-class BlockAttributes(_NoNewAttributesMixinAutoFreeze):
+class BlockAttributes(_NoNewAttributesMixinAuto):
     """Block attributes used to set the attributes of a block.
 
     Parameters
@@ -266,7 +266,7 @@ class BlockAttributes(_NoNewAttributesMixinAutoFreeze):
 
 
 class CompositeAttributes(
-    _NoNewAttributesMixinAutoFreeze,
+    _NoNewAttributesMixinAuto,
     _vtk.DisableVtkSnakeCase,
     _vtk.vtkCompositeDataDisplayAttributes,
 ):

@@ -18,7 +18,7 @@ import numpy as np
 import pyvista
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 from . import _vtk
 from .colors import COLOR_SCHEMES
@@ -1134,7 +1134,7 @@ class _ChartBackground(_CustomContextItem):
         return True
 
 
-class _Chart(_NoNewAttributesMixinAutoFreeze, _vtk.DisableVtkSnakeCase, DocSubs):
+class _Chart(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, DocSubs):
     """Common interface for vtkChart, vtkChartBox, vtkChartPie, and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
@@ -4924,7 +4924,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         legend.set_visible(val)
 
 
-class Charts(_NoNewAttributesMixinAutoFreeze):
+class Charts(_NoNewAttributesMixinAuto):
     """Collection of charts for a renderer.
 
     Users should typically not directly create new instances of this

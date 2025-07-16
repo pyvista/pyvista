@@ -23,7 +23,7 @@ from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
@@ -81,7 +81,7 @@ class _XYZTuple(NamedTuple):
 
 @abstract_class
 class _XYZAssembly(
-    _NoNewAttributesMixinAutoFreeze,
+    _NoNewAttributesMixinAuto,
     _vtk.DisableVtkSnakeCase,
     _Prop3DMixin,
     _NameMixin,

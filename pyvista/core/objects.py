@@ -18,10 +18,10 @@ from .utilities.arrays import FieldLiteral
 from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
-from .utilities.misc import _NoNewAttributesMixinAutoFreeze
+from .utilities.misc import _NoNewAttributesMixinAuto
 
 
-class Table(_NoNewAttributesMixinAutoFreeze, DataObject, _vtk.vtkTable):
+class Table(_NoNewAttributesMixinAuto, DataObject, _vtk.vtkTable):
     """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)

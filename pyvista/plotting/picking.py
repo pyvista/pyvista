@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -51,7 +51,7 @@ def _poked_context_callback(plotter, *args, **kwargs):
         try_callback(*args, **kwargs)
 
 
-class RectangleSelection(_NoNewAttributesMixinAutoFreeze):
+class RectangleSelection(_NoNewAttributesMixinAuto):
     """Internal data structure for rectangle based selections.
 
     Parameters
@@ -90,7 +90,7 @@ class RectangleSelection(_NoNewAttributesMixinAutoFreeze):
         return self._viewport
 
 
-class PointPickingElementHandler(_NoNewAttributesMixinAutoFreeze):
+class PointPickingElementHandler(_NoNewAttributesMixinAuto):
     """Internal picking handler for element-based picking.
 
     This handler is only valid for single point picking operations.
@@ -259,7 +259,7 @@ class PointPickingElementHandler(_NoNewAttributesMixinAutoFreeze):
             try_callback(self.callback, picked)
 
 
-class PickingInterface(_NoNewAttributesMixinAutoFreeze):  # numpydoc ignore=PR01
+class PickingInterface(_NoNewAttributesMixinAuto):  # numpydoc ignore=PR01
     """An internal class to hold core picking related features."""
 
     def __init__(self, *args, **kwargs):

@@ -11,7 +11,7 @@ import numpy as np
 
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import CellType
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -72,7 +72,7 @@ _CellTypeNamesLiteral = Literal[
 
 
 @dataclass
-class CellQualityInfo(_NoNewAttributesMixinAutoFreeze):
+class CellQualityInfo(_NoNewAttributesMixinAuto):
     """Information about a cell's quality measure."""
 
     cell_type: _CellTypesLiteral

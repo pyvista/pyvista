@@ -24,7 +24,7 @@ from pyvista.core import _vtk_core as _vtk
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
-from .misc import _NoNewAttributesMixinAutoFreeze
+from .misc import _NoNewAttributesMixinAuto
 from .misc import abstract_class
 
 if TYPE_CHECKING:
@@ -281,7 +281,7 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader(_NoNewAttributesMixinAutoFreeze):
+class BaseReader(_NoNewAttributesMixinAuto):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -445,7 +445,7 @@ class BaseReader(_NoNewAttributesMixinAutoFreeze):
         """Set defaults on reader post setting file, if needed."""
 
 
-class PointCellDataSelection(_NoNewAttributesMixinAutoFreeze):
+class PointCellDataSelection(_NoNewAttributesMixinAuto):
     """Mixin for readers that support data array selections.
 
     Examples

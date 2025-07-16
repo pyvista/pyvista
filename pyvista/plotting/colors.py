@@ -36,7 +36,7 @@ import numpy as np
 import pyvista
 from pyvista import _validation
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 from . import _vtk
 
@@ -1410,7 +1410,7 @@ _MATPLOTLIB_CMAPS_LITERAL = Literal[
 _MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
-class Color(_NoNewAttributesMixinAutoFreeze):
+class Color(_NoNewAttributesMixinAuto):
     """Helper class to convert between different color representations used in the pyvista library.
 
     Many pyvista methods accept :data:`ColorLike` parameters. This helper class

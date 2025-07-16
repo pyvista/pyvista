@@ -15,7 +15,7 @@ from typing import NamedTuple
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 
 
 def set_error_output_file(filename):
@@ -102,7 +102,7 @@ class VtkEvent(NamedTuple):
     alert: str
 
 
-class Observer(_NoNewAttributesMixinAutoFreeze):
+class Observer(_NoNewAttributesMixinAuto):
     """A standard class for observing VTK objects."""
 
     @_deprecate_positional_args(allowed=['event_type'])
@@ -216,7 +216,7 @@ def send_errors_to_logging():  # numpydoc ignore=RT01
     return obs.observe(error_output)
 
 
-class ProgressMonitor(_NoNewAttributesMixinAutoFreeze):
+class ProgressMonitor(_NoNewAttributesMixinAuto):
     """A standard class for monitoring the progress of a VTK algorithm.
 
     This must be use in a ``with`` context and it will block keyboard

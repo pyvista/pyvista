@@ -18,7 +18,7 @@ from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAutoFreeze
+from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
@@ -30,7 +30,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-class Timer(_NoNewAttributesMixinAutoFreeze):
+class Timer(_NoNewAttributesMixinAuto):
     """Timer class.
 
     Parameters
@@ -64,7 +64,7 @@ class Timer(_NoNewAttributesMixinAutoFreeze):
             iren.DestroyTimer(self.id)
 
 
-class RenderWindowInteractor(_NoNewAttributesMixinAutoFreeze):
+class RenderWindowInteractor(_NoNewAttributesMixinAuto):
     """Wrap :vtk:`vtkRenderWindowInteractor`.
 
     This class has been added for the purpose of making some methods
@@ -1594,7 +1594,7 @@ class RenderWindowInteractor(_NoNewAttributesMixinAutoFreeze):
 
 @abstract_class
 class InteractorStyleCaptureMixin(
-    _NoNewAttributesMixinAutoFreeze, DisableVtkSnakeCase, _vtk.vtkInteractorStyle
+    _NoNewAttributesMixinAuto, DisableVtkSnakeCase, _vtk.vtkInteractorStyle
 ):
     """A mixin for subclasses of vtkInteractorStyle with capturing ability.
 
