@@ -120,7 +120,9 @@ class RenderWindowInteractor(_NoNewAttributesMixinAuto):
 
         # Set default style
         self._style_class: _vtk.vtkInteractorStyle | None = None
-        self._style: Literal['Interactor', 'Context'] = 'Interactor'
+        self._style: Literal['Interactor', 'Context'] | None = 'Interactor'
+        self._prev_style_class: _vtk.vtkInteractorStyle | None = self._style_class
+        self._prev_style: Literal['Interactor', 'Context'] | None = self._style
         self.style = InteractorStyleRubberBandPick(self)
         self.__plotter = weakref.ref(plotter)
 
@@ -578,8 +580,8 @@ class RenderWindowInteractor(_NoNewAttributesMixinAuto):
         self._context_style.SetScene(scene)
         if scene is None and self._style == 'Context':
             # Switch back to previous interactor style
-            self._style = self._prev_style  # type: ignore[has-type]
-            self.style = self._prev_style_class  # type: ignore[has-type]
+            self._style = self._prev_style
+            self.style = self._prev_style_class
             self._prev_style = None
             self._prev_style_class = None
         elif scene is not None and self._style != 'Context':
