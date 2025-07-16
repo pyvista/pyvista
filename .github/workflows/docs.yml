@@ -53,6 +53,7 @@ jobs:
         uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: "3.13"
+          activate-environment: true
 
       - name: Install tox-uv
         run: uv pip install tox-uv

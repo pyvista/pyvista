@@ -95,6 +95,7 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+          activate-environment: true
 
       - name: Restore example data cache
         uses: actions/cache/restore@v4
@@ -171,6 +172,7 @@ jobs:
         uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Install tox-uv
         run: uv pip install tox-uv
@@ -252,6 +254,7 @@ jobs:
         uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Install tox-uv
         run: uv pip install tox-uv
@@ -301,6 +304,7 @@ jobs:
         uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Cache example data
         uses: actions/cache/restore@v4
