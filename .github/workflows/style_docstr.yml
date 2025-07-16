@@ -24,7 +24,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install tox-uv
-        run: uv pip install tox-uv
+        run: uv pip install tox-uv --system
 
       - uses: actions/cache@v4
         with:
