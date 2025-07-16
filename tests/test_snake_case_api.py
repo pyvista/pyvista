@@ -87,6 +87,7 @@ def try_init_object(class_, kwargs):
     return instance
 
 
+@pytest.mark.needs_vtk_version(9, 2)
 def test_vtk_snake_case_api_is_disabled(vtk_subclass):
     assert pv.vtk_snake_case() == 'error'
 
