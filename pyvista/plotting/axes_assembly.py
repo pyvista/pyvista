@@ -1954,9 +1954,8 @@ class PlanesAssembly(_XYZAssembly):
     @camera.setter
     def camera(self, camera):
         self._camera = camera
-        if camera is not None:
-            for axis in self._axis_actors:
-                axis.SetCamera(camera)
+        for axis in self._axis_actors:
+            axis.SetCamera(camera)
 
     @property
     def planes(self):
