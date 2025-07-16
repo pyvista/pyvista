@@ -654,7 +654,7 @@ class CompositePolyDataMapper(
         >>> actor, mapper = pl.add_composite(
         ...     dataset, scalars='data', show_scalar_bar=False
         ... )
-        >>> mapper.nan_color = 'r'
+        >>> pv.global_theme.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
 
