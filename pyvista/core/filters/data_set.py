@@ -1192,7 +1192,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         extent: VectorLike[float] | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> PolyData:
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1714,9 +1714,9 @@ class DataSetFilters(DataObjectFilters):
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet | DataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
-        elif isinstance(geom, (np.ndarray, Sequence)):
+        elif isinstance(geom, Sequence):
             geoms = geom
         else:
             geoms = [geom]
@@ -1869,7 +1869,7 @@ class DataSetFilters(DataObjectFilters):
         output = _get_output(alg)
 
         # Storing geom on the algorithm, for later use in legends.
-        object.__setattr__(output, '_glyph_geom', geoms)
+        output._glyph_geom = geoms
 
         return output
 

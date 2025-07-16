@@ -104,6 +104,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -4039,13 +4040,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = 'Label must be a string'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        if (
-            hasattr(self.mesh, '_glyph_geom')
-            and self.mesh._glyph_geom is not None  # type: ignore[union-attr]
-            and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
-        ):
+        if isinstance(self.mesh, pyvista.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
-            geom: str | pyvista.PolyData = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
+            geom: str | PolyData = pyvista.wrap(self.mesh._glyph_geom[0]).extract_geometry()
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 
