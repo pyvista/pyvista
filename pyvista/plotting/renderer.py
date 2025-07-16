@@ -1132,7 +1132,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
 
     def _delete_axes_widget(self):
         """Remove and delete the current axes widget."""
-        if hasattr(self, 'axes_widget') and self.axes_widget is not None:
+        if self.axes_widget is not None:
             self.axes_actor = None
             # HACK: set the viewport to a tiny value to hide the widget first
             # This is due to an issue with a blue box appearing after removal
@@ -1649,7 +1649,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         >>> pl.hide_axes()
 
         """
-        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
+        if self.axes_widget is not None and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
             self.Modified()
 
@@ -1677,7 +1677,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         >>> pl.show_axes()
 
         """
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             self.axes_widget.EnabledOn()
             self.axes_widget.SetCurrentRenderer(self)
         else:
@@ -1710,7 +1710,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
             Return ``True`` when the axes widget is enabled.
 
         """
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             return bool(self.axes_widget.GetEnabled())
         return False
 
