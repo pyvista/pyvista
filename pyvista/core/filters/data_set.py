@@ -1869,7 +1869,7 @@ class DataSetFilters(DataObjectFilters):
         output = _get_output(alg)
 
         # Storing geom on the algorithm, for later use in legends.
-        output._glyph_geom = geoms
+        object.__setattr__(output, '_glyph_geom', geoms)
 
         return output
 

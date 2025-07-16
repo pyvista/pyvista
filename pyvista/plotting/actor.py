@@ -8,7 +8,6 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NameMixin
 
 from . import _vtk
 from ._property import Property
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
-class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
+class Actor(Prop3D, _vtk.vtkActor):
     """Wrap :vtk:`vtkActor`.
 
     This class represents the geometry & properties in a rendered

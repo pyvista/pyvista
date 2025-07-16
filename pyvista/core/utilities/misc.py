@@ -404,4 +404,4 @@ class _NameMixin:
         if not value:
             msg = 'Name must be truthy.'
             raise ValueError(msg)
-        self._name = str(value)
+        object.__setattr__(self, '_name', str(value))

@@ -364,6 +364,9 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
 
         self.set_color_cycler(self._theme.color_cycler)
         self._closed = False
+        self._bounding_box = None
+        self._box_object = None
+        self._marker_actor = None
 
     @property
     def camera_set(self) -> bool:  # numpydoc ignore=RT01
@@ -2216,10 +2219,10 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         >>> pl.remove_bounding_box()
 
         """
-        if hasattr(self, '_box_object'):
+        if self._box_object is not None:
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
-            del self._box_object
+            self._box_object = None
             self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
@@ -3028,7 +3031,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
 
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
-        if hasattr(self, '_box_object') and self.bounding_box_actor is not None:
+        if self._box_object is not None and self.bounding_box_actor is not None:
             if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
@@ -3863,9 +3866,9 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
 
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
-        if hasattr(self, '_box_object'):
+        if self._box_object is not None:
             self.remove_bounding_box(render=render)
-        if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
+        if self._shadow_pass is not None:
             self.disable_shadows()  # type: ignore[unreachable]
         try:
             if self._charts is not None:
@@ -3879,9 +3882,9 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._camera = None
-        if hasattr(self, '_bounding_box'):
+        if self._bounding_box is not None:
             self._bounding_box = None  # type: ignore[assignment]
-        if hasattr(self, '_marker_actor'):
+        if self._marker_actor is not None:
             self._marker_actor = None
         self._border_actor = None
         # remove reference to parent last

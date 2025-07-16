@@ -14,6 +14,7 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-class Prop3D(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
+class Prop3D(_NoNewAttributesMixinAuto, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
     """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial

@@ -112,6 +112,7 @@ class RenderWindowInteractor(_NoNewAttributesMixinAuto):
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ('LeftButtonPressEvent', 'RightButtonPressEvent')
         }
+        self._timer = None
         self._timer_event = None
         self._click_time = 0
         self._MAX_CLICK_DELAY = 0.8  # seconds
