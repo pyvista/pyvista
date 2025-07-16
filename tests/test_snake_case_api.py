@@ -92,8 +92,8 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
 
     # Default test values for classes
     kwargs = {}
-    vtk_attr_camel_case = 'GetGlobalWarningDisplay'
-    vtk_attr_snake_case = 'global_warning_display'
+    vtk_attr_camel_case = 'GetObjectName'
+    vtk_attr_snake_case = 'object_name'
 
     # Define kwargs or attributes as required for some cases.
     if vtk_subclass is pv.CubeAxesActor:
@@ -135,13 +135,8 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         kwargs['parent'] = pv.Plotter()
         kwargs['image_path'] = pv.examples.logofile
     elif vtk_subclass is pv.pyvista_ndarray:
-        vtk_attr_camel_case = 'GetName'
-        vtk_attr_snake_case = 'name'
         kwargs['array'] = pv.vtk_points(np.eye(3)).GetData()
     elif vtk_subclass is pv.DataSetAttributes:
-        vtk_attr_camel_case = 'GetObjectName'
-        vtk_attr_snake_case = 'object_name'
-
         dataset = pv.ImageData()
         kwargs['vtkobject'] = dataset.GetPointData()
         kwargs['dataset'] = dataset
