@@ -171,7 +171,7 @@ class _XYZAssembly(
         self.origin = origin
         self.user_matrix = user_matrix
 
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
     @property
     def parts(self):

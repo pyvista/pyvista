@@ -97,7 +97,7 @@ class _BaseMapper(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkA
         # any connection with the original
         new_mapper.ShallowCopy(self)
         if hasattr(self, 'dataset'):
-            new_mapper.dataset = self.dataset  # type: ignore[attr-defined]
+            new_mapper.dataset = self.dataset
         return new_mapper
 
     @property

@@ -100,6 +100,7 @@ if TYPE_CHECKING:
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
+    from pyvista import CornerAnnotation
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
@@ -125,6 +126,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
+    from pyvista.plotting.mapper import _BaseMapper
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
     from pyvista.trame.jupyter import EmbeddableWidget
@@ -396,7 +398,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
-        self.text = None
+
+        self.mapper: _BaseMapper | None = None
+        self.volume: Volume | None = None
+        self.text: CornerAnnotation | Text | None = None
 
     @property
     def suppress_rendering(self) -> bool:  # numpydoc ignore=RT01
@@ -2977,14 +2982,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 feature_angle=feature_angle,
             )
 
-        self.mapper: CompositePolyDataMapper | PointGaussianMapper = CompositePolyDataMapper(
+        mapper = CompositePolyDataMapper(
             dataset,
             theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
             interpolate_before_map=interpolate_before_map,
         )
+        self.mapper = mapper
 
-        actor, _ = self.add_actor(self.mapper, render=False)
+        actor, _ = self.add_actor(mapper, render=False)
         actor = cast('Actor', actor)
 
         prop = Property(
@@ -3089,7 +3095,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             remove_existing_actor=remove_existing_actor,
         )
 
-        return actor, self.mapper
+        return actor, mapper
 
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh(  # noqa: PLR0917
@@ -3605,9 +3611,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':
-            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
+            mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
-            self.mapper = DataSetMapper(theme=self.theme)  # type: ignore[assignment]
+            mapper = DataSetMapper(theme=self.theme)
+        self.mapper = mapper
 
         if render_lines_as_tubes and show_edges:
             warnings.warn(
@@ -3768,7 +3775,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         original_scalar_name = None
         scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
-            self.mapper.array_name = scalars
+            mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None and scalars.endswith(('_rgb', '_rgba')):
@@ -3783,7 +3790,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # the input mesh, it may not be set as the active scalars within
             # the mapper. This should be refactored by 0.36.0
             field = get_array_association(mesh, original_scalar_name, preference=preference)
-            self.mapper.scalar_map_mode = field.name
+            mapper.scalar_map_mode = field.name
 
             # set preference for downstream use with actual
             if field == FieldAssociation.POINT:
@@ -3833,12 +3840,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set main values
         self.mesh = mesh
-        self.mapper.dataset = self.mesh
+        mapper.dataset = self.mesh
         if interpolate_before_map is not None:
-            self.mapper.interpolate_before_map = interpolate_before_map
-        set_algorithm_input(self.mapper, algo or mesh)
+            mapper.interpolate_before_map = interpolate_before_map
+        set_algorithm_input(mapper, algo or mesh)
 
-        actor = Actor(mapper=self.mapper)
+        actor = Actor(mapper=mapper)
         actor.user_matrix = user_matrix
 
         if texture is not None:
@@ -3856,7 +3863,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 color = 'white'
             if scalars is None:
                 show_scalar_bar = False
-            self.mapper.scalar_visibility = False
+            mapper.scalar_visibility = False
 
             # see https://github.com/pyvista/pyvista/issues/950
             mesh.set_active_scalars(None)
@@ -3873,7 +3880,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            self.mapper.set_scalars(  # type: ignore[call-arg]
+            mapper.set_scalars(
                 scalars=scalars,
                 scalars_name=scalars_name,
                 n_colors=n_colors,
@@ -3893,17 +3900,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 categories=categories,
                 clim=clim,
             )
-            self.mapper.scalar_visibility = True
+            mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity
-            self.mapper.set_custom_opacity(
+            mapper.set_custom_opacity(
                 opacity,
                 color=color,
                 n_colors=n_colors,
                 preference=preference,
             )
-            self.mapper.scalar_visibility = True
+            mapper.scalar_visibility = True
         else:
-            self.mapper.scalar_visibility = False
+            mapper.scalar_visibility = False
 
         # Set actor properties ================================================
         prop_kwargs = dict(
@@ -3932,14 +3939,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
-        if style == 'points_gaussian' and self.mapper.dataset is not None:
-            self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not self.mapper.emissive and prop.opacity >= 1.0:
+        if style == 'points_gaussian' and mapper.dataset is not None:
+            mapper.scale_factor = prop.point_size * mapper.dataset.length / 1300
+            if not render_points_as_spheres and not mapper.emissive and prop.opacity >= 1.0:
                 prop.opacity = 0.9999  # otherwise, weird triangles
 
         if render_points_as_spheres:
             if style == 'points_gaussian':
-                self.mapper.use_circular_splat(prop.opacity)
+                mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
@@ -4545,7 +4552,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'{", ".join(mappers_lookup.keys())}'
             )
             raise TypeError(msg)
-        self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
+        self.mapper = mappers_lookup[mapper](theme=self._theme)
 
         # Set scalars range
         min_, max_ = None, None
@@ -4758,7 +4765,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = 'clim argument must be a length 2 iterable of values: (min, max).'
             raise TypeError(msg)
         if name is None:
-            if not hasattr(self, 'mapper'):
+            if self.mapper is None:
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
             self.mapper.scalar_range = clim
@@ -4792,7 +4799,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
+        self.mapper = None
 
     def link_views(self, views: int | Iterable[int] | None = 0) -> None:
         """Link the views' cameras.
@@ -5045,7 +5052,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bars
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
+        self.mapper = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -5061,8 +5068,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 _kill_display(disp_id)
             self.iren = None
 
-        if hasattr(self, 'text'):
-            del self.text
+        self.text = None
 
         # end movie
         if hasattr(self, 'mwriter'):
@@ -5083,10 +5089,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
-        self.volume = None  # type: ignore[assignment]
-        if hasattr(self, 'text'):
-            self.text: pyvista.CornerAnnotation | Text | None = None
+        self.mapper = None
+        self.volume = None
+        self.text = None
 
     @_deprecate_positional_args(allowed=['text'])
     def add_text(  # noqa: PLR0917
@@ -5224,16 +5229,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shadow=shadow,
         )
         if isinstance(position, (int, str, bool)):
-            self.text = CornerAnnotation(position, text, linear_font_scale_factor=font_size // 2)
+            actor: CornerAnnotation | Text = CornerAnnotation(
+                position, text, linear_font_scale_factor=font_size // 2
+            )
         else:
-            self.text = Text(text=text, position=position)
+            actor = Text(text=text, position=position)
             if viewport:
-                self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
-                self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+                actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             text_prop.font_size = int(font_size * 2)
-        self.text.prop = text_prop
-        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
-        return self.text
+        actor.prop = text_prop
+        self.text = actor
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
 
     def open_movie(
         self, filename: str | Path, framerate: int = 24, quality: int = 5, **kwargs
@@ -6870,10 +6878,6 @@ class Plotter(BasePlotter):
             theme=theme,
             image_scale=image_scale,
         )
-        self.mapper = None
-        self.volume = None
-        self.text = None
-
         # reset partial initialization flag
         self._initialized = False
 

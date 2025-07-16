@@ -330,8 +330,8 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
-        self.axes_actor = None
-        self.axes_widget = None
+        self.axes_actor: _vtk.vtkAxesActor | None = None
+        self.axes_widget: _vtk.vtkOrientationMarkerWidget | None = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
         self._labels: dict[
@@ -364,9 +364,9 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
 
         self.set_color_cycler(self._theme.color_cycler)
         self._closed = False
-        self._bounding_box = None
-        self._box_object = None
-        self._marker_actor = None
+        self._bounding_box: _vtk.vtkOutlineCornerSource | _vtk.vtkCubeSource | None = None
+        self._box_object: PolyData | None = None
+        self._marker_actor: _vtk.vtkAxesActor | None = None
 
     @property
     def camera_set(self) -> bool:  # numpydoc ignore=RT01
@@ -1119,7 +1119,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         >>> pl.show()
 
         """
-        self._marker_actor = create_axes_marker(
+        marker = create_axes_marker(
             line_width=line_width,
             x_color=x_color,
             y_color=y_color,
@@ -1129,9 +1129,10 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
             zlabel=zlabel,
             labels_off=labels_off,
         )
-        self.AddActor(self._marker_actor)
+        self.AddActor(marker)
         self.Modified()
-        return self._marker_actor
+        self._marker_actor = marker
+        return marker
 
     def _delete_axes_widget(self):
         """Remove and delete the current axes widget."""
@@ -1222,17 +1223,18 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         self._delete_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
-        self.axes_widget = _vtk.vtkOrientationMarkerWidget()
-        self.axes_widget.SetOrientationMarker(actor)
+        axes_widget = _vtk.vtkOrientationMarkerWidget()
+        self.axes_widget = axes_widget
+        axes_widget.SetOrientationMarker(actor)
         if hasattr(self.parent, 'iren'):
-            self.axes_widget.SetInteractor(self.parent.iren.interactor)
-            self.axes_widget.SetEnabled(1)
-            self.axes_widget.SetInteractive(interactive)
-        self.axes_widget.SetCurrentRenderer(self)
+            axes_widget.SetInteractor(self.parent.iren.interactor)
+            axes_widget.SetEnabled(1)
+            axes_widget.SetInteractive(interactive)
+        axes_widget.SetCurrentRenderer(self)
         if viewport is not None:
-            self.axes_widget.SetViewport(viewport)
+            axes_widget.SetViewport(viewport)
         self.Modified()
-        return self.axes_widget
+        return axes_widget
 
     @_deprecate_positional_args
     def add_axes(  # noqa: PLR0917
@@ -2307,19 +2309,22 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
             lighting = self._theme.lighting
 
         self.remove_bounding_box()
+        box: _vtk.vtkOutlineCornerSource | _vtk.vtkCubeSource
         if outline:
-            self._bounding_box = _vtk.vtkOutlineCornerSource()
-            self._bounding_box.SetCornerFactor(corner_factor)
+            source = _vtk.vtkOutlineCornerSource()
+            source.SetCornerFactor(corner_factor)
+            box = source
         else:
-            self._bounding_box = _vtk.vtkCubeSource()  # type: ignore[assignment]
-        self._bounding_box.SetBounds(self.bounds)
-        self._bounding_box.Update()
-        _output: _vtk.vtkPolyData = self._bounding_box.GetOutput()
-        self._box_object = wrap(_output)
-        name = f'BoundingBox({hex(id(self._box_object))})'
+            box = _vtk.vtkCubeSource()
+        box.SetBounds(self.bounds)
+        box.Update()
+        box_object = wrap(box.GetOutput())
+        self._bounding_box = box
+        self._box_object = box_object
+        name = f'BoundingBox({hex(id(box_object))})'
 
         mapper = _vtk.vtkDataSetMapper()
-        mapper.SetInputData(self._box_object)
+        mapper.SetInputData(box_object)
         self.bounding_box_actor, prop = self.add_actor(
             mapper,
             reset_camera=reset_camera,
@@ -3882,10 +3887,8 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._camera = None
-        if self._bounding_box is not None:
-            self._bounding_box = None  # type: ignore[assignment]
-        if self._marker_actor is not None:
-            self._marker_actor = None
+        self._bounding_box = None
+        self._marker_actor = None
         self._border_actor = None
         # remove reference to parent last
         self.parent = None
