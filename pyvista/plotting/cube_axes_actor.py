@@ -14,7 +14,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
 
 from . import _vtk
 
@@ -53,7 +53,7 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
 
 
 class CubeAxesActor(
-    _NoNewAttributesMixinAuto, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor
+    _NoNewAttrMixinAuto, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeAxesActor
 ):
     """Wrap :vtk:`vtkCubeAxesActor`.
 

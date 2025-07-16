@@ -10,15 +10,13 @@ import pyvista
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
 
 from . import _vtk
 from .actor_properties import ActorProperties
 
 
-class AxesActor(
-    _NoNewAttributesMixinAuto, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor
-):
+class AxesActor(_NoNewAttrMixinAuto, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAxesActor):
     """Axes actor wrapper for :vtk:`vtkAxesActor`.
 
     Hybrid 2D/3D actor used to represent 3D axes in a scene. The user

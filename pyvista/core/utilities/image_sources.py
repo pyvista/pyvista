@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
 
 from .helpers import wrap
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class ImageEllipsoidSource(
-    _NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource
+    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource
 ):
     """Create a binary image of an ellipsoid class.
 
@@ -142,7 +142,7 @@ class ImageEllipsoidSource(
 
 
 class ImageMandelbrotSource(
-    _NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource
+    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource
 ):
     """Create an image of the Mandelbrot set.
 
@@ -238,9 +238,7 @@ class ImageMandelbrotSource(
         return wrap(self.GetOutput())
 
 
-class ImageNoiseSource(
-    _NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource
-):
+class ImageNoiseSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -391,7 +389,7 @@ class ImageNoiseSource(
 
 
 class ImageSinusoidSource(
-    _NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource
+    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource
 ):
     """Create an image of a sinusoid.
 
@@ -594,7 +592,7 @@ class ImageSinusoidSource(
 
 
 class ImageGaussianSource(
-    _NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource
+    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource
 ):
     """Create a binary image with Gaussian pixel values.
 
@@ -761,9 +759,7 @@ class ImageGaussianSource(
         return wrap(self.GetOutput())
 
 
-class ImageGridSource(
-    _NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource
-):
+class ImageGridSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
     """Create an image of a grid.
 
     .. versionadded:: 0.44.0

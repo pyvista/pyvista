@@ -286,12 +286,12 @@ class _AutoFreezeMeta(type):
 
     def __call__(cls: type[_T], *args, **kwargs) -> _T:
         obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
-        if isinstance(obj, _NoNewAttributesMixin):
+        if isinstance(obj, _NoNewAttrMixin):
             obj._no_new_attributes(cls)
         return obj
 
 
-class _NoNewAttributesMixin:
+class _NoNewAttrMixin:
     """Mixin to prevent adding new attributes.
 
     Prevents additional attributes via xxx.attribute = "something" after a
@@ -327,7 +327,7 @@ class _NoNewAttributesMixin:
         object.__setattr__(self, key, value)
 
 
-class _NoNewAttributesMixinAuto(_NoNewAttributesMixin, metaclass=_AutoFreezeMeta): ...
+class _NoNewAttrMixinAuto(_NoNewAttrMixin, metaclass=_AutoFreezeMeta): ...
 
 
 def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:

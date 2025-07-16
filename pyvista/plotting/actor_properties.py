@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pyvista.core.utilities.misc import _NoNewAttributesMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
 
 from .opts import InterpolationType
 from .opts import RepresentationType
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from . import _vtk
 
 
-class ActorProperties(_NoNewAttributesMixinAuto):
+class ActorProperties(_NoNewAttrMixinAuto):
     """Properties wrapper for :vtk:`vtkProperty`.
 
     Contains the surface properties of the object.

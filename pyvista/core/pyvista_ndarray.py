@@ -11,7 +11,7 @@ import numpy as np
 from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
-from .utilities.misc import _NoNewAttributesMixinAuto
+from .utilities.misc import _NoNewAttrMixinAuto
 
 if TYPE_CHECKING:
     from typing import Any
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 class pyvista_ndarray(  # noqa: N801
-    _NoNewAttributesMixinAuto, np.ndarray
+    _NoNewAttrMixinAuto, np.ndarray
 ):  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtk array.
 
