@@ -107,6 +107,7 @@ class RenderWindowInteractor(_NoNewAttributesMixinAuto):
 
         # Map of observers to events
         self._observers = {}
+        self._last_key: str | None = None
         self._key_press_event_callbacks = defaultdict(list)
         self._click_event_callbacks = {  # type: ignore[var-annotated]
             event: {(double, v): [] for double in (False, True) for v in (False, True)}

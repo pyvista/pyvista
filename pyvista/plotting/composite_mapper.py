@@ -569,6 +569,8 @@ class CompositePolyDataMapper(
         if interpolate_before_map is not None:
             self.interpolate_before_map = interpolate_before_map
 
+        self._orig_scalars_name: str | None = None
+
     @property
     def dataset(self) -> pyvista.MultiBlock:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.

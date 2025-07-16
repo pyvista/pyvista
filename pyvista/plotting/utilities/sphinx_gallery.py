@@ -120,10 +120,10 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         fname_withoutextension = str(path.parent / path.stem)
         fname = fname_withoutextension + '.png'
 
-        if hasattr(plotter, '_gif_filename'):
+        if (gif_filename := plotter._gif_filename) is not None:
             # move gif to fname
             fname = fname[:-3] + 'gif'
-            shutil.move(plotter._gif_filename, fname)
+            shutil.move(gif_filename, fname)
             image_names.append(fname)
         else:
             plotter.screenshot(fname)

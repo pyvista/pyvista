@@ -1145,7 +1145,7 @@ class Renderer(_NoNewAttributesMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpen
             if self.axes_widget.GetEnabled():
                 self.axes_widget.EnabledOff()
             self.Modified()
-            del self.axes_widget
+            self.axes_widget = None
 
     @_deprecate_positional_args(allowed=['actor'])
     def add_orientation_widget(  # noqa: PLR0917

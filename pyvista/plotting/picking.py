@@ -1658,6 +1658,7 @@ class PickingHelper(PickingMethods):
         self.picked_path = None
         self.picked_geodesic = None
         self.picked_horizon = None
+        self._last_picked_idx: int | None = None
 
     @_deprecate_positional_args
     def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
@@ -1880,7 +1881,6 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:

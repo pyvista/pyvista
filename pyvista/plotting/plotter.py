@@ -97,6 +97,7 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
     import cycler
+    import imageio
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
@@ -402,13 +403,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume: Volume | None = None
         self.text: CornerAnnotation | Text | None = None
         self.iren: RenderWindowInteractor | None = None
+        self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
+        self._gif_filename: Path | None = None
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
         if (iren := self.iren) is None:
-            msg = msg if msg is not None else 'Plotter has no render window interactor.'
+            msg = msg if msg is not None else 'This plotting window is not interactive.'
             raise RuntimeError(msg)
         else:
             return iren
+
+    def _get_mwriter_not_none(self, msg: str | None = None) -> imageio.plugins.ffmpeg.Writer:
+        if (mwriter := self.mwriter) is None:
+            msg = msg if msg is not None else 'This plotter has not opened a movie or GIF file.'
+            raise RuntimeError(msg)
+        else:
+            return mwriter
 
     @property
     def suppress_rendering(self) -> bool:  # numpydoc ignore=RT01
@@ -2202,10 +2212,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def store_click_position(self, *args) -> None:  # noqa: ARG002
         """Store click position in viewport coordinates."""
-        if self.iren is None:
-            msg = 'This plotting window is not interactive.'
-            raise AttributeError(msg)
-        self.click_position = self.iren.get_event_position()
+        self.click_position = self._get_iren_not_none().get_event_position()
         self.mouse_position = self.click_position
 
     def track_mouse_position(self) -> None:
@@ -5076,7 +5083,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.text = None
 
         # end movie
-        if hasattr(self, 'mwriter'):
+        if self.mwriter is not None:
             with suppress(BaseException):
                 self.mwriter.close()
 
@@ -5410,11 +5417,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
 
-        if not hasattr(self, 'mwriter'):
-            msg = 'This plotter has not opened a movie or GIF file.'
-            raise RuntimeError(msg)
+        mwriter = self._get_mwriter_not_none()
         self.update()
-        self.mwriter.append_data(self.image)
+        mwriter.append_data(self.image)
 
     @_deprecate_positional_args
     def get_image_depth(
@@ -6509,7 +6514,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 ):  # 'off_screen' attribute is specific to Plotter objects.
                     time.sleep(sleep_time)
             if write_frames:
-                self.mwriter.close()
+                self._get_mwriter_not_none().close()
 
         if threaded:
             thread = Thread(target=orbit)
