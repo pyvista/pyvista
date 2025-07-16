@@ -57,7 +57,7 @@ def pytest_generate_tests(metafunc):
 
             def inherits_from_vtk(klass):
                 bases = klass.__mro__[1:]
-                return any(base.__name__.startswith('vtk') for base in bases)
+                return any(base.__name__[:3].lower() == 'vtk' for base in bases)
 
             inherits_from_vtk = {
                 name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
@@ -138,6 +138,14 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         vtk_attr_camel_case = 'GetName'
         vtk_attr_snake_case = 'name'
         kwargs['array'] = pv.vtk_points(np.eye(3)).GetData()
+    elif vtk_subclass is pv.DataSetAttributes:
+        vtk_attr_camel_case = 'GetObjectName'
+        vtk_attr_snake_case = 'object_name'
+
+        dataset = pv.ImageData()
+        kwargs['vtkobject'] = dataset.GetPointData()
+        kwargs['dataset'] = dataset
+        kwargs['association'] = pv.FieldAssociation.POINT
     elif issubclass(
         vtk_subclass, pv.plotting.render_window_interactor.InteractorStyleCaptureMixin
     ):
