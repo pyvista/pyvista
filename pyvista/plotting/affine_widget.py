@@ -359,7 +359,7 @@ class AffineWidget3D(_NoNewAttrMixinAuto):
             if self._selected_actor in self._arrows:
                 current_pos = self._get_world_coord_trans(interactor)
                 index = self._arrows.index(self._selected_actor)
-                diff = current_pos - self.init_position
+                diff = current_pos - self._init_position
                 trans_matrix = np.eye(4)
                 trans_matrix[:3, -1] = self.axes[index] * np.dot(diff, self.axes[index])
                 matrix = trans_matrix @ self._cached_matrix
@@ -367,7 +367,7 @@ class AffineWidget3D(_NoNewAttrMixinAuto):
                 current_pos = self._get_world_coord_rot(interactor)
                 index = self._circles.index(self._selected_actor)
                 vec_current = current_pos - self._origin
-                vec_init = self.init_position - self._origin
+                vec_init = self._init_position - self._origin
                 normal = self.axes[index]
                 vec_current = vec_current - np.dot(vec_current, normal) * normal
                 vec_init = vec_init - np.dot(vec_init, normal) * normal
@@ -426,9 +426,9 @@ class AffineWidget3D(_NoNewAttrMixinAuto):
             self._pl.enable_trackball_actor_style()
             self._pressing_down = True
             if self._selected_actor in self._circles:
-                self.init_position = self._get_world_coord_rot(interactor)
+                self._init_position = self._get_world_coord_rot(interactor)
             else:
-                self.init_position = self._get_world_coord_trans(interactor)
+                self._init_position = self._get_world_coord_trans(interactor)
 
     def _release_callback(self, _interactor, _event):
         """Process actions for the mouse button release event."""
