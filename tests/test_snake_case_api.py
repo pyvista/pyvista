@@ -127,7 +127,8 @@ def try_init_pyvista_object(class_):
         raise
     return instance
 
-@pytest.mark.needs_vtk_version(9,2)
+
+@pytest.mark.needs_vtk_version(9, 2)
 def get_default_class_init_kwargs(pyvista_class):
     # Define kwargs as required for initializing some classes
     kwargs = {}
