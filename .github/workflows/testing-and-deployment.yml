@@ -91,7 +91,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv and set the python version ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.config.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
@@ -168,7 +168,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv and set the python version ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -249,7 +249,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv and set the python version ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -298,7 +298,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv and set the python version ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
         with:
           python-version: ${{ matrix.python-version }}
 
