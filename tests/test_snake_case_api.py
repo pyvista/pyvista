@@ -82,6 +82,7 @@ def pytest_generate_tests(metafunc):
             pv.Nek5000Reader,  # Causes test issues without proper file input
             pv.XdmfReader,  # Causes test issues without proper file input
             pv.PVDReader,  # Causes test issues without proper file input
+            pv.CGNSReader,  # Causes test issues without proper file input
             pv.PVDDataSet,
             pv.ExodusIIBlockSet,
             pv.core.dataset.ActiveArrayInfo,  # deprecated
@@ -262,7 +263,6 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
         assert not hasattr(instance, vtk_attr_snake_case)
 
 
-@pytest.mark.needs_vtk_version(9,2, reason='Required for some reader classes.')
 def test_pyvista_class_no_new_attributes(pyvista_class):
     instance = try_init_pyvista_object(pyvista_class)
     with pytest.raises(AttributeError):
