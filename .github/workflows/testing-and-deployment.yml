@@ -104,7 +104,7 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Install tox-uv
-        run: uv pip install tox-uv --system
+        run: pip install tox-uv
 
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.config.python-version }}-core --colored=yes
@@ -173,7 +173,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install tox-uv
-        run: uv pip install tox-uv --system
+        run: uv pip install tox-uv
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
@@ -254,7 +254,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install tox-uv
-        run: uv pip install tox-uv --system
+        run: uv pip install tox-uv
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         with:
@@ -313,7 +313,7 @@ jobs:
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Install tox-uv
-        run: uv pip install tox-uv --system
+        run: uv pip install tox-uv
 
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.python-version }}-core --colored=yes

@@ -55,7 +55,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install tox-uv
-        run: uv pip install tox-uv --system
+        run: uv pip install tox-uv
 
       - name: Create example data path
         run: mkdir ${{ env.PYVISTA_USERDATA_PATH }} # zizmor: ignore[template-injection]
