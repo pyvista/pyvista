@@ -90,12 +90,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install uv and set the python version ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@c893ac1cb213677f58b781341aba739a586833bf
+      - name: Set up Python ${{ matrix.config.python-version }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.config.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
-          activate-environment: true
 
       - name: Restore example data cache
         uses: actions/cache/restore@v4
