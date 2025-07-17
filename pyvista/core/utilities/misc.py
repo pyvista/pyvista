@@ -294,12 +294,15 @@ class _AutoFreezeMeta(type):
 class _NoNewAttrMixin:
     """Mixin to prevent adding new attributes.
 
-    Prevents additional attributes via xxx.attribute = "something" after a
-    call to `self._freeze()`. Mainly used to prevent the user from using
-    wrong attributes on an accessor.
+    This class is mainly used to prevent users from setting the wrong attributes on an
+    object. It prevents setting new attributes via "normal" methods like ``obj.foo = 42``
+    after a call is made to ``self._no_new_attributes()``.
 
-    If you really want to add a new attribute at a later time, you need to use
-    `object.__setattr__(self, key, value)`.
+    There are two versions of this class: ``_NoNewAttrMixin`` and ``_NoNewAttrMixinAuto``.
+    In almost all cases, it is recommended to use ``_NoNewAttrMixinAuto``, since the auto
+    version uses a metaclass to automatically call ``self._no_new_attributes()`` after
+    initialization. The non-auto version should only be used if there is a metaclass
+    conflict, e.g. if the class also inherits from ``ABC``.
     """
 
     def _no_new_attributes(self, freezing_class: type) -> None:
@@ -308,7 +311,7 @@ class _NoNewAttrMixin:
         object.__setattr__(self, '__frozen_by_class', freezing_class)
 
     def __setattr__(self, key: str, value: Any) -> None:
-        """Prevent adding any attribute via xxx.new_attribute = ..."""
+        """Prevent adding new attributes to classes using "normal" methods."""
         # Check if this class froze itself. Any frozen state already set by parent classes, e.g.
         # by calling super().__init__(), will be ignored. This allows subclasses to set attributes
         # during init without being affect by a parent class init.
@@ -322,14 +325,15 @@ class _NoNewAttrMixin:
             from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
             msg = (
-                f'Attribute {key!r} does not exist cannot be added '
+                f'Attribute {key!r} does not exist and cannot be added '
                 f'to class {self.__class__.__name__!r}'
             )
             raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
 
 
-class _NoNewAttrMixinAuto(_NoNewAttrMixin, metaclass=_AutoFreezeMeta): ...
+class _NoNewAttrMixinAuto(_NoNewAttrMixin, metaclass=_AutoFreezeMeta):
+    """Mixin to prevent adding new attributes."""
 
 
 def set_new_attribute(obj: object, name: str, value: Any) -> None:

@@ -125,6 +125,7 @@ from .misc import assert_empty_kwargs as assert_empty_kwargs
 from .misc import check_valid_vector as check_valid_vector
 from .misc import conditional_decorator as conditional_decorator
 from .misc import has_module as has_module
+from .misc import set_new_attribute as set_new_attribute
 from .misc import threaded as threaded
 from .misc import try_callback as try_callback
 from .observers import Observer as Observer

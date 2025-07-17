@@ -66,7 +66,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
-from pyvista.core.utilities.misc import set_new_attribute
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
@@ -1305,11 +1304,11 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
     ham = 'ham'
     eggs = 'eggs'
 
-    match = "Attribute 'ham' does not exist cannot be added to class 'A'"
+    match = "Attribute 'ham' does not exist and cannot be added to class 'A'"
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         setattr(a, ham, eggs)
 
-    match = "Attribute 'ham' does not exist cannot be added to class 'B'"
+    match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         setattr(b, ham, eggs)
 
@@ -1320,7 +1319,7 @@ def test_set_new_attribute(no_new_attributes_mixin_subclass):
     eggs = 'eggs'
 
     assert not hasattr(a, ham)
-    set_new_attribute(a, ham, eggs)
+    pv.set_new_attribute(a, ham, eggs)
     assert hasattr(a, ham)
     assert getattr(a, ham) == eggs
 
@@ -1329,7 +1328,7 @@ def test_set_new_attribute(no_new_attributes_mixin_subclass):
         '`set_new_attribute` can only be used for setting NEW attributes.'
     )
     with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
-        set_new_attribute(a, ham, eggs)
+        pv.set_new_attribute(a, ham, eggs)
 
 
 @pytest.fixture

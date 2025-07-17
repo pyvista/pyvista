@@ -12,6 +12,7 @@ from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
 from pyvista.plotting.charts import _vtkWrapper
 
 
@@ -273,5 +274,22 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
         )
 
     instance = try_init_pyvista_object(pyvista_class)
-    with pytest.raises(AttributeError):
+    try:
         instance.new_attribute = 'foo'
+    except PyVistaAttributeError as e:
+        # Test passes, we want an error to be raised
+        match = 'does not exist and cannot be added to class'
+        assert match in repr(e)  # noqa: PT017
+    except AttributeError as e:
+        if 'dict' in repr(e):
+            pytest.skip('Skip dict classes')
+    else:
+        if not issubclass(pyvista_class, _NoNewAttrMixin):
+            msg = (
+                f'The class {pyvista_class.__name__!r} in {pyvista_class.__module__!r}'
+                f'must inherit from \n{_NoNewAttrMixin.__name__!r} or '
+                f'{_NoNewAttrMixinAuto.__name__!r} in {_NoNewAttrMixin.__module__!r}'
+            )
+        else:
+            msg = f'{PyVistaAttributeError.__name__} was NOT raised (but was expected).'
+        pytest.fail(msg)
