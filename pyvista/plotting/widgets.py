@@ -14,7 +14,7 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -76,7 +76,8 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     return event_map[interaction_event]
 
 
-class WidgetHelper(_NoNewAttrMixinAuto):
+@abstract_class
+class WidgetHelper:
     """An internal class to manage widgets.
 
     It also manages and other helper methods involving widgets.
@@ -105,6 +106,8 @@ class WidgetHelper(_NoNewAttrMixinAuto):
         self.distance_widgets = []
         self.logo_widgets = []
         self.camera3d_widgets = []
+
+        self._no_new_attributes(WidgetHelper)
 
     @_deprecate_positional_args(allowed=['callback'])
     def add_box_widget(  # noqa: PLR0917

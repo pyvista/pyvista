@@ -46,6 +46,7 @@ from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -6772,7 +6773,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ]
 
 
-class Plotter(BasePlotter):
+class Plotter(_NoNewAttrMixin, BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
 
     Parameters
@@ -6983,6 +6984,8 @@ class Plotter(BasePlotter):
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
         log.debug('Plotter init stop')
+
+        self._no_new_attributes(Plotter)
 
     @_deprecate_positional_args
     def show(  # noqa: PLR0917

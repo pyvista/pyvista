@@ -18,7 +18,9 @@ import numpy as np
 import pyvista
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk
 from .colors import COLOR_SCHEMES
@@ -52,7 +54,7 @@ class _vtkWrapperMeta(type):  # noqa: N801
         return obj
 
 
-class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
+class _vtkWrapper(metaclass=_vtkWrapperMeta):  # noqa: N801
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -77,6 +79,7 @@ class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa:
 
 
 # region Documentation substitution
+@abstract_class
 class DocSubs:
     """Helper class to substitute the docstrings of the listed member functions or properties."""
 
@@ -162,7 +165,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
 # endregion
 
 
-class Pen(_vtkWrapper, _vtk.vtkPen):
+class Pen(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
     """Pythonic wrapper for a VTK Pen, used to draw lines.
 
     Parameters
@@ -207,6 +210,8 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.color = color
         self.width = width
         self.style = style
+
+        self._no_new_attributes(Pen)
 
     @property
     def color(self):  # numpydoc ignore=RT01
@@ -290,7 +295,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
             raise ValueError(msg)
 
 
-class Brush(_vtkWrapper, _vtk.vtkBrush):
+class Brush(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrush):
     """Pythonic wrapper for a VTK Brush, used to fill shapes.
 
     Parameters
@@ -313,6 +318,8 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self.texture = texture
         self._interpolate = True  # vtkBrush textureProperties defaults to LINEAR & STRETCH
         self._repeat = False
+
+        self._no_new_attributes(Brush)
 
     @property
     def color(self):  # numpydoc ignore=RT01
@@ -447,7 +454,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
 
 
-class Axis(_vtkWrapper, _vtk.vtkAxis):
+class Axis(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkAxis):
     """Pythonic interface for a VTK Axis, used by 2D charts.
 
     Parameters
@@ -489,6 +496,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
         self.grid = grid
+
+        self._no_new_attributes(Axis)
 
     @property
     def pen(self) -> Pen:  # numpydoc ignore=RT01
@@ -1082,7 +1091,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
+@abstract_class
+class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
@@ -1101,7 +1111,7 @@ class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
         return True
 
 
-class _ChartBackground(_CustomContextItem):
+class _ChartBackground(_vtk.DisableVtkSnakeCase, _CustomContextItem):
     """Utility class for chart backgrounds."""
 
     def __init__(self, chart) -> None:
@@ -1134,7 +1144,8 @@ class _ChartBackground(_CustomContextItem):
         return True
 
 
-class _Chart(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, DocSubs):
+@abstract_class
+class _Chart(DocSubs):
     """Common interface for vtkChart, vtkChartBox, vtkChartPie, and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
@@ -1676,7 +1687,8 @@ class _Chart(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, DocSubs):
 
 
 # Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
-class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
+@abstract_class
+class _Plot(DocSubs):
     """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
@@ -2122,7 +2134,7 @@ class _MultiCompPlot(_Plot):
         self.labels = None if val is None else [val]
 
 
-class LinePlot2D(_Plot, _vtk.vtkPlotLine):
+class LinePlot2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
     """Class representing a 2D line plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2281,7 +2293,7 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
             self.visible = False
 
 
-class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
+class ScatterPlot2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoints):
     """Class representing a 2D scatter plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2518,7 +2530,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
             raise ValueError(msg)
 
 
-class AreaPlot(_Plot, _vtk.vtkPlotArea):
+class AreaPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
     """Class representing a 2D area plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2717,7 +2729,7 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
             self.visible = False
 
 
-class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
+class BarPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBar):
     """Class representing a 2D bar plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2940,7 +2952,9 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
             raise ValueError(msg)
 
 
-class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
+class StackPlot(
+    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotStacked
+):
     """Class representing a 2D stack plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -3116,7 +3130,7 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
             self.visible = False
 
 
-class Chart2D(_Chart, _vtk.vtkChartXY):
+class Chart2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     """2D chart class similar to a ``matplotlib`` figure.
 
     Parameters
@@ -3957,7 +3971,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
             axis.grid = False
 
 
-class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
+class BoxPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBox):
     """Class representing a box plot.
 
     Users should typically not directly create new plot instances, but
@@ -4106,7 +4120,7 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
         self._quartiles.Update()
 
 
-class ChartBox(_Chart, _vtk.vtkChartBox):
+class ChartBox(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     """Dedicated chart for drawing box plots.
 
     Parameters
@@ -4320,7 +4334,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
-class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
+class PiePlot(_vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
     """Class representing a pie plot.
 
     Users should typically not directly create new plot instances, but
@@ -4436,7 +4450,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         self._table.update(data)
 
 
-class ChartPie(_Chart, _vtk.vtkChartPie):
+class ChartPie(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
     """Dedicated chart for drawing pie plots.
 
     Parameters
@@ -4651,7 +4665,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
-class ChartMPL(_Chart, _vtk.vtkImageItem):
+class ChartMPL(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
     """Create new chart from an existing matplotlib figure.
 
     Parameters

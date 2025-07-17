@@ -27,6 +27,7 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
 
 
+@abstract_class
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 

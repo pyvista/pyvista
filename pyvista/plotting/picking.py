@@ -13,6 +13,7 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -259,7 +260,8 @@ class PointPickingElementHandler(_NoNewAttrMixinAuto):
             try_callback(self.callback, picked)
 
 
-class PickingInterface(_NoNewAttrMixinAuto):  # numpydoc ignore=PR01
+@abstract_class
+class PickingInterface:  # numpydoc ignore=PR01
     """An internal class to hold core picking related features."""
 
     def __init__(self, *args, **kwargs):
@@ -668,6 +670,7 @@ class PickingInterface(_NoNewAttrMixinAuto):  # numpydoc ignore=PR01
             self.iren._style_class.StartSelect()  # type: ignore[attr-defined]
 
 
+@abstract_class
 class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     """Internal class to contain picking utilities."""
 
@@ -1649,6 +1652,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         self.track_click_position(callback=get_picked_block, viewport=True, side=side)  # type: ignore[attr-defined]
 
 
+@abstract_class
 class PickingHelper(PickingMethods):
     """Internal container class to contain picking helper methods."""
 

@@ -11,6 +11,7 @@ import pyvista as pv
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
@@ -77,39 +78,12 @@ def pytest_generate_tests(metafunc):
     if 'pyvista_class' in metafunc.fixturenames:
         class_names, class_types = get_all_pyvista_classes()
 
-        SKIP_CLASS = {
-            pv.MFIXReader,  # Causes test issues without proper file input
-            pv.Nek5000Reader,  # Causes test issues without proper file input
-            pv.XdmfReader,  # Causes test issues without proper file input
-            pv.PVDReader,  # Causes test issues without proper file input
-            pv.CGNSReader,  # Causes test issues without proper file input
-            pv.PVDDataSet,
-            pv.ExodusIIBlockSet,
-            pv.core.dataset.ActiveArrayInfo,  # deprecated
-            pv.core.utilities.cell_quality.CellQualityInfo,  # Dataclass
-            pv.core.utilities.misc.conditional_decorator,
-            pv.PartitionedDataSet,
-            pv.charts.DocSubs,
-            pv.plotting.utilities.sphinx_gallery.Scraper,
-            pv.plotting.utilities.sphinx_gallery.DynamicScraper,
-            pv.core._vtk_core.DisableVtkSnakeCase,
-            pv.core._vtk_core.vtkPyVistaOverride,
-            pv.VtkErrorCatcher,
-        }
         SKIP_SUBCLASS = {Warning, Exception, tuple, Enum}
-        SKIP_SUBCLASS_TEMP = {
-            pv.plotting.charts._Plot,
-            pv.plotting.charts._vtkWrapper,
-            pv.DataObjectFilters,
-        }
 
         class_map = {
             name: cls
             for name, cls in zip(class_names, class_types)
-            if not name.startswith('_')
-            and cls not in SKIP_CLASS
-            and not issubclass(cls, tuple(SKIP_SUBCLASS))
-            and not issubclass(cls, tuple(SKIP_SUBCLASS_TEMP))
+            if not name.startswith('_') and not issubclass(cls, tuple(SKIP_SUBCLASS))
         }
         metafunc.parametrize('pyvista_class', list(class_map.values()), ids=list(class_map.keys()))
 
@@ -265,6 +239,35 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
 
 
 def test_pyvista_class_no_new_attributes(pyvista_class):
+    if pyvista_class in (
+        pv.MFIXReader,
+        pv.Nek5000Reader,
+        pv.XdmfReader,
+        pv.PVDReader,
+        pv.CGNSReader,
+        pv.ExodusIIBlockSet,
+    ):
+        assert issubclass(pyvista_class, _NoNewAttrMixin)
+        pytest.skip('Test fails without proper dataset files.')
+    elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
+        pytest.skip('Deprecated.')
+    elif pyvista_class in (pv.PVDDataSet, pv.core.utilities.cell_quality.CellQualityInfo):
+        assert issubclass(pyvista_class, _NoNewAttrMixin)
+        pytest.skip('Dataclass, no test required.')
+    elif pyvista_class in (
+        pv.core.utilities.misc.conditional_decorator,
+        pv.plotting.utilities.sphinx_gallery.Scraper,
+        pv.plotting.utilities.sphinx_gallery.DynamicScraper,
+        pv.core._vtk_core.DisableVtkSnakeCase,
+        pv.core._vtk_core.vtkPyVistaOverride,
+        pv.VtkErrorCatcher,
+    ):
+        assert not issubclass(pyvista_class, _NoNewAttrMixin)
+        pytest.skip('Specialized class with no real risk of new attributes being added.')
+    elif pyvista_class is pv.charts.PiePlot:
+        assert not issubclass(pyvista_class, _NoNewAttrMixin)
+        pytest.skip(f'This class *should* inherit from {_NoNewAttrMixin.__name__}, but cannot.')
+
     instance = try_init_pyvista_object(pyvista_class)
     with pytest.raises(AttributeError):
         instance.new_attribute = 'foo'
