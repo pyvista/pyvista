@@ -319,15 +319,30 @@ class _NoNewAttrMixin:
             and frozen_by is type(self)
             and not (key in type(self).__dict__ or hasattr(self, key))
         ):
+            from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
             msg = (
                 f'Attribute {key!r} does not exist cannot be added '
                 f'to class {self.__class__.__name__!r}'
             )
-            raise AttributeError(msg)
+            raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
 
 
 class _NoNewAttrMixinAuto(_NoNewAttrMixin, metaclass=_AutoFreezeMeta): ...
+
+
+def set_new_attribute(obj: object, name: str, value: Any) -> None:
+    """Set a new attribute for this object."""
+    if hasattr(obj, name):
+        from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+        msg = (
+            f'Attribute {name!r} already exists. '
+            '`set_new_attribute` can only be used for setting NEW attributes.'
+        )
+        raise PyVistaAttributeError(msg)
+    object.__setattr__(obj, name, value)
 
 
 def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
