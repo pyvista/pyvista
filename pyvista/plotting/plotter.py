@@ -313,6 +313,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self._initialized = False
 
+        self.mapper: _BaseMapper | None = None
+        self.volume: Volume | None = None
+        self.text: CornerAnnotation | Text | None = None
+        self.iren: RenderWindowInteractor | None = None
+        self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
+        self._gif_filename: Path | None = None
+
         self._theme = Theme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -400,13 +407,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
-
-        self.mapper: _BaseMapper | None = None
-        self.volume: Volume | None = None
-        self.text: CornerAnnotation | Text | None = None
-        self.iren: RenderWindowInteractor | None = None
-        self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
-        self._gif_filename: Path | None = None
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
         if (iren := self.iren) is None:
