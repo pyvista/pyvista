@@ -382,8 +382,8 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    @_deprecate_positional_args(allowed=['plane'])
-    def reflect_axis_aligned(
+    @_deprecate_positional_args(allowed=['plane', 'value', 'copy_input'])
+    def reflect_axis_aligned(  # noqa: PLR0917
         self: _MeshType_co,
         plane: Literal['x', 'y', 'z'] = 'x',
         value: float = 0.0,
