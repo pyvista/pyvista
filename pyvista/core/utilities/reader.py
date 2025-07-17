@@ -656,7 +656,7 @@ class TimeReader:
         int
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def time_point_value(self, time_point):
         """Value of time point or iteration by index.
@@ -671,7 +671,7 @@ class TimeReader:
         float
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def time_values(self):
@@ -693,7 +693,7 @@ class TimeReader:
         float
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def set_active_time_value(self, time_value):
         """Set active time or iteration value.
@@ -704,7 +704,7 @@ class TimeReader:
             Time or iteration value to set as active.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def set_active_time_point(self, time_point):
         """Set active time or iteration by index.
@@ -715,7 +715,7 @@ class TimeReader:
             Time or iteration point index for setting active time.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class XMLImageDataReader(BaseReader, PointCellDataSelection):

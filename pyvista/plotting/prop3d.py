@@ -9,6 +9,7 @@ from typing import Literal
 
 import numpy as np
 
+from pyvista import abstract_class
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
@@ -566,6 +567,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
     return array_from_vtkmatrix(matrix)[:3, :3]
 
 
+@abstract_class
 class _Prop3DMixin:
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
@@ -651,11 +653,11 @@ class _Prop3DMixin:
 
     def _post_set_update(self):
         """Update object after setting Prop3D attributes."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def _get_bounds(self) -> BoundsTuple:
         """Return the object's 3D bounds."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
