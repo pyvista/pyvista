@@ -107,8 +107,6 @@ class WidgetHelper:
         self.logo_widgets = []
         self.camera3d_widgets = []
 
-        self._no_new_attributes(WidgetHelper)
-
     @_deprecate_positional_args(allowed=['callback'])
     def add_box_widget(  # noqa: PLR0917
         self,

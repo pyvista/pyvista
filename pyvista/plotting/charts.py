@@ -1165,7 +1165,7 @@ class _Chart(DocSubs):
     @property
     def _scene(self):
         """Get a reference to the :vtk:`vtkScene` in which this chart is drawn."""
-        return self.GetScene()
+        return self.GetScene()  # type: ignore[attr-defined]
 
     @property
     def _renderer(self):
@@ -1211,12 +1211,12 @@ class _Chart(DocSubs):
     @property
     def _geometry(self):
         """Chart geometry (x, y position of bottom left corner and width and height in pixels)."""
-        return tuple(self.GetSize())
+        return tuple(self.GetSize())  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, val) -> None:
         """Set the chart geometry."""
-        self.SetSize(_vtk.vtkRectf(*val))
+        self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
 
     @property
     def _interactive(self):
@@ -1228,11 +1228,11 @@ class _Chart(DocSubs):
         :func:`Renderer.set_chart_interaction` method instead.
 
         """
-        return self.GetInteractive()
+        return self.GetInteractive()  # type: ignore[attr-defined]
 
     @_interactive.setter
     def _interactive(self, val) -> None:
-        self.SetInteractive(val)
+        self.SetInteractive(val)  # type: ignore[attr-defined]
 
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
@@ -1513,11 +1513,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()
+        return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)
+        self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def toggle(self) -> None:
@@ -1560,11 +1560,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetTitle()
+        return self.GetTitle()  # type: ignore[attr-defined]
 
     @title.setter
     def title(self, val) -> None:
-        self.SetTitle(val)
+        self.SetTitle(val)  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1589,11 +1589,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetShowLegend()
+        return self.GetShowLegend()  # type: ignore[attr-defined]
 
     @legend_visible.setter
     def legend_visible(self, val) -> None:
-        self.SetShowLegend(val)
+        self.SetShowLegend(val)  # type: ignore[attr-defined]
 
     @_deprecate_positional_args
     @doc_subs
@@ -1866,7 +1866,7 @@ class _Plot(DocSubs):
     @label.setter
     def label(self, val) -> None:
         self._label = '' if val is None else val
-        self.SetLabel(self._label)
+        self.SetLabel(self._label)  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1891,11 +1891,11 @@ class _Plot(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()
+        return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)
+        self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def toggle(self) -> None:
@@ -1939,7 +1939,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)
+        self.SetLabels(self._labels)  # type: ignore[attr-defined]
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
