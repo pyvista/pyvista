@@ -3692,7 +3692,11 @@ class DataSetFilters(DataObjectFilters):
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_multiple_lines(
-        ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
+        ...     [
+        ...         [-0.5, -0.5, 0],
+        ...         [0.5, -0.5, 0],
+        ...         [0.5, 0.5, 0],
+        ...     ]
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
@@ -4995,11 +4999,11 @@ class DataSetFilters(DataObjectFilters):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
         if values is not None:
-            value_names = value_names if value_names else [None] * len(values)
+            value_names = value_names or [None] * len(values)
             for name, val in zip(value_names, values):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
-            range_names = range_names if range_names else [None] * len(ranges)
+            range_names = range_names or [None] * len(ranges)
             for name, rng in zip(range_names, ranges):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
