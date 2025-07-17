@@ -1,6 +1,6 @@
 [build-system]
 build-backend = 'setuptools.build_meta'
-requires = ['setuptools']
+requires = ['setuptools>=77.0.3']
 
 [project]
 authors = [{ name = 'PyVista Developers', email = 'info@pyvista.org' }]
@@ -155,8 +155,9 @@ docs = [
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
 [project.urls]
-'Bug Tracker' = 'https://github.com/pyvista/pyvista/issues'
+'Bug Reports' = 'https://github.com/pyvista/pyvista/issues'
 Documentation = 'https://docs.pyvista.org/'
+Homepage = 'https://github.com/pyvista/pyvista'
 'Source Code' = 'https://github.com/pyvista/pyvista'
 
 [tool.setuptools.dynamic]
