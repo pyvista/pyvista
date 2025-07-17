@@ -165,7 +165,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
 # endregion
 
 
-class Pen(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
+class Pen(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
     """Pythonic wrapper for a VTK Pen, used to draw lines.
 
     Parameters
@@ -210,8 +210,6 @@ class Pen(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
         self.color = color
         self.width = width
         self.style = style
-
-        self._no_new_attributes(Pen)
 
     @property
     def color(self):  # numpydoc ignore=RT01
@@ -295,7 +293,7 @@ class Pen(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
             raise ValueError(msg)
 
 
-class Brush(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrush):
+class Brush(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrush):
     """Pythonic wrapper for a VTK Brush, used to fill shapes.
 
     Parameters
@@ -318,8 +316,6 @@ class Brush(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrus
         self.texture = texture
         self._interpolate = True  # vtkBrush textureProperties defaults to LINEAR & STRETCH
         self._repeat = False
-
-        self._no_new_attributes(Brush)
 
     @property
     def color(self):  # numpydoc ignore=RT01
@@ -454,7 +450,7 @@ class Brush(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrus
         self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
 
 
-class Axis(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkAxis):
+class Axis(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkAxis):
     """Pythonic interface for a VTK Axis, used by 2D charts.
 
     Parameters
@@ -496,8 +492,6 @@ class Axis(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkAxis)
         self._behavior = None  # Will be set by specifying the range below
         self.range = range
         self.grid = grid
-
-        self._no_new_attributes(Axis)
 
     @property
     def pen(self) -> Pen:  # numpydoc ignore=RT01

@@ -12,6 +12,7 @@ from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.plotting.charts import _vtkWrapper
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
@@ -264,9 +265,12 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
     ):
         assert not issubclass(pyvista_class, _NoNewAttrMixin)
         pytest.skip('Specialized class with no real risk of new attributes being added.')
-    elif pyvista_class is pv.charts.PiePlot:
+    elif pyvista_class in [pv.charts.PiePlot, pv.charts.Pen, pv.charts.Brush, pv.charts.Axis]:
         assert not issubclass(pyvista_class, _NoNewAttrMixin)
-        pytest.skip(f'This class *should* inherit from {_NoNewAttrMixin.__name__}, but cannot.')
+        assert issubclass(pyvista_class, _vtkWrapper)
+        pytest.skip(
+            f'Parent {_vtkWrapper.__name__} is not compatible with {_NoNewAttrMixin.__name__}.'
+        )
 
     instance = try_init_pyvista_object(pyvista_class)
     with pytest.raises(AttributeError):
