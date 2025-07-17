@@ -610,6 +610,12 @@ with contextlib.suppress(ImportError):
         vtkXMLPartitionedDataSetWriter as vtkXMLPartitionedDataSetWriter,
     )
 
+# 9.5+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkFiltersGeneral import (
+        vtkAxisAlignedReflectionFilter as vtkAxisAlignedReflectionFilter,
+    )
+
 
 class VersionInfo(NamedTuple):
     """Version information as a named tuple."""
