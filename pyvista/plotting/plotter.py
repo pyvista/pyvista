@@ -409,7 +409,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._suppress_rendering = False
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
-        if (iren := self.iren) is None:
+        if self._initialized and (iren := self.iren) is None:
             msg = msg if msg is not None else 'This plotting window is not interactive.'
             raise RuntimeError(msg)
         else:
