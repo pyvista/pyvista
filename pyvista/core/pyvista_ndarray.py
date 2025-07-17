@@ -60,7 +60,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
     def __new__(  # noqa: PYI034
         cls: type[pyvista_ndarray],
         array: ArrayLike[float] | _vtk.vtkAbstractArray,
-        dataset: DataSet | _vtk.vtkDataSet | _vtk.VTKObjectWrapper | None = None,
+        dataset: DataSet | _vtk.vtkDataSet | _vtk.VTKObjectWrapperCheckSnakeCase | None = None,
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:
         """Allocate the array."""
@@ -78,7 +78,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()
-        if isinstance(dataset, _vtk.VTKObjectWrapper):
+        if isinstance(dataset, _vtk.VTKObjectWrapperCheckSnakeCase):
             obj.dataset.Set(dataset.VTKObject)
         else:
             obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
@@ -131,4 +131,4 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    __getattr__ = _vtk.VTKObjectWrapper.__getattr__
+    __getattr__ = _vtk.VTKObjectWrapperCheckSnakeCase.__getattr__

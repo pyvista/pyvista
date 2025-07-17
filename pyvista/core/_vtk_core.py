@@ -42,6 +42,7 @@ except ImportError:
     )
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
+from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper as VTKObjectWrapper
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as numpyTovtkDataArray
 from vtkmodules.util.numpy_support import get_vtk_array_type as get_vtk_array_type
 from vtkmodules.util.numpy_support import numpy_to_vtk as numpy_to_vtk
@@ -725,21 +726,11 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
     return cls is not None and cls.__module__.startswith('vtkmodules')
 
 
-class VTKObjectWrapper:
+class VTKObjectWrapperCheckSnakeCase(VTKObjectWrapper):
     """Superclass for classes that wrap VTK objects with Python objects.
 
-    This class holds a reference to the wrapped VTK object. It also
-    forwards unresolved methods to the underlying object by overloading
-    __getattr__.
-
-    This class is copied from the VTK implementation in
-    `vtkmodules.numpy_interface.dataset_adapter` to disable the
-    VTK snake case API.
-
+    This class overrides __getattr__ to disable the VTK snake case API.
     """
-
-    def __init__(self, vtkobject=None):
-        self.VTKObject = vtkobject
 
     def __getattr__(self, name: str):
         """Forward unknown attribute requests to VTKArray's __getattr__."""

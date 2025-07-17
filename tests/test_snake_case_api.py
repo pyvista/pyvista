@@ -8,6 +8,7 @@ import pytest
 
 import pyvista as pv
 from pyvista.core._vtk_core import DisableVtkSnakeCase
+from pyvista.core._vtk_core import VTKObjectWrapperCheckSnakeCase
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 
@@ -89,6 +90,9 @@ def try_init_object(class_, kwargs):
 
 @pytest.mark.needs_vtk_version(9, 2)
 def test_vtk_snake_case_api_is_disabled(vtk_subclass):
+    if vtk_subclass is VTKObjectWrapperCheckSnakeCase:
+        pytest.skip('Class is effectively abstract.')
+
     assert pv.vtk_snake_case() == 'error'
 
     # Default test values for classes
