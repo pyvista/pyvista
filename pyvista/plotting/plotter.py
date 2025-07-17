@@ -97,12 +97,14 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
     import cycler
+    import imageio
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -311,6 +313,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._initialized = False
 
         self.mapper: _BaseMapper | None = None
+        self.volume: Volume | None = None
+        self.text: CornerAnnotation | Text | None = None
+        self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
+        self._gif_filename: Path | None = None
+
         self._theme = Theme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -398,6 +405,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+
+    def _get_mwriter_not_none(self, msg: str | None = None) -> imageio.plugins.ffmpeg.Writer:
+        if (mwriter := self.mwriter) is None:
+            msg = msg if msg is not None else 'This plotter has not opened a movie or GIF file.'
+            raise RuntimeError(msg)
+        else:
+            return mwriter
 
     @property
     def suppress_rendering(self) -> bool:  # numpydoc ignore=RT01
@@ -4023,13 +4037,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = 'Label must be a string'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        if (
-            hasattr(self.mesh, '_glyph_geom')
-            and self.mesh._glyph_geom is not None  # type: ignore[union-attr]
-            and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
-        ):
+        if isinstance(self.mesh, pyvista.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
-            geom: str | pyvista.PolyData = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
+            geom: str | PolyData = pyvista.wrap(self.mesh._glyph_geom[0]).extract_geometry()
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 
@@ -4906,7 +4916,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
-                self.renderers[view_index].cemera_set = False
+                self.renderers[view_index].camera_set = False
         else:
             msg = f'Expected type is None, int, list or tuple: {type(views)} is given'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -5049,6 +5059,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.scalar_bars.clear()
         self.mesh = None
         self.mapper = None
+        self.text = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -5068,9 +5079,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self.text
 
         # end movie
-        if hasattr(self, 'mwriter'):
+        if self.mwriter is not None:
             with suppress(BaseException):
                 self.mwriter.close()
+            self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -5086,9 +5098,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
-        self.volume = None  # type: ignore[assignment]
-        self.text: pyvista.CornerAnnotation | Text | None = None
+        self.mapper = None
+        self.volume = None
+        self.text = None
 
     @_deprecate_positional_args(allowed=['text'])
     def add_text(  # noqa: PLR0917
@@ -5226,16 +5238,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
             shadow=shadow,
         )
         if isinstance(position, (int, str, bool)):
-            self.text = CornerAnnotation(position, text, linear_font_scale_factor=font_size // 2)
+            actor: CornerAnnotation | Text = CornerAnnotation(
+                position, text, linear_font_scale_factor=font_size // 2
+            )
         else:
-            self.text = Text(text=text, position=position)
+            actor = Text(text=text, position=position)
             if viewport:
-                self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
-                self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+                actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             text_prop.font_size = int(font_size * 2)
-        self.text.prop = text_prop
-        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
-        return self.text
+        actor.prop = text_prop
+        self.text = actor
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
 
     def open_movie(
         self, filename: str | Path, framerate: int = 24, quality: int = 5, **kwargs
@@ -5399,11 +5414,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
 
-        if not hasattr(self, 'mwriter'):
-            msg = 'This plotter has not opened a movie or GIF file.'
-            raise RuntimeError(msg)
+        mwriter = self._get_mwriter_not_none()
         self.update()
-        self.mwriter.append_data(self.image)
+        mwriter.append_data(self.image)
 
     @_deprecate_positional_args
     def get_image_depth(
@@ -6498,7 +6511,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 ):  # 'off_screen' attribute is specific to Plotter objects.
                     time.sleep(sleep_time)
             if write_frames:
-                self.mwriter.close()
+                self._get_mwriter_not_none().close()
 
         if threaded:
             thread = Thread(target=orbit)
