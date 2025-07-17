@@ -1134,7 +1134,7 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
         self._marker_actor = marker
         return marker
 
-    def _delete_axes_widget(self):
+    def _remove_axes_widget(self):
         """Remove and delete the current axes widget."""
         if self.axes_widget is not None:
             self.axes_actor = None
@@ -1220,7 +1220,7 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        self._delete_axes_widget()
+        self._remove_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
         axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -1360,7 +1360,7 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self._delete_axes_widget()
+        self._remove_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1608,7 +1608,7 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self._delete_axes_widget()
+        self._remove_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -3836,7 +3836,11 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self._delete_axes_widget()
+        self._remove_axes_widget()
+
+        self._bounding_box = None
+        self._box_object = None
+        self._marker_actor = None
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -3890,6 +3894,7 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._box_object = None
         # remove reference to parent last
         self.parent = None
 

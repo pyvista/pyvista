@@ -4938,7 +4938,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # check if maper exists
         mapper = kwargs.get('mapper')
         if mapper is None:
-            if not hasattr(self, 'mapper') or self.mapper is None:
+            if self.mapper is None:
                 msg = 'Mapper does not exist.  Add a mesh with scalars first.'
                 raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
@@ -5063,6 +5063,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.scalar_bars.clear()
         self.mesh = None
         self.mapper = None
+        self.text = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -5078,12 +5079,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 _kill_display(disp_id)
             self.iren = None
 
-        self.text = None
-
         # end movie
         if self.mwriter is not None:
             with suppress(BaseException):
                 self.mwriter.close()
+            self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
