@@ -443,13 +443,13 @@ class DataObjectFilters:
         >>> mesh = pv.Cube(center=(2, 0, 0))
         >>> mesh['example_data'] = mesh.points[:, 0]
         >>> reflected = mesh.reflect_axis_aligned(plane='x', value=1.0)
-        >>> print(f"Result contains {reflected.n_blocks} blocks")
+        >>> print(f'Result contains {reflected.n_blocks} blocks')
         Result contains 2 blocks
-        >>> print("Original mesh bounds:", mesh.bounds)
+        >>> print('Original mesh bounds:', mesh.bounds)
         Original mesh bounds: (1.5, 2.5, -0.5, 0.5, -0.5, 0.5)
-        >>> print("Block 0 (original) bounds:", reflected[0].bounds)
+        >>> print('Block 0 (original) bounds:', reflected[0].bounds)
         Block 0 (original) bounds: (1.5, 2.5, -0.5, 0.5, -0.5, 0.5)
-        >>> print("Block 1 (reflection) bounds:", reflected[1].bounds)
+        >>> print('Block 1 (reflection) bounds:', reflected[1].bounds)
         Block 1 (reflection) bounds: (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         Visualize the reflection.
