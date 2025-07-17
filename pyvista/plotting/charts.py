@@ -53,7 +53,7 @@ class _vtkWrapperMeta(type):  # noqa: N801
         return obj
 
 
-class _vtkWrapper(metaclass=_vtkWrapperMeta):  # noqa: N801
+class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -164,7 +164,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
 # endregion
 
 
-class Pen(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
+class Pen(_vtkWrapper, _vtk.vtkPen):
     """Pythonic wrapper for a VTK Pen, used to draw lines.
 
     Parameters
@@ -292,7 +292,7 @@ class Pen(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkPen):
             raise ValueError(msg)
 
 
-class Brush(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrush):
+class Brush(_vtkWrapper, _vtk.vtkBrush):
     """Pythonic wrapper for a VTK Brush, used to fill shapes.
 
     Parameters
@@ -449,7 +449,7 @@ class Brush(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkBrush):
         self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
 
 
-class Axis(_vtk.DisableVtkSnakeCase, _vtkWrapper, _vtk.vtkAxis):
+class Axis(_vtkWrapper, _vtk.vtkAxis):
     """Pythonic interface for a VTK Axis, used by 2D charts.
 
     Parameters
@@ -4327,7 +4327,7 @@ class ChartBox(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkCh
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
-class PiePlot(_vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
+class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
     """Class representing a pie plot.
 
     Users should typically not directly create new plot instances, but
