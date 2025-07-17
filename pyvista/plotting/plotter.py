@@ -409,8 +409,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._suppress_rendering = False
 
     def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
-        iren = self.iren
-        if iren is None and self._initialized:
+        if (iren := self.iren) is None:
             msg = msg if msg is not None else 'This plotting window is not interactive.'
             raise RuntimeError(msg)
         else:
@@ -2352,7 +2351,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def reset_key_events(self) -> None:
         """Reset all of the key press events to their defaults."""
-        if not hasattr(self, 'iren'):
+        if self.iren is None:
             return
 
         iren = self._get_iren_not_none()

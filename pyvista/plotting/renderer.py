@@ -1226,7 +1226,7 @@ class Renderer(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRend
         axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget = axes_widget
         axes_widget.SetOrientationMarker(actor)
-        if hasattr(self.parent, 'iren'):
+        if self.parent.iren is not None:
             axes_widget.SetInteractor(self.parent.iren.interactor)
             axes_widget.SetEnabled(1)
             axes_widget.SetInteractive(interactive)
