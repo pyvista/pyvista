@@ -414,12 +414,12 @@ class Label(_Prop3DMixin, Text):
         font_size: int = 50,
         prop: pyvista.Property | None = None,
         size: int | None = None,
-        name: str | None = None,
+        name: str = 'Label',
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
-        self._name = name  # type: ignore[assignment]
+        self._name = name
 
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]

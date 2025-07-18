@@ -16,6 +16,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
 
@@ -117,7 +118,9 @@ def numpy_to_idarr(
     return vtk_idarr
 
 
-def create_mixed_cells(mixed_cell_dict, nr_points=None):
+def create_mixed_cells(
+    mixed_cell_dict: dict[np.uint8, NumpyArray[int]], nr_points: int | None = None
+) -> tuple[NumpyArray[np.uint8], NumpyArray[int]]:
     """Generate cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
 
     This function generates all required cell arrays according to a given cell
@@ -170,7 +173,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     ... )
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map
+    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
 
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         msg = 'Found unknown or unsupported VTK cell type in your requested cells'
@@ -185,7 +188,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     for elem_t, cells_arr in mixed_cell_dict.items():
         nr_points_per_elem = enum_cell_type_nr_points_map[elem_t]
         if (
-            not isinstance(cells_arr, np.ndarray)
+            not isinstance(cells_arr, np.ndarray)  # type: ignore[redundant-expr]
             or not np.issubdtype(cells_arr.dtype, np.integer)
             or cells_arr.ndim not in [1, 2]
             or (cells_arr.ndim == 1 and cells_arr.size % nr_points_per_elem != 0)
@@ -222,13 +225,13 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             ).reshape([-1]),
         )
 
-    final_cell_types = np.concatenate(final_cell_types)  # type: ignore[assignment]
-    final_cell_arr = np.concatenate(final_cell_arr)
+    cell_types_out = np.concatenate(final_cell_types)
+    cell_arr_out = np.concatenate(final_cell_arr)
 
-    return final_cell_types, final_cell_arr
+    return cell_types_out, cell_arr_out
 
 
-def get_mixed_cells(vtkobj):
+def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]:
     """Create the cells dictionary from the given pyvista.UnstructuredGrid.
 
     This functions creates a cells dictionary (see
@@ -260,12 +263,12 @@ def get_mixed_cells(vtkobj):
         like VTK_POLYGON.
 
     """
-    from .cell_type_helper import enum_cell_type_nr_points_map
+    from .cell_type_helper import enum_cell_type_nr_points_map  # noqa: PLC0415
 
-    return_dict = {}  # type: ignore[var-annotated]
+    return_dict: dict[np.uint8, NumpyArray[int]] = {}
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
-        msg = 'Expected a pyvista object'
+        msg = 'Expected a pyvista object'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     nr_cells = vtkobj.n_cells

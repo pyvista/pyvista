@@ -2928,6 +2928,17 @@ class WidgetHelper:
         :vtk:`vtkCameraOrientationWidget`
             Camera orientation widget.
 
+        See Also
+        --------
+        :meth:`~pyvista.Plotter.add_axes`
+            Add arrow-style axes as an orientation widget.
+
+        :meth:`~pyvista.Plotter.add_box_axes`
+            Add an axes box as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
+
         Examples
         --------
         Add a camera orientation widget to the scene.

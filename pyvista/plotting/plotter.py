@@ -14,6 +14,7 @@ from copy import deepcopy
 import ctypes
 from functools import wraps
 import io
+from itertools import cycle
 import logging
 import os
 from pathlib import Path
@@ -102,7 +103,6 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
-    from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -503,7 +503,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise FileNotFoundError(msg)
 
         # lazy import here to avoid importing unused modules
-        from vtkmodules.vtkIOImport import vtkGLTFImporter
+        from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
 
         importer = vtkGLTFImporter()
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
@@ -515,7 +515,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set camera position to a three.js viewing perspective
         if set_camera:
-            self.camera_position = 'xy'  # type: ignore[assignment]
+            self.camera_position = 'xy'
 
     def import_vrml(self, filename: str | Path) -> None:
         """Import a VRML file into the plotter.
@@ -537,7 +537,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_vrml_example` for a full example using this method.
 
         """
-        from vtkmodules.vtkIOImport import vtkVRMLImporter
+        from vtkmodules.vtkIOImport import vtkVRMLImporter  # noqa: PLC0415
 
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
@@ -573,7 +573,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show()
 
         """
-        from vtkmodules.vtkIOImport import vtk3DSImporter
+        from vtkmodules.vtkIOImport import vtk3DSImporter  # noqa: PLC0415
 
         filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
@@ -620,7 +620,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.show(cpos='xy')
 
         """
-        from vtkmodules.vtkIOImport import vtkOBJImporter
+        from vtkmodules.vtkIOImport import vtkOBJImporter  # noqa: PLC0415
 
         filename = Path(filename).expanduser().resolve()
         if not filename.is_file():
@@ -678,7 +678,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from trame_vtk.tools.vtksz2html import write_html
+            from trame_vtk.tools.vtksz2html import write_html  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
@@ -726,9 +726,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from pyvista.trame import PyVistaLocalView
-            from pyvista.trame.jupyter import elegantly_launch
-            from pyvista.trame.views import get_server
+            from pyvista.trame import PyVistaLocalView  # noqa: PLC0415
+            from pyvista.trame.jupyter import elegantly_launch  # noqa: PLC0415
+            from pyvista.trame.views import get_server  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
@@ -825,7 +825,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             msg = 'This plotter has been closed and is unable to export the scene.'
             raise RuntimeError(msg)
 
-        from vtkmodules.vtkIOExport import vtkGLTFExporter
+        from vtkmodules.vtkIOExport import vtkGLTFExporter  # noqa: PLC0415
 
         # rotate scene to gltf compatible view
         renamed_arrays = []  # any renamed normal arrays
@@ -909,7 +909,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_vrml('sample')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkVRMLExporter
+        from vtkmodules.vtkIOExport import vtkVRMLExporter  # noqa: PLC0415
 
         if self.render_window is None:
             msg = 'This plotter has been closed and cannot be shown.'
@@ -1218,7 +1218,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def disable_3_lights(self) -> None:
         """Please use ``enable_lightkit``, this method has been deprecated."""
-        from pyvista.core.errors import DeprecationError
+        from pyvista.core.errors import DeprecationError  # noqa: PLC0415
 
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
@@ -1701,7 +1701,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_environment_texture``."""
         return self.renderer.remove_environment_texture(*args, **kwargs)
 
-    #### Properties from Renderer ####
+    # Properties from Renderer ####
 
     @property
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
@@ -2002,7 +2002,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         size_before = self.window_size
         if window_size is not None:
-            self.window_size = window_size  # type: ignore[assignment]
+            self.window_size = window_size
         try:
             yield self
         finally:
@@ -3776,7 +3776,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
                 silhouette_actor = self.add_silhouette(algo or mesh)
-            silhouette_actor.user_matrix = user_matrix  # type: ignore[assignment]
+            silhouette_actor.user_matrix = user_matrix
 
         scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
@@ -3848,7 +3848,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
                 raise ValueError(msg)
 
-        mesh = cast('DataSet | PolyData', mesh)
         if algo is None and not self.theme.allow_empty_mesh and not mesh.n_points:
             # Algorithms may initialize with an empty mesh
             msg = (
@@ -3865,7 +3864,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         set_algorithm_input(self.mapper, algo or mesh)
 
         actor = Actor(mapper=self.mapper)
-        actor.user_matrix = user_matrix  # type: ignore[assignment]
+        actor.user_matrix = user_matrix
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
@@ -4412,13 +4411,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = cast('pyvista.ImageData', wrap(cast('NumpyArray[float]', volume)))
+                volume = cast('pyvista.ImageData', wrap(volume))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
                     msg = 'Invalid resolution dimensions.'
                     raise ValueError(msg)
-                volume.spacing = resolution  # type: ignore[assignment]
+                volume.spacing = resolution
             _validation.check_instance(
                 volume, (pyvista.DataSet, pyvista.MultiBlock), name='volume'
             )
@@ -4433,8 +4432,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             name = f'{type(volume).__name__}({volume.memory_address})'
 
         if isinstance(volume, pyvista.MultiBlock):
-            from itertools import cycle
-
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
@@ -4629,7 +4626,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self.volume = Volume()
         self.volume.mapper = self.mapper
-        self.volume.user_matrix = user_matrix  # type: ignore[assignment]
+        self.volume.user_matrix = user_matrix
 
         self.volume.prop = VolumeProperty(
             lookup_table=self.mapper.lookup_table,
@@ -4789,7 +4786,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not hasattr(self, 'mapper'):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
-            self.mapper.scalar_range = clim  # type: ignore[assignment]
+            self.mapper.scalar_range = clim
             return
 
         try:
@@ -5042,58 +5039,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Why are the points updated here? Not all datasets have points
             # and only the scalars array is modified by this function...
             mesh.GetPoints().Modified()
-
-        if render:
-            self.render()
-
-    @_deprecate_positional_args(allowed=['points'])
-    def update_coordinates(
-        self,
-        points: MatrixLike[float] | VectorLike[float],
-        mesh: _vtk.vtkPolyData | _vtk.vtkUnstructuredGrid | None = None,
-        render: bool | None = True,  # noqa: FBT001, FBT002
-    ) -> None:
-        """Update the points of an object in the plotter.
-
-        .. deprecated:: 0.43.0
-            This method is deprecated and will be removed in a future version of
-            PyVista. It is functionally equivalent to directly modifying the
-            points of a mesh in-place.
-
-            .. code-block:: python
-
-                # Modify the points in place
-                mesh.points = points
-                # Explicitly call render if needed
-                plotter.render()
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Points to replace existing points.
-
-        mesh : vtk.PolyData | vtk.UnstructuredGrid, optional
-            Object that has already been added to the Plotter.  If ``None``, uses
-            last added mesh.
-
-        render : bool, default: True
-            Force a render when True.
-
-        """
-        # Deprecated on 0.43.0, estimated removal on v0.46.0
-        warnings.warn(
-            'This method is deprecated and will be removed in a future version of '
-            'PyVista. Directly modify the points of a mesh in-place instead.',
-            PyVistaDeprecationWarning,
-        )
-        if mesh is None:
-            mesh = self.mesh  # type: ignore[assignment]
-
-        mesh.points = points  # type: ignore[union-attr]
-
-        # only render when the plotter has already been shown
-        if render is None:
-            render = not self._first_time
 
         if render:
             self.render()
@@ -5353,7 +5298,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from imageio import get_writer
+            from imageio import get_writer  # noqa: PLC0415
         except ModuleNotFoundError:  # pragma: no cover
             msg = 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
             raise ModuleNotFoundError(msg) from None
@@ -5431,8 +5376,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from imageio import __version__
-            from imageio import get_writer
+            from imageio import __version__  # noqa: PLC0415
+            from imageio import get_writer  # noqa: PLC0415
         except ModuleNotFoundError:  # pragma: no cover
             msg = 'Install imageio to use `open_gif` with:\n\n   pip install imageio'
             raise ModuleNotFoundError(msg) from None
@@ -5558,7 +5503,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._image_depth_null = np.logical_or(zval < -far, np.isclose(zval, -far))
 
         if fill_value is not None:
-            zval[self._image_depth_null] = fill_value  # type:ignore[index]
+            zval[self._image_depth_null] = fill_value
 
         return zval
 
@@ -5877,7 +5822,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
             if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError
+                from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
                 msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
                 raise VTKVersionError(msg)
@@ -6187,7 +6132,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
         # write screenshot to file if requested
         if isinstance(filename, (str, Path, io.BytesIO)):
-            from PIL import Image
+            from PIL import Image  # noqa: PLC0415
 
             if isinstance(filename, (str, Path)):
                 filename = Path(filename)
@@ -6254,7 +6199,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.save_graphic('img.svg')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
+        from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter  # noqa: PLC0415
 
         if self.render_window is None:
             msg = 'This plotter is closed and unable to save a screenshot.'
@@ -6550,7 +6495,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if progress_bar:
             try:
-                from tqdm import tqdm
+                from tqdm import tqdm  # noqa: PLC0415
             except ImportError:  # pragma: no cover
                 msg = 'Please install `tqdm` to use ``progress_bar=True``'
                 raise ImportError(msg)
@@ -6601,7 +6546,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl.export_obj('scene.obj')  # doctest:+SKIP
 
         """
-        from vtkmodules.vtkIOExport import vtkOBJExporter
+        from vtkmodules.vtkIOExport import vtkOBJExporter  # noqa: PLC0415
 
         if self.render_window is None:
             msg = 'This plotter must still have a render window open.'
@@ -7270,7 +7215,7 @@ class Plotter(BasePlotter):
 
         jupyter_disp = None
         if self.notebook:
-            from pyvista.jupyter.notebook import handle_plotter
+            from pyvista.jupyter.notebook import handle_plotter  # noqa: PLC0415
 
             if jupyter_backend is None:
                 jupyter_backend = self._theme.jupyter_backend
@@ -7362,7 +7307,7 @@ class Plotter(BasePlotter):
         if jupyter_disp is not None and not return_viewer:
             # Default behaviour is to display the Jupyter viewer
             try:
-                from IPython import display
+                from IPython import display  # noqa: PLC0415
             except ImportError:  # pragma: no cover
                 msg = 'Install IPython to display an image in a notebook'
                 raise ImportError(msg)

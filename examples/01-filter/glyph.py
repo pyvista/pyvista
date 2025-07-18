@@ -9,6 +9,8 @@ Use vectors in a dataset to plot and orient glyphs/geometric objects.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4
@@ -43,7 +45,7 @@ cpos = pl.show(return_cpos=True)
 # Another approach is to load the vectors directly to the mesh object and then
 # access the :attr:`pyvista.DataSet.arrows` property.
 
-sphere = pv.Sphere(radius=3.14)
+sphere = pv.Sphere(radius=math.pi)
 
 # make cool swirly pattern
 vectors = np.vstack(

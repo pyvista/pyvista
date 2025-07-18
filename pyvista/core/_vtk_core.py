@@ -353,6 +353,9 @@ from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.4
+    from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation
@@ -461,7 +464,9 @@ from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
 
 with contextlib.suppress(ImportError):
     # Deprecated in 9.3
-    from vtkmodules.vtkFiltersSources import vtkCapsuleSource as vtkCapsuleSource
+    from vtkmodules.vtkFiltersSources import (  # type: ignore[attr-defined]
+        vtkCapsuleSource as vtkCapsuleSource,
+    )
 
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
@@ -576,7 +581,7 @@ except ImportError:  # pragma: no cover
 
         def __init__(self):  # pragma: no cover
             """Raise version error on init."""
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Chart backgrounds require the vtkPythonContext2D module'
             raise VTKVersionError(msg)
@@ -674,7 +679,7 @@ class DisableVtkSnakeCase:
         if vtk_version_info >= (9, 4) and sys.meta_path is not None:
             # Raise error if accessing attributes from VTK's pythonic snake_case API
 
-            import pyvista as pv
+            import pyvista as pv  # noqa: PLC0415
 
             state = pv._VTK_SNAKE_CASE_STATE
             if state != 'allow':
