@@ -422,8 +422,8 @@ class Label(_Prop3DMixin, Text):
         self._name = name
 
         _Prop3DMixin.__init__(self)
-        self.relative_position = relative_position  # type: ignore[assignment]
-        self.position = position  # type: ignore[assignment]
+        self.relative_position = relative_position
+        self.position = position
         self.font_size = font_size
         if size is not None:
             self.size = size
