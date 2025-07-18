@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import wrap
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class ImageEllipsoidSource(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource
 ):
     """Create a binary image of an ellipsoid class.
 
@@ -142,7 +142,7 @@ class ImageEllipsoidSource(
 
 
 class ImageMandelbrotSource(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource
 ):
     """Create an image of the Mandelbrot set.
 
@@ -238,7 +238,7 @@ class ImageMandelbrotSource(
         return wrap(self.GetOutput())
 
 
-class ImageNoiseSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
+class ImageNoiseSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -388,9 +388,7 @@ class ImageNoiseSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkIm
         return wrap(self.GetOutput())
 
 
-class ImageSinusoidSource(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource
-):
+class ImageSinusoidSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
 
     .. versionadded:: 0.44.0
@@ -591,9 +589,7 @@ class ImageSinusoidSource(
         return wrap(self.GetOutput())
 
 
-class ImageGaussianSource(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource
-):
+class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
     """Create a binary image with Gaussian pixel values.
 
     .. versionadded:: 0.44.0
@@ -759,7 +755,7 @@ class ImageGaussianSource(
         return wrap(self.GetOutput())
 
 
-class ImageGridSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
+class ImageGridSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
     """Create an image of a grid.
 
     .. versionadded:: 0.44.0

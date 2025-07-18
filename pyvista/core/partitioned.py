@@ -61,8 +61,6 @@ class PartitionedDataSet(_NoNewAttrMixin, DataObject, MutableSequence, _vtk.vtkP
                     self.append(partition)
         self.wrap_nested()
 
-        self._no_new_attributes(PartitionedDataSet)
-
     def wrap_nested(self) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 

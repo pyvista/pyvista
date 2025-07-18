@@ -18,7 +18,7 @@ import numpy as np
 import pyvista
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk
@@ -2127,7 +2127,7 @@ class _MultiCompPlot(_Plot):
         self.labels = None if val is None else [val]
 
 
-class LinePlot2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
+class LinePlot2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
     """Class representing a 2D line plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2286,7 +2286,7 @@ class LinePlot2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkP
             self.visible = False
 
 
-class ScatterPlot2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoints):
+class ScatterPlot2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoints):
     """Class representing a 2D scatter plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2523,7 +2523,7 @@ class ScatterPlot2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.v
             raise ValueError(msg)
 
 
-class AreaPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
+class AreaPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
     """Class representing a 2D area plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2722,7 +2722,7 @@ class AreaPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlo
             self.visible = False
 
 
-class BarPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBar):
+class BarPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBar):
     """Class representing a 2D bar plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2945,9 +2945,7 @@ class BarPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vt
             raise ValueError(msg)
 
 
-class StackPlot(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotStacked
-):
+class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotStacked):
     """Class representing a 2D stack plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -3123,7 +3121,7 @@ class StackPlot(
             self.visible = False
 
 
-class Chart2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
+class Chart2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     """2D chart class similar to a ``matplotlib`` figure.
 
     Parameters
@@ -3964,7 +3962,7 @@ class Chart2D(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkCha
             axis.grid = False
 
 
-class BoxPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBox):
+class BoxPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBox):
     """Class representing a box plot.
 
     Users should typically not directly create new plot instances, but
@@ -4113,7 +4111,7 @@ class BoxPlot(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vt
         self._quartiles.Update()
 
 
-class ChartBox(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
+class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     """Dedicated chart for drawing box plots.
 
     Parameters
@@ -4443,7 +4441,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         self._table.update(data)
 
 
-class ChartPie(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
+class ChartPie(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
     """Dedicated chart for drawing pie plots.
 
     Parameters
@@ -4658,7 +4656,7 @@ class ChartPie(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkCh
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
-class ChartMPL(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
+class ChartMPL(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
     """Create new chart from an existing matplotlib figure.
 
     Parameters
@@ -4931,7 +4929,7 @@ class ChartMPL(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkIm
         legend.set_visible(val)
 
 
-class Charts(_NoNewAttrMixinAuto):
+class Charts(_NoNewAttrMixin):
     """Collection of charts for a renderer.
 
     Users should typically not directly create new instances of this

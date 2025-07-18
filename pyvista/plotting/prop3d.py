@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from abc import abstractmethod
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -9,14 +10,13 @@ from typing import Literal
 
 import numpy as np
 
-from pyvista import abstract_class
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-class Prop3D(_NoNewAttrMixinAuto, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
+class Prop3D(_NoNewAttrMixin, _NameMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
     """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
@@ -567,8 +567,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
     return array_from_vtkmatrix(matrix)[:3, :3]
 
 
-@abstract_class
-class _Prop3DMixin:
+class _Prop3DMixin(ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
     Derived classes need to implement the :meth:`_post_set_update` method to define
@@ -651,13 +650,13 @@ class _Prop3DMixin:
         """
         return array_from_vtkmatrix(self._prop3d.GetMatrix())
 
+    @abstractmethod
     def _post_set_update(self):
         """Update object after setting Prop3D attributes."""
-        raise NotImplementedError  # pragma: no cover
 
+    @abstractmethod
     def _get_bounds(self) -> BoundsTuple:
         """Return the object's 3D bounds."""
-        raise NotImplementedError  # pragma: no cover
 
     @property
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]

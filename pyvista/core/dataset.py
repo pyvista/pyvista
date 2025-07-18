@@ -39,7 +39,7 @@ from .utilities.arrays import get_array_association
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
-from .utilities.misc import _NoNewAttrMixinAuto
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -97,7 +97,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     name: str
 
 
-class ActiveArrayInfo(_NoNewAttrMixinAuto):
+class ActiveArrayInfo(_NoNewAttrMixin):
     """Active array info class with support for pickling.
 
     .. deprecated:: 0.45
@@ -176,7 +176,7 @@ class ActiveArrayInfo(_NoNewAttrMixinAuto):
 
 @promote_type(_vtk.vtkDataSet)
 @abstract_class
-class DataSet(_NoNewAttrMixinAuto, DataSetFilters, DataObject):
+class DataSet(_NoNewAttrMixin, DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
 
     Parameters

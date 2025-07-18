@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABCMeta
 from collections.abc import Sequence
 import enum
 from functools import cache
@@ -286,23 +287,20 @@ class _AutoFreezeMeta(type):
 
     def __call__(cls: type[_T], *args, **kwargs) -> _T:
         obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
-        if isinstance(obj, _NoNewAttrMixin):
-            obj._no_new_attributes(cls)
+        obj._no_new_attributes(cls)
         return obj
 
 
-class _NoNewAttrMixin:
+class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
+    """Metaclass to combine automatic attribute freezing with ABC support."""
+
+
+class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     """Mixin to prevent adding new attributes.
 
     This class is mainly used to prevent users from setting the wrong attributes on an
-    object. It prevents setting new attributes via "normal" methods like ``obj.foo = 42``
-    after a call is made to ``self._no_new_attributes()``.
-
-    There are two versions of this class: ``_NoNewAttrMixin`` and ``_NoNewAttrMixinAuto``.
-    In almost all cases, it is recommended to use ``_NoNewAttrMixinAuto``, since the auto
-    version uses a metaclass to automatically call ``self._no_new_attributes()`` after
-    initialization. The non-auto version should only be used if there is a metaclass
-    conflict, e.g. if the class also inherits from ``ABC``.
+    object. It freezes the attributes when called and prevents setting new ones via
+    "normal" methods like ``obj.foo = 42``.
     """
 
     def _no_new_attributes(self, this_class: type) -> None:
@@ -330,10 +328,6 @@ class _NoNewAttrMixin:
             )
             raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
-
-
-class _NoNewAttrMixinAuto(_NoNewAttrMixin, metaclass=_AutoFreezeMeta):
-    """Mixin to prevent adding new attributes."""
 
 
 def set_new_attribute(obj: object, name: str, value: Any) -> None:

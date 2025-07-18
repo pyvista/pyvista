@@ -26,7 +26,7 @@ from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
@@ -90,7 +90,7 @@ def translate(
 
 if _vtk.vtk_version_info < (9, 3):
 
-    class CapsuleSource(_NoNewAttrMixinAuto, _vtk.vtkCapsuleSource):  # type: ignore[misc]
+    class CapsuleSource(_NoNewAttrMixin, _vtk.vtkCapsuleSource):  # type: ignore[misc]
         """Capsule source algorithm class.
 
         .. versionadded:: 0.44.0
@@ -311,7 +311,7 @@ if _vtk.vtk_version_info < (9, 3):
             return wrap(self.GetOutput())
 
 
-class ConeSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
+class ConeSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -569,7 +569,7 @@ class ConeSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkConeSour
         return wrap(self.GetOutput())
 
 
-class CylinderSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
+class CylinderSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -832,7 +832,7 @@ class CylinderSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkCyli
         return wrap(self.GetOutput())
 
 
-class MultipleLinesSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
+class MultipleLinesSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -891,7 +891,7 @@ class MultipleLinesSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vt
         return wrap(self.GetOutput())
 
 
-class Text3DSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, vtkVectorText):
+class Text3DSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, vtkVectorText):
     """3D text from a string.
 
     Generate 3D text from a string with a specified width, height or depth.
@@ -1175,7 +1175,7 @@ class Text3DSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, vtkVectorText)
             out.points += self.center
 
 
-class CubeSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
+class CubeSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1403,7 +1403,7 @@ class CubeSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkCubeSour
         self.SetOutputPointsPrecision(precision)
 
 
-class DiscSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
+class DiscSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
     """Disc source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1596,7 +1596,7 @@ class DiscSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkDiskSour
         return wrap(self.GetOutput())
 
 
-class LineSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
+class LineSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1715,7 +1715,7 @@ class LineSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkLineSour
         return wrap(self.GetOutput())
 
 
-class SphereSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
+class SphereSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2012,7 +2012,7 @@ class SphereSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkSphere
         return wrap(self.GetOutput())
 
 
-class PolygonSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
+class PolygonSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2196,9 +2196,7 @@ class PolygonSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkRegul
         return wrap(self.GetOutput())
 
 
-class PlatonicSolidSource(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource
-):
+class PlatonicSolidSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2299,7 +2297,7 @@ class PlatonicSolidSource(
         return wrap(self.GetOutput())
 
 
-class PlaneSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
+class PlaneSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2539,7 +2537,7 @@ class PlaneSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkPlaneSo
         self.center = (self.center + np.array(self.normal) * distance).tolist()
 
 
-class ArrowSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
+class ArrowSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkArrowSource):
     """Create a arrow source.
 
     .. versionadded:: 0.44
@@ -2713,7 +2711,7 @@ class ArrowSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkArrowSo
         return wrap(self.GetOutput())
 
 
-class BoxSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
+class BoxSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2825,9 +2823,7 @@ class BoxSource(_NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkTessellat
         return wrap(self.GetOutput())
 
 
-class SuperquadricSource(
-    _NoNewAttrMixinAuto, _vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource
-):
+class SuperquadricSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
     """Create superquadric source.
 
     .. versionadded:: 0.44
@@ -3137,7 +3133,7 @@ class _PartEnum(IntEnum):
     tip = 1
 
 
-class AxesGeometrySource(_NoNewAttrMixinAuto):
+class AxesGeometrySource(_NoNewAttrMixin):
     """Create axes geometry source.
 
     Source for generating fully 3-dimensional axes shaft and tip geometry.
@@ -3726,7 +3722,7 @@ class AxesGeometrySource(_NoNewAttrMixinAuto):
         return name, (part_x, part_y, part_z)
 
 
-class OrthogonalPlanesSource(_NoNewAttrMixinAuto):
+class OrthogonalPlanesSource(_NoNewAttrMixin):
     """Orthogonal planes source.
 
     This source generates three orthogonal planes. The :attr:`output` is a

@@ -174,8 +174,6 @@ class MultiBlock(
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
-        self._no_new_attributes(MultiBlock)
-
     def wrap_nested(self: MultiBlock) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 

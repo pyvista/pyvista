@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
@@ -52,7 +52,7 @@ def _poked_context_callback(plotter, *args, **kwargs):
         try_callback(*args, **kwargs)
 
 
-class RectangleSelection(_NoNewAttrMixinAuto):
+class RectangleSelection(_NoNewAttrMixin):
     """Internal data structure for rectangle based selections.
 
     Parameters
@@ -91,7 +91,7 @@ class RectangleSelection(_NoNewAttrMixinAuto):
         return self._viewport
 
 
-class PointPickingElementHandler(_NoNewAttrMixinAuto):
+class PointPickingElementHandler(_NoNewAttrMixin):
     """Internal picking handler for element-based picking.
 
     This handler is only valid for single point picking operations.

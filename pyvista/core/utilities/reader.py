@@ -24,7 +24,7 @@ from pyvista.core import _vtk_core as _vtk
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
-from .misc import _NoNewAttrMixinAuto
+from .misc import _NoNewAttrMixin
 from .misc import abstract_class
 
 if TYPE_CHECKING:
@@ -281,7 +281,7 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader(_NoNewAttrMixinAuto):
+class BaseReader(_NoNewAttrMixin):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -445,7 +445,7 @@ class BaseReader(_NoNewAttrMixinAuto):
         """Set defaults on reader post setting file, if needed."""
 
 
-class PointCellDataSelection(_NoNewAttrMixinAuto):
+class PointCellDataSelection(_NoNewAttrMixin):
     """Mixin for readers that support data array selections.
 
     Examples
@@ -643,11 +643,11 @@ class PointCellDataSelection(_NoNewAttrMixinAuto):
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
 
-@abstract_class
-class TimeReader:
+class TimeReader(ABC):
     """Abstract class for readers supporting time."""
 
     @property
+    @abstractmethod
     def number_time_points(self):
         """Return number of time points or iterations available to read.
 
@@ -656,8 +656,8 @@ class TimeReader:
         int
 
         """
-        raise NotImplementedError  # pragma: no cover
 
+    @abstractmethod
     def time_point_value(self, time_point):
         """Value of time point or iteration by index.
 
@@ -671,7 +671,6 @@ class TimeReader:
         float
 
         """
-        raise NotImplementedError  # pragma: no cover
 
     @property
     def time_values(self):
@@ -685,6 +684,7 @@ class TimeReader:
         return [self.time_point_value(idx) for idx in range(self.number_time_points)]
 
     @property
+    @abstractmethod
     def active_time_value(self):
         """Active time or iteration value.
 
@@ -693,8 +693,8 @@ class TimeReader:
         float
 
         """
-        raise NotImplementedError  # pragma: no cover
 
+    @abstractmethod
     def set_active_time_value(self, time_value):
         """Set active time or iteration value.
 
@@ -704,8 +704,8 @@ class TimeReader:
             Time or iteration value to set as active.
 
         """
-        raise NotImplementedError  # pragma: no cover
 
+    @abstractmethod
     def set_active_time_point(self, time_point):
         """Set active time or iteration by index.
 
@@ -715,7 +715,6 @@ class TimeReader:
             Time or iteration point index for setting active time.
 
         """
-        raise NotImplementedError  # pragma: no cover
 
 
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
@@ -1965,7 +1964,7 @@ class BinaryMarchingCubesReader(BaseReader):
 
 
 @dataclass(order=True)
-class PVDDataSet(_NoNewAttrMixinAuto):
+class PVDDataSet(_NoNewAttrMixin):
     """Class for storing dataset info from PVD file."""
 
     time: float
@@ -3513,7 +3512,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetTimeStep(time_point)
 
 
-class ExodusIIBlockSet(_NoNewAttrMixinAuto):
+class ExodusIIBlockSet(_NoNewAttrMixin):
     """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):

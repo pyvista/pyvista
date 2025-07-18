@@ -14,7 +14,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.core.utilities.misc import _NoNewAttrMixinAuto
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
@@ -36,7 +36,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Transform(
-    _NoNewAttrMixinAuto,
+    _NoNewAttrMixin,
     _vtk.DisableVtkSnakeCase,
     _vtk.vtkPyVistaOverride,
     _vtk.vtkTransform,
