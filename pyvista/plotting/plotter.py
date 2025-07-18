@@ -315,6 +315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper: _BaseMapper | None = None
         self.volume: Volume | None = None
         self.text: CornerAnnotation | Text | None = None
+        self.iren: RenderWindowInteractor | None = None
         self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
         self._gif_filename: Path | None = None
 
@@ -405,6 +406,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+
+    def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
+        if (iren := self.iren) is None:
+            msg = msg if msg is not None else 'This plotting window is not interactive.'
+            raise RuntimeError(msg)
+        else:
+            return iren
 
     def _get_mwriter_not_none(self, msg: str | None = None) -> imageio.plugins.ffmpeg.Writer:
         if (mwriter := self.mwriter) is None:
@@ -2184,34 +2192,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_key_event."""
-        if hasattr(self, 'iren'):
-            self.iren.add_key_event(*args, **kwargs)  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.add_key_event(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.add_timer_event)
     def add_timer_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_timer_event."""
-        if hasattr(self, 'iren'):
-            self.iren.add_timer_event(*args, **kwargs)  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.add_timer_event(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.clear_events_for_key)
     def clear_events_for_key(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
-        if hasattr(self, 'iren'):
-            self.iren.clear_events_for_key(*args, **kwargs)  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.clear_events_for_key(*args, **kwargs)
 
     def store_mouse_position(self, *args) -> None:  # noqa: ARG002
         """Store mouse position."""
-        if not hasattr(self, 'iren'):
-            msg = 'This plotting window is not interactive.'
-            raise AttributeError(msg)
-        self.mouse_position = self.iren.get_event_position()  # type: ignore[has-type]
+        self.mouse_position = self._get_iren_not_none().get_event_position()
 
     def store_click_position(self, *args) -> None:  # noqa: ARG002
         """Store click position in viewport coordinates."""
-        if not hasattr(self, 'iren'):
-            msg = 'This plotting window is not interactive.'
-            raise AttributeError(msg)
-        self.click_position = self.iren.get_event_position()  # type: ignore[has-type]
+        self.click_position = self._get_iren_not_none().get_event_position()
         self.mouse_position = self.click_position
 
     def track_mouse_position(self) -> None:
@@ -2222,21 +2224,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         :func:`pyvista.Plotter.track_click_position` instead.
 
         """
-        self.iren.track_mouse_position(self.store_mouse_position)  # type: ignore[has-type]
+        self._get_iren_not_none().track_mouse_position(self.store_mouse_position)
 
     def untrack_mouse_position(self) -> None:
         """Stop tracking the mouse position."""
-        self.iren.untrack_mouse_position()  # type: ignore[has-type]
+        self._get_iren_not_none().untrack_mouse_position()
 
     @wraps(RenderWindowInteractor.track_click_position)
     def track_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.track_click_position."""
-        self.iren.track_click_position(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().track_click_position(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.untrack_click_position)
     def untrack_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Stop tracking the click position."""
-        self.iren.untrack_click_position(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().untrack_click_position(*args, **kwargs)
 
     @property
     def pickable_actors(self) -> list[_vtk.vtkActor]:  # numpydoc ignore=RT01
@@ -2348,7 +2350,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def reset_key_events(self) -> None:
         """Reset all of the key press events to their defaults."""
-        if not hasattr(self, 'iren'):
+        if self.iren is None:
             return
 
         self.iren.clear_key_event_callbacks()  # type: ignore[has-type]
@@ -2369,7 +2371,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.key_press_event)
     def key_press_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.key_press_event."""
-        self.iren.key_press_event(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().key_press_event(*args, **kwargs)
 
     def left_button_down(self, *args) -> None:  # noqa: ARG002
         """Register the event for a left button down click."""
@@ -2387,7 +2389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError(msg)
 
         # Get 2D click location on window
-        click_pos = self.iren.get_event_position()  # type: ignore[has-type]
+        click_pos = self._get_iren_not_none().get_event_position()
 
         # Get corresponding click location in the 3D plot
         picker = _vtk.vtkWorldPointPicker()
@@ -2399,57 +2401,57 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.enable_trackball_style)
     def enable_trackball_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_style."""
-        self.iren.enable_trackball_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_trackball_style()
 
     @wraps(RenderWindowInteractor.enable_custom_trackball_style)
     def enable_custom_trackball_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
-        self.iren.enable_custom_trackball_style(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().enable_custom_trackball_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
-        self.iren.enable_trackball_actor_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_trackball_actor_style()
 
     @wraps(RenderWindowInteractor.enable_image_style)
     def enable_image_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_image_style."""
-        self.iren.enable_image_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_image_style()
 
     @wraps(RenderWindowInteractor.enable_joystick_style)
     def enable_joystick_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_style."""
-        self.iren.enable_joystick_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_joystick_style()
 
     @wraps(RenderWindowInteractor.enable_joystick_actor_style)
     def enable_joystick_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
-        self.iren.enable_joystick_actor_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_joystick_actor_style()
 
     @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_zoom_style."""
-        self.iren.enable_zoom_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_zoom_style()
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
     def enable_terrain_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_terrain_style."""
-        self.iren.enable_terrain_style(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().enable_terrain_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_style."""
-        self.iren.enable_rubber_band_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_rubber_band_style()
 
     @wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
     def enable_rubber_band_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
-        self.iren.enable_rubber_band_2d_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_rubber_band_2d_style()
 
     @wraps(RenderWindowInteractor.enable_2d_style)
     def enable_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_2d_style."""
-        self.iren.enable_2d_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_2d_style()
 
     def enable_stereo_render(self) -> None:
         """Enable anaglyph stereo rendering.
@@ -2532,7 +2534,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def isometric_view_interactive(self) -> None:
         """Set the current interactive render window to isometric view."""
-        interactor = self.iren.get_interactor_style()  # type: ignore[has-type]
+        interactor = self._get_iren_not_none().get_interactor_style()
         renderer = interactor.GetCurrentRenderer()
         if renderer is None:
             renderer = self.renderer
@@ -5075,9 +5077,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 _kill_display(disp_id)
             self.iren = None
 
-        if hasattr(self, 'text'):
-            del self.text
-
         # end movie
         if self.mwriter is not None:
             with suppress(BaseException):
@@ -6404,7 +6403,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Point to fly to in the form of ``(x, y, z)``.
 
         """
-        self.iren.fly_to(self.renderer, point)  # type: ignore[attr-defined]
+        self._get_iren_not_none().fly_to(self.renderer, point)
 
     @_deprecate_positional_args(allowed=['path'])
     def orbit_on_path(  # noqa: PLR0917
@@ -6641,7 +6640,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
-            self.iren.add_observer('ModifiedEvent', renderer.resize)  # type: ignore[attr-defined]
+            self._get_iren_not_none().add_observer('ModifiedEvent', renderer.resize)
 
     @wraps(Renderers.remove_background_image)
     def remove_background_image(self) -> None:  # numpydoc ignore=PR01,RT01
