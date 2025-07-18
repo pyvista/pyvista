@@ -12,7 +12,6 @@ import pyvista
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
-from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
 
-class Texture(_NoNewAttrMixin, DataObject, _vtk.vtkTexture):
+class Texture(DataObject, _vtk.vtkTexture):
     """Wrap :vtk:`vtkTexture`.
 
     Textures can be used to apply images to surfaces, as in the case of
