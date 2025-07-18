@@ -474,24 +474,35 @@ class DataObjectFilters:
             msg = 'reflect_axis_aligned requires VTK 9.5 or later.'
             raise VTKVersionError(msg)
 
-        # Convert plane string to VTK constant
-        plane_map = {
-            'x': 0,  # Reflect across YZ plane (X normal)
-            'y': 1,  # Reflect across XZ plane (Y normal)
-            'z': 2,  # Reflect across XY plane (Z normal)
-        }
+        # Create the reflection plane based on the specified axis
         plane = plane.lower()
-        if plane not in plane_map:
+        if plane not in ['x', 'y', 'z']:
             msg = f"plane must be one of 'x', 'y', or 'z', got '{plane}'"
             raise ValueError(msg)
 
+        # Create a vtkPlane for the reflection
+        reflection_plane = _vtk.vtkPlane()
+        reflection_plane.SetAxisAligned(True)
+        if plane == 'x':
+            # YZ plane (normal to X-axis)
+            reflection_plane.SetNormal(1, 0, 0)
+            reflection_plane.SetOrigin(value, 0, 0)
+        elif plane == 'y':
+            # XZ plane (normal to Y-axis)
+            reflection_plane.SetNormal(0, 1, 0)
+            reflection_plane.SetOrigin(0, value, 0)
+        else:  # plane == 'z'
+            # XY plane (normal to Z-axis)
+            reflection_plane.SetNormal(0, 0, 1)
+            reflection_plane.SetOrigin(0, 0, value)
+
         alg = _vtk.vtkAxisAlignedReflectionFilter()
         alg.SetInputData(self)
-        alg.SetPlane(plane_map[plane])
-        alg.SetValue(value)
+        alg.SetPlaneMode(0)  # Use PLANE mode for custom plane
+        alg.SetReflectionPlane(reflection_plane)
         alg.SetCopyInput(copy_input)
         alg.SetReflectAllInputArrays(reflect_all_input_arrays)
-        _update_alg(alg, progress_bar, 'Reflecting dataset')
+        _update_alg(alg, progress_bar=progress_bar, message='Reflecting dataset')
 
         # The filter returns a vtkPartitionedDataSetCollection
         output = _get_output(alg)
