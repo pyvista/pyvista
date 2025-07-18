@@ -40,7 +40,7 @@ plotter.add_actor(follower)
 plotter.add_mesh(pv.Cube(center=(2, 0, 0)), color='red', label='Static Cube')
 
 # Show the scene
-plotter.show_legend()
+plotter.add_legend()
 plotter.show()
 
 ################################################################################
