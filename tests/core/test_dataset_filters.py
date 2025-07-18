@@ -4217,12 +4217,7 @@ def test_resize_size(sphere, size, center):
     expected_center = sphere.center if center is None else center
 
     resized = sphere.resize(size=size, center=center)
-    new_bounds = resized.bounds
-    new_size = [
-        new_bounds[1] - new_bounds[0],
-        new_bounds[3] - new_bounds[2],
-        new_bounds[5] - new_bounds[4],
-    ]
+    new_size = resized.size
     assert np.allclose(new_size, size)
     assert np.allclose(resized.center, expected_center)
 
