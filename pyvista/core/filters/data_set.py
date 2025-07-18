@@ -1188,6 +1188,8 @@ class DataSetFilters(DataObjectFilters):
 
         >>> mesh = pv.Cube()
         >>> resized = mesh.resize(size=4.0)
+        >>> resized.size
+        (4.0, 4.0, 4.0)
         >>> resized.bounds
         BoundsTuple(x_min = -2.0,
                     x_max =  2.0,
