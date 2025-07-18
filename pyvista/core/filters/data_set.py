@@ -1210,12 +1210,7 @@ class DataSetFilters(DataObjectFilters):
         (1.0, 0.5, 0.25)
 
         """
-        current_bounds = self.bounds
-        current_size = [
-            current_bounds[1] - current_bounds[0],
-            current_bounds[3] - current_bounds[2],
-            current_bounds[5] - current_bounds[4],
-        ]
+        current_size = self.size
 
         if bounds is not None:
             if size is not None:
