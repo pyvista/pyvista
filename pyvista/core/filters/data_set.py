@@ -1154,30 +1154,53 @@ class DataSetFilters(DataObjectFilters):
 
         Examples
         --------
-        Rescale a sphere to fit within unit bounds [-1, 1] in all dimensions.
+        Load a mesh and show its bounds.
 
         >>> import pyvista as pv
-        >>> sphere = pv.Sphere(radius=5.0)
-        >>> rescaled = sphere.resize(bounds=[-1, 1, -1, 1, -1, 1])
-        >>> rescaled.bounds
-        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        >>> mesh = pv.Cube()
+        >>> mesh.bounds
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
-        Scale a mesh by a factor of 2.0 uniformly.
+        Resize it to fit specific bounds.
+
+        >>> resized = mesh.resize(bounds=[-1, 2, -3, 4, -5, 6])
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  2.0,
+                    y_min = -3.0,
+                    y_max =  4.0,
+                    z_min = -5.0,
+                    z_max =  6.0)
+
+        Resize the mesh so its size is ``4.0``.
 
         >>> mesh = pv.Cube()
-        >>> scaled = mesh.resize(size=2.0)
-        >>> scaled.bounds[1] - scaled.bounds[0]  # x extent
-        2.0
+        >>> resized = mesh.resize(size=4.0)
+        >>> resized.bounds
+        BoundsTuple(x_min = -2.0,
+                    x_max =  2.0,
+                    y_min = -2.0,
+                    y_max =  2.0,
+                    z_min = -2.0,
+                    z_max =  2.0)
 
-        Scale with different factors along each axis.
+        Specify a different size for each axis and set the desired center.
 
-        >>> mesh = pv.Cube()
-        >>> scaled = mesh.resize(size=[2.0, 1.0, 0.5])
-
-        Scale about a specific center point.
-
-        >>> mesh = pv.Cube()
-        >>> scaled = mesh.resize(size=2.0, center=[1, 1, 1])
+        >>> resized = mesh.resize(size=[2.0, 1.0, 0.5], center=(1.0, 0.5, 0.25))
+        >>> resized.bounds
+        BoundsTuple(x_min = 0.0,
+                    x_max = 2.0,
+                    y_min = 0.0,
+                    y_max = 1.0,
+                    z_min = 0.0,
+                    z_max = 0.5)
+        >>> resized.center
+        (1.0, 0.5, 0.25)
 
         """
         current_bounds = self.bounds
