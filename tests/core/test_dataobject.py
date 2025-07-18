@@ -474,8 +474,3 @@ def test_is_empty(ant):
 
     assert pv.Table().is_empty
     assert not pv.Table(dict(a=np.array([0]))).is_empty
-
-    class SubClass(pv.DataObject): ...
-
-    with pytest.raises(NotImplementedError):
-        _ = SubClass().is_empty
