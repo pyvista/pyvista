@@ -1332,7 +1332,8 @@ def test_reflect_axis_aligned():
     assert reflected_z.n_blocks == 2
 
     # Test with vector data
-    mesh['vectors'] = np.random.rand(mesh.n_points, 3)
+    rng = np.random.default_rng()
+    mesh['vectors'] = rng.random((mesh.n_points, 3))
     reflected_vectors = mesh.reflect_axis_aligned(
         plane='x', value=0.0, reflect_all_input_arrays=True
     )
