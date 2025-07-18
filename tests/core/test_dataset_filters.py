@@ -4200,172 +4200,57 @@ def test_voxelize_binary_mask_raises(sphere):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
 
 
-def test_rescale_bounds(sphere):
-    """Test rescale method with bounds parameter."""
-    # Test rescaling to unit bounds
-    target_bounds = [-1, 1, -1, 1, -1, 1]
-    rescaled = sphere.rescale(bounds=target_bounds)
+@pytest.mark.parametrize('bounds', [(-1, 1, -1, 1, -1, 1), (0, 10, -5, 5, 2, 8)])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_resize_bounds(sphere, bounds, inplace):
+    """Test resize method with bounds parameter."""
+    resized = sphere.resize(bounds=bounds, inplace=inplace)
 
-    # Check that bounds match exactly (within floating point precision)
-    assert np.allclose(rescaled.bounds, target_bounds, atol=1e-10)
-
-    # Check that original sphere is unchanged
-    assert not np.allclose(sphere.bounds, target_bounds)
-
-    # Test with asymmetric bounds
-    target_bounds = [0, 10, -5, 5, 2, 8]
-    rescaled = sphere.rescale(bounds=target_bounds)
-    assert np.allclose(rescaled.bounds, target_bounds, atol=1e-10)
+    assert np.allclose(resized.bounds, bounds, atol=1e-10)
+    assert (sphere is resized) == inplace
 
 
-def test_rescale_scale_factor(sphere):
-    """Test rescale method with scale_factor parameter."""
-    original_center = sphere.center
-    original_bounds = sphere.bounds
-    original_extents = [
-        original_bounds[1] - original_bounds[0],
-        original_bounds[3] - original_bounds[2],
-        original_bounds[5] - original_bounds[4],
-    ]
+@pytest.mark.parametrize('size', [2.0, (0.5, 2.5, 3.5)])
+@pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
+def test_resize_size(sphere, size, center):
+    """Test resize method with size parameter."""
+    expected_center = sphere.center if center is None else center
 
-    # Test uniform scaling by factor of 2
-    rescaled = sphere.rescale(scale_factor=2.0)
-    new_bounds = rescaled.bounds
-    new_extents = [
+    resized = sphere.resize(size=size, center=center)
+    new_bounds = resized.bounds
+    new_size = [
         new_bounds[1] - new_bounds[0],
         new_bounds[3] - new_bounds[2],
         new_bounds[5] - new_bounds[4],
     ]
-
-    # Check that extents are doubled
-    assert np.allclose(new_extents, [2 * e for e in original_extents])
-
-    # Check that center remains the same
-    assert np.allclose(rescaled.center, original_center)
+    assert np.allclose(new_size, size)
+    assert np.allclose(resized.center, expected_center)
 
 
-def test_rescale_scale_factor_vector(sphere):
-    """Test rescale method with vector scale_factor."""
-    scale_factors = [2.0, 0.5, 3.0]
-    original_center = sphere.center
-    original_bounds = sphere.bounds
-    original_extents = [
-        original_bounds[1] - original_bounds[0],
-        original_bounds[3] - original_bounds[2],
-        original_bounds[5] - original_bounds[4],
-    ]
+def test_resize_raises(sphere):
+    """Test resize method error handling."""
 
-    rescaled = sphere.rescale(scale_factor=scale_factors)
-    new_bounds = rescaled.bounds
-    new_extents = [
-        new_bounds[1] - new_bounds[0],
-        new_bounds[3] - new_bounds[2],
-        new_bounds[5] - new_bounds[4],
-    ]
+    match = "Cannot specify both 'bounds' and 'size'. Choose one resizing method."
+    with pytest.raises(ValueError, match=match):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], size=2.0)
 
-    # Check that extents are scaled by respective factors
-    expected_extents = [original_extents[i] * scale_factors[i] for i in range(3)]
-    assert np.allclose(new_extents, expected_extents)
+    match = "'size' and 'bounds' cannot both be None. Choose one resizing method."
+    with pytest.raises(ValueError, match=match):
+        sphere.resize()
 
-    # Check that center remains the same
-    assert np.allclose(rescaled.center, original_center)
+    match = (
+        "Cannot specify both 'bounds' and 'center'. "
+        "'center' can only be used with the 'size' parameter."
+    )
+    with pytest.raises(ValueError, match=match):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
 
 
-def test_rescale_custom_center(sphere):
-    """Test rescale method with custom center."""
-    custom_center = [1.0, 2.0, 3.0]
-    scale_factor = 2.0
-
-    rescaled = sphere.rescale(scale_factor=scale_factor, center=custom_center)
-
-    # Create expected result manually
-    expected = sphere.copy()
-    points = expected.points.copy()
-    for i in range(3):
-        points[:, i] -= custom_center[i]
-        points[:, i] *= scale_factor
-        points[:, i] += custom_center[i]
-    expected.points = points
-
-    assert np.allclose(rescaled.points, expected.points)
-
-
-def test_rescale_inplace(sphere):
-    """Test rescale method with inplace=True."""
-    original_bounds = sphere.bounds.copy()
-    target_bounds = [-2, 2, -2, 2, -2, 2]
-
-    # Test inplace modification
-    result = sphere.rescale(bounds=target_bounds, inplace=True)
-
-    # Check that result is the same object
-    assert result is sphere
-
-    # Check that sphere bounds have changed
-    assert np.allclose(sphere.bounds, target_bounds, atol=1e-10)
-    assert not np.allclose(sphere.bounds, original_bounds)
-
-
-def test_rescale_error_cases():
-    """Test rescale method error handling."""
-    sphere = pv.Sphere()
-
-    # Test error when both bounds and scale_factor are provided
-    with pytest.raises(ValueError, match="Cannot specify both 'bounds' and 'scale_factor'"):
-        sphere.rescale(bounds=[-1, 1, -1, 1, -1, 1], scale_factor=2.0)
-
-    # Test error when neither bounds nor scale_factor are provided
-    with pytest.raises(ValueError, match="Must specify either 'bounds' or 'scale_factor'"):
-        sphere.rescale()
-
-
-def test_rescale_zero_extent():
-    """Test rescale method with zero extent in one dimension."""
-    # Create a planar dataset (zero Z extent)
-    points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
-    faces = [4, 0, 1, 2, 3]
-    mesh = pv.PolyData(points, faces)
-
+def test_resize_zero_extent(plane):
     # This should not fail even with zero Z extent
     target_bounds = [-1, 1, -1, 1, -1, 1]
-    rescaled = mesh.rescale(bounds=target_bounds)
+    resized = plane.resize(bounds=target_bounds)
 
-    # X and Y should be rescaled, Z should remain at the target Z center
+    # X and Y should be resized, Z should remain at the target Z center
     expected_z_center = (target_bounds[4] + target_bounds[5]) / 2
-    assert np.allclose(rescaled.points[:, 2], expected_z_center)
-
-
-def test_rescale_different_dataset_types():
-    """Test rescale method on different dataset types."""
-    datasets = [
-        pv.Sphere(),
-        pv.Cube(),
-        pv.UniformGrid(dimensions=(5, 5, 5)),
-        pv.StructuredGrid(x=np.arange(3), y=np.arange(3), z=np.arange(3)),
-    ]
-
-    target_bounds = [0, 1, 0, 1, 0, 1]
-
-    for dataset in datasets:
-        rescaled = dataset.rescale(bounds=target_bounds)
-        assert np.allclose(rescaled.bounds, target_bounds, atol=1e-10)
-        # Check that the dataset type is preserved
-        assert type(rescaled) is type(dataset)
-
-
-def test_rescale_preserves_data():
-    """Test that rescale preserves point and cell data."""
-    sphere = pv.Sphere()
-
-    # Add some data
-    rng = np.random.default_rng(42)
-    sphere['point_data'] = rng.random(sphere.n_points)
-    sphere['cell_data'] = rng.random(sphere.n_cells)
-
-    rescaled = sphere.rescale(scale_factor=2.0)
-
-    # Check that data is preserved
-    assert 'point_data' in rescaled.point_data
-    assert 'cell_data' in rescaled.cell_data
-    assert np.array_equal(rescaled['point_data'], sphere['point_data'])
-    assert np.array_equal(rescaled['cell_data'], sphere['cell_data'])
+    assert np.allclose(resized.points[:, 2], expected_z_center)

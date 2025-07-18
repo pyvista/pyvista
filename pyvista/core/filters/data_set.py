@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import contextlib
 import functools
 import itertools
-import numbers
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -36,6 +35,7 @@ from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
@@ -1111,38 +1111,38 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def rescale(  # type: ignore[misc]
+    def resize(  # type: ignore[misc]
         self: _DataSetType,
         *,
         bounds: VectorLike[float] | None = None,
-        scale_factor: float | VectorLike[float] | None = None,
+        size: float | VectorLike[float] | None = None,
         center: VectorLike[float] | None = None,
         inplace: bool = False,
-    ):
-        """Rescale the dataset coordinates to fit within specified bounds or by a scale factor.
+    ) -> _DataSetType:
+        """Resize the dataset's bounds.
 
-        This method provides a convenient way to rescale mesh coordinates either by
-        specifying target bounds or by applying a scale factor. This is useful for
+        This filter rescales and translates the mesh to fit specified bounds. This is useful for
         normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
+
+        Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
+        ``size`` and ``center`` to implicitly set the new bounds.
 
         Parameters
         ----------
         bounds : VectorLike[float], optional
-            Target bounds for the rescaled dataset in the format
-            [xmin, xmax, ymin, ymax, zmin, zmax]. If provided, the dataset will be
-            scaled and translated to fit exactly within these bounds.
-            Cannot be used together with scale_factor.
+            Target :attr:`~pyvista.DataSet.bounds` for the resized dataset in the format
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``. If provided, the dataset is scaled and
+            translated to fit exactly within these bounds. Cannot be used together with
+            ``size`` or ``center``.
 
-        scale_factor : float | VectorLike[float], optional
-            Scale factor(s) to apply to the coordinates. If a single float is provided,
-            uniform scaling is applied. If a 3-element vector is provided, different
-            scaling is applied along each axis [x_scale, y_scale, z_scale].
-            Cannot be used together with bounds.
+        size : float | VectorLike[float], optional
+            Target :attr:`~pyvista.DataSet.size` for the resized dataset. Use a single float to
+            specify the size of all three axes, or a 3-element vector to set the size of each axis
+            independently. Cannot be used together with ``bounds``.
 
         center : VectorLike[float], optional
-            Center point for scaling operations in the format [x, y, z]. If not provided,
-            scaling is performed about the dataset's current center. This parameter
-            is only used when scale_factor is specified.
+            Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``size`` is specified.
 
         inplace : bool, default: False
             If True, the dataset is modified in place. If False, a new dataset is returned.
@@ -1150,7 +1150,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         DataSet
-            The rescaled dataset. If inplace is True, returns self.
+            Reized dataset. Return type matches input.
 
         Examples
         --------
@@ -1158,107 +1158,73 @@ class DataSetFilters(DataObjectFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere(radius=5.0)
-        >>> rescaled = sphere.rescale(bounds=[-1, 1, -1, 1, -1, 1])
+        >>> rescaled = sphere.resize(bounds=[-1, 1, -1, 1, -1, 1])
         >>> rescaled.bounds
         (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
         Scale a mesh by a factor of 2.0 uniformly.
 
         >>> mesh = pv.Cube()
-        >>> scaled = mesh.rescale(scale_factor=2.0)
+        >>> scaled = mesh.resize(size=2.0)
         >>> scaled.bounds[1] - scaled.bounds[0]  # x extent
         2.0
 
         Scale with different factors along each axis.
 
         >>> mesh = pv.Cube()
-        >>> scaled = mesh.rescale(scale_factor=[2.0, 1.0, 0.5])
+        >>> scaled = mesh.resize(size=[2.0, 1.0, 0.5])
 
         Scale about a specific center point.
 
         >>> mesh = pv.Cube()
-        >>> scaled = mesh.rescale(scale_factor=2.0, center=[1, 1, 1])
+        >>> scaled = mesh.resize(size=2.0, center=[1, 1, 1])
 
         """
-        if bounds is not None and scale_factor is not None:
-            msg = "Cannot specify both 'bounds' and 'scale_factor'. Choose one rescaling method."
-            raise ValueError(msg)
-
-        if bounds is None and scale_factor is None:
-            msg = "Must specify either 'bounds' or 'scale_factor' for rescaling."
-            raise ValueError(msg)
+        current_bounds = self.bounds
+        current_size = [
+            current_bounds[1] - current_bounds[0],
+            current_bounds[3] - current_bounds[2],
+            current_bounds[5] - current_bounds[4],
+        ]
 
         if bounds is not None:
-            # Rescale to fit within specified bounds
-            bounds = _validation.validate_array(bounds, must_have_shape=6)
-            current_bounds = self.bounds
-
-            # Calculate current extents
-            current_extents = [
-                current_bounds[1] - current_bounds[0],  # x extent
-                current_bounds[3] - current_bounds[2],  # y extent
-                current_bounds[5] - current_bounds[4],  # z extent
-            ]
-
-            # Calculate target extents
-            target_extents = [
-                bounds[1] - bounds[0],  # x extent
-                bounds[3] - bounds[2],  # y extent
-                bounds[5] - bounds[4],  # z extent
-            ]
-
-            # Calculate scale factors (avoid division by zero)
-            scale_factors = [
-                float(target_extents[i] / current_extents[i]) if current_extents[i] != 0 else 1.0
-                for i in range(3)
-            ]
-
-            # Calculate current center
-            current_center = [
-                float((current_bounds[0] + current_bounds[1]) / 2),
-                float((current_bounds[2] + current_bounds[3]) / 2),
-                float((current_bounds[4] + current_bounds[5]) / 2),
-            ]
-
-            # Calculate target center
-            target_center = [
-                float((bounds[0] + bounds[1]) / 2),
-                float((bounds[2] + bounds[3]) / 2),
-                float((bounds[4] + bounds[5]) / 2),
-            ]
-
-            # Create PyVista transform: translate to origin, scale, translate to target center
-            transform = Transform()
-            transform.translate(target_center)
-            transform.scale(scale_factors)
-            transform.translate([-c for c in current_center])
-
-        else:
-            # Rescale by scale factor
-            if scale_factor is None:
-                msg = 'scale_factor cannot be None when bounds is not provided.'
+            if size is not None:
+                msg = "Cannot specify both 'bounds' and 'size'. Choose one resizing method."
+                raise ValueError(msg)
+            if center is not None:
+                msg = (
+                    "Cannot specify both 'bounds' and 'center'. 'center' can only be used with "
+                    "the 'size' parameter."
+                )
                 raise ValueError(msg)
 
-            if isinstance(scale_factor, numbers.Real):
-                scale_factors = [float(scale_factor)] * 3
-            else:
-                scale_factors = _validation.validate_array(
-                    scale_factor, must_have_shape=3
-                ).tolist()
+            target_bounds3x2 = _validation.validate_array(
+                bounds, must_have_shape=6, reshape_to=(3, 2)
+            )
+            target_size = np.diff(target_bounds3x2.T, axis=0)[0]
 
-            if center is None:
-                # Use dataset center as scaling center
-                center_point = list(self.center)
-            else:
-                center_point = _validation.validate_array(center, must_have_shape=3).tolist()
+            current_center = np.array(self.center)
+            target_center = np.mean(target_bounds3x2, axis=1)
 
-            # Create PyVista transform: translate to origin, scale, translate back
-            transform = Transform()
-            transform.translate(center_point)
-            transform.scale(scale_factors)
-            transform.translate([-c for c in center_point])
+        else:
+            if size is None:
+                msg = "'size' and 'bounds' cannot both be None. Choose one resizing method."
+                raise ValueError(msg)
 
-        # Apply transformation using PyVista's transform method
+            target_size = size
+
+            current_center = np.array(self.center)
+            target_center = (
+                current_center if center is None else _validation.validate_array3(center)
+            )
+
+        scale_factors = target_size * _reciprocal(current_size, default_if_div_by_zero=1.0)
+
+        # Apply transformation
+        transform = pyvista.Transform()
+        transform.translate(-current_center)
+        transform.scale(scale_factors)
+        transform.translate(target_center)
         return self.transform(transform, inplace=inplace)
 
     def gaussian_splatting(  # type: ignore[misc]
