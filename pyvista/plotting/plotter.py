@@ -6394,9 +6394,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if viewup is None:
             viewup = self._theme.camera.viewup
         center = np.array(self.center)
-        x_size, y_size, z_size = self.size
-        radius = x_size * factor
-        y = y_size * factor
+        bnds = self.bounds
+        radius = (bnds.x_max - bnds.x_min) * factor
+        y = (bnds.y_max - bnds.y_min) * factor
         radius = max(y, radius)
         center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
