@@ -113,6 +113,7 @@ from vtkmodules.vtkRenderingCore import (
 from vtkmodules.vtkRenderingCore import vtkCompositePolyDataMapper as vtkCompositePolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkCoordinate as vtkCoordinate
 from vtkmodules.vtkRenderingCore import vtkDataSetMapper as vtkDataSetMapper
+from vtkmodules.vtkRenderingCore import vtkFollower as vtkFollower
 from vtkmodules.vtkRenderingCore import vtkImageActor as vtkImageActor
 from vtkmodules.vtkRenderingCore import vtkInteractorStyle as vtkInteractorStyle
 from vtkmodules.vtkRenderingCore import vtkLight as vtkLight
