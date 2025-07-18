@@ -1206,6 +1206,8 @@ class DataSetFilters(DataObjectFilters):
                     y_max = 1.0,
                     z_min = 0.0,
                     z_max = 0.5)
+        >>> resized.size
+        (2.0, 1.0, 0.5)
         >>> resized.center
         (1.0, 0.5, 0.25)
 
