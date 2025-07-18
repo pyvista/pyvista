@@ -2353,10 +2353,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.iren is None:
             return
 
-        self.iren.clear_key_event_callbacks()  # type: ignore[has-type]
+        self.iren.clear_key_event_callbacks()
 
         self.add_key_event('q', self._prep_for_close)  # type: ignore[arg-type] # Add no matter what
-        b_left_down_callback = lambda: self.iren.add_observer(  # type: ignore[has-type]
+        b_left_down_callback = lambda: self.iren.add_observer(
             'LeftButtonPressEvent',
             self.left_button_down,
         )
@@ -2560,12 +2560,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         curr_time = time.time()
         Plotter.last_update_time = min(Plotter.last_update_time, curr_time)
 
-        if self.iren is not None:  # type: ignore[has-type]
-            update_rate = self.iren.get_desired_update_rate()  # type: ignore[has-type]
+        if self.iren is not None:
+            update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
                 # Allow interaction for a brief moment during interactive updating
                 # Use the non-blocking ProcessEvents method.
-                self.iren.process_events()  # type: ignore[has-type]
+                self.iren.process_events()
                 # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
@@ -5071,8 +5071,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
 
-        if self.iren is not None:  # type: ignore[has-type]
-            self.iren.close()  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
@@ -6942,11 +6942,11 @@ class Plotter(BasePlotter):
             interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)  # type: ignore[assignment]
-        self.iren.set_render_window(self.render_window)  # type: ignore[attr-defined]
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
+        self.iren.set_render_window(self.render_window)
         self.reset_key_events()
         self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
-        self.iren.add_observer('KeyPressEvent', self.key_press_event)  # type: ignore[attr-defined]
+        self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an
         # interactor be present.
@@ -7238,15 +7238,15 @@ class Plotter(BasePlotter):
         if interactive and not self.off_screen:
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
-                self.iren.update_style()  # type: ignore[attr-defined]
+                self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
                     # Resolves #1260
                     if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()  # type: ignore[attr-defined]
-                    self.iren.start()  # type: ignore[attr-defined]
+                        self.iren.process_events()  # type: ignore[union-attr]
+                    self.iren.start()  # type: ignore[union-attr]
 
                 if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
-                    self.iren.initialize()  # type: ignore[attr-defined]
+                    self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
