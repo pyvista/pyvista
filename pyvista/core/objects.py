@@ -21,7 +21,7 @@ from .utilities.arrays import row_array
 from .utilities.misc import _NoNewAttrMixin
 
 
-class Table(_NoNewAttrMixin, DataObject, _vtk.vtkTable):
+class Table(DataObject, _vtk.vtkTable):
     """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)

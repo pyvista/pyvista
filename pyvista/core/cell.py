@@ -42,7 +42,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
     return np.int32
 
 
-class Cell(_NoNewAttrMixin, DataObject, _vtk.vtkGenericCell):
+class Cell(DataObject, _vtk.vtkGenericCell):
     """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
