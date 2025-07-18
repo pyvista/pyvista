@@ -18,7 +18,6 @@ from .utilities.arrays import FieldLiteral
 from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
-from .utilities.misc import _NoNewAttrMixin
 
 
 class Table(DataObject, _vtk.vtkTable):
