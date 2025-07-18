@@ -1716,7 +1716,7 @@ class DataSetFilters(DataObjectFilters):
             _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
             geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
-        elif isinstance(geom, Sequence):
+        elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
         else:
             geoms = [geom]

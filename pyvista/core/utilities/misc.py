@@ -350,6 +350,7 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     >>> mesh.foo
     42
 
+    .. versionadded:: 0.46
 
     """
     if hasattr(obj, name):
