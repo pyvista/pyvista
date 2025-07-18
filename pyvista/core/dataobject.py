@@ -1008,6 +1008,6 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         self.copy_attributes(mesh)  # type: ignore[arg-type]
 
     @property
+    @abstractmethod
     def is_empty(self) -> bool:
         """Return ``True`` if the object is empty."""
-        raise NotImplementedError
