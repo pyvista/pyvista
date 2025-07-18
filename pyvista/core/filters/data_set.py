@@ -1127,6 +1127,13 @@ class DataSetFilters(DataObjectFilters):
         Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
         ``size`` and ``center`` to implicitly set the new bounds.
 
+        .. versionadded:: 0.46
+
+        See Also
+        --------
+        :meth:`~pyvista.DataObjectFilters.scale`, :meth:`~pyvista.DataObjectFilters.translate`
+            Scale and/or translate a mesh. Used internally by :meth:`resize`.
+
         Parameters
         ----------
         bounds : VectorLike[float], optional
