@@ -241,38 +241,40 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
 
 
 def test_pyvista_class_no_new_attributes(pyvista_class):
-    if pyvista_class in (
-        pv.MFIXReader,
-        pv.Nek5000Reader,
-        pv.XdmfReader,
-        pv.PVDReader,
-        pv.CGNSReader,
-        pv.ExodusIIBlockSet,
-    ):
-        assert issubclass(pyvista_class, _NoNewAttrMixin)
-        pytest.skip('Test fails without proper dataset files.')
-    elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
-        pytest.skip('Deprecated.')
-    elif pyvista_class in (pv.PVDDataSet, pv.core.utilities.cell_quality.CellQualityInfo):
-        assert issubclass(pyvista_class, _NoNewAttrMixin)
-        pytest.skip('Dataclass, no test required.')
-    elif pyvista_class in (
-        pv.core.utilities.misc.conditional_decorator,
-        pv.plotting.utilities.sphinx_gallery.Scraper,
-        pv.plotting.utilities.sphinx_gallery.DynamicScraper,
-        pv.core._vtk_core.DisableVtkSnakeCase,
-        pv.core._vtk_core.vtkPyVistaOverride,
-        pv.VtkErrorCatcher,
-    ):
-        assert not issubclass(pyvista_class, _NoNewAttrMixin)
-        pytest.skip('Specialized class with no real risk of new attributes being added.')
-    elif pyvista_class in [pv.charts.PiePlot, pv.charts.Pen, pv.charts.Brush, pv.charts.Axis]:
-        assert not issubclass(pyvista_class, _NoNewAttrMixin)
-        assert issubclass(pyvista_class, _vtkWrapper)
-        pytest.skip(
-            f'Parent {_vtkWrapper.__name__} is not compatible with {_NoNewAttrMixin.__name__}.'
-        )
+    def skip_test_for_some_classes():
+        if pyvista_class in (
+            pv.MFIXReader,
+            pv.Nek5000Reader,
+            pv.XdmfReader,
+            pv.PVDReader,
+            pv.CGNSReader,
+            pv.ExodusIIBlockSet,
+        ):
+            assert issubclass(pyvista_class, _NoNewAttrMixin)
+            pytest.skip('Test fails without proper dataset files.')
+        elif pyvista_class is pv.core.dataset.ActiveArrayInfo:
+            pytest.skip('Deprecated.')
+        elif pyvista_class in (pv.PVDDataSet, pv.core.utilities.cell_quality.CellQualityInfo):
+            assert issubclass(pyvista_class, _NoNewAttrMixin)
+            pytest.skip('Dataclass, no test required.')
+        elif pyvista_class in (
+            pv.core.utilities.misc.conditional_decorator,
+            pv.plotting.utilities.sphinx_gallery.Scraper,
+            pv.plotting.utilities.sphinx_gallery.DynamicScraper,
+            pv.core._vtk_core.DisableVtkSnakeCase,
+            pv.core._vtk_core.vtkPyVistaOverride,
+            pv.VtkErrorCatcher,
+        ):
+            assert not issubclass(pyvista_class, _NoNewAttrMixin)
+            pytest.skip('Specialized class with no real risk of new attributes being added.')
+        elif pyvista_class in [pv.charts.PiePlot, pv.charts.Pen, pv.charts.Brush, pv.charts.Axis]:
+            assert not issubclass(pyvista_class, _NoNewAttrMixin)
+            assert issubclass(pyvista_class, _vtkWrapper)
+            pytest.skip(
+                f'Parent {_vtkWrapper.__name__} is not compatible with {_NoNewAttrMixin.__name__}.'
+            )
 
+    skip_test_for_some_classes()
     instance = try_init_pyvista_object(pyvista_class)
     try:
         instance.new_attribute = 'foo'

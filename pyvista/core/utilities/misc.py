@@ -305,10 +305,10 @@ class _NoNewAttrMixin:
     conflict, e.g. if the class also inherits from ``ABC``.
     """
 
-    def _no_new_attributes(self, freezing_class: type) -> None:
+    def _no_new_attributes(self, this_class: type) -> None:
         """Prevent setting additional attributes."""
         object.__setattr__(self, '__frozen', True)
-        object.__setattr__(self, '__frozen_by_class', freezing_class)
+        object.__setattr__(self, '__frozen_by_class', this_class)
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
@@ -325,8 +325,8 @@ class _NoNewAttrMixin:
             from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
             msg = (
-                f'Attribute {key!r} does not exist and cannot be added '
-                f'to class {self.__class__.__name__!r}'
+                f'Attribute {key!r} does not exist and cannot be added to class '
+                f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new attributes.'
             )
             raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
@@ -337,7 +337,27 @@ class _NoNewAttrMixinAuto(_NoNewAttrMixin, metaclass=_AutoFreezeMeta):
 
 
 def set_new_attribute(obj: object, name: str, value: Any) -> None:
-    """Set a new attribute for this object."""
+    """Set a new attribute for this object.
+
+    Python allows arbitrarily setting new attributes on objects at any time,
+    but PyVista's classes do not allow this. If an attribute is not part of
+    PyVista's API, an ``AttributeError`` is normally raised when attempting
+    to set it.
+
+    Use :func:`set_new_attribute` to override this and set a new attribute anyway.
+
+    Examples
+    --------
+    Set a new custom attribute on a mesh.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.PolyData()
+    >>> pv.set_new_attribute(mesh, 'foo', 42)
+    >>> mesh.foo
+    42
+
+
+    """
     if hasattr(obj, name):
         from pyvista import PyVistaAttributeError  # noqa: PLC0415
 

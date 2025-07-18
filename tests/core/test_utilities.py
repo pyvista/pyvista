@@ -1304,7 +1304,10 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
     ham = 'ham'
     eggs = 'eggs'
 
-    match = "Attribute 'ham' does not exist and cannot be added to class 'A'"
+    match = (
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
+        'Use `pv.set_new_attribute` to set new attributes.'
+    )
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         setattr(a, ham, eggs)
 
