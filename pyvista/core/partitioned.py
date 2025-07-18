@@ -13,7 +13,6 @@ from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
-from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
     from .dataset import DataSet
 
 
-class PartitionedDataSet(_NoNewAttrMixin, DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
+class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
     """Wrapper for the :vtk:`vtkPartitionedDataSet` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.

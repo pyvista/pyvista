@@ -176,7 +176,7 @@ class ActiveArrayInfo(_NoNewAttrMixin):
 
 @promote_type(_vtk.vtkDataSet)
 @abstract_class
-class DataSet(_NoNewAttrMixin, DataSetFilters, DataObject):
+class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
 
     Parameters

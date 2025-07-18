@@ -27,6 +27,7 @@ from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -46,7 +47,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
+class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
