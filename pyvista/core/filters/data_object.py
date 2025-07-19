@@ -850,6 +850,7 @@ class DataObjectFilters:
         bounds: VectorLike[float] | None = None,
         bounds_size: float | VectorLike[float] | None = None,
         center: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ) -> _MeshType_co:
         """Resize the dataset's bounds.
@@ -883,6 +884,10 @@ class DataObjectFilters:
         center : VectorLike[float], optional
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
             :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
+            the points, normals and active vectors are transformed.
 
         inplace : bool, default: False
             If True, the dataset is modified in place. If False, a new dataset is returned.
@@ -991,7 +996,9 @@ class DataObjectFilters:
         transform.translate(-current_center)
         transform.scale(scale_factors)
         transform.translate(target_center)
-        return self.transform(transform, inplace=inplace)
+        return self.transform(
+            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+        )
 
     @_deprecate_positional_args
     def flip_x(  # type: ignore[misc]
