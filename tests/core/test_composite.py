@@ -511,7 +511,7 @@ def test_multi_block_hdf_invalid_nested_block(tmpdir):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
 def test_ensight_multi_block_io(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir('tmpdir').join('tmp.%s' % extension))  # noqa: UP031
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
     # Now check everything
