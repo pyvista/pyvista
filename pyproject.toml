@@ -65,7 +65,7 @@ typing = [
   'mypy<1.17.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.6.0',
+  'trimesh<4.7.0',
   { include-group = 'pinned' },
 ]
 
