@@ -529,8 +529,7 @@ from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
 
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOHDF import vtkHDFReader as vtkHDFReader
+with contextlib.suppress(ImportError):  # Introduced VTK v9.4.0
     from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOImport import vtkGLTFImporter as vtkGLTFImporter
