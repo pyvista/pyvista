@@ -3581,7 +3581,7 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageMagnify()
         alg.SetInputDataObject(self)
         alg.SetMagnificationFactors(factor)
-        _update_alg(alg, progress_bar, 'Magnifying Image')
+        _update_alg(alg, progress_bar=progress_bar, message='Magnifying Image')
         return _get_output(alg)
 
     def resample(  # type: ignore[misc]

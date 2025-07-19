@@ -528,12 +528,18 @@ from vtkmodules.vtkImagingMorphological import (
 )
 from vtkmodules.vtkImagingStencil import vtkImageStencil as vtkImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil as vtkPolyDataToImageStencil
-from vtkmodules.vtkIOCesium3DTiles import vtkCesium3DTilesWriter as vtkCesium3DTilesWriter
-from vtkmodules.vtkIOCesium3DTiles import (
-    vtkCesiumPoint3DTilesWriter as vtkCesiumPoint3DTilesWriter,
-)
-from vtkmodules.vtkIOCesium3DTiles import vtkCesiumPointCloudWriter as vtkCesiumPointCloudWriter
-from vtkmodules.vtkIOCityGML import vtkCityGMLReader as vtkCityGMLReader
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOCesium3DTiles import vtkCesium3DTilesWriter as vtkCesium3DTilesWriter
+    from vtkmodules.vtkIOCesium3DTiles import (
+        vtkCesiumPoint3DTilesWriter as vtkCesiumPoint3DTilesWriter,
+    )
+    from vtkmodules.vtkIOCesium3DTiles import (
+        vtkCesiumPointCloudWriter as vtkCesiumPointCloudWriter,
+    )
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOCityGML import vtkCityGMLReader as vtkCityGMLReader
 from vtkmodules.vtkIOCore import vtkAbstractPolyDataReader as vtkAbstractPolyDataReader
 from vtkmodules.vtkIOEnSight import vtkEnSight6BinaryReader as vtkEnSight6BinaryReader
 from vtkmodules.vtkIOEnSight import vtkEnSight6Reader as vtkEnSight6Reader
@@ -541,22 +547,30 @@ from vtkmodules.vtkIOEnSight import vtkEnSightGoldBinaryReader as vtkEnSightGold
 from vtkmodules.vtkIOEnSight import vtkEnSightGoldReader as vtkEnSightGoldReader
 from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader as vtkGenericEnSightReader
 from vtkmodules.vtkIOExodus import vtkExodusIIReader as vtkExodusIIReader
-from vtkmodules.vtkIOExport import vtkGLTFWriter as vtkGLTFWriter
-from vtkmodules.vtkIOExport import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
-from vtkmodules.vtkIOExport import vtkIVWriter as vtkIVWriter
-from vtkmodules.vtkIOExport import vtkOBJWriter as vtkOBJWriter
-from vtkmodules.vtkIOExport import vtkSingleVTPExporter as vtkSingleVTPExporter
-from vtkmodules.vtkIOExport import vtkVRMLExporter as vtkVRMLExporter
-from vtkmodules.vtkIOExport import vtkX3DExporter as vtkX3DExporter
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOExport import vtkGLTFWriter as vtkGLTFWriter
+    from vtkmodules.vtkIOExport import vtkSingleVTPExporter as vtkSingleVTPExporter
+    from vtkmodules.vtkIOExport import vtkVRMLExporter as vtkVRMLExporter
+    from vtkmodules.vtkIOExport import vtkX3DExporter as vtkX3DExporter
+
+from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
+from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
+from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
-from vtkmodules.vtkIOHDF import vtkHDFReader as vtkHDFReader
-from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
-from vtkmodules.vtkIOImport import vtkGLTFImporter as vtkGLTFImporter
-from vtkmodules.vtkIOImport import vtkOBJImporter as vtkOBJImporter
-from vtkmodules.vtkIOImport import vtkVRMLImporter as vtkVRMLImporter
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOHDF import vtkHDFReader as vtkHDFReader
+    from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOImport import vtkGLTFImporter as vtkGLTFImporter
+    from vtkmodules.vtkIOImport import vtkOBJImporter as vtkOBJImporter
+    from vtkmodules.vtkIOImport import vtkVRMLImporter as vtkVRMLImporter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
-from vtkmodules.vtkIOIOSS import vtkIOSSReader as vtkIOSSReader
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOIOSS import vtkIOSSReader as vtkIOSSReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
 from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
@@ -570,14 +584,18 @@ from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridR
 from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
-from vtkmodules.vtkIOLSDyna import vtkLSDynaReader as vtkLSDynaReader
-from vtkmodules.vtkIOOpenVDB import vtkOpenVDBReader as vtkOpenVDBReader
-from vtkmodules.vtkIOOpenVDB import vtkOpenVDBWriter as vtkOpenVDBWriter
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOLSDyna import vtkLSDynaReader as vtkLSDynaReader
+    from vtkmodules.vtkIOOpenVDB import vtkOpenVDBReader as vtkOpenVDBReader
+    from vtkmodules.vtkIOOpenVDB import vtkOpenVDBWriter as vtkOpenVDBWriter
 from vtkmodules.vtkIOParallel import vtkMultiBlockPLOT3DReader as vtkMultiBlockPLOT3DReader
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
-from vtkmodules.vtkIOTecplotTable import vtkTecplotTableReader as vtkTecplotTableReader
-from vtkmodules.vtkIOVeraOut import vtkVeraOutReader as vtkVeraOutReader
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOTecplotTable import vtkTecplotTableReader as vtkTecplotTableReader
+    from vtkmodules.vtkIOVeraOut import vtkVeraOutReader as vtkVeraOutReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataWriter as vtkXMLImageDataWriter
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader as vtkXMLMultiBlockDataReader
