@@ -1227,7 +1227,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             if center is not None:
                 msg = (
                     "Cannot specify both 'bounds' and 'center'. 'center' can only be used with "
-                    "the 'size' parameter."
+                    "the 'bound_size' parameter."
                 )
                 raise ValueError(msg)
 
