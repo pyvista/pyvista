@@ -173,7 +173,7 @@ def _deprecate_positional_args(
                 signature_string = f'{signature_string[:-1]}, ...)'
 
             # Get source file and line number
-            file = Path(os.path.relpath(inspect.getfile(f), start=Path.cwd())).as_posix()
+            file = Path(inspect.getfile(f)).relative_to(Path.cwd()).as_posix()
             lineno = inspect.getsourcelines(f)[1]
             location = f'{file}:{lineno}'
 
