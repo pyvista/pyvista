@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from typing import TYPE_CHECKING
 
@@ -465,7 +466,7 @@ def test_no_arrows(hexbeam):
 
 
 def test_arrows():
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
 
     # make cool swirly pattern
     vectors = np.vstack(
@@ -507,13 +508,13 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
     mocker.patch.object(pv.DataSet, 'active_vectors_name')
     m.ndim = 1
 
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
     with pytest.raises(ValueError, match='Active vectors are not vectors.'):
         sphere.arrows  # noqa: B018
 
 
 def test_set_active_scalars_raises(mocker: MockerFixture):
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
     sphere.point_data[(f := 'foo')] = 1
 
     m = mocker.patch.object(dataset, 'get_array_association')
@@ -527,7 +528,7 @@ def test_set_active_scalars_raises(mocker: MockerFixture):
 
 
 def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
     sphere.point_data[(f := 'foo')] = 1
 
     m = mocker.patch.object(sphere, 'GetPointData')
@@ -695,7 +696,7 @@ def test_rename_array_field(hexbeam):
 
 
 def test_rename_array_raises(mocker: MockerFixture):
-    sphere = pv.Sphere(radius=3.14)
+    sphere = pv.Sphere(radius=math.pi)
 
     m = mocker.patch.object(dataset, 'get_array_association')
     m.return_value = None
@@ -1411,8 +1412,7 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     # Check that all the neighbors cells share at least one edge with the
     # current cell
     current_points = set()
-    for e in cell.edges:
-        current_points.add(frozenset(e.point_ids))
+    current_points.update(frozenset(e.point_ids) for e in cell.edges)
 
     for i in cell_ids:
         neighbor_points = set()
@@ -1452,8 +1452,7 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     # Check that all the neighbors cells share at least one face with the
     # current cell
     current_points = set()
-    for f in cell.faces:
-        current_points.add(frozenset(f.point_ids))
+    current_points.update(frozenset(f.point_ids) for f in cell.faces)
 
     for i in cell_ids:
         neighbor_points = set()

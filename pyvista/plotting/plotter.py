@@ -46,6 +46,7 @@ from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -208,7 +209,7 @@ def _warn_xserver() -> None:  # pragma: no cover
 
 
 @abstract_class
-class BasePlotter(PickingHelper, WidgetHelper):
+class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     """Base plotting class.
 
     To be used by the :class:`pyvista.Plotter` and
@@ -1701,7 +1702,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_environment_texture``."""
         return self.renderer.remove_environment_texture(*args, **kwargs)
 
-    #### Properties from Renderer ####
+    # Properties from Renderer ####
 
     @property
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
