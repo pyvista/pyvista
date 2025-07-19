@@ -7,6 +7,14 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # Import
 # ~~~~~~

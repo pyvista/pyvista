@@ -4,6 +4,15 @@ This is a full-fledged example on building your own user interface
 with server-side rendering.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "pyvista",
+#   "trame>=2.5.2",
+# ]
+# ///
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt

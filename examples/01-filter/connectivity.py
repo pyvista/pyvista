@@ -9,6 +9,14 @@ filter.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # Remove Noisy Isosurfaces
 # ~~~~~~~~~~~~~~~~~~~~~~~~

@@ -13,6 +13,14 @@ an input array {u, v, w}.
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

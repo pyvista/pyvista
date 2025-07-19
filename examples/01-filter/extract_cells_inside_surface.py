@@ -9,6 +9,13 @@ Extract the cells inside or outside a closed surface using
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 
 # sphinx_gallery_thumbnail_number = 2

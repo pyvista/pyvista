@@ -8,6 +8,13 @@ This example applies the :meth:`~pyvista.DataSetFilters.warp_by_vector`
 filter to a sphere mesh that has 3D displacement vectors defined at each node.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # We first compare the unwarped sphere to the warped sphere.
 from __future__ import annotations

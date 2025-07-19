@@ -18,6 +18,13 @@ a statue as though it were metallic.
 """
 
 # sphinx_gallery_start_ignore
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # physically based rendering does not seem to work in vtk-js
 from __future__ import annotations
 

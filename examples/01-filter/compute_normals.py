@@ -7,6 +7,14 @@ Compute normals on a surface.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 # sphinx_gallery_start_ignore

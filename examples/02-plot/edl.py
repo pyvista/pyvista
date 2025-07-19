@@ -12,6 +12,13 @@ To learn more, please see `this blog post`_.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 
 # sphinx_gallery_thumbnail_number = 1

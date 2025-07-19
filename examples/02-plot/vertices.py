@@ -8,6 +8,13 @@ Display vertices on a mesh in the same fashion as edge visibility.
 """
 
 # sphinx_gallery_thumbnail_number = 3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

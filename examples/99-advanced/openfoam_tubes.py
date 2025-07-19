@@ -11,6 +11,14 @@ This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np

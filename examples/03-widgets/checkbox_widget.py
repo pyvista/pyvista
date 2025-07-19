@@ -12,6 +12,13 @@ See :func:`pyvista.Plotter.add_checkbox_button_widget` for more details.
 
 # sphinx_gallery_thumbnail_number = 2
 # sphinx_gallery_start_ignore
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # widgets do not work in interactive examples
 from __future__ import annotations
 

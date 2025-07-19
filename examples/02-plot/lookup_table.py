@@ -10,6 +10,13 @@ the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv

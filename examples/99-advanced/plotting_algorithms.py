@@ -24,6 +24,14 @@ This example will walk through using a few :vtk:`vtkAlgorithm` filters directly
 and passing them to PyVista for dynamic visualization.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+#   "vtk",
+# ]
+# ///
+
 from __future__ import annotations
 
 import vtk

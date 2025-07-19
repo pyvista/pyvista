@@ -12,6 +12,13 @@ First, we import the required libraries.
 """
 
 # sphinx_gallery_start_ignore
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True

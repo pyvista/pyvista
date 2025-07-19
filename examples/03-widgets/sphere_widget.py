@@ -20,6 +20,16 @@ Let's look at a few use cases that all update a surface mesh.
 # sphinx_gallery_thumbnail_number = 3
 
 # sphinx_gallery_start_ignore
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "matplotlib",
+#   "numpy",
+#   "pyvista",
+#   "scipy",
+# ]
+# ///
+
 # widgets do not work in interactive examples
 from __future__ import annotations
 

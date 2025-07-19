@@ -8,6 +8,13 @@ Add a floor/wall at the boundary of the rendering scene
 using :func:`~pyvista.Plotter.add_floor`.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import pyvista as pv
