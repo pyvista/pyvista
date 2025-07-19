@@ -2812,6 +2812,16 @@ def test_extract_subset(uniform, rebase_coordinates):
         assert voi.origin == origin
         assert voi.offset == new_offset
 
+    # Test same output as using slice_index
+    cropped = uniform.slice_index(
+        [extent[0], extent[1] + 1],
+        [extent[2], extent[3] + 1],
+        [extent[4], extent[5] + 1],
+        index_mode='extent',
+        rebase_coordinates=rebase_coordinates,
+    )
+    assert cropped == voi
+
     # Test same output as using crop
     cropped = uniform.crop(extent=extent, rebase_coordinates=rebase_coordinates)
     assert cropped == voi
