@@ -4235,7 +4235,7 @@ def test_resize_raises(sphere):
 
     match = (
         "Cannot specify both 'bounds' and 'center'. "
-        "'center' can only be used with the 'size' parameter."
+        "'center' can only be used with the 'bounds_size' parameter."
     )
     with pytest.raises(ValueError, match=match):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
