@@ -33,6 +33,10 @@ class Follower(Actor, _vtk.vtkFollower):
     name : str, optional
         The name of this actor used when tracking on a plotter.
 
+    See Also
+    --------
+    :ref:`follower_actor_example` : Example demonstrating the use of follower actors.
+
     Examples
     --------
     Create a follower actor that always faces the camera.
