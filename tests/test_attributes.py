@@ -9,6 +9,7 @@ import pytest
 
 import pyvista as pv
 from pyvista.core._vtk_core import DisableVtkSnakeCase
+from pyvista.core._vtk_core import VTKObjectWrapperCheckSnakeCase
 from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -60,7 +61,7 @@ def pytest_generate_tests(metafunc):
 
             def inherits_from_vtk(klass):
                 bases = klass.__mro__[1:]
-                return any(base.__name__.startswith('vtk') for base in bases)
+                return any(base.__name__[:3].lower() == 'vtk' for base in bases)
 
             inherits_from_vtk = {
                 name: cls for name, cls in zip(class_names, class_types) if inherits_from_vtk(cls)
@@ -197,6 +198,9 @@ def get_default_class_init_kwargs(pyvista_class):
 
 
 def test_vtk_snake_case_api_is_disabled(vtk_subclass):
+    if vtk_subclass is VTKObjectWrapperCheckSnakeCase:
+        pytest.skip('Class is effectively abstract.')
+
     assert pv.vtk_snake_case() == 'error'
 
     # Default test values for classes
@@ -262,6 +266,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
             pv.plotting.utilities.sphinx_gallery.DynamicScraper,
             pv.core._vtk_core.DisableVtkSnakeCase,
             pv.core._vtk_core.vtkPyVistaOverride,
+            pv.core._vtk_core.VTKObjectWrapperCheckSnakeCase,
             pv.VtkErrorCatcher,
         ):
             assert not issubclass(pyvista_class, _NoNewAttrMixin)

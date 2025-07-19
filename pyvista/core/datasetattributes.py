@@ -53,7 +53,9 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
-class DataSetAttributes(_NoNewAttrMixin, _vtk.VTKObjectWrapper):
+class DataSetAttributes(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKObjectWrapperCheckSnakeCase
+):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
     This class provides the ability to pick one of the present arrays as the
