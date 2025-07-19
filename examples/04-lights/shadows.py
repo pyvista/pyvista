@@ -46,14 +46,14 @@ light2 = pyvista.Light(
 
 # Add a thin box below the mesh
 bnds = mesh.bounds
-rnge = (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+x_size, y_size, z_size = mesh.bounds_size
 
 expand = 1.0
-height = rnge[2] * 0.05
+height = z_size * 0.05
 center = np.array(mesh.center)
 center -= [0, 0, mesh.center[2] - bnds.z_min + height / 2]
-width = rnge[0] * (1 + expand)
-length = rnge[1] * (1 + expand)
+width = x_size * (1 + expand)
+length = y_size * (1 + expand)
 base_mesh = pyvista.Cube(center=center, x_length=width, y_length=length, z_length=height)
 
 # rotate base and mesh to get a better view

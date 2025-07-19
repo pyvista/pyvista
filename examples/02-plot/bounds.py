@@ -56,11 +56,8 @@ split_gears = gears.split_bodies()
 central_gear = split_gears.pop(1)
 central_gear.translate([0, 60, 60], inplace=True)
 
-# also, grab the size of the central gear
-bnds = central_gear.bounds
-x_size = bnds.x_max - bnds.x_min
-y_size = bnds.y_max - bnds.y_min
-z_size = bnds.z_max - bnds.z_min
+# also, grab the size of the central gear's bounds
+x_size, y_size, z_size = central_gear.bounds_size
 
 plotter = pv.Plotter()
 plotter.add_mesh(split_gears, smooth_shading=True, split_sharp_edges=True)
