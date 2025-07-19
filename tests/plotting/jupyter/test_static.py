@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import importlib.util
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.jupyter import _validate_jupyter_backend
 
-has_ipython = True
-try:
-    import IPython  # noqa: F401
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
+has_ipython = bool(importlib.util.find_spec('IPython'))
+if has_ipython:
     from PIL.Image import Image
-except:
-    has_ipython = False
+
 
 skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython package')
 
@@ -20,10 +25,21 @@ def test_set_jupyter_backend_fail():
         pv.set_jupyter_backend('not a backend')
 
 
+def test_validate_jupyter_backend_raises(mocker: MockerFixture):
+    from pyvista import jupyter
+
+    m = mocker.patch.object(jupyter, 'importlib')
+    m.util.find_spec.return_value = False
+    with pytest.raises(
+        ImportError, match='Install IPython to display with pyvista in a notebook.'
+    ):
+        _validate_jupyter_backend('foo')
+
+
 @pytest.mark.parametrize('backend', [None, 'none'])
 def test_set_jupyter_backend_none(backend):
     pv.set_jupyter_backend(backend)
-    assert pv.global_theme.jupyter_backend is None
+    assert pv.global_theme.jupyter_backend == 'none'
 
 
 @skip_no_ipython

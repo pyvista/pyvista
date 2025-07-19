@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-import platform
 import re
 from string import ascii_letters
 from string import digits
@@ -19,15 +17,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
-
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-skip_apple_silicon = pytest.mark.skipif(
-    platform.system() == 'Darwin' and platform.processor() == 'arm',
-    reason='Test fails on Apple Silicon',
-)
 
 
 @pytest.fixture
@@ -62,6 +53,12 @@ def insert_string_array(hexbeam_point_attributes):
     sample_array = np.repeat('A', n_points)
     hexbeam_point_attributes.set_array(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
+
+
+@pytest.mark.parametrize('i', [1, None, object(), True])
+def test_setitem_raises(i):
+    with pytest.raises(TypeError, match='Only strings are valid keys for DataSetAttributes.'):
+        pv.Sphere().point_data[i] = 1
 
 
 def test_init(hexbeam):
@@ -526,7 +523,8 @@ def test_value_should_exist(insert_arange_narray):
     for arr in dsa.values():
         if np.array_equal(sample_array, arr):
             return
-    raise AssertionError('Array not in values.')
+    msg = 'Array not in values.'
+    raise AssertionError(msg)
 
 
 def test_active_scalars_setter(hexbeam_point_attributes):
@@ -660,8 +658,8 @@ def test_active_texture_coordinates_name(plane):
         plane.field_data.active_texture_coordinates_name = 'arr'
 
 
-@skip_windows  # windows doesn't support np.complex256
-@skip_apple_silicon  # same with Apple silicon (M1/M2)
+@pytest.mark.skip_windows("windows doesn't support np.complex256")
+@pytest.mark.skip_mac('Test fails on Apple silicon (M1/M2)', processor='arm')
 def test_complex_raises(plane):
     with pytest.raises(ValueError, match='Only numpy.complex64'):
         plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
@@ -677,7 +675,9 @@ def test_complex(plane, dtype_str):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
     real_type = np.float32 if dtype == np.complex64 else np.float64
-    data = np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    data = (
+        np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    )
     plane.point_data[name] = data
     assert np.array_equal(plane.point_data[name], data)
 
@@ -690,30 +690,6 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
-
-
-def test_active_t_coords_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
-
-
-def test_active_t_coords_name_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
 
 
 @pytest.mark.parametrize('copy', [True, False])

@@ -11,7 +11,10 @@ from trame.widgets.vtk import VtkRemoteLocalView
 from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
-CLOSED_PLOTTER_ERROR = 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
+CLOSED_PLOTTER_ERROR = (
+    'The render window for this plotter has been destroyed. '
+    'Do not call `show()` for the plotter before passing to trame.'
+)
 
 
 def get_server(*args, **kwargs):  # numpydoc ignore=RT01
@@ -42,7 +45,7 @@ class _BasePyVistaView:
         """Initialize the base PyVista view."""
         self._plotter = weakref.ref(plotter)
         self.pyvista_initialize()
-        self._plotter_render_callback = lambda *args: self.update()  # type: ignore[attr-defined]
+        self._plotter_render_callback = lambda *_: self.update()  # type: ignore[attr-defined]
 
     def pyvista_initialize(self):
         if self._plotter().render_window is None:  # type: ignore[union-attr]
@@ -72,13 +75,15 @@ class _BasePyVistaView:
         if isinstance(self, PyVistaLocalView):
             data = self.export(format='zip')
             if data is None:
-                raise ValueError('No data to write.')
+                msg = 'No data to write.'
+                raise ValueError(msg)
             write_html(data, content)
             content.seek(0)
         elif isinstance(self, PyVistaRemoteLocalView):
             data = self.export_geometry(format='zip')
             if data is None:
-                raise ValueError('No data to write.')
+                msg = 'No data to write.'
+                raise ValueError(msg)
             write_html(data, content)
             content.seek(0)
         else:
@@ -86,7 +91,7 @@ class _BasePyVistaView:
         return io.BytesIO(content.read().encode('utf8')).read()
 
 
-class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
+class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame ``VtkRemoteView`` for server rendering.
 
     This will connect to a PyVista plotter and stream the server-side
@@ -161,7 +166,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         return self.update(*args, **kwargs)
 
 
-class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
+class PyVistaLocalView(VtkLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame VtkLocalView for in-browser rendering.
 
     This will connect to and synchronize with a PyVista plotter to
@@ -206,7 +211,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
         """No-op implementation to match remote viewers."""
 
 
-class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
+class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):  # type: ignore[misc]
     """PyVista wrapping of trame ``VtkRemoteLocalView``.
 
     Dynamically switch between client and server rendering.

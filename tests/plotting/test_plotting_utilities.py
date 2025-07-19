@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -12,11 +13,7 @@ from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 
-HAS_IMAGEIO = True
-try:
-    import imageio  # noqa: F401
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
+HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
 @pytest.mark.skip_plotting
@@ -38,7 +35,7 @@ def test_gpuinfo():
 
 @pytest.mark.skip_plotting
 def test_ray_trace_plot():
-    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
         [0, 0, 0],
         [1, 1, 1],
@@ -51,13 +48,15 @@ def test_ray_trace_plot():
 
 
 @pytest.mark.skip_plotting
-def test_plot_curvature(skip_check_gc):
-    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+@pytest.mark.skip_check_gc
+def test_plot_curvature():
+    sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
 @pytest.mark.skip_plotting
-def test_plot_curvature_pointset(skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_plot_curvature_pointset():
     grid = examples.load_structured()
     grid.plot_curvature(off_screen=True)
 
@@ -72,7 +71,7 @@ def test_plot_boundaries():
 @pytest.mark.parametrize('flip', [True, False])
 @pytest.mark.parametrize('faces', [True, False])
 def test_plot_normals(flip, faces):
-    sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
 
 
@@ -160,3 +159,5 @@ def test_gif_reader(gif_file):
         data_name = f'frame{i}'
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])
+
+    img.close()

@@ -14,6 +14,7 @@ import sys
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk
 from .colors import Color
@@ -44,14 +45,14 @@ def supports_open_gl():
         ``True`` if the system supports OpenGL, ``False`` otherwise.
 
     """
-    global SUPPORTS_OPENGL
+    global SUPPORTS_OPENGL  # noqa: PLW0603
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():
+def _system_supports_plotting():  # noqa: PLR0911
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -101,7 +102,7 @@ def system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
-    global SUPPORTS_PLOTTING
+    global SUPPORTS_PLOTTING  # noqa: PLW0603
     if SUPPORTS_PLOTTING is None:
         SUPPORTS_PLOTTING = _system_supports_plotting()
 
@@ -123,7 +124,8 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
 
-def create_axes_marker(
+@_deprecate_positional_args
+def create_axes_marker(  # noqa: PLR0917
     label_color=None,
     x_color=None,
     y_color=None,
@@ -131,7 +133,7 @@ def create_axes_marker(
     xlabel='X',
     ylabel='Y',
     zlabel='Z',
-    labels_off: bool = False,
+    labels_off: bool = False,  # noqa: FBT001, FBT002
     line_width=2,
     cone_radius=0.4,
     shaft_length=0.8,
@@ -188,7 +190,7 @@ def create_axes_marker(
 
     Returns
     -------
-    vtk.vtkAxesActor
+    :vtk:`vtkAxesActor`
         Axes actor.
 
     Examples
@@ -207,12 +209,12 @@ def create_axes_marker(
     >>> marker = pv.create_axes_marker(
     ...     line_width=4,
     ...     ambient=0.0,
-    ...     x_color="#378df0",
-    ...     y_color="#ab2e5d",
-    ...     z_color="#f7fb9a",
-    ...     xlabel="X Axis",
-    ...     ylabel="Y Axis",
-    ...     zlabel="Z Axis",
+    ...     x_color='#378df0',
+    ...     y_color='#ab2e5d',
+    ...     z_color='#f7fb9a',
+    ...     xlabel='X Axis',
+    ...     ylabel='Y Axis',
+    ...     zlabel='Z Axis',
     ...     label_size=(0.1, 0.1),
     ... )
     >>> pl = pv.Plotter()
@@ -264,7 +266,8 @@ def create_axes_marker(
     return axes_actor
 
 
-def create_axes_orientation_box(
+@_deprecate_positional_args
+def create_axes_orientation_box(  # noqa: PLR0917
     line_width=1,
     text_scale=0.366667,
     edge_color='black',
@@ -277,11 +280,11 @@ def create_axes_orientation_box(
     x_face_color='red',
     y_face_color='green',
     z_face_color='blue',
-    color_box: bool = False,
+    color_box: bool = False,  # noqa: FBT001, FBT002
     label_color=None,
-    labels_off: bool = False,
+    labels_off: bool = False,  # noqa: FBT001, FBT002
     opacity=0.5,
-    show_text_edges: bool = False,
+    show_text_edges: bool = False,  # noqa: FBT001, FBT002
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -343,7 +346,7 @@ def create_axes_orientation_box(
 
     Returns
     -------
-    vtk.vtkAnnotatedCubeActor
+    :vtk:`vtkAnnotatedCubeActor`
         Annotated cube actor.
 
     Examples
@@ -537,7 +540,13 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='quadratic'):
+@_deprecate_positional_args(allowed=['mapping', 'n_colors'])
+def opacity_transfer_function(  # noqa: PLR0917
+    mapping,
+    n_colors,
+    interpolate: bool = True,  # noqa: FBT001, FBT002
+    kind='linear',
+):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -557,7 +566,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
 
     Parameters
     ----------
-    mapping : list(float) or str
+    mapping : list[float] | str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
         ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
@@ -586,6 +595,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
         - ``'previous'``
         - ``'next'``
 
+        .. versionchanged:: 0.46
+
+            Linear interpolation is now always used by default. Previously,
+            quadratic interpolation was used if ``scipy`` was installed.
+
     Returns
     -------
     numpy.ndarray
@@ -596,12 +610,9 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
     --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
-    >>> tf = pv.opacity_transfer_function("sigmoid", 256)
+    >>> tf = pv.opacity_transfer_function('sigmoid', 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = (
-    ...     pv.opacity_transfer_function("geom_r", 256).astype(float)
-    ...     / 255.0
-    ... )
+    >>> tf = pv.opacity_transfer_function('geom_r', 256).astype(float) / 255.0
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)
@@ -637,10 +648,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise ValueError(
+            msg = (
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}',
-            ) from None
+                f'Valid options: {list(transfer_func.keys())}'
+            )
+            raise ValueError(msg) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -655,11 +667,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
-                    raise ValueError('No interpolation.')
-                # Use a quadratic interp if scipy is available
-                from scipy.interpolate import interp1d
+                    msg = 'No interpolation.'
+                    raise ValueError(msg)
+                from scipy.interpolate import interp1d  # noqa: PLC0415
 
-                # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0
@@ -670,11 +681,14 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
+            msg = (
+                f'Transfer function cannot have more values than `n_colors`. '
+                f'This has {mapping.size} elements'
             )
+            raise RuntimeError(msg)
         return mapping
-    raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
+    msg = f'Transfer function type ({type(mapping)}) not understood'
+    raise TypeError(msg)
 
 
 def parse_font_family(font_family: str) -> int:
@@ -702,7 +716,8 @@ def parse_font_family(font_family: str) -> int:
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
-        raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
+        msg = f'Font must one of the following:\n{", ".join(fonts)}'
+        raise ValueError(msg)
     return FONTS[font_family].value
 
 
@@ -732,14 +747,15 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib as mpl
+    import matplotlib as mpl  # noqa: PLC0415
 
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         return not mpl_vers >= (3, 6)
     elif pyvista.vtk_version_info > (9, 2, 2):
         return mpl_vers >= (3, 6)
-    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
+    msg = 'Uncheckable versions.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover
 
 
 def check_math_text_support():

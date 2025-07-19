@@ -1,4 +1,3 @@
-# ruff: noqa: D102,D103,D107
 """PyVista Trame User Interface.
 
 This module builds a base UI for manipulating a PyVista Plotter.
@@ -17,7 +16,7 @@ from trame.app import get_server
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .base_viewer import BaseViewer
 
 _VIEWERS: dict[str, BaseViewer] = {}

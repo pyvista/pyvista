@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import re
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import vtk
@@ -7,6 +10,9 @@ import vtk
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -17,6 +23,27 @@ def lut():
 @pytest.fixture
 def lut_w_cmap():
     return LookupTable('viridis')
+
+
+def test_cmap_values_raises():
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Cannot set both `cmap` and `values`.'),
+    ):
+        LookupTable(cmap='foo', values='bar')
+
+
+def test_call_raises(lut: LookupError, mocker: MockerFixture):
+    from pyvista.plotting import lookup_table
+
+    m = mocker.patch.object(lookup_table, 'np')
+    m.array.side_effect = TypeError
+
+    with pytest.raises(
+        TypeError,
+        match=re.escape('LookupTable __call__ expects a single value or an iterable.'),
+    ):
+        lut('foo')
 
 
 def test_values(lut):
@@ -199,7 +226,8 @@ def test_table_cmap_list(lut):
     assert lut.n_values == 3
 
 
-def test_table_values_update(lut, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_table_values_update(lut):
     lut.cmap = 'Greens'
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
     assert lut.values.max() == 255
@@ -224,7 +252,8 @@ def test_call(lut):
     assert lut.map_value(0.5) == lut.map_value(0.5)
 
 
-def test_custom_opacity(lut, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
     assert not np.array_equiv(lut.values[:, -1], 255)

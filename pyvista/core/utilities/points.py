@@ -10,23 +10,25 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(
+@_deprecate_positional_args(allowed=['points'])
+def vtk_points(  # noqa: PLR0917
     points: VectorLike[float] | MatrixLike[float],
-    deep: bool = True,
-    force_float: bool = False,
-    allow_empty: bool = True,
+    deep: bool = True,  # noqa: FBT001, FBT002
+    force_float: bool = False,  # noqa: FBT001, FBT002
+    allow_empty: bool = True,  # noqa: FBT001, FBT002
 ) -> _vtk.vtkPoints:
-    """Convert numpy array or array-like to a ``vtkPoints`` object.
+    """Convert numpy array or array-like to a :vtk:`vtkPoints` object.
 
     Parameters
     ----------
@@ -52,8 +54,8 @@ def vtk_points(
 
     Returns
     -------
-    vtk.vtkPoints
-        The vtkPoints object.
+    :vtk:`vtkPoints`
+        The :vtk:`vtkPoints` object.
 
     Examples
     --------
@@ -135,25 +137,26 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
 
     """
     if len(points) % 2 != 0:
-        raise ValueError('An even number of points must be given to define each segment.')
+        msg = 'An even number of points must be given to define each segment.'
+        raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
     lines = np.c_[
-        (
-            2 * np.ones(n_lines, np.int_),
-            np.arange(0, n_points - 1, step=2),
-            np.arange(1, n_points + 1, step=2),
-        )
+        2 * np.ones(n_lines, np.int_),
+        np.arange(0, n_points - 1, step=2),
+        np.arange(1, n_points + 1, step=2),
     ]
     poly = pyvista.PolyData()
-    poly.points = points  # type: ignore[assignment]
+    poly.points = points
     poly.lines = lines
     return poly
 
 
+@_deprecate_positional_args(allowed=['points'])
 def lines_from_points(
-    points: VectorLike[float] | MatrixLike[float], close: bool = False
+    points: VectorLike[float] | MatrixLike[float],
+    close: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Make a connected line set given an array of points.
 
@@ -182,7 +185,7 @@ def lines_from_points(
 
     """
     poly = pyvista.PolyData()
-    poly.points = points  # type: ignore[assignment]
+    poly.points = points
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
@@ -192,9 +195,10 @@ def lines_from_points(
     return poly
 
 
-def fit_plane_to_points(
+@_deprecate_positional_args(allowed=['points'])
+def fit_plane_to_points(  # noqa: PLR0917
     points: MatrixLike[float],
-    return_meta: bool = False,
+    return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
     init_normal: VectorLike[float] | None = None,
 ) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
@@ -308,7 +312,7 @@ def fit_plane_to_points(
     ... ]
     >>> pl.show()
 
-    Use the metadata with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(
@@ -358,9 +362,7 @@ def fit_plane_to_points(
     )
 
     # Fit plane to xyz-aligned mesh
-    aligned_bnds = aligned.bounds
-    i_size = aligned_bnds.x_max - aligned_bnds.x_min
-    j_size = aligned_bnds.y_max - aligned_bnds.y_min
+    i_size, j_size, _ = aligned.bounds_size
     plane = pyvista.Plane(
         i_size=i_size,
         j_size=j_size,
@@ -577,9 +579,11 @@ def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData
 
     """
     if points.shape[1] != 3:
-        raise ValueError('Points array should have shape (N, 3).')
+        msg = 'Points array should have shape (N, 3).'
+        raise ValueError(msg)
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError('Face array should have shape (M, 3).')
+        msg = 'Face array should have shape (M, 3).'
+        raise ValueError(msg)
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
@@ -617,9 +621,7 @@ def vector_poly_data(
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
     >>> u = x / np.sqrt(x**2 + y**2)
     >>> v = y / np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack(
-    ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
-    ... ).T
+    >>> vectors = np.vstack((u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))).T
     >>> pdata = pv.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
@@ -639,12 +641,14 @@ def vector_poly_data(
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise ValueError('orig array must be 3D')
+        msg = 'orig array must be 3D'
+        raise ValueError(msg)
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise ValueError('vec array must be 3D')
+        msg = 'vec array must be 3D'
+        raise ValueError(msg)
 
     # Create vtk points and cells objects
     vpts = _vtk.vtkPoints()

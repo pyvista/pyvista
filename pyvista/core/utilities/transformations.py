@@ -8,16 +8,21 @@ from typing import overload
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
-def axis_angle_rotation(
-    axis: VectorLike[float], angle: float, point: VectorLike[float] | None = None, deg: bool = True
+@_deprecate_positional_args(allowed=['axis', 'angle'])
+def axis_angle_rotation(  # noqa: PLR0917
+    axis: VectorLike[float],
+    angle: float,
+    point: VectorLike[float] | None = None,
+    deg: bool = True,  # noqa: FBT001, FBT002
 ) -> NumpyArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
@@ -116,7 +121,8 @@ def axis_angle_rotation(
     # check and normalize
     axis_norm = np.linalg.norm(axis_)
     if np.isclose(axis_norm, 0):
-        raise ValueError('Cannot rotate around zero vector axis.')
+        msg = 'Cannot rotate around zero vector axis.'
+        raise ValueError(msg)
     if not np.isclose(axis_norm, 1):
         axis_ = axis_ / axis_norm
 
@@ -218,25 +224,26 @@ def reflection(
     ...         [-1, 1, 1],
     ...     ]
     ... )
-    >>> mirrored = transformations.apply_transformation_to_points(
-    ...     trans, verts
-    ... )
+    >>> mirrored = transformations.apply_transformation_to_points(trans, verts)
     >>> np.allclose(mirrored, verts[[np.r_[4:8, 0:4]], :])
     True
 
     """
     normal = np.asarray(normal, dtype='float64')
     if normal.shape != (3,):
-        raise ValueError('Normal must be a 3-length array-like.')
+        msg = 'Normal must be a 3-length array-like.'
+        raise ValueError(msg)
     if point is not None:
         point = np.asarray(point)
         if point.shape != (3,):
-            raise ValueError('Plane reference point must be a 3-length array-like.')
+            msg = 'Plane reference point must be a 3-length array-like.'
+            raise ValueError(msg)
 
     # check and normalize
     normal_norm = np.linalg.norm(normal)
     if np.isclose(normal_norm, 0):
-        raise ValueError('Plane normal cannot be zero.')
+        msg = 'Plane normal cannot be zero.'
+        raise ValueError(msg)
     if not np.isclose(normal_norm, 1):
         normal = normal / normal_norm
 
@@ -256,20 +263,27 @@ def reflection(
 
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True] = True
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[True] = True,  # noqa: FBT002
 ) -> None: ...
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[False] = False,  # noqa: FBT002
 ) -> NumpyArray[float]: ...
 @overload
 def apply_transformation_to_points(
-    transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: bool = ...,  # noqa: FBT001
 ) -> NumpyArray[float] | None: ...
+@_deprecate_positional_args(allowed=['transformation', 'points'])
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
     points: NumpyArray[float],
-    inplace: Literal[True, False] = False,
+    inplace: Literal[True, False] = False,  # noqa: FBT002
 ) -> NumpyArray[float] | None:
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
@@ -309,10 +323,12 @@ def apply_transformation_to_points(
     """
     transformation_shape = transformation.shape
     if transformation_shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+        msg = '`transformation` must be of shape (3, 3) or (4, 4).'
+        raise ValueError(msg)
 
     if points.shape[1] != 3:
-        raise ValueError('`points` must be of shape (N, 3).')
+        msg = '`points` must be of shape (N, 3).'
+        raise ValueError(msg)
 
     if transformation_shape[0] == 4:
         # Divide by scale factor when homogeneous
@@ -324,7 +340,7 @@ def apply_transformation_to_points(
         points_2[:, :-1] = points
         points_2[:, -1] = 1
     else:
-        points_2 = points
+        points_2 = points  # type: ignore[assignment]
 
     # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
     # that the matrices to be multiplied lie in the last two dimensions.

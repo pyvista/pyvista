@@ -11,7 +11,6 @@ import io
 import os
 import pathlib
 from pathlib import Path
-import platform
 import re
 import time
 from types import FunctionType
@@ -26,9 +25,13 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import BackgroundPlotter
+from pyvista.plotting import QtDeprecationError
+from pyvista.plotting import QtInteractor
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -37,14 +40,17 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
-from pyvista.plotting.utilities.gl_checks import uses_egl
+from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
 
+    from pytest_mock import MockerFixture
+
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
+
 
 HAS_IMAGEIO = True
 try:
@@ -83,38 +89,37 @@ def using_mesa():
 
 # always set on Windows CI
 # These tests fail with mesa opengl on windows
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-skip_windows_mesa = pytest.mark.skipif(
-    using_mesa() and os.name == 'nt',
-    reason='Does not display correctly within OSMesa on Windows',
+skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
+    'Does not display correctly within OSMesa on Windows'
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason='Flaky on 9.0.X')
-skip_lesser_9_0_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1),
-    reason='Functions not implemented before 9.0.X',
+skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')  # noqa: N816
+skip_lesser_9_0_X = pytest.mark.needs_vtk_version(  # noqa: N816
+    9, 1, reason='Functions not implemented before 9.0.X'
 )
-skip_lesser_9_3_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3),
-    reason='Functions not implemented before 9.3.X',
+skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
+    9, 3, reason='Functions not implemented before 9.3.X'
+)
+skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
+    9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
-
-skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS CI fails when downloading examples',
-)
-skip_mac_flaky = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='This is a flaky test on MacOS',
-)
-skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
 
 @pytest.fixture(autouse=True)
 def verify_image_cache_wrapper(verify_image_cache):
     return verify_image_cache
+
+
+@pytest.fixture
+def no_images_to_verify(verify_image_cache_wrapper):
+    verify_image_cache_wrapper.allow_useless_fixture = True
+    yield verify_image_cache_wrapper
+    assert (n_calls := verify_image_cache_wrapper.n_calls) == 0, (
+        f'No images were expected to be generated, but got {n_calls}'
+    )
 
 
 @pytest.fixture
@@ -137,6 +142,32 @@ def multicomp_poly():
     return data
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_pyvista_qt_raises():
+    match = re.escape(QtDeprecationError.message.format(*[BackgroundPlotter.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        BackgroundPlotter()
+
+    match = re.escape(QtDeprecationError.message.format(*[QtInteractor.__name__] * 4))
+    with pytest.raises(QtDeprecationError, match=match):
+        QtInteractor()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plotting_module_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotting
+
+    m = mocker.patch.object(plotting, 'inspect')
+    m.getattr_static.side_effect = AttributeError
+
+    match = re.escape(
+        'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically '
+        'find `foo`'
+    )
+    with pytest.raises(AttributeError, match=match):
+        plotting.foo  # noqa: B018
+
+
 def test_import_gltf(verify_image_cache):
     # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
@@ -148,6 +179,7 @@ def test_import_gltf(verify_image_cache):
         pl.import_gltf('not a file')
 
     pl.import_gltf(filename)
+    assert np.allclose(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 
@@ -174,7 +206,10 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 def test_import_vrml():
     filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
 
-    match = 'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
+    match = (
+        'VRML files must be imported directly into a Plotter. '
+        'See `pyvista.Plotter.import_vrml` for details.'
+    )
     with pytest.raises(ValueError, match=match):
         pv.read(filename)
 
@@ -184,10 +219,11 @@ def test_import_vrml():
         pl.import_vrml('not a file')
 
     pl.import_vrml(filename)
+    assert np.allclose(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 
-def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
+def test_export_vrml(tmpdir, sphere):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.wrl'))
 
     pl = pv.Plotter()
@@ -210,6 +246,17 @@ def test_import_3ds():
         pl.import_3ds('not a file')
 
     pl.import_3ds(filename)
+    assert np.allclose(
+        pl.bounds,
+        (
+            -5.379246234893799,
+            5.364696979522705,
+            -1.9769330024719238,
+            2.731842041015625,
+            -7.883847236633301,
+            5.437096118927002,
+        ),
+    )
     pl.show()
 
 
@@ -222,6 +269,7 @@ def test_import_obj():
         pl.import_obj('not a file')
 
     pl.import_obj(download_obj_file)
+    assert np.allclose(pl.bounds, (-10.0, 10.0, 0.0, 4.5, -10.0, 10.0))
     pl.show()
 
 
@@ -233,7 +281,7 @@ def test_import_obj_with_texture():
     pl.show(cpos='xy')
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 def test_pbr(sphere, verify_image_cache):
     """Test PBR rendering"""
@@ -265,25 +313,25 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@skip_windows
-@skip_mac
-def test_set_environment_texture_cubemap(sphere, verify_image_cache):
+@pytest.mark.parametrize('resample', [True, 0.5])
+@pytest.mark.needs_vtk_version(9, 2)
+def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
-    verify_image_cache.high_variance_test = True
-
-    texture = examples.download_sky_box_cube_map()
+    # Skip due to large variance
+    verify_image_cache.windows_skip_image_cache = True
+    verify_image_cache.macos_skip_image_cache = True
 
     pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
-    pl.add_mesh(sphere, color='w', pbr=True, metallic=0.8, roughness=0.2)
-
-    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pv.vtk_version_info > (9, 1)
+    texture = examples.download_cubemap_park()
+    pl.set_environment_texture(texture, is_srgb=True, resample=resample)
+    pl.camera_position = 'xy'
+    pl.camera.zoom(0.7)
+    _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
     pl.show()
 
 
-@skip_windows
-@skip_mac
+@pytest.mark.skip_windows
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 def test_remove_environment_texture_cubemap(sphere):
     """Test remove_environment_texture with a cubemap."""
     texture = examples.download_sky_box_cube_map()
@@ -340,7 +388,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
         text='this is a sphere',
         show_bounds=True,
         color='r',
-        style='wireframe',
+        style='surface',
         line_width=2,
         scalars=scalars,
         flip_scalars=True,
@@ -439,11 +487,13 @@ def test_add_title(verify_image_cache):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_plot_invalid_style(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         pv.plot(sphere, style='not a style')
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize(
     ('interaction', 'kwargs'),
     [
@@ -467,6 +517,7 @@ def test_interactor_style(sphere, interaction, kwargs):
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_lighting_disable_3_lights():
     with pytest.raises(DeprecationError):
         pv.Plotter().disable_3_lights()
@@ -573,11 +624,13 @@ def test_lighting_init_none(sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_lighting_init_invalid():
     with pytest.raises(ValueError):  # noqa: PT011
         pv.Plotter(lighting='invalid')
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_plotter_shape_invalid():
     # wrong size
     with pytest.raises(ValueError):  # noqa: PT011
@@ -644,9 +697,15 @@ def test_set_camera_position(cpos, sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize(
     'cpos',
-    [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid'],
+    [
+        [(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
+        [-1, 2],
+        [(1, 2, 3)],
+        'notvalid',
+    ],
 )
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pv.Plotter()
@@ -655,11 +714,13 @@ def test_set_camera_position_invalid(cpos, sphere):
         plotter.camera_position = cpos
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_parallel_projection():
     plotter = pv.Plotter()
     assert isinstance(plotter.parallel_projection, bool)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize('state', [True, False])
 def test_set_parallel_projection(state):
     plotter = pv.Plotter()
@@ -667,11 +728,13 @@ def test_set_parallel_projection(state):
     assert plotter.parallel_projection == state
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_parallel_scale():
     plotter = pv.Plotter()
     assert isinstance(plotter.parallel_scale, float)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize('value', [1, 1.5, 0.3, 10])
 def test_set_parallel_scale(value):
     plotter = pv.Plotter()
@@ -679,27 +742,52 @@ def test_set_parallel_scale(value):
     assert plotter.parallel_scale == value
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_set_parallel_scale_invalid():
     plotter = pv.Plotter()
     with pytest.raises(TypeError):
         plotter.parallel_scale = 'invalid'
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+
+    def _test_update_scalars_with_invalid_array():
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Convert error this method')
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Remove this method')
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
+
+    def _test_update_scalars_with_valid_array():
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Convert error this method')
+            msg = 'Convert error this method'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Remove this method')
+            msg = 'Remove this method'
+            raise RuntimeError(msg)
+
+    with (
+        pytest.raises(ValueError, match='Number of scalars'),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This method is deprecated and will be removed in a future version',
+        ),
+    ):
+        _test_update_scalars_with_invalid_array()
+    with (
+        pytest.raises(ValueError, match='No active scalars'),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This method is deprecated and will be removed in a future version',
+        ),
+    ):
+        _test_update_scalars_with_valid_array()
 
 
 def test_plot_show_bounds(sphere):
@@ -828,12 +916,14 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_plot_invalid_add_scalar_bar():
     plotter = pv.Plotter()
     with pytest.raises(AttributeError):
         plotter.add_scalar_bar()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_add_scalar_bar_with_unconstrained_font_size(sphere):
     sphere['test_scalars'] = sphere.points[:, 2]
     plotter = pv.Plotter()
@@ -843,18 +933,20 @@ def test_add_scalar_bar_with_unconstrained_font_size(sphere):
 
 
 def test_plot_list():
-    sphere_a = pv.Sphere(0.5)
-    sphere_b = pv.Sphere(1.0)
-    sphere_c = pv.Sphere(2.0)
-    pv.plot([sphere_a, sphere_b, sphere_c], style='wireframe')
+    sphere_a = pv.Sphere(center=(0, 0, 0), radius=0.75)
+    sphere_b = pv.Sphere(center=(1, 0, 0), radius=0.5)
+    sphere_c = pv.Sphere(center=(2, 0, 0), radius=0.25)
+    pv.plot([sphere_a, sphere_b, sphere_c], color='tan')
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_add_lines_invalid():
     plotter = pv.Plotter()
     with pytest.raises(TypeError):
         plotter.add_lines(range(10))
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_open_gif_invalid():
     plotter = pv.Plotter()
@@ -905,36 +997,7 @@ def test_add_legend(sphere):
     plotter.show()
 
 
-def test_legend_circle_face(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    face = 'circle'
-    _ = plotter.add_legend(
-        labels=legend_labels,
-        border=True,
-        bcolor=None,
-        size=[0.1, 0.1],
-        face=face,
-    )
-    plotter.show()
-
-
-def test_legend_rectangle_face(sphere):
-    plotter = pv.Plotter()
-    plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    face = 'rectangle'
-    _ = plotter.add_legend(
-        labels=legend_labels,
-        border=True,
-        bcolor=None,
-        size=[0.1, 0.1],
-        face=face,
-    )
-    plotter.show()
-
-
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_legend_invalid_face(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
@@ -952,13 +1015,13 @@ def test_legend_invalid_face(sphere):
 
 def test_legend_subplots(sphere, cube):
     plotter = pv.Plotter(shape=(1, 2))
-    plotter.add_mesh(sphere, 'blue', smooth_shading=True, label='Sphere')
+    plotter.add_mesh(sphere, color='blue', smooth_shading=True, label='Sphere')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
 
     plotter.subplot(0, 1)
-    plotter.add_mesh(cube, 'r', label='Cube')
+    plotter.add_mesh(cube, color='r', label='Cube')
     assert plotter.legend is None
     plotter.add_legend(bcolor='w')
     assert isinstance(plotter.legend, vtk.vtkActor2D)
@@ -1007,6 +1070,7 @@ def test_hide_axes_all():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_isometric_view_interactive(sphere):
     plotter_iso = pv.Plotter()
     plotter_iso.add_mesh(sphere)
@@ -1050,7 +1114,8 @@ def test_add_point_labels_always_visible(always_visible):
 
 
 @pytest.mark.parametrize('shape', [None, 'rect', 'rounded_rect'])
-def test_add_point_labels_shape(shape, verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_add_point_labels_shape(shape):
     plotter = pv.Plotter()
     plotter.add_point_labels(np.array([[0.0, 0.0, 0.0]]), ['hello world'], shape=shape)
     plotter.show()
@@ -1110,12 +1175,14 @@ def test_add_points():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_key_press_event():
     plotter = pv.Plotter()
     plotter.key_press_event(None, None)
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_enable_picking_gc():
     plotter = pv.Plotter()
     sphere = pv.Sphere()
@@ -1124,15 +1191,18 @@ def test_enable_picking_gc():
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_left_button_down():
     plotter = pv.Plotter()
-    if (
-        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
-        and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
-    ):
-        # This only fails for VTK<9.2.3
-        with pytest.raises(ValueError):  # noqa: PT011
-            plotter.left_button_down(None, None)
+
+    attr = (
+        'GetOffScreenFramebuffer' if pyvista.vtk_version_info < (9, 1) else 'GetRenderFramebuffer'
+    )
+    if hasattr(renwin := plotter.render_window, attr):
+        if not getattr(renwin, attr)().GetFBOIndex():
+            # This only fails for VTK<9.2.3
+            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
+                plotter.left_button_down(None, None)
     else:
         plotter.left_button_down(None, None)
     plotter.close()
@@ -1174,6 +1244,7 @@ def test_plot_clim(sphere):
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_invalid_n_arrays(sphere):
     plotter = pv.Plotter()
     with pytest.raises(ValueError):  # noqa: PT011
@@ -1209,24 +1280,42 @@ def test_axes():
 
 def test_box_axes():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_box():
         plotter.add_axes(box=True)
-    if pv._version.version_info[:2] > (0, 47):
-        raise RuntimeError('Convert error this function')
-    if pv._version.version_info[:2] > (0, 48):
-        raise RuntimeError('Remove this function')
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning,
+        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
+    ):
+        _test_add_axes_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_color_box():
         plotter.add_axes(box=True, box_args={'color_box': True})
-    if pv._version.version_info[:2] > (0, 47):
-        raise RuntimeError('Convert error this function')
-    if pv._version.version_info[:2] > (0, 48):
-        raise RuntimeError('Remove this function')
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning,
+        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
+    ):
+        _test_add_axes_color_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
@@ -1246,6 +1335,7 @@ def test_add_north_arrow():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
@@ -1270,6 +1360,7 @@ def test_screenshot(tmpdir):
         plotter.screenshot()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_scaled():
     # FYI: no regression tests because show() is not called
     factor = 2
@@ -1302,6 +1393,7 @@ def test_screenshot_scaled():
     plotter.close()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_altered_window_size(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
@@ -1334,6 +1426,7 @@ def test_screenshot_bytes():
     assert im.format == 'PNG'
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_rendering(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(examples.load_airplane(), smooth_shading=True)
@@ -1343,6 +1436,7 @@ def test_screenshot_rendering(tmpdir):
     assert not plotter._first_time
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp' + ext))
@@ -1394,11 +1488,12 @@ def test_plot_texture():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
     globe = examples.load_globe()
-    texture_np = np.asarray(imageio.imread(examples.mapfile))
+    texture_np = np.asarray(imageio.v2.imread(examples.mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture_np)
 
@@ -1407,7 +1502,7 @@ def test_plot_numpy_texture():
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = numpy_to_texture(imageio.imread(examples.mapfile))
+    texture = numpy_to_texture(imageio.v2.imread(examples.mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
@@ -1476,7 +1571,7 @@ def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
 
 
 # check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 def test_plot_rgb(composite, dtype):
@@ -1490,7 +1585,7 @@ def test_plot_rgb(composite, dtype):
 
 
 # check_gc fails for polydata (suspected memory leak with pv.merge)
-@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
 @pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
 def test_plot_rgb_implicit(composite, scalars):
@@ -1519,6 +1614,7 @@ def test_vector_array_with_points(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_array_with_cells(multicomp_poly):
     """Test using vector valued data with and without component arg."""
     pl = pv.Plotter()
@@ -1552,6 +1648,7 @@ def test_vector_array(multicomp_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
     copy_vector_values_points = multicomp_poly['vector_values_points'].copy()
@@ -1582,6 +1679,7 @@ def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     assert np.array_equal(multicomp_poly['vector_values_cells'], copy_vector_values_cells)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_vector_array_fail_with_incorrect_component(multicomp_poly):
     """Test failure modes of component argument."""
     p = pv.Plotter()
@@ -1610,9 +1708,9 @@ def test_camera(sphere):
     plotter.view_xz()
     plotter.view_yz()
     plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
-    plotter.view_xy(True)
-    plotter.view_xz(True)
-    plotter.view_yz(True)
+    plotter.view_xy(negative=True)
+    plotter.view_xz(negative=True)
+    plotter.view_yz(negative=True)
     plotter.show()
 
     plotter = pv.Plotter()
@@ -1673,6 +1771,7 @@ def test_multi_renderers_subplot_ind_1x2():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_multi_renderers_bad_indices():
     # Test bad indices
     plotter = pv.Plotter(shape=(1, 2))
@@ -1742,6 +1841,7 @@ def test_subplot_groups():
     plotter.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_subplot_groups_fail():
     # Test group overlap
     with pytest.raises(ValueError):  # noqa: PT011
@@ -1755,7 +1855,7 @@ def test_subplot_groups_fail():
         pv.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_link_views(sphere):
     plotter = pv.Plotter(shape=(1, 4))
     plotter.subplot(0, 0)
@@ -1778,8 +1878,9 @@ def test_link_views(sphere):
     plotter.show()
 
 
-@skip_windows
-def test_link_views_camera_set(sphere, verify_image_cache):
+@pytest.mark.skip_windows
+@pytest.mark.usefixtures('verify_image_cache')
+def test_link_views_camera_set():
     p = pv.Plotter(shape=(1, 2))
     p.add_mesh(pv.Cone())
     assert not p.renderer.camera_set
@@ -1916,7 +2017,18 @@ def test_volume_rendering_rectilinear(uniform):
     plotter.close()
 
 
-@skip_windows
+@skip_windows_mesa  # due to opacity
+@pytest.mark.parametrize('mapper', ['fixed_point', 'gpu', 'open_gl', 'smart'])
+def test_volume_rendering_mappers_image_data(mapper):
+    image = pv.ImageData(dimensions=(50, 50, 50))
+    image['scalars'] = -image.x
+
+    plotter = pv.Plotter()
+    plotter.add_volume(image, mapper=mapper)
+    plotter.show()
+
+
+@pytest.mark.skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
@@ -1972,12 +2084,12 @@ def test_plot_depth_peeling():
     p.show()
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plot(airplane):
     airplane.plot(eye_dome_lighting=True)
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_plotter(airplane):
     p = pv.Plotter()
     p.add_mesh(airplane)
@@ -1985,7 +2097,7 @@ def test_plot_eye_dome_lighting_plotter(airplane):
     p.show()
 
 
-@pytest.mark.skipif(os.name == 'nt', reason='No testing on windows for EDL')
+@pytest.mark.skip_windows('No testing on windows for EDL')
 def test_plot_eye_dome_lighting_enable_disable(airplane):
     p = pv.Plotter()
     p.add_mesh(airplane)
@@ -1994,7 +2106,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
     p.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_opacity_by_array_direct(plane, verify_image_cache):
     # VTK regression 9.0.1 --> 9.1.0
     verify_image_cache.high_variance_test = True
@@ -2003,10 +2115,16 @@ def test_opacity_by_array_direct(plane, verify_image_cache):
     plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pv.Plotter()
     pl.add_mesh(plane, color='b', opacity=np.linspace(0, 1, plane.n_points), show_edges=True)
-    pl.add_mesh(plane_shift, color='r', opacity=np.linspace(0, 1, plane.n_cells), show_edges=True)
+    pl.add_mesh(
+        plane_shift,
+        color='r',
+        opacity=np.linspace(0, 1, plane.n_cells),
+        show_edges=True,
+    )
     pl.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array(uniform):
     # Test with opacity array
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2016,6 +2134,7 @@ def test_opacity_by_array(uniform):
     p.show()
 
 
+@skip_windows_mesa
 def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
@@ -2037,6 +2156,7 @@ def test_opacity_by_array_user_transform(uniform, verify_image_cache):
     p.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_opacity_mismatched_fail(uniform):
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['unc'] = opac
@@ -2048,6 +2168,7 @@ def test_opacity_mismatched_fail(uniform):
         p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+@skip_windows_mesa
 def test_opacity_by_array_preference():
     tetra = pv.Tetrahedron()  # 4 points, 4 cells
     opacities = np.linspace(0.2, 0.8, tetra.n_points)
@@ -2068,6 +2189,17 @@ def test_opacity_by_array_preference():
     p.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('mapping', [None, True, object()])
+def test_opacity_transfer_functions_raises(mapping):
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Transfer function type ({type(mapping)}) not understood'),
+    ):
+        pv.opacity_transfer_function(mapping, n_colors=10)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_opacity_transfer_functions():
     n = 256
     mapping = pv.opacity_transfer_function('linear', n)
@@ -2172,6 +2304,7 @@ def test_user_annotations_scalar_bar_volume(uniform, verify_image_cache):
     p.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_user_matrix_volume(uniform):
     shear = np.eye(4)
     shear[0, 1] = 1
@@ -2188,6 +2321,7 @@ def test_user_matrix_volume(uniform):
         p.add_volume(uniform, user_matrix='invalid')
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_user_matrix_mesh(sphere):
     shear = np.eye(4)
     shear[0, 1] = 1
@@ -2204,6 +2338,18 @@ def test_user_matrix_mesh(sphere):
         p.add_mesh(sphere, user_matrix='invalid')
 
 
+def test_user_matrix_silhouette(airplane):
+    matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        airplane,
+        silhouette=dict(line_width=10),
+        user_matrix=matrix,
+    )
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
@@ -2214,6 +2360,7 @@ def test_scalar_bar_args_unmodified_add_mesh(sphere):
     assert sargs == sargs_copy
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_scalar_bar_args_unmodified_add_volume(uniform):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
@@ -2237,6 +2384,7 @@ def test_plot_string_array(verify_image_cache):
     p.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
     table = pv.Table(np.random.default_rng().random((50, 3)))
@@ -2247,6 +2395,7 @@ def test_fail_plot_table():
         plotter.add_mesh(table)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_bad_keyword_arguments():
     """Make sure bad keyword arguments raise an error"""
     mesh = examples.load_uniform()
@@ -2344,7 +2493,7 @@ def test_add_remove_floor(sphere):
     pl.add_floor(color='b', line_width=2, lighting=True)
     pl.add_bounding_box()  # needed for update_bounds_axes
     assert len(pl.renderer._floors) == 1
-    pl.add_mesh(pv.Sphere(1.0))
+    pl.add_mesh(pv.Sphere(radius=1.0))
     pl.update_bounds_axes()
     assert len(pl.renderer._floors) == 1
     pl.show()
@@ -2357,6 +2506,7 @@ def test_add_remove_floor(sphere):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_reset_camera_clipping_range(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -2377,6 +2527,7 @@ def test_reset_camera_clipping_range(sphere):
     assert pl.camera.clipping_range != (10, 100)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_index_vs_loc():
     # first: 2d grid
     pl = pv.Plotter(shape=(2, 3))
@@ -2430,10 +2581,11 @@ def test_interactive_update():
     p.close()
 
     p = pv.Plotter()
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match=r'The plotter will close immediately automatically'):
         p.show(auto_close=True, interactive_update=True)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_where_is():
     plotter = pv.Plotter(shape=(2, 2))
     plotter.subplot(0, 0)
@@ -2450,10 +2602,9 @@ def test_where_is():
         assert isinstance(loc, tuple)
 
 
-def test_log_scale():
-    mesh = examples.load_uniform()
+def test_log_scale(uniform):
     plotter = pv.Plotter()
-    plotter.add_mesh(mesh, log_scale=True)
+    plotter.add_mesh(uniform, log_scale=True, clim=[-1, uniform.get_data_range()[1]])
     plotter.show()
 
 
@@ -2600,7 +2751,7 @@ def test_collision_plot(verify_image_cache):
     plotter.show()
 
 
-@skip_mac
+@pytest.mark.skip_mac('MacOS CI fails when downloading examples')
 @pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
@@ -2700,6 +2851,7 @@ def test_chart_matplotlib_plot(verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_get_charts():
     """Test that the get_charts method is retuning a list of charts"""
     chart = pv.Chart2D()
@@ -2723,17 +2875,20 @@ def test_add_remove_background(sphere):
 
 
 @pytest.mark.parametrize(
-    'background', [examples.mapfile, Path(examples.mapfile), 'blue'], ids=['str', 'Path', 'color']
+    'background',
+    [examples.mapfile, Path(examples.mapfile), 'blue'],
+    ids=['str', 'Path', 'color'],
 )
 def test_plot_mesh_background(background):
     globe = examples.load_globe()
     globe.plot(texture=pv.Texture(examples.mapfile), background=background)
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_plot_mesh_background_raises():
     globe = examples.load_globe()
     match = 'Background must be color-like or a file path. Got {} instead.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         globe.plot(texture=pv.Texture(examples.mapfile), background={})
 
 
@@ -2769,7 +2924,7 @@ def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading)
     sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
 
 
-@skip_mac_flaky
+@pytest.mark.skip_mac('This is a flaky test on MacOS')
 def test_splitting_active_cells(cube):
     cube.cell_data['cell_id'] = range(cube.n_cells)
     cube = cube.triangulate().subdivide(1)
@@ -2806,6 +2961,7 @@ def test_disable_stereo_render():
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_orbit_on_path(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_edges=True)
@@ -2862,6 +3018,7 @@ def test_pointset_plot_as_points_vtk():
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_write_gif(sphere, tmpdir):
     basename = 'write_gif.gif'
@@ -2932,15 +3089,16 @@ def test_plot_complex_value(plane, verify_image_cache):
     except:
         ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_notebook(tmpdir):
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -2968,8 +3126,17 @@ def test_add_text():
 
 @pytest.mark.skipif(
     not check_math_text_support(),
-    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
+    reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
+    'MathText requires matplotlib<3.6',
 )
+@pytest.mark.filterwarnings(
+    r'ignore:Passing individual properties to FontProperties'
+    r'\(\):matplotlib.MatplotlibDeprecationWarning',
+    r'ignore:.*MathtextBackendBitmap.*:matplotlib.MatplotlibDeprecationWarning'
+    if pv.vtk_version_info <= (9, 1)
+    else '',
+)
+@pytest.mark.usefixtures('recwarn')
 def test_add_text_latex():
     """Test LaTeX symbols.
 
@@ -2983,7 +3150,9 @@ def test_add_text_latex():
 def test_add_text_font_file():
     plotter = pv.Plotter()
     font_file = str(Path(__file__).parent / 'fonts/Mplus2-Regular.ttf')
-    plotter.add_text('左上', position='upper_left', font_size=25, color='blue', font_file=font_file)
+    plotter.add_text(
+        '左上', position='upper_left', font_size=25, color='blue', font_file=font_file
+    )
     plotter.add_text(
         '中央',
         position=(0.5, 0.5),
@@ -2994,6 +3163,7 @@ def test_add_text_font_file():
     plotter.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_int(sphere):
     sphere['data'] = sphere.points[:, 2]
     pl = pv.Plotter()
@@ -3001,6 +3171,7 @@ def test_plot_categories_int(sphere):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_categories_true(sphere):
     sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
     pl = pv.Plotter()
@@ -3008,7 +3179,7 @@ def test_plot_categories_true(sphere):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 @skip_9_0_X
 def test_depth_of_field():
     pl = pv.Plotter()
@@ -3034,18 +3205,17 @@ def test_ssaa_pass():
 
 
 @skip_windows_mesa
-def test_ssao_pass():
+def test_ssao_pass(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
     pl = pv.Plotter()
     pl.add_mesh(ugrid)
 
     pl.enable_ssao()
-    pl.show(auto_close=False)
+    pl.show()
 
-    # ensure this fails when ssao disabled
-    pl.disable_ssao()
-    with pytest.raises(RuntimeError):
-        pl.show()
+    with pytest.raises(RuntimeError, match='The renderer has been closed.'):
+        pl.disable_ssao()
 
 
 @skip_mesa
@@ -3055,8 +3225,10 @@ def test_ssao_pass_from_helper():
     ugrid.plot(ssao=True)
 
 
-@skip_windows
-def test_many_multi_pass():
+@pytest.mark.skip_windows
+def test_many_multi_pass(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+
     pl = pv.Plotter(lighting=None)
     pl.add_mesh(pv.Sphere(), show_edges=True)
     pl.add_light(pv.Light(position=(0, 0, 10)))
@@ -3065,6 +3237,7 @@ def test_many_multi_pass():
     pl.add_blurring()
     pl.enable_shadows()
     pl.enable_eye_dome_lighting()
+    pl.show()
 
 
 def test_plot_composite_many_options(multiblock_poly):
@@ -3089,6 +3262,7 @@ def test_plot_composite_many_options(multiblock_poly):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_plot_composite_raise(sphere, multiblock_poly):
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='Must be a composite dataset'):
@@ -3113,7 +3287,8 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
     multiblock_poly[:2].plot(preference='cell')
 
 
-@skip_windows  # because of opacity
+@pytest.mark.skip_windows('Test fails on Windows because of opacity')
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
 
@@ -3137,6 +3312,7 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
     pl.show()
 
 
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
@@ -3173,6 +3349,7 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
     pl.show()
 
 
+@skip_windows_mesa
 def test_plot_composite_poly_component_norm(multiblock_poly):
     for ii, block in enumerate(multiblock_poly):
         data = block.compute_normals().point_data['Normals']
@@ -3268,6 +3445,7 @@ def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_export_obj(tmpdir, sphere):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.obj'))
 
@@ -3311,6 +3489,7 @@ def test_multi_plot_scalars(verify_image_cache):
     pl.show()
 
 
+@skip_windows_mesa
 def test_bool_scalars(sphere):
     sphere['scalars'] = np.zeros(sphere.n_points, dtype=bool)
     sphere['scalars'][::2] = 1
@@ -3319,7 +3498,7 @@ def test_bool_scalars(sphere):
     plotter.show()
 
 
-@skip_windows  # because of pbr
+@pytest.mark.skip_windows('Test fails on Windows because of pbr')
 @skip_9_1_0  # pbr required
 def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
@@ -3442,7 +3621,7 @@ def test_charts_sin():
     y = np.sin(x)
     chart = pv.Chart2D()
     chart.scatter(x, y)
-    chart.line(x, y, 'r')
+    chart.line(x, y, color='r')
     chart.show()
 
 
@@ -3489,6 +3668,7 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.plot()
 
 
+@skip_windows_mesa
 def test_plot_nan_color(uniform):
     arg = uniform.active_scalars < uniform.active_scalars.mean()
     uniform.active_scalars[arg] = np.nan
@@ -3539,10 +3719,54 @@ def test_plotter_lookup_table(sphere, verify_image_cache):
 
 @skip_windows_mesa  # due to opacity
 def test_plotter_volume_lookup_table(uniform):
+    uniform.set_active_scalars('Spatial Point Data')
+
     lut = pv.LookupTable()
-    lut.alpha_range = (0, 1)
+    lut.apply_cmap('coolwarm', 255)
+    lut.apply_opacity('linear')
+    lut.scalar_range = uniform.get_data_range()
+
     pl = pv.Plotter()
-    pl.add_volume(uniform, scalars='Spatial Point Data', cmap=lut)
+    pl.add_volume(uniform, cmap=lut)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+@pytest.mark.skip_check_gc
+def test_plotter_volume_lookup_table_reactive(uniform):
+    """Ensure that changes to the underlying lookup table are reflected by the volume property."""
+    uniform.set_active_scalars('Spatial Point Data')
+
+    pl = pv.Plotter()
+    actor = pl.add_volume(uniform, cmap='viridis', clim=[0, uniform.n_points // 2])
+    actor.mapper.lookup_table.apply_cmap('coolwarm', 255)
+    actor.mapper.lookup_table.apply_opacity('sigmoid')
+    actor.mapper.lookup_table.scalar_range = [0, uniform.n_points]
+    pl.render()
+    pl.show()
+
+    # Test switching out the lookup table
+    pl = pv.Plotter()
+    actor = pl.add_volume(
+        uniform, cmap='viridis', clim=[0, uniform.n_points // 2], show_scalar_bar=False
+    )
+
+    lut = pv.LookupTable()
+    lut.apply_cmap('coolwarm', 255)
+    actor.prop.apply_lookup_table(lut)
+    lut.apply_opacity('sigmoid')
+    lut.scalar_range = [0, uniform.n_points]
+    pl.render()
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_log_scale(uniform):
+    uniform.clear_data()
+    uniform['data'] = np.logspace(1, 5, uniform.n_points)
+
+    pl = pv.Plotter()
+    pl.add_volume(uniform, scalars='data', log_scale=True)
     pl.show()
 
 
@@ -3566,6 +3790,57 @@ def test_plotter_volume_add_scalars_log_scale(uniform):
     pl.show()
 
 
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_opacity_n_colors():
+    # See https://github.com/pyvista/pyvista/issues/5505
+    grid = pv.ImageData(dimensions=(9, 9, 9))
+    grid['scalars'] = -grid.x
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, opacity='linear', n_colors=128)
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, opacity='linear', n_colors=5)
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_clim():
+    # Validate that we can use clim with volume rendering
+    grid = pv.ImageData(dimensions=(9, 9, 9))
+    grid['scalars'] = np.arange(grid.n_points)
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, clim=[0, grid.n_points], show_scalar_bar=True)
+    pl.show()
+
+    pl = pv.Plotter()
+    pl.add_volume(grid, clim=[grid.n_points * 0.25, grid.n_points * 0.75], show_scalar_bar=True)
+    pl.show()
+
+    # Validate that we can change clim on the mapper
+    pl = pv.Plotter()
+    actor = pl.add_volume(grid, clim=[0, grid.n_points], show_scalar_bar=True)
+    actor.mapper.scalar_range = [grid.n_points * 0.25, grid.n_points * 0.75]
+    pl.show()
+
+
+@skip_windows_mesa  # due to opacity
+def test_plotter_volume_clim_uint():
+    # Validate that add_volume does not set 0-255 as the default clim for uint8 data
+    # for example the `load_frog_tissues` dataset is uint8 with values 0-29 and we want
+    # add_volume to automatically set the clim to 0-29 as that is the valid range
+    # Let's validate this with a toy dataset:
+    volume = pv.ImageData(dimensions=(3, 3, 3))
+    volume['data'] = np.arange(volume.n_points).astype(np.uint8)
+
+    pl = pv.Plotter()
+    actor = pl.add_volume(volume, show_scalar_bar=True)
+    pl.show()
+    assert actor.mapper.scalar_range == (0, np.prod(volume.dimensions) - 1)
+
+
 def test_plot_actor(sphere):
     pl = pv.Plotter()
     actor = pl.add_mesh(sphere, lighting=False, color='b', show_edges=True)
@@ -3587,7 +3862,7 @@ def test_view_xyz(direction, negative, colorful_tetrahedron):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian(sphere):
     sphere.plot(
         color='r',
@@ -3598,7 +3873,7 @@ def test_plot_points_gaussian(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_scalars(sphere):
     sphere.plot(
         scalars=sphere.points[:, 2],
@@ -3610,7 +3885,7 @@ def test_plot_points_gaussian_scalars(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_as_spheres(sphere):
     sphere.plot(
         color='b',
@@ -3622,7 +3897,7 @@ def test_plot_points_gaussian_as_spheres(sphere):
     )
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_plot_points_gaussian_scale(sphere):
     sphere['z'] = sphere.points[:, 2] * 0.1
     pl = pv.Plotter()
@@ -3701,7 +3976,7 @@ def test_remove_vertices_actor(sphere):
     pl.show()
 
 
-@skip_windows
+@pytest.mark.skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
     p = pv.Plotter()
@@ -3842,7 +4117,7 @@ def test_plot_volume_rgba(uniform):
     pl.show()
 
 
-def test_plot_window_size_context(sphere):
+def test_plot_window_size_context():
     pl = pv.Plotter()
     pl.add_mesh(pv.Cube())
     with pl.window_size_context((200, 200)):
@@ -3897,6 +4172,20 @@ def test_color_cycler():
         pl.set_color_cycler(5)
 
 
+def test_color_cycler_true():
+    pv.global_theme.color_cycler = 'default'
+    a = pv.Wavelet().clip(invert=True)
+    b = pv.Wavelet().clip(invert=False)
+
+    pl = pv.Plotter()
+    a0 = pl.add_mesh(a, color=True)
+    a1 = pl.add_mesh(b, color=True)
+    pl.show()
+
+    assert a0.prop.color.hex_rgb == matplotlib_default_colors[0]
+    assert a1.prop.color.hex_rgb == matplotlib_default_colors[1]
+
+
 def test_plotter_render_callback():
     n_ren = [0]
 
@@ -3932,16 +4221,14 @@ def test_plot_texture_flip_y(texture):
 
 @pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
-@pytest.mark.skipif(pv.vtk_version_info >= (9, 3), reason='This is broken on VTK 9.3')
-def test_plot_cubemap_alone(cubemap):
+@pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
+def test_plot_cubemap_alone(cubemap, verify_image_cache):
     """Test plotting directly from the Texture class."""
+    verify_image_cache.high_variance_test = True
     cubemap.plot()
 
 
-@pytest.mark.skipif(
-    uses_egl(),
-    reason='Render window will be current with offscreen builds of VTK.',
-)
+@pytest.mark.skip_egl(reason='Render window will be current with offscreen builds of VTK.')
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -4053,7 +4340,7 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ids=XYZ_ASSEMBLY_TEST_CASES.keys(),
 )
 @pytest.mark.parametrize(
-    ('Assembly', 'obj_kwargs'),
+    ('assembly', 'obj_kwargs'),
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
@@ -4061,9 +4348,10 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
+def test_xyz_assembly(test_kwargs, assembly, obj_kwargs, verify_image_cache):
+    verify_image_cache.high_variance_test = True
     plot = pv.Plotter()
-    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
+    assembly = assembly(**test_kwargs, **obj_kwargs, label_color='white')
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
@@ -4074,13 +4362,13 @@ def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
 
 
 @pytest.mark.parametrize(
-    'Assembly',
+    'assembly',
     [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly_show_labels_false(Assembly):
+def test_xyz_assembly_show_labels_false(assembly):
     plot = pv.Plotter()
-    assembly = Assembly(show_labels=False)
+    assembly = assembly(show_labels=False)
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
@@ -4156,7 +4444,11 @@ def test_show_bounds_no_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.camera_position = [
+        (1.97, 1.89, 1.66),
+        (0.05, -0.05, 0.00),
+        (-0.36, -0.36, 0.85),
+    ]
     plotter.show()
 
 
@@ -4174,7 +4466,11 @@ def test_show_bounds_n_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [(1.97, 1.89, 1.66), (0.05, -0.05, 0.00), (-0.36, -0.36, 0.85)]
+    plotter.camera_position = [
+        (1.97, 1.89, 1.66),
+        (0.05, -0.05, 0.00),
+        (-0.36, -0.36, 0.85),
+    ]
     plotter.show()
 
 
@@ -4197,6 +4493,7 @@ def test_radial_gradient_background():
         plotter.set_background('white', top='black', right='black')
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_no_empty_meshes():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Empty meshes'):
@@ -4486,9 +4783,10 @@ def test_direction_objects(direction_obj_test_case):
     # Test Capsule separately based on vtk version
     if 'Capsule' in name:
         legacy_vtk = pv.vtk_version_info < (9, 3)
-        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
             pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
+                'Test capsule separately for different vtk versions. Expected to fail if testing '
+                'with wrong version.',
             )
 
     direction_param_name = None
@@ -4548,7 +4846,177 @@ def test_direction_objects(direction_obj_test_case):
     plot.show()
 
 
-@skip_windows  # Windows colors all plane cells red (bug?)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.parametrize('orient_faces', [True, False])
+def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
+    contour.clear_data()
+    contour.plot_normals()
+
+
+@pytest.fixture
+def _allow_empty_mesh():
+    # setup
+    flag = pv.global_theme.allow_empty_mesh
+    pv.global_theme.allow_empty_mesh = True
+    yield
+    # teardown
+    pv.global_theme.allow_empty_mesh = flag
+
+
+@pytest.fixture
+def _show_edges():
+    # setup
+    flag = pv.global_theme.show_edges
+    pv.global_theme.show_edges = True
+    yield
+    # teardown
+    pv.global_theme.show_edges = flag
+
+
+@pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
+@pytest.mark.parametrize(
+    ('select_inputs', 'select_outputs'),
+    [(None, None), (None, 2), (2, 2)],
+    ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
+)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_boundary_style(
+    labeled_image,  # noqa: F811
+    select_inputs,
+    select_outputs,
+):
+    def plot_boundary_labels(mesh_):
+        # Split labeled boundaries for regions 2 and 5
+        values = [[2, 0], [2, 5], [5, 0]]
+        label_meshes = mesh_.split_values(
+            values,
+            component_mode='multi',
+        )
+        assert label_meshes.n_blocks <= len(values)
+        plot.add_mesh(label_meshes[0], color='red', label=str(values[0]))
+        plot.add_mesh(label_meshes[1], color='lime', label=str(values[1]))
+        plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
+
+    def _generate_mesh(style):
+        mesh = labeled_image.contour_labels(
+            boundary_style=style,
+            **test_kwargs,
+            **fixed_kwargs,
+        )
+        # Shrink mesh to help reveal cells hidden behind other cells
+        return mesh.shrink(0.7)
+
+    # Remove one foreground point from the fixture to simplify plots
+    labeled_image.active_scalars[19] = 0
+
+    fixed_kwargs = dict(
+        smoothing_distance=0.3,
+        output_mesh_type='quads',
+        orient_faces=False,
+        simplify_output=False,
+    )
+
+    test_kwargs = dict(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
+    )
+
+    # Create meshes to plot
+    EXTERNAL, ALL, INTERNAL = 'external', 'all', 'internal'
+    external_mesh = _generate_mesh(EXTERNAL)
+    all_mesh = _generate_mesh(ALL)
+    internal_mesh = _generate_mesh(INTERNAL)
+
+    # Offset to fit in a single frame
+    external_mesh.points += (0, 0, 1)
+    internal_mesh.points += (0, 0, -1)
+
+    plot = pv.Plotter()
+
+    plot_boundary_labels(external_mesh)
+    plot.add_text(EXTERNAL, position='upper_left')
+
+    plot_boundary_labels(all_mesh)
+    plot.add_text(ALL, position='left_edge')
+
+    plot_boundary_labels(internal_mesh)
+    plot.add_text(INTERNAL, position='lower_left')
+
+    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.show(return_cpos=True)
+
+
+@pytest.mark.parametrize(
+    ('smoothing_distance', 'smoothing_scale'),
+    [(0, None), (None, 0), (5, 0.5), (5, 1)],
+    ids=[
+        'dist_0-scale_None',
+        'dist_None-scale_0',
+        'dist_5-scale_0.5',
+        'dist_5-scale_1',
+    ],
+)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_smoothing_constraint(
+    labeled_image,  # noqa: F811
+    smoothing_distance,
+    smoothing_scale,
+):
+    # Scale spacing for visualization
+    labeled_image.spacing = (10, 10, 10)
+
+    mesh = labeled_image.contour_labels(
+        'all',
+        smoothing_distance=smoothing_distance,
+        smoothing_scale=smoothing_scale,
+        pad_background=False,
+        orient_faces=False,
+    )
+
+    # Translate so origin is in bottom left corner
+    mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
+
+    # Add box of fixed size for scale
+    box = pv.Box(bounds=(0, 10, 0, 10, 0, 10)).extract_all_edges()
+    plot = pv.Plotter()
+    plot.add_mesh(mesh, show_scalar_bar=False)
+    plot.add_mesh(box)
+
+    # Configure plot to enable showing one side of the mesh to visualize
+    # the scale of the smoothing applied by the smoothing constraints
+    plot.enable_parallel_projection()
+    plot.view_yz()
+    plot.show_grid()
+    plot.reset_camera()
+    plot.camera.zoom(1.5)
+    plot.show()
+
+
+@pytest.mark.usefixtures('_show_edges')
+@pytest.mark.parametrize('smoothing', [True, False])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_compare_select_inputs_select_outputs(
+    labeled_image,  # noqa: F811
+    smoothing,
+):
+    common_kwargs = dict(
+        smoothing=smoothing,
+        smoothing_distance=0.8,
+        output_mesh_type='quads',
+        orient_faces=False,
+    )
+    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+
+    plot = pv.Plotter()
+    plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
+    plot.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
+    plot.view_xy()
+    plot.show()
+
+
+@pytest.mark.skip_windows('Windows colors all plane cells red (bug?)')
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
 @pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
 def test_orthogonal_planes_source_normals(normal_sign, plane):
@@ -4564,7 +5032,7 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.skip_check_gc  # gc fails, suspected memory leak with merge
 @pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_push(distance):
     source = pv.OrthogonalPlanesSource()
@@ -4574,7 +5042,7 @@ def test_orthogonal_planes_source_push(distance):
 
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
-@skip_windows
+@pytest.mark.skip_windows
 @skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
@@ -4587,7 +5055,7 @@ def test_orthogonal_planes_source_resolution(resolution):
 
 
 @skip_9_1_0
-@skip_windows
+@pytest.mark.skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
     [
@@ -4610,7 +5078,7 @@ def test_cube_faces_source(name, value):
     )
 
 
-def test_planes_assembly(airplane):
+def test_planes_assembly():
     plot = pv.Plotter()
     actor = pv.PlanesAssembly()
     plot.add_actor(actor)
@@ -4622,11 +5090,12 @@ def test_planes_assembly(airplane):
 @skip_9_1_0  # Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
-    ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
+    ('label_kwarg', 'camera_position'),
+    [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')],
 )
 @pytest.mark.parametrize(('label_mode', 'label_size'), [('2D', 25), ('3D', 40)])
 def test_planes_assembly_label_position(
-    plane, label_kwarg, camera_position, label_mode, label_size, label_offset
+    label_kwarg, camera_position, label_mode, label_size, label_offset
 ):
     plot = pv.Plotter()
 
@@ -4681,11 +5150,8 @@ def oblique_cone():
     return pv.examples.download_oblique_cone()
 
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
-
-@pytest.mark.skipif(
-    is_arm_mac, reason='Barely exceeds error threshold (slightly different rendering).'
+@pytest.mark.skip_mac(
+    'Barely exceeds error threshold (slightly different rendering).', machine='arm64'
 )
 @pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
 def test_bounding_box(oblique_cone, box_style):
@@ -4702,8 +5168,16 @@ def test_bounding_box(oblique_cone, box_style):
 @pytest.mark.parametrize('operator', ['or', 'and', 'ior', 'iand'])
 def test_bitwise_and_or_of_polydata(operator):
     radius = 0.5
-    sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
-    sphere_shifted = pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    shift = [0.25, 0.25, 0.25]
+    kwargs = dict(theta_resolution=10, phi_resolution=10)
+    sphere = pv.Sphere(radius=radius, **kwargs)
+    sphere_shifted = pv.Sphere(radius=radius, center=shift, **kwargs)
+    # Expand the wireframe ever so slightly to avoid rendering artifacts
+    wireframe = pv.Sphere(radius=radius + 0.001, **kwargs).extract_all_edges()
+    wireframe_shifted = pv.Sphere(
+        radius=radius + 0.001, center=shift, **kwargs
+    ).extract_all_edges()
+
     if operator == 'or':
         result = sphere | sphere_shifted
     elif operator == 'and':
@@ -4715,8 +5189,42 @@ def test_bitwise_and_or_of_polydata(operator):
         result = sphere.copy()
         result &= sphere_shifted
     pl = pv.Plotter()
-    pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
-    pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
+    pl.add_mesh(wireframe, color='r', line_width=2)
+    pl.add_mesh(wireframe_shifted, color='b', line_width=2)
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
+    pl.show()
+
+
+def test_plot_logo():
+    logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
+    logo_plotter.show()
+
+
+@skip_mesa
+def test_plot_wireframe_style():
+    sphere = pv.Sphere()
+    sphere.plot(style='wireframe')
+
+
+# Skip tests less 9.1 due to slightly above threshold error
+@pytest.mark.needs_vtk_version(9, 1)
+@pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
+@pytest.mark.parametrize('return_clipped', ['return_clipped', None])
+def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
+    return_clipped = bool(return_clipped)
+    as_multiblock = bool(as_multiblock)
+
+    mesh = examples.download_bunny_coarse()
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+
+    clipped = mesh.clip('x', crinkle=True, return_clipped=return_clipped)
+    if isinstance(clipped, tuple):
+        clipped = pv.MultiBlock(clipped)
+        clipped[0].translate((-0.1, 0, 0), inplace=True)
+
+    pl = pv.Plotter()
+    pl.add_mesh(clipped, show_edges=True)
+    pl.view_xy()
     pl.show()

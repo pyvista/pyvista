@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import os
+import re
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -8,6 +9,9 @@ import vtk
 
 import pyvista as pv
 from pyvista.plotting.errors import PyVistaPickingError
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -21,7 +25,7 @@ def test_single_cell_picking():
         def __init__(self):
             self.called = False
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args, **kwargs):  # noqa: ARG002
             self.called = True
 
     plotter = pv.Plotter(
@@ -171,7 +175,7 @@ def test_surface_point_picking(sphere, left_clicking):
     else:
         pl.iren._mouse_right_button_click(width // 2, height // 2)
 
-    assert len(picked)
+    assert picked
     assert pl.picked_point is not None
 
     # invalid selection
@@ -295,11 +299,8 @@ def test_point_picking(left_clicking):
     assert picked
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info < (9, 2, 0),
-    reason='Hardware picker unavailable for VTK<9.2',
-)
-@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+@pytest.mark.needs_vtk_version(9, 2, 0, reason='Hardware picker unavailable for VTK<9.2')
+@pytest.mark.skip_windows
 @pytest.mark.parametrize('pickable_window', [False, True])
 def test_point_picking_window(pickable_window):
     class Tracker:
@@ -356,7 +357,7 @@ def test_path_picking():
     pl.add_mesh(sphere)
     pl.enable_path_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
     )
     # simulate the pick
     renderer = pl.renderer
@@ -378,7 +379,7 @@ def test_geodesic_picking():
     pl.add_mesh(sphere)
     pl.enable_geodesic_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
         show_path=True,
         keep_order=True,
     )
@@ -405,7 +406,7 @@ def test_horizon_picking():
     pl.add_mesh(sphere)
     pl.enable_horizon_picking(
         show_message=True,
-        callback=lambda path: None,
+        callback=lambda path: None,  # noqa: ARG005
         show_horizon=True,
     )
     # simulate the pick
@@ -423,7 +424,8 @@ def test_horizon_picking():
     pl.close()
 
 
-def test_fly_to_right_click(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_right_click(sphere):
     point = []
 
     def callback(click_point):
@@ -443,7 +445,8 @@ def test_fly_to_right_click(verify_image_cache, sphere):
     pl.close()
 
 
-def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_right_click_multi_render(sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     point = []
 
@@ -463,7 +466,8 @@ def test_fly_to_right_click_multi_render(verify_image_cache, sphere):
     pl.close()
 
 
-def test_fly_to_mouse_position(verify_image_cache, sphere):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fly_to_mouse_position(sphere):
     """Same as enable as fly_to_right_click except with two renders for coverage"""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -484,7 +488,7 @@ def test_block_picking(multiblock_poly):
 
     picked_blocks = []
 
-    def turn_blue(index, dataset):
+    def turn_blue(index, dataset):  # noqa: ARG001
         mapper.block_attr[index].color = 'blue'
         picked_blocks.append(index)
 
@@ -591,3 +595,74 @@ def test_switch_picking_type():
 
     assert points
     assert len(points[0]) == 3
+
+
+@pytest.mark.parametrize('picker', ['foo', 1000])
+def test_picker_raises(picker, mocker: MockerFixture):
+    pl = pv.Plotter()  # patching need to occur after init
+
+    from pyvista.plotting import picking
+
+    m = mocker.patch.object(typ := picking.PickerType, 'from_any')
+    m.return_value = None
+
+    types = [typ.POINT, typ.CELL, typ.HARDWARE, typ.VOLUME]
+    match = re.escape(
+        f'Invalid picker choice for surface picking. Use one of: {types}',
+    )
+    with pytest.raises(ValueError, match=match):
+        pl.enable_surface_point_picking(picker=picker)
+
+    m.assert_called_once_with(picker)
+
+
+def test_block_picking_across_four_subplots():
+    """Test block picking on a 2x2 subplot layout with a MultiBlock of two spheres."""
+    sphere1 = pv.Sphere(center=(-1.0, 0.0, 0.0), radius=0.5)
+    sphere2 = pv.Sphere(center=(1.0, 0.0, 0.0), radius=0.5)
+    blocks = pv.MultiBlock([sphere1, sphere2])
+
+    # Record each block index picked up
+    picked = []
+
+    def callback(index, dataset):  # noqa: ARG001
+        picked.append(index)
+
+    pl = pv.Plotter(shape=(2, 2), window_size=[400, 400])
+    for row in range(2):
+        for col in range(2):
+            pl.subplot(row, col)
+            pl.add_composite(blocks, color='w', pickable=True)
+
+    pl.enable_block_picking(callback, side='left')
+
+    # Using camera_position to ensure consistent view for testing
+    camera_position = [
+        (3.0, 3.0, 3.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 1.0),
+    ]
+
+    pl.show(
+        auto_close=False,
+        cpos=camera_position,
+    )
+
+    # Using hard-coded click positions to ensure consistent testing
+    click_coords = [
+        [45, 266],
+        [147, 326],
+        [245, 263],
+        [352, 321],
+        [44, 59],
+        [147, 121],
+        [243, 60],
+        [349, 125],
+    ]
+
+    for x, y in click_coords:
+        pl.iren._mouse_left_button_click(x, y)
+    pl.close()
+
+    expected = [2, 1] * 4
+    assert picked == expected, f'Picked indices {picked}, but expected {expected}'

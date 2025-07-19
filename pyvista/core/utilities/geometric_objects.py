@@ -10,6 +10,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
@@ -37,7 +38,7 @@ from typing import TYPE_CHECKING
 from .helpers import wrap
 from .misc import check_valid_vector
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import PolyData
     from pyvista import StructuredGrid
@@ -54,9 +55,11 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
-def Capsule(
+@_deprecate_positional_args
+def Capsule(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     radius: float = 0.5,
@@ -66,14 +69,14 @@ def Capsule(
     """Create the surface of a capsule.
 
     .. warning::
-       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
-       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       :func:`pyvista.Capsule` function rotates the capsule :class:`pyvista.PolyData`
+       in its own way. It rotates the output 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
     .. note::
-       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
-       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
-       not identical.
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk
+       versions below 9.3, a separate ``pyvista.CapsuleSource`` class is used instead.
+       The mesh geometries are similar but not identical.
 
     .. versionadded:: 0.44.0
 
@@ -123,7 +126,7 @@ def Capsule(
         )
         algo.capsule_cap = True
     else:
-        algo = CapsuleSource(  # type: ignore[assignment]
+        algo = CapsuleSource(
             center=(0, 0, 0),
             direction=(1, 0, 0),
             radius=radius,
@@ -137,18 +140,20 @@ def Capsule(
     return output
 
 
-def Cylinder(
+@_deprecate_positional_args
+def Cylinder(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     radius: float = 0.5,
     height: float = 1.0,
     resolution: int = 100,
-    capping: bool = True,
+    capping: bool = True,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create the surface of a cylinder.
 
     .. warning::
-       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's :class:`pyvista.PolyData` in its own way.
+       :func:`pyvista.Cylinder` function rotates the :class:`pyvista.CylinderSource` 's
+       :class:`pyvista.PolyData` in its own way.
        It rotates the :attr:`pyvista.CylinderSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
@@ -189,13 +194,11 @@ def Cylinder(
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pv.Cylinder(
-    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
-    ...     ),
+    ...     pv.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2),
     ...     show_edges=True,
     ...     line_width=5,
     ... )
-    >>> pl.camera_position = "xy"
+    >>> pl.camera_position = 'xy'
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -215,7 +218,8 @@ def Cylinder(
     return output
 
 
-def CylinderStructured(
+@_deprecate_positional_args
+def CylinderStructured(  # noqa: PLR0917
     radius: float = 0.5,
     height: float = 1.0,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -304,7 +308,7 @@ def CylinderStructured(
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Center at origin
-    grid.points -= np.array(grid.center)  # type: ignore[misc]
+    grid.points -= np.array(grid.center)
 
     # rotate initially to face +X direction
     grid.rotate_y(90, inplace=True)
@@ -317,7 +321,8 @@ def CylinderStructured(
     return grid
 
 
-def Arrow(
+@_deprecate_positional_args
+def Arrow(  # noqa: PLR0917
     start: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     tip_length: float = 0.25,
@@ -325,7 +330,7 @@ def Arrow(
     tip_resolution: int = 20,
     shaft_radius: float = 0.05,
     shaft_resolution: int = 20,
-    scale: float | Literal['auto'] = 1.0,
+    scale: float | Literal['auto'] | None = 1.0,
 ) -> PolyData:
     """Create an arrow.
 
@@ -382,15 +387,17 @@ def Arrow(
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
     if isinstance(scale, (float, int)):
-        surf.points *= scale  # type: ignore[misc]
+        surf.points *= scale
     elif scale is not None:
-        raise TypeError("Scale must be either float, int or 'auto'.")
+        msg = "Scale must be either float, int or 'auto'."  # type: ignore[unreachable]
+        raise TypeError(msg)
 
     translate(surf, start, direction)
     return surf
 
 
-def Sphere(
+@_deprecate_positional_args
+def Sphere(  # noqa: PLR0917
     radius: float = 0.5,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
@@ -413,6 +420,9 @@ def Sphere(
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole. ``phi=0`` is on the positive z-axis by default.
     ``theta=0`` is on the positive x-axis by default.
+
+    See :ref:`create_sphere_example` for examples on creating spheres in
+    other ways.
 
     Parameters
     ----------
@@ -455,6 +465,7 @@ def Sphere(
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
+    :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
 
     Examples
     --------
@@ -490,7 +501,8 @@ def Sphere(
     return surf
 
 
-def SolidSphere(
+@_deprecate_positional_args
+def SolidSphere(  # noqa: PLR0917
     outer_radius: float = 0.5,
     inner_radius: float = 0.0,
     radius_resolution: int = 5,
@@ -502,7 +514,7 @@ def SolidSphere(
     phi_resolution: int = 30,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    radians: bool = False,
+    radians: bool = False,  # noqa: FBT001, FBT002
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
 ) -> UnstructuredGrid:
@@ -607,9 +619,7 @@ def SolidSphere(
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
     True
-    >>> partial_solid_sphere = pv.SolidSphere(
-    ...     start_theta=180, end_theta=360
-    ... )
+    >>> partial_solid_sphere = pv.SolidSphere(start_theta=180, end_theta=360)
     >>> partial_solid_sphere.plot(show_edges=True)
 
     To see the cell structure inside the solid sphere,
@@ -625,7 +635,7 @@ def SolidSphere(
     ...     theta_resolution=8,
     ...     phi_resolution=8,
     ... )
-    >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
+    >>> partial_solid_sphere['cell_radial_pos'] = np.linalg.norm(
     ...     partial_solid_sphere.cell_centers().points, axis=-1
     ... )
     >>> partial_solid_sphere.explode(1).plot()
@@ -640,24 +650,25 @@ def SolidSphere(
     theta = np.linspace(start_theta, end_theta, theta_resolution)
     phi = np.linspace(start_phi, end_phi, phi_resolution)
     return SolidSphereGeneric(
-        radius,
-        theta,
-        phi,
-        center,
-        direction,
+        radius=radius,
+        theta=theta,
+        phi=phi,
+        center=center,
+        direction=direction,
         radians=radians,
         tol_radius=tol_radius,
         tol_angle=tol_angle,
     )
 
 
-def SolidSphereGeneric(
+@_deprecate_positional_args
+def SolidSphereGeneric(  # noqa: PLR0917
     radius: VectorLike[float] | None = None,
     theta: VectorLike[float] | None = None,
     phi: VectorLike[float] | None = None,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    radians: bool = False,
+    radians: bool = False,  # noqa: FBT001, FBT002
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
 ) -> UnstructuredGrid:
@@ -739,9 +750,7 @@ def SolidSphereGeneric(
     ...     phi=np.linspace(0, 180, 30),
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(
-    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
-    ... )
+    >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
     Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
     `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
@@ -753,9 +762,7 @@ def SolidSphereGeneric(
     ...     phi=phi,
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(
-    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
-    ... )
+    >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
     """
     if radius is None:
@@ -787,21 +794,27 @@ def SolidSphereGeneric(
     nphi = len(phi)
 
     if nr < 2:
-        raise ValueError('radius resolution must be 2 or more')
+        msg = 'radius resolution must be 2 or more'
+        raise ValueError(msg)
     if ntheta < 2:
-        raise ValueError('theta resolution must be 2 or more')
+        msg = 'theta resolution must be 2 or more'
+        raise ValueError(msg)
     if nphi < 2:
-        raise ValueError('phi resolution must be 2 or more')
+        msg = 'phi resolution must be 2 or more'
+        raise ValueError(msg)
 
     def _is_sorted(a: NumpyArray[float]) -> np.bool_:
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
-        raise ValueError('radius is not monotonically increasing')
+        msg = 'radius is not monotonically increasing'
+        raise ValueError(msg)
     if not _is_sorted(theta):
-        raise ValueError('theta is not monotonically increasing')
+        msg = 'theta is not monotonically increasing'
+        raise ValueError(msg)
     if not _is_sorted(phi):
-        raise ValueError('phi is not monotonically increasing')
+        msg = 'phi is not monotonically increasing'
+        raise ValueError(msg)
 
     def _greater_than_equal_or_close(value1: float, value2: float, atol: float) -> bool | np.bool_:
         return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
@@ -810,18 +823,22 @@ def SolidSphereGeneric(
         return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
 
     if not _greater_than_equal_or_close(radius[0], 0.0, tol_radius):
-        raise ValueError('minimum radius cannot be negative')
+        msg = 'minimum radius cannot be negative'
+        raise ValueError(msg)
 
     # range of theta cannot be greater than 360 degrees
     if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle_):
         max_angle = '2 * np.pi' if radians else '360 degrees'
-        raise ValueError(f'max theta and min theta must be within {max_angle}')
+        msg = f'max theta and min theta must be within {max_angle}'
+        raise ValueError(msg)
 
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle_):
-        raise ValueError('minimum phi cannot be negative')
+        msg = 'minimum phi cannot be negative'
+        raise ValueError(msg)
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle_):
         max_angle = 'np.pi' if radians else '180 degrees'
-        raise ValueError(f'maximum phi cannot be > {max_angle}')
+        msg = f'maximum phi cannot be > {max_angle}'
+        raise ValueError(msg)
 
     def _spherical_to_cartesian(
         r: float | VectorLike[float],
@@ -1012,11 +1029,12 @@ def SolidSphereGeneric(
     return mesh
 
 
-def Plane(
+@_deprecate_positional_args
+def Plane(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    i_size: int = 1,
-    j_size: int = 1,
+    i_size: float = 1.0,
+    j_size: float = 1.0,
     i_resolution: int = 10,
     j_resolution: int = 10,
 ) -> PolyData:
@@ -1067,6 +1085,7 @@ def Plane(
     return surf
 
 
+@_deprecate_positional_args(allowed=['pointa', 'pointb'])
 def Line(
     pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
     pointb: VectorLike[float] = (0.5, 0.0, 0.0),
@@ -1139,13 +1158,14 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     return MultipleLinesSource(points=points).output
 
 
-def Tube(
+@_deprecate_positional_args
+def Tube(  # noqa: PLR0917
     pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
     pointb: VectorLike[float] = (0.5, 0.0, 0.0),
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
-    capping: bool = False,
+    capping: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a tube.
 
@@ -1181,7 +1201,7 @@ def Tube(
     Create a tube between ``(0, 0, 0)`` and ``(0, 0, 1)``.
 
     >>> import pyvista as pv
-    >>> mesh = pv.Tube((0, 0, 0), (0, 0, 1))
+    >>> mesh = pv.Tube(pointa=(0, 0, 0), pointb=(0, 0, 1))
     >>> mesh.plot()
 
     """
@@ -1189,13 +1209,14 @@ def Tube(
     return line_src.output.tube(radius=radius, n_sides=n_sides, capping=capping)
 
 
-def Cube(
+@_deprecate_positional_args
+def Cube(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     x_length: float = 1.0,
     y_length: float = 1.0,
     z_length: float = 1.0,
     bounds: VectorLike[float] | None = None,
-    clean: bool = True,
+    clean: bool = True,  # noqa: FBT001, FBT002
     point_dtype: str = 'float32',
 ) -> PolyData:
     """Create a cube.
@@ -1205,10 +1226,10 @@ def Cube(
     arguments are ignored.
 
     .. versionchanged:: 0.33.0
-        The cube is created using ``vtk.vtkCubeSource``. For
+        The cube is created using :vtk:`vtkCubeSource`. For
         compatibility with :func:`pyvista.PlatonicSolid`, face indices
         are also added as cell data. For full compatibility with
-        :func:`PlatonicSolid() <pyvista.PlatonicSolid>`, one has to
+        :func:`~pyvista.PlatonicSolid`, one has to
         use ``x_length = y_length = z_length = 2 * radius / 3**0.5``.
         The cube points are also cleaned by default now, leaving only
         the 8 corners and a watertight (manifold) mesh.
@@ -1276,13 +1297,18 @@ def Cube(
     if clean:
         cube.clean(inplace=True)
 
+        # Fix incorrect default point normals
+        del cube.point_data['Normals']
+        cube = cube.compute_normals(point_normals=True, cell_normals=False)
+
     return cube
 
 
+@_deprecate_positional_args(allowed=['bounds'])
 def Box(
     bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     level: int = 0,
-    quads: bool = True,
+    quads: bool = True,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
 
@@ -1316,12 +1342,13 @@ def Box(
     return BoxSource(level=level, quads=quads, bounds=bounds).output
 
 
-def Cone(
+@_deprecate_positional_args
+def Cone(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     height: float = 1.0,
     radius: float | None = None,
-    capping: bool = True,
+    capping: bool = True,  # noqa: FBT001, FBT002
     angle: float | None = None,
     resolution: int = 6,
 ) -> PolyData:
@@ -1380,12 +1407,13 @@ def Cone(
     return algo.output
 
 
-def Polygon(
+@_deprecate_positional_args
+def Polygon(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     radius: float = 1.0,
     normal: VectorLike[float] = (0.0, 0.0, 1.0),
     n_sides: int = 6,
-    fill: bool = True,
+    fill: bool = True,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a polygon.
 
@@ -1425,7 +1453,8 @@ def Polygon(
     return src.output
 
 
-def Disc(
+@_deprecate_positional_args
+def Disc(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     inner: float = 0.25,
     outer: float = 0.5,
@@ -1482,7 +1511,8 @@ def Disc(
     return surf
 
 
-def Text3D(
+@_deprecate_positional_args(allowed=['string'])
+def Text3D(  # noqa: PLR0917
     string: str,
     depth: float | None = None,
     width: float | None = None,
@@ -1498,11 +1528,11 @@ def Text3D(
     ----------
     string : str
         String to generate 3D text from. If ``None`` or an empty string,
-        the output mesh will have a single point at :attr:`center`.
+        the output mesh will have a single point at ``center``.
 
     depth : float, optional
         Depth of the text. If ``None``, the depth is set to half
-        the :attr:`height` by default. Set to ``0.0`` for planar
+        the ``height`` by default. Set to ``0.0`` for planar
         text.
 
         .. versionchanged:: 0.43
@@ -1513,13 +1543,13 @@ def Text3D(
 
     width : float, optional
         Width of the text. If ``None``, the width is scaled
-        proportional to :attr:`height`.
+        proportional to ``height``.
 
         .. versionadded:: 0.43
 
     height : float, optional
         Height of the text. If ``None``, the height is scaled
-        proportional to :attr:`width`.
+        proportional to ``width``.
 
         .. versionadded:: 0.43
 
@@ -1531,7 +1561,7 @@ def Text3D(
 
     normal : Sequence[float], default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
-        :attr:`depth` of the text and points away from the front surface
+        ``depth`` of the text and points away from the front surface
         of the text.
 
         .. versionadded:: 0.43
@@ -1560,7 +1590,8 @@ def Text3D(
     ).output
 
 
-def Wavelet(
+@_deprecate_positional_args
+def Wavelet(  # noqa: PLR0917
     extent: VectorLike[float] = (-10, 10, -10, 10, -10, 10),
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     maximum: float = 255.0,
@@ -1658,15 +1689,16 @@ def Wavelet(
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    return cast(pyvista.ImageData, wrap(wavelet_source.GetOutput()))
+    return cast('pyvista.ImageData', wrap(wavelet_source.GetOutput()))
 
 
-def CircularArc(
+@_deprecate_positional_args
+def CircularArc(  # noqa: PLR0917
     pointa: VectorLike[float],
     pointb: VectorLike[float],
     center: VectorLike[float],
     resolution: int = 100,
-    negative: bool = False,
+    negative: bool = False,  # noqa: FBT001, FBT002
 ) -> PolyData:
     """Create a circular arc defined by two endpoints and a center.
 
@@ -1706,7 +1738,7 @@ def CircularArc(
     Create a quarter arc centered at the origin in the xy plane.
 
     >>> import pyvista as pv
-    >>> arc = pv.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
+    >>> arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[0, 1, 0], center=[0, 0, 0])
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
@@ -1721,7 +1753,8 @@ def CircularArc(
         np.linalg.norm(np.array(pointa) - np.array(center)),
         np.linalg.norm(np.array(pointb) - np.array(center)),
     ):
-        raise ValueError('pointa and pointb are not equidistant from center')
+        msg = 'pointa and pointb are not equidistant from center'
+        raise ValueError(msg)
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
@@ -1744,10 +1777,11 @@ def CircularArc(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast(pyvista.PolyData, arc)
+    return cast('pyvista.PolyData', arc)
 
 
-def CircularArcFromNormal(
+@_deprecate_positional_args
+def CircularArcFromNormal(  # noqa: PLR0917
     center: VectorLike[float],
     resolution: int = 100,
     normal: VectorLike[float] | None = None,
@@ -1793,7 +1827,7 @@ def CircularArcFromNormal(
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
     >>> arc = pv.CircularArcFromNormal(
-    ...     [0, 0, 0], normal=normal, polar=polar
+    ...     center=[0, 0, 0], normal=normal, polar=polar
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
@@ -1826,7 +1860,7 @@ def CircularArcFromNormal(
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, angle_, resolution + 1)
     arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast(pyvista.PolyData, arc)
+    return cast('pyvista.PolyData', arc)
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
@@ -1868,7 +1902,8 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
         ]
 
     if len(points) != 5:
-        raise TypeError('Points must be given as length 5 np.ndarray or list.')
+        msg = 'Points must be given as length 5 np.ndarray or list.'
+        raise TypeError(msg)
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1884,7 +1919,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = _vtk.vtkUnstructuredGrid()
-    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
+    ug.SetPoints(pyvista.vtk_points(np.array(points), deep=False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return wrap(ug)
@@ -1918,7 +1953,8 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
         points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
 
     if len(points) != 3:
-        raise TypeError('Points must be given as length 3 np.ndarray or list')
+        msg = 'Points must be given as length 3 np.ndarray or list'
+        raise TypeError(msg)
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1956,7 +1992,8 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     if len(points) != 3:
-        raise TypeError('Points must be given as length 3 np.ndarray or list')
+        msg = 'Points must be given as length 3 np.ndarray or list'
+        raise TypeError(msg)
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -1973,11 +2010,12 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     mag_12 = np.linalg.norm(vec_12)
 
     if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
-        raise ValueError('Unable to build a rectangle with less than three different points')
+        msg = 'Unable to build a rectangle with less than three different points'
+        raise ValueError(msg)
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2  # type: ignore[call-overload]
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2  # type: ignore[call-overload]
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2  # type: ignore[call-overload]
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
 
     null_scalar_products = [
         val
@@ -1985,7 +2023,8 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         if np.isclose(val, 0)
     ]
     if len(null_scalar_products) == 0:
-        raise ValueError('The three points should defined orthogonal vectors')
+        msg = 'The three points should defined orthogonal vectors'
+        raise ValueError(msg)
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
@@ -2028,7 +2067,8 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
-        raise TypeError('Points must be given as length 4 np.ndarray or list')
+        msg = 'Points must be given as length 4 np.ndarray or list'
+        raise TypeError(msg)
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -2036,6 +2076,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     return wrap(pyvista.PolyData(points, cells))
 
 
+@_deprecate_positional_args
 def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     """Create a single PolyData circle defined by radius in the XY plane.
 
@@ -2062,7 +2103,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     --------
     >>> import pyvista as pv
     >>> radius = 0.5
-    >>> circle = pv.Circle(radius)
+    >>> circle = pv.Circle(radius=radius)
     >>> circle.plot(show_edges=True, line_width=5)
 
     """
@@ -2074,10 +2115,11 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     return wrap(pyvista.PolyData(points, cells))
 
 
+@_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
 def Ellipse(
     semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, resolution: int = 100
 ) -> PolyData:
-    """Create a single PolyData ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
+    """Create a single ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
 
     Parameters
     ----------
@@ -2116,7 +2158,8 @@ def Ellipse(
     return wrap(pyvista.PolyData(points, cells))
 
 
-def Superquadric(
+@_deprecate_positional_args
+def Superquadric(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     scale: VectorLike[float] = (1.0, 1.0, 1.0),
     size: float = 0.5,
@@ -2124,7 +2167,7 @@ def Superquadric(
     phi_roundness: float = 1.0,
     theta_resolution: int = 16,
     phi_resolution: int = 16,
-    toroidal: bool = False,
+    toroidal: bool = False,  # noqa: FBT001, FBT002
     thickness: float = 1 / 3,
 ) -> PolyData:
     """Create a superquadric.
@@ -2201,6 +2244,7 @@ def Superquadric(
     return source.output
 
 
+@_deprecate_positional_args(allowed=['kind'])
 def PlatonicSolid(
     kind: str = 'tetrahedron', radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
 ) -> PolyData:
@@ -2239,7 +2283,7 @@ def PlatonicSolid(
     >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     check_valid_vector(center, 'center')
@@ -2253,7 +2297,7 @@ def PlatonicSolid(
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
     solid.scale(radius, inplace=True)
-    solid.points += np.asanyarray(center) - solid.center  # type: ignore[misc]
+    solid.points += np.asanyarray(center) - solid.center
     return solid
 
 
@@ -2284,7 +2328,7 @@ def Tetrahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Tetrahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
@@ -2318,7 +2362,7 @@ def Octahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0))
     >>> tetra = pv.Octahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='octahedron', radius=radius, center=center)
@@ -2351,7 +2395,7 @@ def Dodecahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0
     >>> tetra = pv.Dodecahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
@@ -2385,7 +2429,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     >>> tetra = pv.Icosahedron()
     >>> tetra.plot(categories=True)
 
-    See :ref:`platonic_example` for more examples using this filter.
+    See :ref:`create_platonic_solids_example` for more examples using this filter.
 
     """
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)

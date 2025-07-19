@@ -1,4 +1,4 @@
-"""Module containing pyvista implementation of vtkProperty."""
+"""Module containing pyvista implementation of :vtk:`vtkProperty`."""
 
 from __future__ import annotations
 
@@ -7,18 +7,18 @@ from typing import TYPE_CHECKING
 from .opts import InterpolationType
 from .opts import RepresentationType
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from . import _vtk
 
 
 class ActorProperties:
-    """Properties wrapper for ``vtkProperty``.
+    """Properties wrapper for :vtk:`vtkProperty`.
 
     Contains the surface properties of the object.
 
     Parameters
     ----------
-    properties : vtk.vtkProperty
+    properties : :vtk:`vtkProperty`
         VTK properties of the current object.
 
     Examples

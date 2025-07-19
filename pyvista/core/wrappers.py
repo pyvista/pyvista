@@ -1,20 +1,19 @@
 """Wrapper mapping.
 
 Setting ``pyvista._wrappers`` allows for developers to override the default class used
-to coerce a ``vtkDataSet`` into a pyvista object.  This is useful when creating a
+to coerce a :vtk:`vtkDataSet` into a pyvista object. This is useful when creating a
 subclass of a :class:`pyvista.DataSet` class.
 
 Examples
 --------
 A user-defined Foo class is defined that extends the functionality of
 :class:`pyvista.PolyData`.  This class is set as the default wrapper for
-``vtkPolyData`` objects.
+:vtk:`vtkPolyData` objects.
 
 >>> import pyvista as pv
 >>> default_wrappers = pv._wrappers.copy()
 >>> class Foo(pv.PolyData):
 ...     pass  # Extend PolyData here
-...
 >>> pv._wrappers['vtkPolyData'] = Foo
 >>> image = pv.ImageData()
 >>> surface = image.extract_surface()

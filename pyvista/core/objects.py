@@ -1,4 +1,4 @@
-"""Wrappers for vtkDataObjects.
+"""Wrappers for :vtk:`vtkDataObject`.
 
 The data objects does not have any sort of spatial reference.
 
@@ -11,15 +11,17 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
+from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
 
 class Table(DataObject, _vtk.vtkTable):
-    """Wrapper for the ``vtkTable`` class.
+    """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
@@ -33,7 +35,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):
+    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
         """Initialize the table."""
         super().__init__()
         if len(args) == 1:
@@ -49,7 +51,8 @@ class Table(DataObject, _vtk.vtkTable):
             elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
                 self._from_pandas(args[0])
             else:
-                raise TypeError(f'Table unable to be made from ({type(args[0])})')
+                msg = f'Table unable to be made from ({type(args[0])})'
+                raise TypeError(msg)
 
     @staticmethod
     def _prepare_arrays(arrays):
@@ -59,7 +62,8 @@ class Table(DataObject, _vtk.vtkTable):
         elif arrays.ndim == 2:
             return arrays.T
         else:
-            raise ValueError('Only 1D or 2D arrays are supported by Tables.')
+            msg = 'Only 1D or 2D arrays are supported by Tables.'
+            raise ValueError(msg)
 
     def _from_arrays(self, arrays) -> None:
         np_table = self._prepare_arrays(arrays)
@@ -69,7 +73,8 @@ class Table(DataObject, _vtk.vtkTable):
     def _from_dict(self, array_dict):
         for array in array_dict.values():
             if not isinstance(array, np.ndarray) and array.ndim < 3:
-                raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
+                msg = 'Dictionary must contain only NumPy arrays with maximum of 2D.'
+                raise ValueError(msg)
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
@@ -299,8 +304,9 @@ class Table(DataObject, _vtk.vtkTable):
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
                 dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                return row.format(key, arr.dtype, ncomp, dl, dh)
+                ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
+                dtype = None if arr is None else arr.dtype
+                return row.format(key, dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):
                 key = self.GetRowData().GetArrayName(i)
@@ -329,9 +335,10 @@ class Table(DataObject, _vtk.vtkTable):
 
         """
         try:
-            import pandas as pd
+            import pandas as pd  # noqa: PLC0415
         except ImportError:  # pragma: no cover
-            raise ImportError('Install ``pandas`` to use this feature.')
+            msg = 'Install ``pandas`` to use this feature.'
+            raise ImportError(msg)
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
@@ -339,14 +346,13 @@ class Table(DataObject, _vtk.vtkTable):
 
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
-        raise NotImplementedError(
-            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
-        )
+        msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+        raise NotImplementedError(msg)
 
-    def get_data_range(
+    def get_data_range(  # type: ignore[override]
         self,
         arr: str | None = None,
-        preference: str = 'row',
+        preference: FieldLiteral | RowLiteral = 'row',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -371,9 +377,31 @@ class Table(DataObject, _vtk.vtkTable):
             # use the first array in the row data
             arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
-            arr = get_array(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)  # type: ignore[assignment]
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
+
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the table has no rows and no columns.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> table = pv.Table()
+        >>> table.is_empty
+        True
+
+        >>> arrays = np.random.default_rng().random((100, 3))
+        >>> table = pv.Table(arrays)
+        >>> table.is_empty
+        False
+
+        """
+        return self.n_rows == 0 and self.n_columns == 0

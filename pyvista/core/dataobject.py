@@ -7,12 +7,14 @@ from collections import UserDict
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import ClassVar
+from typing import cast
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
@@ -21,22 +23,30 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import PICKLE_EXT
-from .utilities.fileio import _VTKWriterAlias
 from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from types import FunctionType
+    from typing import Any
+    from typing import ClassVar
+
+    from typing_extensions import Self
+
     from ._typing_core import NumpyArray
+    from .utilities.fileio import _VTKWriterAlias
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
+@promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject:
+class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -51,7 +61,7 @@ class DataObject:
 
     _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {}
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the data object."""
         try:
             super().__init__(*args, **kwargs)
@@ -65,50 +75,52 @@ class DataObject:
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
-    def __getattr__(self, item: str) -> Any:
+    def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: DataObject | _vtk.vtkDataObject) -> None:
+    def shallow_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : DataObject | :vtk:`vtkDataObject`
             Data object to perform a shallow copy from.
 
         """
         self.ShallowCopy(to_copy)
 
-    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
+    def deep_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
 
         Parameters
         ----------
-        to_copy : pyvista.DataObject or vtk.vtkDataObject
+        to_copy : DataObject | :vtk:`vtkDataObject`
             Data object to perform a deep copy from.
 
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self, filename: str | Path, **kwargs):
+    def _from_file(self: Self, filename: str | Path, **kwargs) -> None:
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(
+            msg = (
                 f'Reading file returned data of `{type(data).__name__}`, '
-                f'but `{type(self).__name__}` was expected.',
+                f'but `{type(self).__name__}` was expected.'
             )
+            raise TypeError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 
-    def _post_file_load_processing(self) -> None:
+    def _post_file_load_processing(self: Self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
+    @_deprecate_positional_args(allowed=['filename'])
     def save(
-        self,
+        self: Self,
         filename: Path | str,
-        binary: bool = True,
+        binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this vtk object to file.
@@ -151,12 +163,73 @@ class DataObject:
 
         """
 
-        def _write_vtk(mesh_):
+        def _warn_multiblock_nested_field_data(mesh: pyvista.MultiBlock) -> None:
+            iterator = mesh.recursive_iterator('all', node_type='parent')
+            for index, name, nested_multiblock in iterator:
+                if len(nested_multiblock.field_data.keys()) > 0:
+                    # Avoid circular import
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(index)
+                    warnings.warn(
+                        f"Nested MultiBlock at index {index_fmt} with name '{name}' "
+                        f'has field data which will not be saved.\n'
+                        'See https://gitlab.kitware.com/vtk/vtk/-/issues/19414 \n'
+                        'Use `move_nested_field_data_to_root` to store the field data '
+                        'with the root MultiBlock before saving.'
+                    )
+
+        def _check_multiblock_hdf_types(mesh: pyvista.MultiBlock) -> None:
+            if (9, 4, 0) <= pyvista.vtk_version_info < (9, 5, 0):
+                if mesh.is_nested:
+                    msg = (
+                        'Nested MultiBlocks are not supported by the .vtkhdf format in VTK 9.4.'
+                        '\nUpgrade to VTK>=9.5 for this functionality.'
+                    )
+                    raise TypeError(msg)
+                if type(None) in mesh.block_types:
+                    msg = (
+                        'Saving None blocks is not supported by the .vtkhdf format in VTK 9.4.'
+                        '\nUpgrade to VTK>=9.5 for this functionality.'
+                    )
+                    raise TypeError(msg)
+
+            supported_block_types: list[type] = [
+                pyvista.PolyData,
+                pyvista.UnstructuredGrid,
+                type(None),
+                pyvista.MultiBlock,
+                pyvista.PartitionedDataSet,
+            ]
+            for id_, name, block in mesh.recursive_iterator('all'):
+                if type(block) not in supported_block_types:
+                    from pyvista.core.filters.composite import _format_nested_index
+
+                    index_fmt = _format_nested_index(id_)
+                    msg = (
+                        f"Block at index {index_fmt} with name '{name}' has type "
+                        f'{block.__class__.__name__!r} '
+                        f'which cannot be saved to the .vtkhdf format.\n'
+                        f'Supported types are: {[typ.__name__ for typ in supported_block_types]}.'
+                    )
+                    raise TypeError(msg)
+
+        def _warn_imagedata_direction_matrix(mesh: pyvista.ImageData) -> None:
+            if not np.allclose(mesh.direction_matrix, np.eye(3)):
+                warnings.warn(
+                    'The direction matrix for ImageData will not be saved using the '
+                    'legacy `.vtk` format.\n'
+                    'See https://gitlab.kitware.com/vtk/vtk/-/issues/19663 \n'
+                    'Use the `.vti` extension instead (XML format).'
+                )
+
+        def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
-            if file_ext == '.ply' and texture is not None:
+            if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
+                mesh_ = cast('pyvista.DataSet', mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
                     writer.SetArrayName(texture)
                     array_name = texture
@@ -171,18 +244,31 @@ class DataObject:
             writer.Write()
 
         if self._WRITERS is None:
-            raise NotImplementedError(
+            msg = (  # type: ignore[unreachable]
                 f'{self.__class__.__name__} writers are not specified,'
-                ' this should be a dict of (file extension: vtkWriter type)',
+                ' this should be a dict of (file extension: vtkWriter type)'
             )
+            raise NotImplementedError(msg)
 
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
         file_ext = file_path.suffix
 
+        if file_ext == '.vtkhdf' and binary is False:
+            msg = '.vtkhdf files can only be written in binary format.'
+            raise ValueError(msg)
+
         # store complex and bitarray types as field data
         self._store_metadata()
+
+        # warn if data will be lost
+        if isinstance(self, pyvista.MultiBlock):
+            _warn_multiblock_nested_field_data(self)
+            if file_ext == '.vtkhdf':
+                _check_multiblock_hdf_types(self)
+        if isinstance(self, pyvista.ImageData) and file_ext == '.vtk':
+            _warn_imagedata_direction_matrix(self)
 
         writer_exts = self._WRITERS.keys()
         if file_ext in writer_exts:
@@ -190,12 +276,13 @@ class DataObject:
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
         else:
-            raise ValueError(
+            msg = (
                 'Invalid file extension for this data type.'
-                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}',
+                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
+            raise ValueError(msg)
 
-    def _store_metadata(self) -> None:
+    def _store_metadata(self: Self) -> None:
         """Store metadata as field data."""
         fdata = self.field_data
         for assoc_name in ('bitarray', 'complex'):
@@ -206,7 +293,7 @@ class DataObject:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
 
-    def _restore_metadata(self) -> None:
+    def _restore_metadata(self: Self) -> None:
         """Restore PyVista metadata from field data.
 
         Metadata is stored using ``_store_metadata`` and contains entries in
@@ -224,17 +311,20 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self):  # pragma: no cover
+    def get_data_range(
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
-        raise NotImplementedError(
-            f'{type(self)} mesh type does not have a `get_data_range` method.',
-        )
+        msg = f'{type(self)} mesh type does not have a `get_data_range` method.'
+        raise NotImplementedError(msg)
 
-    def _get_attrs(self):  # pragma: no cover
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:  # pragma: no cover
         """Return the representation methods (internal helper)."""
-        raise NotImplementedError('Called only by the inherited class')
+        msg = 'Called only by the inherited class'
+        raise NotImplementedError(msg)
 
-    def head(self, display: bool = True, html=None):
+    @_deprecate_positional_args
+    def head(self: Self, display: bool = True, html: bool | None = None) -> str:  # noqa: FBT001, FBT002
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -277,7 +367,7 @@ class DataObject:
                 from IPython.display import display as _display
 
                 _display(HTML(fmt))
-                return None
+                return ''
             return fmt
         # Otherwise return a string that is Python console friendly
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
@@ -287,7 +377,7 @@ class DataObject:
 
         # now make a call on the object to get its attributes as a list of len
         # 2 tuples
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
@@ -297,15 +387,16 @@ class DataObject:
             fmt += row.format('N Arrays:', self.n_arrays)
         return fmt.strip()
 
-    def _repr_html_(self):  # pragma: no cover
+    def _repr_html_(self: Self) -> str:  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.
 
         This includes header details and information about all arrays.
 
         """
-        raise NotImplementedError('Called only by the inherited class')
+        msg = 'Called only by the inherited class'
+        raise NotImplementedError(msg)
 
-    def copy_meta_from(self, *args, **kwargs) -> None:  # pragma: no cover
+    def copy_meta_from(self: Self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
         Intended to be overridden by subclasses.
@@ -321,7 +412,8 @@ class DataObject:
         """
         # called only by the inherited class
 
-    def copy(self, deep: bool = True):
+    @_deprecate_positional_args
+    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
         """Return a copy of the object.
 
         Parameters
@@ -352,13 +444,13 @@ class DataObject:
         newobject = thistype()
 
         if deep:
-            newobject.deep_copy(self)  # type: ignore[arg-type]
+            newobject.deep_copy(self)
         else:
             newobject.shallow_copy(self)
-        newobject.copy_meta_from(self, deep)
+        newobject.copy_meta_from(self, deep=deep)
         return newobject
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self: Self, other: object) -> bool:
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -367,17 +459,20 @@ class DataObject:
             return True
 
         # these attrs use numpy.array_equal
-        equal_attrs = [
-            'verts',  # DataObject
-            'points',  # DataObject
-            'lines',  # DataObject
-            'faces',  # DataObject
-            'cells',  # UnstructuredGrid
-            'celltypes',
-        ]  # UnstructuredGrid
+        if isinstance(self, pyvista.ImageData):
+            equal_attrs = ['extent', 'index_to_physical_matrix']
+        else:
+            equal_attrs = ['points', 'cells']
+            if isinstance(self, pyvista.PolyData):
+                equal_attrs.extend(['verts', 'lines', 'faces', 'strips'])
+            elif isinstance(self, pyvista.UnstructuredGrid):
+                equal_attrs.append('celltypes')
+
         for attr in equal_attrs:
-            if hasattr(self, attr):
-                if not np.array_equal(getattr(self, attr), getattr(other, attr)):
+            # Only check equality for attributes defined by PyVista
+            # (i.e. ignore any default vtk snake_case attributes)
+            if hasattr(self, attr) and not _vtk.is_vtk_attribute(self, attr):
+                if not np.array_equal(getattr(self, attr), getattr(other, attr), equal_nan=True):
                     return False
 
         # these attrs can be directly compared
@@ -389,7 +484,10 @@ class DataObject:
 
         return True
 
-    def add_field_data(self, array: NumpyArray[float], name: str, deep: bool = True):
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
+
+    @_deprecate_positional_args(allowed=['array', 'name'])
+    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -422,9 +520,7 @@ class DataObject:
         Add field data to a ImageData dataset.
 
         >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
-        >>> mesh.add_field_data(
-        ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
-        ... )
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
@@ -432,19 +528,20 @@ class DataObject:
 
         >>> blocks = pv.MultiBlock()
         >>> blocks.append(pv.Sphere())
-        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
+        >>> blocks['cube'] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
 
         """
         if not hasattr(self, 'field_data'):
-            raise NotImplementedError(f'`{type(self)}` does not support field data')
+            msg = f'`{type(self)}` does not support field data'
+            raise NotImplementedError(msg)
 
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:
+    def field_data(self: Self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
@@ -474,7 +571,7 @@ class DataObject:
             association=FieldAssociation.NONE,
         )
 
-    def clear_field_data(self) -> None:
+    def clear_field_data(self: Self) -> None:
         """Remove all field data.
 
         Examples
@@ -492,12 +589,13 @@ class DataObject:
 
         """
         if not hasattr(self, 'field_data'):
-            raise NotImplementedError(f'`{type(self)}` does not support field data')
+            msg = f'`{type(self)}` does not support field data'
+            raise NotImplementedError(msg)
 
         self.field_data.clear()
 
     @property
-    def user_dict(self) -> _SerializedDictArray:
+    def user_dict(self: Self) -> _SerializedDictArray:
         """Set or return a user-specified data dictionary.
 
         The dictionary is stored as a JSON-serialized string as part of the mesh's
@@ -535,10 +633,13 @@ class DataObject:
             not guaranteed, as it's possible that some filters may modify or clear
             field data. Use with caution.
 
+        .. versionadded:: 0.44
+
         Returns
         -------
         UserDict
-            JSON-serialized dict-like object which is subclassed from :py:class:`collections.UserDict`.
+            JSON-serialized dict-like object which is subclassed from
+            :py:class:`collections.UserDict`.
 
         Examples
         --------
@@ -590,10 +691,16 @@ class DataObject:
         return self._user_dict
 
     @user_dict.setter
-    def user_dict(self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]):
+    def user_dict(
+        self: Self,
+        dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None,
+    ) -> None:
         # Setting None removes the field data array
-        if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
-            del self.field_data['_PYVISTA_USER_DICT']
+        if dict_ is None:
+            if hasattr(self, '_user_dict'):
+                del self._user_dict
+            if USER_DICT_KEY in self.field_data.keys():
+                del self.field_data[USER_DICT_KEY]
             return
 
         self._config_user_dict()
@@ -602,25 +709,26 @@ class DataObject:
         elif isinstance(dict_, UserDict):
             self._user_dict.data = dict_.data
         else:
-            raise TypeError(
-                f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
+            msg = (  # type: ignore[unreachable]
+                f'User dict can only be set with type {dict} or {UserDict}.\n'
+                f'Got {type(dict_)} instead.'
             )
+            raise TypeError(msg)
 
-    def _config_user_dict(self) -> None:
+    def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
-        field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):
             # Init
             self._user_dict = _SerializedDictArray()
 
-        if field_name in field_data.keys():
-            if isinstance(array := field_data[field_name], pyvista_ndarray):
+        if USER_DICT_KEY in field_data.keys():
+            if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
-            elif isinstance(array, str) and repr(self._user_dict) != array:
+            elif isinstance(array, str) and repr(self._user_dict) != array:  # type: ignore[unreachable]
                 # Filters may update the field data block separately, e.g.
                 # when copying field data, so we need to capture the new
                 # string and re-init
@@ -632,12 +740,12 @@ class DataObject:
         # Set field data array directly instead of calling 'set_array'
         # This skips the call to '_prepare_array' which will otherwise
         # do all kinds of casting/conversions and mangle this array
-        self._user_dict.SetName(field_name)
+        self._user_dict.SetName(USER_DICT_KEY)
         field_data.VTKObject.AddArray(self._user_dict)
         field_data.VTKObject.Modified()
 
     @property
-    def memory_address(self) -> str:
+    def memory_address(self: Self) -> str:
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -656,7 +764,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString('')
 
     @property
-    def actual_memory_size(self) -> int:
+    def actual_memory_size(self: Self) -> int:
         """Return the actual size of the dataset object.
 
         Returns
@@ -675,12 +783,12 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: _vtk.vtkDataSet) -> None:
+    def copy_structure(self: Self, dataset: Self) -> None:
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet
+        dataset : :vtk:`vtkDataSet`
             Dataset to copy the geometry and topology from.
 
         Examples
@@ -694,7 +802,7 @@ class DataObject:
         """
         self.CopyStructure(dataset) if dataset is not self else None
 
-    def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
+    def copy_attributes(self: Self, dataset: Self) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
@@ -714,7 +822,9 @@ class DataObject:
         """
         self.CopyAttributes(dataset)
 
-    def __getstate__(self):
+    def __getstate__(  # type: ignore[return]  # noqa: RET503
+        self: Self,
+    ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
         pickle_format = pyvista.PICKLE_FORMAT
         if pickle_format == 'vtk':
@@ -722,9 +832,11 @@ class DataObject:
         elif pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
         # Invalid format, use the setter to raise an error
-        pyvista.set_pickle_format(pickle_format)  # noqa:  RET503
+        pyvista.set_pickle_format(pickle_format)
 
-    def _serialize_vtk_pickle_format(self):
+    def _serialize_vtk_pickle_format(
+        self: Self,
+    ) -> tuple[FunctionType, tuple[dict[str, Any]]]:
         # Note: The serialized state has format: ( function, (dict,) )
         serialized = _vtk.serialize_VTK_data_object(self)
 
@@ -736,12 +848,13 @@ class DataObject:
         # the same format returned by the vtk serializer.
         return serialized
 
-    def _serialize_pyvista_pickle_format(self):
-        """Support pickle by serializing the VTK object data to something which can be pickled natively.
+    def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
+        """Support pickle by serializing the VTK object data.
 
-        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
-        - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
-        - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
+        The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT`
+        (case-insensitive).
+        - If ``'xml'``, the data is serialized as an XML-formatted string.
+        - If ``'legacy'``, the data is serialized to bytes in VTK's binary format.
 
         .. note::
 
@@ -750,15 +863,17 @@ class DataObject:
 
         """
         if isinstance(self, pyvista.MultiBlock):
-            raise TypeError(
+            msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
                 "\nUse `pyvista.PICKLE_FORMAT='vtk'`."
             )
+            raise TypeError(msg)
         state = self.__dict__.copy()
 
         if pyvista.PICKLE_FORMAT.lower() == 'xml':
-            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
-            # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+            # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
+            # not pass all settings down to the sub-writers. Until this is fixed, use the
+            # dataset-specific writers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             writers = {
                 _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
@@ -771,12 +886,13 @@ class DataObject:
 
             for parent_type, writer_type in writers.items():
                 if isinstance(self, parent_type):
-                    writer = writer_type()
+                    writer = writer_type()  # type: ignore[unreachable]
                     break
             else:
-                raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+                msg = f'Cannot pickle dataset of type {self.GetDataObjectType()}'
+                raise TypeError(msg)
 
-            writer.SetInputDataObject(self)
+            writer.SetInputDataObject(self)  # type: ignore[unreachable]
             writer.SetWriteToOutputString(True)
             writer.SetDataModeToBinary()
             writer.SetCompressorTypeToNone()
@@ -784,24 +900,24 @@ class DataObject:
             to_serialize = writer.GetOutputString()
 
         elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
-            writer = _vtk.vtkDataSetWriter()  # type: ignore[assignment]
+            writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
-            writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
+            writer.SetFileTypeToBinary()
             writer.Write()
-            to_serialize = writer.GetOutputStdString()  # type: ignore[attr-defined]
+            to_serialize = writer.GetOutputStdString()
 
         state['vtk_serialized'] = to_serialize
 
-        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
-        # processes
+        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT`
+        # is not shared between processes
         state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self: Self, state: Any) -> None:
         """Support unpickle."""
 
-        def _is_vtk_format(state_):
+        def _is_vtk_format(state_: Any) -> bool:
             # Note: The vtk state has format ( function, (dict,) )
             return (
                 isinstance(state_, tuple)
@@ -811,7 +927,7 @@ class DataObject:
                 and isinstance(state_[1][0], dict)
             )
 
-        def _is_pyvista_format(state_):
+        def _is_pyvista_format(state_: Any) -> bool:
             return isinstance(state_, dict) and 'vtk_serialized' in state_
 
         if _is_vtk_format(state):
@@ -819,11 +935,12 @@ class DataObject:
         elif _is_pyvista_format(state):
             self._unserialize_pyvista_pickle_format(state)
         else:
-            raise RuntimeError(
-                f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
-            )
+            msg = f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
+            raise RuntimeError(msg)
 
-    def _unserialize_vtk_pickle_format(self, state) -> None:
+    def _unserialize_vtk_pickle_format(
+        self: Self, state: tuple[FunctionType, tuple[dict[str, Any]]]
+    ) -> None:
         """Support unpickle of VTK's format."""
         # The vtk state has format: ( function, (dict,) )
         unserialize_func = state[0]
@@ -832,7 +949,7 @@ class DataObject:
         obj = unserialize_func(state_dict)
         self.deep_copy(obj)
 
-    def _unserialize_pyvista_pickle_format(self, state):
+    def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
         """Support unpickle of PyVista 'xml' and 'legacy' formats.
 
         .. note::
@@ -849,8 +966,9 @@ class DataObject:
         self.__dict__.update(state)
 
         if pickle_format.lower() == 'xml':
-            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
-            # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+            # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a
+            # bug where it does not pass all settings down to the sub-readers.
+            # Until this is fixed, use the dataset-specific readers
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
             readers = {
                 _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
@@ -863,26 +981,32 @@ class DataObject:
 
             for parent_type, reader_type in readers.items():
                 if isinstance(self, parent_type):
-                    reader = reader_type()
+                    reader = reader_type()  # type: ignore[unreachable]
                     break
             else:
-                raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+                msg = f'Cannot unpickle dataset of type {self.GetDataObjectType()}'
+                raise TypeError(msg)
 
-            reader.ReadFromInputStringOn()
+            reader.ReadFromInputStringOn()  # type: ignore[unreachable]
             reader.SetInputString(vtk_serialized)
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = _vtk.vtkDataSetReader()  # type: ignore[assignment]
+            reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
-                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[attr-defined]
+                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]
             elif isinstance(vtk_serialized, str):
                 reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        mesh = wrap(reader.GetOutput())  # type: ignore[attr-defined]
+        mesh = wrap(reader.GetOutput())
 
         # copy data
-        self.copy_structure(mesh)
-        self.copy_attributes(mesh)
+        self.copy_structure(mesh)  # type: ignore[arg-type]
+        self.copy_attributes(mesh)  # type: ignore[arg-type]
+
+    @property
+    def is_empty(self) -> bool:
+        """Return ``True`` if the object is empty."""
+        raise NotImplementedError

@@ -9,12 +9,14 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -27,7 +29,7 @@ from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
-class _BaseMapper(_vtk.vtkAbstractMapper):
+class _BaseMapper(_BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
     _new_attr_exceptions = ('_theme',)
@@ -56,10 +58,27 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> import pyvista as pv
         >>> mapper = pv.DataSetMapper(dataset=pv.Cube())
         >>> mapper.bounds
-        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
-        return BoundsTuple(*self.GetBounds())  # type: ignore[attr-defined]
+        return BoundsTuple(*self.GetBounds())
+
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center of mapper.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of the active renderer.
+
+        """
+        return self.GetCenter()
 
     def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
@@ -104,9 +123,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         set to its default value of ``(0.0, 1.0)``.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.scalar_range
@@ -114,11 +131,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> pl.close()
 
         """
-        return self.GetScalarRange()  # type: ignore[attr-defined]
+        return self.GetScalarRange()
 
     @scalar_range.setter
     def scalar_range(self, clim) -> None:
-        self.SetScalarRange(*clim)  # type: ignore[attr-defined]
+        self.SetScalarRange(*clim)
 
     @property
     def lookup_table(self) -> pyvista.LookupTable:  # numpydoc ignore=RT01
@@ -131,9 +148,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(
-        ...     mesh, scalars=mesh.points[:, 2], cmap='bwr'
-        ... )
+        >>> actor = pl.add_mesh(mesh, scalars=mesh.points[:, 2], cmap='bwr')
         >>> actor.mapper.lookup_table
         LookupTable (...)
           Table Range:                (-0.5, 0.5)
@@ -147,20 +162,18 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Return the lookup table of a composite dataset mapper.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.lookup_table  # doctest:+SKIP
         <vtkmodules.vtkCommonCore.vtkLookupTable(...) at ...>
 
         """
-        return self.GetLookupTable()  # type: ignore[attr-defined]
+        return self.GetLookupTable()
 
     @lookup_table.setter
     def lookup_table(self, table) -> None:
-        self.SetLookupTable(table)  # type: ignore[attr-defined]
+        self.SetLookupTable(table)
 
     @property
     def color_mode(self) -> str:  # numpydoc ignore=RT01
@@ -174,7 +187,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         * ``'map'`` - All scalar data will be mapped through the lookup table.
 
         """
-        mode = self.GetColorModeAsString().lower()  # type: ignore[attr-defined]
+        mode = self.GetColorModeAsString().lower()
         if mode == 'mapscalars':
             return 'map'
         return 'direct'
@@ -182,11 +195,12 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     @color_mode.setter
     def color_mode(self, value: str):
         if value == 'direct':
-            self.SetColorModeToDirectScalars()  # type: ignore[attr-defined]
+            self.SetColorModeToDirectScalars()
         elif value == 'map':
-            self.SetColorModeToMapScalars()  # type: ignore[attr-defined]
+            self.SetColorModeToMapScalars()
         else:
-            raise ValueError('Color mode must be either "default", "direct" or "map"')
+            msg = 'Color mode must be either "default", "direct" or "map"'
+            raise ValueError(msg)
 
     @property
     def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
@@ -201,9 +215,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Disable interpolation before mapping.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -228,15 +240,15 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> mapper.interpolate_before_map = True
         >>> pl.show()
 
-        See :ref:`interpolate_before_mapping_example` for additional
+        See :ref:`interpolate_before_map_example` for additional
         explanation regarding this attribute.
 
         """
-        return bool(self.GetInterpolateScalarsBeforeMapping())  # type: ignore[attr-defined]
+        return bool(self.GetInterpolateScalarsBeforeMapping())
 
     @interpolate_before_map.setter
     def interpolate_before_map(self, value: bool) -> None:
-        self.SetInterpolateScalarsBeforeMapping(value)  # type: ignore[attr-defined]
+        self.SetInterpolateScalarsBeforeMapping(value)
 
     @property
     def array_name(self) -> str:  # numpydoc ignore=RT01
@@ -256,12 +268,12 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> pl.close()
 
         """
-        return self.GetArrayName()  # type: ignore[attr-defined]
+        return self.GetArrayName()
 
     @array_name.setter
     def array_name(self, name: str) -> None:
         """Return or set the array name or number and component to color by."""
-        self.SetArrayName(name)  # type: ignore[attr-defined]
+        self.SetArrayName(name)
 
     @property
     def scalar_map_mode(self) -> str:  # numpydoc ignore=RT01
@@ -273,9 +285,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         active scalars to point data.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -296,7 +306,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             'UseCellFieldData': 'cell_field',
             'UseFieldData': 'field',
         }
-        return vtk_to_pv[self.GetScalarModeAsString()]  # type: ignore[attr-defined]
+        return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
     def scalar_map_mode(self, scalar_mode: str | FieldAssociation):
@@ -304,22 +314,23 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()
         if scalar_mode == 'default':
-            self.SetScalarModeToDefault()  # type: ignore[attr-defined]
+            self.SetScalarModeToDefault()
         elif scalar_mode == 'point':
-            self.SetScalarModeToUsePointData()  # type: ignore[attr-defined]
+            self.SetScalarModeToUsePointData()
         elif scalar_mode == 'cell':
-            self.SetScalarModeToUseCellData()  # type: ignore[attr-defined]
+            self.SetScalarModeToUseCellData()
         elif scalar_mode == 'point_field':
-            self.SetScalarModeToUsePointFieldData()  # type: ignore[attr-defined]
+            self.SetScalarModeToUsePointFieldData()
         elif scalar_mode == 'cell_field':
-            self.SetScalarModeToUseCellFieldData()  # type: ignore[attr-defined]
+            self.SetScalarModeToUseCellFieldData()
         elif scalar_mode == 'field':
-            self.SetScalarModeToUseFieldData()  # type: ignore[attr-defined]
+            self.SetScalarModeToUseFieldData()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".',
+                '"default", "point", "cell", "point_field", "cell_field" or "field".'
             )
+            raise ValueError(msg)
 
     @property
     def scalar_visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -340,9 +351,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Show that scalar visibility is ``True``.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -352,11 +361,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> pl.close()
 
         """
-        return bool(self.GetScalarVisibility())  # type: ignore[attr-defined]
+        return bool(self.GetScalarVisibility())
 
     @scalar_visibility.setter
     def scalar_visibility(self, value: bool) -> None:
-        self.SetScalarVisibility(value)  # type: ignore[attr-defined]
+        self.SetScalarVisibility(value)
 
     def update(self) -> None:
         """Update this mapper."""
@@ -365,7 +374,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
 @no_new_attr
 class _DataSetMapper(_BaseMapper):
-    """Base wrapper for _vtk.vtkDataSetMapper.
+    """Base wrapper for :vtk:`vtkDataSetMapper`.
 
     Parameters
     ----------
@@ -392,7 +401,7 @@ class _DataSetMapper(_BaseMapper):
     @property
     def dataset(self) -> pyvista.core.dataset.DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))  # type: ignore[attr-defined]
+        return cast('Optional[pyvista.DataSet]', wrap(_mapper_get_data_set_input(self)))
 
     @dataset.setter
     def dataset(
@@ -415,14 +424,15 @@ class _DataSetMapper(_BaseMapper):
         if self.dataset is not None:
             self.dataset.point_data.pop('__rgba__', None)
             self._configure_scalars_mode(
-                self.lookup_table(self.dataset.active_scalars),
-                '__rgba__',
-                self.scalar_map_mode,
-                True,
+                scalars=self.lookup_table(self.dataset.active_scalars),
+                scalars_name='__rgba__',
+                preference=self.scalar_map_mode,
+                direct_scalars_color_mode=True,
             )
 
     def _configure_scalars_mode(
         self,
+        *,
         scalars,
         scalars_name,
         preference,
@@ -465,7 +475,7 @@ class _DataSetMapper(_BaseMapper):
                     scalars_name not in self.dataset.point_data
                     or scalars_name == pyvista.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.point_data.set_array(scalars, scalars_name, False)
+                    self.dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
                 self.dataset.active_scalars_name = scalars_name
                 self.scalar_map_mode = 'point'
             elif use_cells:
@@ -473,7 +483,7 @@ class _DataSetMapper(_BaseMapper):
                     scalars_name not in self.dataset.cell_data
                     or scalars_name == pyvista.DEFAULT_SCALARS_NAME
                 ):
-                    self.dataset.cell_data.set_array(scalars, scalars_name, False)
+                    self.dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
                 self.dataset.active_scalars_name = scalars_name
                 self.scalar_map_mode = 'cell'
             else:
@@ -481,7 +491,8 @@ class _DataSetMapper(_BaseMapper):
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
-    def set_scalars(
+    @_deprecate_positional_args(allowed=['scalars', 'scalars_name'])
+    def set_scalars(  # noqa: PLR0917
         self,
         scalars,
         scalars_name,
@@ -490,16 +501,16 @@ class _DataSetMapper(_BaseMapper):
         rgb=None,
         component=None,
         preference='point',
-        custom_opac: bool = False,
+        custom_opac: bool = False,  # noqa: FBT001, FBT002
         annotations=None,
-        log_scale: bool = False,
+        log_scale: bool = False,  # noqa: FBT001, FBT002
         nan_color=None,
         above_color=None,
         below_color=None,
         cmap=None,
-        flip_scalars: bool = False,
+        flip_scalars: bool = False,  # noqa: FBT001, FBT002
         opacity=None,
-        categories: bool = False,
+        categories: bool | int = False,  # noqa: FBT001, FBT002
         clim=None,
     ):
         """Set the scalars on this mapper.
@@ -648,7 +659,8 @@ class _DataSetMapper(_BaseMapper):
                 or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
                 if not isinstance(component, (int, type(None))):
-                    raise TypeError('component must be either None or an integer')
+                    msg = 'component must be either None or an integer'
+                    raise TypeError(msg)
                 if component is None:
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
                     scalars_name = f'{scalars_name}-normed'
@@ -656,10 +668,11 @@ class _DataSetMapper(_BaseMapper):
                     scalars = np.array(scalars[:, component]).copy()
                     scalars_name = f'{scalars_name}-{component}'
                 else:
-                    raise ValueError(
+                    msg = (
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}',
+                        f'dimensionality of the scalars array: {scalars.shape[1]}'
                     )
+                    raise ValueError(msg)
             else:
                 scalars = scalars.ravel()
 
@@ -728,10 +741,10 @@ class _DataSetMapper(_BaseMapper):
             self.lookup_table.log_scale = log_scale
 
         self._configure_scalars_mode(
-            scalars,
-            scalars_name,
-            preference,
-            rgb or custom_opac,
+            scalars=scalars,
+            scalars_name=scalars_name,
+            preference=preference,
+            direct_scalars_color_mode=rgb or custom_opac,
         )
 
         if isinstance(self, PointGaussianMapper):
@@ -739,7 +752,10 @@ class _DataSetMapper(_BaseMapper):
 
     @property
     def cmap(self) -> str | None:  # numpydoc ignore=RT01
-        """Colormap assigned to this mapper."""
+        """Colormap assigned to this mapper.
+
+        See :ref:`named_colormaps` for supported colormaps.
+        """
         return self._cmap
 
     @property
@@ -777,11 +793,9 @@ class _DataSetMapper(_BaseMapper):
         >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
 
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     surface, smooth_shading=True, split_sharp_edges=True
-        ... )
+        >>> _ = plotter.add_mesh(surface, smooth_shading=True, split_sharp_edges=True)
         >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
-        >>> actor.mapper.resolve = "polygon_offset"
+        >>> actor.mapper.resolve = 'polygon_offset'
         >>> plotter.show()
 
         """
@@ -790,20 +804,24 @@ class _DataSetMapper(_BaseMapper):
             _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
             _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_zbuffer',
         }
-        return vtk_to_pv[self.GetResolveCoincidentTopology()]  # type: ignore[attr-defined]
+        return vtk_to_pv[self.GetResolveCoincidentTopology()]
 
     @resolve.setter
     def resolve(self, resolve):
         if resolve == 'off':
-            self.SetResolveCoincidentTopologyToOff()  # type: ignore[attr-defined]
+            self.SetResolveCoincidentTopologyToOff()
         elif resolve == 'polygon_offset':
-            self.SetResolveCoincidentTopologyToPolygonOffset()  # type: ignore[attr-defined]
+            self.SetResolveCoincidentTopologyToPolygonOffset()
         elif resolve == 'shift_zbuffer':
-            self.SetResolveCoincidentTopologyToShiftZBuffer()  # type: ignore[attr-defined]
+            self.SetResolveCoincidentTopologyToShiftZBuffer()
         else:
-            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
+            msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+            raise ValueError(msg)
 
-    def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
+    @_deprecate_positional_args(allowed=['opacity'])
+    def set_custom_opacity(  # noqa: PLR0917
+        self, opacity, color, n_colors, preference='point'
+    ):
         """Set custom opacity.
 
         Parameters
@@ -829,20 +847,25 @@ class _DataSetMapper(_BaseMapper):
         elif opacity.size == self.dataset.n_cells:  # type: ignore[union-attr]
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
         else:  # pragma: no cover
-            raise ValueError(
+            msg = (
                 f'Opacity array size ({opacity.size}) does not equal '
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
                 f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
             )
+            raise ValueError(msg)
 
-        default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
+        default_color = (
+            self._theme.color if self._theme is not None else pyvista.global_theme.color
+        )
 
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
 
         self.color_mode = 'direct'
         self.lookup_table.n_values = n_colors
-        self._configure_scalars_mode(rgba, '', preference, True)
+        self._configure_scalars_mode(
+            scalars=rgba, scalars_name='', preference=preference, direct_scalars_color_mode=True
+        )
 
     def __repr__(self):
         """Representation of the mapper."""
@@ -863,7 +886,7 @@ class _DataSetMapper(_BaseMapper):
 
 
 class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
-    """Wrap _vtk.vtkDataSetMapper.
+    """Wrap :vtk:`vtkDataSetMapper`.
 
     Parameters
     ----------
@@ -897,7 +920,7 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
 
 @no_new_attr
 class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
-    """Wrap vtkPointGaussianMapper.
+    """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
     ----------
@@ -984,13 +1007,15 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     @scale_array.setter
     def scale_array(self, name: str):
         if not self.dataset:  # pragma: no cover
-            raise RuntimeError('Missing dataset.')
+            msg = 'Missing dataset.'
+            raise RuntimeError(msg)
         if name not in self.dataset.point_data:
             available_arrays = ', '.join(self.dataset.point_data.keys())
-            raise KeyError(
+            msg = (
                 f'Point array "{name}" does not exist. '
-                f'Available point arrays are: {available_arrays}',
+                f'Available point arrays are: {available_arrays}'
             )
+            raise KeyError(msg)
 
         self.scale_factor = 1.0
         self.SetScaleArray(name)
@@ -1068,8 +1093,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
-        # GetInputAsDataSet unavailable on volume mappers
-        return wrap(self.GetDataSetInput())  # type: ignore[attr-defined]
+        return wrap(_mapper_get_data_set_input(self))
 
     @dataset.setter
     def dataset(
@@ -1110,62 +1134,120 @@ class _BaseVolumeMapper(_BaseMapper):
         * ``"additive"``
 
         Also accepts integer values corresponding to
-        ``vtk.vtkVolumeMapper.BlendModes``. For example
-        ``vtk.vtkVolumeMapper.COMPOSITE_BLEND``.
+        :vtk:`vtkVolumeMapper.BlendModes`. For example
+        :vtk:`vtkVolumeMapper.COMPOSITE_BLEND`.
 
         """
-        value = self.GetBlendMode()  # type: ignore[attr-defined]
-        mode = {0: 'composite', 1: 'maximum', 2: 'minimum', 3: 'average', 4: 'additive'}.get(value)
+        value = self.GetBlendMode()
+        mode = {
+            0: 'composite',
+            1: 'maximum',
+            2: 'minimum',
+            3: 'average',
+            4: 'additive',
+        }.get(value)
         if mode is None:  # pragma: no cover
-            raise NotImplementedError(f'Unsupported blend mode return value {value}')
+            msg = f'Unsupported blend mode return value {value}'
+            raise NotImplementedError(msg)
         return mode
 
     @blend_mode.setter
     def blend_mode(self, value: str | int):
         if isinstance(value, int):
-            self.SetBlendMode(value)  # type: ignore[attr-defined]
+            self.SetBlendMode(value)
         elif isinstance(value, str):
             value = value.lower()
             if value in ['additive', 'add', 'sum']:
-                self.SetBlendModeToAdditive()  # type: ignore[attr-defined]
+                self.SetBlendModeToAdditive()
             elif value in ['average', 'avg', 'average_intensity']:
-                self.SetBlendModeToAverageIntensity()  # type: ignore[attr-defined]
+                self.SetBlendModeToAverageIntensity()
             elif value in ['composite', 'comp']:
-                self.SetBlendModeToComposite()  # type: ignore[attr-defined]
+                self.SetBlendModeToComposite()
             elif value in ['maximum', 'max', 'maximum_intensity']:
-                self.SetBlendModeToMaximumIntensity()  # type: ignore[attr-defined]
+                self.SetBlendModeToMaximumIntensity()
             elif value in ['minimum', 'min', 'minimum_intensity']:
-                self.SetBlendModeToMinimumIntensity()  # type: ignore[attr-defined]
+                self.SetBlendModeToMinimumIntensity()
             else:
-                raise ValueError(
+                msg = (
                     f'Blending mode {value!r} invalid. '
                     'Please choose either "additive", '
-                    '"composite", "minimum" or "maximum".',
+                    '"composite", "minimum" or "maximum".'
                 )
+                raise ValueError(msg)
         else:
-            raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
+            msg = f'`blend_mode` should be either an int or str, not `{type(value)}`'  # type: ignore[unreachable]
+            raise TypeError(msg)
 
     def __del__(self) -> None:
-        del self._lut
+        if hasattr(self, '_lut'):
+            del self._lut
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
-    """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
 
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
-    """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
-    """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
+    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
 
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
-    """Wrap _vtk.vtkSmartVolumeMapper."""
+    """Wrap :vtk:`vtkSmartVolumeMapper`."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+        self.InteractiveAdjustSampleDistancesOff()
 
 
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
-    """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
+    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`."""
+
+    def __init__(self, theme=None) -> None:
+        """Initialize this class."""
+        super().__init__(theme=theme)
+        self.AutoAdjustSampleDistancesOff()
+
+
+def _mapper_has_data_set_input(mapper):
+    """Check if mapper has a data set input using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
+    return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
+
+
+def _mapper_get_data_set_input(mapper):
+    """Get data set input from mapper using the appropriate method.
+
+    Some mappers use 'GetDataSetInput', others use 'GetInputAsDataSet'. This has
+    been standardized to 'GetDataSetInput' in VTK >= 9.5.
+    """
+    return (
+        mapper.GetDataSetInput()
+        if hasattr(mapper, 'GetDataSetInput')
+        else mapper.GetInputAsDataSet()
+    )

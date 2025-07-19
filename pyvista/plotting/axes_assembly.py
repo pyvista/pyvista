@@ -15,11 +15,15 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import BoundsTuple
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
+from pyvista.core.utilities.misc import _NameMixin
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -28,7 +32,7 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
     import sys
 
@@ -74,7 +78,8 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+@abstract_class
+class _XYZAssembly(_vtk.DisableVtkSnakeCase, _Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -98,12 +103,15 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         origin: VectorLike[float],
         scale: float | VectorLike[float],
         user_matrix: MatrixLike[float] | None,
+        name: str | None = None,
     ):
         super().__init__()
 
         def _make_xyz_tuple(xyz):
             def _get_tuple(actor_or_actors):
-                return actor_or_actors if isinstance(actor_or_actors, tuple) else (actor_or_actors,)
+                return (
+                    actor_or_actors if isinstance(actor_or_actors, tuple) else (actor_or_actors,)
+                )
 
             actor_tuples = [_get_tuple(actors) for actors in xyz]
             return _XYZTuple(*actor_tuples)
@@ -134,7 +142,10 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             self.y_label = self.DEFAULT_LABELS.y if y_label is None else y_label
             self.z_label = self.DEFAULT_LABELS.z if z_label is None else z_label
         else:
-            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+            msg = (
+                "Cannot initialize '{}' and 'labels' properties together. "
+                'Specify one or the other, not both.'
+            )
             if x_label is not None:
                 raise ValueError(msg.format('x_label'))
             if y_label is not None:
@@ -147,16 +158,18 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
+        self.position = position
+        self.orientation = orientation
         self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
+        self.origin = origin
+        self.user_matrix = user_matrix
+
+        self._name = name  # type: ignore[assignment]
 
     @property
     def parts(self):
         collection = self.GetParts()
-        return tuple([collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())])
+        return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 
     @property
     def _label_actor_iterator(self) -> Iterator[Label]:
@@ -170,7 +183,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
                 part.user_matrix, new_matrix
             ):
-                part.user_matrix = new_matrix  # type: ignore[method-assign]
+                part.user_matrix = new_matrix
 
     def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         return BoundsTuple(*self.GetBounds())
@@ -342,7 +355,7 @@ class AxesAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
@@ -351,8 +364,20 @@ class AxesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    See Also
+    --------
+    AxesAssemblySymmetric
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------
@@ -394,9 +419,7 @@ class AxesAssembly(_XYZAssembly):
 
     Position and orient the axes in space.
 
-    >>> axes = pv.AxesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
-    ... )
+    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -449,6 +472,7 @@ class AxesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -476,6 +500,7 @@ class AxesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -490,10 +515,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -691,7 +713,8 @@ class AxesAssembly(_XYZAssembly):
     def z_color(self, color: ColorLike | Sequence[ColorLike]):
         self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
-    def set_actor_prop(
+    @_deprecate_positional_args(allowed=['name', 'value'])
+    def set_actor_prop(  # noqa: PLR0917
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],
@@ -738,51 +761,88 @@ class AxesAssembly(_XYZAssembly):
         >>> import pyvista as pv
         >>> axes_assembly = pv.AxesAssembly()
         >>> axes_assembly.set_actor_prop('ambient', 0.7)
-        >>> axes_assembly.get_actor_prop('ambient')
-        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+        >>> axes_assembly.get_actor_prop('ambient')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.7,
+                       y_shaft=0.7,
+                       z_shaft=0.7,
+                       x_tip=0.7,
+                       y_tip=0.7,
+                       z_tip=0.7)
 
         Set the property again, but this time set separate values for each part.
 
         >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
         >>> axes_assembly.set_actor_prop('ambient', values)
-        >>> axes_assembly.get_actor_prop('ambient')
-        _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
+        >>> axes_assembly.get_actor_prop('ambient')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.1,
+                       y_shaft=0.2,
+                       z_shaft=0.3,
+                       x_tip=0.4,
+                       y_tip=0.5,
+                       z_tip=0.6)
 
         Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
         for both the axis shaft and tip by default.
 
         >>> axes_assembly.set_actor_prop('opacity', 0.5, axis='x')
-        >>> axes_assembly.get_actor_prop('opacity')
-        _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
+        >>> axes_assembly.get_actor_prop('opacity')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.5,
+                       y_shaft=1.0,
+                       z_shaft=1.0,
+                       x_tip=0.5,
+                       y_tip=1.0,
+                       z_tip=1.0)
 
         Set the property again, but this time set separate values for the shaft and tip.
 
         >>> axes_assembly.set_actor_prop('opacity', [0.3, 0.7], axis='x')
-        >>> axes_assembly.get_actor_prop('opacity')
-        _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
+        >>> axes_assembly.get_actor_prop('opacity')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=0.3,
+                       y_shaft=1.0,
+                       z_shaft=1.0,
+                       x_tip=0.7,
+                       y_tip=1.0,
+                       z_tip=1.0)
 
         Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
         is set for all axes by default.
 
         >>> axes_assembly.set_actor_prop('show_edges', True, part='shaft')
-        >>> axes_assembly.get_actor_prop('show_edges')
-        _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+        >>> axes_assembly.get_actor_prop(
+        ...     'show_edges'
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=True,
+                       y_shaft=True,
+                       z_shaft=True,
+                       x_tip=False,
+                       y_tip=False,
+                       z_tip=False)
 
         Set the property again, but this time set separate values for each shaft.
 
         >>> axes_assembly.set_actor_prop(
         ...     'show_edges', [True, False, True], part='shaft'
         ... )
-        >>> axes_assembly.get_actor_prop('show_edges')
-        _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+        >>> axes_assembly.get_actor_prop(
+        ...     'show_edges'
+        ... )  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft=True,
+                       y_shaft=False,
+                       z_shaft=True,
+                       x_tip=False,
+                       y_tip=False,
+                       z_tip=False)
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_assembly.set_actor_prop(
-        ...     'style', 'wireframe', axis='x', part='shaft'
-        ... )
-        >>> axes_assembly.get_actor_prop('style')
-        _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
+        >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
+        >>> axes_assembly.get_actor_prop('style')  # doctest: +NORMALIZE_WHITESPACE
+        _AxesPropTuple(x_shaft='Wireframe',
+                       y_shaft='Surface',
+                       z_shaft='Surface',
+                       x_tip='Surface',
+                       y_tip='Surface',
+                       z_tip='Surface')
 
         """
         actors = self._filter_part_actors(axis=axis, part=part)
@@ -808,9 +868,11 @@ class AxesAssembly(_XYZAssembly):
             values = [value] * len(actors)
 
         if len(values) != len(actors):
-            raise ValueError(
-                f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
+            msg = (
+                f'Number of values ({len(values)}) in {value} must match the number of '
+                f"actors ({len(actors)}) for axis '{axis}' and part '{part}'"
             )
+            raise ValueError(msg)
 
         # Sequence is valid, now set values
         for actor, val in zip(actors, values):
@@ -854,11 +916,13 @@ class AxesAssembly(_XYZAssembly):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
         valid_axis_official = valid_axis[3:]
         if axis not in valid_axis:
-            raise ValueError(f'Axis must be one of {valid_axis_official}.')
+            msg = f'Axis must be one of {valid_axis_official}.'
+            raise ValueError(msg)
         valid_part = [0, 1, 'shaft', 'tip', 'all']
         valid_part_official = valid_part[2:]
         if part not in valid_part:
-            raise ValueError(f'Part must be one of {valid_part_official}.')
+            msg = f'Part must be one of {valid_part_official}.'
+            raise ValueError(msg)
 
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
@@ -902,45 +966,6 @@ def _validate_label_sequence(labels: Sequence[str], n_labels: int | Sequence[int
     _validation.check_iterable_items(labels, str, name=name)
     _validation.check_length(labels, exact_length=n_labels, name=name)
     return labels
-
-
-def _validate_color_sequence(
-    color: ColorLike | Sequence[ColorLike],
-    n_colors: int | None = None,
-) -> tuple[Color, ...]:
-    """Validate a color sequence.
-
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
-    For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
-
-    If `n_colors` is None, no broadcasting or length-checking is performed.
-    """
-    try:
-        # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
-        n_colors = 1 if n_colors is None else n_colors
-        return tuple(color_list * n_colors)
-    except ValueError:
-        if isinstance(color, (tuple, list)):
-            try:
-                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
-                if len(color_list) == 1:
-                    n_colors = 1 if n_colors is None else n_colors
-                    color_list = color_list * n_colors
-
-                # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
-                    return tuple(color_list)
-            except ValueError:
-                pass
-    raise ValueError(
-        f'Invalid color(s):\n'
-        f'\t{color}\n'
-        f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
-    )
 
 
 class AxesAssemblySymmetric(AxesAssembly):
@@ -1007,7 +1032,7 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
@@ -1016,8 +1041,20 @@ class AxesAssemblySymmetric(AxesAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    See Also
+    --------
+    AxesAssembly
+
+    :ref:`axes_objects_example`
+        Example showing different axes objects.
 
     Examples
     --------
@@ -1050,7 +1087,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     only show text for the positive axes.
 
     >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -1081,6 +1118,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -1109,6 +1147,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -1151,7 +1190,8 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     @labels.setter
     def labels(
-        self, labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
+        self,
+        labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str],
     ):
         valid_labels = _validate_label_sequence(labels, n_labels=[3, 6], name='labels')
         if len(valid_labels) == 3:
@@ -1278,7 +1318,11 @@ class AxesAssemblySymmetric(AxesAssembly):
 
         # Update minus labels
         label_position = self.label_position
-        label_position_minus = (-label_position[0], -label_position[1], -label_position[2])
+        label_position_minus = (
+            -label_position[0],
+            -label_position[1],
+            -label_position[2],
+        )
         labels_minus = self._label_actors_symmetric
         vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
         for label, position in zip(labels_minus, vector_position_minus):
@@ -1341,13 +1385,13 @@ class PlanesAssembly(_XYZAssembly):
 
     label_offset : float | VectorLike[float], optional
         Vertical offset of the text labels. The offset is proportional to
-        the :attr:`length` of the assembly. Positive values move the labels away
+        the :attr:`~pyvista.Prop3D.length` of the assembly. Positive values move the labels away
         from the center; negative values move them towards it.
 
     label_size : int, default: 50
         Size of the text labels. If :attr:`label_mode` is ``'2D'``, this is the
         font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
-        proportional to the :attr:`length` of the assembly.
+        proportional to the :attr:`~pyvista.Prop3D.length` of the assembly.
 
     label_mode : '2D' | '3D', default: '2D'
         Mode to use for text labels. In 2D mode, the label actors are always visible
@@ -1379,7 +1423,7 @@ class PlanesAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the assembly. This is the point about which all rotations take place.
-        The rotations are defined by the :attr:`orientation`.
+        The rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the assembly.
@@ -1387,6 +1431,11 @@ class PlanesAssembly(_XYZAssembly):
     user_matrix : MatrixLike[float], optional
         A 4x4 transformation matrix applied to the assembly. Defaults to the identity
         matrix. The user matrix is the last transformation applied to the actor.
+
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.OrthogonalPlanesSource`.
@@ -1490,6 +1539,7 @@ class PlanesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
         # Init plane actors
@@ -1530,12 +1580,13 @@ class PlanesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
 
         self.opacity = opacity  # type: ignore[assignment]
         self.label_mode = label_mode
         self.label_offset = label_offset
-        self.label_edge = label_edge  # type: ignore[assignment]
+        self.label_edge = label_edge
 
         # Set default properties
         for actor in self._plane_actors:
@@ -1552,10 +1603,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
@@ -1745,7 +1793,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: int | VectorLike[int] | None):
+    def label_position(self, position: int | VectorLike[int]):
         self._label_position = _validation.validate_array3(
             position,
             broadcast=True,
@@ -1805,7 +1853,11 @@ class PlanesAssembly(_XYZAssembly):
             else _validate_label_sequence(edge, n_labels=3, name='label edge')
         )
         for edge_ in valid_edge:
-            _validation.check_contains(container=['top', 'bottom', 'right', 'left'], item=edge_)
+            _validation.check_contains(
+                ['top', 'bottom', 'right', 'left'],
+                must_contain=edge_,
+                name='label_edge',
+            )
         self._label_edge = tuple(valid_edge)
         self._update_label_positions()
 
@@ -1813,14 +1865,14 @@ class PlanesAssembly(_XYZAssembly):
     def label_offset(self) -> float:  # numpydoc ignore=RT01
         """Vertical offset of the text labels.
 
-        The offset is proportional to the :attr:`length` of the assembly. Positive
+        The offset is proportional to the :attr:`~pyvista.Prop3D.length` of the assembly. Positive
         values move the labels away from the center; negative values move them
         towards it.
         """
         return self._label_offset
 
     @label_offset.setter
-    def label_offset(self, offset: int):
+    def label_offset(self, offset: float):
         self._label_offset = _validation.validate_number(offset, dtype_out=float)
         self._update_label_positions()
 
@@ -1838,7 +1890,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @label_mode.setter
     def label_mode(self, mode: Literal['2D', '3D']):
-        _validation.check_contains(item=mode, container=['2D', '3D'])
+        _validation.check_contains(['2D', '3D'], must_contain=mode, name='label_mode')
         self._label_mode = mode
         use_2D = mode == '2D'
         for axis in self._axis_actors:
@@ -1882,14 +1934,15 @@ class PlanesAssembly(_XYZAssembly):
             opacity, broadcast=True, dtype_out=float, to_tuple=True
         )
         self._opacity = valid_opacity
-        for actor, opacity in zip(self._plane_actors, valid_opacity):
-            actor.prop.opacity = opacity
+        for actor, opacity_ in zip(self._plane_actors, valid_opacity):
+            actor.prop.opacity = opacity_
 
     @property
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
         if not hasattr(self, '_camera'):
-            raise ValueError('Camera has not been set.')
+            msg = 'Camera has not been set.'
+            raise ValueError(msg)
         return self._camera
 
     @camera.setter
@@ -1986,7 +2039,7 @@ class PlanesAssembly(_XYZAssembly):
         self._update_label_positions()
 
 
-class _AxisActor(_vtk.vtkAxisActor):
+class _AxisActor(_vtk.DisableVtkSnakeCase, _vtk.vtkAxisActor):
     def __init__(self):
         super().__init__()
         # Only show the title
@@ -2007,7 +2060,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only

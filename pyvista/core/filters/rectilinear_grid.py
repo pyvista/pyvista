@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 import numpy as np
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
@@ -16,13 +17,14 @@ from pyvista.core.utilities.misc import abstract_class
 class RectilinearGridFilters:
     """An internal class to manage filters/algorithms for rectilinear grid datasets."""
 
-    def to_tetrahedra(
+    @_deprecate_positional_args(allowed=['tetra_per_cell'])
+    def to_tetrahedra(  # noqa: PLR0917
         self,
         tetra_per_cell: int = 5,
-        mixed: Sequence[int] | bool = False,
-        pass_cell_ids: bool = True,
-        pass_data: bool = True,
-        progress_bar: bool = False,
+        mixed: str | Sequence[int] | bool = False,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
+        pass_data: bool = True,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Create a tetrahedral mesh structured grid.
 
@@ -94,30 +96,31 @@ class RectilinearGridFilters:
         alg.SetRememberVoxelId(pass_cell_ids or pass_data)
         if mixed is not False:
             if isinstance(mixed, str):
-                self.cell_data.active_scalars_name = mixed
+                self.cell_data.active_scalars_name = mixed  # type: ignore[attr-defined]
             elif isinstance(mixed, (np.ndarray, Sequence)):
                 self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore[attr-defined]
             elif not isinstance(mixed, bool):
-                raise TypeError('`mixed` must be either a sequence of ints or bool')
+                msg = '`mixed` must be either a sequence of ints or bool'  # type: ignore[unreachable]
+                raise TypeError(msg)
             alg.SetTetraPerCellTo5And12()
         else:
             if tetra_per_cell not in [5, 6, 12]:
-                raise ValueError(
-                    f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}',
-                )
+                msg = f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}'
+                raise ValueError(msg)
 
             # Edge case causing a seg-fault where grid is flat in one dimension
             # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18650
             if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore[attr-defined]
-                raise RuntimeError(
+                msg = (
                     'Cannot split cells into 12 tetrahedrals when at least '
-                    f'one dimension is 1. Dimensions are {self.dimensions}.',  # type: ignore[attr-defined]
+                    f'one dimension is 1. Dimensions are {self.dimensions}.'  # type: ignore[attr-defined]
                 )
+                raise RuntimeError(msg)
 
             alg.SetTetraPerCell(tetra_per_cell)
 
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Converting to tetrahedra')
+        _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
         out = _get_output(alg)
 
         if pass_data:

@@ -35,8 +35,8 @@ def start_xvfb(wait=3, window_size=None):
 
     Notes
     -----
-    Only available on Linux.  Be sure to install ``libgl1-mesa-glx
-    xvfb`` in your package manager.
+    Only available on Linux.  Be sure to install ``xvfb``
+    and ``libgl1-mesa-glx`` in your package manager.
 
     Examples
     --------
@@ -51,10 +51,11 @@ def start_xvfb(wait=3, window_size=None):
         PyVistaDeprecationWarning,
     )
 
-    from pyvista import global_theme
+    from pyvista import global_theme  # noqa: PLC0415
 
     if os.name != 'posix':
-        raise OSError('`start_xvfb` is only supported on Linux')
+        msg = '`start_xvfb` is only supported on Linux'
+        raise OSError(msg)
 
     if os.system('which Xvfb > /dev/null'):
         raise OSError(XVFB_INSTALL_NOTES)

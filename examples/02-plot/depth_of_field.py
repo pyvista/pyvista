@@ -9,11 +9,11 @@ This example shows how you can use :func:`enable_depth_of_field
 
 """
 
-# sphinx_gallery_start_ignore
-# depth field modification does not seem to work in interactive mode
 from __future__ import annotations
 
-PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_start_ignore
+# depth field modification does not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
@@ -29,7 +29,7 @@ from pyvista import examples
 
 # download the stanford bunny and rotate it into a good position
 mesh = examples.download_bunny()
-mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4, 4, 4)
+mesh = mesh.rotate_x(90, inplace=False).rotate_z(90, inplace=False).scale(4)
 
 # We use a uniform grid here simply to create equidistantly spaced points for
 # our glyph filter
