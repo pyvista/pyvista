@@ -4229,7 +4229,7 @@ def test_resize_raises(sphere):
     with pytest.raises(ValueError, match=match):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
 
-    match = "'size' and 'bounds' cannot both be None. Choose one resizing method."
+    match = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
     with pytest.raises(ValueError, match=match):
         sphere.resize()
 
