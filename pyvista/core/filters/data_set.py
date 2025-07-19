@@ -1209,6 +1209,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         (1.0, 0.5, 0.25)
 
         Center the mesh at the origin and normalize its bounds to ``1.0``.
+
         >>> resized = mesh.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
         >>> resized.bounds
         BoundsTuple(x_min = -0.5,
