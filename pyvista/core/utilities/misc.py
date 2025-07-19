@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
 from collections.abc import Sequence
 import enum
 from functools import cache
@@ -22,7 +20,6 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import ClassVar
 
-    from pyvista import BoundsTuple
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
     from pyvista._typing_core import VectorLike
@@ -392,12 +389,7 @@ class _NameMixin:
         self._name = str(value)
 
 
-class _BoundsSizeMixin(ABC):
-    @property
-    @abstractmethod
-    def bounds(self) -> BoundsTuple:
-        """Return this object's bounds."""
-
+class _BoundsSizeMixin:
     @property
     def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the object's bounding box.
@@ -420,7 +412,7 @@ class _BoundsSizeMixin(ABC):
         (1.0, 1.0, 1.0)
 
         """
-        bounds = self.bounds
+        bounds = self.bounds  # type: ignore[attr-defined]
         return (
             bounds.x_max - bounds.x_min,
             bounds.y_max - bounds.y_min,
