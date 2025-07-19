@@ -294,9 +294,9 @@ class Viewer(BaseViewer):
             # Initialize state variables
             server.state[self.EDGES] = False
             server.state[self.GRID] = self.plotter.renderer.cube_axes_actor is not None
-            server.state[self.OUTLINE] = hasattr(self.plotter.renderer, '_box_object')
+            server.state[self.OUTLINE] = self.plotter.renderer._box_object is not None
             server.state[self.AXIS] = (
-                hasattr(self.plotter.renderer, 'axes_widget')
+                self.plotter.renderer.axes_widget is not None
                 and self.plotter.renderer.axes_widget.GetEnabled()
             )
             server.state[self.SERVER_RENDERING] = default_server_rendering

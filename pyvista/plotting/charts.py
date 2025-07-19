@@ -18,6 +18,8 @@ import numpy as np
 import pyvista
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import abstract_class
 
 from . import _vtk
 from .colors import COLOR_SCHEMES
@@ -76,6 +78,7 @@ class _vtkWrapper(_vtk.DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa:
 
 
 # region Documentation substitution
+@abstract_class
 class DocSubs:
     """Helper class to substitute the docstrings of the listed member functions or properties."""
 
@@ -1081,7 +1084,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         self.SetCustomTickPositions(locs, labels)
 
 
-class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
+@abstract_class
+class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
@@ -1100,7 +1104,7 @@ class _CustomContextItem(_vtk.DisableVtkSnakeCase, _vtk.vtkPythonItem):
         return True
 
 
-class _ChartBackground(_CustomContextItem):
+class _ChartBackground(_vtk.DisableVtkSnakeCase, _CustomContextItem):
     """Utility class for chart backgrounds."""
 
     def __init__(self, chart) -> None:
@@ -1133,7 +1137,8 @@ class _ChartBackground(_CustomContextItem):
         return True
 
 
-class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
+@abstract_class
+class _Chart(DocSubs):
     """Common interface for vtkChart, vtkChartBox, vtkChartPie, and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
@@ -1153,7 +1158,7 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
     @property
     def _scene(self):
         """Get a reference to the :vtk:`vtkScene` in which this chart is drawn."""
-        return self.GetScene()
+        return self.GetScene()  # type: ignore[attr-defined]
 
     @property
     def _renderer(self):
@@ -1199,12 +1204,12 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
     @property
     def _geometry(self):
         """Chart geometry (x, y position of bottom left corner and width and height in pixels)."""
-        return tuple(self.GetSize())
+        return tuple(self.GetSize())  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, val) -> None:
         """Set the chart geometry."""
-        self.SetSize(_vtk.vtkRectf(*val))
+        self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
 
     @property
     def _interactive(self):
@@ -1216,11 +1221,11 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
         :func:`Renderer.set_chart_interaction` method instead.
 
         """
-        return self.GetInteractive()
+        return self.GetInteractive()  # type: ignore[attr-defined]
 
     @_interactive.setter
     def _interactive(self, val) -> None:
-        self.SetInteractive(val)
+        self.SetInteractive(val)  # type: ignore[attr-defined]
 
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
@@ -1501,11 +1506,11 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()
+        return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)
+        self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def toggle(self) -> None:
@@ -1548,11 +1553,11 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
            >>> chart.show()
 
         """
-        return self.GetTitle()
+        return self.GetTitle()  # type: ignore[attr-defined]
 
     @title.setter
     def title(self, val) -> None:
-        self.SetTitle(val)
+        self.SetTitle(val)  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1577,11 +1582,11 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
            >>> chart.show()
 
         """
-        return self.GetShowLegend()
+        return self.GetShowLegend()  # type: ignore[attr-defined]
 
     @legend_visible.setter
     def legend_visible(self, val) -> None:
-        self.SetShowLegend(val)
+        self.SetShowLegend(val)  # type: ignore[attr-defined]
 
     @_deprecate_positional_args
     @doc_subs
@@ -1675,7 +1680,8 @@ class _Chart(_vtk.DisableVtkSnakeCase, DocSubs):
 
 
 # Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
-class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
+@abstract_class
+class _Plot(DocSubs):
     """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
@@ -1853,7 +1859,7 @@ class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
     @label.setter
     def label(self, val) -> None:
         self._label = '' if val is None else val
-        self.SetLabel(self._label)
+        self.SetLabel(self._label)  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1878,11 +1884,11 @@ class _Plot(_vtk.DisableVtkSnakeCase, DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()
+        return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
     def visible(self, val) -> None:
-        self.SetVisible(val)
+        self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def toggle(self) -> None:
@@ -1926,7 +1932,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)
+        self.SetLabels(self._labels)  # type: ignore[attr-defined]
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
@@ -2121,7 +2127,7 @@ class _MultiCompPlot(_Plot):
         self.labels = None if val is None else [val]
 
 
-class LinePlot2D(_Plot, _vtk.vtkPlotLine):
+class LinePlot2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
     """Class representing a 2D line plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2280,7 +2286,7 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
             self.visible = False
 
 
-class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
+class ScatterPlot2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoints):
     """Class representing a 2D scatter plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2517,7 +2523,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
             raise ValueError(msg)
 
 
-class AreaPlot(_Plot, _vtk.vtkPlotArea):
+class AreaPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
     """Class representing a 2D area plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2716,7 +2722,7 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
             self.visible = False
 
 
-class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
+class BarPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBar):
     """Class representing a 2D bar plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -2939,7 +2945,7 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
             raise ValueError(msg)
 
 
-class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
+class StackPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotStacked):
     """Class representing a 2D stack plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D
@@ -3115,7 +3121,7 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
             self.visible = False
 
 
-class Chart2D(_Chart, _vtk.vtkChartXY):
+class Chart2D(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     """2D chart class similar to a ``matplotlib`` figure.
 
     Parameters
@@ -3956,7 +3962,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
             axis.grid = False
 
 
-class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
+class BoxPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlotBox):
     """Class representing a box plot.
 
     Users should typically not directly create new plot instances, but
@@ -4105,7 +4111,7 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
         self._quartiles.Update()
 
 
-class ChartBox(_Chart, _vtk.vtkChartBox):
+class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     """Dedicated chart for drawing box plots.
 
     Parameters
@@ -4435,7 +4441,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         self._table.update(data)
 
 
-class ChartPie(_Chart, _vtk.vtkChartPie):
+class ChartPie(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
     """Dedicated chart for drawing pie plots.
 
     Parameters
@@ -4650,7 +4656,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
             _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
-class ChartMPL(_Chart, _vtk.vtkImageItem):
+class ChartMPL(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
     """Create new chart from an existing matplotlib figure.
 
     Parameters
@@ -4923,7 +4929,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         legend.set_visible(val)
 
 
-class Charts:
+class Charts(_NoNewAttrMixin):
     """Collection of charts for a renderer.
 
     Users should typically not directly create new instances of this

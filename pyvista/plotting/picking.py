@@ -12,6 +12,8 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
@@ -50,7 +52,7 @@ def _poked_context_callback(plotter, *args, **kwargs):
         try_callback(*args, **kwargs)
 
 
-class RectangleSelection:
+class RectangleSelection(_NoNewAttrMixin):
     """Internal data structure for rectangle based selections.
 
     Parameters
@@ -89,7 +91,7 @@ class RectangleSelection:
         return self._viewport
 
 
-class PointPickingElementHandler:
+class PointPickingElementHandler(_NoNewAttrMixin):
     """Internal picking handler for element-based picking.
 
     This handler is only valid for single point picking operations.
@@ -258,6 +260,7 @@ class PointPickingElementHandler:
             try_callback(self.callback, picked)
 
 
+@abstract_class
 class PickingInterface:  # numpydoc ignore=PR01
     """An internal class to hold core picking related features."""
 
@@ -667,6 +670,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             self.iren._style_class.StartSelect()  # type: ignore[attr-defined]
 
 
+@abstract_class
 class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     """Internal class to contain picking utilities."""
 
@@ -1648,6 +1652,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         self.track_click_position(callback=get_picked_block, viewport=True, side=side)  # type: ignore[attr-defined]
 
 
+@abstract_class
 class PickingHelper(PickingMethods):
     """Internal container class to contain picking helper methods."""
 
@@ -1657,6 +1662,7 @@ class PickingHelper(PickingMethods):
         self.picked_path = None
         self.picked_geodesic = None
         self.picked_horizon = None
+        self._last_picked_idx: int | None = None
 
     @_deprecate_positional_args
     def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
@@ -1879,7 +1885,6 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:

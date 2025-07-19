@@ -24,6 +24,7 @@ from pyvista.core import _vtk_core as _vtk
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
+from .misc import _NoNewAttrMixin
 from .misc import abstract_class
 
 if TYPE_CHECKING:
@@ -280,7 +281,7 @@ class BaseVTKReader(ABC):
 
 
 @abstract_class
-class BaseReader:
+class BaseReader(_NoNewAttrMixin):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -444,7 +445,7 @@ class BaseReader:
         """Set defaults on reader post setting file, if needed."""
 
 
-class PointCellDataSelection:
+class PointCellDataSelection(_NoNewAttrMixin):
     """Mixin for readers that support data array selections.
 
     Examples
@@ -1963,7 +1964,7 @@ class BinaryMarchingCubesReader(BaseReader):
 
 
 @dataclass(order=True)
-class PVDDataSet:
+class PVDDataSet(_NoNewAttrMixin):
     """Class for storing dataset info from PVD file."""
 
     time: float
@@ -3511,7 +3512,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetTimeStep(time_point)
 
 
-class ExodusIIBlockSet:
+class ExodusIIBlockSet(_NoNewAttrMixin):
     """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):

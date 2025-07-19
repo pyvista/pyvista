@@ -22,6 +22,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -217,7 +218,7 @@ def scale_point(camera, point, invert=False):  # noqa: FBT002
     return (scaled[0], scaled[1], scaled[2])
 
 
-class CameraPosition:
+class CameraPosition(_NoNewAttrMixin):
     """Container to hold camera location attributes.
 
     Parameters
@@ -301,7 +302,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
+class Renderer(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
@@ -329,6 +330,8 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
+        self.axes_actor: _vtk.vtkAxesActor | None = None
+        self.axes_widget: _vtk.vtkOrientationMarkerWidget | None = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
         self._labels: dict[
@@ -360,6 +363,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             self.add_border(border_color, border_width)
 
         self.set_color_cycler(self._theme.color_cycler)
+        self._closed = False
+        self._bounding_box: _vtk.vtkOutlineCornerSource | _vtk.vtkCubeSource | None = None
+        self._box_object: PolyData | None = None
+        self._marker_actor: _vtk.vtkAxesActor | None = None
 
     @property
     def camera_set(self) -> bool:  # numpydoc ignore=RT01
@@ -1112,7 +1119,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self._marker_actor = create_axes_marker(
+        marker = create_axes_marker(
             line_width=line_width,
             x_color=x_color,
             y_color=y_color,
@@ -1122,13 +1129,14 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             zlabel=zlabel,
             labels_off=labels_off,
         )
-        self.AddActor(self._marker_actor)
+        self.AddActor(marker)
         self.Modified()
-        return self._marker_actor
+        self._marker_actor = marker
+        return marker
 
-    def _delete_axes_widget(self):
+    def _remove_axes_widget(self):
         """Remove and delete the current axes widget."""
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             self.axes_actor = None
             # HACK: set the viewport to a tiny value to hide the widget first
             # This is due to an issue with a blue box appearing after removal
@@ -1137,7 +1145,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             if self.axes_widget.GetEnabled():
                 self.axes_widget.EnabledOff()
             self.Modified()
-            del self.axes_widget
+            self.axes_widget = None
 
     @_deprecate_positional_args(allowed=['actor'])
     def add_orientation_widget(  # noqa: PLR0917
@@ -1212,20 +1220,21 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        self._delete_axes_widget()
+        self._remove_axes_widget()
         if interactive is None:
             interactive = self._theme.interactive
-        self.axes_widget = _vtk.vtkOrientationMarkerWidget()
-        self.axes_widget.SetOrientationMarker(actor)
-        if hasattr(self.parent, 'iren'):
-            self.axes_widget.SetInteractor(self.parent.iren.interactor)
-            self.axes_widget.SetEnabled(1)
-            self.axes_widget.SetInteractive(interactive)
-        self.axes_widget.SetCurrentRenderer(self)
+        axes_widget = _vtk.vtkOrientationMarkerWidget()
+        self.axes_widget = axes_widget
+        axes_widget.SetOrientationMarker(actor)
+        if self.parent.iren is not None:
+            axes_widget.SetInteractor(self.parent.iren.interactor)
+            axes_widget.SetEnabled(1)
+            axes_widget.SetInteractive(interactive)
+        axes_widget.SetCurrentRenderer(self)
         if viewport is not None:
-            self.axes_widget.SetViewport(viewport)
+            axes_widget.SetViewport(viewport)
         self.Modified()
-        return self.axes_widget
+        return axes_widget
 
     @_deprecate_positional_args
     def add_axes(  # noqa: PLR0917
@@ -1351,7 +1360,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self._delete_axes_widget()
+        self._remove_axes_widget()
         if box is None:
             box = self._theme.axes.box
         if box:
@@ -1599,7 +1608,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        self._delete_axes_widget()
+        self._remove_axes_widget()
         self.axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
@@ -1645,7 +1654,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
+        if self.axes_widget is not None and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
             self.Modified()
 
@@ -1673,7 +1682,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.show_axes()
 
         """
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             self.axes_widget.EnabledOn()
             self.axes_widget.SetCurrentRenderer(self)
         else:
@@ -1706,7 +1715,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             Return ``True`` when the axes widget is enabled.
 
         """
-        if hasattr(self, 'axes_widget'):
+        if self.axes_widget is not None:
             return bool(self.axes_widget.GetEnabled())
         return False
 
@@ -2212,10 +2221,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         >>> pl.remove_bounding_box()
 
         """
-        if hasattr(self, '_box_object'):
+        if self._box_object is not None:
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
-            del self._box_object
+            self._box_object = None
             self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
@@ -2300,19 +2309,22 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
             lighting = self._theme.lighting
 
         self.remove_bounding_box()
+        box: _vtk.vtkOutlineCornerSource | _vtk.vtkCubeSource
         if outline:
-            self._bounding_box = _vtk.vtkOutlineCornerSource()
-            self._bounding_box.SetCornerFactor(corner_factor)
+            source = _vtk.vtkOutlineCornerSource()
+            source.SetCornerFactor(corner_factor)
+            box = source
         else:
-            self._bounding_box = _vtk.vtkCubeSource()  # type: ignore[assignment]
-        self._bounding_box.SetBounds(self.bounds)
-        self._bounding_box.Update()
-        _output: _vtk.vtkPolyData = self._bounding_box.GetOutput()
-        self._box_object = wrap(_output)
-        name = f'BoundingBox({hex(id(self._box_object))})'
+            box = _vtk.vtkCubeSource()
+        box.SetBounds(self.bounds)
+        box.Update()
+        box_object = wrap(box.GetOutput())
+        self._bounding_box = box
+        self._box_object = box_object
+        name = f'BoundingBox({hex(id(box_object))})'
 
         mapper = _vtk.vtkDataSetMapper()
-        mapper.SetInputData(self._box_object)
+        mapper.SetInputData(box_object)
         self.bounding_box_actor, prop = self.add_actor(
             mapper,
             reset_camera=reset_camera,
@@ -3024,7 +3036,7 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
-        if hasattr(self, '_box_object') and self.bounding_box_actor is not None:
+        if self._box_object is not None and self.bounding_box_actor is not None:
             if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
@@ -3824,7 +3836,11 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self._delete_axes_widget()
+        self._remove_axes_widget()
+
+        self._bounding_box = None
+        self._box_object = None
+        self._marker_actor = None
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
@@ -3859,9 +3875,9 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
 
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
-        if hasattr(self, '_box_object'):
+        if self._box_object is not None:
             self.remove_bounding_box(render=render)
-        if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
+        if self._shadow_pass is not None:
             self.disable_shadows()  # type: ignore[unreachable]
         try:
             if self._charts is not None:
@@ -3875,9 +3891,10 @@ class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._camera = None
-        self._bounding_box = None  # type: ignore[assignment]
+        self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._box_object = None
         # remove reference to parent last
         self.parent = None
 

@@ -872,8 +872,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     PyVistaDeprecationWarning,
                 )
 
-        self._glyph_geom = None
-
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and
@@ -1677,7 +1675,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.cell_normals
 
     @property
-    def obbTree(self):  # noqa: N802  # numpydoc ignore=RT01
+    def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
         An obbTree is an object to generate oriented bounding box (OBB)
@@ -1686,12 +1684,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
         """
-        if not hasattr(self, '_obbTree'):
-            self._obbTree = _vtk.vtkOBBTree()
-            self._obbTree.SetDataSet(self)
-            self._obbTree.BuildLocator()
-
-        return self._obbTree
+        obb_tree = _vtk.vtkOBBTree()
+        obb_tree.SetDataSet(self)
+        obb_tree.BuildLocator()
+        return obb_tree
 
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01
@@ -1740,12 +1736,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         """
         return self.n_open_edges == 0
-
-    def __del__(self) -> None:
-        """Delete the object."""
-        if hasattr(self, '_obbTree'):
-            del self._obbTree
-        self._glyph_geom = None
 
 
 @abstract_class

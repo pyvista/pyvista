@@ -577,8 +577,11 @@ def test_normals_get(plane):
 
 def test_normals_set():
     plane = pv.Plane(i_resolution=1, j_resolution=1)
-    plane.point_data.normals = plane.point_normals
-    assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
+    plane.clear_data()
+    assert plane.active_normals is None
+    new_normals = np.zeros((plane.n_points, 3))
+    plane.point_data.active_normals = new_normals
+    assert np.array_equal(plane.point_data.active_normals, new_normals)
 
     with pytest.raises(ValueError, match='must be a 2-dim'):
         plane.point_data.active_normals = [1]

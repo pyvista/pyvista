@@ -140,7 +140,7 @@ def create_axes_marker(  # noqa: PLR0917
     tip_length=0.2,
     ambient=0.5,
     label_size=(0.25, 0.1),
-):
+) -> _vtk.vtkAxesActor:
     """Create an axis actor.
 
     Parameters

@@ -87,17 +87,17 @@ def test_plotter_anti_aliasing_raises():
         pl.enable_anti_aliasing(aa_type='foo')
 
 
-def test_plotter_store_mouse_position_raises(monkeypatch: pytest.MonkeyPatch):
+def test_plotter_store_mouse_position_raises():
     pl = pv.Plotter()
-    monkeypatch.delattr(pl, 'iren')
+    pl.iren = None
     with pytest.raises(
-        AttributeError,
+        RuntimeError,
         match='This plotting window is not interactive.',
     ):
         pl.store_mouse_position()
 
     with pytest.raises(
-        AttributeError,
+        RuntimeError,
         match='This plotting window is not interactive.',
     ):
         pl.store_click_position()

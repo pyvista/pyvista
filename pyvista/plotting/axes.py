@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .actor import Actor
 from .axes_actor import AxesActor
 
 
-class Axes(_vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
+class Axes(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAxes):
     """PyVista wrapper for the VTK Axes class.
 
     Parameters
