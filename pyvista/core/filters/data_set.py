@@ -1162,17 +1162,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Examples
         --------
-        Load a mesh and show its bounds.
+        Load a mesh with asymmetric bounds and show them.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Cube()
+        >>> mesh = pv.Cube(
+        ...     x_length=1.0, y_length=2.0, z_length=3.0, center=(1.0, 2.0, 3.0)
+        ... )
         >>> mesh.bounds
-        BoundsTuple(x_min = -0.5,
-                    x_max =  0.5,
-                    y_min = -0.5,
-                    y_max =  0.5,
-                    z_min = -0.5,
-                    z_max =  0.5)
+        BoundsTuple(x_min = 0.5,
+                    x_max = 1.5,
+                    y_min = 1.0,
+                    y_max = 3.0,
+                    z_min = 1.5,
+                    z_max = 4.5)
 
         Resize it to fit specific bounds.
 
@@ -1187,33 +1189,34 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Resize the mesh so its size is ``4.0``.
 
-        >>> mesh = pv.Cube()
         >>> resized = mesh.resize(bounds_size=4.0)
         >>> resized.bounds_size
         (4.0, 4.0, 4.0)
         >>> resized.bounds
-        BoundsTuple(x_min = -2.0,
-                    x_max =  2.0,
-                    y_min = -2.0,
-                    y_max =  2.0,
-                    z_min = -2.0,
-                    z_max =  2.0)
+        BoundsTuple(x_min = -1.0,
+                    x_max =  3.0,
+                    y_min =  0.0,
+                    y_max =  4.0,
+                    z_min =  1.0,
+                    z_max =  5.0)
 
         Specify a different size for each axis and set the desired center.
 
-        >>> resized = mesh.resize(bounds_size=[2.0, 1.0, 0.5], center=(1.0, 0.5, 0.25))
-
+        >>> resized = mesh.resize(bounds_size=(2.0, 1.0, 0.5), center=(1.0, 0.5, 0.25))
         >>> resized.bounds_size
         (2.0, 1.0, 0.5)
         >>> resized.center
         (1.0, 0.5, 0.25)
+
+        Center the mesh at the origin and normalize its bounds to ``1.0``.
+        >>> resized = mesh.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
         >>> resized.bounds
-        BoundsTuple(x_min = 0.0,
-                    x_max = 2.0,
-                    y_min = 0.0,
-                    y_max = 1.0,
-                    z_min = 0.0,
-                    z_max = 0.5)
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
 
         """
         if bounds is not None:
