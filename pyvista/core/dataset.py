@@ -39,6 +39,7 @@ from .utilities.arrays import get_array_association
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -175,7 +176,7 @@ class ActiveArrayInfo:
 
 @promote_type(_vtk.vtkDataSet)
 @abstract_class
-class DataSet(DataSetFilters, DataObject):
+class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
 
     Parameters
