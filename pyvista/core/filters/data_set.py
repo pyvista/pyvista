@@ -1240,7 +1240,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         else:
             if bounds_size is None:
-                msg = "'size' and 'bounds' cannot both be None. Choose one resizing method."
+                msg = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
                 raise ValueError(msg)
 
             target_size = bounds_size
