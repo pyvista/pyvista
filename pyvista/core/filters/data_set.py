@@ -1231,7 +1231,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 raise ValueError(msg)
 
             target_bounds3x2 = _validation.validate_array(
-                bounds, must_have_shape=6, reshape_to=(3, 2)
+                bounds, must_have_shape=6, reshape_to=(3, 2), name='bounds'
             )
             target_size = np.diff(target_bounds3x2.T, axis=0)[0]
             current_center = np.array(self.center)
@@ -1245,7 +1245,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             target_size = bounds_size
             current_center = np.array(self.center)
             target_center = (
-                current_center if center is None else _validation.validate_array3(center)
+                current_center
+                if center is None
+                else _validation.validate_array3(center, name='center')
             )
 
         current_size = self.bounds_size
