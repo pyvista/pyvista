@@ -532,9 +532,6 @@ from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
 with contextlib.suppress(ImportError):  # Introduced VTK v9.4.0
     from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOIOSS import vtkIOSSReader as vtkIOSSReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
 from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
