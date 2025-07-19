@@ -545,12 +545,6 @@ from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridR
 from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOLSDyna import vtkLSDynaReader as vtkLSDynaReader
-    from vtkmodules.vtkIOOpenVDB import vtkOpenVDBReader as vtkOpenVDBReader
-    from vtkmodules.vtkIOOpenVDB import vtkOpenVDBWriter as vtkOpenVDBWriter
-from vtkmodules.vtkIOParallel import vtkMultiBlockPLOT3DReader as vtkMultiBlockPLOT3DReader
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
 
