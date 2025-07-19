@@ -1343,3 +1343,17 @@ def test_resize_zero_extent(plane):
     # X and Y should be resized, Z should remain at the target Z center
     expected_z_center = (target_bounds[4] + target_bounds[5]) / 2
     assert np.allclose(resized.points[:, 2], expected_z_center)
+
+
+def test_resize_multiblock():
+    sphere = pv.Sphere(center=(1, 2, 3))
+    cube = pv.Cube(center=(-1, -2, -3))
+    multi = pv.MultiBlock({'sphere': sphere, 'cube': cube})
+
+    new_size = (7, 8, 9)
+    resized = multi.resize(bounds_size=new_size)
+    assert np.allclose(resized.bounds_size, new_size)
+    # Test that blocks were not resized individually, but were
+    # instead resized as part of the whole
+    assert not np.allclose(resized['sphere'].bounds_size, new_size)
+    assert not np.allclose(resized['cube'].bounds_size, new_size)
