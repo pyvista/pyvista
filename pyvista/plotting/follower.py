@@ -79,10 +79,7 @@ class Follower(Actor, _vtk.vtkFollower):
         camera: Camera | None = None,
     ) -> None:
         """Initialize follower."""
-        # vtkFollower.__init__ is called by super().__init__ through Actor
         super().__init__(mapper=mapper, prop=prop, name=name)
-
-        # Set the camera if provided, otherwise create a default one
         if camera is None:
             camera = Camera()
         self.camera = camera
