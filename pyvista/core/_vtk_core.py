@@ -635,6 +635,10 @@ except ImportError:  # pragma: no cover
             msg = 'Chart backgrounds require the vtkPythonContext2D module'
             raise VTKVersionError(msg)
 
+from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
+from vtkmodules.vtkImagingFourier import vtkImageButterworthLowPass as vtkImageButterworthLowPass
+from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
+from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
 
 # 9.1+ imports
 with contextlib.suppress(ImportError):
