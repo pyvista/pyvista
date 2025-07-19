@@ -33,9 +33,6 @@ class Follower(Actor, _vtk.vtkFollower):
     name : str, optional
         The name of this actor used when tracking on a plotter.
 
-    camera : pyvista.Camera, optional
-        Camera to follow. If not provided, no camera will be set initially.
-
     See Also
     --------
     :ref:`follower_actor_example` : Example demonstrating the use of follower actors.
@@ -76,14 +73,9 @@ class Follower(Actor, _vtk.vtkFollower):
         mapper: _BaseMapper | None = None,
         prop: Property | None = None,
         name: str | None = None,
-        camera: Camera | None = None,
     ) -> None:
         """Initialize follower."""
         super().__init__(mapper=mapper, prop=prop, name=name)
-
-        # Set the camera if provided
-        if camera is not None:
-            self.SetCamera(camera)
 
     @property
     def camera(self) -> Camera | None:  # numpydoc ignore=RT01
