@@ -35,6 +35,7 @@ from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -55,7 +56,7 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class DataSetFilters(DataObjectFilters):
+class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     @_deprecate_positional_args(allowed=['target'])
@@ -1115,7 +1116,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         bounds: VectorLike[float] | None = None,
-        size: float | VectorLike[float] | None = None,
+        bounds_size: float | VectorLike[float] | None = None,
         center: VectorLike[float] | None = None,
         inplace: bool = False,
     ) -> _DataSetType:
@@ -1125,7 +1126,7 @@ class DataSetFilters(DataObjectFilters):
         normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
 
         Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
-        ``size`` and ``center`` to implicitly set the new bounds.
+        ``bounds_size`` and ``center`` to implicitly set the new bounds.
 
         .. versionadded:: 0.46
 
@@ -1140,16 +1141,16 @@ class DataSetFilters(DataObjectFilters):
             Target :attr:`~pyvista.DataSet.bounds` for the resized dataset in the format
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``. If provided, the dataset is scaled and
             translated to fit exactly within these bounds. Cannot be used together with
-            ``size`` or ``center``.
+            ``bounds_size`` or ``center``.
 
-        size : float | VectorLike[float], optional
-            Target :attr:`~pyvista.DataSet.size` for the resized dataset. Use a single float to
-            specify the size of all three axes, or a 3-element vector to set the size of each axis
-            independently. Cannot be used together with ``bounds``.
+        bounds_size : float | VectorLike[float], optional
+            Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
+            single float to specify the size of all three axes, or a 3-element vector to set the
+            size of each axis independently. Cannot be used together with ``bounds``.
 
         center : VectorLike[float], optional
             Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
-            :attr:`~pyvista.DataSet.center` is used. Only used when ``size`` is specified.
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
 
         inplace : bool, default: False
             If True, the dataset is modified in place. If False, a new dataset is returned.
@@ -1187,8 +1188,8 @@ class DataSetFilters(DataObjectFilters):
         Resize the mesh so its size is ``4.0``.
 
         >>> mesh = pv.Cube()
-        >>> resized = mesh.resize(size=4.0)
-        >>> resized.size
+        >>> resized = mesh.resize(bounds_size=4.0)
+        >>> resized.bounds_size
         (4.0, 4.0, 4.0)
         >>> resized.bounds
         BoundsTuple(x_min = -2.0,
@@ -1200,7 +1201,12 @@ class DataSetFilters(DataObjectFilters):
 
         Specify a different size for each axis and set the desired center.
 
-        >>> resized = mesh.resize(size=[2.0, 1.0, 0.5], center=(1.0, 0.5, 0.25))
+        >>> resized = mesh.resize(bounds_size=[2.0, 1.0, 0.5], center=(1.0, 0.5, 0.25))
+
+        >>> resized.bounds_size
+        (2.0, 1.0, 0.5)
+        >>> resized.center
+        (1.0, 0.5, 0.25)
         >>> resized.bounds
         BoundsTuple(x_min = 0.0,
                     x_max = 2.0,
@@ -1208,16 +1214,10 @@ class DataSetFilters(DataObjectFilters):
                     y_max = 1.0,
                     z_min = 0.0,
                     z_max = 0.5)
-        >>> resized.size
-        (2.0, 1.0, 0.5)
-        >>> resized.center
-        (1.0, 0.5, 0.25)
 
         """
-        current_size = self.size
-
         if bounds is not None:
-            if size is not None:
+            if bounds_size is not None:
                 msg = "Cannot specify both 'bounds' and 'size'. Choose one resizing method."
                 raise ValueError(msg)
             if center is not None:
@@ -1236,17 +1236,18 @@ class DataSetFilters(DataObjectFilters):
             target_center = np.mean(target_bounds3x2, axis=1)
 
         else:
-            if size is None:
+            if bounds_size is None:
                 msg = "'size' and 'bounds' cannot both be None. Choose one resizing method."
                 raise ValueError(msg)
 
-            target_size = size
+            target_size = bounds_size
 
             current_center = np.array(self.center)
             target_center = (
                 current_center if center is None else _validation.validate_array3(center)
             )
 
+        current_size = self.bounds_size
         scale_factors = target_size * _reciprocal(current_size, default_if_div_by_zero=1.0)
 
         # Apply transformation

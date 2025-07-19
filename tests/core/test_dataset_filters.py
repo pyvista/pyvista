@@ -4216,7 +4216,7 @@ def test_resize_size(sphere, size, center):
     """Test resize method with size parameter."""
     expected_center = sphere.center if center is None else center
 
-    resized = sphere.resize(size=size, center=center)
+    resized = sphere.resize(bounds_size=size, center=center)
     new_size = resized.size
     assert np.allclose(new_size, size)
     assert np.allclose(resized.center, expected_center)
@@ -4227,7 +4227,7 @@ def test_resize_raises(sphere):
 
     match = "Cannot specify both 'bounds' and 'size'. Choose one resizing method."
     with pytest.raises(ValueError, match=match):
-        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], size=2.0)
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
 
     match = "'size' and 'bounds' cannot both be None. Choose one resizing method."
     with pytest.raises(ValueError, match=match):
