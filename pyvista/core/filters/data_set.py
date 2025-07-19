@@ -1222,7 +1222,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         """
         if bounds is not None:
             if bounds_size is not None:
-                msg = "Cannot specify both 'bounds' and 'size'. Choose one resizing method."
+                msg = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
                 raise ValueError(msg)
             if center is not None:
                 msg = (
