@@ -4210,15 +4210,15 @@ def test_resize_bounds(sphere, bounds, inplace):
     assert (sphere is resized) == inplace
 
 
-@pytest.mark.parametrize('size', [2.0, (0.5, 2.5, 3.5)])
+@pytest.mark.parametrize('bounds_size', [2.0, (0.5, 2.5, 3.5)])
 @pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
-def test_resize_size(sphere, size, center):
+def test_resize_size(sphere, bounds_size, center):
     """Test resize method with size parameter."""
     expected_center = sphere.center if center is None else center
 
-    resized = sphere.resize(bounds_size=size, center=center)
-    new_size = resized.size
-    assert np.allclose(new_size, size)
+    resized = sphere.resize(bounds_size=bounds_size, center=center)
+    new_size = resized.bounds_size
+    assert np.allclose(new_size, bounds_size)
     assert np.allclose(resized.center, expected_center)
 
 
