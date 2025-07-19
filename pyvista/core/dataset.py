@@ -1264,8 +1264,12 @@ class DataSet(DataSetFilters, DataObject):
         (1.0, 1.0, 1.0)
 
         """
-        bnds = self.bounds
-        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+        bounds = self.bounds
+        return (
+            bounds.x_max - bounds.x_min,
+            bounds.y_max - bounds.y_min,
+            bounds.z_max - bounds.z_min,
+        )
 
     @property
     def center(self: Self) -> tuple[float, float, float]:

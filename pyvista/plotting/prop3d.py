@@ -498,8 +498,12 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         (1.0, 1.0, 1.0)
 
         """
-        bnds = self.bounds
-        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+        bounds = self.bounds
+        return (
+            bounds.x_max - bounds.x_min,
+            bounds.y_max - bounds.y_min,
+            bounds.z_max - bounds.z_min,
+        )
 
     def rotation_from(self, rotation: RotationLike) -> None:
         """Set the entity's orientation from a rotation.
@@ -712,5 +716,9 @@ class _Prop3DMixin(ABC):
     @wraps(Prop3D.bounds_size.fget)  # type: ignore[attr-defined]
     def bounds_size(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.size."""
-        bnds = self.bounds
-        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+        bounds = self.bounds
+        return (
+            bounds.x_max - bounds.x_min,
+            bounds.y_max - bounds.y_min,
+            bounds.z_max - bounds.z_min,
+        )
