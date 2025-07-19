@@ -221,7 +221,7 @@ def _deprecate_positional_args(
                     def call_site() -> str:
                         # Get location where the function is called
                         frame = inspect.stack()[stack_level]
-                        file = Path(os.path.relpath(frame.filename, start=Path.cwd())).as_posix()
+                        file = Path(frame.filename).relative_to(Path.cwd()).as_posix()
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
