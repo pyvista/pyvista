@@ -230,20 +230,9 @@ def test_actor_length(klass, actor, dummy_actor):
     initial_length = 2**0.5  # sqrt(2)
     scale_factor = 2
 
-    assert np.isclose(actor.length, initial_length)
+    assert actor.length == initial_length
     actor.scale = scale_factor
-    assert np.allclose(actor.length, initial_length * scale_factor)
-
-
-@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_size(klass, actor, dummy_actor):
-    actor = actor if klass == 'Prop3D' else dummy_actor
-    initial_size = np.array((1.0, 1.0, 0.0))  # default size of plane mesh
-    scale_factor = 2
-
-    assert np.allclose(actor.bounds_size, initial_size)
-    actor.scale = scale_factor
-    assert np.allclose(actor.bounds_size, initial_size * scale_factor)
+    assert actor.length == initial_length * scale_factor
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])

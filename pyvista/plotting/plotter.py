@@ -46,6 +46,7 @@ from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -208,7 +209,7 @@ def _warn_xserver() -> None:  # pragma: no cover
 
 
 @abstract_class
-class BasePlotter(PickingHelper, WidgetHelper):
+class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     """Base plotting class.
 
     To be used by the :class:`pyvista.Plotter` and
@@ -1787,36 +1788,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         return self.renderer.bounds
-
-    @property
-    def bounds_size(self) -> tuple[float, float, float]:
-        """Return the size of each axis of the plotter's bounding box.
-
-        .. versionadded:: 0.46
-
-        Returns
-        -------
-        tuple[float, float, float]
-            Size of each x-y-z axis.
-
-        Examples
-        --------
-        Get the size of the plotter after adding a cube actor. The cube has edge lengths af
-        ``(1.0, 1.0, 1.0)`` by default.
-
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(pv.Cube())
-        >>> pl.bounds_size
-        (1.0, 1.0, 1.0)
-
-        """
-        bounds = self.bounds
-        return (
-            bounds.x_max - bounds.x_min,
-            bounds.y_max - bounds.y_min,
-            bounds.z_max - bounds.z_min,
-        )
 
     @wraps(Renderer.compute_bounds)
     def compute_bounds(self, *args, **kwargs) -> BoundsTuple:  # numpydoc ignore=PR01,RT01

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Sequence
 import enum
 from functools import cache
@@ -20,6 +22,7 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import ClassVar
 
+    from pyvista import BoundsTuple
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
     from pyvista._typing_core import VectorLike
@@ -382,3 +385,39 @@ class _NameMixin:
             msg = 'Name must be truthy.'
             raise ValueError(msg)
         self._name = str(value)
+
+
+class _BoundsSizeMixin(ABC):
+    @property
+    @abstractmethod
+    def bounds(self) -> BoundsTuple:
+        """Return this object's bounds."""
+
+    @property
+    def bounds_size(self) -> tuple[float, float, float]:
+        """Return the size of each axis of the object's bounding box.
+
+        .. versionadded:: 0.46
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Size of each x-y-z axis.
+
+        Examples
+        --------
+        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        by default.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.bounds_size
+        (1.0, 1.0, 1.0)
+
+        """
+        bounds = self.bounds
+        return (
+            bounds.x_max - bounds.x_min,
+            bounds.y_max - bounds.y_min,
+            bounds.z_max - bounds.z_min,
+        )

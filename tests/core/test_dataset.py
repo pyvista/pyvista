@@ -1545,7 +1545,3 @@ def test_active_array_info_deprecated():
     if pv._version.version_info[:2] > (0, 48):
         msg = 'Remove this deprecated class'
         raise RuntimeError(msg)
-
-
-def test_bounds_size(cube):
-    assert np.allclose(cube.bounds_size, (1.0, 1.0, 1.0))

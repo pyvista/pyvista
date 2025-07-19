@@ -15,6 +15,7 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
+class Prop3D(_BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
     """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
@@ -475,36 +476,6 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         """
         return self.GetLength()
 
-    @property
-    def bounds_size(self) -> tuple[float, float, float]:
-        """Return the size of each axis of the prop's bounding box.
-
-        .. versionadded:: 0.46
-
-        Returns
-        -------
-        tuple[float, float, float]
-            Size of each x-y-z axis.
-
-        Examples
-        --------
-        Get the size of a cube actor. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
-        by default.
-
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Cube())
-        >>> actor.bounds_size
-        (1.0, 1.0, 1.0)
-
-        """
-        bounds = self.bounds
-        return (
-            bounds.x_max - bounds.x_min,
-            bounds.y_max - bounds.y_min,
-            bounds.z_max - bounds.z_min,
-        )
-
     def rotation_from(self, rotation: RotationLike) -> None:
         """Set the entity's orientation from a rotation.
 
@@ -595,7 +566,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
     return array_from_vtkmatrix(matrix)[:3, :3]
 
 
-class _Prop3DMixin(ABC):
+class _Prop3DMixin(_BoundsSizeMixin, ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
     Derived classes need to implement the :meth:`_post_set_update` method to define
@@ -711,14 +682,3 @@ class _Prop3DMixin(ABC):
         return np.linalg.norm(
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         ).tolist()
-
-    @property
-    @wraps(Prop3D.bounds_size.fget)  # type: ignore[attr-defined]
-    def bounds_size(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.size."""
-        bounds = self.bounds
-        return (
-            bounds.x_max - bounds.x_min,
-            bounds.y_max - bounds.y_min,
-            bounds.z_max - bounds.z_min,
-        )
