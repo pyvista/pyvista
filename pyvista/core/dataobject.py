@@ -194,7 +194,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                     )
                     raise TypeError(msg)
 
-            supported_block_types = [
+            supported_block_types: list[type] = [
                 pyvista.PolyData,
                 pyvista.UnstructuredGrid,
                 type(None),

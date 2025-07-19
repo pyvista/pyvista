@@ -756,7 +756,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """
 
     _USE_STRICT_N_FACES = False
-    _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS: ClassVar[
         dict[
@@ -1408,19 +1407,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if PolyData._USE_STRICT_N_FACES:
             return self.n_faces_strict
 
-        # Only issue the deprecated n_faces warning the first time it's used
-        if not PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES:
-            PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = True
-
-            # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
-            warnings.warn(
-                """The current behavior of `pv.PolyData.n_faces` has been deprecated.
-                Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead.
-                See the documentation in '`pv.PolyData.n_faces` for more information.""",
-                PyVistaDeprecationWarning,
-            )
-
-        return self.n_cells
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
+        msg = (
+            'The non-strict behavior of `pv.PolyData.n_faces` has been removed. '
+            'Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead. '
+            'See the documentation in `pv.PolyData.n_faces` for more information.'
+        )
+        raise AttributeError(msg)
 
     @property
     def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
@@ -2222,7 +2215,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(faces.GetData())
 
     @property
-    def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
+    def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell

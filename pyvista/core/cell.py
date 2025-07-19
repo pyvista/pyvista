@@ -18,6 +18,7 @@ from .dataobject import DataObject
 from .errors import CellSizeError
 from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
+from .utilities.misc import _BoundsSizeMixin
 
 if TYPE_CHECKING:
     from typing import Any
@@ -41,7 +42,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
     return np.int32
 
 
-class Cell(DataObject, _vtk.vtkGenericCell):
+class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
