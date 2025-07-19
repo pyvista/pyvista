@@ -511,11 +511,6 @@ from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincIn
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
-from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
-from vtkmodules.vtkImagingFourier import vtkImageButterworthLowPass as vtkImageButterworthLowPass
-from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
-from vtkmodules.vtkImagingFourier import vtkImageFourierCenter as vtkImageFourierCenter
-from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkGaussianSplatter as vtkGaussianSplatter
