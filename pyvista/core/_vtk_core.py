@@ -547,10 +547,6 @@ from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredG
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOTecplotTable import vtkTecplotTableReader as vtkTecplotTableReader
-    from vtkmodules.vtkIOVeraOut import vtkVeraOutReader as vtkVeraOutReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataWriter as vtkXMLImageDataWriter
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader as vtkXMLMultiBlockDataReader
