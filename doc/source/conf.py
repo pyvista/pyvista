@@ -697,7 +697,10 @@ texinfo_documents = [
 # -- Custom 404 page
 
 notfound_context = {
-    'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',  # noqa: E501
+    'body': (
+        '<h1>Page not found.</h1>\n\n'
+        'Perhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.'
+    ),
 }
 notfound_urls_prefix = None
 
