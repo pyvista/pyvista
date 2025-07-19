@@ -1234,7 +1234,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 bounds, must_have_shape=6, reshape_to=(3, 2)
             )
             target_size = np.diff(target_bounds3x2.T, axis=0)[0]
-
             current_center = np.array(self.center)
             target_center = np.mean(target_bounds3x2, axis=1)
 
@@ -1244,14 +1243,13 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 raise ValueError(msg)
 
             target_size = bounds_size
-
             current_center = np.array(self.center)
             target_center = (
                 current_center if center is None else _validation.validate_array3(center)
             )
 
         current_size = self.bounds_size
-        scale_factors = target_size * _reciprocal(current_size, default_if_div_by_zero=1.0)
+        scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
 
         # Apply transformation
         transform = pyvista.Transform()

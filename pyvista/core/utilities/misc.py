@@ -305,7 +305,7 @@ def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
 
 def _reciprocal(
-    x: ArrayLike[float], tol: float = 1e-8, default_if_div_by_zero: float = 0.0
+    x: ArrayLike[float], tol: float = 1e-8, value_if_division_by_zero: float = 0.0
 ) -> NumpyArray[float]:
     """Compute the element-wise reciprocal and avoid division by zero.
 
@@ -318,7 +318,7 @@ def _reciprocal(
         Input array.
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
-    default_if_div_by_zero : float
+    value_if_division_by_zero : float
         Default value given to values less than ``tol``, i.e. the value given if division
         by zero is detected.
 
@@ -332,7 +332,7 @@ def _reciprocal(
     x = x if np.issubdtype(x.dtype, np.floating) else x.astype(float)
     zero = np.abs(x) < tol
     x[~zero] = np.reciprocal(x[~zero])
-    x[zero] = default_if_div_by_zero
+    x[zero] = value_if_division_by_zero
     return x
 
 
