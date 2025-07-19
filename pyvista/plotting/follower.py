@@ -85,7 +85,7 @@ class Follower(Actor, _vtk.vtkFollower):
         # Set the camera if provided, otherwise create a default one
         if camera is None:
             camera = Camera()
-        self.SetCamera(camera)
+        self.camera = camera
 
     @property
     def camera(self) -> Camera | None:  # numpydoc ignore=RT01
