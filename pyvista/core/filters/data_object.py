@@ -811,7 +811,7 @@ class DataObjectFilters:
         pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
 
-        pyvista.DataSetFilters.resize
+        pyvista.DataObjectFilters.resize
             Resize a mesh.
 
         Examples
