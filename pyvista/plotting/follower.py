@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 from . import _vtk
 from .actor import Actor
+from .camera import Camera
 
 if TYPE_CHECKING:
     from ._property import Property
-    from .camera import Camera
     from .mapper import _BaseMapper
 
 
@@ -32,6 +32,9 @@ class Follower(Actor, _vtk.vtkFollower):
 
     name : str, optional
         The name of this actor used when tracking on a plotter.
+
+    camera : pyvista.Camera, optional
+        Camera to follow. If not provided, a default camera will be created.
 
     See Also
     --------
@@ -68,15 +71,21 @@ class Follower(Actor, _vtk.vtkFollower):
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         mapper: _BaseMapper | None = None,
         prop: Property | None = None,
         name: str | None = None,
+        camera: Camera | None = None,
     ) -> None:
         """Initialize follower."""
         # vtkFollower.__init__ is called by super().__init__ through Actor
         super().__init__(mapper=mapper, prop=prop, name=name)
+
+        # Set the camera if provided, otherwise create a default one
+        if camera is None:
+            camera = Camera()
+        self.SetCamera(camera)
 
     @property
     def camera(self) -> Camera | None:  # numpydoc ignore=RT01
