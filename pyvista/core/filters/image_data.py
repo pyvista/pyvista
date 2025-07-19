@@ -3575,6 +3575,26 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
            Magnified image.
 
+        Examples
+        --------
+        Download an image and magnify it anisotropically.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> filename = examples.download_gourds(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> image_data = reader.read()
+
+        Create a plotter and display the original and magnified images side by side.
+
+        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> plotter.add_mesh(image_data)
+        >>> plotter.camera_position = 'xy'
+        >>> plotter.subplot(0, 1)
+        >>> plotter.add_mesh(image_data.magnify(factor=[2, 1, 1]))
+        >>> plotter.camera_position = 'xy'
+        >>> plotter.show()  # doctest: +SKIP
+
         """
         _validation.validate_array(factor, must_have_shape=3, must_be_integer=True, name='factor')
         _validation.check_instance(progress_bar, bool)
