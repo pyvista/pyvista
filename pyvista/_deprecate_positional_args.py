@@ -220,7 +220,7 @@ def _deprecate_positional_args(
                     def call_site() -> str:
                         # Get location where the function is called
                         frame = inspect.stack()[stack_level]
-                        file = Path(frame.filename).relative_to(Path.cwd()).as_posix()
+                        file = Path(os.path.relpath(frame.filename, start=os.getcwd())).as_posix()  # noqa: PTH109 # https://github.com/pyvista/pyvista/pull/7732
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
