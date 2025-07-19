@@ -511,11 +511,6 @@ from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincIn
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
-from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
-from vtkmodules.vtkImagingFourier import vtkImageButterworthLowPass as vtkImageButterworthLowPass
-from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
-from vtkmodules.vtkImagingFourier import vtkImageFourierCenter as vtkImageFourierCenter
-from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkGaussianSplatter as vtkGaussianSplatter
@@ -528,49 +523,16 @@ from vtkmodules.vtkImagingMorphological import (
 )
 from vtkmodules.vtkImagingStencil import vtkImageStencil as vtkImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil as vtkPolyDataToImageStencil
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOCesium3DTiles import vtkCesium3DTilesWriter as vtkCesium3DTilesWriter
-    from vtkmodules.vtkIOCesium3DTiles import (
-        vtkCesiumPoint3DTilesWriter as vtkCesiumPoint3DTilesWriter,
-    )
-    from vtkmodules.vtkIOCesium3DTiles import (
-        vtkCesiumPointCloudWriter as vtkCesiumPointCloudWriter,
-    )
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOCityGML import vtkCityGMLReader as vtkCityGMLReader
-from vtkmodules.vtkIOCore import vtkAbstractPolyDataReader as vtkAbstractPolyDataReader
-from vtkmodules.vtkIOEnSight import vtkEnSight6BinaryReader as vtkEnSight6BinaryReader
-from vtkmodules.vtkIOEnSight import vtkEnSight6Reader as vtkEnSight6Reader
-from vtkmodules.vtkIOEnSight import vtkEnSightGoldBinaryReader as vtkEnSightGoldBinaryReader
-from vtkmodules.vtkIOEnSight import vtkEnSightGoldReader as vtkEnSightGoldReader
-from vtkmodules.vtkIOEnSight import vtkGenericEnSightReader as vtkGenericEnSightReader
-from vtkmodules.vtkIOExodus import vtkExodusIIReader as vtkExodusIIReader
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOExport import vtkGLTFWriter as vtkGLTFWriter
-    from vtkmodules.vtkIOExport import vtkSingleVTPExporter as vtkSingleVTPExporter
-    from vtkmodules.vtkIOExport import vtkVRMLExporter as vtkVRMLExporter
-    from vtkmodules.vtkIOExport import vtkX3DExporter as vtkX3DExporter
-
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
 from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
 
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOHDF import vtkHDFReader as vtkHDFReader
+with contextlib.suppress(ImportError):  # Introduced VTK v9.4.0
     from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOImport import vtkGLTFImporter as vtkGLTFImporter
-    from vtkmodules.vtkIOImport import vtkOBJImporter as vtkOBJImporter
-    from vtkmodules.vtkIOImport import vtkVRMLImporter as vtkVRMLImporter
-from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOIOSS import vtkIOSSReader as vtkIOSSReader
+from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
 from vtkmodules.vtkIOLegacy import vtkDataSetWriter as vtkDataSetWriter
@@ -584,18 +546,8 @@ from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridR
 from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOLSDyna import vtkLSDynaReader as vtkLSDynaReader
-    from vtkmodules.vtkIOOpenVDB import vtkOpenVDBReader as vtkOpenVDBReader
-    from vtkmodules.vtkIOOpenVDB import vtkOpenVDBWriter as vtkOpenVDBWriter
-from vtkmodules.vtkIOParallel import vtkMultiBlockPLOT3DReader as vtkMultiBlockPLOT3DReader
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOTecplotTable import vtkTecplotTableReader as vtkTecplotTableReader
-    from vtkmodules.vtkIOVeraOut import vtkVeraOutReader as vtkVeraOutReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataWriter as vtkXMLImageDataWriter
 from vtkmodules.vtkIOXML import vtkXMLMultiBlockDataReader as vtkXMLMultiBlockDataReader
@@ -635,6 +587,11 @@ except ImportError:  # pragma: no cover
             msg = 'Chart backgrounds require the vtkPythonContext2D module'
             raise VTKVersionError(msg)
 
+
+from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
+from vtkmodules.vtkImagingFourier import vtkImageButterworthLowPass as vtkImageButterworthLowPass
+from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
+from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
 
 # 9.1+ imports
 with contextlib.suppress(ImportError):
