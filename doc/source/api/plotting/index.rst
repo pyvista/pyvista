@@ -36,6 +36,7 @@ all plotting functionality in PyVista.
    CornerAnnotation
    CubeAxesActor
    DataSetMapper
+   Follower
    Label
    LookupTable
    PlanesAssembly
