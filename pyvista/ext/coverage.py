@@ -296,7 +296,7 @@ class CoverageBuilder(Builder):
                     write_header(op, name)
                     if undoc['funcs']:
                         op.write('Functions:\n')
-                        op.writelines(' * %s\n' % x for x in undoc['funcs'])  # noqa: UP031
+                        op.writelines(f' * {x}\n' for x in undoc['funcs'])
                         if self.config.coverage_show_missing_items:
                             if self.app.quiet or self.app.warningiserror:
                                 for func in undoc['funcs']:
@@ -320,7 +320,7 @@ class CoverageBuilder(Builder):
                         op.write('Classes:\n')
                         for class_name, methods in sorted(undoc['classes'].items()):
                             if not methods:
-                                op.write(' * %s\n' % class_name)  # noqa: UP031
+                                op.write(f' * {class_name}\n')
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         logger.warning(
@@ -339,9 +339,9 @@ class CoverageBuilder(Builder):
                                         )
                             else:
                                 op.write(
-                                    ' * %s -- missing methods:\n\n' % class_name,  # noqa: UP031
+                                    f' * {class_name} -- missing methods:\n\n',
                                 )
-                                op.writelines('   - %s\n' % x for x in methods)  # noqa: UP031
+                                op.writelines(f'   - {x}\n' for x in methods)
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         for meth in methods:
@@ -365,7 +365,7 @@ class CoverageBuilder(Builder):
 
             if failed:
                 write_header(op, 'Modules that failed to import')
-                op.writelines(' * %s -- %s\n' % x for x in failed)  # noqa: UP031
+                op.writelines(f' * {x[0]} -- {x[1]}\n' for x in failed)
 
     def finish(self) -> None:
         """Dump the coverage data to a pickle file too."""
