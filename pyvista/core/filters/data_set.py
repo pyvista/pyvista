@@ -1158,7 +1158,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Returns
         -------
         DataSet
-            Reized dataset. Return type matches input.
+            Resized dataset. Return type matches input.
 
         Examples
         --------
