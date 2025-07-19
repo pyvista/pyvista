@@ -3596,11 +3596,13 @@ class ImageDataFilters(DataSetFilters):
         >>> plotter.show()  # doctest: +SKIP
 
         """
-        _validation.validate_array(factor, must_have_shape=3, must_be_integer=True, name='factor')
+        factor_validated = _validation.validate_array(
+            factor, must_have_shape=3, must_be_integer=True, name='factor'
+        )
         _validation.check_instance(progress_bar, bool)
         alg = _vtk.vtkImageMagnify()
         alg.SetInputDataObject(self)
-        alg.SetMagnificationFactors(factor)
+        alg.SetMagnificationFactors(factor_validated.tolist())
         _update_alg(alg, progress_bar=progress_bar, message='Magnifying Image')
         return _get_output(alg)
 
