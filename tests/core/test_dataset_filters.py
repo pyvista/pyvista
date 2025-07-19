@@ -4225,7 +4225,7 @@ def test_resize_size(sphere, bounds_size, center):
 def test_resize_raises(sphere):
     """Test resize method error handling."""
 
-    match = "Cannot specify both 'bounds' and 'size'. Choose one resizing method."
+    match = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
     with pytest.raises(ValueError, match=match):
         sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
 
