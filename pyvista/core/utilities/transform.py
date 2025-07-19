@@ -537,7 +537,7 @@ class Transform(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkTrans
         pyvista.DataObjectFilters.scale
             Scale a mesh.
 
-        pyvista.DataSetFilters.resize
+        pyvista.DataObjectFilters.resize
             Resize a mesh.
 
         Examples
