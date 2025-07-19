@@ -1789,7 +1789,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.bounds
 
     @property
-    def size(self) -> tuple[float, float, float]:
+    def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the plotter's bounding box.
 
         .. versionadded:: 0.46
@@ -1807,7 +1807,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
-        >>> pl.size
+        >>> pl.bounds_size
         (1.0, 1.0, 1.0)
 
         """

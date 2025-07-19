@@ -197,7 +197,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         normal=normal,
     )
     out = src.output
-    actual_width, actual_height, actual_depth = out.size
+    actual_width, actual_height, actual_depth = out.bounds_size
 
     # Compute expected values
     empty_string = string.isspace()
@@ -213,7 +213,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         # For width and height, create an unscaled version for reference
         src_not_scaled = pv.Text3DSource(string=string, center=center)
         out_not_scaled = src_not_scaled.output
-        unscaled_width, unscaled_height, _ = out_not_scaled.size
+        unscaled_width, unscaled_height, _ = out_not_scaled.bounds_size
         if width is None and height is not None:
             expected_width = unscaled_width * actual_height / unscaled_height
         elif width is not None and height is None:

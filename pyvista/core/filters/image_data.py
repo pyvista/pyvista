@@ -4112,7 +4112,7 @@ class ImageDataFilters(DataSetFilters):
                 output_image.origin = new_origin
             else:
                 # Compute spacing to match bounds of input and dimensions of output
-                size = np.array(input_image.size)
+                size = np.array(input_image.bounds_size)
                 if processing_cell_scalars:
                     new_spacing = (size + input_image.spacing) / output_dimensions
                 else:

@@ -1158,7 +1158,7 @@ class Text3DSource(_vtk.DisableVtkSnakeCase, vtkVectorText):
         )
 
         # Scale mesh
-        size_w, size_h, size_d = out.size
+        size_w, size_h, size_d = out.bounds_size
         scale_w, scale_h, scale_d = _reciprocal((size_w, size_h, size_d))
 
         # Scale width and height first
@@ -3758,7 +3758,7 @@ class AxesGeometrySource:
         part.points -= part.center
 
         # Scale so bounding box edges have length one
-        size = np.array(part.size)
+        size = np.array(part.bounds_size)
         if np.any(size < 1e-8):
             msg = f'Custom axes part must be 3D. Got bounds:\n{part.bounds}.'
             raise ValueError(msg)

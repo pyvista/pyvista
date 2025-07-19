@@ -476,7 +476,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         return self.GetLength()
 
     @property
-    def size(self) -> tuple[float, float, float]:
+    def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the prop's bounding box.
 
         .. versionadded:: 0.46
@@ -494,7 +494,7 @@ class Prop3D(_vtk.DisableVtkSnakeCase, _vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Cube())
-        >>> actor.size
+        >>> actor.bounds_size
         (1.0, 1.0, 1.0)
 
         """
@@ -709,8 +709,8 @@ class _Prop3DMixin(ABC):
         ).tolist()
 
     @property
-    @wraps(Prop3D.size.fget)  # type: ignore[attr-defined]
-    def size(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    @wraps(Prop3D.bounds_size.fget)  # type: ignore[attr-defined]
+    def bounds_size(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.size."""
         bnds = self.bounds
         return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min

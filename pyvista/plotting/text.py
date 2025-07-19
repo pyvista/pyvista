@@ -6,14 +6,11 @@ import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
-import warnings
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
-from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
@@ -296,19 +293,11 @@ class Label(_Prop3DMixin, Text):
     relative_position : VectorLike[float]
         Position of the text in XYZ coordinates relative to its :attr:`~pyvista.Prop3D.position`.
 
-    font_size : int, default: 50
-        Font size of the text label.
+    size : int
+        Size of the text label.
 
     prop : pyvista.TextProperty, optional
         The property of this actor.
-
-    size : int, optional
-        Font size of the text label.
-
-        .. deprecated:: 0.46
-
-            Use `font_size` instead. Maintained for backwards compatibility. Will be
-            removed in a future version.
 
     name : str, optional
         The name of this actor used when tracking on a plotter.
@@ -399,7 +388,7 @@ class Label(_Prop3DMixin, Text):
     """
 
     _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
-        'font_size',
+        'size',
         'relative_position',
         '_relative_position',
         '_prop3d',
@@ -411,9 +400,8 @@ class Label(_Prop3DMixin, Text):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
         *,
-        font_size: int = 50,
+        size: int = 50,
         prop: pyvista.Property | None = None,
-        size: int | None = None,
         name: str = 'Label',
     ):
         Text.__init__(self, text=text, prop=prop)
@@ -424,9 +412,7 @@ class Label(_Prop3DMixin, Text):
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position
         self.position = position
-        self.font_size = font_size
-        if size is not None:
-            self.size = size
+        self.size = size
 
     @property
     def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -442,48 +428,19 @@ class Label(_Prop3DMixin, Text):
         valid_position = _validation.validate_array3(position)
         self.GetPositionCoordinate().SetValue(valid_position)
 
-    @property  # type: ignore[override]
+    @property
     def size(self) -> int:  # numpydoc ignore=RT01
         """Size of the text label.
-
-        .. warning::
-
-            The behavior of `size` will change in a future version. It currently
-            returns an integer with the label's font size, but will return a tuple with
-            its physical geometric size in the future. Use :attr:`font_size` instead.
 
         Notes
         -----
         The text property's font size used to control the size of the label.
 
         """
-        if version_info >= (0, 49):  # pragma: no cover
-            msg = 'Convert this deprecation warning into an error.'
-            raise RuntimeError(msg)
-        if version_info >= (0, 50):  # pragma: no cover
-            msg = 'Remove this property.'
-            raise RuntimeError(msg)
-
-        msg = (
-            'The behavior of `size` will change in a future version. It currently returns a float '
-            "with\n the label's font size, but will return a tuple with its physical geometric "
-            'size in the future.\nUse `font_size` instead.'
-        )
-        warnings.warn(msg, PyVistaFutureWarning)
         return self.prop.font_size
 
     @size.setter
     def size(self, size: int):
-        self.prop.font_size = size
-
-    @property
-    def font_size(self) -> int:  # numpydoc ignore=RT01
-        """Font size of the text label."""
-        return self.prop.font_size
-
-    @font_size.setter
-    def font_size(self, size: int) -> None:  # numpydoc ignore=RT01
-        """Font size of the text label."""
         self.prop.font_size = size
 
     @property

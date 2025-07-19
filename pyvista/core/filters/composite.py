@@ -126,7 +126,7 @@ class CompositeFilters(DataObjectFilters):
         ...     # Center the dataset
         ...     dataset = dataset.translate(-np.array(dataset.center))
         ...     # Scale the dataset
-        ...     factor = 1 / np.array(dataset.size)
+        ...     factor = 1 / np.array(dataset.bounds_size)
         ...     return dataset.scale(factor)
 
         >>> filtered = multi.generic_filter(normalize_bounds)

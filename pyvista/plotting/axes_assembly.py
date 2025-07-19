@@ -643,7 +643,7 @@ class AxesAssembly(_XYZAssembly):
     def label_size(self, size: int):
         self._label_size = size
         for label in self._label_actor_iterator:
-            label.font_size = size
+            label.size = size
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01

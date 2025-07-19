@@ -7772,7 +7772,7 @@ class DataSetFilters(DataObjectFilters):
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
-            size = np.array(surface.size)
+            size = np.array(surface.bounds_size)
 
             if dimensions is None:
                 rounding_func = np.round if rounding_func is None else rounding_func

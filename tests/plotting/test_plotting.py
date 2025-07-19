@@ -4381,7 +4381,7 @@ def test_label_prop3d(relative_position):
     actor = pv.Actor(mapper=pv.DataSetMapper(dataset=dataset))
     actor.user_matrix = USER_MATRIX
 
-    label = pv.Label(text='TEXT', font_size=100, relative_position=relative_position)
+    label = pv.Label(text='TEXT', size=100, relative_position=relative_position)
     label.prop.justification_horizontal = 'center'
     label.user_matrix = USER_MATRIX
 

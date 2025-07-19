@@ -1547,5 +1547,5 @@ def test_active_array_info_deprecated():
         raise RuntimeError(msg)
 
 
-def test_size(cube):
-    assert np.allclose(cube.size, (1.0, 1.0, 1.0))
+def test_bounds_size(cube):
+    assert np.allclose(cube.bounds_size, (1.0, 1.0, 1.0))

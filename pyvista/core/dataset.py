@@ -1243,7 +1243,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def size(self: Self) -> tuple[float, float, float]:
+    def bounds_size(self: Self) -> tuple[float, float, float]:
         """Return the size of each axis of the dataset's bounding box.
 
         .. versionadded:: 0.46
@@ -1260,7 +1260,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> mesh.size
+        >>> mesh.bounds_size
         (1.0, 1.0, 1.0)
 
         """
