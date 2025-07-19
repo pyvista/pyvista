@@ -845,13 +845,13 @@ class DataObjectFilters:
         )
 
     def resize(  # type: ignore[misc]
-        self: _DataSetType,
+        self: _MeshType_co,
         *,
         bounds: VectorLike[float] | None = None,
         bounds_size: float | VectorLike[float] | None = None,
         center: VectorLike[float] | None = None,
         inplace: bool = False,
-    ) -> _DataSetType:
+    ) -> _MeshType_co:
         """Resize the dataset's bounds.
 
         This filter rescales and translates the mesh to fit specified bounds. This is useful for
@@ -864,7 +864,7 @@ class DataObjectFilters:
 
         See Also
         --------
-        :meth:`~pyvista.DataObjectFilters.scale`, :meth:`~pyvista.DataObjectFilters.translate`
+        :meth:`scale`, :meth:`translate`
             Scale and/or translate a mesh. Used internally by :meth:`resize`.
 
         Parameters
@@ -889,7 +889,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet
+        DataSet | MultiBlock
             Resized dataset. Return type matches input.
 
         Examples
