@@ -35,6 +35,7 @@ from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
@@ -54,7 +55,7 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class DataSetFilters(DataObjectFilters):
+class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     @_deprecate_positional_args(allowed=['target'])
