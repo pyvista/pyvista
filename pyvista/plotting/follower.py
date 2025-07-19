@@ -68,7 +68,7 @@ class Follower(Actor, _vtk.vtkFollower):
 
     """
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         mapper: _BaseMapper | None = None,
         prop: Property | None = None,
