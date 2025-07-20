@@ -39,32 +39,40 @@ class Follower(Actor, _vtk.vtkFollower):
 
     Examples
     --------
-    Create a follower actor that always faces the camera.
+    Create a scene with a vtkFollower text that always faces the camera and a
+    transparent cube, similar to the VTK C++ example.
 
     >>> import pyvista as pv
-    >>> mesh = pv.Sphere()
-    >>> mapper = pv.DataSetMapper(mesh)
-    >>> follower = pv.Follower(mapper=mapper)
-    >>> follower
-    Follower (...)
-      Center:                     (0.0, 0.0, 0.0)
-      Pickable:                   True
-      Position:                   (0.0, 0.0, 0.0)
-      Scale:                      (1.0, 1.0, 1.0)
-      Visible:                    True
-      X Bounds                    -4.993E-01, 4.993E-01
-      Y Bounds                    -4.965E-01, 4.965E-01
-      Z Bounds                    -5.000E-01, 5.000E-01
-      User matrix:                Identity
-      Has mapper:                 True
-    ...
+    >>> from pyvista import examples
 
-    Set the camera for the follower and render it.
+    Create a plotter and set the background color.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(follower)
-    >>> follower.SetCamera(pl.camera)
-    >>> pl.show()
+    >>> plotter = pv.Plotter()
+    >>> plotter.background_color = 'LightSlateGray'
+
+    Create the "Hello" text that will follow the camera.
+
+    >>> text_mesh = pv.Text3D('Hello', depth=0.1)
+    >>> text_mesh.translate([-text_mesh.center[0], -text_mesh.center[1], 0])
+
+    Create mapper and follower actor for the text.
+
+    >>> text_mapper = pv.DataSetMapper(text_mesh)
+    >>> follower = pv.Follower(mapper=text_mapper)
+    >>> follower.prop.color = 'gold'
+    >>> _ = plotter.add_actor(follower)
+
+    Create a transparent cube that doesn't follow the camera.
+
+    >>> cube = pv.Cube()
+    >>> cube_actor = plotter.add_mesh(
+    ...     cube, color='MidnightBlue', opacity=0.3, show_edges=False
+    ... )
+
+    Set the follower's camera and show the scene.
+
+    >>> follower.SetCamera(plotter.camera)
+    >>> plotter.show()
 
     """
 
@@ -82,15 +90,6 @@ class Follower(Actor, _vtk.vtkFollower):
         """Return or set the camera of this follower.
 
         The follower will continuously update its orientation to face this camera.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> pl = pv.Plotter()
-        >>> follower = pv.Follower(pv.DataSetMapper(mesh))
-        >>> _ = pl.add_actor(follower)
-        >>> follower.camera = pl.camera
 
         """
         return self.GetCamera()  # type: ignore[return-value]
