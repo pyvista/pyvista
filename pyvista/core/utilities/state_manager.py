@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
+class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:

@@ -388,7 +388,7 @@ def test_legend_add_entry_warning():
 
     with pytest.warns(UserWarning, match='Some of the arguments given to legend are not used'):
         pl.add_legend(legend_entries, size=(0.5, 0.5))
-        pl.show()
+    pl.show()
 
 
 def test_legend_add_entry_exception():

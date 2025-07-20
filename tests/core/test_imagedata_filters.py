@@ -63,7 +63,10 @@ def test_contour_labeled_deprecated():
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled()
 
     assert frog_tissues.point_data.active_scalars.max() == 29
@@ -74,7 +77,10 @@ def test_contour_labeled(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_smoothing(frog_tissues):
     # Extract smooth surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(smoothing=True)
     # this somehow mutates the object... also the n_labels is likely not correct
 
@@ -85,7 +91,10 @@ def test_contour_labeled_with_smoothing(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_reduced_labels_count(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(n_labels=2)
     # this somehow mutates the object... also the n_labels is likely not correct
 
@@ -96,7 +105,10 @@ def test_contour_labeled_with_reduced_labels_count(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
 
     assert 'BoundaryLabels' in mesh.cell_data
@@ -106,7 +118,10 @@ def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_boundary_output_style(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(output_style='boundary')
 
     assert 'BoundaryLabels' in mesh.cell_data
@@ -116,7 +131,10 @@ def test_contour_labeled_with_boundary_output_style(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError):  # noqa: PT011
             frog_tissues.contour_labeled(output_mesh_type='invalid')
 
@@ -124,11 +142,17 @@ def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_output_style(frog_tissues):
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(NotImplementedError):
             frog_tissues.contour_labeled(output_style='selected')
 
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError):  # noqa: PT011
             frog_tissues.contour_labeled(output_style='invalid')
 
@@ -139,7 +163,10 @@ def test_contour_labeled_with_scalars(frog_tissues):
     frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
 
     # Extract surface for each label
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         mesh = frog_tissues.contour_labeled(scalars='labels')
 
     assert 'BoundaryLabels' in mesh.cell_data
@@ -149,19 +176,28 @@ def test_contour_labeled_with_scalars(frog_tissues):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labeled_with_invalid_scalars(frog_tissues):
     # Nonexistent scalar key
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(KeyError):
             frog_tissues.contour_labeled(scalars='nonexistent_key')
 
     # Using cell data
     frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError, match='Can only process point data'):
             frog_tissues.contour_labeled(scalars='cell_data')
 
     # When no scalas are given and active scalars are not point data
     frog_tissues.set_active_scalars('cell_data', preference='cell')
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='This filter produces unexpected results and is deprecated',
+    ):
         with pytest.raises(ValueError, match='active scalars must be point array'):
             frog_tissues.contour_labeled()
 
@@ -920,24 +956,24 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Passing `pad_singleton_dims` should raise an error.'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `pad_singleton_dims`.'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Passing `pad_singleton_dims` should raise an error.'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `pad_singleton_dims`.'
+        raise RuntimeError(msg)
 
     match = (
         'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
     )
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Passing `pad_singleton_dims` should raise an error.'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 48):
-            msg = 'Remove `pad_singleton_dims`.'
-            raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 47):
+        msg = 'Passing `pad_singleton_dims` should raise an error.'
+        raise RuntimeError(msg)
+    if pv._version.version_info[:2] > (0, 48):
+        msg = 'Remove `pad_singleton_dims`.'
+        raise RuntimeError(msg)
 
 
 @pytest.fixture
@@ -1420,3 +1456,384 @@ def test_select_values_dtype(uniform, dtype):
     uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
     selected = uniform.select_values([0])
     assert selected.active_scalars.dtype == dtype
+
+
+UNCROPPED_DIMENSION = (10, 12, 12)
+CROPPED_OFFSET = (1, 3, 4)
+CROPPED_DIMENSIONS = (6, 4, 2)
+CROPPED_MASK_IMAGE = pv.ImageData(offset=CROPPED_OFFSET, dimensions=CROPPED_DIMENSIONS)
+CROPPED_EXTENT = CROPPED_MASK_IMAGE.extent
+PADDING = [
+    CROPPED_OFFSET[0],
+    UNCROPPED_DIMENSION[0] - CROPPED_OFFSET[0] - CROPPED_DIMENSIONS[0],
+    CROPPED_OFFSET[1],
+    UNCROPPED_DIMENSION[1] - CROPPED_OFFSET[1] - CROPPED_DIMENSIONS[1],
+    CROPPED_OFFSET[2],
+    UNCROPPED_DIMENSION[2] - CROPPED_OFFSET[2] - CROPPED_DIMENSIONS[2],
+]
+
+# Add scalar data, here we just fill the mask with foreground
+CROPPED_MASK_IMAGE.point_data['scalars'] = np.ones((CROPPED_MASK_IMAGE.n_points,))
+MASK_ARRAY_NAME = 'mask'
+DATA_ARRAY_NAME = 'data'
+
+CROP_FACTOR = np.array(CROPPED_DIMENSIONS, dtype=float) / UNCROPPED_DIMENSION
+
+MARGIN = ((np.array(UNCROPPED_DIMENSION) - CROPPED_DIMENSIONS) / 2).astype(int)
+
+NORMALIZED_BOUNDS = (
+    CROPPED_OFFSET[0] / UNCROPPED_DIMENSION[0],
+    (CROPPED_OFFSET[0] + CROPPED_DIMENSIONS[0]) / UNCROPPED_DIMENSION[0],
+    CROPPED_OFFSET[1] / UNCROPPED_DIMENSION[1],
+    (CROPPED_OFFSET[1] + CROPPED_DIMENSIONS[1]) / UNCROPPED_DIMENSION[1],
+    CROPPED_OFFSET[2] / UNCROPPED_DIMENSION[2],
+    (CROPPED_OFFSET[2] + CROPPED_DIMENSIONS[2]) / UNCROPPED_DIMENSION[2],
+)
+
+
+@pytest.fixture
+def uncropped_image():
+    mesh = pv.ImageData(dimensions=UNCROPPED_DIMENSION)
+    mesh.point_data[DATA_ARRAY_NAME] = range(mesh.n_points)
+
+    array = create_mask_array_from_extents(mesh.extent, CROPPED_EXTENT)
+    mesh[MASK_ARRAY_NAME] = array
+    return mesh
+
+
+def create_mask_array_from_extents(outer_extent, inner_extent):
+    """Create binary mask array with 1s inside the inner_extent and 0s elsewhere."""
+
+    img = pv.ImageData()
+    img.extent = outer_extent
+    mask = np.zeros(img.n_points, dtype=int)
+
+    # Set foreground points
+    for i in range(img.n_points):
+        x, y, z = img.points[i]
+        if (
+            inner_extent[0] <= x <= inner_extent[1]
+            and inner_extent[2] <= y <= inner_extent[3]
+            and inner_extent[4] <= z <= inner_extent[5]
+        ):
+            mask[i] = 1
+
+    return mask
+
+
+CROP_TEST_CASES = {
+    'factor': (
+        dict(factor=CROP_FACTOR),
+        {},
+        dict(background_value=0.0),
+        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+        "'padding', 'background_value']",
+    ),
+    'margin': (
+        dict(margin=MARGIN),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+        "'padding', 'background_value']",
+    ),
+    'normalized_bounds': (
+        dict(normalized_bounds=NORMALIZED_BOUNDS),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
+        "'background_value']",
+    ),
+    'extent': (
+        dict(extent=CROPPED_EXTENT),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
+        "'padding', 'background_value']",
+    ),
+    'dims_offset': (
+        dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+        "'background_value']",
+    ),
+    'dimensions': (
+        dict(dimensions=CROPPED_DIMENSIONS),
+        {},
+        dict(background_value=0.0),
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+        "'background_value']",
+    ),
+    'mask': (
+        dict(mask=MASK_ARRAY_NAME),
+        dict(background_value=0.0),
+        dict(offset=(0, 0, 0)),
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds']",
+    ),
+}
+
+
+def _remove_one_from_offset(mesh: pv.ImageData):
+    mesh.offset = np.array(mesh.offset) - 1
+
+
+@pytest.mark.parametrize(
+    ('required_kwarg', 'optional_kwarg', 'invalid_kwarg', 'match'),
+    CROP_TEST_CASES.values(),
+    ids=CROP_TEST_CASES.keys(),
+)
+@pytest.mark.parametrize('keep_dimensions', [True, False])
+def test_crop(
+    uncropped_image, required_kwarg, optional_kwarg, invalid_kwarg, match, keep_dimensions
+):
+    is_symmetric_padding = (
+        'margin' in required_kwarg or 'factor' in required_kwarg or 'dimensions' in required_kwarg
+    )
+    if is_symmetric_padding:
+        # Need to modify input for this test since expected output otherwise is impossible to
+        # achieve because the cropping is symmetric
+        _remove_one_from_offset(uncropped_image)
+
+    kwargs = required_kwarg.copy()
+    kwargs.update(optional_kwarg)
+
+    cropped = uncropped_image.crop(**kwargs, keep_dimensions=keep_dimensions)
+    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, rebase_coordinates=False)
+
+    if keep_dimensions:
+        expected_output = expected_output.pad_image(pad_size=PADDING)
+        if is_symmetric_padding:
+            _remove_one_from_offset(expected_output)
+        # Only the point data is padded for the expected output, so we don't check full equality
+        assert cropped.extent == expected_output.extent
+        return
+
+    assert cropped.extent == expected_output.extent
+    assert cropped == expected_output
+
+    kwargs.update(invalid_kwarg)
+    with pytest.raises(TypeError, match=re.escape(match)):
+        uncropped_image.crop(**kwargs)
+
+
+@pytest.mark.parametrize('scalars', [MASK_ARRAY_NAME, DATA_ARRAY_NAME])
+@pytest.mark.parametrize('background_value', [1.0, 0.0, None])
+def test_crop_mask(uncropped_image, background_value, scalars):
+    uncropped_image.set_active_scalars(scalars)
+    cropped = uncropped_image.crop(mask=True, background_value=background_value)
+
+    if scalars == DATA_ARRAY_NAME or background_value == 1.0:
+        assert cropped.dimensions == uncropped_image.dimensions
+    else:
+        assert all(np.array(cropped.dimensions) < np.array(uncropped_image.dimensions))
+
+
+@pytest.mark.parametrize(
+    ('background_value', 'extent'),
+    [
+        (0, (1, 1, 1, 1, 1, 1)),
+        ((0, 0, 0), (1, 1, 1, 1, 1, 1)),
+        ((1, 1, 1), (0, 2, 0, 2, 0, 2)),
+    ],
+)
+def test_crop_mask_multi_component(background_value, extent):
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros((np.prod(dims), 3), dtype=int)
+    arr[13] = (1, 1, 1)
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr
+
+    cropped = mask.crop(mask=True, background_value=background_value)
+    assert cropped.extent == extent
+
+
+@pytest.fixture
+def mask3x3():
+    # Image with a single foreground voxel in center
+    dims = (3, 3, 3)
+    arr = np.zeros(dims, dtype=int)
+    arr[1, 1, 1] = 1
+    mask = pv.ImageData(dimensions=dims)
+    mask['mask'] = arr.ravel()
+    return mask
+
+
+@pytest.mark.parametrize(
+    ('padding', 'extent'),
+    [
+        (0, (1, 1, 1, 1, 1, 1)),
+        (1, (0, 2, 0, 2, 0, 2)),
+        ((1, 1, 1), (0, 2, 0, 2, 0, 2)),
+        ((0, 1, 2), (1, 1, 0, 2, 0, 2)),
+        ((0, 0, 0, 1, 1, 1), (1, 1, 1, 2, 0, 2)),
+    ],
+)
+def test_crop_mask_padding(mask3x3, padding, extent):
+    cropped = mask3x3.crop(mask=True, padding=padding)
+    assert cropped.extent == extent
+
+
+@pytest.mark.parametrize('mask', [True, MASK_ARRAY_NAME, CROPPED_MASK_IMAGE, 'array'])
+def test_crop_mask_inputs(uncropped_image, mask):
+    if mask == 'array':
+        mask = uncropped_image[MASK_ARRAY_NAME]
+    elif mask is True:
+        uncropped_image.set_active_scalars('mask')
+
+    expected_output = uncropped_image.extract_subset(CROPPED_EXTENT, rebase_coordinates=False)
+
+    cropped = uncropped_image.crop(mask=mask)
+    assert cropped == expected_output
+
+
+@pytest.mark.parametrize(
+    ('margin', 'dimensions_in', 'dimensions_out'),
+    [(1, (10, 10, 10), (8, 8, 8)), (1, (10, 10, 1), (8, 8, 1))],
+)
+def test_crop_margin(margin, dimensions_in, dimensions_out):
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(margin=margin)
+    assert cropped.dimensions == dimensions_out
+
+
+@pytest.mark.parametrize('dimensionality', ['2D', '3D'])
+@pytest.mark.parametrize(
+    ('bounds', 'dimensions_in', 'dimensions_out', 'offset_out'),
+    [
+        ([0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [10, 10, 10], [10, 10, 10], [0, 0, 0]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [10, 10, 10], [1, 2, 3], [1, 2, 4]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [11, 11, 11], [1, 1, 2], [2, 3, 5]),
+        ([0.1, 0.2, 0.2, 0.4, 0.4, 0.7], [9, 9, 9], [1, 1, 2], [1, 2, 4]),
+    ],
+)
+def test_crop_normalized_bounds(bounds, dimensions_in, dimensions_out, offset_out, dimensionality):
+    if dimensionality == '2D':
+        bounds = (*bounds[0:4], 0.0, 1.0)
+        dimensions_in = (*dimensions_in[0:2], 1)
+        dimensions_out = (*dimensions_out[0:2], 1)
+        offset_out = (*offset_out[0:2], 0)
+
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(normalized_bounds=bounds)
+    actual_dimensions = np.array(cropped.dimensions)
+    assert np.array_equal(actual_dimensions, dimensions_out)
+    actual_offset = np.array(cropped.offset)
+    assert np.array_equal(actual_offset, offset_out)
+
+    actual_lower_bound = actual_offset / dimensions_in
+    expected_lower_bound = np.array(bounds[::2])
+    assert np.all(actual_lower_bound >= expected_lower_bound)
+
+    actual_upper_bound = (actual_offset + actual_dimensions) / dimensions_in
+    expected_upper_bound = np.array(bounds[1::2])
+    assert np.all((actual_upper_bound <= expected_upper_bound) | (actual_dimensions == 1))
+
+
+@pytest.mark.parametrize('dimensionality', ['2D', '3D'])
+@pytest.mark.parametrize(
+    ('factor', 'dimensions_in', 'dimensions_out'),
+    [
+        (1.0, (10, 10, 10), (10, 10, 10)),
+        ((1.0, 1.0, 1.0), (10, 10, 10), (10, 10, 10)),
+        ((0.21, 0.25, 0.29), (10, 10, 10), (2, 2, 2)),
+        ((0.21, 0.25, 0.29), (11, 11, 11), (2, 2, 3)),
+        ((0.21, 0.25, 0.29), (9, 9, 9), (1, 2, 2)),
+    ],
+)
+def test_crop_factor(factor, dimensions_in, dimensions_out, dimensionality):
+    if dimensionality == '2D':
+        dimensions_in = (dimensions_in[0], dimensions_in[1], 1)
+        dimensions_out = (dimensions_out[0], dimensions_out[1], 1)
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(factor=factor)
+    dimensions = cropped.dimensions
+    assert np.array_equal(dimensions, dimensions_out)
+
+
+@pytest.mark.parametrize(
+    ('dimensions_in', 'dimensions', 'extent_out'),
+    [
+        ((10, 10, 10), (10, 10, 10), (0, 9, 0, 9, 0, 9)),
+        ((10, 10, 10), (9, 9, 9), (0, 8, 0, 8, 0, 8)),
+    ],
+)
+def test_crop_dimensions(dimensions_in, dimensions, extent_out):
+    mesh = pv.ImageData(dimensions=dimensions_in)
+    cropped = mesh.crop(dimensions=dimensions)
+    assert np.array_equal(cropped.dimensions, dimensions)
+    assert np.array_equal(cropped.extent, extent_out)
+
+
+@pytest.fixture
+def image2x2():
+    # Image with multiple point and cell arrays
+    dims = (2, 2, 2)
+    im = pv.ImageData(dimensions=dims)
+    im['zeros'] = np.zeros((im.n_points,))
+    im['ones'] = np.ones((im.n_points,))
+    im['range'] = range(im.n_cells)
+    im['twos'] = np.ones((im.n_cells,)) * 2
+    return im
+
+
+@pytest.mark.parametrize('fill_value', [42, -1, None])
+def test_crop_keep_dimensions(image2x2, fill_value):
+    # Test with 2x2 image and use margin to crop half the input
+
+    user_dict = dict(name='crop')
+    image2x2.user_dict = user_dict
+    fill_value = 0 if fill_value is None else fill_value
+
+    cropped = image2x2.crop(margin=(1, 0, 0), keep_dimensions=True, fill_value=fill_value)
+    assert cropped.array_names == image2x2.array_names
+    assert cropped.dimensions == image2x2.dimensions
+
+    for name in image2x2.point_data:
+        actual_array = cropped.point_data[name]
+        expected_array = image2x2.point_data[name]
+        assert actual_array.dtype == expected_array.dtype
+
+        # Expect half the input to have fill value
+        expected_array[0:-1:2] = fill_value
+        assert np.array_equal(actual_array, expected_array)
+
+    # Test cell data is not modified at all
+    image2x2.point_data.clear()
+    cropped.point_data.clear()
+    assert image2x2 == cropped
+
+    # Test field data is preserved
+    assert cropped.user_dict == user_dict
+
+
+def test_crop_raises():
+    background = 0.0
+    img = pv.ImageData(dimensions=(1, 1, 1))
+    img.point_data['data'] = [background]
+    match = (
+        'Crop with mask failed, no foreground values found '
+        "in array 'data' using background value 0.0."
+    )
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=True)
+
+    match = 'mask cannot be `False`.'
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=False)
+
+    match = 'Dimensions must also be specified when cropping with offset.'
+    with pytest.raises(TypeError, match=match):
+        img.crop(offset=(1, 2, 3))
+
+    img = img.points_to_cells()
+    match = "Scalars 'data' must be associated with point data. Got cell data instead."
+    with pytest.raises(ValueError, match=match):
+        img.crop(mask=True)
+
+    match = (
+        'No crop arguments provided. One of the following keywords must be provided:\n'
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask']"
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        img.crop()

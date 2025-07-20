@@ -753,7 +753,8 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+
+    def _test_update_scalars_with_invalid_array():
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -761,7 +762,8 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+
+    def _test_update_scalars_with_valid_array():
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -769,6 +771,23 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
+
+    with (
+        pytest.raises(ValueError, match='Number of scalars'),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This method is deprecated and will be removed in a future version',
+        ),
+    ):
+        _test_update_scalars_with_invalid_array()
+    with (
+        pytest.raises(ValueError, match='No active scalars'),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This method is deprecated and will be removed in a future version',
+        ),
+    ):
+        _test_update_scalars_with_valid_array()
 
 
 def test_plot_show_bounds(sphere):
@@ -1261,28 +1280,42 @@ def test_axes():
 
 def test_box_axes():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_box():
         plotter.add_axes(box=True)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Convert error this function'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this function'
-        raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning,
+        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
+    ):
+        _test_add_axes_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_color_box():
         plotter.add_axes(box=True, box_args={'color_box': True})
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Convert error this function'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this function'
-        raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning,
+        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
+    ):
+        _test_add_axes_color_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
@@ -2548,7 +2581,7 @@ def test_interactive_update():
     p.close()
 
     p = pv.Plotter()
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match=r'The plotter will close immediately automatically'):
         p.show(auto_close=True, interactive_update=True)
 
 
@@ -3056,11 +3089,11 @@ def test_plot_complex_value(plane, verify_image_cache):
     except:
         ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 

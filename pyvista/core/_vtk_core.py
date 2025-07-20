@@ -353,6 +353,9 @@ from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.4
+    from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation
@@ -722,3 +725,18 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
     cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
     return cls is not None and cls.__module__.startswith('vtkmodules')
+
+
+class VTKObjectWrapperCheckSnakeCase(VTKObjectWrapper):
+    """Superclass for classes that wrap VTK objects with Python objects.
+
+    This class overrides __getattr__ to disable the VTK snake case API.
+    """
+
+    def __getattr__(self, name: str):
+        """Forward unknown attribute requests to VTKArray's __getattr__."""
+        if self.VTKObject is not None:
+            # Check if forwarding snake_case attributes
+            DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
+            return getattr(self.VTKObject, name)
+        raise AttributeError

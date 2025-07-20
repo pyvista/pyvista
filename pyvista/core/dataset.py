@@ -641,40 +641,6 @@ class DataSet(DataSetFilters, DataObject):
             self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
-    @property
-    def active_t_coords(self: Self) -> pyvista_ndarray | None:
-        """Return the active texture coordinates on the points.
-
-        Returns
-        -------
-        Optional[pyvista_ndarray]
-            Active texture coordinates on the points.
-
-        """
-        warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. '
-            'Use `DataSet.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.active_texture_coordinates
-
-    @active_t_coords.setter
-    def active_t_coords(self: Self, t_coords: NumpyArray[float]) -> None:
-        """Set the active texture coordinates on the points.
-
-        Parameters
-        ----------
-        t_coords : np.ndarray
-            Active texture coordinates on the points.
-
-        """
-        warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. '
-            'Use `DataSet.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.active_texture_coordinates = t_coords
-
     def set_active_scalars(
         self: Self,
         name: str | None,
@@ -1383,7 +1349,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_array(
         self: Self,
         name: str,
-        preference: Literal['cell', 'point', 'field'] = 'cell',
+        preference: CellLiteral | PointLiteral | FieldLiteral = 'cell',
     ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
@@ -1492,7 +1458,7 @@ class DataSet(DataSetFilters, DataObject):
     def __getitem__(
         self: Self,
         index: tuple[str, Literal['cell', 'point', 'field']] | str,
-    ) -> NumpyArray[float]:
+    ) -> pyvista_ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, tuple):
             name, preference = index

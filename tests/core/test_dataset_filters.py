@@ -667,13 +667,17 @@ def test_glyph(datasets, sphere):
     )
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
 
-    with pytest.warns(Warning):  # tries to orient but no orientation vector available
-        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # tries to orient but no orientation vector available
+    with pytest.warns(UserWarning, match=r'No vector-like data to use for orient'):
+        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
-    with pytest.warns(Warning):  # tries to orient but multiple orientation vectors are possible
-        assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
+    # tries to orient but multiple orientation vectors are possible
+    with pytest.warns(
+        UserWarning, match=r'It is unclear which one to use. orient will be set to False'
+    ):
+        assert sphere_sans_arrays.glyph(geom=geoms, scale=False, progress_bar=True)
 
     with pytest.raises(TypeError):
         # wrong type for the glyph
@@ -688,8 +692,14 @@ def test_glyph(datasets, sphere):
 
 def test_glyph_warns_ambiguous_data(sphere):
     sphere.compute_normals(inplace=True)
-    with pytest.warns(Warning):
+    with pytest.warns(UserWarning, match='It is unclear which one to use') as warning_info:
         sphere.glyph(scale=True)
+    # Check that at least one of the expected warnings is raised
+    warning_messages = [str(w.message) for w in warning_info]
+    assert any(
+        'It is unclear which one to use. scale will be set to False' in msg
+        for msg in warning_messages
+    )
 
 
 def test_glyph_cell_point_data(sphere):
@@ -1438,7 +1448,7 @@ def test_streamlines_max_length():
             max_time=1,
             max_step_length=0.1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
     with pytest.warns(
@@ -1452,7 +1462,7 @@ def test_streamlines_max_length():
             max_time=5,
             max_length=1,
         )
-        check_deprecation()
+    check_deprecation()
     assert np.isclose(stream.length, 1)
 
 
@@ -2771,13 +2781,50 @@ def test_compute_derivatives(random_hills):
         derv = mesh.compute_derivative()
 
 
-def test_extract_subset():
-    volume = examples.load_uniform()
-    voi = volume.extract_subset([0, 3, 1, 4, 5, 7], progress_bar=True)
+@pytest.mark.parametrize('rebase_coordinates', [True, False])
+def test_extract_subset(uniform, rebase_coordinates):
+    offset = (1, 2, 3)
+    dict_ = {'foo': 'bar'}
+    origin = (1.1, 2.2, 3.3)
+    uniform.user_dict = dict_
+    uniform.offset = offset
+    uniform.origin = origin
+
+    new_offset = (2, 4, 6)
+    new_dims = 4, 3, 2
+    extent = pv.ImageData(dimensions=new_dims, offset=new_offset).extent
+    voi = uniform.extract_subset(extent, progress_bar=True, rebase_coordinates=rebase_coordinates)
     assert isinstance(voi, pv.ImageData)
-    # Test that we fix the confusing issue from extents in
-    #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-    assert voi.origin == voi.bounds[::2]
+    assert voi is not uniform
+    assert voi.spacing == uniform.spacing
+    assert voi.dimensions == new_dims
+    assert voi.array_names == uniform.array_names
+    assert voi.user_dict == dict_
+
+    if rebase_coordinates:
+        # Test that we fix the confusing issue from extents in
+        #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+        assert voi.origin != origin
+        assert voi.origin == voi.bounds[::2]
+        assert voi.offset != new_offset
+        assert voi.offset == (0, 0, 0)
+    else:
+        assert voi.origin == origin
+        assert voi.offset == new_offset
+
+    # Test same output as using slice_index
+    cropped = uniform.slice_index(
+        [extent[0], extent[1] + 1],
+        [extent[2], extent[3] + 1],
+        [extent[4], extent[5] + 1],
+        index_mode='extent',
+        rebase_coordinates=rebase_coordinates,
+    )
+    assert cropped == voi
+
+    # Test same output as using crop
+    cropped = uniform.crop(extent=extent, rebase_coordinates=rebase_coordinates)
+    assert cropped == voi
 
 
 def test_gaussian_smooth_output_type():
@@ -3641,7 +3688,10 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     combined = tetbeam + hexbeam
 
     hex_cells = combined.extract_cells_by_type(
-        [pv.CellType.HEXAHEDRON, pv.CellType.BEZIER_PYRAMID]
+        [
+            pv.CellType.HEXAHEDRON,
+            pv.CellType.BEZIER_PYRAMID,
+        ]
     )
     assert np.all(hex_cells.celltypes == pv.CellType.HEXAHEDRON)
 

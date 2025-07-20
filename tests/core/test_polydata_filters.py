@@ -84,7 +84,10 @@ def test_flip_normals_raises():
         pytest.raises(
             NotAllTrianglesError, match='Can only flip normals on an all triangle mesh.'
         ),
-        pytest.warns(PyVistaDeprecationWarning),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='`flip_normals` is deprecated. Use `flip_faces` instead',
+        ),
     ):
         plane.flip_normals()
 

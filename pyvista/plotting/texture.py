@@ -9,8 +9,6 @@ import warnings
 import numpy as np
 
 import pyvista
-
-pyvista.OFF_SCREEN = True
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum

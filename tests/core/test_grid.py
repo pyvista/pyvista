@@ -18,6 +18,7 @@ from pyvista import examples
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import MissingDataError
+from pyvista.examples import cells
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -438,10 +439,24 @@ def test_save_bad_extension():
         pv.UnstructuredGrid('file.abc')
 
 
-def test_linear_copy(hexbeam):
-    # need a grid with quadratic cells
-    lgrid = hexbeam.linear_copy()
-    assert np.all(lgrid.celltypes < 20)
+@pytest.mark.parametrize(
+    ('nonlinear_input', 'linear_output'),
+    [
+        (cells.QuadraticQuadrilateral(), cells.Quadrilateral()),
+        (cells.QuadraticTriangle(), cells.Triangle()),
+        (cells.QuadraticTetrahedron(), cells.Tetrahedron()),
+        (cells.QuadraticPyramid(), cells.Pyramid()),
+        (cells.QuadraticWedge(), cells.Wedge()),
+        (cells.QuadraticHexahedron(), cells.Hexahedron()),
+    ],
+)
+def test_linear_copy(nonlinear_input, linear_output):
+    assert not nonlinear_input.get_cell(0).IsLinear()
+    lgrid = nonlinear_input.linear_copy()
+    assert lgrid.get_cell(0).IsLinear()
+    assert lgrid.n_points == nonlinear_input.n_points
+    assert lgrid.n_points != linear_output.n_points
+    assert lgrid.n_cells == linear_output.n_cells
 
 
 def test_linear_copy_surf_elem():
@@ -516,7 +531,9 @@ def test_merge(hexbeam):
 def test_merge_not_main(hexbeam):
     grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning, match=r"The keyword 'main_has_priority' is deprecated"
+    ):
         unmerged = grid.merge(hexbeam, inplace=False, merge_points=False, main_has_priority=False)
 
     grid.merge(hexbeam, inplace=True, merge_points=True)
@@ -1889,3 +1906,223 @@ def test_cell_connectivity_empty(empty_poly_cast_to_ugrid, hexbeam):
     connectivity = empty_poly_cast_to_ugrid.cell_connectivity
     assert connectivity.size == 0
     assert connectivity.dtype == hexbeam.cell_connectivity.dtype
+
+
+@pytest.fixture
+def appended_images():
+    def create_slice(ind: 0):
+        im = pv.ImageData(dimensions=(3, 3, 1), offset=(0, 0, ind))
+        im.point_data['data'] = np.ones((im.n_points,)) * ind
+        return im
+
+    slice0 = create_slice(0)
+    slice1 = create_slice(1)
+
+    append = vtk.vtkImageAppend()
+    append.SetAppendAxis(2)
+    append.AddInputData(slice0)
+    append.AddInputData(slice1)
+    append.Update()
+    return slice0, slice1, pv.wrap(append.GetOutput())
+
+
+@pytest.fixture
+def appended_images_with_offset(appended_images):
+    offset = (1, 2, 3)
+    slice0, slice1, appended = appended_images
+    slice0.offset = slice0.offset + np.array(offset)
+    slice1.offset = slice1.offset + np.array(offset)
+    appended.offset = appended.offset + np.array(offset)
+    return slice0, slice1, appended
+
+
+def test_imagedata_slice_index_with_slice(uniform):
+    sliced = uniform.slice_index(slice(10), slice(0, 10), slice(None))
+    assert sliced == uniform
+
+
+def test_imagedata_slice_index_strict_index(uniform):
+    rng = [None, uniform.dimensions[0] + 1]
+    uniform.slice_index(rng)  # No error
+    match = (
+        'The requested volume of interest (0, 10, 0, 9, 0, 9) '
+        "is outside the input's extent (0, 9, 0, 9, 0, 9)."
+    )
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform.slice_index(rng, strict_index=True)
+
+    rng = [-uniform.dimensions[0] - 1, None]
+    uniform.slice_index(rng)  # No error
+    match = (
+        'The requested volume of interest (-1, 9, 0, 9, 0, 9) '
+        "is outside the input's extent (0, 9, 0, 9, 0, 9)."
+    )
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform.slice_index(rng, strict_index=True)
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_integer(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+
+    # Slice with integer
+    z = 0
+    sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
+    assert sliced == slice0
+
+    # Slice with negative integer
+    z = -1
+    sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
+    assert sliced == slice1
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_range(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+    x_dim, y_dim, z_dim = appended.dimensions
+
+    # Slice with index range equal to dimensions
+    lower = 0
+    sliced = (
+        appended.slice_index(x=[lower, x_dim], y=[lower, y_dim], z=[lower, z_dim])
+        if use_slice_index
+        else appended[lower:x_dim, lower:y_dim, lower:z_dim]
+    )
+    assert sliced == appended
+
+    # Slice with unspecified start and stop index
+    lower = 0
+    upper_x = x_dim
+    upper_z = z_dim
+    sliced = (
+        appended.slice_index(x=[None, upper_x], y=[lower, None], z=[lower, upper_z])
+        if use_slice_index
+        else appended[:upper_x, lower:, lower:upper_z]
+    )
+    assert sliced == appended
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_range_upper_bounds(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+    x_dim, y_dim, z_dim = appended.dimensions
+
+    # Slice with upper range larger than dimensions
+    lower = 0
+    extra = 2
+    sliced = (
+        appended.slice_index(
+            x=[lower, x_dim + extra], y=[lower, y_dim + extra], z=[lower, z_dim + extra]
+        )
+        if use_slice_index
+        else appended[lower : x_dim + extra, lower : y_dim + extra, lower : z_dim + extra]
+    )
+    assert sliced == appended
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_negative_range(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    slice0, slice1, appended = meshes
+    x_dim, y_dim, z_dim = appended.dimensions
+
+    # Slice with negative stop index
+    lower = 0
+    upper = -1
+    sliced_stop = (
+        appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
+        if use_slice_index
+        else appended[lower:upper, lower:upper, lower:upper]
+    )
+    assert sliced_stop.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
+
+    # Slice with negative start index
+    lower = -3
+    upper = -1
+    sliced_start = (
+        appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
+        if use_slice_index
+        else appended[lower:upper, lower:upper, lower:upper]
+    )
+    assert sliced_start.dimensions == (x_dim + upper, y_dim + upper, z_dim + upper)
+    assert sliced_stop == sliced_start
+
+
+@pytest.mark.parametrize('use_slice_index', [True, False])
+@pytest.mark.parametrize('add_offset', [True, False])
+def test_imagedata_slice_index_all_none(
+    appended_images, appended_images_with_offset, add_offset, use_slice_index
+):
+    meshes = appended_images_with_offset if add_offset else appended_images
+    _, _, appended = meshes
+
+    if use_slice_index:
+        match = 'No indices were provided for slicing.'
+        with pytest.raises(TypeError, match=match):
+            appended.slice_index()
+    else:
+        sliced = appended[:, :, :]
+        assert sliced == appended
+
+
+def test_slice_index_indexing_range():
+    mesh = pv.ImageData(dimensions=(10, 11, 12))
+    mesh['data'] = range(mesh.n_points)
+    index = np.array((5, 6, 7))
+    offset = (1, 2, 3)
+    mesh.offset = offset
+
+    sliced_dimensions = mesh.slice_index(*index, index_mode='dimensions')
+    sliced_extent = mesh.slice_index(*(index + offset), index_mode='extent')
+    assert sliced_dimensions == sliced_extent
+
+
+def test_imagedata_getitem_raises(uniform):
+    match = 'Exactly 3 slices must be specified, one for each xyz-axis.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform[0]
+
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform[:]
+
+    match = (
+        "index must be an instance of any type (<class 'int'>, <class 'tuple'>, "
+        "<class 'list'>, <class 'slice'>). Got <class 'dict'> instead."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        uniform[{}, str, set()]
+
+    match = 'Only contiguous slices with step=1 are supported.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform[2::2, 0, 0]
+
+    match = (
+        'index 10 is out of bounds for axis 0 with size 10.\n'
+        'Valid range of valid index values (inclusive) is [-10, 9].'
+    )
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform[uniform.dimensions[0], 0, 0]
+
+    uniform.offset = [1, 1, 1]
+    _ = uniform.slice_index(uniform.dimensions[0], index_mode='extent')
+    match = (
+        'index 11 is out of bounds for axis 0 with size 10.\n'
+        'Valid range of valid index values (inclusive) is [-9, 10].'
+    )
+    with pytest.raises(IndexError, match=re.escape(match)):
+        uniform.slice_index(uniform.dimensions[0] + uniform.offset[0], 0, 0, index_mode='extent')
