@@ -654,6 +654,7 @@ def test_plotter_shape_invalid():
 
 
 def test_plot_bounds_axes_with_no_data(verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
     if pyvista.vtk_version_info < (9, 5, 99):
         # Axis labels changed substantially in VTK 9.6
         verify_image_cache.skip = True
