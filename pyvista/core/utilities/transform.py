@@ -543,6 +543,9 @@ class Transform(
         pyvista.DataObjectFilters.scale
             Scale a mesh.
 
+        pyvista.DataObjectFilters.resize
+            Resize a mesh.
+
         Examples
         --------
         Compose a scale matrix.

@@ -1462,7 +1462,7 @@ class DataSet(DataSetFilters, DataObject):
     def __getitem__(
         self: Self,
         index: tuple[str, Literal['cell', 'point', 'field']] | str,
-    ) -> NumpyArray[float]:
+    ) -> pyvista_ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, tuple):
             name, preference = index
