@@ -222,9 +222,9 @@ class ImageDataFilters(DataSetFilters):
 
     def slice_index(  # type: ignore[misc]
         self: ImageData,
-        x: int | VectorLike[int] | slice | None = None,
-        y: int | VectorLike[int] | slice | None = None,
-        z: int | VectorLike[int] | slice | None = None,
+        i: int | VectorLike[int] | slice | None = None,
+        j: int | VectorLike[int] | slice | None = None,
+        k: int | VectorLike[int] | slice | None = None,
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
         strict_index: bool = False,
@@ -245,9 +245,9 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        x, y, z : int | sequence[int], optional
-            Indices to slice along the X, Y, and Z axes, respectively. Specify an integer for
-            a single index, or two integers ``[start, stop)`` for a range of indices.
+        i, j, k : int | VectorLike[int] | slice, optional
+            Indices to slice along the I, J, and K coordinate axes, respectively. Specify an
+            integer for a single index, or two integers ``[start, stop)`` for a range of indices.
 
             .. note::
 
@@ -323,7 +323,7 @@ class ImageDataFilters(DataSetFilters):
 
         Extract a single slice along the z-axis.
 
-        >>> sliced = mesh.slice_index(z=5)
+        >>> sliced = mesh.slice_index(k=5)
         >>> sliced.dimensions
         (10, 10, 1)
 
@@ -335,19 +335,19 @@ class ImageDataFilters(DataSetFilters):
 
         Extract a volume of interest.
 
-        >>> sliced = mesh.slice_index(x=[1, 3], y=[2, 5], z=[5, 10])
+        >>> sliced = mesh.slice_index(i=[1, 3], j=[2, 5], k=[5, 10])
         >>> sliced.dimensions
         (2, 3, 5)
 
         Equivalently:
 
-        >>> sliced2 = mesh[1:3, 2:5, 5:11]
+        >>> sliced2 = mesh[1:3, 2:5, 5:10]
         >>> sliced == sliced2
         True
 
         Use ``None`` to implicitly define the start and/or stop indices.
 
-        >>> sliced = mesh.slice_index(x=[None, 3], y=[2, None], z=None)
+        >>> sliced = mesh.slice_index(i=[None, 3], j=[2, None], k=None)
         >>> sliced.dimensions
         (3, 8, 10)
 
@@ -372,14 +372,14 @@ class ImageDataFilters(DataSetFilters):
                     out[1] = default_stop
             return out
 
-        if x is None and y is None and z is None:
+        if i is None and j is None and k is None:
             msg = 'No indices were provided for slicing.'
             raise TypeError(msg)
 
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
-            for slc, low, dim in zip((x, y, z), lower, self.dimensions)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
         )
         voi = self._compute_voi_from_index(
             indices, index_mode=index_mode, strict_index=strict_index
