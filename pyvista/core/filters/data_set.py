@@ -5902,7 +5902,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         Perform PCA on point data of a mesh.
 
         Create a dataset with correlated data
-        
+
         >>> import pyvista as pv
         >>> import numpy as np
         >>> mesh = pv.PolyData(np.random.rand(100, 3))
@@ -5910,15 +5910,15 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> mesh['x_data'] = mesh.points[:, 0]
         >>> mesh['y_data'] = mesh.points[:, 1]
         >>> mesh['xy_sum'] = mesh.points[:, 0] + mesh.points[:, 1]
-        
+
         Compute PCA statistics
-        
+
         >>> pca_results = mesh.compute_pca_statistics()
         >>> pca_results.keys()
         ['means', 'variances', 'column_names']
-        
+
         Show the results
-        
+
         >>> pca_results['means']  # doctest:+SKIP
         pyvista_ndarray([0.48323506, 0.48541015, 0.96864522])
         >>> pca_results['variances']  # doctest:+SKIP
