@@ -44,11 +44,7 @@ class Follower(Actor, _vtk.vtkFollower):
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-
-    Create a plotter and set the background color.
-
     >>> plotter = pv.Plotter()
-    >>> plotter.background_color = 'LightSlateGray'
 
     Create the "Hello" text that will follow the camera.
 
@@ -71,7 +67,7 @@ class Follower(Actor, _vtk.vtkFollower):
 
     Set the follower's camera and show the scene.
 
-    >>> follower.SetCamera(plotter.camera)
+    >>> follower.camera = plotter.camera
     >>> plotter.show()
 
     """
