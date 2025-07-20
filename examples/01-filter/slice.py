@@ -190,7 +190,7 @@ p.show()
 # :func:`~pyvista.examples.examples.load_frog_tissues`.
 
 mask = examples.load_frog_tissues()
-sliced = mask.slice_index(z=50)
+sliced = mask.slice_index(k=50)
 colored = sliced.color_labels()
 colored.plot(cpos='xy', zoom='tight', lighting=False)
 
@@ -198,7 +198,7 @@ colored.plot(cpos='xy', zoom='tight', lighting=False)
 # Extract a 3D volume of interest instead and visualize it as a surface mesh. Here we define
 # indices to extract the frog's head.
 
-sliced = mask.slice_index(x=[300, 500], y=[110, 350], z=[0, 100])
+sliced = mask.slice_index(i=[300, 500], j=[110, 350], k=[0, 100])
 surface = sliced.contour_labels()
 colored = surface.color_labels()
 

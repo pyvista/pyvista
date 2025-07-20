@@ -704,10 +704,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     ) -> NumpyArray[int]:
         """Compute VOI extents from indexing values."""
         _validation.check_contains(
-            ['extent', 'dimensions'], must_contain=index_mode, name='indexing_range'
+            ['extent', 'dimensions'], must_contain=index_mode, name='index_mode'
         )
         if not (isinstance(indices, tuple) and len(indices) == 3):  # type: ignore[redundant-expr]
-            msg = 'Exactly 3 slices must be specified, one for each xyz-axis.'  # type: ignore[unreachable]
+            msg = 'Exactly 3 slices must be specified, one for each IJK-coordinate axis.'  # type: ignore[unreachable]
             raise IndexError(msg)
 
         dims = self.dimensions
