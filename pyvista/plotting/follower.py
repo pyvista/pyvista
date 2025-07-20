@@ -39,8 +39,7 @@ class Follower(Actor, _vtk.vtkFollower):
 
     Examples
     --------
-    Create a scene with a vtkFollower text that always faces the camera and a
-    transparent cube, similar to the VTK C++ example.
+    Create a scene with a Follower text that always faces the camera and a transparent cube.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
