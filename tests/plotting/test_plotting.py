@@ -422,6 +422,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
 
 def test_plot_helper_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
     if pyvista.vtk_version_info < (9, 5, 99):
         # Axis labels changed substantially in VTK 9.6
         verify_image_cache.skip = True
