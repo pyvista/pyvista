@@ -205,7 +205,6 @@ skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doct
 [tool.coverage.run]
 omit = [
   'pyvista/conftest.py',
-  'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
@@ -298,7 +297,6 @@ checks = [
 exclude = [ # don't report on objects that match any of these regex
   '\.*Reader(\.|$)',        # classes inherit from BaseReader
   '\._.*$',                 # Ignore anything that's private (e.g., starts with _)
-  '^coverage\..*$',
   '^plot_directive\..*$',
   '^viewer_directive\..*$',
 ]
