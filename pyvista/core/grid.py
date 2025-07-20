@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 import warnings
 
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -677,6 +679,96 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def __str__(self: Self) -> str:
         """Return the default str representation."""
         return DataSet.__str__(self)
+
+    def __getitem__(  # type: ignore[override]
+        self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
+    ) -> ImageData | pyvista_ndarray:
+        """Search for a data array or slice with IJK indexing."""
+        # Return point, cell, or field data
+        if isinstance(key, str) or (
+            isinstance(key, tuple) and len(key) > 0 and isinstance(key[0], str)  # type: ignore[redundant-expr]
+        ):
+            return super().__getitem__(key)
+        return self.extract_subset(self._compute_voi_from_index(key), rebase_coordinates=False)
+
+    def _compute_voi_from_index(
+        self,
+        indices: tuple[
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+        ],
+        *,
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        strict_index: bool = False,
+    ) -> NumpyArray[int]:
+        """Compute VOI extents from indexing values."""
+        _validation.check_contains(
+            ['extent', 'dimensions'], must_contain=index_mode, name='indexing_range'
+        )
+        if not (isinstance(indices, tuple) and len(indices) == 3):  # type: ignore[redundant-expr]
+            msg = 'Exactly 3 slices must be specified, one for each xyz-axis.'  # type: ignore[unreachable]
+            raise IndexError(msg)
+
+        dims = self.dimensions
+        extent = self.extent
+        voi = list(extent)
+
+        for axis, slicer in enumerate(indices):
+            _validation.check_instance(slicer, (int, tuple, list, slice), name='index')
+
+            offset = extent[axis * 2]
+            index_offset = 0 if index_mode == 'extent' else offset
+
+            if isinstance(slicer, (list, tuple)):
+                rng = _validation.validate_array(
+                    slicer, must_have_dtype=int, must_have_length=2, to_list=True
+                )
+                slicer = slice(*rng)  # noqa: PLW2901
+
+            if isinstance(slicer, slice):
+                start = slicer.start if slicer.start is not None else 0
+                stop = slicer.stop if slicer.stop is not None else dims[axis]
+                step = slicer.step
+                if step not in (None, 1):
+                    msg = 'Only contiguous slices with step=1 are supported.'
+                    raise ValueError(msg)
+
+                # Handle negative indices
+                if start < 0:
+                    start += dims[axis]
+                if stop < 0:
+                    stop += dims[axis]
+
+            else:  # isinstance(slicer, int)
+                min_allowed = offset - dims[axis] - index_offset
+                max_allowed = min_allowed + dims[axis] * 2 - 1
+                if slicer < min_allowed or slicer > max_allowed:
+                    msg = (
+                        f'index {slicer} is out of bounds for axis {axis} with size {dims[axis]}.'
+                        f'\nValid range of valid index values (inclusive) is '
+                        f'[{min_allowed}, {max_allowed}].'
+                    )
+                    raise IndexError(msg)
+                if slicer < 0:
+                    slicer += dims[axis]  # noqa: PLW2901
+                start = slicer
+                stop = start + 1
+
+            voi[axis * 2] = index_offset + start
+            voi[axis * 2 + 1] = index_offset + stop - 1
+
+        clipped = pyvista.ImageDataFilters._clip_extent(voi, clip_to=self.extent)
+        if strict_index and (
+            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2]))
+            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2]))
+        ):
+            msg = (
+                f'The requested volume of interest {tuple(voi)} '
+                f"is outside the input's extent {extent}."
+            )
+            raise IndexError(msg)
+        return clipped
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
