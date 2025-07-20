@@ -48,7 +48,7 @@ class Follower(Actor, _vtk.vtkFollower):
     Create the "Hello" text that will follow the camera.
 
     >>> text_mesh = pv.Text3D('Hello', depth=0.1)
-    >>> text_mesh.translate([-text_mesh.center[0], -text_mesh.center[1], 0])
+    >>> text_mesh = text_mesh.translate([-text_mesh.center[0], -text_mesh.center[1], 0])
 
     Create mapper and follower actor for the text.
 
