@@ -5896,18 +5896,30 @@ class DataSetFilters(DataObjectFilters):
         --------
         Perform PCA on point data of a mesh.
 
+        Create a dataset with correlated data
+        
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> # Create a dataset with correlated data
         >>> mesh = pv.PolyData(np.random.rand(100, 3))
         >>> # Add correlated scalar data
         >>> mesh['x_data'] = mesh.points[:, 0]
         >>> mesh['y_data'] = mesh.points[:, 1]
         >>> mesh['xy_sum'] = mesh.points[:, 0] + mesh.points[:, 1]
-        >>> # Compute PCA statistics
+        
+        Compute PCA statistics
+        
         >>> pca_results = mesh.compute_pca_statistics()
-        >>> # Access means and variances
-        >>> means = pca_results['means']
+        >>> pca_results.keys()
+        ['means', 'variances', 'column_names']
+        
+        Show the results
+        
+        >>> pca_results['means']  # doctest:+SKIP
+        pyvista_ndarray([0.48323506, 0.48541015, 0.96864522])
+        >>> pca_results['variances']  # doctest:+SKIP
+        pyvista_ndarray([0.08497419, 0.07317837, 0.20055975])
+        >>> pca_results['column_names']  # doctest:+SKIP
+        pyvista_ndarray(['x_data', 'y_data', 'xy_sum'], dtype='<U6')
 
         """
         # Convert dataset to table for PCA analysis
