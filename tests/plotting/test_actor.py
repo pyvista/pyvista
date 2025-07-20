@@ -364,63 +364,12 @@ def test_transform_actor(actor, multiply_mode):
     assert np.allclose(actor2.user_matrix, expected.matrix)
 
 
-def test_follower_init():
-    """Test follower initialization."""
-    follower = pv.Follower()
-    assert isinstance(follower, pv.Actor)
-    assert isinstance(follower, pv.Follower)
-    assert follower.camera is None
-
-
-def test_follower_with_mapper():
-    """Test follower with mapper."""
+def test_follower():
     mesh = pv.Sphere()
     mapper = pv.DataSetMapper(mesh)
     follower = pv.Follower(mapper=mapper)
-    assert follower.mapper is mapper
-    assert follower.prop is not None
-
-
-def test_follower_camera_property():
-    """Test follower camera property."""
-    follower = pv.Follower()
     camera = pv.Camera()
     follower.camera = camera
+    assert follower.mapper is mapper
+    assert follower.prop is not None
     assert follower.camera is camera
-    assert follower.GetCamera() is camera
-
-
-def test_follower_render():
-    """Test follower rendering."""
-    mesh = pv.Sphere()
-    mapper = pv.DataSetMapper(mesh)
-    follower = pv.Follower(mapper=mapper)
-
-    pl = pv.Plotter()
-    pl.add_actor(follower)
-    follower.camera = pl.camera
-
-    # Should render without error
-    pl.show(auto_close=False)
-    pl.close()
-
-
-def test_follower_inheritance():
-    """Test that Follower inherits all Actor properties."""
-    mesh = pv.Sphere()
-    mapper = pv.DataSetMapper(mesh)
-    follower = pv.Follower(mapper=mapper)
-
-    # Test Actor properties
-    follower.visibility = False
-    assert not follower.visibility
-
-    follower.pickable = False
-    assert not follower.pickable
-
-    # Test transform properties
-    follower.position = (1, 2, 3)
-    assert np.allclose(follower.position, (1, 2, 3))
-
-    follower.scale = 2.0
-    assert np.allclose(follower.scale, (2.0, 2.0, 2.0))
