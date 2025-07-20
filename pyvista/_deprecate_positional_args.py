@@ -173,7 +173,9 @@ def _deprecate_positional_args(
                 signature_string = f'{signature_string[:-1]}, ...)'
 
             # Get source file and line number
-            file = Path(os.path.relpath(inspect.getfile(f), start=os.getcwd())).as_posix()  # noqa: PTH109
+            file = Path(
+                os.path.relpath(inspect.getfile(f), start=os.getcwd())  # noqa: PTH109  # https://github.com/pyvista/pyvista/pull/7732
+            ).as_posix()
             lineno = inspect.getsourcelines(f)[1]
             location = f'{file}:{lineno}'
 
@@ -221,7 +223,9 @@ def _deprecate_positional_args(
                     def call_site() -> str:
                         # Get location where the function is called
                         frame = inspect.stack()[stack_level]
-                        file = Path(os.path.relpath(frame.filename, start=os.getcwd())).as_posix()  # noqa: PTH109
+                        file = Path(
+                            os.path.relpath(frame.filename, start=os.getcwd())  # noqa: PTH109  # https://github.com/pyvista/pyvista/pull/7732
+                        ).as_posix()
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:

@@ -1292,3 +1292,68 @@ def test_flip_normal():
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
     assert isinstance(out, pv.ImageData)
+
+
+@pytest.mark.parametrize('bounds', [(-1, 1, -1, 1, -1, 1), (0, 10, -5, 5, 2, 8)])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_resize_bounds(sphere, bounds, inplace):
+    """Test resize method with bounds parameter."""
+    resized = sphere.resize(bounds=bounds, inplace=inplace)
+
+    assert np.allclose(resized.bounds, bounds, atol=1e-10)
+    assert (sphere is resized) == inplace
+
+
+@pytest.mark.parametrize('bounds_size', [2.0, (0.5, 2.5, 3.5)])
+@pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
+def test_resize_bounds_size(sphere, bounds_size, center):
+    """Test resize method with bounds_size parameter."""
+    expected_center = sphere.center if center is None else center
+
+    resized = sphere.resize(bounds_size=bounds_size, center=center)
+    new_size = resized.bounds_size
+    assert np.allclose(new_size, bounds_size)
+    assert np.allclose(resized.center, expected_center)
+
+
+def test_resize_raises(sphere):
+    """Test resize method error handling."""
+
+    match = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
+    with pytest.raises(ValueError, match=match):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
+
+    match = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
+    with pytest.raises(ValueError, match=match):
+        sphere.resize()
+
+    match = (
+        "Cannot specify both 'bounds' and 'center'. "
+        "'center' can only be used with the 'bounds_size' parameter."
+    )
+    with pytest.raises(ValueError, match=match):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
+
+
+def test_resize_zero_extent(plane):
+    # This should not fail even with zero Z extent
+    target_bounds = [-1, 1, -1, 1, -1, 1]
+    resized = plane.resize(bounds=target_bounds)
+
+    # X and Y should be resized, Z should remain at the target Z center
+    expected_z_center = (target_bounds[4] + target_bounds[5]) / 2
+    assert np.allclose(resized.points[:, 2], expected_z_center)
+
+
+def test_resize_multiblock():
+    sphere = pv.Sphere(center=(1, 2, 3))
+    cube = pv.Cube(center=(-1, -2, -3))
+    multi = pv.MultiBlock({'sphere': sphere, 'cube': cube})
+
+    new_size = (7, 8, 9)
+    resized = multi.resize(bounds_size=new_size)
+    assert np.allclose(resized.bounds_size, new_size)
+    # Test that blocks were not resized individually, but were
+    # instead resized as part of the whole
+    assert not np.allclose(resized['sphere'].bounds_size, new_size)
+    assert not np.allclose(resized['cube'].bounds_size, new_size)

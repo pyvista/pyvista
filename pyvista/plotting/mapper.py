@@ -16,6 +16,7 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -28,7 +29,7 @@ from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
-class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
+class _BaseMapper(_BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
     _new_attr_exceptions = ('_theme',)
