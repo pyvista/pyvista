@@ -1740,7 +1740,8 @@ class PlanesAssembly(_XYZAssembly):
         # For 3D labels, we re-scale the text proportional to the planes assembly
         # Values on the order of 0.01-0.05 seem to work best. Use a normalization
         # factor so that input values are on the order of 10-50 and roughly match 2D sizes
-        scale_3d = self.planes.length * float(valid_size) / 1000
+        NORM_FACTOR = 1000
+        scale_3d = self.planes.length * float(valid_size) / NORM_FACTOR
 
         # In VTK 9.6+, the 3D label size depends on the 2D label size, so in the 3D case
         # we need to reset the 2D font size to match the VTK default value of 12
