@@ -5857,12 +5857,12 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
         return _get_output(alg)
 
-    @_deprecate_positional_args
     def compute_pca_statistics(  # type: ignore[misc]
         self: _DataSetType,
         scalars: str | None = None,
+        *,
         preference: Literal['point', 'cell'] = 'point',
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ) -> pyvista.Table:
         """Compute Principal Component Analysis (PCA) statistics on the dataset.
 
