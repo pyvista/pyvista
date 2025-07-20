@@ -4993,6 +4993,7 @@ def test_contour_labels_smoothing_constraint(
     smoothing_scale,
     verify_image_cache,
 ):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
     if pyvista.vtk_version_info < (9, 5, 99):
         # Axis labels changed substantially in VTK 9.6
         verify_image_cache.skip = True
