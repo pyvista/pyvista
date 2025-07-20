@@ -321,7 +321,7 @@ class ImageDataFilters(DataSetFilters):
         >>> mesh = pv.ImageData(dimensions=(10, 10, 10))
         >>> mesh['data'] = range(mesh.n_points)
 
-        Extract a single slice along the z-axis.
+        Extract a single slice along the k-axis.
 
         >>> sliced = mesh.slice_index(k=5)
         >>> sliced.dimensions
