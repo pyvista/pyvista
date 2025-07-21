@@ -85,7 +85,6 @@ extensions = [
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
-    'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
     'sphinx.ext.autodoc',
@@ -106,88 +105,6 @@ extensions = [
     'sphinxext.opengraph',
     'sphinx_sitemap',
     'vtk_xref',
-]
-
-# Configuration of pyvista.ext.coverage
-coverage_additional_modules = [
-    'pyvista',
-    'pyvista.errors',
-    'pyvista.report',
-    # core
-    'pyvista.core.cell',
-    'pyvista.core.celltype',
-    'pyvista.core.composite',
-    'pyvista.core.dataobject',
-    'pyvista.core.dataset',
-    'pyvista.core.datasetattributes',
-    'pyvista.core.errors',
-    'pyvista.core.grid',
-    'pyvista.core.objects',
-    'pyvista.core.pointset',
-    'pyvista.core.pyvista_ndarray',
-    'pyvista.core.filters.composite',
-    'pyvista.core.filters.data_set',
-    'pyvista.core.filters.poly_data',
-    'pyvista.core.filters.structured_grid',
-    'pyvista.core.filters.image_data',
-    'pyvista.core.filters.unstructured_grid',
-    'pyvista.core.utilitis.arrays',
-    'pyvista.core.utilitis.cell_type_helper',
-    'pyvista.core.utilitis.cells',
-    'pyvista.core.utilitis.features',
-    'pyvista.core.utilitis.fileio',
-    'pyvista.core.utilitis.geometric_objects',
-    'pyvista.core.utilitis.helpers',
-    'pyvista.core.utilitis.misc',
-    'pyvista.core.utilitis.observers',
-    'pyvista.core.utilitis.parametric_objects',
-    'pyvista.core.utilitis.points',
-    'pyvista.core.utilitis.reader',
-    'pyvista.core.utilitis.transformations',
-    # demos
-    'pyvista.demos.demos',
-    'pyvista.demos.logo',
-    # examples
-    'pyvista.examples.cells',
-    'pyvista.examples.downloads',
-    'pyvista.examples.examples',
-    'pyvista.examples.gltf',
-    'pyvista.examples.planets',
-    'pyvista.examples.vrml',
-    # plotting
-    'pyvista.plotting.actor_properties',
-    'pyvista.plotting.actor',
-    'pyvista.plotting.axes_actor',
-    'pyvista.plotting.axes',
-    'pyvista.plotting.background_renderer',
-    'pyvista.plotting.camera',
-    'pyvista.plotting.charts',
-    'pyvista.plotting.colors',
-    'pyvista.plotting.composite_mapper',
-    'pyvista.plotting.cube_axes_actor',
-    'pyvista.plotting.errors',
-    'pyvista.plotting.helpers',
-    'pyvista.plotting.lights',
-    'pyvista.plotting.lookup_table',
-    'pyvista.plotting.mapper',
-    'pyvista.plotting.opts',
-    'pyvista.plotting.picking',
-    'pyvista.plotting.plotter',
-    'pyvista.plotting.prop3d',
-    'pyvista.plotting.render_passes',
-    'pyvista.plotting.render_window_interactor',
-    'pyvista.plotting.renderer',
-    'pyvista.plotting.renderers',
-    'pyvista.plotting.scalar_bars',
-    'pyvista.plotting.texture',
-    'pyvista.plotting.themes',
-    'pyvista.plotting.tools',
-    'pyvista.plotting.volume_property',
-    'pyvista.plotting.volume',
-    'pyvista.plotting.widgets',
-]
-coverage_ignore_modules = [
-    r'\.plot_directive$',  # Issue with class parameter documentation
 ]
 
 
@@ -698,7 +615,10 @@ texinfo_documents = [
 # -- Custom 404 page
 
 notfound_context = {
-    'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',  # noqa: E501
+    'body': (
+        '<h1>Page not found.</h1>\n\n'
+        'Perhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.'
+    ),
 }
 notfound_urls_prefix = None
 

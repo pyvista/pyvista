@@ -65,7 +65,7 @@ typing = [
   'mypy<1.17.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.6.0',
+  'trimesh<4.7.0',
   { include-group = 'pinned' },
 ]
 
@@ -212,7 +212,6 @@ report.exclude_also = [
 ]
 report.omit = [
   '*/pyvista/conftest.py',
-  '*/pyvista/ext/coverage.py',
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 run.branch = true
@@ -230,6 +229,7 @@ filterwarnings = [
   'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
+  'ignore:Ignoring invalid PYVISTA_USERDATA_PATH.*:UserWarning',
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:invalid escape sequence.*:DeprecationWarning',                                                                 # trame-vuetify, VAlert class
@@ -306,7 +306,6 @@ checks = [
 exclude = [ # don't report on objects that match any of these regex
   '\.*Reader(\.|$)',        # classes inherit from BaseReader
   '\._.*$',                 # Ignore anything that's private (e.g., starts with _)
-  '^coverage\..*$',
   '^plot_directive\..*$',
   '^viewer_directive\..*$',
 ]

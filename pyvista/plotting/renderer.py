@@ -22,6 +22,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -136,10 +137,7 @@ def make_legend_face(face) -> PolyData:
         norm_poly.points -= np.array(norm_poly.center)
 
         # Scale so max bounds are [-0.5, 0.5] along x and y axes
-        bnds = norm_poly.bounds
-        size = np.array(
-            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
-        )
+        size = np.array(norm_poly.bounds_size)
         size[size < 1e-8] = 1  # Avoid division by zero
         max_xy_size = max(size[0:2])
         norm_poly.scale(1 / max_xy_size, inplace=True)
@@ -301,7 +299,7 @@ class CameraPosition:
         self._viewup = value
 
 
-class Renderer(_vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
+class Renderer(_BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute

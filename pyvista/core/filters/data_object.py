@@ -27,6 +27,7 @@ from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -810,6 +811,9 @@ class DataObjectFilters:
         pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
 
+        pyvista.DataObjectFilters.resize
+            Resize a mesh.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -838,6 +842,162 @@ class DataObjectFilters:
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
+        )
+
+    def resize(  # type: ignore[misc]
+        self: _MeshType_co,
+        *,
+        bounds: VectorLike[float] | None = None,
+        bounds_size: float | VectorLike[float] | None = None,
+        center: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ) -> _MeshType_co:
+        """Resize the dataset's bounds.
+
+        This filter rescales and translates the mesh to fit specified bounds. This is useful for
+        normalizing datasets, changing units, or fitting datasets into specific coordinate ranges.
+
+        Use ``bounds`` to set the mesh's :attr:`~pyvista.DataSet.bounds` directly or use
+        ``bounds_size`` and ``center`` to implicitly set the new bounds.
+
+        .. versionadded:: 0.46
+
+        See Also
+        --------
+        :meth:`scale`, :meth:`translate`
+            Scale and/or translate a mesh. Used internally by :meth:`resize`.
+
+        Parameters
+        ----------
+        bounds : VectorLike[float], optional
+            Target :attr:`~pyvista.DataSet.bounds` for the resized dataset in the format
+            ``[xmin, xmax, ymin, ymax, zmin, zmax]``. If provided, the dataset is scaled and
+            translated to fit exactly within these bounds. Cannot be used together with
+            ``bounds_size`` or ``center``.
+
+        bounds_size : float | VectorLike[float], optional
+            Target size of the :attr:`~pyvista.DataSet.bounds` for the resized dataset. Use a
+            single float to specify the size of all three axes, or a 3-element vector to set the
+            size of each axis independently. Cannot be used together with ``bounds``.
+
+        center : VectorLike[float], optional
+            Center of the resized dataset in ``[x, y, z]``. By default, the mesh's
+            :attr:`~pyvista.DataSet.center` is used. Only used when ``bounds_size`` is specified.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed as part of the resize. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            If True, the dataset is modified in place. If False, a new dataset is returned.
+
+        Returns
+        -------
+        DataSet | MultiBlock
+            Resized dataset. Return type matches input.
+
+        Examples
+        --------
+        Load a mesh with asymmetric bounds and show them.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube(
+        ...     x_length=1.0, y_length=2.0, z_length=3.0, center=(1.0, 2.0, 3.0)
+        ... )
+        >>> mesh.bounds
+        BoundsTuple(x_min = 0.5,
+                    x_max = 1.5,
+                    y_min = 1.0,
+                    y_max = 3.0,
+                    z_min = 1.5,
+                    z_max = 4.5)
+
+        Resize it to fit specific bounds.
+
+        >>> resized = mesh.resize(bounds=[-1, 2, -3, 4, -5, 6])
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  2.0,
+                    y_min = -3.0,
+                    y_max =  4.0,
+                    z_min = -5.0,
+                    z_max =  6.0)
+
+        Resize the mesh so its size is ``4.0``.
+
+        >>> resized = mesh.resize(bounds_size=4.0)
+        >>> resized.bounds_size
+        (4.0, 4.0, 4.0)
+        >>> resized.bounds
+        BoundsTuple(x_min = -1.0,
+                    x_max =  3.0,
+                    y_min =  0.0,
+                    y_max =  4.0,
+                    z_min =  1.0,
+                    z_max =  5.0)
+
+        Specify a different size for each axis and set the desired center.
+
+        >>> resized = mesh.resize(bounds_size=(2.0, 1.0, 0.5), center=(1.0, 0.5, 0.25))
+        >>> resized.bounds_size
+        (2.0, 1.0, 0.5)
+        >>> resized.center
+        (1.0, 0.5, 0.25)
+
+        Center the mesh at the origin and normalize its bounds to ``1.0``.
+
+        >>> resized = mesh.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
+        >>> resized.bounds
+        BoundsTuple(x_min = -0.5,
+                    x_max =  0.5,
+                    y_min = -0.5,
+                    y_max =  0.5,
+                    z_min = -0.5,
+                    z_max =  0.5)
+
+        """
+        if bounds is not None:
+            if bounds_size is not None:
+                msg = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
+                raise ValueError(msg)
+            if center is not None:
+                msg = (
+                    "Cannot specify both 'bounds' and 'center'. 'center' can only be used with "
+                    "the 'bounds_size' parameter."
+                )
+                raise ValueError(msg)
+
+            target_bounds3x2 = _validation.validate_array(
+                bounds, must_have_shape=6, reshape_to=(3, 2), name='bounds'
+            )
+            target_size = np.diff(target_bounds3x2.T, axis=0)[0]
+            current_center = np.array(self.center)
+            target_center = np.mean(target_bounds3x2, axis=1)
+
+        else:
+            if bounds_size is None:
+                msg = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
+                raise ValueError(msg)
+
+            target_size = bounds_size
+            current_center = np.array(self.center)
+            target_center = (
+                current_center
+                if center is None
+                else _validation.validate_array3(center, name='center')
+            )
+
+        current_size = self.bounds_size
+        scale_factors = target_size * _reciprocal(current_size, value_if_division_by_zero=1.0)
+
+        # Apply transformation
+        transform = pyvista.Transform()
+        transform.translate(-current_center)
+        transform.scale(scale_factors)
+        transform.translate(target_center)
+        return self.transform(
+            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
     @_deprecate_positional_args
@@ -1484,6 +1644,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the surface of a sphere.
@@ -1553,6 +1721,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the surface of a sphere.
@@ -1620,6 +1796,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_along_axis
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
@@ -1741,6 +1925,14 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_line
+        :meth:`~pyvista.ImageDataFilters.slice_index`
+
         Examples
         --------
         Slice the random hills dataset in the X direction.
@@ -1852,6 +2044,14 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        See Also
+        --------
+        slice
+        slice_implicit
+        slice_orthogonal
+        slice_along_axis
+        :meth:`~pyvista.ImageDataFilters.slice_index`
 
         Examples
         --------
