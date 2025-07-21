@@ -363,6 +363,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                [  0.,   0.,   0.]])
 
         """
+        if pyvista.vtk_version_info >= (9, 4, 0):
+            return convert_array(self.GetPoints().GetData())
+
         xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
