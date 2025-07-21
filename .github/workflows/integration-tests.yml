@@ -68,7 +68,7 @@ jobs:
       - name: Install tox-uv
         run: uv pip install tox-uv
 
-      - name: Run tests (no geovista)
+      - name: Run tests (no xvfb)
         if: ${{matrix.project != 'geovista'}}
         run: tox run -e integration-${{matrix.project}} --colored=yes
 
