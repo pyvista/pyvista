@@ -798,6 +798,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                [1., 1., 1.]])
 
         """
+        if pyvista.vtk_version_info >= (9, 4, 0):
+            return convert_array(self.GetPoints().GetData())
+
         # Handle empty case
         if not all(self.dimensions):
             return np.zeros((0, 3))
