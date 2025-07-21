@@ -4208,3 +4208,78 @@ def test_voxelize_binary_mask_raises(sphere):
         )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_compute_pca_statistics():
+    """Test the compute_pca_statistics method."""
+    # Create a simple dataset with correlated data
+    rng = np.random.default_rng(42)
+    mesh = pv.PolyData(rng.random((100, 3)))
+
+    # Add correlated scalar data arrays
+    mesh['x_data'] = mesh.points[:, 0]
+    mesh['y_data'] = mesh.points[:, 1]
+    mesh['xy_sum'] = mesh.points[:, 0] + mesh.points[:, 1]
+    mesh['independent'] = rng.random(100)
+
+    # Test with default parameters (analyze all point data)
+    pca_result = mesh.compute_pca_statistics()
+
+    # Check that the result is a Table
+    assert isinstance(pca_result, pv.Table)
+
+    # The result should have some data
+    assert pca_result.n_rows > 0
+    assert pca_result.n_columns > 0
+
+    # Test with specific scalar array
+    pca_result_specific = mesh.compute_pca_statistics(scalars='x_data')
+    assert isinstance(pca_result_specific, pv.Table)
+
+    # Test with cell data preference
+    mesh_with_cell_data = pv.Sphere()
+    mesh_with_cell_data['cell_x'] = mesh_with_cell_data.cell_centers().points[:, 0]
+    mesh_with_cell_data['cell_y'] = mesh_with_cell_data.cell_centers().points[:, 1]
+
+    pca_result_cells = mesh_with_cell_data.compute_pca_statistics(preference='cell')
+    assert isinstance(pca_result_cells, pv.Table)
+
+    # Test with progress bar
+    pca_result_progress = mesh.compute_pca_statistics(progress_bar=True)
+    assert isinstance(pca_result_progress, pv.Table)
+
+    # Test error handling for invalid preference
+    with pytest.raises(ValueError, match="preference must be 'point' or 'cell'"):
+        mesh.compute_pca_statistics(preference='invalid')
+
+    # Test error handling for non-existent scalar in point data
+    with pytest.raises(KeyError, match="Array 'nonexistent' not found in point data"):
+        mesh.compute_pca_statistics(scalars='nonexistent', preference='point')
+
+    # Test error handling for non-existent scalar in cell data
+    with pytest.raises(KeyError, match="Array 'nonexistent' not found in cell data"):
+        mesh_with_cell_data.compute_pca_statistics(scalars='nonexistent', preference='cell')
+
+    # Test specific scalar array with cell data
+    pca_result_cell_scalar = mesh_with_cell_data.compute_pca_statistics(
+        scalars='cell_x', preference='cell'
+    )
+    assert isinstance(pca_result_cell_scalar, pv.Table)
+
+    # Test that results contain expected fields
+    if pca_result.n_rows > 0:
+        assert 'means' in pca_result.keys()
+        assert 'variances' in pca_result.keys()
+        assert 'column_names' in pca_result.keys()
+
+        # Check that means and variances have correct shape
+        means = pca_result['means']
+        variances = pca_result['variances']
+        col_names = pca_result['column_names']
+        assert len(means) == len(col_names)
+        assert len(variances) == len(col_names)
+
+    # Test with empty data arrays
+    empty_mesh = pv.PolyData(np.empty((0, 3)))
+    pca_empty = empty_mesh.compute_pca_statistics()
+    assert isinstance(pca_empty, pv.Table)

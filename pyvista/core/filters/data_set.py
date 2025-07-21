@@ -5862,6 +5862,153 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
         return _get_output(alg)
 
+    def compute_pca_statistics(  # type: ignore[misc]
+        self: _DataSetType,
+        scalars: str | None = None,
+        *,
+        preference: Literal['point', 'cell'] = 'point',
+        progress_bar: bool = False,
+    ) -> pyvista.Table:
+        """Compute Principal Component Analysis (PCA) statistics on the dataset.
+
+        This method performs PCA on the specified scalar arrays to identify
+        principal components, eigenvalues, and other statistical measures. PCA
+        is useful for dimensionality reduction, data analysis, and identifying
+        patterns in multidimensional datasets.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of the scalar array(s) to analyze. If not specified, all
+            point or cell data arrays will be analyzed based on the preference.
+
+        preference : str, default: 'point'
+            When ``scalars`` is not specified, this specifies whether to use
+            point data or cell data. Must be either ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.Table
+            A table containing the PCA results including:
+            - Mean values for each variable
+            - Variance values for each variable
+            - Column names of the analyzed variables
+
+        Examples
+        --------
+        Perform PCA on point data of a mesh.
+
+        Create a dataset with correlated data
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.PolyData(np.random.rand(100, 3))
+        >>> # Add correlated scalar data
+        >>> mesh['x_data'] = mesh.points[:, 0]
+        >>> mesh['y_data'] = mesh.points[:, 1]
+        >>> mesh['xy_sum'] = mesh.points[:, 0] + mesh.points[:, 1]
+
+        Compute PCA statistics
+
+        >>> pca_results = mesh.compute_pca_statistics()
+        >>> pca_results.keys()
+        ['means', 'variances', 'column_names']
+
+        Show the results
+
+        >>> pca_results['means']  # doctest:+SKIP
+        pyvista_ndarray([0.48323506, 0.48541015, 0.96864522])
+        >>> pca_results['variances']  # doctest:+SKIP
+        pyvista_ndarray([0.08497419, 0.07317837, 0.20055975])
+        >>> pca_results['column_names']  # doctest:+SKIP
+        pyvista_ndarray(['x_data', 'y_data', 'xy_sum'], dtype='<U6')
+
+        """
+        # Convert dataset to table for PCA analysis
+        if scalars is not None:
+            # Analyze specific scalar array
+            if preference == 'point':
+                if scalars not in self.point_data.keys():
+                    msg = f"Array '{scalars}' not found in point data"
+                    raise KeyError(msg)
+                table_data = {scalars: self.point_data[scalars]}
+            else:  # cell
+                if scalars not in self.cell_data.keys():
+                    msg = f"Array '{scalars}' not found in cell data"
+                    raise KeyError(msg)
+                table_data = {scalars: self.cell_data[scalars]}
+        # Analyze all arrays in the specified association
+        elif preference == 'point':
+            table_data = {name: self.point_data[name] for name in self.point_data.keys()}
+        elif preference == 'cell':
+            table_data = {name: self.cell_data[name] for name in self.cell_data.keys()}
+        else:
+            msg = f"preference must be 'point' or 'cell', not {preference}"  # type: ignore[unreachable]
+            raise ValueError(msg)
+
+        # Create table from data
+        table = pyvista.Table(table_data)
+
+        # Set up PCA algorithm
+        alg = _vtk.vtkPCAStatistics()
+        alg.SetInputData(table)
+
+        # Add column pairs for full covariance matrix computation
+        column_names = list(table_data.keys())
+        for i in range(len(column_names)):
+            for j in range(i, len(column_names)):
+                alg.AddColumnPair(column_names[i], column_names[j])
+
+        # Set algorithm parameters
+        alg.SetLearnOption(True)
+        alg.SetDeriveOption(True)
+        alg.SetAssessOption(False)  # Assessment not needed for basic PCA
+
+        # Update algorithm
+        _update_alg(alg, progress_bar=progress_bar, message='Computing PCA Statistics')
+
+        # Get the MultiBlock output containing derived statistics
+        multiblock_output = alg.GetOutputDataObject(1)
+
+        # Extract relevant information from the multiblock
+        result_data = {}
+
+        # Get basic statistics from the first block (Raw Sparse Covariance Data)
+        if multiblock_output.GetNumberOfBlocks() > 0:
+            raw_data_block = multiblock_output.GetBlock(0)
+            if raw_data_block and raw_data_block.GetNumberOfRows() > 0:
+                # Extract means and variances from individual column blocks
+                means = {}
+                variances = {}
+
+                for block_idx in range(1, multiblock_output.GetNumberOfBlocks()):
+                    block = multiblock_output.GetBlock(block_idx)
+                    if block and block.GetNumberOfColumns() == 3:  # Single column covariance
+                        # Get the column name from the block metadata or first data row
+                        if block.GetNumberOfRows() > 0:
+                            col_name = str(block.GetValue(0, 0)).strip('"')
+                            if col_name in column_names:
+                                mean_val = block.GetValue(0, 1).ToFloat()
+                                var_val = block.GetValue(0, 2).ToFloat()
+                                means[col_name] = mean_val
+                                variances[col_name] = var_val
+
+                # Store means and variances
+                if means:
+                    result_data['means'] = np.array(
+                        [means.get(name, 0.0) for name in column_names]
+                    )
+                    result_data['variances'] = np.array(
+                        [variances.get(name, 0.0) for name in column_names]
+                    )
+                    result_data['column_names'] = np.array(column_names, dtype=object)
+
+        # Create result table
+        return pyvista.Table(result_data)
+
     @_deprecate_positional_args(allowed=['shrink_factor'])
     def shrink(  # type: ignore[misc]
         self: _DataSetType,
