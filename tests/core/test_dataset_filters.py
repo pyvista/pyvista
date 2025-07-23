@@ -4074,6 +4074,12 @@ def test_voxelize_binary_mask_spacing(ant):
     # Check spacing matches mesh length. Use atol since spacing is approximate.
     assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
 
+    match = 'Spacing and cell length options cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_percentile=0.1)
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=ant.n_cells)
+
 
 # This test is flaky because of random sampling that cannot be controlled.
 # Sometimes the sampling produces the same output.
@@ -4208,3 +4214,85 @@ def test_voxelize_binary_mask_raises(sphere):
         )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_rectilinear(ant):
+    vox = ant.voxelize_rectilinear()
+    assert isinstance(vox, pv.RectilinearGrid)
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = ant.voxelize_rectilinear(dimensions=dims)
+    assert np.array_equal(vox.dimensions, dims)
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    single_cell_dims = np.array((2, 2, 2))
+    vox = ant.voxelize_rectilinear(spacing=size)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test reference volume - specify both dimensions and spacing
+    reference_volume = pv.ImageData(dimensions=single_cell_dims - 1, spacing=size)
+    vox = ant.voxelize_rectilinear(reference_volume=reference_volume)
+    assert np.allclose(vox.dimensions, single_cell_dims)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test scalar values
+    foreground = 2
+    background = 3
+    vox = ant.voxelize_rectilinear(foreground_value=foreground, background_value=background)
+    assert 'mask' in vox.cell_data
+    assert vox.array_names == ['mask']
+    values = np.unique(vox['mask'])
+    assert np.array_equal(values, [foreground, background])
+
+    # Test other keywords
+    if pv.vtk_version_info >= (9, 2):
+        vox = ant.voxelize(cell_length_percentile=0.5)
+        assert vox.n_cells
+        vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+        assert vox.n_cells
+    assert vox.n_cells
+    vox = ant.voxelize_rectilinear(progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize_rectilinear(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize_rectilinear(spacing={0.5, 0.3})
+
+
+def test_voxelize(ant):
+    vox = ant.voxelize()
+    assert isinstance(vox, pv.UnstructuredGrid)
+    assert vox.array_names == []
+
+    # Test dimensions
+    dims = np.array((10, 20, 30))
+    vox = pv.Cube().voxelize(dimensions=dims)
+    assert np.array_equal(vox.n_points, np.prod(dims))
+
+    # Test spacing by voxelizing as a single cell
+    bnds = ant.bounds
+    size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+    vox = ant.voxelize(spacing=size)
+    assert np.allclose(vox.n_cells, 1)
+    assert np.allclose(vox.bounds, ant.bounds)
+
+    # Test other keywords
+    if pv.vtk_version_info >= (9, 2):
+        vox = ant.voxelize(cell_length_percentile=0.5)
+        assert vox.n_cells
+        vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
+        assert vox.n_cells
+    vox = ant.voxelize(progress_bar=True)
+    assert vox.n_cells
+    vox = ant.voxelize(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    assert vox.n_cells
+
+    # Test invalid input
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        ant.voxelize(spacing={0.5, 0.3})
