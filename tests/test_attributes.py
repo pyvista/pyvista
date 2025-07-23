@@ -293,8 +293,8 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
         if not issubclass(pyvista_class, _NoNewAttrMixin):
             msg = (
                 f'The class {pyvista_class.__name__!r} in {pyvista_class.__module__!r}'
-                f'must inherit from \n{_NoNewAttrMixin.__name__!r} or '
-                f'{_NoNewAttrMixin.__name__!r} in {_NoNewAttrMixin.__module__!r}'
+                f'must inherit from \n{_NoNewAttrMixin.__name__!r} '
+                f'in {_NoNewAttrMixin.__module__!r}'
             )
         else:
             msg = f'{PyVistaAttributeError.__name__} was NOT raised (but was expected).'
