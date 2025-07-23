@@ -4539,11 +4539,13 @@ def test_voxelize_volume():
     cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
 
     # Create an equal density voxel volume and plot the result.
-    vox = pv.voxelize_volume(mesh, density=0.15)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize_volume(mesh, density=0.15)
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
     # Create a voxel volume from unequal density dimensions and plot result.
-    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 

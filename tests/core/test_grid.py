@@ -1971,12 +1971,12 @@ def test_imagedata_slice_index_integer(
 
     # Slice with integer
     z = 0
-    sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
+    sliced = appended.slice_index(k=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice0
 
     # Slice with negative integer
     z = -1
-    sliced = appended.slice_index(z=z) if use_slice_index else appended[:, :, z]
+    sliced = appended.slice_index(k=z) if use_slice_index else appended[:, :, z]
     assert sliced == slice1
 
 
@@ -1992,7 +1992,7 @@ def test_imagedata_slice_index_range(
     # Slice with index range equal to dimensions
     lower = 0
     sliced = (
-        appended.slice_index(x=[lower, x_dim], y=[lower, y_dim], z=[lower, z_dim])
+        appended.slice_index(i=[lower, x_dim], j=[lower, y_dim], k=[lower, z_dim])
         if use_slice_index
         else appended[lower:x_dim, lower:y_dim, lower:z_dim]
     )
@@ -2003,7 +2003,7 @@ def test_imagedata_slice_index_range(
     upper_x = x_dim
     upper_z = z_dim
     sliced = (
-        appended.slice_index(x=[None, upper_x], y=[lower, None], z=[lower, upper_z])
+        appended.slice_index(i=[None, upper_x], j=[lower, None], k=[lower, upper_z])
         if use_slice_index
         else appended[:upper_x, lower:, lower:upper_z]
     )
@@ -2024,7 +2024,7 @@ def test_imagedata_slice_index_range_upper_bounds(
     extra = 2
     sliced = (
         appended.slice_index(
-            x=[lower, x_dim + extra], y=[lower, y_dim + extra], z=[lower, z_dim + extra]
+            i=[lower, x_dim + extra], j=[lower, y_dim + extra], k=[lower, z_dim + extra]
         )
         if use_slice_index
         else appended[lower : x_dim + extra, lower : y_dim + extra, lower : z_dim + extra]
@@ -2045,7 +2045,7 @@ def test_imagedata_slice_index_negative_range(
     lower = 0
     upper = -1
     sliced_stop = (
-        appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
+        appended.slice_index(i=[lower, upper], j=[lower, upper], k=[lower, upper])
         if use_slice_index
         else appended[lower:upper, lower:upper, lower:upper]
     )
@@ -2055,7 +2055,7 @@ def test_imagedata_slice_index_negative_range(
     lower = -3
     upper = -1
     sliced_start = (
-        appended.slice_index(x=[lower, upper], y=[lower, upper], z=[lower, upper])
+        appended.slice_index(i=[lower, upper], j=[lower, upper], k=[lower, upper])
         if use_slice_index
         else appended[lower:upper, lower:upper, lower:upper]
     )
@@ -2093,7 +2093,7 @@ def test_slice_index_indexing_range():
 
 
 def test_imagedata_getitem_raises(uniform):
-    match = 'Exactly 3 slices must be specified, one for each xyz-axis.'
+    match = 'Exactly 3 slices must be specified, one for each IJK-coordinate axis.'
     with pytest.raises(IndexError, match=re.escape(match)):
         uniform[0]
 
