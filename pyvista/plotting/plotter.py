@@ -5880,11 +5880,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         )
         hier.SetTextProperty(text_property)
 
-        self.remove_actor(f'{name}-points', reset_camera=False)  # type: ignore[arg-type]
-        self.remove_actor(f'{name}-labels', reset_camera=False)  # type: ignore[arg-type]
+        # Explicitly set render=False to avoid unnecessary renders
+        self.remove_actor(f'{name}-points', reset_camera=False, render=False)  # type: ignore[arg-type]
+        self.remove_actor(f'{name}-labels', reset_camera=False, render=False)  # type: ignore[arg-type]
 
         # add points
         if show_points:
+            # Explicitly set render=False to defer rendering to the final add_actor call
             self.add_mesh(
                 algo or points,
                 color=point_color,
@@ -5893,7 +5895,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 pickable=pickable,
                 render_points_as_spheres=render_points_as_spheres,
                 reset_camera=reset_camera,
-                render=render,
+                render=False,
             )
 
         label_actor = _vtk.vtkActor2D()
