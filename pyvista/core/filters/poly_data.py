@@ -2246,6 +2246,11 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Cleaned mesh.
 
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
+
         Examples
         --------
         Create a mesh with a degenerate face and then clean it,

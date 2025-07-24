@@ -121,6 +121,11 @@ class UnstructuredGridFilters(DataSetFilters):
         UnstructuredGrid
             Cleaned unstructured grid.
 
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
+
         Examples
         --------
         Demonstrate cleaning an UnstructuredGrid and show how it can be used to
