@@ -2254,8 +2254,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return a the vtk cell connectivity as a numpy array.
+    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
         padding.
