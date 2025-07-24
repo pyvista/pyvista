@@ -195,6 +195,39 @@ class UnstructuredGridFilters(DataSetFilters):
         UnstructuredGrid
             Mesh with unused points removed.
 
+        Examples
+        --------
+        Create :class:`~pyvista.UnstructuredGrid` with three points. The first two points are
+        coincident and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point
+        is "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> cells = [1, 0, 1, 1]
+        >>> celltypes = [pv.CellType.VERTEX, pv.CellType.VERTEX]
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> grid = pv.UnstructuredGrid(cells, celltypes, points)
+        >>> grid
+        UnstructuredGrid (...)
+          N Cells:    2
+          N Points:   3
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> grid = grid.remove_unused_points()
+        >>> grid
+        UnstructuredGrid (...)
+          N Cells:    2
+          N Points:   2
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
         """
 
         def _add_vertex_cell_to_unused_points(mesh):
@@ -222,11 +255,18 @@ class UnstructuredGridFilters(DataSetFilters):
             )
             return pv.UnstructuredGrid(all_cells, all_celltypes, self.points)
 
-        # Surprisingly, extract_points will keep unused points, so we first need to
-        # explicitly map unused points to VERTEX cells
-        new_grid = _add_vertex_cell_to_unused_points(self)
-
+        # Use extract_points to only keep point IDs associated with cells.
+        # Surprisingly, extract_points will keep unused points, even if their point IDs are
+        # not included, so we first need to explicitly map unused points to VERTEX cells
+        new_grid = (
+            pv.UnstructuredGrid() if self.is_empty else _add_vertex_cell_to_unused_points(self)
+        )
         out = new_grid.extract_points(self.cell_connectivity)
+        if (name := 'vtkOriginalPointIds') in (data := out.point_data):
+            del data[name]
+        if (name := 'vtkOriginalCellIds') in (data := out.cell_data):
+            del data[name]
+
         if inplace:
             self.copy_from(out, deep=False)
             return self

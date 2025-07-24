@@ -4543,6 +4543,40 @@ class PolyDataFilters(DataSetFilters):
         PolyData
             Mesh with unused points removed.
 
+        Examples
+        --------
+        Create :class:`~pyvista.PolyData` with three points. The first two points are coincident
+        and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point is
+        "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> faces = [1, 0, 1, 1]
+        >>> poly = pv.PolyData(points, faces)
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   3
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> poly = poly.remove_unused_points()
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   2
+          N Strips:   0
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
         """
         return self.clean(
             point_merging=False,

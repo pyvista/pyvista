@@ -95,3 +95,8 @@ def test_remove_unused_points(mesh_type, inplace):
     assert mesh_out.n_points == n_points_expected
 
     assert (mesh_in is mesh_out) == inplace
+    assert mesh_out.n_arrays == 0
+
+    # Test empty
+    empty = mesh_type().remove_unused_points()
+    assert empty.n_arrays == 0
