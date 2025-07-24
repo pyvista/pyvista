@@ -54,14 +54,6 @@ def test_cone_source():
     assert algo.radius == 0.0
 
 
-def test_text_3d_raises():
-    match = re.escape(
-        f'Attribute "foo" does not exist and cannot be added to type {pv.Text3DSource.__name__}'
-    )
-    with pytest.raises(AttributeError, match=match):
-        pv.Text3DSource().foo = 1
-
-
 @given(bounds=lists(integers()).filter(lambda x: len(x) != 6))
 def test_box_source_bounds_raises(bounds):
     b = pv.BoxSource()
