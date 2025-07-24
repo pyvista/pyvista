@@ -509,7 +509,7 @@ def render_figures(
                 figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
                 for j, (_, plotter) in enumerate(figures.items()):
-                    if hasattr(plotter, '_gif_filename'):
+                    if plotter._gif_filename is not None:
                         image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                         shutil.move(plotter._gif_filename, image_file.filename)
                     else:
