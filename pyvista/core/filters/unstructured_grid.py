@@ -166,8 +166,8 @@ class UnstructuredGridFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg)
 
-    def remove_unused_points(
-        self: UnstructuredGrid,  # type: ignore[misc]
+    def remove_unused_points(  # type: ignore[misc]
+        self: UnstructuredGrid,
         *,
         inplace: bool = False,
     ):

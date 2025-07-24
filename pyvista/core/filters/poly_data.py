@@ -4518,8 +4518,8 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
         return _get_output(alg)
 
-    def remove_unused_points(
-        self: PolyData,  # type: ignore[misc]
+    def remove_unused_points(  # type: ignore[misc]
+        self: PolyData,
         *,
         inplace: bool = False,
     ):
