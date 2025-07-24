@@ -10,6 +10,7 @@ import numpy as np
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.cell import CellArray
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -178,7 +179,8 @@ class UnstructuredGridFilters(DataSetFilters):
     ):
         """Remove points which are not used by any cells.
 
-        Unlike :meth:`clean`, this filter does `not` merge points.
+        Unlike :meth:`clean`, this filter does `not` merge points. The point order is also
+        unchanged by this filter.
 
         .. note::
             This filter is inefficient. If point merging is acceptable, :meth:`clean` should
@@ -236,6 +238,7 @@ class UnstructuredGridFilters(DataSetFilters):
         """
 
         def _add_vertex_cell_to_unused_points(mesh):
+            mesh = mesh.copy(deep=False)
             # Find unused point indices
             merge_map = mesh.clean(
                 remove_unused_points=True,
@@ -258,7 +261,12 @@ class UnstructuredGridFilters(DataSetFilters):
                     np.full(n_unused, CellType.VERTEX, dtype=np.uint8),
                 ]
             )
-            return pv.UnstructuredGrid(all_cells, all_celltypes, self.points)
+
+            # Convert to vtk arrays and set the new cells
+            vtk_cells = CellArray(all_cells)
+            vtk_celltypes = _vtk.numpy_to_vtk(all_celltypes)
+            mesh.SetCells(vtk_celltypes, vtk_cells)
+            return mesh
 
         # Use extract_points to only keep point IDs associated with cells.
         # Surprisingly, extract_points will keep unused points, even if their point IDs are
@@ -267,6 +275,7 @@ class UnstructuredGridFilters(DataSetFilters):
             pv.UnstructuredGrid() if self.is_empty else _add_vertex_cell_to_unused_points(self)
         )
         out = new_grid.extract_points(self.cell_connectivity)
+
         if (name := 'vtkOriginalPointIds') in (data := out.point_data):
             del data[name]
         if (name := 'vtkOriginalCellIds') in (data := out.cell_data):

@@ -4530,7 +4530,12 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Remove points which are not used by any cells.
 
-        This filter is a convenience wrapper around :meth:`clean`.
+        This filter is similar to :meth:`clean` but does `not` merge points or convert cells.
+        The point order is also unchanged by this filter.
+
+        .. note::
+            This filter is inefficient. If point merging is acceptable, :meth:`clean` should
+            be used instead.
 
         .. versionadded:: 0.46
 
@@ -4583,10 +4588,8 @@ class PolyDataFilters(DataSetFilters):
           N Arrays:   0
 
         """
-        return self.clean(
-            point_merging=False,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
-            inplace=inplace,
-        )
+        out = self.cast_to_unstructured_grid().remove_unused_points().extract_geometry()
+        if inplace:
+            self.copy_from(out, deep=False)
+            return self
+        return out

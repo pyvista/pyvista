@@ -2414,7 +2414,13 @@ class ImageDataFilters(DataSetFilters):
         if select_outputs is not None:
             # This option generates unused points
             # Use clean to remove these points (without merging points)
-            output.remove_unused_points(inplace=True)
+            output.clean(
+                point_merging=False,
+                lines_to_points=False,
+                polys_to_lines=False,
+                strips_to_polys=False,
+                inplace=True,
+            )
 
         if orient_faces and output.n_cells > 0:
             if pyvista.vtk_version_info >= (9, 4):

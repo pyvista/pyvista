@@ -84,18 +84,31 @@ def test_clean_grid(hexbeam):
 @pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
 def test_remove_unused_points(mesh_type, inplace):
     cube = pv.Cube(clean=False)
+    array_names = cube.array_names
+    assert array_names == ['Normals', 'TCoords', 'FaceIndex']
     n_points_expected = 24  # cube has duplicate points at the vertices
     assert cube.n_points == n_points_expected
 
-    cube = pv.PolyData(np.append(cube.points, [[0, 0, 0]], axis=0), cube.faces)
-    assert cube.n_points == n_points_expected + 1
+    cube_cast = cube if mesh_type is pv.PolyData else cube.cast_to_unstructured_grid()
 
-    mesh_in = cube if mesh_type is pv.PolyData else cube.cast_to_unstructured_grid()
+    mesh_in = cube_cast.copy()
+
+    # Add an unused point
+    mesh_in.points = np.append(mesh_in.points, [[0, 0, 0]], axis=0)
+    assert mesh_in.n_points == n_points_expected + 1
+
     mesh_out = mesh_in.remove_unused_points(inplace=inplace)
-    assert mesh_out.n_points == n_points_expected
 
+    # Test unused point is removed and no points are merged
+    assert mesh_out.n_points == n_points_expected
+    # Mesh geometry (point and cell order) should also match cube input exactly
+    assert mesh_out == cube_cast
+
+    # Test mesh and array copies
     assert (mesh_in is mesh_out) == inplace
-    assert mesh_out.n_arrays == 0
+    for name in array_names:
+        assert np.shares_memory(mesh_in[name], mesh_out[name]) == inplace
+    assert mesh_out.array_names == array_names
 
     # Test empty
     empty = mesh_type().remove_unused_points()
