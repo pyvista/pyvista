@@ -3,15 +3,23 @@
 from __future__ import annotations
 
 from functools import wraps
+from typing import TYPE_CHECKING
 
+import numpy as np
+
+import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.celltype import CellType
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
 
 
 @abstract_class
@@ -157,3 +165,70 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetAveragePointData(average_point_data)
         _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg)
+
+    def remove_unused_points(
+        self: UnstructuredGrid,  # type: ignore[misc]
+        *,
+        inplace: bool = False,
+    ):
+        """Remove points which are not used by any cells.
+
+        Unlike :meth:`clean`, this filter does `not` merge points.
+
+        .. note::
+            This filter is inefficient. If point merging is acceptable, :meth:`clean` should
+            be used instead.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.remove_unused_points
+
+        Returns
+        -------
+        UnstructuredGrid
+            Mesh with unused points removed.
+
+        """
+
+        def _add_vertex_cell_to_unused_points(mesh):
+            merge_map = mesh.clean(
+                remove_unused_points=True,
+                produce_merge_map=True,
+                average_point_data=False,
+            ).field_data['PointMergeMap']
+
+            # Find unused point indices
+            unused_point_ids = np.where(merge_map == -1)[0]
+
+            # Create vertex cells [1, pt_id] for each unused point
+            n_unused = len(unused_point_ids)
+            vertex_cells = np.empty(n_unused * 2, dtype=np.int32)
+            vertex_cells[0::2] = 1
+            vertex_cells[1::2] = unused_point_ids
+
+            # Concatenate with original cell array and cell types
+            all_cells = np.concatenate([mesh.cells, vertex_cells])
+            all_celltypes = np.concatenate(
+                [
+                    mesh.celltypes,
+                    np.full(n_unused, CellType.VERTEX, dtype=np.uint8),
+                ]
+            )
+            return pv.UnstructuredGrid(all_cells, all_celltypes, self.points)
+
+        # Surprisingly, extract_points will keep unused points, so we first need to
+        # explicitly map unused points to VERTEX cells
+        new_grid = _add_vertex_cell_to_unused_points(self)
+
+        out = new_grid.extract_points(self.cell_connectivity)
+        if inplace:
+            self.copy_from(out, deep=False)
+            return self
+        return out

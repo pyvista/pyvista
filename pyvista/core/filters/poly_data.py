@@ -4517,3 +4517,37 @@ class PolyDataFilters(DataSetFilters):
             alg.SetResolution(resolution)  # type: ignore[arg-type]
         _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
         return _get_output(alg)
+
+    def remove_unused_points(
+        self: PolyData,  # type: ignore[misc]
+        *,
+        inplace: bool = False,
+    ):
+        """Remove points which are not used by any cells.
+
+        This filter is a convenience wrapper around :meth:`clean`.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.UnstructuredGridFilters.remove_unused_points
+
+        Returns
+        -------
+        PolyData
+            Mesh with unused points removed.
+
+        """
+        return self.clean(
+            point_merging=False,
+            lines_to_points=False,
+            polys_to_lines=False,
+            strips_to_polys=False,
+            inplace=inplace,
+        )

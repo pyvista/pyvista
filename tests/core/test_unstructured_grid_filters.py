@@ -77,3 +77,20 @@ def test_clean_grid(hexbeam):
     # test merging_array
     cleaned = merged.clean(average_point_data=True, merging_array_name='data_2')
     assert cleaned.n_points == 165
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
+def test_remove_unused_points(mesh_type, inplace):
+    cube = pv.Cube(clean=False)
+    n_points_expected = 24  # cube has duplicate points at the vertices
+    assert cube.n_points == n_points_expected
+
+    cube = pv.PolyData(np.append(cube.points, [[0, 0, 0]], axis=0), cube.faces)
+    assert cube.n_points == n_points_expected + 1
+
+    mesh_in = cube if mesh_type is pv.PolyData else cube.cast_to_unstructured_grid()
+    mesh_out = mesh_in.remove_unused_points(inplace=inplace)
+    assert mesh_out.n_points == n_points_expected
+
+    assert (mesh_in is mesh_out) == inplace
