@@ -85,7 +85,7 @@ class BackgroundRenderer(Renderer):
 
         # make the longest dimensions match the plotting window
         img_dim = np.array(image_data.dimensions[:2])
-        self.camera.focus = np.array([xc, yc, 0.0])
+        self.camera._focus = np.array([xc, yc, 0.0])
         self.camera.position = np.array([xc, yc, dist])
 
         ratio = img_dim / np.array(self.parent.window_size)

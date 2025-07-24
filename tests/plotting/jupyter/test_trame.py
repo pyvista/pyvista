@@ -151,9 +151,9 @@ def test_trame(client_type):
     assert len(pl.actors) == 1
 
     server.state[viewer.AXIS] = True
-    assert not hasattr(pl.renderer, 'axes_actor')
+    assert pl.renderer.axes_actor is None
     viewer.on_axis_visibility_change(**server.state.to_dict())
-    assert hasattr(pl.renderer, 'axes_actor')
+    assert pl.renderer.axes_actor is not None
     server.state[viewer.AXIS] = False
     viewer.on_axis_visibility_change(**server.state.to_dict())
 

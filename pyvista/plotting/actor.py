@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
@@ -22,8 +19,7 @@ if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
-@no_new_attr
-class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
+class Actor(Prop3D, _vtk.vtkActor):
     """Wrap :vtk:`vtkActor`.
 
     This class represents the geometry & properties in a rendered
@@ -86,8 +82,6 @@ class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     False
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None) -> None:
         """Initialize actor."""

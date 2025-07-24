@@ -10,12 +10,13 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
 
 
-class Renderers:
+class Renderers(_NoNewAttrMixin):
     """Organize Renderers for ``pyvista.Plotter``.
 
     Parameters

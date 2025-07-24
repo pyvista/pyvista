@@ -62,10 +62,10 @@ from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
-from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
@@ -1308,25 +1308,53 @@ def test_fit_plane_to_points_success_with_many_points(one_million_points):
 
 
 @pytest.fixture
-def no_new_attr_subclass():
-    @no_new_attr
-    class A: ...
+def no_new_attributes_mixin_subclass():
+    class A(_NoNewAttrMixin):
+        def __init__(self):
+            super().__init__()
+            self.bar = 42
 
     class B(A):
-        _new_attr_exceptions = 'eggs'
-
         def __init__(self):
-            self.eggs = 'ham'
+            super().__init__()
+            self.baz = 42
 
-    return B
+    return A(), B()
 
 
-def test_no_new_attr_subclass(no_new_attr_subclass):
-    obj = no_new_attr_subclass()
-    assert obj
-    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
-    with pytest.raises(AttributeError, match=msg):
-        obj._eggs = 'ham'
+def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
+    a, b = no_new_attributes_mixin_subclass
+    ham = 'ham'
+    eggs = 'eggs'
+
+    match = (
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
+        'Use `pv.set_new_attribute` to set new attributes.'
+    )
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        setattr(a, ham, eggs)
+
+    match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        setattr(b, ham, eggs)
+
+
+def test_set_new_attribute(no_new_attributes_mixin_subclass):
+    a, _ = no_new_attributes_mixin_subclass
+    ham = 'ham'
+    eggs = 'eggs'
+
+    assert not hasattr(a, ham)
+    pv.set_new_attribute(a, ham, eggs)
+    assert hasattr(a, ham)
+    assert getattr(a, ham) == eggs
+
+    match = (
+        "Attribute 'ham' already exists. "
+        '`set_new_attribute` can only be used for setting NEW attributes.'
+    )
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
+        pv.set_new_attribute(a, ham, eggs)
 
 
 @pytest.fixture
@@ -2212,7 +2240,6 @@ def test_parse_interaction_event_raises_wrong_type():
 def test_classproperty():
     magic_number = 42
 
-    @no_new_attr
     class Foo:
         @_classproperty
         def prop(cls):  # noqa: N805

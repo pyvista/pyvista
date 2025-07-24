@@ -11,12 +11,13 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .helpers import view_vectors
 
 
-class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
+class Camera(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
     Parameters
@@ -46,6 +47,7 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
         self._elevation = 0.0
         self._azimuth = 0.0
         self._is_set = False
+        self._focus = None  # Used by BackgroundRenderer
 
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
@@ -105,7 +107,6 @@ class Camera(_vtk.DisableVtkSnakeCase, _vtk.vtkCamera):
     def __del__(self):
         """Delete the camera."""
         self.RemoveAllObservers()
-        self.parent = None
 
     @property
     def is_set(self) -> bool:  # numpydoc ignore=RT01
