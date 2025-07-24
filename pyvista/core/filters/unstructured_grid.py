@@ -198,13 +198,12 @@ class UnstructuredGridFilters(DataSetFilters):
         """
 
         def _add_vertex_cell_to_unused_points(mesh):
+            # Find unused point indices
             merge_map = mesh.clean(
                 remove_unused_points=True,
                 produce_merge_map=True,
                 average_point_data=False,
             ).field_data['PointMergeMap']
-
-            # Find unused point indices
             unused_point_ids = np.where(merge_map == -1)[0]
 
             # Create vertex cells [1, pt_id] for each unused point
