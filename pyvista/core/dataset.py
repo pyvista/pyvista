@@ -39,6 +39,7 @@ from .utilities.arrays import get_array_association
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -96,7 +97,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     name: str
 
 
-class ActiveArrayInfo:
+class ActiveArrayInfo(_NoNewAttrMixin):
     """Active array info class with support for pickling.
 
     .. deprecated:: 0.45
@@ -197,6 +198,9 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+
+        # Used by glyph filter and plotter legend
+        self._glyph_geom: Sequence[_vtk.vtkDataSet] | None = None
 
     def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""

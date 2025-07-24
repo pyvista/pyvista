@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABCMeta
 from collections.abc import Sequence
 import enum
 from functools import cache
@@ -18,11 +19,12 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from typing import Any
-    from typing import ClassVar
 
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
     from pyvista._typing_core import VectorLike
+
+    _T = TypeVar('_T')
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
@@ -280,28 +282,86 @@ def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
         raise ValueError(msg)
 
 
-def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
-    """Override __setattr__ to not permit new attributes."""
-    if not hasattr(cls, '_new_attr_exceptions'):
-        cls._new_attr_exceptions = []
+class _AutoFreezeMeta(type):
+    """Metaclass to automatically freeze a class when called."""
 
-    def __setattr__(self, name, value):  # noqa: ANN001, ANN202, N807
-        """Do not allow setting attributes."""
+    def __call__(cls: type[_T], *args, **kwargs) -> _T:
+        obj = super().__call__(*args, **kwargs)  # type: ignore[misc]
+        obj._no_new_attributes(cls)
+        return obj
+
+
+class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
+    """Metaclass to combine automatic attribute freezing with ABC support."""
+
+
+class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
+    """Mixin to prevent adding new attributes.
+
+    This class is mainly used to prevent users from setting the wrong attributes on an
+    object. It freezes the attributes when called and prevents setting new ones via
+    "normal" methods like ``obj.foo = 42``.
+    """
+
+    def _no_new_attributes(self, this_class: type) -> None:
+        """Prevent setting additional attributes."""
+        object.__setattr__(self, '__frozen', True)
+        object.__setattr__(self, '__frozen_by_class', this_class)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """Prevent adding new attributes to classes using "normal" methods."""
+        # Check if this class froze itself. Any frozen state already set by parent classes, e.g.
+        # by calling super().__init__(), will be ignored. This allows subclasses to set attributes
+        # during init without being affect by a parent class init.
+        frozen = self.__dict__.get('__frozen', False)
+        frozen_by = self.__dict__.get('__frozen_by_class', None)
         if (
-            hasattr(self, name)
-            or name in cls._new_attr_exceptions
-            or name in self._new_attr_exceptions
+            frozen
+            and frozen_by is type(self)
+            and not (key in type(self).__dict__ or hasattr(self, key))
         ):
-            object.__setattr__(self, name, value)
-        else:
-            msg = (
-                f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
-            )
-            raise AttributeError(msg)
+            from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
-    cls.__setattr__ = __setattr__
-    return cls
+            msg = (
+                f'Attribute {key!r} does not exist and cannot be added to class '
+                f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new attributes.'
+            )
+            raise PyVistaAttributeError(msg)
+        object.__setattr__(self, key, value)
+
+
+def set_new_attribute(obj: object, name: str, value: Any) -> None:
+    """Set a new attribute for this object.
+
+    Python allows arbitrarily setting new attributes on objects at any time,
+    but PyVista's classes do not allow this. If an attribute is not part of
+    PyVista's API, an ``AttributeError`` is normally raised when attempting
+    to set it.
+
+    Use :func:`set_new_attribute` to override this and set a new attribute anyway.
+
+    Examples
+    --------
+    Set a new custom attribute on a mesh.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.PolyData()
+    >>> pv.set_new_attribute(mesh, 'foo', 42)
+    >>> mesh.foo
+    42
+
+    .. versionadded:: 0.46
+
+    """
+    if hasattr(obj, name):
+        from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+        msg = (
+            f'Attribute {name!r} already exists. '
+            '`set_new_attribute` can only be used for setting NEW attributes.'
+        )
+        raise PyVistaAttributeError(msg)
+    object.__setattr__(obj, name, value)
 
 
 def _reciprocal(
@@ -366,9 +426,6 @@ class _NameMixin:
 
     """
 
-    # In case subclasses use @no_new_attr mixin
-    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
-
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
@@ -386,7 +443,7 @@ class _NameMixin:
         if not value:
             msg = 'Name must be truthy.'
             raise ValueError(msg)
-        self._name = str(value)
+        object.__setattr__(self, '_name', str(value))
 
 
 class _BoundsSizeMixin:

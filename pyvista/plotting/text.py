@@ -13,7 +13,7 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
@@ -23,7 +23,6 @@ from .tools import FONTS
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import ClassVar
 
     from pyvista.core._typing_core import VectorLike
 
@@ -33,8 +32,9 @@ HorizontalOptions = Literal['left', 'center', 'right']
 VerticalOptions = Literal['bottom', 'center', 'top']
 
 
-@no_new_attr
-class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
+class CornerAnnotation(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation
+):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide
@@ -169,8 +169,7 @@ class CornerAnnotation(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnot
         self.SetLinearFontScaleFactor(factor)
 
 
-@no_new_attr
-class Text(_vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
+class Text(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
@@ -387,13 +386,6 @@ class Label(_Prop3DMixin, Text):
 
     """
 
-    _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
-        'size',
-        'relative_position',
-        '_relative_position',
-        '_prop3d',
-    )
-
     def __init__(
         self,
         text: str | None = None,
@@ -466,8 +458,7 @@ class Label(_Prop3DMixin, Text):
         return BoundsTuple(x, x, y, y, z, z)
 
 
-@no_new_attr
-class TextProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
+class TextProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkTextProperty):
     """Define text's property.
 
     Parameters

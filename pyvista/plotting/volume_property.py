@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
 import weakref
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 
 
-@no_new_attr
-class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
+class VolumeProperty(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     """Wrap the VTK class :vtk:`vtkVolumeProperty`.
 
     This class is used to represent common properties associated with volume
@@ -81,8 +79,6 @@ class VolumeProperty(_vtk.DisableVtkSnakeCase, _vtk.vtkVolumeProperty):
     >>> pl.show()
 
     """
-
-    _new_attr_exceptions: ClassVar[list[str]] = ['_lookup_table_', '_lookup_table_observer_id']
 
     @_deprecate_positional_args
     def __init__(  # noqa: PLR0917
