@@ -2134,6 +2134,17 @@ class Renderer(
             cube_axes_actor.GetLabelTextProperty(2),
         ]
 
+        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
+        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
+        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
+        # an additional scaling factor.
+        default_screen_size = 10.0
+        default_font_size = 12
+        scaled_font_size = 50
+
+        font_size_factor = (
+            scaled_font_size / default_font_size if pyvista.vtk_version_info > (9, 5, 99) else 1.0
+        )
         for prop in props:
             prop.SetColor(color.float_rgb)
             prop.SetFontFamily(font_family)
@@ -2141,13 +2152,11 @@ class Renderer(
 
             # this merely makes the font sharper
             if use_3d_text:
-                prop.SetFontSize(50)
+                prop.SetFontSize(scaled_font_size)
 
-        # Note: font_size does nothing as a property, use SetScreenSize instead
-        # Here, we normalize relative to 12 to give the user an illusion of
-        # just changing the font size relative to a font size of 12. 10 is used
-        # here since it's the default "screen size".
-        cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
+        cube_axes_actor.SetScreenSize(
+            font_size / default_font_size / font_size_factor * default_screen_size
+        )
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)

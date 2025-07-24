@@ -1750,10 +1750,16 @@ class PlanesAssembly(_XYZAssembly):
         # Values on the order of 0.01-0.05 seem to work best. Use a normalization
         # factor so that input values are on the order of 10-50 and roughly match 2D sizes
         NORM_FACTOR = 1000
-        scale = self.planes.length * float(valid_size) / NORM_FACTOR
+        scale_3d = self.planes.length * float(valid_size) / NORM_FACTOR
+
+        # In VTK 9.6+, the 3D label size depends on the 2D label size, so in the 3D case
+        # we need to reset the 2D font size to match the VTK default value of 12
+        font_size_2d = (
+            valid_size if hasattr(self, 'label_mode') and self.label_mode == '2D' else 12
+        )
         for axis in self._axis_actors:
-            axis.GetTitleActor().SetScale(scale)  # 3D labels
-            axis.GetTitleTextProperty().SetFontSize(size)  # 2D labels
+            axis.GetTitleActor().SetScale(scale_3d)  # 3D labels
+            axis.GetTitleTextProperty().SetFontSize(font_size_2d)  # 2D labels
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1904,6 +1910,9 @@ class PlanesAssembly(_XYZAssembly):
         use_2D = mode == '2D'
         for axis in self._axis_actors:
             axis.SetUse2DMode(use_2D)
+
+        # The 3D label size depends on the 2D label size so we need to reset this property
+        self.label_size = self.label_size
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01

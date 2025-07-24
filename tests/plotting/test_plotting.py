@@ -378,6 +378,10 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
 
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -418,6 +422,10 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
 
 def test_plot_helper_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
 
     uniform.plot(
         volume=True,
@@ -645,13 +653,23 @@ def test_plotter_shape_invalid():
         pv.Plotter(shape={1, 2})
 
 
-def test_plot_bounds_axes_with_no_data():
+def test_plot_bounds_axes_with_no_data(verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
     plotter.show_bounds()
     plotter.show()
 
 
-def test_plot_show_grid(sphere):
+def test_plot_show_grid(sphere, verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
 
     with pytest.raises(ValueError, match='Value of location'):
@@ -805,7 +823,12 @@ def test_plot_show_bounds(sphere):
     plotter.show()
 
 
-def test_plot_label_fmt(sphere):
+def test_plot_label_fmt(sphere, verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
@@ -814,7 +837,12 @@ def test_plot_label_fmt(sphere):
 
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
-def test_plot_show_bounds_params(grid, location):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_plot_show_bounds_params(grid, location, verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially with VTK 9.6
+        verify_image_cache.skip = True
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
@@ -1720,7 +1748,12 @@ def test_camera(sphere):
     plotter.show()
 
 
-def test_multi_renderers():
+def test_multi_renderers(verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter(shape=(2, 2))
 
     plotter.subplot(0, 0)
@@ -4964,7 +4997,13 @@ def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
     smoothing_scale,
+    verify_image_cache,
 ):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
