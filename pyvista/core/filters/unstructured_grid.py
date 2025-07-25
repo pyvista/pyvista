@@ -5,12 +5,8 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.cell import CellArray
-from pyvista.core.celltype import CellType
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
@@ -19,7 +15,11 @@ from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
     from pyvista import UnstructuredGrid
+
+    T = TypeVar('T', bound=UnstructuredGrid)
 
 
 @abstract_class
@@ -172,18 +172,13 @@ class UnstructuredGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def remove_unused_points(  # type: ignore[misc]
-        self: UnstructuredGrid,
+        self: T,
         *,
         inplace: bool = False,
-    ):
+    ) -> T:
         """Remove points which are not used by any cells.
 
-        Unlike :meth:`clean`, this filter does `not` merge points. The point order is also
-        unchanged by this filter.
-
-        .. note::
-            This filter is inefficient. If point merging is acceptable, :meth:`clean` should
-            be used instead.
+        Unlike :meth:`clean`, this filter does `not` merge points.
 
         .. versionadded:: 0.46
 
@@ -235,50 +230,12 @@ class UnstructuredGridFilters(DataSetFilters):
           N Arrays:   0
 
         """
+        # Must not include cells here else unused points will also be extracted
+        new_grid = self.extract_points(self.cell_connectivity, include_cells=False)
+        if (name := 'vtkOriginalPointIds') in (data := new_grid.point_data):
+            del data[name]
 
-        def _add_vertex_cell_to_unused_points(mesh):
-            # Find unused point indices
-            merge_map = mesh.clean(
-                remove_unused_points=True,
-                produce_merge_map=True,
-                average_point_data=False,
-            ).field_data['PointMergeMap']
-            unused_point_ids = np.where(merge_map == -1)[0]
-
-            # Create vertex cells [1, pt_id] for each unused point
-            n_unused = len(unused_point_ids)
-            vertex_cells = np.empty(n_unused * 2, dtype=np.int32)
-            vertex_cells[0::2] = 1
-            vertex_cells[1::2] = unused_point_ids
-
-            # Concatenate with original cell array and cell types
-            all_cells = np.concatenate([mesh.cells, vertex_cells])
-            all_celltypes = np.concatenate(
-                [
-                    mesh.celltypes,
-                    np.full(n_unused, CellType.VERTEX, dtype=np.uint8),
-                ]
-            )
-
-            # Convert to vtk arrays and set the new cells
-            vtk_cells = CellArray(all_cells)
-            vtk_celltypes = _vtk.numpy_to_vtk(all_celltypes)
-            mesh.SetCells(vtk_celltypes, vtk_cells)
-
-        # Use extract_points to only keep point IDs associated with cells.
-        # Surprisingly, extract_points will keep unused points, even if their point IDs are
-        # not included, so we first need to explicitly map unused points to VERTEX cells
-        new_grid = self.copy(deep=False)
-        if not new_grid.is_empty:
-            _add_vertex_cell_to_unused_points(new_grid)
-            new_grid = new_grid.extract_points(self.cell_connectivity)
-
-            if (name := 'vtkOriginalPointIds') in (data := new_grid.point_data):
-                del data[name]
-            if (name := 'vtkOriginalCellIds') in (data := new_grid.cell_data):
-                del data[name]
-
-        if inplace:
-            self.copy_from(new_grid, deep=False)
-            return self
-        return new_grid
+        out = self if inplace else self.copy()
+        out.points = new_grid.points
+        out.point_data.update(new_grid.point_data, copy=not inplace)
+        return out

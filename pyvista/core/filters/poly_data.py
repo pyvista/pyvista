@@ -33,9 +33,13 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
     from pyvista import PolyData
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
+    T = TypeVar('T', bound=PolyData)
 
 
 @abstract_class
@@ -4524,18 +4528,14 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def remove_unused_points(  # type: ignore[misc]
-        self: PolyData,
+        self: T,
         *,
         inplace: bool = False,
-    ):
+    ) -> T:
         """Remove points which are not used by any cells.
 
         This filter is similar to :meth:`clean` but does `not` merge points or convert cells.
         The point order is also unchanged by this filter.
-
-        .. note::
-            This filter is inefficient. If point merging is acceptable, :meth:`clean` should
-            be used instead.
 
         .. versionadded:: 0.46
 
