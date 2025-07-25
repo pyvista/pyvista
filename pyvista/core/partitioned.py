@@ -247,6 +247,26 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self.SetNumberOfPartitions(n)
         self.Modified()
 
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if there are no blocks.
+
+        .. versionadded:: 0.46
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.MultiBlock()
+        >>> mesh.is_empty
+        True
+
+        >>> mesh.append(pv.Sphere())
+        >>> mesh.is_empty
+        False
+
+        """
+        return self.n_partitions == 0
+
     def append(self, dataset) -> None:
         """Add a data set to the next partition index.
 

@@ -532,6 +532,7 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH118',
   'PTH119',
 ]
+'tests/typing/test_typing_cases/*' = ['E501']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

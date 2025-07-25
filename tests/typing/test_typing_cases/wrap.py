@@ -8,14 +8,14 @@ import pyvista as pv
 from pyvista import wrap
 from pyvista.core import _vtk_core as _vtk
 
-# reveal_type(wrap(_vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
-# reveal_type(wrap(pv.PolyData()))  # EXPECTED_TYPE: "PolyData"
+reveal_type(wrap(_vtk.vtkPolyData()))  # EXPECTED_TYPE: "PolyData"
+reveal_type(wrap(pv.PolyData()))  # EXPECTED_TYPE: "PolyData"
 
 reveal_type(wrap(_vtk.vtkStructuredGrid()))  # EXPECTED_TYPE: "StructuredGrid"
 reveal_type(wrap(pv.StructuredGrid()))  # EXPECTED_TYPE: "StructuredGrid"
 
-# reveal_type(wrap(_vtk.vtkExplicitStructuredGrid()))  # EXPECTED_TYPE: "ExplicitStructuredGrid"
-# reveal_type(wrap(pv.ExplicitStructuredGrid()))  # EXPECTED_TYPE: "ExplicitStructuredGrid"
+reveal_type(wrap(_vtk.vtkExplicitStructuredGrid()))  # EXPECTED_TYPE: "ExplicitStructuredGrid"
+reveal_type(wrap(pv.ExplicitStructuredGrid()))  # EXPECTED_TYPE: "ExplicitStructuredGrid"
 
 reveal_type(wrap(_vtk.vtkUnstructuredGrid()))  # EXPECTED_TYPE: "UnstructuredGrid"
 reveal_type(wrap(pv.UnstructuredGrid()))  # EXPECTED_TYPE: "UnstructuredGrid"
@@ -37,7 +37,7 @@ reveal_type(wrap(_vtk.vtkTable()))  # EXPECTED_TYPE: "Table"
 reveal_type(wrap(pv.Table()))  # EXPECTED_TYPE: "Table"
 
 reveal_type(wrap(_vtk.vtkPartitionedDataSet()))  # EXPECTED_TYPE: "PartitionedDataSet"
-# reveal_type(wrap(pv.PartitionedDataSet()))  # EXPECTED_TYPE: "PartitionedDataSet"
+reveal_type(wrap(pv.PartitionedDataSet()))  # EXPECTED_TYPE: "PartitionedDataSet"
 
 reveal_type(wrap(np.zeros(shape=(100, 3))))  # EXPECTED_TYPE: "Union[PolyData, ImageData]"
 reveal_type(wrap(_vtk.vtkFloatArray()))  # EXPECTED_TYPE: "pyvista_ndarray"
