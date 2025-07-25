@@ -63,7 +63,10 @@ def flaky_test(
                 func_name = test_function.__name__
                 module_name = test_function.__module__
                 error_name = e.__class__.__name__
-                msg = f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}'
+                msg = (
+                    f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - '
+                    f'{module_name}::{func_name} - {error_name}'
+                )
                 if i == times - 1:
                     print(msg)
                     raise  # Re-raise the last failure if all retries fail
@@ -147,11 +150,6 @@ def globe():
 @pytest.fixture
 def hexbeam():
     return examples.load_hexbeam()
-
-
-@pytest.fixture
-def grid():
-    return pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
 @pytest.fixture
@@ -287,23 +285,9 @@ def pytest_configure(config: pytest.Config):
 
     if pyvista.vtk_version_info < (9, 1):
         warnings.append(
-            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
+            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin '
+            r'.{1}bool.*:DeprecationWarning'
         )
-
-
-def marker_names(item: pytest.Item):
-    return [marker.name for marker in item.iter_markers()]
-
-
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
-    test_downloads = config.getoption('--test_downloads')
-
-    for item in items:
-        # skip all tests that need downloads
-        if not test_downloads:
-            if 'needs_download' in marker_names(item):
-                skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
-                item.add_marker(skip_downloads)
 
 
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
@@ -312,7 +296,10 @@ def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     try:
         bounds = sig.bind(*item_mark.args, **item_mark.kwargs)
     except TypeError as e:
-        msg = f'Marker `{item_mark.name}` called with incorrect arguments.\nSignature should be: @pytest.mark.{item_mark.name}{sig}'
+        msg = (
+            f'Marker `{item_mark.name}` called with incorrect arguments.\n'
+            f'Signature should be: @pytest.mark.{item_mark.name}{sig}'
+        )
         raise ValueError(msg) from e
     else:
         bounds.apply_defaults()
@@ -340,7 +327,10 @@ def _get_min_max_vtk_version(
 
     # Distinguish scenarios from positional arguments
     if (len(args := bounds.arguments['args']) > 0) and (bounds.arguments['at_least'] is not None):
-        msg = f'Cannot specify both *args and `at_least` keyword argument to `{item_mark.name}` marker.'
+        msg = (
+            f'Cannot specify both *args and `at_least` keyword argument to '
+            f'`{item_mark.name}` marker.'
+        )
         raise ValueError(msg)
 
     if len(args) > 0:
@@ -351,7 +341,10 @@ def _get_min_max_vtk_version(
     _max = bounds.arguments['less_than']
 
     if _max is None and _min is None:
-        msg = f'Need to specify either `at_least` or `less_than` keyword arguments to `{item_mark.name}` marker.'
+        msg = (
+            f'Need to specify either `at_least` or `less_than` keyword arguments to '
+            f'`{item_mark.name}` marker.'
+        )
         raise ValueError(msg)
 
     return _pad_version(_min), _pad_version(_max), bounds
@@ -490,8 +483,12 @@ def pytest_runtest_setup(item: pytest.Item):
         if should_skip:
             pytest.skip(bounds.arguments[r])
 
+    test_downloads = item.config.getoption(flag := '--test_downloads')
+    if item.get_closest_marker('needs_download') and not test_downloads:
+        pytest.skip(f'Downloads not enabled with {flag}')
 
-def pytest_report_header(config):
+
+def pytest_report_header(config):  # noqa: ARG001
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}

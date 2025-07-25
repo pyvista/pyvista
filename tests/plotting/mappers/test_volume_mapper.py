@@ -15,11 +15,13 @@ def volume_mapper():
     return actor.mapper
 
 
-def test_volume_mapper_dataset(volume_mapper, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_volume_mapper_dataset(volume_mapper):
     assert isinstance(volume_mapper.dataset, pv.ImageData)
 
 
-def test_volume_mapper_blend_mode(volume_mapper, skip_check_gc):
+@pytest.mark.skip_check_gc
+def test_volume_mapper_blend_mode(volume_mapper):
     assert isinstance(volume_mapper.blend_mode, str)
 
     volume_mapper.blend_mode = vtk.vtkVolumeMapper.COMPOSITE_BLEND

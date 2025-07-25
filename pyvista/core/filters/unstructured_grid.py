@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import wraps
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -17,12 +18,12 @@ from pyvista.core.utilities.misc import abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @wraps(PolyDataFilters.delaunay_2d)
+    @wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
     def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @wraps(PolyDataFilters.reconstruct_surface)
+    @wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
     def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
@@ -54,14 +55,15 @@ class UnstructuredGridFilters(DataSetFilters):
         _update_alg(alg)
         return _get_output(alg)
 
-    def clean(
+    @_deprecate_positional_args
+    def clean(  # noqa: PLR0917
         self,
         tolerance=0,
-        remove_unused_points: bool = True,
-        produce_merge_map: bool = True,
-        average_point_data: bool = True,
+        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
+        produce_merge_map: bool = True,  # noqa: FBT001, FBT002
+        average_point_data: bool = True,  # noqa: FBT001, FBT002
         merging_array_name=None,
-        progress_bar: bool = False,
+        progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
@@ -70,8 +72,7 @@ class UnstructuredGridFilters(DataSetFilters):
         modify the topology of the input dataset, nor change the types of
         cells. It may however, renumber the cell connectivity ids.
 
-        This filter implements `vtkStaticCleanUnstructuredGrid
-        <https://vtk.org/doc/nightly/html/classvtkStaticCleanUnstructuredGrid.html>`_
+        This filter implements :vtk:`vtkStaticCleanUnstructuredGrid`.
 
         Parameters
         ----------
@@ -140,7 +141,7 @@ class UnstructuredGridFilters(DataSetFilters):
 
         """
         try:
-            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
+            from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid  # noqa: PLC0415
         except ImportError:  # pragma no cover
             msg = 'UnstructuredGrid.clean requires VTK >= 9.2.2'
             raise VTKVersionError(msg) from None
@@ -154,5 +155,5 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
-        _update_alg(alg, progress_bar, 'Cleaning Unstructured Grid')
+        _update_alg(alg, progress_bar=progress_bar, message='Cleaning Unstructured Grid')
         return _get_output(alg)

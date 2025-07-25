@@ -56,7 +56,9 @@ integrated_data['normal_velocity']
 # %%
 # An additional ``Area`` or ``Volume`` array is added.
 print(f'Original arrays: {inlet_surface.array_names}')
-new_arrays = [name for name in integrated_data.array_names if name not in inlet_surface.array_names]
+new_arrays = [
+    name for name in integrated_data.array_names if name not in inlet_surface.array_names
+]
 print(f'New arrays      : {new_arrays}')
 
 # %%

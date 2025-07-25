@@ -38,29 +38,17 @@ def _is_vtk(obj):
         return False
 
 
-@pytest.fixture
-def skip_check_gc(check_gc):
-    """Skip check_gc fixture."""
-    check_gc.skip = True
-
-
 @pytest.fixture(autouse=True)
-def check_gc():
+def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
+    if request.node.get_closest_marker('skip_check_gc'):
+        yield
+        return
+
     gc.collect()
     before = {id(o) for o in gc.get_objects() if _is_vtk(o)}
 
-    class GcHandler:
-        def __init__(self) -> None:
-            # if set to True, will entirely skip checking in this fixture
-            self.skip = False
-
-    gc_handler = GcHandler()
-
-    yield gc_handler
-
-    if gc_handler.skip:
-        return
+    yield
 
     pv.close_all()
 
@@ -125,7 +113,7 @@ def make_two_char_img(text):
 
 
 @pytest.fixture
-def cubemap(texture):
+def cubemap():
     """Sample texture as a cubemap."""
     return pv.Texture(
         [

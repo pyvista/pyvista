@@ -89,7 +89,7 @@ plotter.show()
 # Here is another example:
 dragon = examples.download_dragon()
 plotter = pyvista.Plotter()
-plotter.set_background('black', 'blue')
+plotter.set_background('black', top='blue')
 plotter.add_mesh(
     dragon,
     color='green',

@@ -15,36 +15,38 @@ from pathlib import Path
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 
-def plot(
+@_deprecate_positional_args(allowed=['var_item'])
+def plot(  # noqa: PLR0917
     var_item,
     off_screen=None,
     full_screen=None,
     screenshot=None,
-    interactive=True,
+    interactive=True,  # noqa: FBT002
     cpos=None,
     window_size=None,
-    show_bounds=False,
+    show_bounds=False,  # noqa: FBT002
     show_axes=None,
     notebook=None,
     background=None,
     text='',
-    return_img=False,
-    eye_dome_lighting=False,
-    volume=False,
-    parallel_projection=False,
+    return_img=False,  # noqa: FBT002
+    eye_dome_lighting=False,  # noqa: FBT002
+    volume=False,  # noqa: FBT002
+    parallel_projection=False,  # noqa: FBT002
     jupyter_backend=None,
-    return_viewer=False,
-    return_cpos=False,
+    return_viewer=False,  # noqa: FBT002
+    return_cpos=False,  # noqa: FBT002
     jupyter_kwargs=None,
     theme=None,
     anti_aliasing=None,
     zoom=None,
-    border=False,
+    border=False,  # noqa: FBT002
     border_color='k',
     border_width=2.0,
-    ssao=False,
+    ssao=False,  # noqa: FBT002
     **kwargs,
 ):
     """Plot a PyVista, numpy, or vtk object.
@@ -233,9 +235,9 @@ def plot(
         show_axes = pl.theme.axes.show
     if show_axes:
         if pl.theme.axes.box:
-            pl.add_box_axes()  # type: ignore[call-arg]
+            pl.add_box_axes()
         else:
-            pl.add_axes()  # type: ignore[call-arg]
+            pl.add_axes()
 
     if anti_aliasing:
         if anti_aliasing is True:
@@ -254,7 +256,7 @@ def plot(
                 pl.add_background_image(path)
         else:
             msg = f'Background must be color-like or a file path. Got {background} instead.'
-            raise ValueError(msg)
+            raise TypeError(msg)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -285,25 +287,25 @@ def plot(
         pl.add_text(text)
 
     if show_grid:
-        pl.show_grid()  # type: ignore[call-arg]
+        pl.show_grid()
     elif show_bounds:
-        pl.show_bounds()  # type: ignore[call-arg]
+        pl.show_bounds()
 
     if cpos is None:
-        cpos = pl.get_default_cam_pos()  # type: ignore[call-arg]
+        cpos = pl.get_default_cam_pos()
         pl.camera_position = cpos
         pl.camera_set = False
     else:
         pl.camera_position = cpos
 
     if eye_dome_lighting:
-        pl.enable_eye_dome_lighting()  # type: ignore[call-arg]
+        pl.enable_eye_dome_lighting()
 
     if parallel_projection:
-        pl.enable_parallel_projection()  # type: ignore[call-arg]
+        pl.enable_parallel_projection()
 
     if ssao:
-        pl.enable_ssao()  # type: ignore[call-arg]
+        pl.enable_ssao()
 
     if zoom is not None:
         pl.camera.zoom(zoom)

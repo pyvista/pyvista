@@ -103,7 +103,7 @@ def test_polygon():
     assert grid.n_points == 6
 
 
-def test_Quadrilateral():
+def test_quadrilateral():
     grid = cells.Quadrilateral()
     assert grid.celltypes[0] == CellType.QUAD
     assert grid.n_cells == 1

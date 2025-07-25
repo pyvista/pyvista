@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import pickle
 import platform
 import re
 import shutil
+import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeVar
@@ -28,6 +30,8 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
+from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.utilities import cells
@@ -58,10 +62,10 @@ from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 from pyvista.core.utilities.misc import _classproperty
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
-from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.observers import ProgressMonitor
 from pyvista.core.utilities.state_manager import _StateManager
@@ -69,6 +73,9 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+
+with contextlib.suppress(ImportError):
+    import tomllib  # Python 3.11+
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -146,7 +153,8 @@ def test_get_array_raises():
 
 def test_raise_not_matching_raises():
     with pytest.raises(
-        ValueError, match=re.escape('Number of scalars (1) must match number of rows (0).')
+        ValueError,
+        match=re.escape('Number of scalars (1) must match number of rows (0).'),
     ):
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
@@ -176,7 +184,7 @@ def test_createvectorpolydata_error():
         vector_poly_data([0, 1, 2], vec)
 
 
-def test_createvectorpolydata_1D():
+def test_createvectorpolydata_1d():
     orig = np.random.default_rng().random(3)
     vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
@@ -207,7 +215,14 @@ def test_get_ext(path, target_ext):
 
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_read(tmpdir, use_pathlib):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
     if use_pathlib:
         fnames = [Path(fname) for fname in fnames]
     types = (
@@ -244,7 +259,14 @@ def test_read(tmpdir, use_pathlib):
 
 
 def test_read_force_ext(tmpdir):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
     types = (
         pv.PolyData,
         pv.PolyData,
@@ -269,7 +291,7 @@ def test_read_force_ext(tmpdir):
 @mock.patch('pyvista.BaseReader.read')
 @mock.patch('pyvista.BaseReader.reader')
 @mock.patch('pyvista.BaseReader.show_progress')
-def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
+def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa: ARG001
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
     mock_show_progress.assert_called_once()
@@ -390,56 +412,80 @@ def test_is_inside_bounds_raises():
     with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
         is_inside_bounds(point=np.array([0]), bounds=(0, 1, 3, 4, 5))
 
-    with pytest.raises(TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")):
+    with pytest.raises(
+        TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")
+    ):
         is_inside_bounds(point=None, bounds=(0,))
 
 
 def test_voxelize(uniform):
-    vox = pv.voxelize(uniform, 0.5)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize(uniform, density=0.5)
     assert vox.n_cells
+
+    if pv._version.version_info[:2] > (0, 49):
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
 
 def test_voxelize_non_uniform_density(uniform):
-    vox = pv.voxelize(uniform, [0.5, 0.3, 0.2])
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize(uniform, density=[0.5, 0.3, 0.2])
     assert vox.n_cells
-    vox = pv.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize(uniform, density=np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
 def test_voxelize_invalid_density(rectilinear):
     # test error when density is not length-3
-    with pytest.raises(ValueError, match='not enough values to unpack'):
-        pv.voxelize(rectilinear, [0.5, 0.3])
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='not enough values to unpack'):
+            pv.voxelize(rectilinear, density=[0.5, 0.3])
     # test error when density is not an array-like
-    with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize(rectilinear, {0.5, 0.3})
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
     mesh = pv.PolyData(hexbeam.points)
-    with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize(mesh)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='must have faces'):
+            pv.voxelize(mesh)
 
 
 def test_voxelize_volume_default_density(uniform):
-    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
-    actual = pv.voxelize_volume(uniform).n_cells
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        actual = pv.voxelize_volume(uniform).n_cells
     assert actual == expected
+
+    if pv._version.version_info[:2] > (0, 49):
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
 
 def test_voxelize_volume_invalid_density(rectilinear):
-    with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):
-    with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize_volume(pv.PolyData())
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='must have faces'):
+            pv.voxelize_volume(pv.PolyData())
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize_volume(rectilinear, density={0.5, 0.3})
 
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_enclosed_bounds(function, ant):
-    vox = function(ant, density=0.9, enclosed=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = function(ant, density=0.9, enclosed=True)
 
     assert vox.bounds.x_min <= ant.bounds.x_min
     assert vox.bounds.y_min <= ant.bounds.y_min
@@ -452,7 +498,8 @@ def test_voxelize_enclosed_bounds(function, ant):
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_fit_bounds(function, uniform):
-    vox = function(uniform, density=0.9, fit_bounds=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = function(uniform, density=0.9, fit_bounds=True)
 
     assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
     assert np.isclose(vox.bounds.y_min, uniform.bounds.y_min)
@@ -525,7 +572,7 @@ def test_transform_vectors_sph_to_cart():
     lev = [1]  # elevation (radius)
     u, v = np.meshgrid(lon, lat, indexing='ij')
     w = u**2 - v**2
-    uu, vv, ww = pv.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
+    uu, vv, ww = pv.transform_vectors_sph_to_cart(theta=lon, phi=lat, r=lev, u=u, v=v, w=w)
     assert np.allclose(
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
@@ -638,8 +685,8 @@ def test_annotated_int_enum_from_any_raises(value):
         BAR = (0, 'foo')
 
     with pytest.raises(
-        ValueError,
-        match=re.escape(f'{Foo.__name__} has no value matching {value}'),
+        TypeError,
+        match=re.escape(f'Invalid type {type(value)} for class {Foo.__name__}'),
     ):
         Foo.from_any(value)
 
@@ -655,10 +702,10 @@ def test_lines_segments_from_points(points):
 
 def test_cells_dict_utils():
     # No pyvista object
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
@@ -687,7 +734,9 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5))
+    x, y, z = np.meshgrid(
+        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
+    )
     mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pv.StructuredGrid(x2, y2, z2)
@@ -843,26 +892,20 @@ def test_merge(sphere, cube, datasets):
     # check unstructured
     merged_ugrid = pv.merge(datasets, merge_points=False)
     assert isinstance(merged_ugrid, pv.UnstructuredGrid)
-    assert merged_ugrid.n_points == sum([ds.n_points for ds in datasets])
+    assert merged_ugrid.n_points == sum(ds.n_points for ds in datasets)
     # check main has priority
-    sphere_a = sphere.copy()
-    sphere_b = sphere.copy()
-    sphere_a['data'] = np.zeros(sphere_a.n_points)
-    sphere_b['data'] = np.ones(sphere_a.n_points)
+    sphere_main = sphere.copy()
+    sphere_other = sphere.copy()
+    main_data = np.zeros(sphere_main.n_points)
+    other_data = np.ones(sphere_main.n_points)
+    sphere_main['data'] = main_data
+    sphere_other['data'] = other_data
 
     merged = pv.merge(
-        [sphere_a, sphere_b],
+        [sphere_main, sphere_other],
         merge_points=True,
-        main_has_priority=False,
     )
-    assert np.allclose(merged['data'], 1)
-
-    merged = pv.merge(
-        [sphere_a, sphere_b],
-        merge_points=True,
-        main_has_priority=True,
-    )
-    assert np.allclose(merged['data'], 0)
+    assert np.allclose(merged['data'], main_data)
 
 
 def test_convert_array():
@@ -920,10 +963,35 @@ def test_copy_vtk_array():
     assert new_value == arr_copy_shallow.GetValue(1)
 
 
+def test_copy_implicit_vtk_array(plane):
+    # Use the connectivity filter to generate an implicit vtkDataArray
+    conn = plane.connectivity()
+    vtk_object = conn['RegionId'].VTKObject
+    if pv.vtk_version_info >= (9, 4):
+        # The VTK array appears to be abstract but is not
+        assert type(vtk_object) is vtk.vtkDataArray
+    else:
+        assert type(vtk_object) is vtk.vtkIdTypeArray
+
+    # `copy_vtk_array` is called with this assignment
+    plane['test'] = conn['RegionId']
+
+    new_vtk_object = plane['test'].VTKObject
+    if pv.vtk_version_info >= (9, 4):
+        # The VTK array type has changed and is now a concrete subclass
+        assert type(new_vtk_object) is vtk.vtkUnsignedIntArray
+    else:
+        assert type(new_vtk_object) is vtk.vtkIdTypeArray
+
+
 def test_cartesian_to_spherical():
     def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi)),
+            (
+                r * np.sin(phi) * np.cos(theta),
+                r * np.sin(phi) * np.sin(theta),
+                r * np.cos(phi),
+            ),
         ).T
 
     points = np.random.default_rng().random((1000, 3))
@@ -955,6 +1023,13 @@ def test_linkcode_resolve():
     # test property
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
     assert 'dataset.py' in link
+
+    # test wrapped function
+    link = linkcode_resolve(
+        'py',
+        {'module': 'pyvista', 'fullname': 'pyvista.plotting.plotter.Plotter.add_ruler'},
+    )
+    assert 'renderer.py' in link
 
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
     assert link.endswith('__init__.py')
@@ -1118,7 +1193,9 @@ def test_fit_line_to_points():
     assert np.allclose(direction, np.abs(pv.principal_axes(fitted_line.points)[0]))
     assert np.allclose(length, fitted_line.length)
 
-    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution, return_meta=False)
+    fitted_line = fit_line_to_points(
+        expected_line.points, resolution=resolution, return_meta=False
+    )
     assert np.allclose(fitted_line.bounds, expected_line.bounds)
 
 
@@ -1156,7 +1233,8 @@ is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac, reason='Different results for some tests.'
+    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
@@ -1230,25 +1308,53 @@ def test_fit_plane_to_points_success_with_many_points(one_million_points):
 
 
 @pytest.fixture
-def no_new_attr_subclass():
-    @no_new_attr
-    class A: ...
+def no_new_attributes_mixin_subclass():
+    class A(_NoNewAttrMixin):
+        def __init__(self):
+            super().__init__()
+            self.bar = 42
 
     class B(A):
-        _new_attr_exceptions = 'eggs'
-
         def __init__(self):
-            self.eggs = 'ham'
+            super().__init__()
+            self.baz = 42
 
-    return B
+    return A(), B()
 
 
-def test_no_new_attr_subclass(no_new_attr_subclass):
-    obj = no_new_attr_subclass()
-    assert obj
-    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
-    with pytest.raises(AttributeError, match=msg):
-        obj._eggs = 'ham'
+def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
+    a, b = no_new_attributes_mixin_subclass
+    ham = 'ham'
+    eggs = 'eggs'
+
+    match = (
+        "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
+        'Use `pv.set_new_attribute` to set new attributes.'
+    )
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        setattr(a, ham, eggs)
+
+    match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        setattr(b, ham, eggs)
+
+
+def test_set_new_attribute(no_new_attributes_mixin_subclass):
+    a, _ = no_new_attributes_mixin_subclass
+    ham = 'ham'
+    eggs = 'eggs'
+
+    assert not hasattr(a, ham)
+    pv.set_new_attribute(a, ham, eggs)
+    assert hasattr(a, ham)
+    assert getattr(a, ham) == eggs
+
+    match = (
+        "Attribute 'ham' already exists. "
+        '`set_new_attribute` can only be used for setting NEW attributes.'
+    )
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
+        pv.set_new_attribute(a, ham, eggs)
 
 
 @pytest.fixture
@@ -1381,7 +1487,8 @@ def test_transform_reflect(transform, reflect_args):
 
 
 @pytest.mark.parametrize(
-    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+    ('method', 'vector'),
+    [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))],
 )
 def test_transform_flip_xyz(transform, method, vector):
     getattr(transform, method)()
@@ -1539,10 +1646,20 @@ class CasesTransformApply:
 
     @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
     def case_polydata_int(self):
-        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+        return (
+            pv.PolyData(np.atleast_2d(VECTOR).astype(int)),
+            True,
+            pv.PolyData,
+            np.float32,
+        )
 
     def case_polydata_float(self):
-        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+        return (
+            pv.PolyData(np.atleast_2d(VECTOR).astype(float)),
+            True,
+            pv.PolyData,
+            float,
+        )
 
     def case_multiblock_float(self):
         return (
@@ -1733,7 +1850,9 @@ def transformed_actor():
 
 @pytest.mark.parametrize('override_mode', ['pre', 'post'])
 @pytest.mark.parametrize('object_mode', ['pre', 'post'])
-def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
+def test_transform_multiply_mode_override(
+    transform, transformed_actor, object_mode, override_mode
+):
     # This test validates multiply mode by performing the same transformations
     # applied by `Prop3D` objects and comparing the results
     transform.multiply_mode = object_mode
@@ -1860,7 +1979,12 @@ def test_transform_radd():
 
 @pytest.mark.parametrize(
     'other',
-    [SCALE, (SCALE, SCALE, SCALE), Transform().scale(SCALE), Transform().scale(SCALE).matrix],
+    [
+        SCALE,
+        (SCALE, SCALE, SCALE),
+        Transform().scale(SCALE),
+        Transform().scale(SCALE).matrix,
+    ],
 )
 def test_transform_mul_other(other):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
@@ -1939,7 +2063,8 @@ def test_transform_rmul_raises():
 def test_transform_mul_raises():
     match = (
         "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
-        'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+        'The right-side argument must be a single number or a length-3 vector '
+        'or have 3x3 or 4x4 shape.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() * (1, 2, 3, 4)
@@ -2003,7 +2128,9 @@ SHEAR[2, 1] = values[2]
 @pytest.mark.parametrize('do_reflection', [True, False])
 @pytest.mark.parametrize('do_rotate', [True, False])
 @pytest.mark.parametrize('do_translate', [True, False])
-def test_transform_decompose(transform, do_shear, do_scale, do_reflection, do_rotate, do_translate):
+def test_transform_decompose(
+    transform, do_shear, do_scale, do_reflection, do_rotate, do_translate
+):
     if do_shear:
         transform.compose(SHEAR)
     if do_scale:
@@ -2113,10 +2240,9 @@ def test_parse_interaction_event_raises_wrong_type():
 def test_classproperty():
     magic_number = 42
 
-    @no_new_attr
     class Foo:
         @_classproperty
-        def prop(cls):
+        def prop(cls):  # noqa: N805
             return magic_number
 
     assert Foo.prop == magic_number
@@ -2258,7 +2384,10 @@ def test_state_manager_invalid_type_arg(arg):
     else:
         cls = _create_state_manager_subclass(arg)
 
-    match = 'Type argument for subclasses must be a single non-empty Literal with all state options provided.'
+    match = (
+        'Type argument for subclasses must be a single non-empty Literal with all '
+        'state options provided.'
+    )
     with pytest.raises(TypeError, match=match):
         cls()
 
@@ -2272,7 +2401,8 @@ def test_state_manager_sub_subclass():
 
 
 @pytest.mark.parametrize(
-    'cell_type', [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE']
+    'cell_type',
+    [pv.CellType.TRIANGLE, int(pv.CellType.TRIANGLE), 'triangle', 'TRIANGLE'],
 )
 def test_cell_quality_info(cell_type):
     measure = 'area'
@@ -2286,7 +2416,9 @@ CELL_QUALITY_IDS = [f'{info.cell_type.name}-{info.quality_measure}' for info in 
 
 
 def _compute_unit_cell_quality(
-    info: CellQualityInfo, null_value=-42.42, coincident: Literal['all', 'single', False] = False
+    info: CellQualityInfo,
+    null_value=-42.42,
+    coincident: Literal['all', 'single', False] = False,
 ):
     example_name = _CELL_TYPE_INFO[info.cell_type.name].example
     cell_mesh = getattr(ex.cells, example_name)()
@@ -2414,7 +2546,8 @@ def test_cell_quality_info_raises():
 
     match = re.escape(
         "Cell quality info is not available for 'TRIANGLE' measure 'volume'. Valid options are:\n"
-        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', 'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
+        "['area', 'aspect_ratio', 'aspect_frobenius', 'condition', 'distortion', "
+        "'max_angle', 'min_angle', 'scaled_jacobian', 'radius_ratio', 'shape', 'shape_and_size']"
     )
     with pytest.raises(ValueError, match=match):
         pv.cell_quality_info(pv.CellType.TRIANGLE, 'volume')
@@ -2435,3 +2568,201 @@ def test_is_vtk_attribute():
 @pytest.mark.needs_vtk_version(9, 4)
 def test_is_vtk_attribute_input_type(obj):
     assert _vtk.is_vtk_attribute(obj, 'GetDimensions')
+
+
+warnings.simplefilter('always')
+
+
+def test_deprecate_positional_args_error_messages():
+    # Test single arg
+    @_deprecate_positional_args
+    def foo(bar): ...
+
+    match = (
+        "Argument 'bar' must be passed as a keyword argument to function "
+        "'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
+        'From version 0.50, passing this as a positional argument will result in a TypeError.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True)
+
+    # Test many args
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    match = (
+        "Arguments 'bar', 'baz' must be passed as keyword arguments to function "
+        "'test_deprecate_positional_args_error_messages.<locals>.foo'.\n"
+        'From version 1.2, passing these as positional arguments will result in a TypeError.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True, True)
+
+
+def test_deprecate_positional_args_post_deprecation():
+    match = (
+        r'Positional arguments are no longer allowed in '
+        r"'test_deprecate_positional_args_post_deprecation.<locals>.foo'\.\n"
+        r'Update the function signature at:\n'
+        r'.*test_utilities\.py:\d+ to enforce keyword-only args:\n'
+        r'    test_deprecate_positional_args_post_deprecation.<locals>.foo\(bar, \*, baz\)\n'
+        r"and remove the '_deprecate_positional_args' decorator\."
+    )
+    with pytest.raises(RuntimeError, match=match):
+
+        @_deprecate_positional_args(allowed=['bar'], version=(0, 46))
+        def foo(bar, baz): ...
+
+    match = 'foo(*, bar, baz, ham, ...)'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(version=(0, 46))
+        def foo(bar, baz, ham, eggs): ...
+
+    match = 'foo(self, *, bar, baz, ham, ...)'
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @_deprecate_positional_args(version=(0, 46))
+            def foo(self, bar, baz, ham, eggs): ...
+
+
+def test_deprecate_positional_args_allowed():
+    # Test single allowed
+    @_deprecate_positional_args(allowed=['bar'])
+    def foo(bar, baz): ...
+
+    foo(True, baz=True)
+
+    # Too many allowed args
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
+        f'A maximum of {_MAX_POSITIONAL_ARGS} positional arguments are allowed.\n'
+        "Got 6: ['bar', 'baz', 'qux', 'ham', 'eggs', 'cats']"
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['bar', 'baz', 'qux', 'ham', 'eggs', 'cats'])
+        def foo(bar, baz, qux, ham, eggs, cats): ...
+
+    # Test invalid allowed
+    match = (
+        "Allowed positional argument 'invalid' in decorator '_deprecate_positional_args'\n"
+        'is not a parameter of '
+        "function 'test_deprecate_positional_args_allowed.<locals>.foo'."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['invalid'])
+        def foo(bar): ...
+
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_allowed.<locals>.foo':\n"
+        "Allowed arguments must be a list, got <class 'str'>."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed='invalid')
+        def foo(bar): ...
+
+    # Test invalid order
+    match = (
+        "The `allowed` list ['b', 'a'] in decorator '_deprecate_positional_args' "
+        'is not in the\nsame order as the parameters in '
+        "'test_deprecate_positional_args_allowed.<locals>.foo'.\n"
+        "Expected order: ['a', 'b']."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['b', 'a'])
+        def foo(a, b, c): ...
+
+    # Test not already kwonly
+    match = (
+        "Parameter 'b' in decorator '_deprecate_positional_args' is already keyword-only\n"
+        'and should be removed from the allowed list.'
+    )
+    with pytest.raises(ValueError, match=match):
+
+        @_deprecate_positional_args(allowed=['a', 'b'])
+        def foo(a, *, b): ...
+
+
+def test_deprecate_positional_args_n_allowed():
+    n_allowed = 4
+    assert n_allowed > _MAX_POSITIONAL_ARGS
+
+    @_deprecate_positional_args(allowed=['a', 'b', 'c', 'd'], n_allowed=4)
+    def foo(a, b, c, d, e=True): ...
+
+    match = (
+        "In decorator '_deprecate_positional_args' for function "
+        "'test_deprecate_positional_args_n_allowed.<locals>.foo':\n"
+        '`n_allowed` must be greater than 3 for it to be useful.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['a', 'b', 'c'], n_allowed=_MAX_POSITIONAL_ARGS)
+        def foo(a, b, c): ...
+
+
+def test_deprecate_positional_args_class_methods():
+    # Test that 'cls' and 'self' args do not cause problems
+    class Foo:
+        @classmethod
+        @_deprecate_positional_args
+        def foo_classmethod(cls, bar=None): ...
+
+        @_deprecate_positional_args
+        def foo_method(self, bar=None): ...
+
+    obj = Foo()
+    obj.foo_method()
+    obj.foo_classmethod()
+
+
+def test_deprecate_positional_args_decorator_not_needed():
+    match = (
+        "Function 'test_deprecate_positional_args_decorator_not_needed.<locals>.Foo.foo' has 0 "
+        'positional arguments, which is less than or equal to the\nmaximum number of allowed '
+        f'positional arguments ({_MAX_POSITIONAL_ARGS}).\n'
+        f'This decorator is not necessary and can be removed.'
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @classmethod
+            @_deprecate_positional_args
+            def foo(cls, *, bar=None): ...
+
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        class Foo:
+            @_deprecate_positional_args
+            def foo(self, *, bar=None): ...
+
+    match = (
+        f"Function 'test_deprecate_positional_args_decorator_not_needed.<locals>.foo' has 3 "
+        f'positional arguments, which is less than or equal to the\nmaximum number of allowed '
+        f'positional arguments ({_MAX_POSITIONAL_ARGS}).\n'
+        f'This decorator is not necessary and can be removed.'
+    )
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+
+        @_deprecate_positional_args(allowed=['a', 'b', 'c'])
+        def foo(a, b, c): ...
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
+)
+def test_max_positional_args_matches_pyproject():
+    pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+    with pyproject_path.open('rb') as f:
+        pyproject_data = tomllib.load(f)
+    expected_value = pyproject_data['tool']['ruff']['lint']['pylint']['max-positional-args']
+
+    assert expected_value == _MAX_POSITIONAL_ARGS

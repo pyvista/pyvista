@@ -1,4 +1,4 @@
-"""Wrappers for vtkDataObjects.
+"""Wrappers for :vtk:`vtkDataObject`.
 
 The data objects does not have any sort of spatial reference.
 
@@ -21,7 +21,7 @@ from .utilities.arrays import row_array
 
 
 class Table(DataObject, _vtk.vtkTable):
-    """Wrapper for the ``vtkTable`` class.
+    """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
@@ -35,7 +35,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):
+    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
         """Initialize the table."""
         super().__init__()
         if len(args) == 1:
@@ -335,7 +335,7 @@ class Table(DataObject, _vtk.vtkTable):
 
         """
         try:
-            import pandas as pd
+            import pandas as pd  # noqa: PLC0415
         except ImportError:  # pragma: no cover
             msg = 'Install ``pandas`` to use this feature.'
             raise ImportError(msg)

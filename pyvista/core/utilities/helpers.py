@@ -6,13 +6,14 @@ from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
+from typing_extensions import TypeIs
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
@@ -39,8 +40,7 @@ if TYPE_CHECKING:
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-
-    from ..wrappers import _WrappableVTKDataObjectType
+    from pyvista.wrappers import _WrappableVTKDataObjectType
 
 
 # vtkDataSet overloads
@@ -92,7 +92,7 @@ def wrap(dataset: Trimesh) -> PolyData: ...
 # TODO: Support meshio overload
 # @overload
 # def wrap(dataset: Mesh) -> UnstructuredGrid: ...
-def wrap(
+def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
     | Trimesh
@@ -229,7 +229,6 @@ def wrap(
         except KeyError:
             msg = f'VTK data type ({key}) is not currently supported by pyvista.'
             raise TypeError(msg)
-        return None  # pragma: no cover
 
     # wrap meshio
     if is_meshio_mesh(dataset):
@@ -244,7 +243,7 @@ def wrap(
             faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
-        if hasattr(dataset.visual, 'uv'):
+        if hasattr(dataset.visual, 'uv') and dataset.visual.uv is not None:
             polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
@@ -253,15 +252,7 @@ def wrap(
     raise NotImplementedError(msg)
 
 
-@overload
-def is_pyvista_dataset(
-    obj: pyvista.DataSet | pyvista.MultiBlock,
-) -> Literal[True]: ...
-@overload
-def is_pyvista_dataset(
-    obj: Any,
-) -> Literal[False]: ...
-def is_pyvista_dataset(obj: Any) -> bool:
+def is_pyvista_dataset(obj: Any) -> TypeIs[pyvista.DataSet | pyvista.MultiBlock]:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -279,7 +270,7 @@ def is_pyvista_dataset(obj: Any) -> bool:
 
 
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
-    """Return a _vtk.vtkPlane.
+    """Return a :vtk:`vtkPlane`.
 
     Parameters
     ----------
@@ -291,7 +282,7 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
 
     Returns
     -------
-    vtk.vtkPlane
+    :vtk:`vtkPlane`
         VTK plane.
 
     """
@@ -304,8 +295,13 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     return plane
 
 
-def axis_rotation(
-    points: NumpyArray[float], angle: float, inplace: bool = False, deg: bool = True, axis='z'
+@_deprecate_positional_args(allowed=['points', 'angle'])
+def axis_rotation(  # noqa: PLR0917
+    points: NumpyArray[float],
+    angle: float,
+    inplace: bool = False,  # noqa: FBT001, FBT002
+    deg: bool = True,  # noqa: FBT001, FBT002
+    axis='z',
 ):
     """Rotate points by angle about an axis.
 

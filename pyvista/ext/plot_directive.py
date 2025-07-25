@@ -265,7 +265,11 @@ def setup(app):
     app.add_config_value('pyvista_plot_cleanup', None, True)
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
-    return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+        'version': pyvista.__version__,
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -279,7 +283,7 @@ def _contains_doctest(text):
         pass
     else:
         return False
-    r = re.compile(r'^\s*>>>', re.M)
+    r = re.compile(r'^\s*>>>', re.MULTILINE)
     m = r.search(text)
     return bool(m)
 
@@ -313,15 +317,15 @@ def _split_code_at_show(text):
         part.append(line)
 
         # check if show(...) or plot(...) is within the line
-        line = _strip_comments(line)
+        line_no_comments = _strip_comments(line)
         if within_plot:  # allow for multi-line plot(...
-            if _strip_comments(line).endswith(')'):
+            if line_no_comments.endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
                 within_plot = False
 
-        elif '.show(' in line or '.plot(' in line:
-            if _strip_comments(line).endswith(')'):
+        elif _show_or_plot_in_string(line_no_comments):
+            if line_no_comments.endswith(')'):
                 parts.append('\n'.join(part))
                 part = []
             else:  # allow for multi-line plot(...
@@ -330,6 +334,13 @@ def _split_code_at_show(text):
     if '\n'.join(part).strip():
         parts.append('\n'.join(part))
     return is_doctest, parts
+
+
+def _show_or_plot_in_string(string):
+    # string contains `.show(`, `.plot(`, or `plot_xyz(` where `xyz` is one
+    # or more lower-case letters or underscore, e.g. `plot_cell(`, `plot_datasets(`
+    pattern = r'(?:\.plot\(|\.show\(|(?:[ \t\n.]plot_[a-z_]+?)\()'
+    return bool(re.search(pattern, string))
 
 
 # -----------------------------------------------------------------------------
@@ -412,7 +423,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _run_code(code, code_path, ns=None, function_name=None):
+def _run_code(*, code, code_path, ns=None, function_name=None):  # noqa: ARG001
     """Run a docstring example.
 
     Run the example if it does not contain ``'doctest:+SKIP'``, or a
@@ -441,6 +452,7 @@ def _run_code(code, code_path, ns=None, function_name=None):
 
 
 def render_figures(
+    *,
     code,
     code_path,
     output_dir,
@@ -457,8 +469,8 @@ def render_figures(
     rendered.
     """
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
-    # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
-    # and its options properly parsed.
+    # The doctest parser will present the code-block once again with the ```pyvista-plot::``
+    # directive and its options properly parsed.
     if _contains_pyvista_plot(code):
         is_doctest = True
         code_pieces = [code]
@@ -475,52 +487,60 @@ def render_figures(
     code_cleanup = config.pyvista_plot_cleanup
 
     if code_setup:
-        _run_code(code_setup, code_path, ns, function_name)
+        _run_code(code=code_setup, code_path=code_path, ns=ns, function_name=function_name)
 
     try:
         for i, code_piece in enumerate(code_pieces):
             # generate the plot
             _run_code(
-                doctest.script_from_examples(code_piece) if is_doctest else code_piece,
-                code_path,
-                ns,
-                function_name,
+                code=doctest.script_from_examples(code_piece) if is_doctest else code_piece,
+                code_path=code_path,
+                ns=ns,
+                function_name=function_name,
             )
 
             images = []
-            figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
-            for j, (_, plotter) in enumerate(figures.items()):
-                if hasattr(plotter, '_gif_filename'):
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
-                    shutil.move(plotter._gif_filename, image_file.filename)
-                else:
-                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
-                    try:
-                        plotter.screenshot(image_file.filename)
-                    except RuntimeError:  # pragma no cover
-                        # ignore closed, unrendered plotters
-                        continue
-                    if force_static or (plotter.last_vtksz is None):
-                        images.append(image_file)
-                        continue
+            if (
+                _show_or_plot_in_string(code_piece)
+                or '.open_gif' in code_piece
+                or 'plot=True' in code_piece
+            ):
+                figures = pyvista.plotting.plotter._ALL_PLOTTERS
+
+                for j, (_, plotter) in enumerate(figures.items()):
+                    if plotter._gif_filename is not None:
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
+                        shutil.move(plotter._gif_filename, image_file.filename)
                     else:
-                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
-                        with Path(image_file.filename).open('wb') as f:
-                            f.write(plotter.last_vtksz)
-                images.append(image_file)
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
+                        try:
+                            plotter.screenshot(image_file.filename)
+                        except RuntimeError:  # pragma no cover
+                            # ignore closed, unrendered plotters
+                            continue
+                        if force_static or (plotter.last_vtksz is None):
+                            images.append(image_file)
+                            continue
+                        else:
+                            image_file = ImageFile(
+                                output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz'
+                            )
+                            with Path(image_file.filename).open('wb') as f:
+                                f.write(plotter.last_vtksz)
+                    images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
 
             results.append((code_piece, images))
     finally:
         if code_cleanup:
-            _run_code(code_cleanup, code_path, ns, function_name)
+            _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
 
     return results
 
 
-def run(arguments, content, options, state_machine, state, lineno):
+def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config
@@ -572,12 +592,14 @@ def run(arguments, content, options, state_machine, state, lineno):
         # note: this reuses the existing matplotlib plot counter if available
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
-        output_base = f'{base}-{counter}.py'
+        base = Path(source_file_name).stem
+        ext = Path(source_file_name).suffix
+        output_base = f'{base}-{counter}{ext}'
         function_name = None
         caption = options.get('caption', '')
 
-    base, source_ext = os.path.splitext(output_base)  # noqa: PTH122
+    base = Path(output_base).stem
+    source_ext = Path(output_base).suffix
     if source_ext in ('.py', '.rst', '.txt'):
         output_base = base
     else:
@@ -627,14 +649,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     else:
         try:
             results = render_figures(
-                code,
-                source_file_name,
-                build_dir,
-                output_base,
-                keep_context,
-                function_name,
-                config,
-                force_static,
+                code=code,
+                code_path=source_file_name,
+                output_dir=build_dir,
+                output_base=output_base,
+                context=keep_context,
+                function_name=function_name,
+                config=config,
+                force_static=force_static,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter
@@ -647,7 +669,9 @@ def run(arguments, content, options, state_machine, state, lineno):
             errors.append([sm])
 
     # Properly indent the caption
-    caption = '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    caption = (
+        '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    )
 
     # generate output restructuredtext
     total_lines = []
@@ -665,8 +689,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         else:
             source_code = ''
 
-        if nofigs:
-            images = []
+        images_input = [] if nofigs else images
 
         opts = [
             f':{key}: {val}'
@@ -679,11 +702,11 @@ def run(arguments, content, options, state_machine, state, lineno):
             dest_dir=dest_dir_link,
             build_dir=build_dir_link,
             source_link=None,
-            multi_image=len(images) > 1,
+            multi_image=len(images_input) > 1,
             options=opts,
-            images=images,
+            images=images_input,
             source_code=source_code,
-            html_show_formats=config.pyvista_plot_html_show_formats and len(images),
+            html_show_formats=config.pyvista_plot_html_show_formats and len(images_input),
             caption=caption,
         )
 
@@ -704,7 +727,9 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # copy script (if necessary)
     Path(dest_dir, output_base + source_ext).write_text(
-        doctest.script_from_examples(code) if source_file_name == rst_file and is_doctest else code,
+        doctest.script_from_examples(code)
+        if source_file_name == rst_file and is_doctest
+        else code,
         encoding='utf-8',
     )
 

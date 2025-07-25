@@ -72,7 +72,7 @@ curvsurf.plot(texture=tex)
 #
 # What about loading your own texture from an image? This is often most easily
 # done using the :func:`pyvista.read_texture` function - simply pass an image
-# file's path, and this function with handle making a ``vtkTexture`` for you to
+# file's path, and this function with handle making a :vtk:`vtkTexture` for you to
 # use.
 
 image_file = examples.mapfile

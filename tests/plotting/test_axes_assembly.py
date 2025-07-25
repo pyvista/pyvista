@@ -221,7 +221,10 @@ def test_axes_assembly_z_label_init(axes_assembly):
 
 
 def test_axes_assembly_labels_raises():
-    match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+    match = (
+        "Cannot initialize '{}' and 'labels' properties together. "
+        'Specify one or the other, not both.'
+    )
     with pytest.raises(ValueError, match=match.format('x_label')):
         pv.AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
     with pytest.raises(ValueError, match=match.format('y_label')):
@@ -451,7 +454,10 @@ def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
     ]
     assert np.allclose(actual_rgb, expected_rgb)
 
-    color1, color2 = tuple(np.array(float_rgb) * 10 / 255), tuple(np.array(float_rgb) * 40 / 255)
+    color1, color2 = (
+        tuple(np.array(float_rgb) * 10 / 255),
+        tuple(np.array(float_rgb) * 40 / 255),
+    )
     axes_assembly.set_actor_prop('color', [color1, color2], axis=0)
     val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
@@ -557,11 +563,17 @@ def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', 0.0, axis='a')
 
-    match = "Number of values (3) in [1, 2, 3] must match the number of actors (2) for axis '0' and part 'all'"
+    match = (
+        "Number of values (3) in [1, 2, 3] must match the number of actors (2) for axis '0' "
+        "and part 'all'"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', [1, 2, 3], axis=0)
 
-    match = "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' and part 'shaft'"
+    match = (
+        "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' "
+        "and part 'shaft'"
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', [0, 1], part='shaft')
 
@@ -711,8 +723,7 @@ def test_planes_assembly_label_size_init():
 
 
 def test_planes_assembly_camera(planes_assembly):
-    with pytest.raises(ValueError, match='Camera has not been set.'):
-        _ = planes_assembly.camera
+    assert planes_assembly.camera is None
 
     camera = pv.Camera()
     planes_assembly.camera = camera

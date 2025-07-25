@@ -156,7 +156,7 @@ def test_clip_box(datasets):
 
     # crinkle clip
     surf = pv.Sphere(radius=3)
-    vol = pv.voxelize(surf)
+    vol = surf.voxelize()
     cube = pv.Cube().rotate_x(33, inplace=False)
     clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
     assert clp is not None
@@ -326,6 +326,12 @@ def test_cell_centers(datasets):
         result = dataset.cell_centers(progress_bar=True)
         assert result is not None
         assert isinstance(result, pv.PolyData)
+
+
+def test_cell_centers_no_cell_data(cube):
+    # test passing cell data kwarg works
+    assert cube.cell_centers(pass_cell_data=True).cell_data
+    assert not cube.cell_centers(pass_cell_data=False).cell_data
 
 
 @pytest.mark.needs_vtk_version(9, 1, 0)
@@ -503,10 +509,13 @@ def test_slice_along_line_composite(multiblock_all):
 
 def test_compute_cell_quality():
     mesh = pv.ParametricEllipsoid().triangulate().decimate(0.8)
-    with pytest.warns(PyVistaDeprecationWarning):
+    with pytest.warns(
+        PyVistaDeprecationWarning, match='This filter is deprecated. Use `cell_quality` instead'
+    ):
         qual = mesh.compute_cell_quality(progress_bar=True)
-        assert 'CellQuality' in qual.array_names
-        with pytest.raises(KeyError):
+    assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        with pytest.warns(PyVistaDeprecationWarning):
             qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
@@ -587,10 +596,9 @@ def test_cell_quality_return_type(multiblock_all_with_nested_and_none):
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
-    # rotate about x-axis by 90 degrees
+    dx, dy, dz = -1.0, 2.0, 3.0
+    tf = pv.Transform().translate((dx, dy, dz))
     for dataset in datasets:
-        tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
-
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
@@ -604,9 +612,9 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
         transformed = dataset.transform(tf, transform_all_input_vectors=False, inplace=False)
 
-        assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
-        assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
-        assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+        assert np.allclose(dataset.points[:, 0] + dx, transformed.points[:, 0])
+        assert np.allclose(dataset.points[:, 1] + dy, transformed.points[:, 1])
+        assert np.allclose(dataset.points[:, 2] + dz, transformed.points[:, 2])
 
         # ensure that none of the vector data is changed
         for name, array in dataset.point_data.items():
@@ -629,10 +637,9 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
+    sx, sy, sz = -1.1, 2.2, 3.3
+    tf = pv.Transform().scale((sx, sy, sz))
     for dataset in datasets:
-        # rotate about x-axis by 90 degrees
-        tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
-
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().random((dataset.n_cells, 3))
 
@@ -650,29 +657,35 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         if num_point_data:
             assert dataset.point_data == orig_dataset.point_data
 
-        assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
-        assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
-        assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
+        assert np.allclose(dataset.points[:, 0] * sx, transformed.points[:, 0])
+        assert np.allclose(dataset.points[:, 1] * sy, transformed.points[:, 1])
+        assert np.allclose(dataset.points[:, 2] * sz, transformed.points[:, 2])
 
         for i in range(num_cell_arrays):
-            assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
+            assert np.allclose(
+                dataset.cell_data[f'C{i}'][:, 0] * sx,
                 transformed.cell_data[f'C{i}'][:, 0],
             )
-            assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
-                -transformed.cell_data[f'C{i}'][:, 1],
+            assert np.allclose(
+                dataset.cell_data[f'C{i}'][:, 1] * sy,
+                transformed.cell_data[f'C{i}'][:, 1],
             )
-            assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
+            assert np.allclose(
+                dataset.cell_data[f'C{i}'][:, 2] * sz,
                 transformed.cell_data[f'C{i}'][:, 2],
             )
 
         for i in range(num_point_data):
-            assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
+            assert np.allclose(
+                dataset.point_data[f'P{i}'][:, 0] * sx,
                 transformed.point_data[f'P{i}'][:, 0],
             )
-            assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
-                -transformed.point_data[f'P{i}'][:, 1],
+            assert np.allclose(
+                dataset.point_data[f'P{i}'][:, 1] * sy,
+                transformed.point_data[f'P{i}'][:, 1],
             )
-            assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
+            assert np.allclose(
+                dataset.point_data[f'P{i}'][:, 2] * sz,
                 transformed.point_data[f'P{i}'][:, 2],
             )
 
@@ -691,8 +704,8 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
+    tf = pv.Transform().scale((1, 2, 3))
     for dataset in datasets:
-        tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
             dataset.cell_data[f'C{i}'] = np.random.default_rng().integers(
@@ -709,14 +722,69 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-def test_transform_inplace_rectilinear(rectilinear):
-    # assert that transformations of this type raises the correct error
-    tf = pv.core.utilities.transformations.axis_angle_rotation(
-        (1, 0, 0),
-        90,
-    )  # rotate about x-axis by 90 degrees
-    with pytest.raises(TypeError):
-        rectilinear.transform(tf, inplace=True)
+def test_transform_inplace(datasets):
+    tf = pv.Transform().scale(1, 2, 3)
+    for dataset in datasets:
+        dataset.clear_data()
+        pdata_array = np.arange(dataset.n_points)
+        cdata_array = np.arange(dataset.n_cells)
+        pdata_name = 'pdata'
+        cdata_name = 'cdata'
+        dataset[pdata_name] = pdata_array
+        dataset[cdata_name] = cdata_array
+
+        copied = dataset.copy()
+        inplace = copied.transform(tf, inplace=True)
+        assert inplace is copied
+        assert np.shares_memory(inplace[pdata_name], copied[pdata_name])
+        assert np.shares_memory(inplace[cdata_name], copied[cdata_name])
+
+        not_inplace = dataset.transform(tf, inplace=False)
+        assert inplace == not_inplace
+        assert not np.shares_memory(not_inplace[pdata_name], copied[pdata_name])
+        assert not np.shares_memory(not_inplace[cdata_name], copied[cdata_name])
+
+
+def test_transform_rectilinear_warns(rectilinear):
+    tf = pv.Transform().rotate_x(30)
+    match = (
+        'The transformation has a non-diagonal rotation component which has been removed. '
+        'Rotation is\nnot supported by RectilinearGrid; cast to StructuredGrid first to fully '
+        'support rotations.'
+    )
+    with pytest.warns(UserWarning, match=match):
+        rectilinear.transform(tf, inplace=False)
+
+    matrix = np.eye(4)
+    matrix[0, 1] = 0.1
+    matrix[1, 0] = 0.1
+    match = (
+        'The transformation has a shear component which has been removed. Shear is not '
+        'supported\nby RectilinearGrid; cast to StructuredGrid first to support shear '
+        'transformations.'
+    )
+    with pytest.warns(UserWarning, match=match):
+        rectilinear.transform(matrix, inplace=False)
+
+
+def test_transform_rectilinear(rectilinear):
+    # Test that various transformations applied sequentially work
+
+    def transform(mesh):
+        return (
+            mesh.flip_x()
+            .flip_y()
+            .flip_z()
+            .rotate_x(360)
+            .rotate(np.diag((-1, -1, -1)))
+            .scale((1, 2, 3))
+            .translate((4, 5, 6))
+        )
+
+    transform_then_cast = transform(rectilinear).cast_to_unstructured_grid()
+    cast_then_transform = transform(rectilinear.cast_to_unstructured_grid())
+
+    assert transform_then_cast == cast_then_transform
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
@@ -754,14 +822,17 @@ def test_transform_imagedata_warns_with_shear(uniform):
 
     with pytest.warns(
         Warning,
-        match='The transformation matrix has a shear component which has been removed. \n'
-        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+        match=r'The transformation matrix has a shear component which has been removed\. \n'
+        r'Shear is not supported when setting `ImageData` `index_to_physical_matrix`\.',
     ):
         uniform.transform(shear, inplace=True)
 
 
 def test_transform_filter_inplace_default_warns(cube):
-    expected_msg = 'The default value of `inplace` for the filter `PolyData.transform` will change in the future.'
+    expected_msg = (
+        'The default value of `inplace` for the filter `PolyData.transform` '
+        'will change in the future.'
+    )
     with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
         _ = cube.transform(np.eye(4))
 
@@ -847,15 +918,9 @@ def test_reflect_inplace(dataset):
     assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
 
 
-def test_transform_inplace_bad_types_2(rectilinear):
-    # assert that transformations of these types throw the correct error
-    with pytest.raises(TypeError):
-        rectilinear.reflect((1, 0, 0), inplace=True)
-
-
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
-def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
+def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, hexbeam):
     trans = pv.Transform()
     trans.check_finite = False
     trans.RotateWXYZ(*rotate_amounts)
@@ -863,11 +928,11 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
     trans.Update()
 
     # Apply transform with pyvista filter
-    grid_a = grid.copy()
+    grid_a = hexbeam.copy()
     grid_a.transform(trans, inplace=True)
 
     # Apply transform with vtk filter
-    grid_b = grid.copy()
+    grid_b = hexbeam.copy()
     f = vtk.vtkTransformFilter()
     f.SetInputDataObject(grid_b)
     f.SetTransform(trans)
@@ -881,30 +946,30 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4))
-def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
+def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, hexbeam):
     # test non homogeneous transform
     trans_rotate_only = pv.Transform()
     trans_rotate_only.check_finite = False
     trans_rotate_only.RotateWXYZ(*rotate_amounts)
     trans_rotate_only.Update()
 
-    grid_copy = grid.copy()
+    grid_copy = hexbeam.copy()
     grid_copy.transform(trans_rotate_only, inplace=True)
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
     trans_arr = trans_rotate_only.matrix[:3, :3]
-    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
+    trans_pts = apply_transformation_to_points(trans_arr, hexbeam.points)
     assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
 
 
-def test_translate_should_not_fail_given_none(grid):
-    bounds = grid.bounds
-    grid.transform(None, inplace=True)
-    assert grid.bounds == bounds
+def test_translate_should_not_fail_given_none(hexbeam):
+    bounds = hexbeam.bounds
+    hexbeam.transform(None, inplace=True)
+    assert hexbeam.bounds == bounds
 
 
-def test_translate_should_fail_bad_points_or_transform(grid):
+def test_translate_should_fail_bad_points_or_transform():
     points = np.random.default_rng().random((10, 2))
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))
@@ -921,19 +986,19 @@ def test_translate_should_fail_bad_points_or_transform(grid):
     max_examples=HYPOTHESIS_MAX_EXAMPLES,
 )
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
-def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
+def test_transform_should_fail_given_wrong_numpy_shape(array, hexbeam):
     assume(array.shape not in [(3, 3), (4, 4)])
     match = 'Shape must be one of [(3, 3), (4, 4)]'
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid.transform(array, inplace=True)
+        hexbeam.transform(array, inplace=True)
 
 
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
-def test_translate_should_translate_grid(grid, axis_amounts):
-    grid_copy = grid.copy()
+def test_translate_should_translate_grid(hexbeam, axis_amounts):
+    grid_copy = hexbeam.copy()
     grid_copy.translate(axis_amounts, inplace=True)
 
-    grid_points = grid.points.copy() + np.array(axis_amounts)
+    grid_points = hexbeam.points.copy() + np.array(axis_amounts)
     assert np.allclose(grid_copy.points, grid_points)
 
 
@@ -943,18 +1008,18 @@ def test_translate_should_translate_grid(grid, axis_amounts):
 )
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
-def test_rotate_should_match_vtk_rotation(angle, axis, grid):
+def test_rotate_should_match_vtk_rotation(angle, axis, hexbeam):
     trans = vtk.vtkTransform()
     getattr(trans, f'Rotate{axis.upper()}')(angle)
     trans.Update()
 
     trans_filter = vtk.vtkTransformFilter()
     trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
+    trans_filter.SetInputData(hexbeam)
     trans_filter.Update()
     grid_a = pv.UnstructuredGrid(trans_filter.GetOutput())
 
-    grid_b = grid.copy()
+    grid_b = hexbeam.copy()
     getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
@@ -1096,7 +1161,7 @@ def test_transform_integers():
         assert poly.point_data[key].dtype == np.int_
         assert poly.cell_data[key].dtype == np.int_
 
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match=r'Integer points.*converted.*float32'):
         poly.rotate_x(angle=10, inplace=True)
 
     # check that points were converted and transformed correctly
@@ -1227,3 +1292,68 @@ def test_flip_normal():
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
     assert isinstance(out, pv.ImageData)
+
+
+@pytest.mark.parametrize('bounds', [(-1, 1, -1, 1, -1, 1), (0, 10, -5, 5, 2, 8)])
+@pytest.mark.parametrize('inplace', [True, False])
+def test_resize_bounds(sphere, bounds, inplace):
+    """Test resize method with bounds parameter."""
+    resized = sphere.resize(bounds=bounds, inplace=inplace)
+
+    assert np.allclose(resized.bounds, bounds, atol=1e-10)
+    assert (sphere is resized) == inplace
+
+
+@pytest.mark.parametrize('bounds_size', [2.0, (0.5, 2.5, 3.5)])
+@pytest.mark.parametrize('center', [None, (0.0, 0.0, 0.0), (1.5, 2.5, 3.5)])
+def test_resize_bounds_size(sphere, bounds_size, center):
+    """Test resize method with bounds_size parameter."""
+    expected_center = sphere.center if center is None else center
+
+    resized = sphere.resize(bounds_size=bounds_size, center=center)
+    new_size = resized.bounds_size
+    assert np.allclose(new_size, bounds_size)
+    assert np.allclose(resized.center, expected_center)
+
+
+def test_resize_raises(sphere):
+    """Test resize method error handling."""
+
+    match = "Cannot specify both 'bounds' and 'bounds_size'. Choose one resizing method."
+    with pytest.raises(ValueError, match=match):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], bounds_size=2.0)
+
+    match = "'bounds_size' and 'bounds' cannot both be None. Choose one resizing method."
+    with pytest.raises(ValueError, match=match):
+        sphere.resize()
+
+    match = (
+        "Cannot specify both 'bounds' and 'center'. "
+        "'center' can only be used with the 'bounds_size' parameter."
+    )
+    with pytest.raises(ValueError, match=match):
+        sphere.resize(bounds=[-1, 1, -1, 1, -1, 1], center=(0, 0, 0))
+
+
+def test_resize_zero_extent(plane):
+    # This should not fail even with zero Z extent
+    target_bounds = [-1, 1, -1, 1, -1, 1]
+    resized = plane.resize(bounds=target_bounds)
+
+    # X and Y should be resized, Z should remain at the target Z center
+    expected_z_center = (target_bounds[4] + target_bounds[5]) / 2
+    assert np.allclose(resized.points[:, 2], expected_z_center)
+
+
+def test_resize_multiblock():
+    sphere = pv.Sphere(center=(1, 2, 3))
+    cube = pv.Cube(center=(-1, -2, -3))
+    multi = pv.MultiBlock({'sphere': sphere, 'cube': cube})
+
+    new_size = (7, 8, 9)
+    resized = multi.resize(bounds_size=new_size)
+    assert np.allclose(resized.bounds_size, new_size)
+    # Test that blocks were not resized individually, but were
+    # instead resized as part of the whole
+    assert not np.allclose(resized['sphere'].bounds_size, new_size)
+    assert not np.allclose(resized['cube'].bounds_size, new_size)

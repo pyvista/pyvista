@@ -57,7 +57,7 @@ pl = pv.Plotter()
 actor, mapper = pl.add_composite(blocks, color='w', pbr=True, metallic=True)
 
 
-def callback(index, *args):
+def callback(index, *args):  # noqa: ARG001
     """Change a block to red if color is unset, and back to the actor color if set."""
     if mapper.block_attr[index].color is None:
         mapper.block_attr[index].color = 'r'

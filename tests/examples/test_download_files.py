@@ -14,6 +14,7 @@ import warnings
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize
 
 import pyvista as pv
 from pyvista import examples
@@ -595,64 +596,70 @@ def test_download_gif_simple():
     assert 'frame0' in dataset.point_data
 
 
-def test_download_black_vase():
-    filename = examples.download_black_vase(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_black_vase(high_resolution: bool):
+    filename = examples.download_black_vase(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_black_vase(load=True)
+    dataset = examples.download_black_vase(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points > 1_000_000
+    assert dataset.n_points == 17_337 if not high_resolution else 1_611_789
 
 
-def test_download_ivan_angel():
-    filename = examples.download_ivan_angel(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_ivan_angel(high_resolution: bool):
+    filename = examples.download_ivan_angel(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_ivan_angel(load=True)
+    dataset = examples.download_ivan_angel(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points > 1_000_000
+    assert dataset.n_points == 18_412 if not high_resolution else 1_811_531
 
 
-def test_download_bird_bath():
-    filename = examples.download_bird_bath(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_bird_bath(high_resolution: bool):
+    filename = examples.download_bird_bath(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_bird_bath(load=True)
+    dataset = examples.download_bird_bath(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points > 1_000_000
+    assert dataset.n_points == 18_796 if not high_resolution else 1_831_383
 
 
-def test_download_owl():
-    filename = examples.download_owl(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_owl(high_resolution: bool):
+    filename = examples.download_owl(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_owl(load=True)
+    dataset = examples.download_owl(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points > 1_000_000
+    assert dataset.n_points == 12442 if not high_resolution else 1_221_756
 
 
-def test_download_plastic_vase():
-    filename = examples.download_plastic_vase(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_plastic_vase(high_resolution: bool):
+    filename = examples.download_plastic_vase(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_plastic_vase(load=True)
+    dataset = examples.download_plastic_vase(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points > 1_000_000
+    assert dataset.n_points == 18238 if not high_resolution else 1_796_805
 
 
-def test_download_sea_vase():
-    filename = examples.download_sea_vase(load=False)
+@parametrize(high_resolution=[True, False])
+def test_download_sea_vase(high_resolution: bool):
+    filename = examples.download_sea_vase(load=False, high_resolution=high_resolution)
     assert Path(filename).is_file()
     assert filename.endswith('vtp')
 
-    dataset = examples.download_sea_vase(load=True)
+    dataset = examples.download_sea_vase(load=True, high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
-    assert dataset.n_points > 1_000_000
+    assert dataset.n_points == 18_063 if not high_resolution else 1_810_012
 
 
 def test_download_sparse_points():
@@ -809,8 +816,9 @@ def test_download_drill():
     assert isinstance(dataset, pv.PolyData)
 
 
-def test_download_action_figure():
-    dataset = examples.download_action_figure()
+@parametrize(high_resolution=[True, False])
+def test_download_action_figure(high_resolution: bool):
+    dataset = examples.download_action_figure(high_resolution=high_resolution)
     assert isinstance(dataset, pv.PolyData)
 
 
@@ -1080,6 +1088,7 @@ def test_download_nek5000():
         assert isinstance(nek_data, pv.UnstructuredGrid)
 
 
+@pytest.mark.skip_windows
 def test_download_biplane():
     filename = examples.download_biplane(load=False)
     assert Path(filename).is_file()
@@ -1087,3 +1096,165 @@ def test_download_biplane():
 
     biplane = examples.download_biplane()
     assert isinstance(biplane, pv.MultiBlock)
+
+
+def test_download_head2():
+    filename = examples.download_head_2(load=False)
+    assert Path(filename).is_file()
+    assert filename.endswith('vti')
+
+    biplane = examples.download_head_2()
+    assert isinstance(biplane, pv.ImageData)
+
+
+def test_download_great_white_shark():
+    filename = examples.download_great_white_shark(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.stl'
+
+    shark = examples.download_great_white_shark()
+    assert isinstance(shark, pv.PolyData)
+
+
+def test_download_grey_nurse_shark():
+    filename = examples.download_grey_nurse_shark(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.stl'
+
+    shark = examples.download_grey_nurse_shark()
+    assert isinstance(shark, pv.PolyData)
+
+
+def test_download_carburetor():
+    filename = examples.download_carburetor(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.ply'
+
+    carburetor = examples.download_carburetor()
+    assert isinstance(carburetor, pv.PolyData)
+
+
+def test_download_dikhololo_night():
+    filename = examples.download_dikhololo_night(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.hdr'
+
+    mesh = examples.download_dikhololo_night()
+    assert isinstance(mesh, pv.Texture)
+
+
+def test_download_victorian_goblet_face_illusion():
+    filename = examples.download_victorian_goblet_face_illusion(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.stl'
+
+    mesh = examples.download_victorian_goblet_face_illusion()
+    assert isinstance(mesh, pv.PolyData)
+
+
+def test_download_reservoir():
+    filename = examples.download_reservoir(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.vtu'
+
+    mesh = examples.download_reservoir()
+    assert isinstance(mesh, pv.ExplicitStructuredGrid)
+
+
+@parametrize(high_resolution=[True, False])
+def test_download_whole_body_ct_male(high_resolution: bool):
+    filename = examples.download_whole_body_ct_male(load=False, high_resolution=high_resolution)
+
+    if not high_resolution:
+        assert (p := (Path(filename))).is_file()
+        assert p.suffix == '.vtm'
+
+    dataset: pv.MultiBlock = examples.download_whole_body_ct_male(
+        load=True, high_resolution=high_resolution
+    )
+    assert isinstance(dataset, pv.MultiBlock)
+    npoints = max(b.n_points for b in dataset.recursive_iterator())
+    assert npoints == 6_988_800 if not high_resolution else 56_012_800
+
+
+@parametrize(high_resolution=[True, False])
+def test_download_whole_body_ct_female(high_resolution: bool):
+    filename = examples.download_whole_body_ct_female(load=False, high_resolution=high_resolution)
+
+    if not high_resolution:
+        assert (p := (Path(filename))).is_file()
+        assert p.suffix == '.vtm'
+
+    dataset = examples.download_whole_body_ct_female(load=True, high_resolution=high_resolution)
+    assert isinstance(dataset, pv.MultiBlock)
+    npoints = max(b.n_points for b in dataset.recursive_iterator())
+    assert npoints == 6_937_600 if not high_resolution else 55_603_200
+
+
+def test_download_headsq():
+    filename = examples.download_headsq(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.nhdr'
+
+    mesh = examples.download_headsq()
+    assert isinstance(mesh, pv.ImageData)
+
+
+def test_download_t3_grid_0():
+    filename = examples.download_t3_grid_0(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.mnc'
+
+    mesh = examples.download_t3_grid_0()
+    assert isinstance(mesh, pv.ImageData)
+
+
+def test_download_full_head():
+    filename = examples.download_full_head(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.mhd'
+
+    mesh = examples.download_full_head()
+    assert isinstance(mesh, pv.ImageData)
+
+
+@parametrize(partial=[True, False])
+@pytest.mark.needs_vtk_version(9, 1, less_than=(9, 2))  # 9.1 for HDFReader, 9.2 for example
+def test_download_can(partial: bool):
+    filename = examples.download_can(load=False, partial=partial)
+
+    if partial:
+        assert (p := (Path(filename))).is_file()
+        assert p.suffix == '.hdf'
+    else:
+        assert all(Path(f).is_file() for f in filename)
+        assert all(Path(f).suffix == '.hdf' for f in filename)
+
+    dataset: pv.UnstructuredGrid = examples.download_can(load=True, partial=partial)
+    assert isinstance(dataset, pv.UnstructuredGrid)
+    assert dataset.n_points == 6724 if partial else 20_172
+
+
+@parametrize(partial=[True, False])
+@pytest.mark.needs_vtk_version(9, 2)
+def test_download_can_raises(partial: bool):
+    with pytest.raises(pv.VTKVersionError):
+        examples.download_can(partial=partial)
+
+
+def test_download_fea_bracket():
+    filename = examples.download_fea_bracket(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.vtu'
+
+    mesh = examples.download_fea_bracket()
+    assert isinstance(mesh, pv.UnstructuredGrid)
+
+
+def test_download_yinyang():
+    filename = examples.download_yinyang(load=False)
+    assert (p := Path(filename)).is_file()
+    assert p.suffix == '.png'
+
+    mesh = examples.download_yinyang()
+    assert isinstance(mesh, pv.ImageData)

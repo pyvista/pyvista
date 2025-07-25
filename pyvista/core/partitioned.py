@@ -6,6 +6,8 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import overload
 
+from pyvista._deprecate_positional_args import _deprecate_positional_args
+
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
-    """Wrapper for the ``vtkPartitionedDataSet`` class.
+    """Wrapper for the :vtk:`vtkPartitionedDataSet` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
 
@@ -41,7 +43,10 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     """
 
     if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}  # type: ignore[dict-item]
+        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
+
+        if _vtk.vtk_version_info >= (9, 4):
+            _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
@@ -124,7 +129,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             self[i + 1] = self[i]
         self[index] = dataset
 
-    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01
+    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01  # noqa: ARG002
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
@@ -187,7 +192,8 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    def copy(self, deep: bool = True):
+    @_deprecate_positional_args
+    def copy(self, deep: bool = True):  # noqa: FBT001, FBT002
         """Return a copy of the PartitionedDataSet.
 
         Parameters

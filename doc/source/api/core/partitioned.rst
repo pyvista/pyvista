@@ -77,11 +77,9 @@ PartitionedDataSet API Reference
 
 The :class:`pyvista.PartitionedDataSet` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista. This
-base class is analogous to VTK's `vtk.vtkPartitionedDataSetDataSet`_ class.
+base class is analogous to VTK's :vtk:`vtkPartitionedDataSet` class.
 
 .. autosummary::
    :toctree: _autosummary
 
    pyvista.PartitionedDataSet
-
-.. _vtk.vtkPartitionedDataSetDataSet: https://vtk.org/doc/nightly/html/classvtkPartitionedDataSetDataSet.html

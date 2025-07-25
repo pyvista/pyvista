@@ -11,6 +11,7 @@ import numpy as np
 
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import CellType
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -71,7 +72,7 @@ _CellTypeNamesLiteral = Literal[
 
 
 @dataclass
-class CellQualityInfo:
+class CellQualityInfo(_NoNewAttrMixin):
     """Information about a cell's quality measure."""
 
     cell_type: _CellTypesLiteral
@@ -261,8 +262,13 @@ def cell_quality_info(
 
     >>> import pyvista as pv
     >>> info_tri = pv.cell_quality_info(pv.CellType.TRIANGLE, 'scaled_jacobian')
-    >>> info_tri
-    CellQualityInfo(cell_type=<CellType.TRIANGLE: 5>, quality_measure='scaled_jacobian', acceptable_range=(0.5, 1.1547005383792515), normal_range=(-1.1547005383792515, 1.1547005383792515), full_range=(-inf, inf), unit_cell_value=1.0)
+    >>> info_tri  # doctest: +NORMALIZE_WHITESPACE
+    CellQualityInfo(cell_type=<CellType.TRIANGLE: 5>,
+                    quality_measure='scaled_jacobian',
+                    acceptable_range=(0.5, 1.1547005383792515),
+                    normal_range=(-1.1547005383792515, 1.1547005383792515),
+                    full_range=(-inf, inf),
+                    unit_cell_value=1.0)
 
     Show the acceptable range for this measure.
 
@@ -277,8 +283,13 @@ def cell_quality_info(
     Get info for the same measure but for :attr:`~pyvista.CellType.QUAD` cells.
 
     >>> info_quad = pv.cell_quality_info(pv.CellType.QUAD, 'scaled_jacobian')
-    >>> info_quad
-    CellQualityInfo(cell_type=<CellType.QUAD: 9>, quality_measure='scaled_jacobian', acceptable_range=(0.3, 1.0), normal_range=(-1.0, 1.0), full_range=(-1.0, 1.0), unit_cell_value=1.0)
+    >>> info_quad  # doctest: +NORMALIZE_WHITESPACE
+    CellQualityInfo(cell_type=<CellType.QUAD: 9>,
+                    quality_measure='scaled_jacobian',
+                    acceptable_range=(0.3, 1.0),
+                    normal_range=(-1.0, 1.0),
+                    full_range=(-1.0, 1.0),
+                    unit_cell_value=1.0)
 
     Show the acceptable range. Note that it differs for quads compared to triangles.
 

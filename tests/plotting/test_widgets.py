@@ -26,26 +26,26 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.skip_plotting
 
 
-def r_mat_to_euler_angles(R):
+def r_mat_to_euler_angles(r):
     """Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
 
     Returns the angles in radians.
     """
     # Check for gimbal lock: singular cases
-    if abs(R[2, 0]) == 1:
+    if abs(r[2, 0]) == 1:
         # Gimbal lock exists
         yaw = 0  # Set yaw to 0 and compute the others
-        if R[2, 0] == -1:  # Directly looking up
+        if r[2, 0] == -1:  # Directly looking up
             pitch = np.pi / 2
-            roll = yaw + np.arctan2(R[0, 1], R[0, 2])
+            roll = yaw + np.arctan2(r[0, 1], r[0, 2])
         else:  # Directly looking down
             pitch = -np.pi / 2
-            roll = -yaw + np.arctan2(-R[0, 1], -R[0, 2])
+            roll = -yaw + np.arctan2(-r[0, 1], -r[0, 2])
     else:
         # Not at the singularities
-        pitch = -np.arcsin(R[2, 0])
-        roll = np.arctan2(R[2, 1] / np.cos(pitch), R[2, 2] / np.cos(pitch))
-        yaw = np.arctan2(R[1, 0] / np.cos(pitch), R[0, 0] / np.cos(pitch))
+        pitch = -np.arcsin(r[2, 0])
+        roll = np.arctan2(r[2, 1] / np.cos(pitch), r[2, 2] / np.cos(pitch))
+        yaw = np.arctan2(r[1, 0] / np.cos(pitch), r[0, 0] / np.cos(pitch))
 
     if np.isclose(roll, np.pi):
         roll = 0
@@ -60,14 +60,14 @@ def r_mat_to_euler_angles(R):
 def test_add_plane_widget_raises():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='assign_to_axis not understood'):
-        pl.add_plane_widget(lambda *x: True, assign_to_axis='foo')
+        pl.add_plane_widget(lambda *x: True, assign_to_axis='foo')  # noqa: ARG005
 
 
 def test_add_slider_widget_raises():
     pl = pv.Plotter()
     pl.close()
     with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
-        pl.add_slider_widget(lambda *x: True, rng=[0, 1])
+        pl.add_slider_widget(lambda *x: True, rng=[0, 1])  # noqa: ARG005
 
 
 def test_add_mesh_threshold_raises():
@@ -125,7 +125,7 @@ def test_widget_box(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda box, widget: box  # Does nothing
+    func = lambda box, widget: box  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_box_widget(callback=func, pass_widget=True)
     p.close()
@@ -147,37 +147,37 @@ def test_widget_box(uniform):
 
 def test_widget_plane(uniform):
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, implicit=True)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin, widget: normal  # Does nothing
+    func = lambda normal, origin, widget: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, implicit=False)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin, widget: normal  # Does nothing
+    func = lambda normal, origin, widget: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
     p.close()
 
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_plane_widget(callback=func, normal_rotation=False, implicit=False)
     p.close()
@@ -207,7 +207,7 @@ def test_widget_line(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda line, widget: line  # Does nothing
+    func = lambda line, widget: line  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_line_widget(callback=func, pass_widget=True)
     p.close()
@@ -253,7 +253,7 @@ def test_widget_slider(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda value, widget: value  # Does nothing
+    func = lambda value, widget: value  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_slider_widget(callback=func, rng=[0, 10], style='modern', pass_widget=True)
     p.close()
@@ -332,7 +332,7 @@ def test_widget_spline(uniform):
     p.close()
 
     p = pv.Plotter()
-    func = lambda spline, widget: spline  # Does nothing
+    func = lambda spline, widget: spline  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
     p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
     p.close()
@@ -372,7 +372,7 @@ def test_measurement_widget(random_hills):
     p.close()
 
 
-def test_widget_sphere(uniform):
+def test_widget_sphere():
     p = pv.Plotter()
     func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
@@ -381,7 +381,7 @@ def test_widget_sphere(uniform):
     # pass multiple centers
     nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pv.Plotter()
-    func = lambda center, index: center  # Does nothing
+    func = lambda center, index: center  # Does nothing  # noqa: ARG005
     p.add_sphere_widget(callback=func, center=nodes)
     p.close()
 
@@ -419,7 +419,11 @@ def test_widget_radio_button_click(uniform):
     size = 50
     position = (10.0, 10.0)
     b = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=False, size=size, position=position
+        callback=func,
+        radio_button_group='group',
+        value=False,
+        size=size,
+        position=position,
     )
     p.show(auto_close=False)
     # Test switching logic
@@ -462,7 +466,11 @@ def test_widget_radio_button_multiple_switch(uniform):
     b1_position = (10.0, 10.0)
     b2_position = (10.0, 70.0)
     b1 = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=True, size=size, position=b1_position
+        callback=func,
+        radio_button_group='group',
+        value=True,
+        size=size,
+        position=b1_position,
     )
     b2 = p.add_radio_button_widget(
         callback=func, radio_button_group='group', size=size, position=b2_position
@@ -486,7 +494,7 @@ def test_widget_radio_button_plotter_closed(uniform):
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-def test_add_camera_orientation_widget(uniform):
+def test_add_camera_orientation_widget():
     p = pv.Plotter()
     p.add_camera_orientation_widget()
     assert p.camera_widgets
@@ -576,7 +584,9 @@ def test_ray_plane_intersection():
 
     # Expected result
     expected_result = np.array([0, 0, 5])
-    result = ray_plane_intersection(start_point, direction, plane_point, normal)
+    result = ray_plane_intersection(
+        start_point=start_point, direction=direction, plane_point=plane_point, normal=normal
+    )
     np.testing.assert_array_almost_equal(result, expected_result)
 
 
@@ -750,7 +760,11 @@ def test_affine_widget(sphere):
 
     # test change axes
     axes = np.array(
-        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]],
+        [
+            [0.70710678, 0.70710678, 0.0],
+            [-0.70710678, 0.70710678, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
     )
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
@@ -778,7 +792,8 @@ def test_affine_widget(sphere):
     assert not widget._arrows
 
 
-def test_logo_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_logo_widget():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
     pl.add_logo_widget()
@@ -812,7 +827,8 @@ def test_logo_widget(verify_image_cache):
     reason='MacOS CI produces a slightly different camera position. Needs investigation.',
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_camera3d_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_camera3d_widget():
     sphere = pv.Sphere()
     plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
     plotter.add_mesh(sphere)
@@ -825,14 +841,17 @@ def test_camera3d_widget(verify_image_cache):
 @pytest.mark.parametrize('outline_opacity', [True, False, np.random.default_rng(0).random()])
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
-    func = lambda normal, origin: normal  # Does nothing
+    func = lambda normal, origin: normal  # Does nothing  # noqa: ARG005
     p.add_mesh(uniform)
-    plane_widget = p.add_plane_widget(callback=func, implicit=True, outline_opacity=outline_opacity)
+    plane_widget = p.add_plane_widget(
+        callback=func, implicit=True, outline_opacity=outline_opacity
+    )
     assert plane_widget.GetOutlineProperty().GetOpacity() == float(outline_opacity)
     p.close()
 
 
-def test_clear_box_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_box_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -841,7 +860,8 @@ def test_clear_box_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_plane_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_plane_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -850,7 +870,8 @@ def test_clear_plane_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_line_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_line_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -859,7 +880,8 @@ def test_clear_line_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_slider_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_slider_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -868,7 +890,8 @@ def test_clear_slider_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_spline_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_spline_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -877,7 +900,8 @@ def test_clear_spline_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_measure_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_measure_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -886,7 +910,8 @@ def test_clear_measure_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_sphere_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_sphere_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -896,7 +921,8 @@ def test_clear_sphere_widget(verify_image_cache):
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-def test_clear_camera_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_camera_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -905,7 +931,8 @@ def test_clear_camera_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_button_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_button_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -914,7 +941,8 @@ def test_clear_button_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-def test_clear_logo_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_logo_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -924,7 +952,8 @@ def test_clear_logo_widget(verify_image_cache):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_clear_camera3d_widget(verify_image_cache):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_clear_camera3d_widget():
     mesh = pv.Cube()
     pl = pv.Plotter()
     pl.add_mesh(mesh)
@@ -933,7 +962,7 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.show(cpos='xy')
 
 
-class Test_event_parser:
+class TestEventParser:
     """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
 
     @pytest.fixture

@@ -28,7 +28,6 @@ downloading, reading, and processing files with a generic mapping:
 
 """
 
-# ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 # mypy: disable-error-code="redundant-expr"
 from __future__ import annotations
 
@@ -170,7 +169,7 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         name_iter = [name] if isinstance(name, str) else name
         url = self.base_url
         base_url_iter = [url] if isinstance(url, str) else url
-        url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
+        url_raw = list(map(os.path.join, base_url_iter, name_iter))
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
     @property
@@ -276,17 +275,20 @@ class _DatasetLoader:
         cell_types: dict[pv.CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
-            if isinstance(data, pv.Texture):
-                data = cast('pv.ImageData', pv.wrap(data.GetInput()))
+            dataset = (
+                cast('pv.ImageData', pv.wrap(data.GetInput()))
+                if isinstance(data, pv.Texture)
+                else data
+            )
             try:
-                if isinstance(data, pv.ExplicitStructuredGrid):
+                if isinstance(dataset, pv.ExplicitStructuredGrid):
                     # extract_cells_by_type does not support this datatype
                     # so get cells manually
-                    cells = (c.type for c in data.cell)
+                    cells = (c.type for c in dataset.cell)
                     [cell_types.update({cell_type: None}) for cell_type in cells]
                 else:
                     for cell_type in pv.CellType:
-                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
+                        extracted = dataset.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
                         if extracted.n_cells > 0:
                             cell_types[cell_type] = None
             except AttributeError:
@@ -298,7 +300,7 @@ class _SingleFile(_SingleFilePropsProtocol):
     """Wrap a single file."""
 
     def __init__(self, path):
-        from pyvista.examples.downloads import USER_DATA_PATH
+        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
 
         self._path = (
             path if path is None or os.path.isabs(path) else os.path.join(USER_DATA_PATH, path)
@@ -422,12 +424,12 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     ):
         _SingleFile.__init__(self, path)
 
-        from pyvista.examples.downloads import SOURCE
-        from pyvista.examples.downloads import USER_DATA_PATH
-        from pyvista.examples.downloads import _download_archive_file_or_folder
-        from pyvista.examples.downloads import download_file
-        from pyvista.examples.downloads import file_from_files
-        from pyvista.examples.examples import dir_path
+        from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
+        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+        from pyvista.examples.downloads import _download_archive_file_or_folder  # noqa: PLC0415
+        from pyvista.examples.downloads import download_file  # noqa: PLC0415
+        from pyvista.examples.downloads import file_from_files  # noqa: PLC0415
+        from pyvista.examples.examples import dir_path  # noqa: PLC0415
 
         if Path(path).is_absolute():
             # Absolute path must point to a built-in dataset
@@ -438,7 +440,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             self._source_name = Path(path).name
             # the dataset is already downloaded (it's built-in)
             # so make download() simply return the local filepath
-            self._download_func = lambda source: path
+            self._download_func = lambda _: path
         else:
             # Relative path, use vars from downloads.py
             self._base_url = SOURCE
@@ -495,7 +497,7 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
 
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         path: str,
         read_func: Callable[[str], DatasetType] | None = None,
@@ -563,11 +565,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     @property
     def path_loadable(self) -> tuple[str, ...]:
         return tuple(
-            [
-                file.path
-                for file in self._file_objects
-                if isinstance(file, _SingleFileDatasetLoader)
-            ],
+            file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)
         )
 
     @property
@@ -578,11 +576,11 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def _filesize_format(self) -> tuple[str, ...]:
-        return tuple([_format_file_size(size) for size in self._filesize_bytes])
+        return tuple(_format_file_size(size) for size in self._filesize_bytes)
 
     @property
     def _total_size_bytes(self) -> int:
-        return sum([file._total_size_bytes for file in self._file_objects])
+        return sum(file._total_size_bytes for file in self._file_objects)
 
     @property
     def total_size(self) -> str:
@@ -645,6 +643,7 @@ def _flatten_nested_sequence(nested: Sequence[_ScalarType | Sequence[_ScalarType
 
 def _download_dataset(
     dataset_loader: _SingleFileDownloadableDatasetLoader | _MultiFileDownloadableDatasetLoader,
+    *,
     load: bool = True,
     metafiles: bool = False,
 ):
@@ -706,7 +705,8 @@ def _load_as_multiblock(
         )
         paths = [Path(path) for path in paths]
         names = [
-            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name for path in paths
+            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
+            for path in paths
         ]
 
     for file, name in zip(files, names):
@@ -716,7 +716,10 @@ def _load_as_multiblock(
         assert isinstance(
             loaded,
             (pv.MultiBlock, pv.DataSet),
-        ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
+        ), (
+            f'Only MultiBlock or DataSet objects can be loaded as a MultiBlock. '
+            f"Got {type(loaded)}.'"
+        )
         multi.append(loaded, name)
     return multi
 
@@ -780,7 +783,7 @@ def _get_file_or_folder_ext(path: str):
     return ext
 
 
-def _get_all_nested_filepaths(filepath, exclude_readme=True):
+def _get_all_nested_filepaths(filepath, *, exclude_readme=True):
     """Walk through directory and get all file paths.
 
     Optionally exclude any readme files (if any).

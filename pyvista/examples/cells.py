@@ -51,7 +51,7 @@ def plot_cell(grid, cpos=None, **kwargs):
     pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
     pl.add_point_labels(
         grid.points,
-        range(grid.n_points),
+        list(range(grid.n_points)),
         always_visible=True,
         fill_shape=False,
         margin=0,
@@ -1457,7 +1457,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_QUAD
     array([30], dtype=uint8)
 
-    """
+    """  # noqa: E501
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticLinearQuad())
 
 
@@ -1563,7 +1563,8 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
 def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
     """Create a :class:`pyvista.UnstructuredGrid` containing a single biquadratic quadratic hexahedron.
 
-    This cell corresponds to the :attr:`pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON` cell type.
+    This cell corresponds to the :attr:`pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON`
+    cell type.
 
     Returns
     -------
@@ -1615,7 +1616,7 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
     >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
     array([33], dtype=uint8)
 
-    """
+    """  # noqa: E501
     return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuadraticHexahedron())
 
 

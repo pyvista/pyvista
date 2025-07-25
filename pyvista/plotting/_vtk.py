@@ -26,6 +26,29 @@ from vtkmodules.vtkChartsCore import vtkPlotPoints3D as vtkPlotPoints3D
 from vtkmodules.vtkChartsCore import vtkPlotStacked as vtkPlotStacked
 from vtkmodules.vtkChartsCore import vtkPlotSurface as vtkPlotSurface
 from vtkmodules.vtkCommonColor import vtkColorSeries as vtkColorSeries
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleImage as vtkInteractorStyleImage
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleJoystickActor as vtkInteractorStyleJoystickActor,
+)
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleJoystickCamera as vtkInteractorStyleJoystickCamera,
+)
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleRubberBand2D as vtkInteractorStyleRubberBand2D,
+)
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleRubberBandPick as vtkInteractorStyleRubberBandPick,
+)
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleRubberBandZoom as vtkInteractorStyleRubberBandZoom,
+)
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTerrain as vtkInteractorStyleTerrain
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleTrackballActor as vtkInteractorStyleTrackballActor,
+)
+from vtkmodules.vtkInteractionStyle import (
+    vtkInteractorStyleTrackballCamera as vtkInteractorStyleTrackballCamera,
+)
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget as vtkBoxWidget
 from vtkmodules.vtkInteractionWidgets import vtkButtonWidget as vtkButtonWidget
 from vtkmodules.vtkInteractionWidgets import (
@@ -73,7 +96,7 @@ try:
     from vtkmodules.vtkRenderingCore import vtkHardwarePicker as vtkHardwarePicker
 except ImportError:  # pragma: no cover
     # VTK < 9.2 is missing this class
-    vtkHardwarePicker = None  # type: ignore[assignment, misc]
+    vtkHardwarePicker = None  # type: ignore[assignment, misc] # noqa: N816
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_OFF as VTK_RESOLVE_OFF
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_POLYGON_OFFSET as VTK_RESOLVE_POLYGON_OFFSET
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_SHIFT_ZBUFFER as VTK_RESOLVE_SHIFT_ZBUFFER
@@ -91,6 +114,7 @@ from vtkmodules.vtkRenderingCore import vtkCompositePolyDataMapper as vtkComposi
 from vtkmodules.vtkRenderingCore import vtkCoordinate as vtkCoordinate
 from vtkmodules.vtkRenderingCore import vtkDataSetMapper as vtkDataSetMapper
 from vtkmodules.vtkRenderingCore import vtkImageActor as vtkImageActor
+from vtkmodules.vtkRenderingCore import vtkInteractorStyle as vtkInteractorStyle
 from vtkmodules.vtkRenderingCore import vtkLight as vtkLight
 from vtkmodules.vtkRenderingCore import vtkLightActor as vtkLightActor
 from vtkmodules.vtkRenderingCore import vtkLightKit as vtkLightKit

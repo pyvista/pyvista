@@ -2,12 +2,12 @@
 # See https://pre-commit.ci/
 ci:
   autoupdate_commit_msg: "chore: update pre-commit hooks"
-  autofix_prs: false
+  autofix_prs: true
   autoupdate_schedule: monthly
 
 repos:
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.9
+    rev: v0.4.1
     hooks:
       - id: blackdoc
         args: ["--skip-string-normalization"]
@@ -33,7 +33,7 @@ repos:
           ]
 
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.8.0
+    rev: v1.9.0
     hooks:
       - id: numpydoc-validation
         files: ^pyvista/
@@ -57,19 +57,19 @@ repos:
         files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.01.22
+    rev: 2025.05.02
     hooks:
       - id: sp-repo-review
         args: ["--show=errskip"]
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.32.1
+    rev: 0.33.2
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.4
+    rev: v0.12.2
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
@@ -78,7 +78,7 @@ repos:
         exclude: tests/core/typing
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.6.2
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -102,7 +102,12 @@ repos:
         # See options: https://taplo.tamasfe.dev/configuration/formatter-options.html
         args: [--option, "reorder_arrays=true", --option, "reorder_keys=true"]
 
-  - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.5.2
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.11.0
     hooks:
       - id: zizmor
+
+  - repo: https://github.com/sphinx-contrib/sphinx-lint
+    rev: v1.0.0
+    hooks:
+      - id: sphinx-lint

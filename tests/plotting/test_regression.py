@@ -59,21 +59,21 @@ def test_wrap_image_array_raises_dtype(mocker: MockerFixture):
 
 def test_commpare_images_raises(mocker: MockerFixture):
     @dataclass
-    class foo:
+    class Foo:
         n_calls: int = 0
 
-        def __call__(self, v):
+        def __call__(self, v):  # noqa: ARG002
             self.n_calls += 1
-            return bar(self.n_calls)
+            return Bar(self.n_calls)
 
     @dataclass
-    class bar:
+    class Bar:
         n_calls: int
 
-        def GetDimensions(self):
+        def GetDimensions(self):  # noqa: N802
             return self.n_calls
 
-    mocker.patch.object(regression, 'remove_alpha', new=foo())
+    mocker.patch.object(regression, 'remove_alpha', new=Foo())
 
     with pytest.raises(RuntimeError, match='Input images are not the same size.'):
         pv.compare_images(pv.ImageData(), pv.ImageData())

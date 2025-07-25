@@ -18,11 +18,13 @@ from xml.etree import ElementTree as ET
 import numpy as np
 
 import pyvista
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
+from .misc import _NoNewAttrMixin
 from .misc import abstract_class
 
 if TYPE_CHECKING:
@@ -38,9 +40,9 @@ def _lazy_vtk_instantiation(module_name, class_name):
 
 
 def lazy_vtkPOpenFOAMReader():
-    """Lazy import of the vtkPOpenFOAMReader."""
-    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader
-    from vtkmodules.vtkParallelCore import vtkDummyController
+    """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
+    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader  # noqa: PLC0415
+    from vtkmodules.vtkParallelCore import vtkDummyController  # noqa: PLC0415
 
     # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
     reader = vtkPOpenFOAMReader()
@@ -222,7 +224,9 @@ def get_reader(filename, force_ext=None):
             ):
                 Reader = DICOMReader
             else:
-                msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+                msg = (
+                    f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
+                )
                 raise ValueError(msg)
         else:
             msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
@@ -250,7 +254,7 @@ class BaseVTKReader(ABC):
         """Add Observer that can be triggered during Update."""
         self._observers.append([event_type, callback])  # type: ignore[arg-type]
 
-    def RemoveObservers(self, *args) -> None:
+    def RemoveObservers(self, *args) -> None:  # noqa: ARG002
         """Remove Observer."""
         self._observers = []
 
@@ -271,13 +275,13 @@ class BaseVTKReader(ABC):
         Set self._data_object.
         """
 
-    def GetOutputDataObject(self, *args):
+    def GetOutputDataObject(self, *args):  # noqa: ARG002
         """Return stored data."""
         return self._data_object
 
 
 @abstract_class
-class BaseReader:
+class BaseReader(_NoNewAttrMixin):
     """The Base Reader class.
 
     The base functionality includes reading data from a file,
@@ -303,7 +307,7 @@ class BaseReader:
         else:
             # edge case where some class customization is needed on instantiation
             self._reader = self._class_reader()
-        self._filename = None
+        self._filename: str | None = None
         self._progress_bar = False
         self._progress_msg = None
         self.__directory = None
@@ -418,7 +422,7 @@ class BaseReader:
             PyVista Dataset.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import
+        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
@@ -441,7 +445,7 @@ class BaseReader:
         """Set defaults on reader post setting file, if needed."""
 
 
-class PointCellDataSelection:
+class PointCellDataSelection(_NoNewAttrMixin):
     """Mixin for readers that support data array selections.
 
     Examples
@@ -460,7 +464,8 @@ class PointCellDataSelection:
     >>> reader.point_array_names
     []
     >>> reader.all_cell_arrays_status  # doctest: +NORMALIZE_WHITESPACE
-    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True, 'omega': True, 'f': True, 'epsilon': True, 'U': True}
+    {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True,
+    'omega': True, 'f': True, 'epsilon': True, 'U': True}
     >>> reader.disable_all_cell_arrays()
     >>> reader.enable_cell_array('U')
     >>> mesh = reader.read()  # MultiBlock mesh
@@ -1357,7 +1362,7 @@ class VTKDataSetReader(BaseReader):
     -----
     This reader calls ``ReadAllScalarsOn``, ``ReadAllColorScalarsOn``,
     ``ReadAllNormalsOn``, ``ReadAllTCoordsOn``, ``ReadAllVectorsOn``,
-    and ``ReadAllFieldsOn`` on the underlying ``vtkDataSetReader``.
+    and ``ReadAllFieldsOn`` on the underlying :vtk:`vtkDataSetReader`.
 
     Examples
     --------
@@ -1471,8 +1476,8 @@ class MultiBlockPlot3DReader(BaseReader):
     """MultiBlock Plot3D Reader.
 
     The methods :meth:`add_function()` and :meth:`remove_function()` accept values from
-    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as class variables,
-    as shown below.
+    :class:`Plot3DFunctionEnum`. For convenience, the values of that enumeration are available as
+    class variables, as shown below.
 
         - ``MultiBlockPlot3DReader.DENSITY = Plot3DFunctionEnum.DENSITY``
         - ``MultiBlockPlot3DReader.PRESSURE = Plot3DFunctionEnum.PRESSURE``
@@ -1555,8 +1560,8 @@ class MultiBlockPlot3DReader(BaseReader):
     def add_function(self, value: int | Plot3DFunctionEnum) -> None:
         """Specify additional functions to compute.
 
-        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
-        easily accessed by their aliases as class variables.
+        The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this
+        enumeration are most easily accessed by their aliases as class variables.
 
         Multiple functions may be requested by calling this method multiple times.
 
@@ -1604,9 +1609,9 @@ class MultiBlockPlot3DReader(BaseReader):
     def preserve_intermediate_functions(self):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
-        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still needs to compute
-        ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the output will not have ``Velocity``
-        array, only the requested ``VelocityMagnitude``.
+        For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still
+        needs to compute ``Velocity``. If `preserve_intermediate_functions` is ``False``, then the
+        output will not have ``Velocity`` array, only the requested ``VelocityMagnitude``.
 
         This is useful to avoid using up memory for arrays that are not relevant for the analysis.
         """
@@ -1644,7 +1649,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     By default, all point and cell arrays are loaded as well as the boundary
     patch. This varies from VTK's defaults. For more details, see
-    `vtkCGNSReader <https://vtk.org/doc/nightly/html/classvtkCGNSReader.html>`_
+    :vtk:`vtkCGNSReader`.
 
     Examples
     --------
@@ -1959,7 +1964,7 @@ class BinaryMarchingCubesReader(BaseReader):
 
 
 @dataclass(order=True)
-class PVDDataSet:
+class PVDDataSet(_NoNewAttrMixin):
     """Class for storing dataset info from PVD file."""
 
     time: float
@@ -2005,7 +2010,9 @@ class _PVDReader(BaseVTKReader):
 
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-        self._time_mapping: dict[float, list[PVDDataSet]] = {time: [] for time in self._time_values}
+        self._time_mapping: dict[float, list[PVDDataSet]] = {
+            time: [] for time in self._time_values
+        }
         for dataset in self._datasets:
             self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
@@ -2108,7 +2115,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
     .. versionadded:: 0.45.0
 
-    This reader requires vtk version >=9.3.0.
+    .. note::
+        This reader requires vtk version >=9.3.0.
 
     Examples
     --------
@@ -2262,13 +2270,13 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     def cell_array_names(self):  # noqa: D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def enable_cell_array(self, name) -> None:  # noqa: D102
+    def enable_cell_array(self, name) -> None:  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def disable_cell_array(self, name) -> None:  # noqa: D102
+    def disable_cell_array(self, name) -> None:  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
-    def cell_array_status(self, name):  # noqa: D102
+    def cell_array_status(self, name):  # noqa: ARG002, D102
         raise AttributeError(self._cell_attr_err_msg)
 
     def enable_all_cell_arrays(self) -> None:  # noqa: D102
@@ -2578,6 +2586,9 @@ class AVSucdReader(BaseReader):
 class HDFReader(BaseReader):
     """HDFReader for .hdf files.
 
+    .. note::
+        This reader requires vtk version >=9.1.0.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -2595,8 +2606,15 @@ class HDFReader(BaseReader):
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
 
+    def __init__(self, path):
+        if pyvista.vtk_version_info < (9, 1, 0):
+            msg = f'{self.__class__.__name__} is only available for vtk>=9.1'
+            raise pyvista.VTKVersionError(msg)
+
+        super().__init__(path)
+
     @wraps(BaseReader.read)
-    def read(self):
+    def read(self):  # type: ignore[override]
         """Wrap the base reader to handle the vtk 9.1 --> 9.2 change."""
         try:
             with pyvista.VtkErrorCatcher(raise_errors=True):
@@ -2657,8 +2675,8 @@ class _GIFReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the GIF and store internally to `_data_object`."""
-        from PIL import Image
-        from PIL import ImageSequence
+        from PIL import Image  # noqa: PLC0415
+        from PIL import ImageSequence  # noqa: PLC0415
 
         img = Image.open(self._filename)
         self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
@@ -2668,7 +2686,7 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
+            self._data_object.point_data.set_array(data, f'frame{i}')
             self.UpdateObservers(6)
 
         if 'frame0' in self._data_object.point_data:
@@ -2848,7 +2866,8 @@ class GaussianCubeReader(BaseReader):
     _vtk_module_name = 'vtkIOChemistry'
     _vtk_class_name = 'vtkGaussianCubeReader'
 
-    def read(self, grid: bool = True):
+    @_deprecate_positional_args
+    def read(self, grid: bool = True):  # noqa: FBT001, FBT002
         """Read the file and return the output.
 
         Parameters
@@ -2857,7 +2876,7 @@ class GaussianCubeReader(BaseReader):
             Output as a grid if ``True``, otherwise return the polydata.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import
+        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
 
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = (
@@ -3493,8 +3512,8 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetTimeStep(time_point)
 
 
-class ExodusIIBlockSet:
-    """Class for enabling and disabling the blocks, sets, block arrays and set arrays in Exodus II files."""
+class ExodusIIBlockSet(_NoNewAttrMixin):
+    """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):
         if not exodus_reader.reader.GetObjectTypeName(object_type):

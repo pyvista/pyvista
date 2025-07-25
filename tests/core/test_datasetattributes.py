@@ -17,7 +17,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
@@ -578,8 +577,11 @@ def test_normals_get(plane):
 
 def test_normals_set():
     plane = pv.Plane(i_resolution=1, j_resolution=1)
-    plane.point_data.normals = plane.point_normals
-    assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
+    plane.clear_data()
+    assert plane.active_normals is None
+    new_normals = np.zeros((plane.n_points, 3))
+    plane.point_data.active_normals = new_normals
+    assert np.array_equal(plane.point_data.active_normals, new_normals)
 
     with pytest.raises(ValueError, match='must be a 2-dim'):
         plane.point_data.active_normals = [1]
@@ -676,7 +678,9 @@ def test_complex(plane, dtype_str):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
     real_type = np.float32 if dtype == np.complex64 else np.float64
-    data = np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    data = (
+        np.random.default_rng().random((plane.n_points, 2)).astype(real_type).view(dtype).ravel()
+    )
     plane.point_data[name] = data
     assert np.array_equal(plane.point_data[name], data)
 
@@ -689,34 +693,6 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
-
-
-def test_active_t_coords_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-
-
-def test_active_t_coords_name_deprecated():
-    mesh = pv.Cube()
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-    with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
-        mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('copy', [True, False])

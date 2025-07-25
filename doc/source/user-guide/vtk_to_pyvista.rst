@@ -9,7 +9,7 @@ into numpy arrays so that users can benefit from its bracket syntax
 and fancy indexing. This section demonstrates the difference between
 the two approaches in a series of examples.
 
-For example, to hard-code points for a `vtk.vtkImageData`_ data
+For example, to hard-code points for a :vtk:`vtkImageData` data
 structure using VTK Python's bindings, one would write the following:
 
 .. code-block:: python
@@ -44,7 +44,7 @@ structure using VTK Python's bindings, one would write the following:
    >>> image_data.GetPointData().SetScalars(points)
 
 As you can see, there is quite a bit of boilerplate that goes into
-the creation of a simple `vtk.vtkImageData`_ dataset. PyVista provides
+the creation of a simple :vtk:`vtkImageData` dataset. PyVista provides
 much more concise syntax that is more "Pythonic." The equivalent code in
 PyVista is:
 
@@ -76,10 +76,10 @@ Here, PyVista has done several things for us:
    fields). Here, shape and values are stored concretely in one
    variable.
 
-#. :class:`pyvista.ImageData` wraps `vtk.vtkImageData`_, just with a
+#. :class:`pyvista.ImageData` wraps :vtk:`vtkImageData`, just with a
    different name; they are both containers of evenly spaced points. Your
    data does not have to be an "image" to use it with
-   `vtk.vtkImageData`_; rather, like images, values in the dataset are
+   :vtk:`vtkImageData`; rather, like images, values in the dataset are
    evenly spaced apart like pixels in an image.
 
    Furthermore, since we know the container is for uniformly spaced data,
@@ -152,15 +152,12 @@ However, with PyVista you only need:
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 
-.. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
-
-
 PointSet Construction
 ---------------------
 PyVista heavily relies on NumPy to efficiently allocate and access
 VTK's C arrays. For example, to create an array of points within VTK
 one would normally loop through all the points of a list and supply
-that to a  `vtkPoints`_ class. For example:
+that to a  :vtk:`vtkPoints` class. For example:
 
 .. jupyter-execute::
 
@@ -189,7 +186,7 @@ To do the same within PyVista, you simply need to create a NumPy array:
    >>> np_points = np.array([[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]])
 
 .. note::
-   You can use :func:`pyvista.vtk_points` to construct a `vtkPoints`_
+   You can use :func:`pyvista.vtk_points` to construct a :vtk:`vtkPoints`
    object, but this is unnecessary in almost all situations.
 
 Since the end goal is to construct a :class:`pyvista.DataSet
@@ -211,7 +208,7 @@ Whereas in VTK you would have to do:
 The same goes with assigning face or cell connectivity/topology. With
 VTK you would normally have to loop using ``InsertNextCell`` and
 ``InsertCellPoint``. For example, to create a single cell
-(triangle) and then assign it to `vtkPolyData`_:
+(triangle) and then assign it to :vtk:`vtkPolyData`:
 
 .. jupyter-execute::
 
@@ -309,8 +306,7 @@ Under the hood, the collision filter detects mesh collisions using
 oriented bounding box (OBB) trees. For a single collision, this filter
 is as performant as the VTK counterpart, but when computing multiple
 collisions with the same meshes, as in the :ref:`collision_example`
-example, it is more efficient to use the `vtkCollisionDetectionFilter
-<https://vtk.org/doc/nightly/html/classvtkCollisionDetectionFilter.html>`_,
+example, it is more efficient to use the :vtk:`vtkCollisionDetectionFilter`,
 as the OBB tree is computed once for each mesh. In most cases, pure
 PyVista is sufficient for most data science, but there are times when
 you may want to use VTK classes directly.

@@ -73,11 +73,11 @@ def _preprocess_build_images(build_images_dir: str, output_dir: str):
         output_paths.append(output_path)
 
         # Ensure image size is max 400x400 and save to output
-        im = Image.open(input_path)
-        im = im.convert('RGB') if im.mode != 'RGB' else im
-        if not (im.size[0] <= 400 and im.size[1] <= 400):
-            im.thumbnail(size=(400, 400))
-        im.save(output_path, quality='keep') if im.format == 'JPEG' else im.save(output_path)
+        with Image.open(input_path) as im:
+            im = im.convert('RGB') if im.mode != 'RGB' else im  # noqa: PLW2901
+            if not (im.size[0] <= 400 and im.size[1] <= 400):
+                im.thumbnail(size=(400, 400))
+            im.save(output_path, quality='keep') if im.format == 'JPEG' else im.save(output_path)
 
     return output_paths
 
@@ -232,8 +232,8 @@ def _test_compare_images(test_name, docs_image_path, cached_image_path):
                 else:
                     # Test still fails
                     fail_msg += (
-                        '\nTHIS IS A FLAKY TEST. It initially failed (as above) and failed again for '
-                        f'all images in \n\t{Path(FLAKY_IMAGE_DIR, test_name)!s}.'
+                        '\nTHIS IS A FLAKY TEST. It initially failed (as above) and failed again '
+                        f'for all images in \n\t{Path(FLAKY_IMAGE_DIR, test_name)!s}.'
                     )
     except RuntimeError as e:
         warn_msg = None
@@ -278,10 +278,10 @@ def test_interactive_plot_file_size(vtksz_file: str):
     if size_megabytes > MAX_VTKSZ_FILE_SIZE_MB:
         rel_path = filepath.relative_to(ROOT_DIR)
         msg = (
-            f'The generated interactive plot file is too large: \n'
-            f'\t{rel_path}\n'
-            f'Its size is {size_megabytes} MB, but must be less than {MAX_VTKSZ_FILE_SIZE_MB} MB.\n'
-            f'Consider reducing the complexity of the plot or forcing it to be static.'
+            f'The generated interactive plot file is too large: '
+            f'\n\t{rel_path}\n'
+            f'Its size is {size_megabytes} MB, but must be less than {MAX_VTKSZ_FILE_SIZE_MB} MB.'
+            f'\nConsider reducing the complexity of the plot or forcing it to be static.'
         )
         pytest.fail(msg)
 
@@ -296,5 +296,6 @@ def test_sphinx_gallery_execution_times(testcase):
     if float(testcase['time']) > SPHINX_GALLERY_EXAMPLE_MAX_TIME:
         pytest.fail(
             f'Gallery example {testcase["name"]!r} from {testcase["file"]!r}\n'
-            f'Took too long to run: Duration {testcase["time"]}s > {SPHINX_GALLERY_EXAMPLE_MAX_TIME}s',
+            f'Took too long to run: '
+            f'Duration {testcase["time"]}s > {SPHINX_GALLERY_EXAMPLE_MAX_TIME}s',
         )

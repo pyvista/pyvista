@@ -31,11 +31,48 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
+  CACHE_FOLDER_NAME: vtk-data
+  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
+  LINUX_PLOTTING_ARGS: >
+    tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch --disallow_unused_cache
 
 permissions:
   id-token: none
 
 jobs:
+  cache-vtk-data:
+    name: Cache vtk-data Repo
+    runs-on: ubuntu-22.04
+    outputs:
+      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
+    steps:
+      - name: Get vtk-data commit
+        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+
+      - name: Test if the example data cache exists
+        id: restore-cache-vtk-data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          lookup-only: true
+
+      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: pyvista/vtk-data
+          path: ${{ env.CACHE_FOLDER_NAME }}
+
+      - name: Create the example data cache
+        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+        id: save-cache-vtk-data
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+          enableCrossOsArchive: true
+
   macOS:
     name: Mac OS Unit Testing
     strategy:
@@ -49,6 +86,7 @@ jobs:
           - { os: macos-latest, python-version: "3.13" }
 
     runs-on: ${{ matrix.config.os }}
+    needs: cache-vtk-data
 
     steps:
       - uses: actions/checkout@v4
@@ -59,8 +97,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.config.python-version }}
-          if: env.USE_CACHE == 'true'
-          cache: "pip"
+          cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+
+      - name: Restore example data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Install PyVista test dependencies
         run: |
@@ -71,22 +115,30 @@ jobs:
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: pytest -v --ignore=tests/plotting
+        run: pytest -v --ignore=tests/plotting --test_downloads
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: pytest -v tests/plotting --disallow_unused_cache
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          path: _generated_test_images
 
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-22.04
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
 
@@ -127,12 +179,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - uses: actions/cache@v4
+      - name: Cache example data
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Build wheel and install pyvista
         run: |
@@ -169,9 +221,9 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.5.0
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
         with:
           packages: xvfb
@@ -183,14 +235,22 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a python -m pytest tests/plotting --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --generated_image_dir debug_images
+        run: |
+          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
 
       - name: Software Report
         if: always()
@@ -199,7 +259,7 @@ jobs:
           which python
           pip list
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -219,9 +279,92 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
+  VTK-dev:
+    # For PRs, only run this job if the 'vtk-dev-testing' label is applied
+    if: |
+      (github.event_name != 'pull_request' && github.event_name != 'push') ||
+      contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
+    name: Linux VTK Dev Testing
+    permissions:
+      contents: read
+    runs-on: ubuntu-22.04
+    needs: cache-vtk-data
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+
+      - name: Install Testing Requirements
+        run: |
+          pip install --upgrade pip
+          pip install . --group test
+
+      - name: Install VTK dev wheel
+        run: |
+          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+
+      - name: Core Testing (no GL)
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
+
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        if: always()
+        with:
+          packages: xvfb
+          version: 3.0
+
+      - name: Software Report (Plotting Dependencies)
+        if: always()
+        run: xvfb-run -a python -c "import pyvista; print(pyvista.Report());"
+
+      - name: Plotting Testing (uses GL)
+        if: always()
+        run: |
+          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
+
+      - name: Software Report
+        if: always()
+        run: |
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
+          pip show vtk
+
   windows:
     name: Windows Unit Testing
     runs-on: windows-latest
+    needs: cache-vtk-data
     env:
       CI_WINDOWS: true
     strategy:
@@ -239,8 +382,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
+
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v4.1
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Install PyVista test dependencies
         run: |
@@ -250,29 +400,23 @@ jobs:
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
-      - name: Set example data path as env variable
-        run: |
-          chcp 65001 #set code page to utf-8
-          echo ("PYVISTA_EXAMPLE_DATA_PATH=" + $(python -c "import pyvista; from pyvista import examples; print(examples.USER_DATA_PATH)")) >> $env:GITHUB_ENV
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: Examples-1-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-1-
-
       - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting
+        run: python -m pytest -v --ignore=tests/plotting --test_downloads
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+        run: python -m pytest -v tests/plotting --disallow_unused_cache
+
+      - name: Upload Images for Failed Tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
-          path: debug_images
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: _generated_test_images
