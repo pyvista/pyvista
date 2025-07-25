@@ -237,9 +237,6 @@ class UnstructuredGridFilters(DataSetFilters):
         """
 
         def _add_vertex_cell_to_unused_points(mesh):
-            mesh = mesh.copy(deep=False)
-            if mesh.is_empty:
-                return mesh
             # Find unused point indices
             merge_map = mesh.clean(
                 remove_unused_points=True,
@@ -267,20 +264,21 @@ class UnstructuredGridFilters(DataSetFilters):
             vtk_cells = CellArray(all_cells)
             vtk_celltypes = _vtk.numpy_to_vtk(all_celltypes)
             mesh.SetCells(vtk_celltypes, vtk_cells)
-            return mesh
 
         # Use extract_points to only keep point IDs associated with cells.
         # Surprisingly, extract_points will keep unused points, even if their point IDs are
         # not included, so we first need to explicitly map unused points to VERTEX cells
-        new_grid = _add_vertex_cell_to_unused_points(self)
-        out = new_grid.extract_points(self.cell_connectivity)
+        new_grid = self.copy(deep=False)
+        if not new_grid.is_empty:
+            _add_vertex_cell_to_unused_points(new_grid)
+            new_grid = new_grid.extract_points(self.cell_connectivity)
 
-        if (name := 'vtkOriginalPointIds') in (data := out.point_data):
-            del data[name]
-        if (name := 'vtkOriginalCellIds') in (data := out.cell_data):
-            del data[name]
+            if (name := 'vtkOriginalPointIds') in (data := new_grid.point_data):
+                del data[name]
+            if (name := 'vtkOriginalCellIds') in (data := new_grid.cell_data):
+                del data[name]
 
         if inplace:
-            self.copy_from(out, deep=False)
+            self.copy_from(new_grid, deep=False)
             return self
-        return out
+        return new_grid
