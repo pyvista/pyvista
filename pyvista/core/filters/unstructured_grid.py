@@ -15,11 +15,7 @@ from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from typing import TypeVar
-
-    from pyvista import UnstructuredGrid
-
-    T = TypeVar('T', bound=UnstructuredGrid)
+    from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
 
 
 @abstract_class
@@ -172,10 +168,10 @@ class UnstructuredGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def remove_unused_points(  # type: ignore[misc]
-        self: T,
+        self: _UnstructuredGridType,
         *,
         inplace: bool = False,
-    ) -> T:
+    ) -> _UnstructuredGridType:
         """Remove points which are not used by any cells.
 
         Unlike :meth:`clean`, this filter does `not` merge points.
