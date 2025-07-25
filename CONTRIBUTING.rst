@@ -797,9 +797,9 @@ When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
 ``EXPECTED_TYPE`` defined by each test case.
 
-In addition, the ``pyanalyze`` package tests the actual returned
+In addition, the ``pycroscope`` package tests the actual returned
 type at runtime to match the statically-revealed type. The
-`pyanalyze.runtime.get_assignability_error <https://pyanalyze.readthedocs.io/en/latest/reference/runtime.html#pyanalyze.runtime.get_assignability_error>`_
+`pycroscope.runtime.get_assignability_error <https://pyanalyze.readthedocs.io/en/latest/reference/runtime.html#pyanalyze.runtime.get_assignability_error>`_
 method is used for this.
 
 Building the Documentation

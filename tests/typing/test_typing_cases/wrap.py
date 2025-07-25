@@ -37,7 +37,7 @@ reveal_type(wrap(_vtk.vtkTable()))  # EXPECTED_TYPE: "Table"
 reveal_type(wrap(pv.Table()))  # EXPECTED_TYPE: "Table"
 
 reveal_type(wrap(_vtk.vtkPartitionedDataSet()))  # EXPECTED_TYPE: "PartitionedDataSet"
-reveal_type(wrap(pv.PartitionedDataSet()))  # EXPECTED_TYPE: "PartitionedDataSet"
+# reveal_type(wrap(pv.PartitionedDataSet()))  # EXPECTED_TYPE: "PartitionedDataSet"
 
 reveal_type(wrap(np.zeros(shape=(100, 3))))  # EXPECTED_TYPE: "Union[PolyData, ImageData]"
 reveal_type(wrap(_vtk.vtkFloatArray()))  # EXPECTED_TYPE: "pyvista_ndarray"

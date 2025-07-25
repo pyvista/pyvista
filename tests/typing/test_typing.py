@@ -24,7 +24,7 @@ from typing import NamedTuple
 from typing import Union  # noqa: F401
 
 from mypy import api as mypy_api
-import pyanalyze
+import pycroscope
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -50,6 +50,10 @@ REPLACE_TYPES = {
     'pyvista.core.objects.Table': 'Table',
     'pyvista.core.pyvista_ndarray.pyvista_ndarray': 'pyvista_ndarray',
     'typing.Iterator': 'Iterator',
+    'builtins.str': 'str',
+    'builtins.int': 'int',
+    'builtins.tuple': 'tuple',
+    'builtins.list': 'list',
 }
 
 # Import the REPLACE_TYPES values into the global namespace to make
@@ -61,10 +65,6 @@ globals().update(
         for module_name, class_name in [full_path.rsplit('.', 1)]
     }
 )
-REPLACE_TYPES.update({'builtins.str': 'str'})
-REPLACE_TYPES.update({'builtins.int': 'int'})
-REPLACE_TYPES.update({'builtins.tuple': 'tuple'})
-REPLACE_TYPES.update({'builtins.list': 'list'})
 
 
 class _TestCaseTuple(NamedTuple):
@@ -194,9 +194,19 @@ def _generate_test_cases():
 
 
 def _load_module_namespace(module_path: Path) -> dict[str, Any]:
-    namespace = {}
-    with module_path.open() as f:
-        exec(f.read(), namespace)
+    # Compile and execute the file in a real module-like namespace
+    source = module_path.read_text()
+    code = compile(source, str(module_path), mode='exec')
+
+    # This dictionary simulates a module's __dict__
+    namespace = {
+        '__builtins__': __builtins__,
+        '__name__': '__test_case__',
+        '__file__': str(module_path),
+        '__package__': None,
+    }
+
+    exec(code, namespace)
     return namespace
 
 
@@ -247,7 +257,6 @@ def test_typing(test_case):
             # Load the test case file's namespace into the local namespace
             # so we can evaluate code defined in the test case
             namespace = _load_module_namespace(Path(TYPING_CASES_ABS_PATH) / file)
-            locals().update(namespace)
         except Exception as e:
             msg = (
                 f'Test setup failed for runtime test case in {file}:{line_num}.\n'
@@ -266,7 +275,7 @@ def test_typing(test_case):
                 f'An exception was raised:\n{e!r}'
             )
         try:
-            runtime_val = eval(arg)
+            runtime_val = eval(arg, namespace)
         except Exception as e:
             pytest.fail(
                 f'Test setup failed for runtime test case in {file}:{line_num}.\n'
@@ -274,7 +283,7 @@ def test_typing(test_case):
                 f'\t{arg}\n'
                 f'An exception was raised:\n{e!r}'
             )
-        compat_error_msg = pyanalyze.runtime.get_assignability_error(runtime_val, expected_type)
+        compat_error_msg = pycroscope.runtime.get_assignability_error(runtime_val, expected_type)
         if compat_error_msg:
             error_prefix = (
                 f'\nRuntime value:\n'
