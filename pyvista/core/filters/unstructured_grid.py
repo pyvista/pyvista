@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.cell import CellArray
@@ -239,6 +238,8 @@ class UnstructuredGridFilters(DataSetFilters):
 
         def _add_vertex_cell_to_unused_points(mesh):
             mesh = mesh.copy(deep=False)
+            if mesh.is_empty:
+                return mesh
             # Find unused point indices
             merge_map = mesh.clean(
                 remove_unused_points=True,
@@ -271,9 +272,7 @@ class UnstructuredGridFilters(DataSetFilters):
         # Use extract_points to only keep point IDs associated with cells.
         # Surprisingly, extract_points will keep unused points, even if their point IDs are
         # not included, so we first need to explicitly map unused points to VERTEX cells
-        new_grid = (
-            pv.UnstructuredGrid() if self.is_empty else _add_vertex_cell_to_unused_points(self)
-        )
+        new_grid = _add_vertex_cell_to_unused_points(self)
         out = new_grid.extract_points(self.cell_connectivity)
 
         if (name := 'vtkOriginalPointIds') in (data := out.point_data):

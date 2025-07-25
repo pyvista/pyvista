@@ -101,7 +101,7 @@ def test_remove_unused_points(mesh_type, inplace):
 
     # Test unused point is removed and no points are merged
     assert mesh_out.n_points == n_points_expected
-    # Mesh geometry (point and cell order) should also match cube input exactly
+    # Mesh geometry (point and cell order) and arrays should also match cube input exactly
     assert mesh_out == cube_cast
 
     # Test mesh and array copies
@@ -111,5 +111,9 @@ def test_remove_unused_points(mesh_type, inplace):
     assert mesh_out.array_names == array_names
 
     # Test empty
-    empty = mesh_type().remove_unused_points()
-    assert empty.n_arrays == 0
+    key = 'data'
+    empty = mesh_type()
+    empty.field_data[key] = [1, 2, 3]
+    out = empty.remove_unused_points(inplace=inplace)
+    assert (out is empty) == inplace
+    assert out.array_names == [key]
