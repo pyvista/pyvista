@@ -37,6 +37,7 @@ doc/sphinx_warnings.txt
 .pytest_cache/
 tests/.coverage
 tests/htmlcov/
+.tox
 
 # doctest generated
 ant.vtk
