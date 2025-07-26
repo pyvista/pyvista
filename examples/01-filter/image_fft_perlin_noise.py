@@ -15,6 +15,14 @@ and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "numpy",
+#   "pyvista",
+# ]
+# ///
+
 from __future__ import annotations
 
 import numpy as np
