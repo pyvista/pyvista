@@ -5,10 +5,19 @@ import os
 from pathlib import Path
 import re
 import sys
+import warnings
 
 import pyvista
 
 sys.path.append(str(Path(__file__).parent))
+
+# Suppress invalid user data path when there is an issue with restoring the cache for CI
+# https://github.com/pyvista/pyvista/pull/7747
+warnings.filterwarnings(
+    'ignore',
+    message=r'Ignoring invalid PYVISTA_USERDATA_PATH.*',
+    category=UserWarning,
+)
 
 # -- General configuration ------------------------------------------------
 
