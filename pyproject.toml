@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
   'matplotlib>=3.0.1',
-  'numpy>=1.21.0',     # minimum typing support
+  'numpy>=1.21.0', # minimum typing support
   'pillow',
   'pooch',
   'scooby>=0.5.1',
@@ -124,7 +124,7 @@ docs = [
   'mypy==1.15.0',
   'numpydoc==1.8.0',
   'osmnx==2.0.2',
-  'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
   'pytest-pyvista==0.2.0',
   'pytest-sphinx==0.6.3',
@@ -219,12 +219,12 @@ filterwarnings = [
   'error',
 
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
-  'ignore:.*Given trait value dtype "float64":UserWarning',                                                              # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:Ignoring invalid PYVISTA_USERDATA_PATH.*:UserWarning',
-  'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
+  'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
@@ -296,8 +296,8 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 exclude = [ # don't report on objects that match any of these regex
-  '\.*Reader(\.|$)',        # classes inherit from BaseReader
-  '\._.*$',                 # Ignore anything that's private (e.g., starts with _)
+  '\.*Reader(\.|$)', # classes inherit from BaseReader
+  '\._.*$', # Ignore anything that's private (e.g., starts with _)
   '^plot_directive\..*$',
   '^viewer_directive\..*$',
 ]
@@ -375,39 +375,39 @@ extend-select = [
 ]
 fixable = ['ALL']
 ignore = [
-  'ANN002',  # Missing annotations for `*args`
-  'ANN003',  # Missing annotations for `*kwargs`
-  'ANN401',  # Disallow `Any`
-  'B028',    # https://github.com/pyvista/pyvista/pull/6030
-  'B904',    # https://github.com/pyvista/pyvista/pull/6022
-  'COM812',  # May cause conflicts when used with the formatter
-  'D105',    # Missing docstring in magic method
-  'D107',    # Missing docstring in `__init__`
-  'D203',    # May conflict with the formatter
-  'D211',    # Incompatible with D203
-  'D213',    # Incompatible with D212
-  'D402',    # First line should not be the function's signature
-  'D416',    # Section name ends in colon
-  'E402',    # module level import not at top of file
+  'ANN002', # Missing annotations for `*args`
+  'ANN003', # Missing annotations for `*kwargs`
+  'ANN401', # Disallow `Any`
+  'B028', # https://github.com/pyvista/pyvista/pull/6030
+  'B904', # https://github.com/pyvista/pyvista/pull/6022
+  'COM812', # May cause conflicts when used with the formatter
+  'D105', # Missing docstring in magic method
+  'D107', # Missing docstring in `__init__`
+  'D203', # May conflict with the formatter
+  'D211', # Incompatible with D203
+  'D213', # Incompatible with D212
+  'D402', # First line should not be the function's signature
+  'D416', # Section name ends in colon
+  'E402', # module level import not at top of file
   'E722',
-  'E731',    # do not assign a lambda expression, use a def
-  'E741',    # ambiguous variable name
-  'F403',    # 'from module import *' used; unable to detect undefined names
-  'ISC001',  # May cause conflicts when used with the formatter
+  'E731', # do not assign a lambda expression, use a def
+  'E741', # ambiguous variable name
+  'F403', # 'from module import *' used; unable to detect undefined names
+  'ISC001', # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
   'PLR0915', # Too many statements
   'PLR2004', # Magic value used in comparison
-  'Q0',      # Quotes (temporary)
-  'RET505',  # https://github.com/pyvista/pyvista/pull/5911
-  'RET506',  # https://github.com/pyvista/pyvista/pull/5911
-  'RET507',  # https://github.com/pyvista/pyvista/pull/5911
-  'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
-  'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
-  'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
-  'TRY301',  # https://github.com/pyvista/pyvista/pull/7572
+  'Q0', # Quotes (temporary)
+  'RET505', # https://github.com/pyvista/pyvista/pull/5911
+  'RET506', # https://github.com/pyvista/pyvista/pull/5911
+  'RET507', # https://github.com/pyvista/pyvista/pull/5911
+  'SIM102', # https://github.com/pyvista/pyvista/pull/5877
+  'SIM117', # https://github.com/pyvista/pyvista/pull/5888
+  'SIM118', # https://github.com/pyvista/pyvista/pull/5837
+  'TRY301', # https://github.com/pyvista/pyvista/pull/7572
 ]
 unfixable = ['F401', 'PLC0415']
 
@@ -429,8 +429,8 @@ allow-dict-calls-with-keyword-arguments = true
 ]
 'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
-  'B015',    # https://github.com/pyvista/pyvista/pull/6014
-  'B018',    # https://github.com/pyvista/pyvista/pull/6019
+  'B015', # https://github.com/pyvista/pyvista/pull/6014
+  'B018', # https://github.com/pyvista/pyvista/pull/6019
   'D102',
   'D103',
   'D205',
@@ -553,5 +553,5 @@ ignore = [
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
   'PY004', # we have a 'doc' folder, not 'docs'
   'PY007', # tox support
-  'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
+  'RTD', # RTD: the documentation is not hosted by ReadTheDocs
 ]
