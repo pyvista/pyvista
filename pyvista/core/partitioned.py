@@ -249,7 +249,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
-        """Return ``True`` if there are no blocks.
+        """Return ``True`` if there are no partitions.
 
         .. versionadded:: 0.46
 
