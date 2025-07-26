@@ -100,7 +100,15 @@ repos:
     hooks:
       - id: taplo-format
         # See options: https://taplo.tamasfe.dev/configuration/formatter-options.html
-        args: [--option, "reorder_arrays=true", --option, "reorder_keys=true"]
+        args:
+          [
+            --option,
+            "reorder_arrays=true",
+            --option,
+            "reorder_keys=true",
+            --option,
+            "align_comments=false",
+          ]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.11.0
