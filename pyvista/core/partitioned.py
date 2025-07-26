@@ -17,7 +17,10 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from typing_extensions import Self
+
     from .dataset import DataSet
+    from .utilities.arrays import FieldAssociation
 
 
 class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
@@ -80,7 +83,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def __getitem__(self, index):
         """Get a partition by its index."""
         if isinstance(index, slice):
-            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])  # type: ignore[abstract]
+            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
                 msg = f'index ({index}) out of range for this dataset.'
@@ -244,6 +247,26 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self.SetNumberOfPartitions(n)
         self.Modified()
 
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if there are no partitions.
+
+        .. versionadded:: 0.46
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> mesh = pv.PartitionedDataSet()
+        >>> mesh.is_empty
+        True
+
+        >>> mesh.append(pv.Sphere())
+        >>> mesh.is_empty
+        False
+
+        """
+        return self.n_partitions == 0
+
     def append(self, dataset) -> None:
         """Add a data set to the next partition index.
 
@@ -256,3 +279,9 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         index = self.n_partitions
         self.n_partitions += 1
         self[index] = dataset
+
+    def get_data_range(  # numpydoc ignore=RT01
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
+        """Get the non-NaN min and max of a named array."""
+        return DataObject.get_data_range(self, name=name, preference=preference)
