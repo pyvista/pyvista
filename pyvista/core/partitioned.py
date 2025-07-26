@@ -256,7 +256,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         Examples
         --------
         >>> import pyvista as pv
-        >>> mesh = pv.MultiBlock()
+        >>> mesh = pv.PartitionedDataSet()
         >>> mesh.is_empty
         True
 
