@@ -47,6 +47,7 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -98,12 +99,14 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:
     import cycler
+    import imageio
     from IPython.lib.display import IFrame
     from PIL.Image import Image
 
     from pyvista import DataSet
     from pyvista import LookupTable
     from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
@@ -126,6 +129,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import SilhouetteArgs
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
+    from pyvista.plotting.mapper import _BaseMapper
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
     from pyvista.trame.jupyter import EmbeddableWidget
@@ -310,6 +314,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self._initialized = False
 
+        self.mapper: _BaseMapper | None = None
+        self.volume: Volume | None = None
+        self.text: CornerAnnotation | Text | None = None
+        self.iren: RenderWindowInteractor | None = None
+        self.mwriter: imageio.plugins.ffmpeg.Writer | None = None
+        self._gif_filename: Path | None = None
+
         self._theme = Theme()
         if theme is None:
             # copy global theme to ensure local plot theme is fixed
@@ -397,6 +408,20 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         self._initialized = True
         self._suppress_rendering = False
+
+    def _get_iren_not_none(self, msg: str | None = None) -> RenderWindowInteractor:
+        if (iren := self.iren) is None:
+            msg = msg if msg is not None else 'This plotting window is not interactive.'
+            raise RuntimeError(msg)
+        else:
+            return iren
+
+    def _get_mwriter_not_none(self, msg: str | None = None) -> imageio.plugins.ffmpeg.Writer:
+        if (mwriter := self.mwriter) is None:
+            msg = msg if msg is not None else 'This plotter has not opened a movie or GIF file.'
+            raise RuntimeError(msg)
+        else:
+            return mwriter
 
     @property
     def suppress_rendering(self) -> bool:  # numpydoc ignore=RT01
@@ -2169,34 +2194,28 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.add_key_event)
     def add_key_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_key_event."""
-        if hasattr(self, 'iren'):
-            self.iren.add_key_event(*args, **kwargs)  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.add_key_event(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.add_timer_event)
     def add_timer_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.add_timer_event."""
-        if hasattr(self, 'iren'):
-            self.iren.add_timer_event(*args, **kwargs)  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.add_timer_event(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.clear_events_for_key)
     def clear_events_for_key(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.clear_events_for_key."""
-        if hasattr(self, 'iren'):
-            self.iren.clear_events_for_key(*args, **kwargs)  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.clear_events_for_key(*args, **kwargs)
 
     def store_mouse_position(self, *args) -> None:  # noqa: ARG002
         """Store mouse position."""
-        if not hasattr(self, 'iren'):
-            msg = 'This plotting window is not interactive.'
-            raise AttributeError(msg)
-        self.mouse_position = self.iren.get_event_position()  # type: ignore[has-type]
+        self.mouse_position = self._get_iren_not_none().get_event_position()
 
     def store_click_position(self, *args) -> None:  # noqa: ARG002
         """Store click position in viewport coordinates."""
-        if not hasattr(self, 'iren'):
-            msg = 'This plotting window is not interactive.'
-            raise AttributeError(msg)
-        self.click_position = self.iren.get_event_position()  # type: ignore[has-type]
+        self.click_position = self._get_iren_not_none().get_event_position()
         self.mouse_position = self.click_position
 
     def track_mouse_position(self) -> None:
@@ -2207,21 +2226,21 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         :func:`pyvista.Plotter.track_click_position` instead.
 
         """
-        self.iren.track_mouse_position(self.store_mouse_position)  # type: ignore[has-type]
+        self._get_iren_not_none().track_mouse_position(self.store_mouse_position)
 
     def untrack_mouse_position(self) -> None:
         """Stop tracking the mouse position."""
-        self.iren.untrack_mouse_position()  # type: ignore[has-type]
+        self._get_iren_not_none().untrack_mouse_position()
 
     @wraps(RenderWindowInteractor.track_click_position)
     def track_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.track_click_position."""
-        self.iren.track_click_position(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().track_click_position(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.untrack_click_position)
     def untrack_click_position(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Stop tracking the click position."""
-        self.iren.untrack_click_position(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().untrack_click_position(*args, **kwargs)
 
     @property
     def pickable_actors(self) -> list[_vtk.vtkActor]:  # numpydoc ignore=RT01
@@ -2333,13 +2352,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     def reset_key_events(self) -> None:
         """Reset all of the key press events to their defaults."""
-        if not hasattr(self, 'iren'):
+        if self.iren is None:
             return
 
-        self.iren.clear_key_event_callbacks()  # type: ignore[has-type]
+        self.iren.clear_key_event_callbacks()
 
         self.add_key_event('q', self._prep_for_close)  # type: ignore[arg-type] # Add no matter what
-        b_left_down_callback = lambda: self.iren.add_observer(  # type: ignore[has-type]
+        b_left_down_callback = lambda: self.iren.add_observer(
             'LeftButtonPressEvent',
             self.left_button_down,
         )
@@ -2354,7 +2373,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.key_press_event)
     def key_press_event(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.key_press_event."""
-        self.iren.key_press_event(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().key_press_event(*args, **kwargs)
 
     def left_button_down(self, *args) -> None:  # noqa: ARG002
         """Register the event for a left button down click."""
@@ -2372,7 +2391,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise ValueError(msg)
 
         # Get 2D click location on window
-        click_pos = self.iren.get_event_position()  # type: ignore[has-type]
+        click_pos = self._get_iren_not_none().get_event_position()
 
         # Get corresponding click location in the 3D plot
         picker = _vtk.vtkWorldPointPicker()
@@ -2384,57 +2403,57 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     @wraps(RenderWindowInteractor.enable_trackball_style)
     def enable_trackball_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_style."""
-        self.iren.enable_trackball_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_trackball_style()
 
     @wraps(RenderWindowInteractor.enable_custom_trackball_style)
     def enable_custom_trackball_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
-        self.iren.enable_custom_trackball_style(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().enable_custom_trackball_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
-        self.iren.enable_trackball_actor_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_trackball_actor_style()
 
     @wraps(RenderWindowInteractor.enable_image_style)
     def enable_image_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_image_style."""
-        self.iren.enable_image_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_image_style()
 
     @wraps(RenderWindowInteractor.enable_joystick_style)
     def enable_joystick_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_style."""
-        self.iren.enable_joystick_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_joystick_style()
 
     @wraps(RenderWindowInteractor.enable_joystick_actor_style)
     def enable_joystick_actor_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_joystick_actor_style."""
-        self.iren.enable_joystick_actor_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_joystick_actor_style()
 
     @wraps(RenderWindowInteractor.enable_zoom_style)
     def enable_zoom_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_zoom_style."""
-        self.iren.enable_zoom_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_zoom_style()
 
     @wraps(RenderWindowInteractor.enable_terrain_style)
     def enable_terrain_style(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_terrain_style."""
-        self.iren.enable_terrain_style(*args, **kwargs)  # type: ignore[has-type]
+        self._get_iren_not_none().enable_terrain_style(*args, **kwargs)
 
     @wraps(RenderWindowInteractor.enable_rubber_band_style)
     def enable_rubber_band_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_style."""
-        self.iren.enable_rubber_band_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_rubber_band_style()
 
     @wraps(RenderWindowInteractor.enable_rubber_band_2d_style)
     def enable_rubber_band_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_rubber_band_2d_style."""
-        self.iren.enable_rubber_band_2d_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_rubber_band_2d_style()
 
     @wraps(RenderWindowInteractor.enable_2d_style)
     def enable_2d_style(self) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_2d_style."""
-        self.iren.enable_2d_style()  # type: ignore[has-type]
+        self._get_iren_not_none().enable_2d_style()
 
     def enable_stereo_render(self) -> None:
         """Enable anaglyph stereo rendering.
@@ -2517,7 +2536,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     def isometric_view_interactive(self) -> None:
         """Set the current interactive render window to isometric view."""
-        interactor = self.iren.get_interactor_style()  # type: ignore[has-type]
+        interactor = self._get_iren_not_none().get_interactor_style()
         renderer = interactor.GetCurrentRenderer()
         if renderer is None:
             renderer = self.renderer
@@ -2543,12 +2562,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         curr_time = time.time()
         Plotter.last_update_time = min(Plotter.last_update_time, curr_time)
 
-        if self.iren is not None:  # type: ignore[has-type]
-            update_rate = self.iren.get_desired_update_rate()  # type: ignore[has-type]
+        if self.iren is not None:
+            update_rate = self.iren.get_desired_update_rate()
             if (curr_time - Plotter.last_update_time) > (1.0 / update_rate):
                 # Allow interaction for a brief moment during interactive updating
                 # Use the non-blocking ProcessEvents method.
-                self.iren.process_events()  # type: ignore[has-type]
+                self.iren.process_events()
                 # Rerender
                 self.render()
                 Plotter.last_update_time = curr_time
@@ -2977,14 +2996,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 feature_angle=feature_angle,
             )
 
-        self.mapper: CompositePolyDataMapper | PointGaussianMapper = CompositePolyDataMapper(
+        mapper = CompositePolyDataMapper(
             dataset,
             theme=self._theme,
             color_missing_with_nan=color_missing_with_nan,
             interpolate_before_map=interpolate_before_map,
         )
+        self.mapper = mapper
 
-        actor, _ = self.add_actor(self.mapper, render=False)
+        actor, _ = self.add_actor(mapper, render=False)
         actor = cast('Actor', actor)
 
         prop = Property(
@@ -3089,7 +3109,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             remove_existing_actor=remove_existing_actor,
         )
 
-        return actor, self.mapper
+        return actor, mapper
 
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh(  # noqa: PLR0917
@@ -3605,9 +3625,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':
-            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
+            mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
-            self.mapper = DataSetMapper(theme=self.theme)  # type: ignore[assignment]
+            mapper = DataSetMapper(theme=self.theme)
+        self.mapper = mapper
 
         if render_lines_as_tubes and show_edges:
             warnings.warn(
@@ -3768,7 +3789,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         original_scalar_name = None
         scalars_name = pyvista.DEFAULT_SCALARS_NAME
         if isinstance(scalars, str):
-            self.mapper.array_name = scalars
+            mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None and scalars.endswith(('_rgb', '_rgba')):
@@ -3783,7 +3804,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             # the input mesh, it may not be set as the active scalars within
             # the mapper. This should be refactored by 0.36.0
             field = get_array_association(mesh, original_scalar_name, preference=preference)
-            self.mapper.scalar_map_mode = field.name
+            mapper.scalar_map_mode = field.name
 
             # set preference for downstream use with actual
             if field == FieldAssociation.POINT:
@@ -3833,12 +3854,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # set main values
         self.mesh = mesh
-        self.mapper.dataset = self.mesh
+        mapper.dataset = self.mesh
         if interpolate_before_map is not None:
-            self.mapper.interpolate_before_map = interpolate_before_map
-        set_algorithm_input(self.mapper, algo or mesh)
+            mapper.interpolate_before_map = interpolate_before_map
+        set_algorithm_input(mapper, algo or mesh)
 
-        actor = Actor(mapper=self.mapper)
+        actor = Actor(mapper=mapper)
         actor.user_matrix = user_matrix
 
         if texture is not None:
@@ -3856,7 +3877,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 color = 'white'
             if scalars is None:
                 show_scalar_bar = False
-            self.mapper.scalar_visibility = False
+            mapper.scalar_visibility = False
 
             # see https://github.com/pyvista/pyvista/issues/950
             mesh.set_active_scalars(None)
@@ -3873,7 +3894,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            self.mapper.set_scalars(  # type: ignore[call-arg]
+            mapper.set_scalars(
                 scalars=scalars,
                 scalars_name=scalars_name,
                 n_colors=n_colors,
@@ -3893,17 +3914,17 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 categories=categories,
                 clim=clim,
             )
-            self.mapper.scalar_visibility = True
+            mapper.scalar_visibility = True
         elif custom_opac:  # no scalars but custom opacity
-            self.mapper.set_custom_opacity(
+            mapper.set_custom_opacity(
                 opacity,
                 color=color,
                 n_colors=n_colors,
                 preference=preference,
             )
-            self.mapper.scalar_visibility = True
+            mapper.scalar_visibility = True
         else:
-            self.mapper.scalar_visibility = False
+            mapper.scalar_visibility = False
 
         # Set actor properties ================================================
         prop_kwargs = dict(
@@ -3932,14 +3953,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
-        if style == 'points_gaussian' and self.mapper.dataset is not None:
-            self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not self.mapper.emissive and prop.opacity >= 1.0:
+        if style == 'points_gaussian' and mapper.dataset is not None:
+            mapper.scale_factor = prop.point_size * mapper.dataset.length / 1300
+            if not render_points_as_spheres and not mapper.emissive and prop.opacity >= 1.0:
                 prop.opacity = 0.9999  # otherwise, weird triangles
 
         if render_points_as_spheres:
             if style == 'points_gaussian':
-                self.mapper.use_circular_splat(prop.opacity)
+                mapper.use_circular_splat(prop.opacity)
                 prop.opacity = 1.0
             else:
                 prop.render_points_as_spheres = render_points_as_spheres
@@ -4020,13 +4041,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = 'Label must be a string'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        if (
-            hasattr(self.mesh, '_glyph_geom')
-            and self.mesh._glyph_geom is not None  # type: ignore[union-attr]
-            and self.mesh._glyph_geom[0] is not None  # type: ignore[union-attr]
-        ):
+        if isinstance(self.mesh, pyvista.DataSet) and self.mesh._glyph_geom is not None:
             # Using only the first geometry
-            geom: str | pyvista.PolyData = pyvista.PolyData(self.mesh._glyph_geom[0])  # type: ignore[union-attr]
+            geom: str | PolyData = pyvista.wrap(self.mesh._glyph_geom[0]).extract_geometry()
         else:
             geom = 'triangle' if scalars is None else 'rectangle'
 
@@ -4545,7 +4562,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 f'{", ".join(mappers_lookup.keys())}'
             )
             raise TypeError(msg)
-        self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
+        self.mapper = mappers_lookup[mapper](theme=self._theme)
 
         # Set scalars range
         min_, max_ = None, None
@@ -4596,7 +4613,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
-        self.mapper.blend_mode = blending  # type: ignore[union-attr]
+        self.mapper.blend_mode = blending
         self.mapper.update()
 
         self.volume = Volume()
@@ -4758,7 +4775,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             msg = 'clim argument must be a length 2 iterable of values: (min, max).'
             raise TypeError(msg)
         if name is None:
-            if not hasattr(self, 'mapper'):
+            if self.mapper is None:
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
             self.mapper.scalar_range = clim
@@ -4792,7 +4809,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.renderers.clear()
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
+        self.mapper = None
 
     def link_views(self, views: int | Iterable[int] | None = 0) -> None:
         """Link the views' cameras.
@@ -4903,7 +4920,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
-                self.renderers[view_index].cemera_set = False
+                self.renderers[view_index].camera_set = False
         else:
             msg = f'Expected type is None, int, list or tuple: {type(views)} is given'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -4921,7 +4938,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # check if maper exists
         mapper = kwargs.get('mapper')
         if mapper is None:
-            if not hasattr(self, 'mapper') or self.mapper is None:
+            if self.mapper is None:
                 msg = 'Mapper does not exist.  Add a mesh with scalars first.'
                 raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
@@ -5045,7 +5062,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # reset scalar bars
         self.scalar_bars.clear()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
+        self.mapper = None
+        self.text = None
 
         # grab the display id before clearing the window
         # this is an experimental feature
@@ -5055,19 +5073,17 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
 
-        if self.iren is not None:  # type: ignore[has-type]
-            self.iren.close()  # type: ignore[has-type]
+        if self.iren is not None:
+            self.iren.close()
             if KILL_DISPLAY:  # pragma: no cover
                 _kill_display(disp_id)
             self.iren = None
 
-        if hasattr(self, 'text'):
-            del self.text
-
         # end movie
-        if hasattr(self, 'mwriter'):
+        if self.mwriter is not None:
             with suppress(BaseException):
                 self.mwriter.close()
+            self.mwriter = None
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -5083,9 +5099,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if hasattr(self, 'renderers'):
             self.renderers.deep_clean()
         self.mesh = None
-        self.mapper = None  # type: ignore[assignment]
-        self.volume = None  # type: ignore[assignment]
-        self.text: pyvista.CornerAnnotation | Text | None = None
+        self.mapper = None
+        self.volume = None
+        self.text = None
 
     @_deprecate_positional_args(allowed=['text'])
     def add_text(  # noqa: PLR0917
@@ -5223,16 +5239,19 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             shadow=shadow,
         )
         if isinstance(position, (int, str, bool)):
-            self.text = CornerAnnotation(position, text, linear_font_scale_factor=font_size // 2)
+            actor: CornerAnnotation | Text = CornerAnnotation(
+                position, text, linear_font_scale_factor=font_size // 2
+            )
         else:
-            self.text = Text(text=text, position=position)
+            actor = Text(text=text, position=position)
             if viewport:
-                self.text.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
-                self.text.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+                actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             text_prop.font_size = int(font_size * 2)
-        self.text.prop = text_prop
-        self.add_actor(self.text, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
-        return self.text
+        actor.prop = text_prop
+        self.text = actor
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
+        return actor
 
     def open_movie(
         self, filename: str | Path, framerate: int = 24, quality: int = 5, **kwargs
@@ -5396,11 +5415,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
 
-        if not hasattr(self, 'mwriter'):
-            msg = 'This plotter has not opened a movie or GIF file.'
-            raise RuntimeError(msg)
+        mwriter = self._get_mwriter_not_none()
         self.update()
-        self.mwriter.append_data(self.image)
+        mwriter.append_data(self.image)
 
     @_deprecate_positional_args
     def get_image_depth(
@@ -5880,11 +5897,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         )
         hier.SetTextProperty(text_property)
 
-        self.remove_actor(f'{name}-points', reset_camera=False)  # type: ignore[arg-type]
-        self.remove_actor(f'{name}-labels', reset_camera=False)  # type: ignore[arg-type]
+        # Explicitly set render=False to avoid unnecessary renders
+        self.remove_actor(f'{name}-points', reset_camera=False, render=False)  # type: ignore[arg-type]
+        self.remove_actor(f'{name}-labels', reset_camera=False, render=False)  # type: ignore[arg-type]
 
         # add points
         if show_points:
+            # Explicitly set render=False to defer rendering to the final add_actor call
             self.add_mesh(
                 algo or points,
                 color=point_color,
@@ -5893,7 +5912,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 pickable=pickable,
                 render_points_as_spheres=render_points_as_spheres,
                 reset_camera=reset_camera,
-                render=render,
+                render=False,
             )
 
         label_actor = _vtk.vtkActor2D()
@@ -6388,7 +6407,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             Point to fly to in the form of ``(x, y, z)``.
 
         """
-        self.iren.fly_to(self.renderer, point)  # type: ignore[attr-defined]
+        self._get_iren_not_none().fly_to(self.renderer, point)
 
     @_deprecate_positional_args(allowed=['path'])
     def orbit_on_path(  # noqa: PLR0917
@@ -6495,7 +6514,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 ):  # 'off_screen' attribute is specific to Plotter objects.
                     time.sleep(sleep_time)
             if write_frames:
-                self.mwriter.close()
+                self._get_mwriter_not_none().close()
 
         if threaded:
             thread = Thread(target=orbit)
@@ -6625,7 +6644,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # set up autoscaling of the image
         if auto_resize:  # pragma: no cover
-            self.iren.add_observer('ModifiedEvent', renderer.resize)  # type: ignore[attr-defined]
+            self._get_iren_not_none().add_observer('ModifiedEvent', renderer.resize)
 
     @wraps(Renderers.remove_background_image)
     def remove_background_image(self) -> None:  # numpydoc ignore=PR01,RT01
@@ -6756,7 +6775,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         ]
 
 
-class Plotter(BasePlotter):
+class Plotter(_NoNewAttrMixin, BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
 
     Parameters
@@ -6927,11 +6946,11 @@ class Plotter(BasePlotter):
             interactor = None
 
         # Add ren win and interactor
-        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)  # type: ignore[assignment]
-        self.iren.set_render_window(self.render_window)  # type: ignore[attr-defined]
+        self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
+        self.iren.set_render_window(self.render_window)
         self.reset_key_events()
         self.enable_trackball_style()  # type: ignore[call-arg] # internally calls update_style()
-        self.iren.add_observer('KeyPressEvent', self.key_press_event)  # type: ignore[attr-defined]
+        self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an
         # interactor be present.
@@ -7223,15 +7242,15 @@ class Plotter(BasePlotter):
         if interactive and not self.off_screen:
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
-                self.iren.update_style()  # type: ignore[attr-defined]
+                self.iren.update_style()  # type: ignore[union-attr]
                 if not interactive_update:
                     # Resolves #1260
                     if os.name == 'nt':  # pragma: no cover
-                        self.iren.process_events()  # type: ignore[attr-defined]
-                    self.iren.start()  # type: ignore[attr-defined]
+                        self.iren.process_events()  # type: ignore[union-attr]
+                    self.iren.start()  # type: ignore[union-attr]
 
                 if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
-                    self.iren.initialize()  # type: ignore[attr-defined]
+                    self.iren.initialize()  # type: ignore[union-attr]
 
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
