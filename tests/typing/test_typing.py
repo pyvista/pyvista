@@ -193,17 +193,13 @@ def _generate_test_cases():
     return test_cases_list
 
 
-def _load_module_namespace(module_path: Path) -> dict[str, Any]:
-    source = module_path.read_text()
-    filename = str(module_path)
-
-    # Import module and populate globals dict
-    module_name = module_path.stem
-    spec = importlib.util.spec_from_loader(module_name, loader=None)
-    mod = importlib.util.module_from_spec(spec)
-
-    exec(compile(source, filename, mode='exec'), mod.__dict__)
-    return mod.__dict__
+def _load_module_namespace(path: Path) -> dict[str, Any]:
+    module_name = path.stem
+    spec = importlib.util.spec_from_file_location(module_name, str(path))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module  # Needed for some C extensions to behave
+    spec.loader.exec_module(module)
+    return vars(module)
 
 
 def pytest_generate_tests(metafunc):
