@@ -347,7 +347,6 @@ from vtkmodules.vtkFiltersCore import vtkElevationFilter as vtkElevationFilter
 from vtkmodules.vtkFiltersCore import (
     vtkExplicitStructuredGridToUnstructuredGrid as vtkExplicitStructuredGridToUnstructuredGrid,
 )
-from vtkmodules.vtkFiltersCore import vtkExtractCells as vtkExtractCells
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges as vtkFeatureEdges
 from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D as vtkFlyingEdges3D
 from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
