@@ -194,20 +194,16 @@ def _generate_test_cases():
 
 
 def _load_module_namespace(module_path: Path) -> dict[str, Any]:
-    # Compile and execute the file in a real module-like namespace
     source = module_path.read_text()
-    code = compile(source, str(module_path), mode='exec')
+    filename = str(module_path)
 
-    # This dictionary simulates a module's __dict__
-    namespace = {
-        '__builtins__': __builtins__,
-        '__name__': '__test_case__',
-        '__file__': str(module_path),
-        '__package__': None,
-    }
+    # Import module and populate globals dict
+    module_name = module_path.stem
+    spec = importlib.util.spec_from_loader(module_name, loader=None)
+    mod = importlib.util.module_from_spec(spec)
 
-    exec(code, namespace)
-    return namespace
+    exec(compile(source, filename, mode='exec'), mod.__dict__)
+    return mod.__dict__
 
 
 def pytest_generate_tests(metafunc):
