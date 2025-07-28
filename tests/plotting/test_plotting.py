@@ -1306,7 +1306,9 @@ def test_axes():
     plotter.show()
 
 
-def test_box_axes():
+def test_box_axes(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+
     plotter = pv.Plotter()
 
     def _test_add_axes_box():
