@@ -5,6 +5,8 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
@@ -226,12 +228,23 @@ class UnstructuredGridFilters(DataSetFilters):
           N Arrays:   0
 
         """
-        # Must not include cells here else unused points will also be extracted
-        new_grid = self.extract_points(self.cell_connectivity, include_cells=False)
-        if (name := 'vtkOriginalPointIds') in (data := new_grid.point_data):
-            del data[name]
+        if self.is_empty:
+            return self if inplace else self.copy()
 
-        out = self if inplace else self.copy()
-        out.points = new_grid.points
-        out.point_data.update(new_grid.point_data, copy=not inplace)
+        out = self.copy()
+        if not out.is_empty:
+            # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
+            cell_array = out.GetCells()
+            cell_array.InsertNextCell(1)
+
+            # Extract all the cells, except for the dummy cell
+            out = out.extract_cells(np.arange(self.n_cells))
+            if (name := 'vtkOriginalPointIds') in (data := out.point_data):
+                del data[name]
+            if (name := 'vtkOriginalCellIds') in (data := out.cell_data):
+                del data[name]
+
+        if inplace:
+            self.copy_from(out)
+            return self
         return out

@@ -83,26 +83,37 @@ def test_clean_grid(hexbeam):
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
 def test_remove_unused_points(mesh_type, inplace):
-    cube = pv.Cube(clean=False)
-    array_names = cube.array_names
+    cube_poly = pv.Cube(clean=False)
+    array_names = cube_poly.array_names
     assert array_names == ['Normals', 'TCoords', 'FaceIndex']
     n_points_expected = 24  # cube has duplicate points at the vertices
-    assert cube.n_points == n_points_expected
+    assert cube_poly.n_points == n_points_expected
 
-    cube_cast = cube if mesh_type is pv.PolyData else cube.cast_to_unstructured_grid()
+    cube_ug = cube_poly.cast_to_unstructured_grid()
 
-    mesh_in = cube_cast.copy()
+    # Insert an unused point at the start of the mesh's points array
+    cube_ug.points = np.insert(cube_ug.points, 0, [[0, 0, 0]], axis=0)
+    cube_ug['Normals'] = np.insert(cube_ug['Normals'], 0, [[0, 0, 0]], axis=0)
+    cube_ug['TCoords'] = np.insert(cube_ug['TCoords'], 0, [[0, 0]], axis=0)
+    # Need to offset cell connectivity by one to account for new point
+    connectivity = cube_ug.GetCells().GetConnectivityArray()
+    for i in range(connectivity.GetNumberOfTuples()):
+        connectivity.SetValue(i, connectivity.GetValue(i) + 1)
+    assert cube_ug.n_points == n_points_expected + 1
 
-    # Add an unused point
-    mesh_in.points = np.append(mesh_in.points, [[0, 0, 0]], axis=0)
-    assert mesh_in.n_points == n_points_expected + 1
+    # Append an unused point at the end of the mesh's points array
+    cube_ug.points = np.append(cube_ug.points, [[0, 0, 0]], axis=0)
+    cube_ug['Normals'] = np.append(cube_ug['Normals'], [[0, 0, 0]], axis=0)
+    cube_ug['TCoords'] = np.append(cube_ug['TCoords'], [[0, 0]], axis=0)
+    assert cube_ug.n_points == n_points_expected + 2
 
+    mesh_in = cube_ug if mesh_type is pv.UnstructuredGrid else cube_poly.extract_geometry()
     mesh_out = mesh_in.remove_unused_points(inplace=inplace)
 
     # Test unused point is removed and no points are merged
     assert mesh_out.n_points == n_points_expected
     # Mesh geometry (point and cell order) and arrays should also match cube input exactly
-    assert mesh_out == cube_cast
+    assert mesh_out.cast_to_unstructured_grid() == cube_poly.cast_to_unstructured_grid()
 
     # Test mesh and array copies
     assert (mesh_in is mesh_out) == inplace
