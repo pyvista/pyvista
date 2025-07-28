@@ -232,17 +232,17 @@ class UnstructuredGridFilters(DataSetFilters):
             return self if inplace else self.copy()
 
         out = self.copy()
-        if not out.is_empty:
-            # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
-            cell_array = out.GetCells()
-            cell_array.InsertNextCell(1)
 
-            # Extract all the cells, except for the dummy cell
-            out = out.extract_cells(np.arange(self.n_cells))
-            if (name := 'vtkOriginalPointIds') in (data := out.point_data):
-                del data[name]
-            if (name := 'vtkOriginalCellIds') in (data := out.cell_data):
-                del data[name]
+        # Need to add an extra "dummy" cell to force vtkExtractCells to remap the point IDs
+        cell_array = out.GetCells()
+        cell_array.InsertNextCell(1)
+
+        # Extract all the cells, except for the dummy cell
+        out = out.extract_cells(np.arange(self.n_cells))
+        if (name := 'vtkOriginalPointIds') in (data := out.point_data):
+            del data[name]
+        if (name := 'vtkOriginalCellIds') in (data := out.cell_data):
+            del data[name]
 
         if inplace:
             self.copy_from(out)
