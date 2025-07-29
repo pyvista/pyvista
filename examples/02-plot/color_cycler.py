@@ -7,6 +7,13 @@ Color Cycling
 Cycle through colors when sequentially adding meshes to a plotter.
 """
 
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#   "pyvista",
+# ]
+# ///
+
 # %%
 # Many plotting libraries like Matplotlib cycle through a predefined list of
 # colors to colorize the data being added to the graphic. PyVista supports
