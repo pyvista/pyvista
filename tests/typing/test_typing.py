@@ -194,12 +194,10 @@ def _generate_test_cases():
 
 
 def _load_module_namespace(path: Path) -> dict[str, Any]:
-    module_name = path.stem
-    spec = importlib.util.spec_from_file_location(module_name, str(path))
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module  # Needed for some C extensions to behave
-    spec.loader.exec_module(module)
-    return vars(module)
+    namespace = {}
+    with path.open() as f:
+        exec(f.read(), namespace)
+    return namespace
 
 
 def pytest_generate_tests(metafunc):
