@@ -80,10 +80,6 @@ This will add PyVista to your ``pixi.toml`` file and install it in your project 
     pixi shell
     python -c 'import pyvista; print(pyvista.__version__)'
 
-For global installation, you can use::
-
-    pixi global install pyvista
-
 Pixi automatically handles all dependencies and ensures compatibility across different platforms.
 
 
