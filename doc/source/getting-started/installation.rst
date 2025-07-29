@@ -78,7 +78,7 @@ To install PyVista using pixi, first ensure you have pixi installed (see `pixi i
 This will add PyVista to your ``pixi.toml`` file and install it in your project environment. To use PyVista in your pixi environment::
 
     pixi shell
-    python -c "import pyvista; print(pyvista.__version__)"
+    python -c 'import pyvista; print(pyvista.__version__)'
 
 For global installation, you can use::
 
