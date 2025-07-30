@@ -49,10 +49,7 @@ def test_texture_color_mode(n_components):
     im['data'] = np.zeros((im.n_points, n_components))
     texture = pv.Texture(im)
     assert texture.n_components == n_components
-    if n_components in [3, 4]:
-        assert texture.color_mode == 'direct'
-    else:
-        assert texture.color_mode == 'map'
+    assert texture.color_mode == 'direct'
 
     texture.color_mode = 'direct'
     assert texture.color_mode == 'direct'
@@ -61,10 +58,7 @@ def test_texture_color_mode(n_components):
 
     # Test that VTK's default mode gets converted properly
     texture.SetColorMode(0)
-    if n_components in [3, 4]:
-        assert texture.color_mode == 'direct'
-    else:
-        assert texture.color_mode == 'map'
+    assert texture.color_mode == 'direct'
 
 
 def test_from_array():
@@ -169,13 +163,16 @@ def test_wrap(texture):
 
 
 def test_grayscale(texture):
+    assert texture.color_mode == 'direct'
     grayscale = texture.to_grayscale()
     assert grayscale.n_components == 1
     assert grayscale.dimensions == texture.dimensions
+    assert grayscale.color_mode == 'direct'
 
     gray_again = grayscale.to_grayscale()
     assert gray_again == grayscale
     assert gray_again is not grayscale  # equal and copy
+    assert grayscale.color_mode == 'direct'
 
 
 def test_numpy_to_texture():
