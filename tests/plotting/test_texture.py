@@ -54,6 +54,11 @@ def test_texture_color_mode(n_components):
     else:
         assert texture.color_mode == 'map'
 
+    texture.color_mode = 'direct'
+    assert texture.color_mode == 'direct'
+    texture.color_mode = 'map'
+    assert texture.color_mode == 'map'
+
 
 def test_from_array():
     texture = pv.Texture()
