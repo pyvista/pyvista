@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import _PolyDataType
 
 
 @abstract_class
@@ -2245,6 +2246,11 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Cleaned mesh.
+
+        See Also
+        --------
+        remove_unused_points
+            Strictly remove unused points `without` merging points.
 
         Examples
         --------
@@ -4517,3 +4523,69 @@ class PolyDataFilters(DataSetFilters):
             alg.SetResolution(resolution)  # type: ignore[arg-type]
         _update_alg(alg, progress_bar=progress_bar, message='Generating ruled surface')
         return _get_output(alg)
+
+    def remove_unused_points(  # type: ignore[misc]
+        self: _PolyDataType,
+        *,
+        inplace: bool = False,
+    ) -> _PolyDataType:
+        """Remove points which are not used by any cells.
+
+        This filter is similar to :meth:`clean` but does `not` merge points or convert cells.
+        The point order is also unchanged by this filter.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy is returned.
+
+        See Also
+        --------
+        pyvista.UnstructuredGridFilters.remove_unused_points
+
+        Returns
+        -------
+        PolyData
+            Mesh with unused points removed.
+
+        Examples
+        --------
+        Create :class:`~pyvista.PolyData` with three points. The first two points are coincident
+        and associated with :attr:`~pyvista.CellType.VERTEX` cells, and the third point is
+        "unused" and not associated with any cells.
+
+        >>> import pyvista as pv
+        >>> points = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        >>> faces = [1, 0, 1, 1]
+        >>> poly = pv.PolyData(points, faces)
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   3
+          N Strips:   0
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 1.000e+00
+          N Arrays:   0
+
+        Since the third point is unused, we can remove it. Note that coincident points are `not`
+        merged by this filter, so the two vertex points are kept as-is.
+
+        >>> poly = poly.remove_unused_points()
+        >>> poly
+        PolyData (...)
+          N Cells:    2
+          N Points:   2
+          N Strips:   0
+          X Bounds:   0.000e+00, 0.000e+00
+          Y Bounds:   0.000e+00, 0.000e+00
+          Z Bounds:   0.000e+00, 0.000e+00
+          N Arrays:   0
+
+        """
+        removed = self.cast_to_unstructured_grid().remove_unused_points().extract_geometry()
+        out = self if inplace else type(self)()
+        out.copy_from(removed, deep=not inplace)
+        return out
