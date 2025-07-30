@@ -3812,7 +3812,7 @@ class Renderer(
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
                 old_image = pyvista.wrap(texture.GetInputDataObject(i, 0))
-                new_image = old_image.resample(resample, anti_aliasing=True)
+                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
                 texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
