@@ -33,6 +33,7 @@ from .composite_mapper import CompositePolyDataMapper as CompositePolyDataMapper
 from .cube_axes_actor import CubeAxesActor as CubeAxesActor
 from .errors import InvalidCameraError as InvalidCameraError
 from .errors import RenderWindowUnavailable as RenderWindowUnavailable
+from .follower import Follower as Follower
 from .helpers import plot_arrows as plot_arrows
 from .helpers import plot_compare_four as plot_compare_four
 from .lights import Light as Light
