@@ -58,6 +58,7 @@ PAT
 PVGeo
 Parametrizing
 Phong
+Pixi
 Postprocessing
 Protobuf
 Ptera
@@ -140,6 +141,7 @@ omfvista
 parametrizing
 parm
 performant
+pixi
 postprocessing
 pre
 pyembree

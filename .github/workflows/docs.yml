@@ -108,6 +108,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation
+        if: always()
         run: pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
