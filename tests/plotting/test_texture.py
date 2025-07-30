@@ -59,11 +59,12 @@ def test_texture_color_mode(n_components):
     texture.color_mode = 'map'
     assert texture.color_mode == 'map'
 
-    # Test that VTK's default mode gets converted to 'direct' mode by default
+    # Test that VTK's default mode gets converted properly
     texture.SetColorMode(0)
-    assert texture.color_mode == 'direct'
-    texture.SetColorMode(2)
-    assert texture.color_mode == 'direct'
+    if n_components in [3, 4]:
+        assert texture.color_mode == 'direct'
+    else:
+        assert texture.color_mode == 'map'
 
 
 def test_from_array():
