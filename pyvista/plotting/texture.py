@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -16,6 +17,8 @@ from pyvista.core.utilities.misc import AnnotatedIntEnum
 from . import _vtk
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -28,6 +31,11 @@ class Texture(DataObject, _vtk.vtkTexture):
     They can also be used for environment textures to affect the lighting of
     the scene, or even as a environment cubemap as in the case of
     :ref:`pbr_example` and :ref:`planets_example`.
+
+    .. versionchanged:: 0.46
+
+        Multi-component textures (with RGB(A) scalars) now use ``'direct'`` :attr:`color_mode`
+        by default.
 
     Parameters
     ----------
@@ -147,6 +155,9 @@ class Texture(DataObject, _vtk.vtkTexture):
             msg = f'Cannot create a pyvista.Texture from ({type(uinput)})'
             raise TypeError(msg)
 
+        if self.n_components in (3, 4):  # RGB or RGBA
+            self.color_mode = 'direct'
+
     def _from_file(self, filename, **kwargs):
         try:
             image = pyvista.read(filename, **kwargs)
@@ -160,6 +171,31 @@ class Texture(DataObject, _vtk.vtkTexture):
     def _from_texture(self, texture):
         image = texture.GetInput()
         self._from_image_data(image)
+
+    @property
+    def color_mode(self) -> Literal['map', 'direct']:  # numpydoc ignore=RT01
+        """Return or set the color mode.
+
+        Either ``'direct'``, or ``'map'``.
+
+        * ``'direct'`` - All integer types are treated as colors with values in
+          the range 0-255 and floating types are treated as colors with values
+          in the range 0.0-1.0
+        * ``'map'`` - All scalar data will be mapped through the lookup table.
+
+        .. versionadded:: 0.46
+
+        """
+        mode = self.GetColorMode()
+        return 'direct' if mode == 2 else 'map'
+
+    @color_mode.setter
+    def color_mode(self, value: Literal['map', 'direct']):
+        _validation.check_contains(['map', 'direct'], must_contain=value, name='color_mode')
+        if value == 'direct':
+            self.SetColorModeToDirectScalars()
+        else:
+            self.SetColorModeToMapScalars()
 
     @property
     def interpolate(self) -> bool:  # numpydoc ignore=RT01
@@ -507,6 +543,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         kwargs.setdefault('show_axes', False)
         kwargs.setdefault('show_scalar_bar', False)
         mesh = pyvista.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
+        self.SetUseSRGBColorSpace(True)
         return mesh.plot(texture=self, **kwargs)
 
     def _plot_skybox(self, **kwargs):
