@@ -543,7 +543,6 @@ class Texture(DataObject, _vtk.vtkTexture):
         kwargs.setdefault('show_axes', False)
         kwargs.setdefault('show_scalar_bar', False)
         mesh = pyvista.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
-        self.SetUseSRGBColorSpace(True)
         return mesh.plot(texture=self, **kwargs)
 
     def _plot_skybox(self, **kwargs):
