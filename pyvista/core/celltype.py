@@ -7,9 +7,11 @@ import textwrap
 from typing import Literal
 from typing import NamedTuple
 
+import numpy as np
+
 from . import _vtk_core as _vtk
 
-_enum_cell_type_nr_points_map = {}
+_CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
 
 _DROPDOWN_TEMPLATE = """
 .. dropdown:: More info
@@ -1028,7 +1030,7 @@ class CellType(IntEnum):
             badges = ''
             if _cell_class:
                 cell = _cell_class()
-                _enum_cell_type_nr_points_map[value] = cell.GetNumberOfPoints()
+                _CELL_TYPE_TO_NUM_POINTS[np.uint8(value)] = cell.GetNumberOfPoints()
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())

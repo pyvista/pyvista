@@ -14,7 +14,7 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.celltype import _enum_cell_type_nr_points_map
+from pyvista.core.celltype import _CELL_TYPE_TO_NUM_POINTS
 
 if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
@@ -174,18 +174,18 @@ def create_mixed_cells(
     ... )
 
     """
-    if not np.all([k in _enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
+    if not np.all([k in _CELL_TYPE_TO_NUM_POINTS for k in mixed_cell_dict.keys()]):
         msg = 'Found unknown or unsupported VTK cell type in your requested cells'
         raise ValueError(msg)
 
-    if not np.all([_enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
+    if not np.all([_CELL_TYPE_TO_NUM_POINTS[k] > 0 for k in mixed_cell_dict.keys()]):
         msg = "You requested a cell type with variable length, which can't be used in this method"
         raise ValueError(msg)
 
     final_cell_types = []
     final_cell_arr = []
     for elem_t, cells_arr in mixed_cell_dict.items():
-        nr_points_per_elem = _enum_cell_type_nr_points_map[elem_t]
+        nr_points_per_elem = _CELL_TYPE_TO_NUM_POINTS[elem_t]
         if (
             not isinstance(cells_arr, np.ndarray)  # type: ignore[redundant-expr]
             or not np.issubdtype(cells_arr.dtype, np.integer)
@@ -277,11 +277,11 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
 
     unique_cell_types = np.unique(cell_types)
 
-    if not np.all([k in _enum_cell_type_nr_points_map for k in unique_cell_types]):
+    if not np.all([k in _CELL_TYPE_TO_NUM_POINTS for k in unique_cell_types]):
         msg = 'Found unknown or unsupported VTK cell type in the present cells'
         raise ValueError(msg)
 
-    if not np.all([_enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
+    if not np.all([_CELL_TYPE_TO_NUM_POINTS[k] > 0 for k in unique_cell_types]):
         msg = (
             'You requested a cell-dictionary with a variable length cell, which is not supported '
             'currently'
@@ -291,13 +291,13 @@ def get_mixed_cells(vtkobj: UnstructuredGrid) -> dict[np.uint8, NumpyArray[int]]
     cell_sizes = np.zeros_like(cell_types)
     for cell_type in unique_cell_types:
         mask = cell_types == cell_type
-        cell_sizes[mask] = _enum_cell_type_nr_points_map[cell_type]
+        cell_sizes[mask] = _CELL_TYPE_TO_NUM_POINTS[cell_type]
 
     cell_ends = np.cumsum(cell_sizes + 1)
     cell_starts = np.concatenate([np.array([0], dtype=cell_ends.dtype), cell_ends[:-1]]) + 1
 
     for cell_type in unique_cell_types:
-        cell_size = _enum_cell_type_nr_points_map[cell_type]
+        cell_size = _CELL_TYPE_TO_NUM_POINTS[cell_type]
         mask = cell_types == cell_type
         current_cell_starts = cell_starts[mask]
 
