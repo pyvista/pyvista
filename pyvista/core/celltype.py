@@ -9,6 +9,8 @@ from typing import NamedTuple
 
 from . import _vtk_core as _vtk
 
+_enum_cell_type_nr_points_map = {}
+
 _DROPDOWN_TEMPLATE = """
 .. dropdown:: More info
     :icon: info
@@ -804,21 +806,35 @@ _CELL_TYPE_INFO = dict(
     HIGHER_ORDER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_HIGHER_ORDER_HEXAHEDRON),
     ####################################################################################
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
-    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE),
-    LAGRANGE_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TRIANGLE),
-    LAGRANGE_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_QUADRILATERAL),
+    LAGRANGE_CURVE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_CURVE, cell_class=_vtk.vtkLagrangeCurve),
+    LAGRANGE_TRIANGLE=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_TRIANGLE, cell_class=_vtk.vtkLagrangeTriangle
+    ),
+    LAGRANGE_QUADRILATERAL=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_QUADRILATERAL, cell_class=_vtk.vtkLagrangeQuadrilateral
+    ),
     LAGRANGE_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_TETRAHEDRON),
-    LAGRANGE_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_HEXAHEDRON),
-    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE),
+    LAGRANGE_HEXAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_LAGRANGE_HEXAHEDRON, cell_class=_vtk.vtkLagrangeHexahedron
+    ),
+    LAGRANGE_WEDGE=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_WEDGE, cell_class=_vtk.vtkLagrangeWedge),
     LAGRANGE_PYRAMID=_CellTypeTuple(value=_vtk.VTK_LAGRANGE_PYRAMID),
     ####################################################################################
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
-    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE),
-    BEZIER_TRIANGLE=_CellTypeTuple(value=_vtk.VTK_BEZIER_TRIANGLE),
-    BEZIER_QUADRILATERAL=_CellTypeTuple(value=_vtk.VTK_BEZIER_QUADRILATERAL),
-    BEZIER_TETRAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_TETRAHEDRON),
-    BEZIER_HEXAHEDRON=_CellTypeTuple(value=_vtk.VTK_BEZIER_HEXAHEDRON),
-    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE),
+    BEZIER_CURVE=_CellTypeTuple(value=_vtk.VTK_BEZIER_CURVE, cell_class=_vtk.vtkBezierCurve),
+    BEZIER_TRIANGLE=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_TRIANGLE, cell_class=_vtk.vtkBezierTriangle
+    ),
+    BEZIER_QUADRILATERAL=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_QUADRILATERAL, cell_class=_vtk.vtkBezierQuadrilateral
+    ),
+    BEZIER_TETRAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_TETRAHEDRON, cell_class=_vtk.vtkBezierTetra
+    ),
+    BEZIER_HEXAHEDRON=_CellTypeTuple(
+        value=_vtk.VTK_BEZIER_HEXAHEDRON, cell_class=_vtk.vtkBezierHexahedron
+    ),
+    BEZIER_WEDGE=_CellTypeTuple(value=_vtk.VTK_BEZIER_WEDGE, cell_class=_vtk.vtkBezierWedge),
     BEZIER_PYRAMID=_CellTypeTuple(value=_vtk.VTK_BEZIER_PYRAMID),
 )
 if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
@@ -1012,6 +1028,7 @@ class CellType(IntEnum):
             badges = ''
             if _cell_class:
                 cell = _cell_class()
+                _enum_cell_type_nr_points_map[value] = cell.GetNumberOfPoints()
                 linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
                 primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
