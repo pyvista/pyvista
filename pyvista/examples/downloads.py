@@ -6242,6 +6242,9 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
+            Another HDR texture.
+
     """
     return _download_dataset(_dataset_parched_canal_4k, load=load)
 
@@ -7331,6 +7334,9 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
 
         :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
+            Another HDR texture.
 
         :ref:`load_gltf_example`
             See additional examples using this dataset.
