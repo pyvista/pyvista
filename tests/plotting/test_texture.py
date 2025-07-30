@@ -43,6 +43,18 @@ def test_texture_grayscale_init():
     assert texture.n_components == 1
 
 
+@pytest.mark.parametrize('n_components', [1, 3, 4])
+def test_texture_color_mode(n_components):
+    im = pv.ImageData(dimensions=(2, 3, 4))
+    im['data'] = np.zeros((im.n_points, n_components))
+    texture = pv.Texture(im)
+    assert texture.n_components == n_components
+    if n_components in [3, 4]:
+        assert texture.color_mode == 'direct'
+    else:
+        assert texture.color_mode == 'map'
+
+
 def test_from_array():
     texture = pv.Texture()
     with pytest.raises(ValueError, match='Third dimension'):
