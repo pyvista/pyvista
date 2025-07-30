@@ -155,8 +155,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             msg = f'Cannot create a pyvista.Texture from ({type(uinput)})'
             raise TypeError(msg)
 
-        if self.n_components in (3, 4):  # RGB or RGBA
-            self.color_mode = 'direct'
+        self.color_mode = 'direct' if self.n_components in (3, 4) else 'map'
 
     def _from_file(self, filename, **kwargs):
         try:
@@ -187,7 +186,12 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         mode = self.GetColorMode()
-        return 'direct' if mode == 2 else 'map'
+        color_mode = 'map' if mode == 1 else 'direct'
+        if mode == 0:
+            # VTK's default mode uses 'direct' if scalars have uint8 dtype, and 'map' otherwise
+            # But PyVista's default is to always use 'direct', even for floats
+            self.color_mode = 'direct'
+        return color_mode
 
     @color_mode.setter
     def color_mode(self, value: Literal['map', 'direct']):
