@@ -189,13 +189,14 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         """
         mode = self.GetColorMode()
-        color_mode: Literal['map', 'direct'] = 'map' if mode == 1 else 'direct'
         if mode == 0:
             # VTK's default mode uses 'direct' if scalars have uint8 dtype, and 'map' otherwise
             # But PyVista's default is to always use 'direct', even for floats, for
             # multi-component textures
             color_mode = self._get_default_color_mode()
             self.color_mode = color_mode
+        else:
+            color_mode: Literal['map', 'direct'] = 'map' if mode == 1 else 'direct'
         return color_mode
 
     @color_mode.setter
