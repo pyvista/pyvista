@@ -214,7 +214,7 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
     """
     try:
         func(*args)
-    except Exception:
+    except Exception:  # noqa: BLE001
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(

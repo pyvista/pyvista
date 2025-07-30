@@ -2920,7 +2920,7 @@ class PolyDataFilters(DataSetFilters):
             for key in self.cell_data:  # type: ignore[attr-defined]
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]  # type: ignore[attr-defined]
-                except:
+                except (ValueError, TypeError, KeyError):
                     warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array

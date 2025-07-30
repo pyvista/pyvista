@@ -2147,7 +2147,7 @@ class MultiBlock(
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
 
         fmt += '</table>\n'
@@ -2177,7 +2177,7 @@ class MultiBlock(
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 

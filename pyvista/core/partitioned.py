@@ -152,7 +152,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         fmt += '</table>\n'
         fmt += '\n'
@@ -177,7 +177,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 
