@@ -362,3 +362,14 @@ def test_transform_actor(actor, multiply_mode):
     assert actor2 is not actor1
 
     assert np.allclose(actor2.user_matrix, expected.matrix)
+
+
+def test_follower():
+    mesh = pv.Sphere()
+    mapper = pv.DataSetMapper(mesh)
+    follower = pv.Follower(mapper=mapper)
+    camera = pv.Camera()
+    follower.camera = camera
+    assert follower.mapper is mapper
+    assert follower.prop is not None
+    assert follower.camera is camera

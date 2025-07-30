@@ -72,6 +72,23 @@ To install this package with ``conda`` run:
 .. asciinema:: 507565
 
 
+Pixi
+~~~~
+
+`Pixi <https://pixi.sh/>`_ is a modern package management tool that provides fast, reliable, and reproducible software environments. It can be used as an alternative to conda/mamba for managing PyVista installations.
+
+To install PyVista using pixi, first ensure you have pixi installed (see `pixi installation instructions <https://pixi.sh/latest/#installation>`_), then run::
+
+    pixi add pyvista
+
+This will add PyVista to your ``pixi.toml`` file and install it in your project environment. To use PyVista in your pixi environment::
+
+    pixi shell
+    python -c 'import pyvista; print(pyvista.__version__)'
+
+Pixi automatically handles all dependencies and ensures compatibility across different platforms.
+
+
 Installing the Current Development Branch from GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
