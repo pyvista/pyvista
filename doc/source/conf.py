@@ -385,16 +385,33 @@ class ResetPyVista:
         If default documentation settings are modified in any example, reset here.
         """
         import atexit
+        import warnings
 
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
         pyvista.set_plot_theme('document_build')
 
-        # Enter error catcher context manager and register exit on cleanup
+        # Enter VTK error catcher context manager and register exit on cleanup
         _error_catcher = pyvista.VtkErrorCatcher(raise_errors=True)
         _error_catcher.__enter__()
         atexit.register(_error_catcher.__exit__, None, None, None)
+
+        # Convert warnings into a RuntimeError
+
+        def custom_showwarning(message, category, filename, lineno, file=None, line=None):  # noqa: ARG001, PLR0917
+            """Customize warning handler."""
+            formatted = warnings.formatwarning(message, category, filename, lineno, line)
+            _warning_messages.append(formatted)
+
+        def _check_warnings():
+            """Check warnings at process exit."""
+            if _warning_messages:
+                raise RuntimeError('Python warnings occurred:\n' + ''.join(_warning_messages))
+
+        _warning_messages = []  # List to hold captured warning messages
+        warnings.showwarning = custom_showwarning  # Override the default warning handler
+        atexit.register(_check_warnings)
 
     def __repr__(self):
         return 'ResetPyVista'
