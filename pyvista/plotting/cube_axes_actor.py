@@ -573,7 +573,7 @@ class CubeAxesActor(
             else:
                 self.SetAxisLabels(0, self._empty_str)
         else:
-            self.SetXTitle(' ')
+            self.SetXTitle('')
             self.SetAxisLabels(0, self._empty_str)
 
     def _update_y_labels(self):
@@ -591,7 +591,7 @@ class CubeAxesActor(
             else:
                 self.SetAxisLabels(1, self._empty_str)
         else:
-            self.SetYTitle(' ')
+            self.SetYTitle('')
             self.SetAxisLabels(1, self._empty_str)
 
     def _update_z_labels(self):
@@ -609,7 +609,7 @@ class CubeAxesActor(
             else:
                 self.SetAxisLabels(2, self._empty_str)
         else:
-            self.SetZTitle(' ')
+            self.SetZTitle('')
             self.SetAxisLabels(2, self._empty_str)
 
     @property
