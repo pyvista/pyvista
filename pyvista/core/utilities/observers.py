@@ -97,12 +97,12 @@ class VtkErrorCatcher:
 
     @property
     def events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
-        """List of events observed."""
+        """List of VTK error events observed."""
         return self._observer.event_history
 
     @property
     def runtime_errors(self) -> list[RuntimeError]:  # numpydoc ignore=RT01
-        """List of runtime errors caught."""
+        """List of VTK error events formatted as runtime errors."""
         return [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
 
 
