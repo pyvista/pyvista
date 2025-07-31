@@ -578,16 +578,16 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
-def test_texture_map_to_plane():
-    dataset = examples.load_airplane()
+def test_texture_map_to_plane(airplane):
+    dataset = airplane
     # Automatically decide plane
     out = dataset.texture_map_to_plane(inplace=False, progress_bar=True)
     assert isinstance(out, type(dataset))
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
-    point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
-    point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
+    point_u = (bnds.x_max, bnds.y_min, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_max, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
@@ -1491,7 +1491,7 @@ def test_streamlines_from_source(uniform_vec):
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 
-    source = pv.ImageData(dimensions=[5, 5, 5], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
+    source = pv.ImageData(dimensions=[20, 20, 20], spacing=[0.1, 0.1, 0.1], origin=[0, 0, 0])
     stream = uniform_vec.streamlines_from_source(source, 'vectors', progress_bar=True)
     assert all([stream.n_points, stream.n_cells])
 

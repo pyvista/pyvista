@@ -1574,6 +1574,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         0.5183
 
         """
+        if self.is_empty:
+            return 0.0
         mprop = _vtk.vtkMassProperties()
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()

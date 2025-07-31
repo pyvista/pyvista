@@ -10,12 +10,16 @@ import signal
 import sys
 import threading
 import traceback
+from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 def set_error_output_file(filename):
@@ -73,7 +77,7 @@ class VtkErrorCatcher:
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
 
-    def __enter__(self) -> None:
+    def __enter__(self: Self) -> Self:
         """Observe VTK string output window for errors."""
         error_output = _vtk.vtkStringOutputWindow()
         error_win = _vtk.vtkOutputWindow()
@@ -82,15 +86,24 @@ class VtkErrorCatcher:
         obs = Observer(log=self.send_to_logging, store_history=True)
         obs.observe(error_output)
         self._observer = obs
+        return self
 
     def __exit__(self, *args):
         """Stop observing VTK string output window."""
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
-        self.events = self._observer.event_history
         if self.raise_errors and self.events:
-            errors = [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
-            raise RuntimeError(errors)
+            raise RuntimeError(self.runtime_errors)
+
+    @property
+    def events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
+        """List of events observed."""
+        return self._observer.event_history
+
+    @property
+    def runtime_errors(self) -> list[RuntimeError]:  # numpydoc ignore=RT01
+        """List of runtime errors caught."""
+        return [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
 
 
 class VtkEvent(NamedTuple):

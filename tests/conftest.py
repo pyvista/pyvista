@@ -93,8 +93,22 @@ def catch_vtk_errors(request):
     if request.node.get_closest_marker('no_vtk_error_catcher'):
         yield  # skip the context manager
     else:
-        with pyvista.VtkErrorCatcher(raise_errors=True):
+        with pyvista.VtkErrorCatcher() as catcher:
             yield
+            errors = catcher.runtime_errors
+            if errors:
+                n_errors = len(errors)
+                msg_start = (
+                    f'{n_errors} {"error" if n_errors == 1 else "errors"} were caught by '
+                    f'{catcher.__class__.__name__} during test execution:'
+                )
+                errors_formatted = '\n'.join(str(e.args) for e in errors)
+                msg_end = (
+                    "If this is expected, use 'pytest.mark.no_vtk_error_catcher' "
+                    'to disable error catching.'
+                )
+                msg = f'{msg_start}\n{errors_formatted}\n{msg_end}'
+                raise RuntimeError(msg)
 
 
 @pytest.fixture(scope='session', autouse=True)

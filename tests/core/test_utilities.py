@@ -297,6 +297,7 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
+@pytest.mark.no_vtk_error_catcher
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file

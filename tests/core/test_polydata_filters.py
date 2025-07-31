@@ -111,6 +111,7 @@ def test_contour_banded_raises(mocker: MockerFixture):
         sp.contour_banded(1)
 
 
+@pytest.mark.no_vtk_error_catcher
 def test_boolean_intersect_edge_case():
     a = pv.Cube(x_length=2, y_length=2, z_length=2).triangulate()
     b = pv.Cube().triangulate()  # smaller cube (x_length=1)
