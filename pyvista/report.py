@@ -200,12 +200,12 @@ class Report(scooby.Report):
             'nest_asyncio',
         ]
 
-        # Information about the GPU - bare except in case there is a rendering
+        # Information about the GPU - catch all Exception in case there is a rendering
         # bug that the user is trying to report.
         if gpu:
             try:
                 extra_meta = GPUInfo().get_info()
-            except:
+            except Exception:  # noqa: BLE001
                 extra_meta = [
                     ('GPU Details', 'error'),
                 ]

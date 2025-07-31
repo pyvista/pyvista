@@ -878,7 +878,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 try:
                                     dataset = dataset.extract_surface()
                                     mapper.SetInputData(dataset)
-                                except:  # pragma: no cover
+                                except (AttributeError, ValueError, TypeError):  # pragma: no cover
                                     warnings.warn(
                                         'During gLTF export, failed to convert some '
                                         'datasets to PolyData. Exported scene will not have '
@@ -893,7 +893,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except:  # pragma: no cover
+                        except Exception:  # noqa: BLE001  # pragma: no cover
                             pass
 
         exporter = vtkGLTFExporter()
