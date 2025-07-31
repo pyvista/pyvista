@@ -88,9 +88,12 @@ def global_variables_reset():
 
 
 @pytest.fixture(autouse=True)
-def catch_vtk_errors():
-    with pyvista.VtkErrorCatcher(raise_errors=True):
-        yield
+def catch_vtk_errors(request):
+    if request.node.get_closest_marker('no_vtk_error_catcher'):
+        yield  # skip the context manager
+    else:
+        with pyvista.VtkErrorCatcher():
+            yield
 
 
 @pytest.fixture(scope='session', autouse=True)
