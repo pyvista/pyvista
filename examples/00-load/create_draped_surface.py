@@ -35,6 +35,10 @@ profile in 2D with the coordinates associated to the top of each column in your
 
 from __future__ import annotations
 
+import warnings
+
+warnings.warn('Foo')
+
 import matplotlib.pyplot as plt
 import numpy as np
 
