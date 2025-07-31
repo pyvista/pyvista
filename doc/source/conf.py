@@ -384,10 +384,17 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
+        import atexit
+
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
         pyvista.set_plot_theme('document_build')
+
+        # Enter error catcher context manager and register exit on cleanup
+        _error_catcher = pyvista.VtkErrorCatcher()
+        _error_catcher.__enter__()
+        atexit.register(_error_catcher.__exit__, None, None, None)
 
     def __repr__(self):
         return 'ResetPyVista'
