@@ -392,7 +392,7 @@ class ResetPyVista:
         pyvista.set_plot_theme('document_build')
 
         # Enter error catcher context manager and register exit on cleanup
-        _error_catcher = pyvista.VtkErrorCatcher()
+        _error_catcher = pyvista.VtkErrorCatcher(raise_errors=True)
         _error_catcher.__enter__()
         atexit.register(_error_catcher.__exit__, None, None, None)
 
