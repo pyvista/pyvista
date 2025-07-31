@@ -167,13 +167,10 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
 
 
 def test_point_cell_data_single_scalar_no_exception_raised():
-    try:
-        m = pv.PolyData([0, 0, 0.0])
-        m.point_data['foo'] = 1
-        m.cell_data['bar'] = 1
-        m['baz'] = 1
-    except Exception as e:
-        pytest.fail(f'Unexpected exception raised: {e}')
+    m = pv.PolyData([0, 0, 0.0])
+    m.point_data['foo'] = 1
+    m.cell_data['bar'] = 1
+    m['baz'] = 1
 
 
 def test_field_data(hexbeam):

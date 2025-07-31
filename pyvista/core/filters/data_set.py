@@ -2305,7 +2305,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if inplace:
             try:
                 self.copy_from(output, deep=False)
-            except:
+            except TypeError:
                 pass
             else:
                 return self
