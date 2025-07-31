@@ -92,6 +92,7 @@ def catch_vtk_errors():
     with pyvista.VtkErrorCatcher(raise_errors=True):
         yield
 
+
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
