@@ -87,6 +87,11 @@ def global_variables_reset():
     pyvista.FIGURE_PATH = tmp_figurepath
 
 
+@pytest.fixture(autouse=True)
+def catch_vtk_errors():
+    with pyvista.VtkErrorCatcher(raise_errors=True):
+        yield
+
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
