@@ -161,6 +161,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NumpyArray'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
+    (r'py:.*', '.*_PolyDataType'),
+    (r'py:.*', '.*_UnstructuredGridType'),
     (r'py:.*', '.*_GridType'),
     (r'py:.*', '.*_PointGridType'),
     (r'py:.*', '.*_PointSetType'),
