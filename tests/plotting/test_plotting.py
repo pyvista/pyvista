@@ -58,19 +58,15 @@ try:
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
-ffmpeg_failed = False
 try:
-    try:
-        import imageio_ffmpeg
+    import imageio_ffmpeg
 
-        imageio_ffmpeg.get_ffmpeg_exe()
-    except ImportError:
-        if HAS_IMAGEIO:
-            imageio.plugins.ffmpeg.download()
-        else:
-            raise
-except:
-    ffmpeg_failed = True
+    imageio_ffmpeg.get_ffmpeg_exe()
+except ImportError:
+    if HAS_IMAGEIO:
+        imageio.plugins.ffmpeg.download()
+    else:
+        raise
 
 
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
@@ -982,7 +978,6 @@ def test_open_gif_invalid():
         plotter.open_gif('file.abs')
 
 
-@pytest.mark.skipif(ffmpeg_failed, reason='Requires imageio-ffmpeg')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
@@ -3121,8 +3116,8 @@ def test_plot_complex_value(plane, verify_image_cache):
     # check for removal when support for vtk 9.0.3 is removed
     try:
         ComplexWarning = np.exceptions.ComplexWarning
-    except:
-        ComplexWarning = np.ComplexWarning  # noqa: NPY201
+    except AttributeError:
+        ComplexWarning = np.ComplexWarning
 
     with pytest.warns(ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
@@ -3444,8 +3439,8 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # check for removal when support for vtk 9.0.3 is removed
     try:
         ComplexWarning = np.exceptions.ComplexWarning
-    except:
-        ComplexWarning = np.ComplexWarning  # noqa: NPY201
+    except AttributeError:
+        ComplexWarning = np.ComplexWarning
 
     pl = pv.Plotter()
     with pytest.warns(ComplexWarning, match='Casting complex'):
@@ -4724,9 +4719,9 @@ def _has_param(call: Callable, param: str) -> bool:
         kwargs[param] = None
         try:
             call(**kwargs)
-        except BaseException as ex:
+        except TypeError as ex:
             # Param is not valid only if a kwarg TypeError is raised
-            return not ('TypeError' in repr(ex) and 'unexpected keyword argument' in repr(ex))
+            return 'unexpected keyword argument' not in repr(ex)
         else:
             return True
 
