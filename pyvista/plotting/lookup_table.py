@@ -1166,6 +1166,6 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
         else:
             try:
                 return np.array([self.map_value(item) for item in value])
-            except:
+            except (TypeError, ValueError):
                 msg = 'LookupTable __call__ expects a single value or an iterable.'
                 raise TypeError(msg)

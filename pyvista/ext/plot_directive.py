@@ -216,7 +216,7 @@ class PlotDirective(Directive):
                 self.state,
                 self.lineno,
             )
-        except Exception as e:  # pragma: no cover
+        except Exception as e:  # noqa: BLE001  # pragma: no cover
             raise self.error(str(e))
 
 
