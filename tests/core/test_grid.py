@@ -1373,7 +1373,9 @@ def test_remove_cells(ind, hexbeam, catch_vtk_errors):
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
-def test_remove_cells_not_inplace(ind, hexbeam):
+def test_remove_cells_not_inplace(ind, hexbeam, catch_vtk_errors):
+    if pv.vtk_version_info < (9, 4, 0) and platform.system() == 'Linux':
+        catch_vtk_errors.expect_vtk_error = True
     grid_copy = hexbeam.copy()  # copy to protect
     grid_w_removed = grid_copy.remove_cells(ind)
     assert grid_w_removed.n_cells < hexbeam.n_cells

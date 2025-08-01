@@ -97,7 +97,7 @@ def catch_vtk_errors(request):
         return is_marked or attribute_is_set
 
     with pyvista.VtkErrorCatcher() as catcher:
-        yield
+        yield catcher
         if is_marked_or_attribute_is_set('ignore_vtk_error'):
             return
 
@@ -106,7 +106,7 @@ def catch_vtk_errors(request):
         if errors and not error_is_expected:
             n_errors = len(errors)
             msg_start = (
-                f'{n_errors} {"error" if n_errors == 1 else "errors"} were caught by '
+                f'{n_errors} {"error was" if n_errors == 1 else "errors were"} caught by '
                 f'{catcher.__class__.__name__} during test execution:'
             )
             errors_formatted = '\n'.join(str(e.args) for e in errors)
