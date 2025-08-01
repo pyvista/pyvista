@@ -331,6 +331,7 @@ extend-select = [
   'ASYNC',
   'ASYNC1',
   'B',
+  'BLE',
   'C4',
   'COM',
   'D',
@@ -390,7 +391,6 @@ ignore = [
   'D402', # First line should not be the function's signature
   'D416', # Section name ends in colon
   'E402', # module level import not at top of file
-  'E722',
   'E731', # do not assign a lambda expression, use a def
   'E741', # ambiguous variable name
   'F403', # 'from module import *' used; unable to detect undefined names

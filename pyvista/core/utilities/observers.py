@@ -144,7 +144,7 @@ class Observer(_NoNewAttrMixin):
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
-        except:
+        except Exception:  # noqa: BLE001
             return '', '', '', message
         else:
             return kind, path, address, alert
@@ -171,7 +171,7 @@ class Observer(_NoNewAttrMixin):
                 self.event_history.append(VtkEvent(kind, path, address, alert))
             if self.__log:
                 self.log_message(kind, alert)
-        except Exception:  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             try:
                 if len(message) > 120:
                     message = f'{message[:100]!r} ... ({len(message)} characters)'
@@ -182,7 +182,7 @@ class Observer(_NoNewAttrMixin):
                     file=sys.__stdout__,
                 )
                 traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     def has_event_occurred(self):  # numpydoc ignore=RT01

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 try:
     from vtkmodules import vtkCommonDataModel
-except:  # pragma: no cover
+except Exception:  # noqa: BLE001  # pragma: no cover
     import vtk as vtkCommonDataModel  # type: ignore[no-redef]  # noqa: N812
 
 vtkcell_types = [
@@ -66,5 +66,5 @@ for cell_num_str, cell_str in vtkcell_types:
             cell_num = getattr(vtkCommonDataModel, cell_num_str)
             n_points = getattr(vtkCommonDataModel, cell_str)().GetNumberOfPoints()
             enum_cell_type_nr_points_map[cell_num] = n_points
-        except:  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             pass

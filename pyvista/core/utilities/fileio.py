@@ -1088,7 +1088,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type  # noqa: PLC0415
 
-    except:  # pragma: no cover
+    except (ImportError, AttributeError):  # pragma: no cover
         from meshio._vtk_common import vtk_to_meshio_type  # noqa: PLC0415
 
     # Cast to unstructured grid
