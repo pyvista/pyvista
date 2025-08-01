@@ -92,9 +92,9 @@ def catch_vtk_errors(request):
     """Raise a RuntimeError when vtk errors are emitted."""
     with pyvista.VtkErrorCatcher() as catcher:
         yield
-        error_is_expected = request.node.get_closest_marker(
-            'pytest.mark.expect_vtk_error'
-        ) or getattr(catcher, 'expect_vtk_error', False)
+        has_marker = bool(request.node.get_closest_marker('expect_vtk_error'))
+        has_attribute = getattr(catcher, 'expect_vtk_error', False)
+        error_is_expected = has_marker or has_attribute
         errors = catcher.runtime_errors
         if errors and not error_is_expected:
             n_errors = len(errors)
