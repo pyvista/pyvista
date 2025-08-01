@@ -90,11 +90,18 @@ def global_variables_reset():
 @pytest.fixture(autouse=True)
 def catch_vtk_errors(request):
     """Raise a RuntimeError when vtk errors are emitted."""
+
+    def is_marked_or_attribute_is_set(name: str):
+        is_marked = bool(request.node.get_closest_marker(name))
+        attribute_is_set = bool(getattr(catcher, name, False))
+        return is_marked or attribute_is_set
+
     with pyvista.VtkErrorCatcher() as catcher:
         yield
-        has_marker = bool(request.node.get_closest_marker('expect_vtk_error'))
-        has_attribute = getattr(catcher, 'expect_vtk_error', False)
-        error_is_expected = has_marker or has_attribute
+        if is_marked_or_attribute_is_set('ignore_vtk_error'):
+            return
+
+        error_is_expected = is_marked_or_attribute_is_set('expect_vtk_error')
         errors = catcher.runtime_errors
         if errors and not error_is_expected:
             n_errors = len(errors)

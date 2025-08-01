@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from types import ModuleType
 
-pytestmark = pytest.mark.expect_vtk_error
+pytestmark = pytest.mark.ignore_vtk_error
 
 
 def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
