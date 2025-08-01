@@ -112,7 +112,9 @@ def catch_vtk_errors(request):
             errors_formatted = '\n'.join(str(e.args) for e in errors)
             msg_end = (
                 "If this is expected, use 'pytest.mark.expect_vtk_error' "
-                'to disable error catching.'
+                'to check that a vtk error is caught\n'
+                "or use 'pytest.mark.ignore_vtk_error' to ignore any vtk "
+                'errors that may be raised.'
             )
             msg = f'{msg_start}\n{errors_formatted}\n{msg_end}'
             raise RuntimeError(msg)
