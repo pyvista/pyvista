@@ -58,7 +58,7 @@ def test_start_xvfb_raises(monkeypatch: pytest.MonkeyPatch, mocker: MockerFixtur
         pv.start_xvfb()
 
 
-@pytest.mark.no_vtk_error_catcher  # vtk error is expected here
+@pytest.mark.expect_vtk_error
 def test_algo_to_mesh_handler_raises(mocker: MockerFixture):
     m = mocker.patch.object(algorithms, 'wrap')
     m.return_value = None

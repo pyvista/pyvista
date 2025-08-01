@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
+import platform
 import re
 from typing import TYPE_CHECKING
 import weakref
@@ -1364,7 +1365,9 @@ def test_gaussian_smooth():
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
-def test_remove_cells(ind, hexbeam):
+def test_remove_cells(ind, hexbeam, request):
+    if pv.vtk_version_info < (9, 4, 0) and platform.system() == 'Linux':
+        request.node.expect_vtk_error = True
     grid_copy = hexbeam.remove_cells(ind)
     assert grid_copy.n_cells < hexbeam.n_cells
 
