@@ -1051,7 +1051,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             reset_camera=_kwargs.pop('reset_camera', False),
                             **_kwargs,
                         )
-                except Exception as e:  # pragma: no cover
+                except Exception as e:  # noqa: BLE001  # pragma: no cover
                     warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))  # type: ignore[call-overload]
 
                 # Reset to the active renderer.

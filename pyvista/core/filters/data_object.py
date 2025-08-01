@@ -2872,7 +2872,7 @@ class DataObjectFilters:
 
         .. note::
 
-            Refer to the `Verdict Library Reference Manual <https://public.kitware.com/Wiki/images/6/6b/VerdictManual-revA.pdf>`_
+            Refer to the `Verdict Library Reference Manual <https://github.com/sandialabs/verdict/raw/master/SAND2007-2853p.pdf>`_
             for low-level technical information about how each metric is computed.
 
         .. versionadded:: 0.45
