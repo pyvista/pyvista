@@ -94,7 +94,7 @@ def catch_vtk_errors(request):
         yield
         error_is_expected = request.node.get_closest_marker(
             'pytest.mark.expect_vtk_error'
-        ) or getattr(request.node, 'expect_vtk_error', False)
+        ) or getattr(catcher, 'expect_vtk_error', False)
         errors = catcher.runtime_errors
         if errors and not error_is_expected:
             n_errors = len(errors)
