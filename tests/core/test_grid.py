@@ -1363,6 +1363,8 @@ def test_gaussian_smooth():
     assert not np.all(uniform.active_scalars == values)
 
 
+# Ignore VTK error emitted when using bool type indices for VTK < 9.4
+@pytest.mark.ignore_vtk_error_catcher
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells(ind, hexbeam):
     # Some versions of VTK emit errors for the bool array case which we ignore
@@ -1371,6 +1373,8 @@ def test_remove_cells(ind, hexbeam):
         assert grid_copy.n_cells < hexbeam.n_cells
 
 
+# Ignore VTK error emitted when using bool type indices for VTK < 9.4
+@pytest.mark.ignore_vtk_error_catcher
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells_not_inplace(ind, hexbeam):
     # Some versions of VTK emit errors for the bool array case which we ignore

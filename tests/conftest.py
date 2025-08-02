@@ -88,8 +88,11 @@ def global_variables_reset():
 
 
 @pytest.fixture(autouse=True)
-def catch_vtk_errors():
+def catch_vtk_errors(request):
     """Raise a RuntimeError when vtk errors are emitted."""
+    if request.node.get_closest_marker('ignore_vtk_error_catcher'):
+        yield
+        return
 
     with pyvista.VtkErrorCatcher() as catcher:
         yield catcher
