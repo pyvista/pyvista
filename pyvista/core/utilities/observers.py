@@ -12,6 +12,7 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
+import warnings
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
@@ -61,6 +62,11 @@ class VtkErrorCatcher:
         Determine whether VTK errors raised within the context should
         also be sent to logging.
 
+    emit_warnings : bool, default: False
+        Emit a ``RuntimeWarning`` when a VTK warning is encountered.
+
+        .. versionadded:: 0.46
+
     Examples
     --------
     Catch VTK errors using the context manager.
@@ -72,38 +78,74 @@ class VtkErrorCatcher:
     """
 
     @_deprecate_positional_args
-    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:  # noqa: FBT001, FBT002
+    def __init__(
+        self,
+        raise_errors: bool = False,  # noqa: FBT001, FBT002
+        send_to_logging: bool = True,  # noqa: FBT001, FBT002
+        emit_warnings: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
+        self.emit_warnings = emit_warnings
 
     def __enter__(self: Self) -> Self:
         """Observe VTK string output window for errors."""
-        error_output = _vtk.vtkStringOutputWindow()
+        output_window = _vtk.vtkStringOutputWindow()
         error_win = _vtk.vtkOutputWindow()
         self._error_output_orig = error_win.GetInstance()
-        error_win.SetInstance(error_output)
-        obs = Observer(log=self.send_to_logging, store_history=True)
-        obs.observe(error_output)
-        self._observer = obs
+        error_win.SetInstance(output_window)
+
+        obs = Observer(event_type='ErrorEvent', log=self.send_to_logging, store_history=True)
+        obs.observe(output_window)
+        self._error_observer = obs
+
+        obs = Observer(event_type='WarningEvent', log=self.send_to_logging, store_history=True)
+        obs.observe(output_window)
+        self._warning_observer = obs
+
         return self
 
     def __exit__(self, *args):
         """Stop observing VTK string output window."""
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
-        if self.raise_errors and self.events:
-            raise RuntimeError(self.runtime_errors)
+
+        if self.emit_warnings and self.warning_events:
+            self._emit_warning(self._runtime_warning_message)
+        if self.raise_errors and self.error_events:
+            self._raise_error(self._runtime_error_message)
 
     @property
     def events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
         """List of VTK error events observed."""
-        return self._observer.event_history
+        return [*self._warning_observer.event_history, *self._error_observer.event_history]
 
     @property
-    def runtime_errors(self) -> list[RuntimeError]:  # numpydoc ignore=RT01
+    def error_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
+        """List of VTK error events observed."""
+        return self._error_observer.event_history
+
+    @property
+    def warning_events(self) -> list[VtkEvent]:  # numpydoc ignore=RT01
+        """List of VTK error events observed."""
+        return self._warning_observer.event_history
+
+    @property
+    def _runtime_error_message(self) -> str:  # numpydoc ignore=RT01
         """List of VTK error events formatted as runtime errors."""
-        return [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
+        return '\n'.join([repr(e) for e in self.error_events])
+
+    @property
+    def _runtime_warning_message(self) -> str:  # numpydoc ignore=RT01
+        """List of VTK error events formatted as runtime errors."""
+        return '\n'.join([repr(e) for e in self.warning_events])
+
+    def _raise_error(self, message: str):
+        raise pyvista.VTKOutputMessageError(message)
+
+    def _emit_warning(self, message: str):
+        warnings.warn(message, pyvista.VTKOutputMessageWarning)
 
 
 class VtkEvent(NamedTuple):
@@ -113,6 +155,9 @@ class VtkEvent(NamedTuple):
     path: str
     address: str
     alert: str
+
+    def __repr__(self):
+        return f'{self.kind}: {self.alert} {self.path} {self.address}'.strip()
 
 
 class Observer(_NoNewAttrMixin):
@@ -136,6 +181,7 @@ class Observer(_NoNewAttrMixin):
 
         self.store_history = store_history
         self.event_history: list[VtkEvent] = []
+        self._event_history_etc: list[str] = []
 
     @staticmethod
     def parse_message(message):  # numpydoc ignore=RT01
@@ -169,6 +215,7 @@ class Observer(_NoNewAttrMixin):
             self.__message = alert
             if self.store_history:
                 self.event_history.append(VtkEvent(kind, path, address, alert))
+                self._event_history_etc.append(message)
             if self.__log:
                 self.log_message(kind, alert)
         except Exception:  # noqa: BLE001  # pragma: no cover

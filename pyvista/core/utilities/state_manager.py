@@ -17,7 +17,12 @@ from typing import overload
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
+    from typing import Protocol
+
     from typing_extensions import Self
+
+    class _Updatable(Protocol):
+        def Update(self) -> None | bool: ...  # noqa: N802
 
 
 T = TypeVar('T')
@@ -310,3 +315,132 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
 
 vtk_snake_case = _vtkSnakeCase()
+
+
+_VTKMessagePolicyOptions = Literal['mixed', 'warning', 'error', 'ignore']
+
+
+class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
+    """Context manager to control access to VTK's pythonic snake_case API.
+
+    VTK 9.4 introduced pythonic snake_case attributes, e.g. `output_port` instead
+    of `GetOutputPort`. These can easily be confused for PyVista attributes
+    which also use a snake_case convention. This class controls access to vtk's
+    new interface.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    state : 'allow' | 'warning' | 'error'
+        Allow or disallow the use of VTK's pythonic snake_case API with
+        PyVista-wrapped VTK classes.
+
+        - 'allow': Allow accessing VTK-defined snake_case attributes.
+        - 'warning': Print a RuntimeWarning when accessing VTK-defined snake_case
+          attributes.
+        - 'error': Raise a ``PyVistaAttributeError`` when accessing
+          VTK-defined snake_case attributes.
+
+    Examples
+    --------
+    Get the current access state for VTK's snake_case api.
+
+    >>> import pyvista as pv
+    >>> pv.vtk_snake_case()
+    'error'
+
+    The following will raise an error because the `information` property is defined
+    by :vtk:`vtkDataObject` and is not part of PyVista's API.
+
+    >>> # pv.PolyData().information
+
+    Allow use of VTK's snake_case attributes. No warning or error is raised.
+
+    >>> _ = pv.vtk_snake_case('allow')
+    >>> pv.PolyData().information
+    <vtkmodules.vtkCommonCore.vtkInformation...
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.vtk_snake_case('error')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.vtk_snake_case('allow'):
+    ...     _ = pv.PolyData().information
+
+    >>> pv.vtk_snake_case()
+    'error'
+
+    """
+
+    @property
+    def _state(self) -> _VTKMessagePolicyOptions:
+        import pyvista as pv  # noqa: PLC0415
+
+        return pv._VTK_MESSAGE_POLICY_STATE
+
+    @_state.setter
+    def _state(self, state: _VTKMessagePolicyOptions) -> None:
+        import pyvista as pv  # noqa: PLC0415
+
+        pv._VTK_MESSAGE_POLICY_STATE = state
+
+    @staticmethod
+    def _call_function(func, *args, **kwargs):  # noqa: ANN001, ANN205
+        import pyvista as pv  # noqa: PLC0415
+
+        message_policy = pv._VTK_MESSAGE_POLICY_STATE
+        if message_policy == 'ignore':
+            return func(*args, **kwargs)
+        with pv.VtkErrorCatcher(raise_errors=False, emit_warnings=False) as catcher:
+            # Disable vtk verbosity to avoid duplicate output from VTK and from python
+            with pv.vtk_verbosity('off'):
+                output = func(*args, **kwargs)
+
+            warning_msg = catcher._runtime_warning_message
+            error_msg = catcher._runtime_error_message
+            if message_policy == 'warning':
+                # Combine messages and emit warning
+                message = f'{warning_msg}\n{error_msg}'.strip()
+                if message:
+                    catcher._emit_warning(message)
+            elif message_policy == 'error':
+                # Combine messages and raise error
+                message = f'{warning_msg}\n{error_msg}'.strip()
+                if message:
+                    catcher._raise_error(message)
+            elif message_policy == 'mixed':
+                # Emit warnings as warnings
+                if warning_msg:
+                    catcher._emit_warning(warning_msg)
+                # Raise errors as errors
+                if error_msg:
+                    catcher._raise_error(error_msg)
+
+                # def emit_warning(self, msg) -> None:
+                #     """Parse different event types and passes them to logging."""
+                #     msg = f'The following VTK event was detected by PyVista:\n{msg}'
+                #     warnings.warn(msg, pyvista.VTKRuntimeWarning)
+        return output
+
+
+vtk_message_policy = _VTKMessagePolicy()
+
+
+def _update_alg(
+    alg: _Updatable, *, progress_bar: bool = False, message: str | None = ''
+) -> bool | None:
+    """Update an algorithm with or without a progress bar."""
+    func = alg.Update
+    if progress_bar:
+        from pyvista.core.utilities.observers import ProgressMonitor  # noqa: PLC0415
+
+        msg = message if message else ''
+        with ProgressMonitor(alg, message=msg):
+            return vtk_message_policy._call_function(func)
+    else:
+        return vtk_message_policy._call_function(func)

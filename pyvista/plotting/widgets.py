@@ -17,6 +17,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .affine_widget import AffineWidget3D
@@ -371,7 +372,7 @@ class WidgetHelper:
                 bounds.append(plane.GetOrigin())
 
             clipper.SetBoxClip(*bounds)
-            clipper.Update()
+            _update_alg(clipper)
             if crinkle:
                 clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
             else:
@@ -588,7 +589,7 @@ class WidgetHelper:
                 origin[1] + (bounds[3] - bounds[2]) * 0.01,
                 origin[2],
             )
-            source.Update()
+            _update_alg(source)
             plane_widget = _vtk.vtkPlaneWidget()  # type: ignore[assignment]
             plane_widget.SetHandleSize(0.01)
             # Position of the widget
@@ -799,7 +800,7 @@ class WidgetHelper:
         def callback(normal, loc):
             function = generate_plane(normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
-            clipper.Update()  # Perform the Cut
+            _update_alg(clipper)  # Perform the Cut
             if crinkle:
                 clipped = pyvista.wrap(crinkler.GetOutputDataObject(0))
             else:
@@ -1096,7 +1097,7 @@ class WidgetHelper:
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
-            alg.Update()  # Perform the Cut
+            _update_alg(alg)  # Perform the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_plane_widget(
@@ -1793,7 +1794,7 @@ class WidgetHelper:
 
         def callback(value):
             _set_threshold_limit(alg, value=value, method=method, invert=invert)
-            alg.Update()
+            _update_alg(alg)
             threshold_mesh.shallow_copy(alg.GetOutput())
 
         self.add_slider_widget(
@@ -1957,7 +1958,7 @@ class WidgetHelper:
 
         def callback(value):
             alg.SetValue(0, value)
-            alg.Update()
+            _update_alg(alg)
             isovalue_mesh.shallow_copy(alg.GetOutput())
 
         self.add_slider_widget(
@@ -2076,7 +2077,7 @@ class WidgetHelper:
         def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
-            para_source.Update()
+            _update_alg(para_source)
             polyline = pyvista.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
@@ -2227,7 +2228,7 @@ class WidgetHelper:
             polyplane = _vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
             alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
-            alg.Update()  # Perform the Cut
+            _update_alg(alg)  # Perform the Cut
             spline_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_spline_widget(

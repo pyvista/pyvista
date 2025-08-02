@@ -245,7 +245,6 @@ def test_add_point_labels_raises(points):
         pl.add_point_labels(points=points, labels='foo')
 
 
-@pytest.mark.expect_vtk_error
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_add_point_labels_algo_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter

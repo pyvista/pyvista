@@ -297,7 +297,7 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
-@pytest.mark.expect_vtk_error
+@pytest.mark.skip_vtk_error_catcher
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -750,13 +750,35 @@ def _generate_vtk_err():
     alg.Update()
 
 
+def _generate_vtk_warn():
+    """Simple operation which generates a VTK error."""
+
+    texture = ex.download_cake_easy_texture()
+
+    renderer = vtk.vtkRenderer()
+    renderer.UseImageBasedLightingOn()
+    renderer.SetEnvironmentTexture(texture)
+
+    render_window = vtk.vtkRenderWindow()
+    render_window.AddRenderer(renderer)
+    render_window.SetOffScreenRendering(True)
+    interactor = vtk.vtkRenderWindowInteractor()
+    interactor.SetRenderWindow(render_window)
+
+    render_window.Render()
+
+
 def test_vtk_error_catcher():
     # raise_errors: False
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
     with error_catcher:
         _generate_vtk_err()
         _generate_vtk_err()
-    assert len(error_catcher.events) == 2
+        _generate_vtk_warn()
+        _generate_vtk_warn()
+    assert len(error_catcher.events) == 4
+    assert len(error_catcher.error_events) == 2
+    assert len(error_catcher.warning_events) == 2
 
     # raise_errors: False, no error
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher()
@@ -765,13 +787,50 @@ def test_vtk_error_catcher():
 
     # raise_errors: True
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
-    with pytest.raises(RuntimeError):
+    error_match = (
+        r'ERROR: The update extent specified in the information for output port 0 on algorithm '
+        r'vtkTrivialProducer \(0x[0-9a-fA-F]+\) is 0 39 0 39 0 39, which is outside the whole '
+        r'extent 0 3 0 3 0 3\. vtkStreamingDemandDrivenPipeline\.cxx 0x[0-9a-fA-F]+'
+    )
+    with pytest.raises(RuntimeError, match=error_match):  # noqa: PT012
         with error_catcher:
             _generate_vtk_err()
-    assert len(error_catcher.events) == 1
+            _generate_vtk_warn()
+    assert len(error_catcher.events) == 2
+    assert len(error_catcher.error_events) == 1
+    assert len(error_catcher.warning_events) == 1
 
-    # raise_errors: True, no error
-    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
+    # Raise two VTK errors as a single RuntimeError
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
+    error_match2 = f'{error_match}\n{error_match}'
+    with pytest.raises(pv.VTKOutputMessageError, match=error_match2):  # noqa: PT012
+        with error_catcher:
+            _generate_vtk_err()
+            _generate_vtk_err()
+
+    # Warn and raise error. The order emitted by VTK is not guaranteed to be the same
+    # since warn and err events are logged independently.
+    # Here we generate VTK err then warn, but expect warning then error
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
+    warning_match = re.compile(
+        r': Warning: In vtkPBRPrefilterTexture\.cxx, line 269\n'
+        r'vtkPBRPrefilterTexture \(0x[0-9a-fA-F]+\): The input texture of vtkPBRPrefilterTexture '
+        r'should have mipmap and interpolate set to ON\.'
+    )
+    with pytest.warns(pv.VTKOutputMessageWarning, match=warning_match):  # noqa: PT031
+        with pytest.raises(pv.VTKOutputMessageError, match=error_match):  # noqa: PT012
+            with error_catcher:
+                _generate_vtk_err()
+                _generate_vtk_warn()
+
+    # Test raise/emit with no errors/warnings generated
+    error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
+        raise_errors=True, emit_warnings=True
+    )
     with error_catcher:
         pass
 

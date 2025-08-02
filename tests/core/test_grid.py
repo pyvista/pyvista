@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
-import platform
 import re
 from typing import TYPE_CHECKING
 import weakref
@@ -1365,21 +1364,21 @@ def test_gaussian_smooth():
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
-def test_remove_cells(ind, hexbeam, catch_vtk_errors):
-    if pv.vtk_version_info < (9, 4, 0) and platform.system() == 'Linux':
-        catch_vtk_errors.expect_vtk_error = True
-    grid_copy = hexbeam.remove_cells(ind)
-    assert grid_copy.n_cells < hexbeam.n_cells
+def test_remove_cells(ind, hexbeam):
+    # Some versions of VTK emit errors for the bool array case which we ignore
+    with pv.vtk_message_policy('ignore'):
+        grid_copy = hexbeam.remove_cells(ind)
+        assert grid_copy.n_cells < hexbeam.n_cells
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
-def test_remove_cells_not_inplace(ind, hexbeam, catch_vtk_errors):
-    if pv.vtk_version_info < (9, 4, 0) and platform.system() == 'Linux':
-        catch_vtk_errors.expect_vtk_error = True
-    grid_copy = hexbeam.copy()  # copy to protect
-    grid_w_removed = grid_copy.remove_cells(ind)
-    assert grid_w_removed.n_cells < hexbeam.n_cells
-    assert grid_copy.n_cells == hexbeam.n_cells
+def test_remove_cells_not_inplace(ind, hexbeam):
+    # Some versions of VTK emit errors for the bool array case which we ignore
+    with pv.vtk_message_policy('ignore'):
+        grid_copy = hexbeam.copy()  # copy to protect
+        grid_w_removed = grid_copy.remove_cells(ind)
+        assert grid_w_removed.n_cells < hexbeam.n_cells
+        assert grid_copy.n_cells == hexbeam.n_cells
 
 
 def test_remove_cells_invalid(hexbeam):

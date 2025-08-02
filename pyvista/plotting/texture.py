@@ -12,6 +12,7 @@ import pyvista
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 
@@ -200,7 +201,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         if not isinstance(image, pyvista.ImageData):
             image = pyvista.ImageData(image)
         self.SetInputDataObject(image)
-        self.Update()
+        _update_alg(self)
 
     def _from_array(self, image):
         """Create a texture from a np.ndarray."""

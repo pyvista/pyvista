@@ -14,6 +14,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.state_manager import _update_alg
 
 
 def _padded_bins(mesh, density):
@@ -894,7 +895,6 @@ def sample_function(  # noqa: PLR0917
 
     """
     # internal import to avoide circular dependency
-    from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)

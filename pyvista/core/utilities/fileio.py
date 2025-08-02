@@ -22,6 +22,7 @@ import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.state_manager import _update_alg
 
 from .observers import Observer
 
@@ -479,7 +480,7 @@ def read_exodus(  # noqa: PLR0917
 
         reader.SetSideSetArrayStatus(name, 1)
 
-    reader.Update()
+    _update_alg(reader)
     return cast('pyvista.DataSet', wrap(reader.GetOutput()))
 
 

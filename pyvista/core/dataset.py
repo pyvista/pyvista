@@ -42,6 +42,7 @@ from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+from .utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -1705,7 +1706,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         alg = _vtk.vtkAppendFilter()
         alg.AddInputData(self)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     @_deprecate_positional_args

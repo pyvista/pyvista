@@ -27,5 +27,5 @@ def reset_global_theme():
 @pytest.fixture(autouse=True)
 def catch_vtk_errors():
     """Raise a RuntimeError when vtk errors are emitted."""
-    with pyvista.VtkErrorCatcher(raise_errors=True):
+    with pyvista.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
         yield
