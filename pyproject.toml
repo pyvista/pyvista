@@ -117,7 +117,7 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.4.1',
+  'jupyterlab==4.4.5',
   'lxml==6.0.0',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
