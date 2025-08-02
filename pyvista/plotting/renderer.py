@@ -3806,14 +3806,15 @@ class Renderer(
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
             texture_copy = pyvista.Texture()  # type: ignore[abstract]
             texture_copy.cube_map = texture.cube_map
-            texture_copy.SetMipmap(texture.GetMipmap())
-            texture_copy.SetInterpolate(texture.GetInterpolate())
+            texture_copy.mipmap = texture.mipmap
+            texture_copy.interpolate = texture.interpolate
+            texture_copy.color_mode = texture.color_mode
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
-                texture_copy.SetInputDataObject(
-                    i, pyvista.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
-                )
+                old_image = pyvista.wrap(texture.GetInputDataObject(i, 0))
+                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
+                texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
             self.SetEnvironmentTexture(texture, is_srgb)

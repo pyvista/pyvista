@@ -43,6 +43,24 @@ def test_texture_grayscale_init():
     assert texture.n_components == 1
 
 
+@pytest.mark.parametrize('n_components', [1, 3, 4])
+def test_texture_color_mode(n_components):
+    im = pv.ImageData(dimensions=(2, 3, 4))
+    im['data'] = np.zeros((im.n_points, n_components))
+    texture = pv.Texture(im)
+    assert texture.n_components == n_components
+    assert texture.color_mode == 'direct'
+
+    texture.color_mode = 'direct'
+    assert texture.color_mode == 'direct'
+    texture.color_mode = 'map'
+    assert texture.color_mode == 'map'
+
+    # Test that VTK's default mode gets converted properly
+    texture.SetColorMode(0)
+    assert texture.color_mode == 'direct'
+
+
 def test_from_array():
     texture = pv.Texture()
     with pytest.raises(ValueError, match='Third dimension'):
@@ -145,13 +163,16 @@ def test_wrap(texture):
 
 
 def test_grayscale(texture):
+    assert texture.color_mode == 'direct'
     grayscale = texture.to_grayscale()
     assert grayscale.n_components == 1
     assert grayscale.dimensions == texture.dimensions
+    assert grayscale.color_mode == 'direct'
 
     gray_again = grayscale.to_grayscale()
     assert gray_again == grayscale
     assert gray_again is not grayscale  # equal and copy
+    assert grayscale.color_mode == 'direct'
 
 
 def test_numpy_to_texture():
