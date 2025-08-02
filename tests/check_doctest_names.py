@@ -162,7 +162,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
                 continue
             try:
                 exec(example.source, globs)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')
                 erroring_code = ''.join([example.source for example in dt.examples[:iline]])

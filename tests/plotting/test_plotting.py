@@ -58,19 +58,15 @@ try:
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
-ffmpeg_failed = False
 try:
-    try:
-        import imageio_ffmpeg
+    import imageio_ffmpeg
 
-        imageio_ffmpeg.get_ffmpeg_exe()
-    except ImportError:
-        if HAS_IMAGEIO:
-            imageio.plugins.ffmpeg.download()
-        else:
-            raise
-except:
-    ffmpeg_failed = True
+    imageio_ffmpeg.get_ffmpeg_exe()
+except ImportError:
+    if HAS_IMAGEIO:
+        imageio.plugins.ffmpeg.download()
+    else:
+        raise
 
 
 THIS_PATH = pathlib.Path(__file__).parent.absolute()
@@ -378,6 +374,10 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     verify_image_cache.high_variance_test = True
     verify_image_cache.macos_skip_image_cache = True
     verify_image_cache.windows_skip_image_cache = True
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
 
     tmp_dir = tmpdir.mkdir('tmpdir2')
     filename = str(tmp_dir.join('tmp.png'))
@@ -418,6 +418,10 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
 
 def test_plot_helper_volume(uniform, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
 
     uniform.plot(
         volume=True,
@@ -645,13 +649,23 @@ def test_plotter_shape_invalid():
         pv.Plotter(shape={1, 2})
 
 
-def test_plot_bounds_axes_with_no_data():
+def test_plot_bounds_axes_with_no_data(verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
     plotter.show_bounds()
     plotter.show()
 
 
-def test_plot_show_grid(sphere):
+def test_plot_show_grid(sphere, verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
 
     with pytest.raises(ValueError, match='Value of location'):
@@ -753,7 +767,8 @@ def test_set_parallel_scale_invalid():
 def test_plot_no_active_scalars(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+
+    def _test_update_scalars_with_invalid_array():
         plotter.update_scalars(np.arange(5))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -761,7 +776,8 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
-    with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
+
+    def _test_update_scalars_with_valid_array():
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
         if pv._version.version_info[:2] > (0, 46):
             msg = 'Convert error this method'
@@ -769,6 +785,23 @@ def test_plot_no_active_scalars(sphere):
         if pv._version.version_info[:2] > (0, 47):
             msg = 'Remove this method'
             raise RuntimeError(msg)
+
+    with (
+        pytest.raises(ValueError, match='Number of scalars'),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This method is deprecated and will be removed in a future version',
+        ),
+    ):
+        _test_update_scalars_with_invalid_array()
+    with (
+        pytest.raises(ValueError, match='No active scalars'),
+        pytest.warns(
+            PyVistaDeprecationWarning,
+            match='This method is deprecated and will be removed in a future version',
+        ),
+    ):
+        _test_update_scalars_with_valid_array()
 
 
 def test_plot_show_bounds(sphere):
@@ -786,7 +819,12 @@ def test_plot_show_bounds(sphere):
     plotter.show()
 
 
-def test_plot_label_fmt(sphere):
+def test_plot_label_fmt(sphere, verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.show_bounds(xtitle='My X', fmt=r'%.3f')
@@ -795,7 +833,12 @@ def test_plot_label_fmt(sphere):
 
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
-def test_plot_show_bounds_params(grid, location):
+@pytest.mark.usefixtures('verify_image_cache')
+def test_plot_show_bounds_params(grid, location, verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially with VTK 9.6
+        verify_image_cache.skip = True
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Cone())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
@@ -935,7 +978,6 @@ def test_open_gif_invalid():
         plotter.open_gif('file.abs')
 
 
-@pytest.mark.skipif(ffmpeg_failed, reason='Requires imageio-ffmpeg')
 @pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_make_movie(sphere, tmpdir, verify_image_cache):
     verify_image_cache.skip = True
@@ -1259,30 +1301,46 @@ def test_axes():
     plotter.show()
 
 
-def test_box_axes():
+def test_box_axes(verify_image_cache):
+    verify_image_cache.high_variance_test = True
+
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_box():
         plotter.add_axes(box=True)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Convert error this function'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this function'
-        raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning,
+        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
+    ):
+        _test_add_axes_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
-    with pytest.warns(pv.PyVistaDeprecationWarning):
+
+    def _test_add_axes_color_box():
         plotter.add_axes(box=True, box_args={'color_box': True})
-    if pv._version.version_info[:2] > (0, 47):
-        msg = 'Convert error this function'
-        raise RuntimeError(msg)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this function'
-        raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 47):
+            msg = 'Convert error this function'
+            raise RuntimeError(msg)
+        if pv._version.version_info[:2] > (0, 48):
+            msg = 'Remove this function'
+            raise RuntimeError(msg)
+
+    with pytest.warns(
+        pv.PyVistaDeprecationWarning,
+        match='`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
+    ):
+        _test_add_axes_color_box()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
@@ -1687,7 +1745,12 @@ def test_camera(sphere):
     plotter.show()
 
 
-def test_multi_renderers():
+def test_multi_renderers(verify_image_cache):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     plotter = pv.Plotter(shape=(2, 2))
 
     plotter.subplot(0, 0)
@@ -2548,7 +2611,7 @@ def test_interactive_update():
     p.close()
 
     p = pv.Plotter()
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match=r'The plotter will close immediately automatically'):
         p.show(auto_close=True, interactive_update=True)
 
 
@@ -3053,14 +3116,14 @@ def test_plot_complex_value(plane, verify_image_cache):
     # check for removal when support for vtk 9.0.3 is removed
     try:
         ComplexWarning = np.exceptions.ComplexWarning
-    except:
-        ComplexWarning = np.ComplexWarning  # noqa: NPY201
+    except AttributeError:
+        ComplexWarning = np.ComplexWarning
 
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning):
+    with pytest.warns(ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
@@ -3376,8 +3439,8 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # check for removal when support for vtk 9.0.3 is removed
     try:
         ComplexWarning = np.exceptions.ComplexWarning
-    except:
-        ComplexWarning = np.ComplexWarning  # noqa: NPY201
+    except AttributeError:
+        ComplexWarning = np.ComplexWarning
 
     pl = pv.Plotter()
     with pytest.warns(ComplexWarning, match='Casting complex'):
@@ -4473,11 +4536,13 @@ def test_voxelize_volume():
     cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
 
     # Create an equal density voxel volume and plot the result.
-    vox = pv.voxelize_volume(mesh, density=0.15)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize_volume(mesh, density=0.15)
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
     # Create a voxel volume from unequal density dimensions and plot result.
-    vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
@@ -4654,9 +4719,9 @@ def _has_param(call: Callable, param: str) -> bool:
         kwargs[param] = None
         try:
             call(**kwargs)
-        except BaseException as ex:
+        except TypeError as ex:
             # Param is not valid only if a kwarg TypeError is raised
-            return not ('TypeError' in repr(ex) and 'unexpected keyword argument' in repr(ex))
+            return 'unexpected keyword argument' not in repr(ex)
         else:
             return True
 
@@ -4929,7 +4994,13 @@ def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
     smoothing_distance,
     smoothing_scale,
+    verify_image_cache,
 ):
+    # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+    if pyvista.vtk_version_info < (9, 5, 99):
+        # Axis labels changed substantially in VTK 9.6
+        verify_image_cache.skip = True
+
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 

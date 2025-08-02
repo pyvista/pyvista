@@ -46,7 +46,7 @@ def __getattr__(name):
         ``pyvista.utilities``.
 
     """
-    from pyvista.core.errors import PyVistaDeprecationWarning
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
     for module in _MODULES:
         feature, import_path = _try_import(module, name)

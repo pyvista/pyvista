@@ -762,7 +762,7 @@ def convert_string_array(
             # setting the object name
             _set_string_scalar_object_name(vtkarr)
 
-        ########### OPTIMIZE ###########
+        # OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
         ################################
@@ -770,7 +770,7 @@ def convert_string_array(
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    ############### OPTIMIZE ###############
+    # OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
     try:
@@ -875,7 +875,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
         The field and name of the active array.
 
     """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_vectors_name is None:
         point_data = mesh.point_data
@@ -943,7 +943,7 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
         The field and name of the active array.
 
     """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_scalars_name is None:
         point_data = mesh.point_data

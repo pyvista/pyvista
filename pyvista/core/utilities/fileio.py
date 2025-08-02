@@ -152,9 +152,9 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
         The configured vtk writer instance.
 
     """
-    from vtkmodules.vtkIOGeometry import vtkSTLWriter
-    from vtkmodules.vtkIOLegacy import vtkDataWriter
-    from vtkmodules.vtkIOPLY import vtkPLYWriter
+    from vtkmodules.vtkIOGeometry import vtkSTLWriter  # noqa: PLC0415
+    from vtkmodules.vtkIOLegacy import vtkDataWriter  # noqa: PLC0415
+    from vtkmodules.vtkIOPLY import vtkPLYWriter  # noqa: PLC0415
 
     if isinstance(vtk_writer, (vtkDataWriter, vtkPLYWriter, vtkSTLWriter)):
         if use_binary:
@@ -273,7 +273,7 @@ def read(  # noqa: PLR0911, PLR0917
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
-    if ext.lower() in ['.grdecl']:
+    if ext.lower() == '.grdecl':
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
         msg = (
@@ -291,7 +291,7 @@ def read(  # noqa: PLR0911, PLR0917
         if force_ext is not None:
             msg = 'This file was not able to be automatically read by pyvista.'
             raise OSError(msg)
-        from meshio._exceptions import ReadError
+        from meshio._exceptions import ReadError  # noqa: PLC0415
 
         try:
             return read_meshio(filename)
@@ -444,13 +444,13 @@ def read_exodus(  # noqa: PLR0917
     >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
-    from .helpers import wrap
+    from .helpers import wrap  # noqa: PLC0415
 
     # lazy import here to avoid loading module on import pyvista
     try:
-        from vtkmodules.vtkIOExodus import vtkExodusIIReader
+        from vtkmodules.vtkIOExodus import vtkExodusIIReader  # noqa: PLC0415
     except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]
+        from vtk import vtkExodusIIReader  # type: ignore[no-redef]  # noqa: PLC0415
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -710,7 +710,7 @@ def read_grdecl(
         return keywords
 
     # Read keywords
-    other_keywords = other_keywords if other_keywords else []
+    other_keywords = other_keywords or []
     keywords = read_keywords(filename, other_keywords)
 
     try:
@@ -815,7 +815,7 @@ def read_grdecl(
         grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
 
     # Store unused keywords in user dict
-    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}  # type: ignore[assignment]
+    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
 
     return grid
 
@@ -854,7 +854,7 @@ def read_pickle(filename: str | Path) -> DataObject:
 
     Unlike other file formats, custom attributes are saved with pickled meshes.
 
-    >>> mesh.custom_attribute = 42
+    >>> pv.set_new_attribute(mesh, 'custom_attribute', 42)
     >>> pv.save_pickle('ant.pkl', mesh)
     >>> new_mesh = pv.read_pickle('ant.pkl')
     >>> new_mesh.custom_attribute
@@ -910,7 +910,7 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
 
     Unlike other file formats, custom attributes are saved with pickled meshes.
 
-    >>> mesh.custom_attribute = 42
+    >>> pv.set_new_attribute(mesh, 'custom_attribute', 42)
     >>> pv.save_pickle('ant.pkl', mesh)
     >>> new_mesh = pv.read_pickle('ant.pkl')
     >>> new_mesh.custom_attribute
@@ -945,7 +945,7 @@ def is_meshio_mesh(obj: object) -> bool:
 
     """
     try:
-        import meshio
+        import meshio  # noqa: PLC0415
 
         return isinstance(obj, meshio.Mesh)
     except ImportError:
@@ -972,11 +972,11 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
     """
     try:  # meshio<5.0 compatibility
-        from meshio.vtk._vtk import meshio_to_vtk_type
-        from meshio.vtk._vtk import vtk_type_to_numnodes
+        from meshio.vtk._vtk import meshio_to_vtk_type  # noqa: PLC0415
+        from meshio.vtk._vtk import vtk_type_to_numnodes  # noqa: PLC0415
     except ImportError:  # pragma: no cover
-        from meshio._vtk_common import meshio_to_vtk_type
-        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+        from meshio._vtk_common import meshio_to_vtk_type  # noqa: PLC0415
+        from meshio.vtk._vtk_42 import vtk_type_to_numnodes  # noqa: PLC0415
 
     if len(mesh.cells) == 0:
         # Empty mesh
@@ -1079,17 +1079,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     """
     try:
-        import meshio
+        import meshio  # noqa: PLC0415
 
     except ImportError:  # pragma: no cover
         msg = 'To use this feature install meshio with:\n\npip install meshio'
         raise ImportError(msg)
 
     try:  # for meshio<5.0 compatibility
-        from meshio.vtk._vtk import vtk_to_meshio_type
+        from meshio.vtk._vtk import vtk_to_meshio_type  # noqa: PLC0415
 
-    except:  # pragma: no cover
-        from meshio._vtk_common import vtk_to_meshio_type
+    except (ImportError, AttributeError):  # pragma: no cover
+        from meshio._vtk_common import vtk_to_meshio_type  # noqa: PLC0415
 
     # Cast to unstructured grid
     mesh = mesh.cast_to_unstructured_grid()
@@ -1223,7 +1223,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     """
     try:
-        import meshio
+        import meshio  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         msg = 'To use this feature install meshio with:\n\npip install meshio'
         raise ImportError(msg)
@@ -1298,7 +1298,7 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
 
     """
     try:
-        from imageio.v2 import imread
+        from imageio.v2 import imread  # noqa: PLC0415
     except ModuleNotFoundError:  # pragma: no cover
         msg = (
             'Problem reading the image with VTK. Install imageio to try to read the '

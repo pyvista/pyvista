@@ -36,7 +36,7 @@ surface.plot(cpos=cpos, opacity=0.75)
 
 # %%
 # Create a voxel model of the bounding surface
-voxels = pv.voxelize(surface, density=surface.length / 200)
+voxels = surface.voxelize()
 
 p = pv.Plotter()
 p.add_mesh(voxels, color=True, show_edges=True, opacity=0.5)

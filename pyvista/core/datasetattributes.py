@@ -7,7 +7,6 @@ import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
-import warnings
 
 import numpy as np
 import numpy.typing as npt
@@ -15,11 +14,11 @@ import numpy.typing as npt
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import _vtk_core as _vtk
-from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
+from .utilities.misc import _NoNewAttrMixin
 
 T = TypeVar('T')
 
@@ -54,7 +53,9 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
-class DataSetAttributes(_vtk.VTKObjectWrapper):
+class DataSetAttributes(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKObjectWrapperCheckSnakeCase
+):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
     This class provides the ability to pick one of the present arrays as the
@@ -405,86 +406,6 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
         return None
-
-    @property
-    def active_t_coords(self: Self) -> pyvista_ndarray | None:
-        """Return the active texture coordinates array.
-
-        .. deprecated:: 0.43.0
-            Use :func:`DataSetAttributes.active_texture_coordinates` instead.
-
-        Returns
-        -------
-        pyvista.pyvista_ndarray
-            Array of the active texture coordinates.
-
-        """
-        warnings.warn(
-            'Use of `DataSetAttributes.active_t_coords` is deprecated. '
-            'Use `DataSetAttributes.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.active_texture_coordinates
-
-    @active_t_coords.setter
-    def active_t_coords(self: Self, t_coords: NumpyArray[float]) -> None:
-        """Set the active texture coordinates array.
-
-        .. deprecated:: 0.43.0
-            Use :func:`DataSetAttributes.active_texture_coordinates` instead.
-
-        Parameters
-        ----------
-        t_coords : np.ndarray
-            Array of the active texture coordinates.
-
-        """
-        warnings.warn(
-            'Use of `DataSetAttributes.active_t_coords` is deprecated. '
-            'Use `DataSetAttributes.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
-
-    @property
-    def active_t_coords_name(self: Self) -> str | None:
-        """Return the name of the active texture coordinates array.
-
-        .. deprecated:: 0.43.0
-            Use :func:`DataSetAttributes.active_texture_coordinates_name` instead.
-
-        Returns
-        -------
-        Optional[str]
-            Name of the active texture coordinates array.
-
-        """
-        warnings.warn(
-            'Use of `DataSetAttributes.active_t_coords_name` is deprecated. '
-            'Use `DataSetAttributes.active_texture_coordinates_name` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.active_texture_coordinates_name
-
-    @active_t_coords_name.setter
-    def active_t_coords_name(self: Self, name: str) -> None:
-        """Set the name of the active texture coordinates array.
-
-        .. deprecated:: 0.43.0
-            Use :func:`DataSetAttributes.active_texture_coordinates_name` instead.
-
-        Parameters
-        ----------
-        name : str
-            Name of the active texture coordinates array.
-
-        """
-        warnings.warn(
-            'Use of `DataSetAttributes.active_t_coords_name` is deprecated. '
-            'Use `DataSetAttributes.active_texture_coordinates_name` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.active_texture_coordinates_name = name
 
     def get_array(self: Self, key: str | int) -> pyvista_ndarray:
         """Get an array in this object.
@@ -1359,6 +1280,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     return False
 
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
     def active_normals(self: Self) -> pyvista_ndarray | None:

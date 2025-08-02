@@ -1,6 +1,6 @@
 [build-system]
 build-backend = 'setuptools.build_meta'
-requires = ['setuptools']
+requires = ['setuptools>=77.0.3']
 
 [project]
 authors = [{ name = 'PyVista Developers', email = 'info@pyvista.org' }]
@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
   'matplotlib>=3.0.1',
-  'numpy>=1.21.0',     # minimum typing support
+  'numpy>=1.21.0', # minimum typing support
   'pillow',
   'pooch',
   'scooby>=0.5.1',
@@ -54,7 +54,7 @@ jupyter = [
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
   'matplotlib<3.10.2',
-  'numpy<2.3.0',
+  'numpy<2.4.0',
   'pillow<11.3.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
@@ -62,10 +62,10 @@ pinned = [ # Pinned versions of core dependencies
 ]
 
 typing = [
-  'mypy<1.14.0',
+  'mypy<1.17.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.6.0',
+  'trimesh<4.7.0',
   { include-group = 'pinned' },
 ]
 
@@ -74,35 +74,35 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.131.10',
-  'imageio-ffmpeg<0.6.0',
-  'imageio<2.37.0',
-  'ipython<9.0.0',
+  'hypothesis<6.135.27',
+  'imageio-ffmpeg<0.7.0',
+  'imageio<2.38.0',
+  'ipython<10.0.0',
   'ipywidgets<9.0.0',
   'meshio<5.4.0',
   'nest_asyncio<1.6.1',
-  'numpydoc==1.8.0',
-  'pandas<=2.3.0',
+  'numpydoc<1.10.0',
+  'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
-  'pytest-cov<6.2.0',
+  'pytest-cov<6.3.0',
   'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.2.0',
-  'pytest-xdist<3.7.0',
-  'pytest<8.4.0',
-  'pytest_cases<3.8.7',
+  'pytest-xdist<3.9.0',
+  'pytest<8.5.0',
+  'pytest_cases<3.10.0',
   'pytest_mock<3.15.0',
   'retry-requests<2.1.0',
-  'scipy<1.14.2',
+  'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
-  'sphinx-gallery<0.19.0',
-  'sphinx<8.2.0',
+  'sphinx-gallery<0.20.0',
+  'sphinx<8.3.0',
   'sphinx_design<0.7.0',
-  'sympy<1.14.0',
+  'sympy<1.15.0',
   'tqdm<4.68.0',
-  'trame-vtk>=2.5.8,<2.8.12',
-  'trame-vuetify>=2.3.1,<2.7.2',
-  'trame>=2.5.2,<3.7.1',
-  'trimesh<4.6.0',
+  'trame-vtk>=2.5.8,<2.9.1',
+  'trame-vuetify>=2.3.1,<3.0.2',
+  'trame>=2.5.2,<3.10.3',
+  'trimesh<4.7.0',
   'typing-extensions<4.14.0',
   { include-group = 'pinned' },
 ]
@@ -124,11 +124,11 @@ docs = [
   'mypy==1.15.0',
   'numpydoc==1.8.0',
   'osmnx==2.0.2',
-  'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
   'pytest-pyvista==0.2.0',
   'pytest-sphinx==0.6.3',
-  'scipy==1.15.2',
+  'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
@@ -138,15 +138,15 @@ docs = [
   'sphinx-sitemap==2.6.0',
   'sphinx-tags==0.4.0',
   'sphinx-toolbox==3.9.0',
-  'sphinx==8.2.1',
+  'sphinx==8.2.3',
   'sphinxcontrib-asciinema==0.4.2',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.10.0',
-  'sympy==1.13.3',
-  'trame-vtk==2.8.15',
+  'sympy==1.14.0',
+  'trame-vtk==2.9.0',
   'trame-vuetify==3.0.1',
-  'trame==3.9.0',
-  'trimesh==4.6.8',
+  'trame==3.10.2',
+  'trimesh==4.6.13',
   'vtk-xref==0.1.0',
   { include-group = 'pinned' },
 ]
@@ -154,8 +154,9 @@ docs = [
 dev = ['pre-commit', { include-group = 'test' }, { include-group = 'typing' }]
 
 [project.urls]
-'Bug Tracker' = 'https://github.com/pyvista/pyvista/issues'
+'Bug Reports' = 'https://github.com/pyvista/pyvista/issues'
 Documentation = 'https://docs.pyvista.org/'
+Homepage = 'https://github.com/pyvista/pyvista'
 'Source Code' = 'https://github.com/pyvista/pyvista'
 
 [tool.setuptools.dynamic]
@@ -204,7 +205,6 @@ skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doct
 [tool.coverage.run]
 omit = [
   'pyvista/conftest.py',
-  'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 [tool.coverage.report]
@@ -219,11 +219,12 @@ filterwarnings = [
   'error',
 
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
-  'ignore:.*Given trait value dtype "float64":UserWarning',                                                              # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
-  'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
+  'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:Ignoring invalid PYVISTA_USERDATA_PATH.*:UserWarning',
+  'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
@@ -295,9 +296,8 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 exclude = [ # don't report on objects that match any of these regex
-  '\.*Reader(\.|$)',        # classes inherit from BaseReader
-  '\._.*$',                 # Ignore anything that's private (e.g., starts with _)
-  '^coverage\..*$',
+  '\.*Reader(\.|$)', # classes inherit from BaseReader
+  '\._.*$', # Ignore anything that's private (e.g., starts with _)
   '^plot_directive\..*$',
   '^viewer_directive\..*$',
 ]
@@ -330,6 +330,7 @@ extend-select = [
   'ASYNC',
   'ASYNC1',
   'B',
+  'BLE',
   'C4',
   'COM',
   'D',
@@ -375,46 +376,40 @@ extend-select = [
 ]
 fixable = ['ALL']
 ignore = [
-  'ANN002',  # Missing annotations for `*args`
-  'ANN003',  # Missing annotations for `*kwargs`
-  'ANN401',  # Disallow `Any`
-  'B028',    # https://github.com/pyvista/pyvista/pull/6030
-  'B904',    # https://github.com/pyvista/pyvista/pull/6022
-  'COM812',  # May cause conflicts when used with the formatter
-  'D105',    # Missing docstring in magic method
-  'D107',    # Missing docstring in `__init__`
-  'D203',    # May conflict with the formatter
-  'D211',    # Incompatible with D203
-  'D213',    # Incompatible with D212
-  'D402',    # First line should not be the function's signature
-  'D416',    # Section name ends in colon
-  'E402',    # module level import not at top of file
-  'E722',
-  'E731',    # do not assign a lambda expression, use a def
-  'E741',    # ambiguous variable name
-  'F403',    # 'from module import *' used; unable to detect undefined names
-  'ISC001',  # May cause conflicts when used with the formatter
+  'ANN002', # Missing annotations for `*args`
+  'ANN003', # Missing annotations for `*kwargs`
+  'ANN401', # Disallow `Any`
+  'B028', # https://github.com/pyvista/pyvista/pull/6030
+  'B904', # https://github.com/pyvista/pyvista/pull/6022
+  'COM812', # May cause conflicts when used with the formatter
+  'D105', # Missing docstring in magic method
+  'D107', # Missing docstring in `__init__`
+  'D203', # May conflict with the formatter
+  'D211', # Incompatible with D203
+  'D213', # Incompatible with D212
+  'D402', # First line should not be the function's signature
+  'D416', # Section name ends in colon
+  'E402', # module level import not at top of file
+  'E731', # do not assign a lambda expression, use a def
+  'E741', # ambiguous variable name
+  'F403', # 'from module import *' used; unable to detect undefined names
+  'ISC001', # May cause conflicts when used with the formatter
   'N806',
   'PERF203', # https://github.com/pyvista/pyvista/pull/6037
-  'PLC0415',
   'PLR0912', # Too many branches
   'PLR0913', # Too many arguments in function definition
   'PLR0915', # Too many statements
   'PLR2004', # Magic value used in comparison
-  'PLW1641',
-  'PT028',
-  'PT030',
-  'PT031',
-  'Q0',      # Quotes (temporary)
-  'RET505',  # https://github.com/pyvista/pyvista/pull/5911
-  'RET506',  # https://github.com/pyvista/pyvista/pull/5911
-  'RET507',  # https://github.com/pyvista/pyvista/pull/5911
-  'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
-  'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
-  'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
-  'TRY301',  # https://github.com/pyvista/pyvista/pull/7572
+  'Q0', # Quotes (temporary)
+  'RET505', # https://github.com/pyvista/pyvista/pull/5911
+  'RET506', # https://github.com/pyvista/pyvista/pull/5911
+  'RET507', # https://github.com/pyvista/pyvista/pull/5911
+  'SIM102', # https://github.com/pyvista/pyvista/pull/5877
+  'SIM117', # https://github.com/pyvista/pyvista/pull/5888
+  'SIM118', # https://github.com/pyvista/pyvista/pull/5837
+  'TRY301', # https://github.com/pyvista/pyvista/pull/7572
 ]
-unfixable = ['F401']
+unfixable = ['F401', 'PLC0415']
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
@@ -422,7 +417,7 @@ allow-dict-calls-with-keyword-arguments = true
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
 '__init__.py' = ['PLC0414']
-'doc/*' = ['ANN', 'INP']
+'doc/*' = ['ANN', 'INP', 'PLC0415']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -432,16 +427,17 @@ allow-dict-calls-with-keyword-arguments = true
   'PTH123',
   'T20',
 ]
-'examples*' = ['ANN', 'INP']
+'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
-  'B015',   # https://github.com/pyvista/pyvista/pull/6014
-  'B018',   # https://github.com/pyvista/pyvista/pull/6019
+  'B015', # https://github.com/pyvista/pyvista/pull/6014
+  'B018', # https://github.com/pyvista/pyvista/pull/6019
   'D102',
   'D103',
   'D205',
   'D212',
   'D400',
   'D415',
+  'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
   'SIM115',
   'T20',
 ]
@@ -454,13 +450,13 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']
 'pyvista/core/_vtk_core.py' = ['ANN', 'PLC0414']
+'pyvista/core/dataobject.py' = ['PLC0415']
 'pyvista/core/errors.py' = ['ANN']
 'pyvista/core/filters/*' = ['ANN', 'PYI019']
 'pyvista/core/objects.py' = ['ANN']
 'pyvista/core/partitioned.py' = ['ANN']
 'pyvista/core/pointset.py' = ['ANN']
 'pyvista/core/utilities/cell.py' = ['ANN']
-'pyvista/core/utilities/cells.py' = ['ANN']
 'pyvista/core/utilities/docs.py' = ['ANN']
 'pyvista/core/utilities/features.py' = ['ANN']
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
@@ -510,7 +506,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/prop_collection.py' = ['ANN']
 'pyvista/plotting/render_passes.py' = ['ANN']
 'pyvista/plotting/render_window_interactor.py' = ['ANN']
-'pyvista/plotting/renderer.py' = ['ANN']
+'pyvista/plotting/renderer.py' = ['ANN', 'PLC0415']
 'pyvista/plotting/renderers.py' = ['ANN']
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/text.py' = ['ANN']
@@ -521,11 +517,11 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/plotting/volume.py' = ['ANN']
 'pyvista/plotting/volume_property.py' = ['ANN']
-'pyvista/plotting/widgets.py' = ['ANN']
+'pyvista/plotting/widgets.py' = ['ANN', 'PLC0415']
 'pyvista/report.py' = ['ANN']
 'pyvista/trame/*' = ['ANN', 'FBT', 'PLR0917']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
-'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLR0917', 'T20']
+'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'T20']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',
@@ -557,5 +553,5 @@ ignore = [
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
   'PY004', # we have a 'doc' folder, not 'docs'
   'PY007', # tox support
-  'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
+  'RTD', # RTD: the documentation is not hosted by ReadTheDocs
 ]

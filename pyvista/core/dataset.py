@@ -39,6 +39,7 @@ from .utilities.arrays import get_array_association
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -96,7 +97,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     name: str
 
 
-class ActiveArrayInfo:
+class ActiveArrayInfo(_NoNewAttrMixin):
     """Active array info class with support for pickling.
 
     .. deprecated:: 0.45
@@ -151,7 +152,7 @@ class ActiveArrayInfo:
         """Build a namedtuple on the fly to provide legacy support."""
         return ActiveArrayInfoTuple(self.association, self.name)
 
-    def __iter__(self: ActiveArrayInfo) -> Iterator[FieldAssociation | str]:
+    def __iter__(self: ActiveArrayInfo) -> Iterator[FieldAssociation | str | None]:
         """Provide namedtuple-like __iter__."""
         return self._namedtuple.__iter__()
 
@@ -159,7 +160,7 @@ class ActiveArrayInfo:
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
 
-    def __getitem__(self: ActiveArrayInfo, item: int) -> FieldAssociation | str:
+    def __getitem__(self: ActiveArrayInfo, item: int) -> FieldAssociation | str | None:
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
 
@@ -169,6 +170,8 @@ class ActiveArrayInfo:
             same_association = int(self.association.value) == int(other.association.value)
             return self.name == other.name and same_association
         return False
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
 
 @promote_type(_vtk.vtkDataSet)
@@ -195,6 +198,9 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalars_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
         self._active_tensors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+
+        # Used by glyph filter and plotter legend
+        self._glyph_geom: Sequence[_vtk.vtkDataSet] | None = None
 
     def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -447,7 +453,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property  # type: ignore[explicit-override, override]
+    @property
     def active_scalars_name(self: Self) -> str | None:
         """Return the name of the active scalars.
 
@@ -638,40 +644,6 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
-
-    @property
-    def active_t_coords(self: Self) -> pyvista_ndarray | None:
-        """Return the active texture coordinates on the points.
-
-        Returns
-        -------
-        Optional[pyvista_ndarray]
-            Active texture coordinates on the points.
-
-        """
-        warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. '
-            'Use `DataSet.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        return self.active_texture_coordinates
-
-    @active_t_coords.setter
-    def active_t_coords(self: Self, t_coords: NumpyArray[float]) -> None:
-        """Set the active texture coordinates on the points.
-
-        Parameters
-        ----------
-        t_coords : np.ndarray
-            Active texture coordinates on the points.
-
-        """
-        warnings.warn(
-            'Use of `DataSet.active_t_coords` is deprecated. '
-            'Use `DataSet.active_texture_coordinates` instead.',
-            PyVistaDeprecationWarning,
-        )
-        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     def set_active_scalars(
         self: Self,
@@ -1381,7 +1353,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_array(
         self: Self,
         name: str,
-        preference: Literal['cell', 'point', 'field'] = 'cell',
+        preference: CellLiteral | PointLiteral | FieldLiteral = 'cell',
     ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
@@ -1490,7 +1462,7 @@ class DataSet(DataSetFilters, DataObject):
     def __getitem__(
         self: Self,
         index: tuple[str, Literal['cell', 'point', 'field']] | str,
-    ) -> NumpyArray[float]:
+    ) -> pyvista_ndarray:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, tuple):
             name, preference = index
@@ -2970,7 +2942,7 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
 
         """
-        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+        self.point_data.active_texture_coordinates = texture_coordinates
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01

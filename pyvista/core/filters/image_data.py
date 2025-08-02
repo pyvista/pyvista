@@ -29,6 +29,8 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from numpy.typing import NDArray
 
     from pyvista import ImageData
@@ -218,12 +220,181 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
+    def slice_index(  # type: ignore[misc]
+        self: ImageData,
+        i: int | VectorLike[int] | slice | None = None,
+        j: int | VectorLike[int] | slice | None = None,
+        k: int | VectorLike[int] | slice | None = None,
+        *,
+        index_mode: Literal['extent', 'dimensions'] = 'dimensions',
+        strict_index: bool = False,
+        rebase_coordinates: bool = False,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Extract a subset using IJK indices.
+
+        This filter enables slicing :class:`~pyvista.ImageData` with Python-style indexing using
+        IJK coordinates. It can be used to extract a single slice, multiple contiguous slices, or
+        a volume of interest. Unlike other slicing filters, this filter returns
+        :class:`~pyvista.ImageData`.
+
+        .. note::
+            Slicing by index is also possible using the "get index" operator ``[]``. See examples.
+
+        .. versionadded::0.46
+
+        Parameters
+        ----------
+        i, j, k : int | VectorLike[int] | slice, optional
+            Indices to slice along the I, J, and K coordinate axes, respectively. Specify an
+            integer for a single index, or two integers ``[start, stop)`` for a range of indices.
+
+            .. note::
+
+                Like regular Python slicing:
+
+                - Half-open intervals are used, i.e. the ``start`` index is included in the range
+                  but the ``stop`` index is not.
+                - Negative indexing is supported.
+                - An ``IndexError`` is raised when a single integer is specified as the index and
+                  the index is out-of-bounds.
+                - An ``IndexError`` is `not` raised when a range is specified as the index and
+                  the index is out-of-bounds. This default can be overridden by setting
+                  ``strict_index=True``.
+                - A copy of the data is returned (modifying the sliced output does `not` affect
+                  the input data).
+
+        index_mode : 'extent' | 'dimensions', default: 'dimensions'
+            Mode to use when determining the range of values to index from.
+
+            - Use ``'dimensions'`` to index values in the range ``[0, dimensions - 1]``.
+            - Use ``'extent'`` to index values based on the :class:`~pyvista.ImageData.extent`,
+              i.e. ``[offset, offset + dimensions - 1]``.
+
+            The main difference between these modes is the inclusion or exclusion of the
+            :attr:`~pyvista.ImageData.offset`. ``dimensions`` is more pythonic and is how the
+            object's data arrays themselves would be indexed, whereas ``'extent'`` respects VTK's
+            definition of ``extent`` and considers the object's geometry.
+
+        strict_index : bool, default: False
+            Raise an ``IndexError`` if `any` of the indices are out of range. By default, an
+            ``IndexError`` is only raised if a single integer index is out of range, but not when
+            a range of indices are specified; set this to ``True`` to raise in error in both cases.
+
+        rebase_coordinates : bool, default: False
+            Rebase the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the indexing.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Sliced mesh.
+
+        See Also
+        --------
+        crop
+        extract_subset
+        :meth:`~pyvista.DataObjectFilters.slice`
+        :meth:`~pyvista.DataObjectFilters.slice_implicit`
+        :meth:`~pyvista.DataObjectFilters.slice_orthogonal`
+        :meth:`~pyvista.DataObjectFilters.slice_along_axis`
+        :meth:`~pyvista.DataObjectFilters.slice_along_line`
+
+        Examples
+        --------
+        Create a :class:`~pyvista.ImageData` mesh and give it some point data.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.ImageData(dimensions=(10, 10, 10))
+        >>> mesh['data'] = range(mesh.n_points)
+
+        Extract a single slice along the k-axis.
+
+        >>> sliced = mesh.slice_index(k=5)
+        >>> sliced.dimensions
+        (10, 10, 1)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[:, :, 5]
+        >>> sliced == sliced2
+        True
+
+        Extract a volume of interest.
+
+        >>> sliced = mesh.slice_index(i=[1, 3], j=[2, 5], k=[5, 10])
+        >>> sliced.dimensions
+        (2, 3, 5)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[1:3, 2:5, 5:10]
+        >>> sliced == sliced2
+        True
+
+        Use ``None`` to implicitly define the start and/or stop indices.
+
+        >>> sliced = mesh.slice_index(i=[None, 3], j=[2, None], k=None)
+        >>> sliced.dimensions
+        (3, 8, 10)
+
+        Equivalently:
+
+        >>> sliced2 = mesh[:3, 2:, :]
+        >>> sliced == sliced2
+        True
+
+        See :ref:`slice_example` for more examples using this filter.
+
+        """
+
+        def _set_default_start_and_stop(rng, default_start, default_stop):
+            if isinstance(rng, slice):
+                return rng
+            out = (default_start, default_stop) if rng is None else np.asanyarray(rng).tolist()
+            if isinstance(out, list) and len(out) >= 2:
+                if out[0] is None:
+                    out[0] = default_start
+                if out[1] is None:
+                    out[1] = default_stop
+            return out
+
+        if i is None and j is None and k is None:
+            msg = 'No indices were provided for slicing.'
+            raise TypeError(msg)
+
+        lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
+        indices = tuple(
+            _set_default_start_and_stop(slc, low, dim)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
+        )
+        voi = self._compute_voi_from_index(
+            indices, index_mode=index_mode, strict_index=strict_index
+        )
+        return self.extract_subset(
+            voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
+        )
+
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(  # noqa: PLR0917
         self,
         voi,
         rate=(1, 1, 1),
         boundary: bool = False,  # noqa: FBT001, FBT002
+        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Select piece (e.g., volume of interest).
@@ -256,6 +427,22 @@ class ImageDataFilters(DataSetFilters):
             even multiple of the grid dimensions. By default this is
             disabled.
 
+        rebase_coordinates : bool, default: True
+            If ``True`` (default), reset the coordinate reference of the extracted subset:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset specified by
+            the ``voi`` parameter.
+
+            .. versionadded:: 0.46
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -263,6 +450,11 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             ImageData subset.
+
+        See Also
+        --------
+        slice_index
+        crop
 
         """
         alg = _vtk.vtkExtractVOI()
@@ -272,17 +464,534 @@ class ImageDataFilters(DataSetFilters):
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
-        # Adjust for the confusing issue with the extents
-        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
-        fixed = pyvista.ImageData()
-        fixed.origin = result.bounds[::2]
-        fixed.spacing = result.spacing
-        fixed.dimensions = result.dimensions
-        fixed.point_data.update(result.point_data)
-        fixed.cell_data.update(result.cell_data)
-        fixed.field_data.update(result.field_data)
-        fixed.copy_meta_from(result, deep=True)
-        return fixed
+        if rebase_coordinates:
+            # Adjust for the confusing issue with the extents
+            #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+            result.origin = result.bounds[::2]
+            result.offset = (0, 0, 0)
+        return result
+
+    @staticmethod
+    def _clip_extent(extent: VectorLike[int], *, clip_to: VectorLike[int]) -> NumpyArray[int]:
+        out = np.array(extent)
+        for axis in range(3):
+            min_ind = axis * 2
+            max_ind = axis * 2 + 1
+
+            out[min_ind] = np.max((clip_to[min_ind], extent[min_ind]))  # type: ignore[arg-type]
+            out[max_ind] = np.min((clip_to[max_ind], extent[max_ind]))  # type: ignore[arg-type]
+        return out
+
+    def crop(  # type: ignore[misc]
+        self: ImageData,
+        *,
+        factor: float | VectorLike[float] | None = None,
+        margin: int | VectorLike[int] | None = None,
+        offset: VectorLike[int] | None = None,
+        dimensions: VectorLike[int] | None = None,
+        extent: VectorLike[int] | None = None,
+        normalized_bounds: VectorLike[float] | None = None,
+        mask: str | ImageData | NumpyArray[float] | Literal[True] | None = None,
+        padding: int | VectorLike[int] | None = None,
+        background_value: float | None = None,
+        keep_dimensions: bool = False,
+        fill_value: float | VectorLike[float] | None = None,
+        rebase_coordinates: bool = False,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Crop this image to remove points at its boundaries.
+
+        This filter is useful for extracting a volume or region of interest. There are several ways
+        to crop:
+
+        #. Use ``factor`` to crop a portion of the image symmetrically.
+        #. Use ``margin`` to remove points from the image border.
+        #. Use ``dimensions`` (and optionally, ``offset``) to explicitly crop to the specified
+           :attr:`~pyvista.ImageData.dimensions` and :attr:`~pyvista.ImageData.offset`.
+        #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
+        #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
+        #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
+           values to define the cropping region.
+
+        These methods are all independent, e.g. it is not possible to specify both ``factor`` and
+        ``margin``.
+
+        By default, the cropped output's :attr:`~pyvista.ImageData.dimensions` are typically less
+        than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
+        ensure the output dimensions always match the input.
+
+        .. note::
+
+            All cropping is performed using the image's ijk-indices, not physical xyz-bounds.
+
+        .. versionadded:: 0.46
+
+        Parameters
+        ----------
+        factor : float, optional
+            Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
+            keep along each axis. Use a single float for uniform cropping or a vector of three
+            floats for cropping each xyz-axis independently. The crop is centered in the image.
+
+        margin : int | VectorLike[int], optional
+            Margin to remove from each side of each axis. Specify:
+
+            - A single value to remove from all boundaries equally.
+            - Two values, one for each ``(X, Y)`` axis, to remove margin from
+              each axis independently.
+            - Three values, one for each ``(X, Y, Z)`` axis, to remove margin from
+              each axis independently.
+            - Four values, one for each ``(-X, +X, -Y, +Y)`` boundary, to remove
+              margin from each boundary independently.
+            - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to remove
+              margin from each boundary independently.
+
+        offset : VectorLike[int], optional
+            Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.offset` indices
+            where the cropping region originates. If specified, then ``dimensions`` must also be
+            provided.
+
+        dimensions : VectorLike[int], optional
+            Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.dimensions` of
+            the cropping region. ``offset`` may also be provided, but if it is not, the crop is
+            centered in the image.
+
+        extent : VectorLike[int], optional
+            Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
+            the cropping region.
+
+        normalized_bounds : VectorLike[float], optional
+            Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
+            that define a box relative to the input size. The input is cropped such that it fully
+            fits within these bounds. Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+        mask : str | ImageData | NumpyArray[float] | bool, optional
+            Scalar values that define the cropping region. Set this option to:
+
+            - a string denoting the name of scalars belonging to this mesh
+            - ``True`` to use this mesh's default scalars
+            - a separate image, in which case the other image's active scalars are used
+            - a 1D or 2D (multi-component) array
+
+            The length of the scalar array must equal the number of points.
+
+            This mesh will be cropped to the bounds of the foreground values of the array, i.e.
+            values that are not equal to the specified ``background_value``.
+
+        padding : int | VectorLike[int], optional
+            Padding to add to foreground region `before` cropping. Only valid when using a mask to
+            crop the image. Specify:
+
+            - A single value to pad all boundaries equally.
+            - Two values, one for each ``(X, Y)`` axis, to apply symmetric padding to
+              each axis independently.
+            - Three values, one for each ``(X, Y, Z)`` axis, to apply symmetric padding
+              to each axis independently.
+            - Four values, one for each ``(-X, +X, -Y, +Y)`` boundary, to apply
+              padding to each boundary independently.
+            - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
+              padding to each boundary independently.
+
+            The specified value is the `maximum` padding that may be applied. If the padding
+            extends beyond the actual extents of this mesh, it is clipped and does not extend
+            outside the bounds of the image.
+
+        background_value : float | VectorLike[float], optional
+            Value or multi-component vector considered to be the background. Only valid when using
+            a mask to crop the image.
+
+        keep_dimensions : bool, default: False
+            If ``True``, the cropped output is :meth:`padded <pad_image>` with ``fill_value`` to
+            ensure the output dimensions match the input.
+
+        fill_value : float | VectorLike[float], optional
+            Value used when padding the cropped output if ``keep_dimensions`` is ``True``. May be
+            a single float or a multi-component vector (e.g. RGB vector).
+
+        rebase_coordinates : bool, default: False
+            Rebase the coordinate reference of the cropped output:
+
+            - the :attr:`~pyvista.ImageData.origin` is set to the minimum bounds of the subset
+            - the :attr:`~pyvista.ImageData.offset` is reset to ``(0, 0, 0)``
+
+            The rebasing effectively applies a positive translation in world (XYZ) coordinates and
+            a similar (i.e. inverse) negative translation in voxel (IJK) coordinates. As a result,
+            the :attr:`~pyvista.DataSet.bounds` of the output are unchanged, but the coordinate
+            reference frame is modified.
+
+            Set this to ``False`` to leave the origin unmodified and keep the offset used by the
+            crop.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Cropped image.
+
+        See Also
+        --------
+        pad_image
+            Add points to image boundaries. This is the inverse operation of the ``margin`` crop.
+
+        resample
+            Modify an image's dimensions and spacing.
+
+        select_values
+            Threshold-like filter which may be used to generate a mask for cropping.
+
+        extract_subset
+            Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
+
+        :ref:`crop_labeled_example`
+            Example cropping :class:`~pyvista.ImageData` using a segmentation mask.
+
+        Examples
+        --------
+        Load a grayscale image.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> gray_image = examples.download_yinyang()
+        >>> gray_image.dimensions
+        (512, 342, 1)
+
+        Define a custom plotting helper to show the image as pixel cells.
+
+        >>> def image_plotter(image):
+        ...     pixel_cells = image.points_to_cells()
+        ...
+        ...     pl = pv.Plotter()
+        ...     pl.add_mesh(
+        ...         pixel_cells,
+        ...         cmap='gray',
+        ...         clim=[0, 255],
+        ...         lighting=False,
+        ...         show_scalar_bar=False,
+        ...     )
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
+
+        Plot the image for context.
+
+        >>> image_plotter(gray_image).show()
+
+        Crop the white border around the image using active scalars as a mask. Here we specify a
+        background value of ``255`` to correspond to white pixels. If this was an RGB image, we
+        could also specify ``(255, 255, 255)`` as the background value.
+
+        >>> cropped = gray_image.crop(mask=True, background_value=255)
+        >>> cropped.dimensions
+        (237, 238, 1)
+        >>> image_plotter(cropped).show()
+
+        Use ``margin`` instead to remove 100 and 20 pixels from each side of the x- and y-axis,
+        respectively.
+
+        >>> cropped = gray_image.crop(margin=(100, 20))
+        >>> cropped.dimensions
+        (312, 302, 1)
+        >>> image_plotter(cropped).show()
+
+        Use ``offset`` to select a starting location for the crop (from the origin at the
+        bottom-left corner) along with ``dimensions`` to define the crop size.
+
+        >>> cropped = gray_image.crop(offset=(50, 20, 0), dimensions=(300, 200, 1))
+        >>> cropped.dimensions
+        (300, 200, 1)
+        >>> image_plotter(cropped).show()
+
+        Use ``extent`` directly instead of using ``dimensions`` and ``offset`` to yield the same
+        result as above.
+
+        >>> cropped = gray_image.crop(extent=(50, 349, 20, 219, 0, 0))
+        >>> cropped.extent
+        (50, 349, 20, 219, 0, 0)
+        >>> image_plotter(cropped).show()
+
+        Use ``factor`` to crop 40% of the image. This `keeps` 40% of the pixels along each axis,
+        and `removes` 60% (i.e. 30% from each side).
+
+        >>> cropped = gray_image.crop(factor=0.4)
+        >>> cropped.dimensions
+        (204, 136, 1)
+        >>> image_plotter(cropped).show()
+
+        Use ``normalized_bounds`` to crop from 40% to 80% of the image along the x-axis, and
+        from 30% to 90% of the image along the y-axis.
+
+        >>> cropped = gray_image.crop(normalized_bounds=[0.4, 0.8, 0.3, 0.9, 0.0, 1.0])
+        >>> cropped.extent
+        (205, 408, 103, 306, 0, 0)
+        >>> image_plotter(cropped).show()
+
+        """
+        CORE_METHOD_KWARGS = dict(
+            factor=factor,
+            margin=margin,
+            offset=offset,
+            dimensions=dimensions,
+            extent=extent,
+            normalized_bounds=normalized_bounds,
+            mask=mask,
+        )
+        SUPPORTING_KWARGS = dict(padding=padding, background_value=background_value)
+        MUTUALLY_EXCLUSIVE_KWARGS = CORE_METHOD_KWARGS | SUPPORTING_KWARGS
+
+        def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
+            args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
+            for arg in [arg_name, *also_exclude]:
+                args_to_check.pop(arg)
+
+            for key, val in args_to_check.items():
+                if val is not None:
+                    msg = (
+                        f'When cropping with {arg_name}, the following parameters cannot be set:\n'
+                        f'{list(args_to_check.keys())}.\n'
+                        f'Got: {key}={val}'
+                    )
+                    raise TypeError(msg)
+
+        def _validate_scalars(mesh: ImageData, scalars: str | None = None):
+            if scalars is None:
+                field, scalars = set_default_active_scalars(mesh)
+            else:
+                field = mesh.get_array_association(scalars, preference='point')
+            if field != FieldAssociation.POINT:
+                msg = (
+                    f"Scalars '{scalars}' must be associated with point data. "
+                    f'Got {field.name.lower()} data instead.'
+                )
+                raise ValueError(msg)
+            return field, scalars
+
+        def _voi_from_mask(mask_: str | ImageData | NumpyArray[float] | bool):  # noqa: FBT001
+            _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
+            # Validate scalars
+            if isinstance(mask_, (str, bool)):
+                mesh = self
+                if isinstance(mask_, str):
+                    scalars = mask_
+                elif mask_ is True:
+                    scalars = None
+                else:
+                    msg = 'mask cannot be `False`.'
+                    raise ValueError(msg)
+            elif isinstance(mask_, pyvista.ImageData):
+                mesh = mask_
+                scalars = None
+            else:
+                mesh = pyvista.ImageData(dimensions=self.dimensions, offset=self.offset)
+                scalars = 'scalars'
+                mesh[scalars] = mask_
+
+            field, scalars_ = _validate_scalars(mesh, scalars)
+            array = cast(
+                'pyvista.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field)
+            )
+            num_components = 1 if array.ndim == 1 else array.shape[1]
+
+            # Create a binary foreground/background mask array
+            default_background = 0.0
+            background = default_background if background_value is None else background_value
+            if num_components > 1:
+                background = _validation.validate_arrayN(
+                    background, name='background_value', must_have_length=(1, num_components)
+                )
+                mask_array = np.any(array != background, axis=1)
+            else:
+                background = _validation.validate_number(background, name='background_value')
+                mask_array = array != background
+
+            # Get foreground voi
+            shaped_array = mask_array.reshape(mesh.dimensions[::-1])
+            coords = np.argwhere(shaped_array)
+            if coords.size == 0:
+                msg = (
+                    f'Crop with mask failed, no foreground values found in array '
+                    f'{scalars_!r} using background value {background}.'
+                )
+                raise ValueError(msg)
+
+            zmin, ymin, xmin = coords.min(axis=0)
+            zmax, ymax, xmax = coords.max(axis=0)
+            voi = xmin, xmax, ymin, ymax, zmin, zmax
+
+            if padding is not None:
+                pad = _validate_padding(padding)
+                voi = _pad_extent(voi, pad)
+
+            # Add offset
+            voi_array = np.array(voi)
+            voi_array[[0, 1]] += mesh.offset[0]
+            voi_array[[2, 3]] += mesh.offset[1]
+            voi_array[[4, 5]] += mesh.offset[2]
+
+            # Clip voi so it doesn't extend beyond the image's extent
+            return ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
+
+        def _voi_from_normalized_bounds(normalized_bounds_):
+            _raise_error_kwargs_not_none('normalized_bounds')
+            bounds = _validation.validate_arrayN(
+                normalized_bounds_,
+                must_have_dtype=float,
+                must_be_in_range=[0.0, 1.0],
+                must_have_length=6,
+                name='normalized_bounds',
+            )
+            # Compute IJK bounds from normalized bounds
+            # A small bias is added to account for numerical error
+            # e.g. we want floor(0.29999999 * 10 + eps) = 3, not 2
+            dims = np.array(self.dimensions)
+            eps = 1e-6
+            norm_starts = bounds[::2]
+            norm_stops = bounds[1::2]
+            starts = np.ceil(norm_starts * dims - eps).astype(int)
+            stops = np.floor(norm_stops * dims + eps).astype(int) - 1
+
+            # Ensure dimensions are not set to 0
+            stops = np.maximum(stops, starts)
+
+            # Apply image offset
+            offset = self.offset
+            xmin, ymin, zmin = starts + offset
+            xmax, ymax, zmax = stops + offset
+
+            return xmin, xmax, ymin, ymax, zmin, zmax
+
+        def _voi_from_extent(extent_):
+            _raise_error_kwargs_not_none('extent')
+            return _validation.validate_arrayN(
+                extent_,
+                must_be_integer=True,
+                must_have_length=6,
+                dtype_out=int,
+                name='extent',
+            )
+
+        def _voi_from_factor(factor_):
+            _raise_error_kwargs_not_none('factor')
+            valid_factor = _validation.validate_array3(
+                factor_,
+                broadcast=True,
+                must_be_in_range=[0.0, 1.0],
+                dtype_out=float,
+                name='crop factor',
+            )
+
+            scale_dims = valid_factor * np.array(self.dimensions)
+            new_dimensions = np.floor(scale_dims).astype(int)
+            new_dimensions = np.maximum(new_dimensions, 1)  # avoid zero
+
+            # Center of the current image in ijk coordinates
+            center = self.offset + ((np.array(self.dimensions) - 1) // 2)
+            # Offset to center the new cropped region around the original center
+            new_offset = center - ((new_dimensions - 1) // 2)
+
+            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+
+        def _voi_from_dimensions(dimensions_):
+            valid_dims = _validation.validate_array3(
+                dimensions_,
+                broadcast=True,
+                must_have_dtype=np.integer,
+                must_be_in_range=[1, np.inf],
+                dtype_out=int,
+                name='dimensions',
+            )
+
+            new_dimensions = np.minimum(valid_dims, np.array(self.dimensions))
+
+            # Center of the current image in ijk coordinates
+            center = self.offset + ((np.array(self.dimensions) - 1) // 2)
+
+            # Compute offset to center the new cropped region
+            # When the difference is odd, place the extra point on the min side
+            half_size = (new_dimensions - 1) // 2
+            new_offset = center - half_size
+
+            return pyvista.ImageData(dimensions=new_dimensions, offset=new_offset).extent
+
+        def _voi_from_margin(margin_):
+            _raise_error_kwargs_not_none('margin')
+            padding = _validate_padding(margin_)
+            # Do not pad singleton dims
+            singleton_dims = np.array(self.dimensions) == 1
+            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
+            padding[mask] = np.array(self.extent)[mask]
+            return _pad_extent(self.extent, -padding)
+
+        def _voi_from_dimensions_or_offset(dimensions_, offset_):
+            _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
+            if dimensions_ is None:
+                msg = 'Dimensions must also be specified when cropping with offset.'
+                raise TypeError(msg)
+            elif offset_ is None:
+                return _voi_from_dimensions(dimensions_)
+            else:
+                return pyvista.ImageData(dimensions=dimensions, offset=offset).extent
+
+        if factor is not None:
+            voi = _voi_from_factor(factor)
+        elif margin is not None:
+            voi = _voi_from_margin(margin)
+        elif mask is not None:
+            voi = _voi_from_mask(mask)
+        elif normalized_bounds is not None:
+            voi = _voi_from_normalized_bounds(normalized_bounds)
+        elif extent is not None:
+            voi = _voi_from_extent(extent)
+        elif dimensions is not None or offset is not None:
+            voi = _voi_from_dimensions_or_offset(dimensions, offset)
+        else:
+            msg = (
+                'No crop arguments provided. One of the following keywords must be provided:\n'
+                f'{list(CORE_METHOD_KWARGS.keys())}'
+            )
+            raise TypeError(msg)
+
+        # Ensure dimensions are all at least one
+        voi = np.array(voi)
+        voi[1] = max(voi[0:2])
+        voi[3] = max(voi[2:4])
+        voi[5] = max(voi[4:6])
+
+        cropped = self.extract_subset(
+            voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
+        )
+        if not keep_dimensions:
+            return cropped
+
+        # Compute padding required to make extents match the input
+        off_before = self.offset
+        off_after = cropped.offset
+        dims_before = self.dimensions
+        dims_after = cropped.dimensions
+        padding = [
+            off_after[0] - off_before[0],
+            (off_before[0] + dims_before[0]) - (off_after[0] + dims_after[0]),
+            off_after[1] - off_before[1],
+            (off_before[1] + dims_before[1]) - (off_after[1] + dims_after[1]),
+            off_after[2] - off_before[2],
+            (off_before[2] + dims_before[2]) - (off_after[2] + dims_after[2]),
+        ]
+
+        # Pad the output
+        fill = fill_value if fill_value is not None else 0
+        result = cropped.pad_image(
+            pad_value=fill,
+            pad_size=padding,
+            pad_all_scalars=True,
+            dimensionality=self.dimensionality,
+            progress_bar=progress_bar,
+        )
+
+        # The pad filter removes cell data, so copy it unchanged from input
+        result.cell_data.update(self.cell_data)
+        return result
 
     @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
     def image_dilate_erode(  # noqa: PLR0917
@@ -995,7 +1704,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1595,13 +2304,13 @@ class ImageDataFilters(DataSetFilters):
 
                 # Dynamically calculate distance if not specified.
                 # This emulates the auto-constraint calc from vtkSurfaceNets3D
-                distance_ = distance_ if distance_ else np.linalg.norm(spacing_)
+                distance_ = distance_ or np.linalg.norm(spacing_)
                 alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
             else:
                 alg_.SmoothingOff()
 
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
             raise VTKVersionError(msg)
@@ -1714,15 +2423,27 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
-            # Orient the faces but discard the normals array
-            output.compute_normals(
-                cell_normals=True,
-                point_normals=False,
-                consistent_normals=True,
-                auto_orient_normals=True,
-                inplace=True,
-            )
-            del output.cell_data['Normals']
+            if pyvista.vtk_version_info >= (9, 4):
+                filter_ = _vtk.vtkOrientPolyData()
+                filter_.SetInputData(output)
+                filter_.ConsistencyOn()
+                filter_.AutoOrientNormalsOn()
+                filter_.NonManifoldTraversalOn()
+                filter_.Update()
+                oriented = wrap(filter_.GetOutput())
+                output.points = oriented.points
+                output.faces = oriented.faces
+            else:
+                # Orient the faces but discard the normals array
+                output.compute_normals(
+                    cell_normals=True,
+                    point_normals=False,
+                    consistent_normals=True,
+                    auto_orient_normals=True,
+                    non_manifold_traversal=True,
+                    inplace=True,
+                )
+                del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -2155,14 +2876,14 @@ class ImageDataFilters(DataSetFilters):
         new_image = pyvista.ImageData()
 
         if points_to_cells:
-            output_scalars = scalars if scalars else _get_output_scalars('point')
+            output_scalars = scalars or _get_output_scalars('point')
             # Enlarge image so points become cell centers
             origin_operator = operator.sub
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
         else:  # cells_to_points
-            output_scalars = scalars if scalars else _get_output_scalars('cell')
+            output_scalars = scalars or _get_output_scalars('cell')
             # Shrink image so cell centers become points
             origin_operator = operator.add
             dims_operator = operator.sub  # Decrease dimensions
@@ -2318,6 +3039,10 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Padded image.
 
+        See Also
+        --------
+        crop, resample, contour_labels
+
         Examples
         --------
         Pad a grayscale image with a 100-pixel wide border. The padding is black
@@ -2427,59 +3152,16 @@ class ImageDataFilters(DataSetFilters):
             )
             raise ValueError(msg)
 
-        # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
-        pad_sz = np.atleast_1d(pad_size)
-        if pad_sz.ndim != 1:
-            msg = f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.'
-            raise ValueError(msg)
-        if not np.issubdtype(pad_sz.dtype, np.integer):
-            msg = f'Pad size must be integers. Got dtype {pad_sz.dtype.name}.'
-            raise TypeError(msg)
-        if np.any(pad_sz < 0):
-            msg = f'Pad size cannot be negative. Got {pad_size}.'
-            raise ValueError(msg)
-
-        length = len(pad_sz)
-        if length == 1:
-            all_pad_sizes = np.broadcast_to(pad_sz, (6,)).copy()
-        elif length == 2:
-            all_pad_sizes = np.array(
-                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], 0, 0),
-            )
-        elif length == 3:
-            all_pad_sizes = np.array(
-                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], pad_sz[2], pad_sz[2]),
-            )
-        elif length == 4:
-            all_pad_sizes = np.array(
-                (pad_sz[0], pad_sz[1], pad_sz[2], pad_sz[3], 0, 0),
-            )
-        elif length == 6:
-            all_pad_sizes = pad_sz
-        else:
-            msg = f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.'
-            raise ValueError(msg)
+        all_pad_sizes = _validate_padding(pad_size)
 
         # Combine size 2 by 2 to get a (3, ) shaped array
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],  # type: ignore[arg-type]
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
-
-        # Define new extents after padding
-        pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_sizes
-        ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = self.GetExtent()  # type: ignore[attr-defined]
-
-        padded_extents = (
-            ext_xn - pad_xn,  # minX
-            ext_xp + pad_xp,  # maxX
-            ext_yn - pad_yn,  # minY
-            ext_yp + pad_yp,  # maxY
-            ext_zn - pad_zn,  # minZ
-            ext_zp + pad_zp,  # maxZ
-        )
+        padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)  # type: ignore[attr-defined]
 
         # Validate pad value
         pad_multi_component = None  # Flag for multi-component constants
@@ -2818,7 +3500,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,  # type: ignore[arg-type]
+            scalars,
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':
@@ -3169,6 +3851,9 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        crop
+            Crop image to remove points at the image's boundaries.
+
         :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
@@ -3522,7 +4207,7 @@ class ImageDataFilters(DataSetFilters):
             if dimensions is not None:
                 dimensions_ = np.array(dimensions)
                 dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+                reference_image.dimensions = dimensions_
             new_dimensions = np.array(reference_image.dimensions)
 
         # Compute the magnification factors to use with the filter
@@ -3603,14 +4288,7 @@ class ImageDataFilters(DataSetFilters):
                 output_image.origin = new_origin
             else:
                 # Compute spacing to match bounds of input and dimensions of output
-                bnds = input_image.bounds
-                size = np.array(
-                    (
-                        bnds.x_max - bnds.x_min,
-                        bnds.y_max - bnds.y_min,
-                        bnds.z_max - bnds.z_min,
-                    )
-                )
+                size = np.array(input_image.bounds_size)
                 if processing_cell_scalars:
                     new_spacing = (size + input_image.spacing) / output_dimensions
                 else:
@@ -3939,3 +4617,53 @@ class ImageDataFilters(DataSetFilters):
         output.copy_structure(self)
         output[array_name] = array_out
         return output
+
+
+def _validate_padding(pad_size):
+    # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
+    padding = np.atleast_1d(pad_size)
+    if padding.ndim != 1:
+        msg = f'Pad size must be one dimensional. Got {padding.ndim} dimensions.'
+        raise ValueError(msg)
+    if not np.issubdtype(padding.dtype, np.integer):
+        msg = f'Pad size must be integers. Got dtype {padding.dtype.name}.'
+        raise TypeError(msg)
+    if np.any(padding < 0):
+        msg = f'Pad size cannot be negative. Got {pad_size}.'
+        raise ValueError(msg)
+
+    length = len(padding)
+    if length == 1:
+        all_pad_sizes = np.broadcast_to(padding, (6,)).copy()
+    elif length == 2:
+        all_pad_sizes = np.array(
+            (padding[0], padding[0], padding[1], padding[1], 0, 0),
+        )
+    elif length == 3:
+        all_pad_sizes = np.array(
+            (padding[0], padding[0], padding[1], padding[1], padding[2], padding[2]),
+        )
+    elif length == 4:
+        all_pad_sizes = np.array(
+            (padding[0], padding[1], padding[2], padding[3], 0, 0),
+        )
+    elif length == 6:
+        all_pad_sizes = padding
+    else:
+        msg = f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.'
+        raise ValueError(msg)
+    return all_pad_sizes
+
+
+def _pad_extent(extent, padding):
+    pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = padding
+    ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = extent
+
+    return (
+        ext_xn - pad_xn,  # minX
+        ext_xp + pad_xp,  # maxX
+        ext_yn - pad_yn,  # minY
+        ext_yp + pad_yp,  # maxY
+        ext_zn - pad_zn,  # minZ
+        ext_zp + pad_zp,  # maxZ
+    )

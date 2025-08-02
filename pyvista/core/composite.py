@@ -43,6 +43,7 @@ from .utilities.arrays import parse_field_choice
 from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
+from .utilities.misc import _BoundsSizeMixin
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -55,6 +56,7 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
 
 class MultiBlock(
+    _BoundsSizeMixin,
     CompositeFilters,
     DataObject,
     MutableSequence,  # type: ignore[type-arg]
@@ -1972,6 +1974,8 @@ class MultiBlock(
 
         return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
+
     def insert(
         self: MultiBlock,
         index: int,
@@ -2143,7 +2147,7 @@ class MultiBlock(
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
 
         fmt += '</table>\n'
@@ -2173,7 +2177,7 @@ class MultiBlock(
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt.strip()
 

@@ -35,6 +35,7 @@ from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
@@ -42,8 +43,11 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from pyvista import Color
     from pyvista import DataSet
+    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -54,7 +58,7 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class DataSetFilters(DataObjectFilters):
+class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     @_deprecate_positional_args(allowed=['target'])
@@ -1175,7 +1179,7 @@ class DataSetFilters(DataObjectFilters):
         >>> threshed.plot(opacity=0.5, show_scalar_bar=False)
 
         """
-        from pyvista.core import _validation
+        from pyvista.core import _validation  # noqa: PLC0415
 
         _validation.check_range(radius, [0.0, 1.0], name='radius')
         dimensions_ = _validation.validate_array3(dimensions, name='dimensions')
@@ -1192,7 +1196,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         extent: VectorLike[float] | None = None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> PolyData:
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1714,7 +1718,7 @@ class DataSetFilters(DataObjectFilters):
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet | DataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
@@ -1746,7 +1750,7 @@ class DataSetFilters(DataObjectFilters):
             alg.SetSourceData(geoms[0])
         else:
             for index, subgeom in zip(indices, geoms):
-                alg.SetSourceData(index, subgeom)  # type: ignore[call-overload]
+                alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
                     alg.SetIndexModeToVector()
@@ -2301,7 +2305,7 @@ class DataSetFilters(DataObjectFilters):
         if inplace:
             try:
                 self.copy_from(output, deep=False)
-            except:
+            except TypeError:
                 pass
             else:
                 return self
@@ -3606,7 +3610,7 @@ class DataSetFilters(DataObjectFilters):
         See the :ref:`plot_over_line_example` example.
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
@@ -3689,7 +3693,11 @@ class DataSetFilters(DataObjectFilters):
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_multiple_lines(
-        ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
+        ...     [
+        ...         [-0.5, -0.5, 0],
+        ...         [0.5, -0.5, 0],
+        ...         [0.5, 0.5, 0],
+        ...     ]
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
@@ -3959,7 +3967,7 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
@@ -4100,7 +4108,7 @@ class DataSetFilters(DataObjectFilters):
         ... )  # doctest:+SKIP
 
         """
-        from matplotlib import pyplot as plt
+        from matplotlib import pyplot as plt  # noqa: PLC0415
 
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
@@ -4992,11 +5000,11 @@ class DataSetFilters(DataObjectFilters):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
         if values is not None:
-            value_names = value_names if value_names else [None] * len(values)
+            value_names = value_names or [None] * len(values)
             for name, val in zip(value_names, values):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
-            range_names = range_names if range_names else [None] * len(ranges)
+            range_names = range_names or [None] * len(ranges)
             for name, rng in zip(range_names, ranges):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
@@ -6948,7 +6956,7 @@ class DataSetFilters(DataObjectFilters):
                 result.cell_data[output_scalars] = packed_array
 
             # vtkPackLabels sets active scalars by default, so do the same here
-            result.set_active_scalars(output_scalars, preference=field)
+            result.set_active_scalars(output_scalars, preference=field)  # type: ignore[arg-type]
 
             return result
 
@@ -7236,10 +7244,10 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Lazy import since these are from plotting module
-        import matplotlib.colors
+        import matplotlib.colors  # noqa: PLC0415
 
-        from pyvista.core._validation.validate import _validate_color_sequence
-        from pyvista.plotting.colors import get_cmap_safe
+        from pyvista.core._validation.validate import _validate_color_sequence  # noqa: PLC0415
+        from pyvista.plotting.colors import get_cmap_safe  # noqa: PLC0415
 
         def _local_validate_color_sequence(
             seq: ColorLike | Sequence[ColorLike],
@@ -7360,7 +7368,7 @@ class DataSetFilters(DataObjectFilters):
                 keys_ = np.arange(n_colors)
                 values_ = color_rgb_sequence
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))  # type: ignore[assignment]
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
                     values_.extend(values_[::-1])
                 keys = keys_
                 values = values_
@@ -7467,7 +7475,7 @@ class DataSetFilters(DataObjectFilters):
         foreground_value : int, default: 1
             Foreground value of the generated mask.
 
-        reference_volume : pyvista.ImageData, optional
+        reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
 
@@ -7476,7 +7484,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
 
-        spacing : VectorLike[float], optional
+        spacing : float | VectorLike[float], optional
             Approximate spacing to use for the generated mask image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
@@ -7503,7 +7511,7 @@ class DataSetFilters(DataObjectFilters):
             #. Computing the distance between two random points in each cell.
             #. Inserting the distance into an ordered set to create the CDF.
 
-            Has no effect if ``dimension`` or ``reference_volume`` are specified.
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
             .. note::
                 This option is only available for VTK 9.2 or greater.
@@ -7518,7 +7526,7 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
             has dtype :class:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
@@ -7529,7 +7537,7 @@ class DataSetFilters(DataObjectFilters):
             Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
-        voxelize_volume
+        voxelize_rectilinear
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
         pyvista.ImageDataFilters.contour_labels
@@ -7540,7 +7548,7 @@ class DataSetFilters(DataObjectFilters):
             Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
             cells.
 
-        pyvista.ImageData
+        ImageData
             Class used to build custom ``reference_volume``.
 
         Examples
@@ -7768,15 +7776,11 @@ class DataSetFilters(DataObjectFilters):
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
-            bnds = surface.bounds
-            x_size = bnds.x_max - bnds.x_min
-            y_size = bnds.y_max - bnds.y_min
-            z_size = bnds.z_max - bnds.z_min
-            sizes = np.array((x_size, y_size, z_size))
+            size = np.array(surface.bounds_size)
 
             if dimensions is None:
                 rounding_func = np.round if rounding_func is None else rounding_func
-                initial_dimensions = sizes / initial_spacing
+                initial_dimensions = size / initial_spacing
                 # Make sure we don't round dimensions to zero, make it one instead
                 initial_dimensions[initial_dimensions < 1] = 1
                 dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
@@ -7788,11 +7792,11 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
-            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            reference_volume.dimensions = dimensions
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds
-            final_spacing = sizes / np.array(reference_volume.dimensions)
+            final_spacing = size / np.array(reference_volume.dimensions)
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
 
@@ -7821,7 +7825,6 @@ class DataSetFilters(DataObjectFilters):
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
         binary_mask['mask'] = scalars  # type: ignore[assignment]
-
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
@@ -7847,6 +7850,379 @@ class DataSetFilters(DataObjectFilters):
         output_volume.direction_matrix = reference_volume.direction_matrix
 
         return output_volume
+
+    def _voxelize_binary_mask_cells(  # type: ignore[misc]
+        self: DataSet,
+        *,
+        background_value: float = 0.0,
+        foreground_value: float = 1.0,
+        reference_volume: ImageData | None,
+        dimensions: VectorLike[int] | None,
+        spacing: float | VectorLike[float] | None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+        cell_length_percentile: float | None,
+        cell_length_sample_size: int | None,
+        progress_bar: bool,
+    ):
+        if dimensions is not None:
+            dimensions_ = _validation.validate_array3(
+                dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
+            )
+            dimensions = cast('NumpyArray[int]', dimensions_) - 1
+
+        binary_mask = self.voxelize_binary_mask(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+        return binary_mask.points_to_cells(dimensionality='3D', copy=False)
+
+    def voxelize_rectilinear(  # type: ignore[misc]
+        self: DataSet,
+        *,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
+        reference_volume: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        progress_bar: bool = False,
+    ) -> RectilinearGrid:
+        """Voxelize mesh to create a RectilinearGrid voxel volume.
+
+        The voxelization can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output grid's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        grid fits the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``1/100`` of the input mesh's length.
+
+        A point data array ``mask`` is included where points inside and outside of the
+        input surface are labelled with ``foreground_value`` and ``background_value``,
+        respectively.
+
+        .. versionadded:: 0.46
+
+        .. note::
+
+            This method is a wrapper around :meth:`voxelize_binary_mask`. See that
+            method for additional information.
+
+        Parameters
+        ----------
+        background_value : int, default: 0
+            Background value of the generated grid.
+
+        foreground_value : int, default: 1
+            Foreground value of the generated grid.
+
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, and ``spacing`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated rectilinear grid. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
+
+            .. note::
+
+                Dimensions is the number of points along each axis, not cells. Set
+                dimensions to ``N+1`` instead for ``N`` cells along each axis.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated grid. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        RectilinearGrid
+            RectilinearGrid as voxelized volume with discretized cells.
+
+        See Also
+        --------
+        voxelize
+            Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
+            :attr:`~pyvista.CellType.VOXEL` cells.
+
+        voxelize_binary_mask
+            Similar function that returns a :class:`~pyvista.ImageData` with point data.
+
+        Examples
+        --------
+        Create a voxel volume of a nut. By default, the spacing is automatically
+        estimated.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = pv.examples.load_nut()
+        >>> vox = mesh.voxelize_rectilinear()
+
+        Plot the mesh together with its volume.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+        >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+        >>> pl.show()
+
+        Load a mesh of a cow.
+
+        >>> mesh = examples.download_cow()
+
+        Create an equal density voxel volume and plot the result.
+
+        >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
+        >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+        >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
+
+        Slice the voxel volume to view the ``mask`` scalars.
+
+        >>> slices = vox.slice_orthogonal()
+        >>> slices.plot(scalars='mask', show_edges=True)
+
+        Create a voxel volume from unequal density dimensions and plot result.
+
+        >>> vox = mesh.voxelize_rectilinear(spacing=(0.15, 0.15, 0.5))
+        >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
+
+        Slice the unequal density voxel volume to view the ``mask`` scalars.
+
+        >>> slices = vox.slice_orthogonal()
+        >>> slices.plot(scalars='mask', show_edges=True, cpos=cpos)
+
+        """
+        voxel_cells = self._voxelize_binary_mask_cells(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+        return voxel_cells.cast_to_rectilinear_grid()
+
+    def voxelize(  # type: ignore[misc]
+        self: DataSet,
+        *,
+        reference_volume: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        progress_bar: bool = False,
+    ) -> UnstructuredGrid:
+        """Voxelize mesh to UnstructuredGrid.
+
+        The voxelization can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        mesh fits the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``1/100`` of the input mesh's length.
+
+        .. versionadded:: 0.46
+
+        .. note::
+
+            This method is a wrapper around :meth:`voxelize_binary_mask`. See that
+            method for additional information.
+
+        Parameters
+        ----------
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            and ``spacing`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the voxelized mesh. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
+
+            .. note::
+
+                Dimensions is the number of points along each axis, not cells. Set
+                dimensions to ``N+1`` instead for ``N`` cells along each axis.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated mesh. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``dimensions`` is specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimensions`` is specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        UnstructuredGrid
+            Voxelized unstructured grid of the original mesh.
+
+        See Also
+        --------
+        voxelize_rectilinear
+            Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
+
+        voxelize_binary_mask
+            Similar function that returns a :class:`~pyvista.ImageData` with point data.
+
+        Examples
+        --------
+        Create a voxelized mesh with uniform spacing.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> vox = mesh.voxelize(spacing=0.01)
+        >>> vox.plot(show_edges=True)
+
+        Create a voxelized mesh using non-uniform spacing.
+
+        >>> vox = mesh.voxelize(spacing=(0.01, 0.005, 0.002))
+        >>> vox.plot(show_edges=True)
+
+        The bounds of the voxelized mesh always match the bounds of the input.
+
+        >>> mesh.bounds
+        BoundsTuple(x_min = -0.13155962526798248,
+                    x_max =  0.18016336858272552,
+                    y_min = -0.12048563361167908,
+                    y_max =  0.18769524991512299,
+                    z_min = -0.14300920069217682,
+                    z_max =  0.09850578755140305)
+
+        >>> vox.bounds
+        BoundsTuple(x_min = -0.13155962526798248,
+                    x_max =  0.18016336858272552,
+                    y_min = -0.12048563361167908,
+                    y_max =  0.18769524991512299,
+                    z_min = -0.14300920069217682,
+                    z_max =  0.09650979936122894)
+
+        Create a voxelized mesh with ``3 x 4 x 5`` cells. Since ``dimensions`` is the
+        number of points, not cells, we need to add ``1`` to get the number of desired cells.
+
+        >>> mesh = pv.Box()
+        >>> cell_dimensions = np.array((3, 4, 5))
+        >>> vox = mesh.voxelize(dimensions=cell_dimensions + 1)
+        >>> vox.plot(show_edges=True)
+
+        """
+        voxel_cells = self._voxelize_binary_mask_cells(
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+        ugrid = voxel_cells.threshold(0.5)
+        del ugrid.cell_data['mask']
+        return ugrid
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):

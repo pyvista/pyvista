@@ -213,7 +213,7 @@ class _PointSet(DataSet):
 
         """
         if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)  # type: ignore[assignment]
+            self.points = self.points.astype(np.double)
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
@@ -258,7 +258,7 @@ class _PointSet(DataSet):
 
         """
         if inplace:
-            self.points += np.asarray(xyz)  # type: ignore[misc]
+            self.points += np.asarray(xyz)
             return self
         return pyvista.DataObjectFilters.translate(
             self,
@@ -413,14 +413,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
     @wraps(DataSet.plot)  # type: ignore[has-type]
-    def plot(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
     @wraps(PolyDataFilters.threshold)  # type: ignore[has-type]
-    def threshold(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -428,7 +428,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.threshold_percent)  # type:ignore[has-type]
-    def threshold_percent(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -438,7 +438,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         )
 
     @wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -447,7 +447,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.delaunay_3d)  # type: ignore[has-type]
-    def delaunay_3d(self, *args, **kwargs):  # numpydoc ignore=RT01
+    def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
@@ -756,7 +756,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """
 
     _USE_STRICT_N_FACES = False
-    _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS: ClassVar[
         dict[
@@ -872,8 +871,6 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
                     PyVistaDeprecationWarning,
                 )
-
-        self._glyph_geom = None
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
@@ -1408,19 +1405,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         if PolyData._USE_STRICT_N_FACES:
             return self.n_faces_strict
 
-        # Only issue the deprecated n_faces warning the first time it's used
-        if not PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES:
-            PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = True
-
-            # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
-            warnings.warn(
-                """The current behavior of `pv.PolyData.n_faces` has been deprecated.
-                Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead.
-                See the documentation in '`pv.PolyData.n_faces` for more information.""",
-                PyVistaDeprecationWarning,
-            )
-
-        return self.n_cells
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.49.0
+        msg = (
+            'The non-strict behavior of `pv.PolyData.n_faces` has been removed. '
+            'Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead. '
+            'See the documentation in `pv.PolyData.n_faces` for more information.'
+        )
+        raise AttributeError(msg)
 
     @property
     def n_faces_strict(self) -> int:  # numpydoc ignore=RT01
@@ -1684,7 +1675,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return self.cell_normals
 
     @property
-    def obbTree(self):  # noqa: N802  # numpydoc ignore=RT01
+    def obbTree(self) -> _vtk.vtkOBBTree:  # noqa: N802  # numpydoc ignore=RT01
         """Return the obbTree of the polydata.
 
         An obbTree is an object to generate oriented bounding box (OBB)
@@ -1693,12 +1684,10 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
         """
-        if not hasattr(self, '_obbTree'):
-            self._obbTree = _vtk.vtkOBBTree()
-            self._obbTree.SetDataSet(self)
-            self._obbTree.BuildLocator()
-
-        return self._obbTree
+        obb_tree = _vtk.vtkOBBTree()
+        obb_tree.SetDataSet(self)
+        obb_tree.BuildLocator()
+        return obb_tree
 
     @property
     def n_open_edges(self) -> int:  # numpydoc ignore=RT01
@@ -1750,8 +1739,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
     def __del__(self) -> None:
         """Delete the object."""
-        if hasattr(self, '_obbTree'):
-            del self._obbTree
+        # avoid a reference cycle that can't be resolved with vtkPolyData
         self._glyph_geom = None
 
 
@@ -2222,7 +2210,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             return convert_array(faces.GetData())
 
     @property
-    def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
+    def cells_dict(self) -> dict[np.uint8, NumpyArray[int]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -2271,8 +2259,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return a the vtk cell connectivity as a numpy array.
+    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
         padding.
@@ -2306,10 +2294,12 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         Converts the following cell types to their linear equivalents.
 
-        - ``QUADRATIC_TETRA      --> TETRA``
-        - ``QUADRATIC_PYRAMID    --> PYRAMID``
-        - ``QUADRATIC_WEDGE      --> WEDGE``
-        - ``QUADRATIC_HEXAHEDRON --> HEXAHEDRON``
+        - :attr:`~pyvista.CellType.QUADRATIC_TRIANGLE`   --> :attr:`~pyvista.CellType.TRIANGLE`
+        - :attr:`~pyvista.CellType.QUADRATIC_QUAD`       --> :attr:`~pyvista.CellType.QUAD`
+        - :attr:`~pyvista.CellType.QUADRATIC_TETRA`      --> :attr:`~pyvista.CellType.TETRA`
+        - :attr:`~pyvista.CellType.QUADRATIC_PYRAMID`    --> :attr:`~pyvista.CellType.PYRAMID`
+        - :attr:`~pyvista.CellType.QUADRATIC_WEDGE`      --> :attr:`~pyvista.CellType.WEDGE`
+        - :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` --> :attr:`~pyvista.CellType.HEXAHEDRON`
 
         Parameters
         ----------
@@ -2341,10 +2331,15 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         quad_tri_mask = celltype == CellType.QUADRATIC_TRIANGLE
         celltype[quad_tri_mask] = CellType.TRIANGLE
 
-        vtk_offset = self.GetCellLocationsArray()
         cells = _vtk.vtkCellArray()
         cells.DeepCopy(self._get_cells())
-        lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
+        if pyvista.vtk_version_info >= (9, 5):
+            face_locations = self.GetPolyhedronFaceLocations()
+            faces = self.GetPolyhedronFaces()
+            lgrid.SetPolyhedralCells(vtk_cell_type, cells, face_locations, faces)
+        else:
+            vtk_offset = self.GetCellLocationsArray()
+            lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):
@@ -2602,7 +2597,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput  # type: ignore[assignment]
+            self.points = uinput
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -2924,7 +2919,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             for key in s1:
                 grid.cell_data.pop(key, None)
 
-        return grid  # type: ignore[return-value]
+        return grid
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
@@ -3113,7 +3108,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             raise ValueError(msg)
 
         else:
-            n_cells = np.prod([n - 1 for n in dims])
+            n_cells = np.prod([n - 1 for n in dims])  # type: ignore[arg-type]
 
         if isinstance(cells, dict):
             celltypes = list(cells)
@@ -3408,7 +3403,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
-        dims = np.diff(dims, axis=1)  # type: ignore[assignment]
+        dims = np.diff(dims, axis=1)
         dims = dims.flatten() + 1  # type: ignore[assignment]
         return int(dims[0]), int(dims[1]), int(dims[2])
 
@@ -3537,7 +3532,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             coords = tuple(coords)
         dims = self._dimensions()
         try:
-            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore[call-overload]
+            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')
         except ValueError:
             return None
         else:

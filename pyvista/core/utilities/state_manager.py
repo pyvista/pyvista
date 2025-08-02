@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
+class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
     """Abstract base class for managing a global state variable.
 
     Subclasses must:
@@ -113,7 +113,7 @@ class _StateManager(contextlib.AbstractContextManager[None], Generic[T], ABC):
 
     @final
     def _validate_state(self, state: T) -> T:
-        from pyvista import _validation
+        from pyvista import _validation  # noqa: PLC0415
 
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
@@ -298,13 +298,13 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
     @property
     def _state(self) -> _VtkSnakeCaseOptions:
-        import pyvista as pv
+        import pyvista as pv  # noqa: PLC0415
 
         return pv._VTK_SNAKE_CASE_STATE
 
     @_state.setter
     def _state(self, state: _VtkSnakeCaseOptions) -> None:
-        import pyvista as pv
+        import pyvista as pv  # noqa: PLC0415
 
         pv._VTK_SNAKE_CASE_STATE = state
 

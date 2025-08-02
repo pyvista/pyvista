@@ -18,7 +18,6 @@ import vtk
 
 import pyvista as pv
 from pyvista.core.errors import MissingDataError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 
@@ -88,17 +87,17 @@ def test_plotter_anti_aliasing_raises():
         pl.enable_anti_aliasing(aa_type='foo')
 
 
-def test_plotter_store_mouse_position_raises(monkeypatch: pytest.MonkeyPatch):
+def test_plotter_store_mouse_position_raises():
     pl = pv.Plotter()
-    monkeypatch.delattr(pl, 'iren')
+    pl.iren = None
     with pytest.raises(
-        AttributeError,
+        RuntimeError,
         match='This plotting window is not interactive.',
     ):
         pl.store_mouse_position()
 
     with pytest.raises(
-        AttributeError,
+        RuntimeError,
         match='This plotting window is not interactive.',
     ):
         pl.store_click_position()
@@ -815,19 +814,6 @@ def test_plotter_zoom_camera():
 def test_plotter_reset_key_events():
     pl = pv.Plotter()
     pl.reset_key_events()
-
-
-def test_plotter_update_coordinates(sphere):
-    with pytest.warns(PyVistaDeprecationWarning):
-        pl = pv.Plotter()
-        pl.add_mesh(sphere)
-        pl.update_coordinates(sphere.points * 2.0)
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
 
 @pytest.mark.usefixtures('global_variables_reset')

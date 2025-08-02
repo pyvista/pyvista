@@ -344,7 +344,7 @@ def apply_transformation_to_points(
 
     # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
     # that the matrices to be multiplied lie in the last two dimensions.
-    points_2 = (transformation[np.newaxis, :, :] @ points_2.T)[0, :3, :].T  # type: ignore[assignment]
+    points_2 = (transformation[np.newaxis, :, :] @ points_2.T)[0, :3, :].T
 
     # If inplace, set the points
     if inplace:

@@ -27,6 +27,7 @@ from .utilities.fileio import read
 from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
+from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -46,7 +47,7 @@ USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
-class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
+class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters
@@ -194,7 +195,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                     )
                     raise TypeError(msg)
 
-            supported_block_types = [
+            supported_block_types: list[type] = [
                 pyvista.PolyData,
                 pyvista.UnstructuredGrid,
                 type(None),
@@ -356,7 +357,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
             for attr in self._get_attrs():
                 try:
                     fmt += row.format(attr[0], attr[2].format(*attr[1]))
-                except:
+                except TypeError:
                     fmt += row.format(attr[0], attr[2].format(attr[1]))
             if hasattr(self, 'n_arrays'):
                 fmt += row.format('N Arrays', self.n_arrays)
@@ -381,7 +382,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
-            except:
+            except TypeError:
                 fmt += row.format(attr[0] + ':', attr[2].format(attr[1]))
         if hasattr(self, 'n_arrays'):
             fmt += row.format('N Arrays:', self.n_arrays)
@@ -483,6 +484,8 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
                     return False
 
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @_deprecate_positional_args(allowed=['array', 'name'])
     def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
@@ -719,7 +722,7 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
 
         if not hasattr(self, '_user_dict'):
             # Init
-            self._user_dict = _SerializedDictArray()
+            object.__setattr__(self, '_user_dict', _SerializedDictArray())
 
         if USER_DICT_KEY in field_data.keys():
             if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
@@ -1005,6 +1008,6 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         self.copy_attributes(mesh)  # type: ignore[arg-type]
 
     @property
+    @abstractmethod
     def is_empty(self) -> bool:
         """Return ``True`` if the object is empty."""
-        raise NotImplementedError

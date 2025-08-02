@@ -1232,7 +1232,7 @@ def test_nek5000_reader():
     nek_reader = pv.get_reader(filename)
 
     # test time routines
-    ## Check correct number of time points
+    # Check correct number of time points
     ntimes = 11
     dt = 0.01
     assert nek_reader.number_time_points == ntimes, 'Checks number of time points'
@@ -1240,7 +1240,7 @@ def test_nek5000_reader():
 
     assert nek_reader.time_values == [dt * i for i in range(ntimes)]
 
-    ## check setting and getting of time points and times
+    # check setting and getting of time points and times
     for i in range(ntimes):
         nek_reader.set_active_time_point(i)
         assert nek_reader.active_time_point == i, 'check time point set'
@@ -1291,7 +1291,7 @@ def test_nek5000_reader():
     with pytest.raises(AttributeError):
         nek_reader.disable_all_cell_arrays()
 
-    ## check enabling and disabling of point arrays
+    # check enabling and disabling of point arrays
     for name in nek_reader.point_array_names:
         # Should be enabled by default
         assert nek_reader.point_array_status(name)
@@ -1409,7 +1409,7 @@ def test_exodus_reader_core():
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
 
-    ## check enabling of displacements (To match functionality
+    # check enabling of displacements (To match functionality
     # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
@@ -1418,7 +1418,7 @@ def test_exodus_reader_core():
     e_reader.disable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 0
 
-    ## check number of cell and point arrays and their names
+    # check number of cell and point arrays and their names
     assert e_reader.number_point_arrays == 2
     assert e_reader.number_cell_arrays == 1
 
@@ -1426,7 +1426,7 @@ def test_exodus_reader_core():
 
     assert 'aux_elem' in e_reader.cell_array_names
 
-    ## check enabling and disabling of point arrays
+    # check enabling and disabling of point arrays
     for name in e_reader.point_array_names:
         # Should be enabled by default
         assert e_reader.point_array_status(name)
@@ -1437,7 +1437,7 @@ def test_exodus_reader_core():
         e_reader.enable_point_array(name)
         assert e_reader.point_array_status(name)
 
-    ## check enabling and disabling of cell arrays
+    # check enabling and disabling of cell arrays
     for name in e_reader.cell_array_names:
         # Should be enabled by default
         assert e_reader.cell_array_status(name)
@@ -1473,13 +1473,13 @@ def test_exodus_reader_core():
     ntimes = 21
     dt = 0.1
 
-    ## check correct number of time points
+    # check correct number of time points
     assert e_reader.number_time_points == ntimes, 'Checks number of time points'
     assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
 
     assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
 
-    ## check setting and getting of time points and times
+    # check setting and getting of time points and times
     for i in range(ntimes):
         e_reader.set_active_time_point(i)
         assert e_reader.reader.GetTimeStep() == i, 'check time point set'
@@ -1507,7 +1507,7 @@ def test_exodus_reader_core():
     with pytest.raises(ValueError, match=err_msg):
         e_reader.set_active_time_value(1.25)
 
-    ## check read with point and cell arrays present
+    # check read with point and cell arrays present
     multiblock = e_reader.read()
 
     unstruct = multiblock[0][0]

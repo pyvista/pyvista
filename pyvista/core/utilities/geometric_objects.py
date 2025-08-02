@@ -298,7 +298,7 @@ def CylinderStructured(  # noqa: PLR0917
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
-    zz = np.full((X.size, z_resolution), dz)  # type:ignore[assignment]
+    zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')  # type: ignore[arg-type]
 
@@ -308,7 +308,7 @@ def CylinderStructured(  # noqa: PLR0917
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Center at origin
-    grid.points -= np.array(grid.center)  # type: ignore[misc]
+    grid.points -= np.array(grid.center)
 
     # rotate initially to face +X direction
     grid.rotate_y(90, inplace=True)
@@ -387,7 +387,7 @@ def Arrow(  # noqa: PLR0917
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
     if isinstance(scale, (float, int)):
-        surf.points *= scale  # type: ignore[misc]
+        surf.points *= scale
     elif scale is not None:
         msg = "Scale must be either float, int or 'auto'."  # type: ignore[unreachable]
         raise TypeError(msg)
@@ -957,10 +957,10 @@ def SolidSphereGeneric(  # noqa: PLR0917
             cells.append(5)
             cells.extend(
                 [
-                    _index(0, iphi, itheta),  # type:ignore[arg-type]
-                    _index(0, iphi, itheta + 1),  # type:ignore[arg-type]
-                    _index(0, iphi + 1, itheta + 1),  # type:ignore[arg-type]
-                    _index(0, iphi + 1, itheta),  # type:ignore[arg-type]
+                    _index(0, iphi, itheta),
+                    _index(0, iphi, itheta + 1),
+                    _index(0, iphi + 1, itheta + 1),
+                    _index(0, iphi + 1, itheta),
                     0,
                 ],
             )
@@ -1011,14 +1011,14 @@ def SolidSphereGeneric(  # noqa: PLR0917
         cells.append(8)
         cells.extend(
             [
-                _index(ir, iphi, itheta),  # type:ignore[arg-type]
-                _index(ir, iphi + 1, itheta),  # type:ignore[arg-type]
-                _index(ir, iphi + 1, itheta + 1),  # type:ignore[arg-type]
-                _index(ir, iphi, itheta + 1),  # type:ignore[arg-type]
-                _index(ir + 1, iphi, itheta),  # type:ignore[arg-type]
-                _index(ir + 1, iphi + 1, itheta),  # type:ignore[arg-type]
-                _index(ir + 1, iphi + 1, itheta + 1),  # type:ignore[arg-type]
-                _index(ir + 1, iphi, itheta + 1),  # type:ignore[arg-type]
+                _index(ir, iphi, itheta),
+                _index(ir, iphi + 1, itheta),
+                _index(ir, iphi + 1, itheta + 1),
+                _index(ir, iphi, itheta + 1),
+                _index(ir + 1, iphi, itheta),
+                _index(ir + 1, iphi + 1, itheta),
+                _index(ir + 1, iphi + 1, itheta + 1),
+                _index(ir + 1, iphi, itheta + 1),
             ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
@@ -1033,8 +1033,8 @@ def SolidSphereGeneric(  # noqa: PLR0917
 def Plane(  # noqa: PLR0917
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    i_size: int = 1,
-    j_size: int = 1,
+    i_size: float = 1.0,
+    j_size: float = 1.0,
     i_resolution: int = 10,
     j_resolution: int = 10,
 ) -> PolyData:
@@ -1758,9 +1758,9 @@ def CircularArc(  # noqa: PLR0917
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
-    pointb = list(pointb)  # type: ignore[assignment]
-    pointb[0] -= 1e-10  # type: ignore[index]
-    pointb[1] -= 1e-10  # type: ignore[index]
+    pointb = list(pointb)
+    pointb[0] -= 1e-10
+    pointb[1] -= 1e-10
 
     arc = _vtk.vtkArcSource()
     arc.SetPoint1(*pointa)
@@ -2297,7 +2297,7 @@ def PlatonicSolid(
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
     solid.scale(radius, inplace=True)
-    solid.points += np.asanyarray(center) - solid.center  # type: ignore[misc]
+    solid.points += np.asanyarray(center) - solid.center
     return solid
 
 

@@ -51,8 +51,6 @@ def __getattr__(name):
         pyvista.utilities.
 
     """
-    from pyvista.core.errors import PyVistaDeprecationWarning
-
     try:
         return globals()[name]
     except KeyError:
@@ -73,6 +71,8 @@ def __getattr__(name):
         f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported '
         f'as: `{import_path}`.'
     )
+
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
     warnings.warn(
         message,

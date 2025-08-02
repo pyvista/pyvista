@@ -143,11 +143,9 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     n_points = len(points)
     n_lines = n_points // 2
     lines = np.c_[
-        (
-            2 * np.ones(n_lines, np.int_),
-            np.arange(0, n_points - 1, step=2),
-            np.arange(1, n_points + 1, step=2),
-        )
+        2 * np.ones(n_lines, np.int_),
+        np.arange(0, n_points - 1, step=2),
+        np.arange(1, n_points + 1, step=2),
     ]
     poly = pyvista.PolyData()
     poly.points = points
@@ -192,7 +190,7 @@ def lines_from_points(
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     if close:
-        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)  # type: ignore[assignment]
+        cells = np.append(cells, [[2, len(points) - 1, 0]], axis=0)
     poly.lines = cells
     return poly
 
@@ -364,9 +362,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     )
 
     # Fit plane to xyz-aligned mesh
-    aligned_bnds = aligned.bounds
-    i_size = aligned_bnds.x_max - aligned_bnds.x_min
-    j_size = aligned_bnds.y_max - aligned_bnds.y_min
+    i_size, j_size, _ = aligned.bounds_size
     plane = pyvista.Plane(
         i_size=i_size,
         j_size=j_size,

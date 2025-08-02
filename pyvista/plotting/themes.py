@@ -131,7 +131,7 @@ def set_plot_theme(theme):
     >>> pv.set_plot_theme('paraview')
 
     """
-    import pyvista
+    import pyvista  # noqa: PLC0415
 
     if isinstance(theme, str):
         theme = theme.lower()
@@ -155,7 +155,7 @@ class _ForceSlots(type):
     """Metaclass to force classes and subclasses to have __slots__."""
 
     @classmethod
-    def __prepare__(cls, name, bases, **kwargs):
+    def __prepare__(cls, name, bases, **kwargs):  # type: ignore[override]
         super_prepared = super().__prepare__(cls, name, bases, **kwargs)  # type: ignore[arg-type, call-arg, misc]
         super_prepared['__slots__'] = ()
         return super_prepared
@@ -211,6 +211,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 return False
 
         return True
+
+    __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     def __getitem__(self, key):
         """Get a value via a key.
@@ -1366,9 +1368,9 @@ class _SliderConfig(_ThemeConfig):
         self._classic.name = 'classic'
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'  # type: ignore[assignment]
+        self._classic.slider_color = 'gray'
         self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'  # type: ignore[assignment]
+        self._classic.tube_color = 'white'
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
@@ -1377,9 +1379,9 @@ class _SliderConfig(_ThemeConfig):
         self._modern.name = 'modern'
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
-        self._modern.slider_color = (110, 113, 117)  # type: ignore[assignment]
+        self._modern.slider_color = (110, 113, 117)
         self._modern.tube_width = 0.04
-        self._modern.tube_color = (178, 179, 181)  # type: ignore[assignment]
+        self._modern.tube_color = (178, 179, 181)
         self._modern.cap_opacity = 0
         self._modern.cap_length = 0.01
         self._modern.cap_width = 0.02
@@ -2127,7 +2129,7 @@ class Theme(_ThemeConfig):
 
     @jupyter_backend.setter
     def jupyter_backend(self, backend: str):
-        from pyvista.jupyter import _validate_jupyter_backend
+        from pyvista.jupyter import _validate_jupyter_backend  # noqa: PLC0415
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
 
@@ -3324,16 +3326,16 @@ class DarkTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'dark'
-        self.background = 'black'  # type: ignore[assignment]
+        self.background = 'black'
         self.cmap = 'viridis'
-        self.font.color = 'white'  # type: ignore[assignment]
+        self.font.color = 'white'
         self.show_edges = False
-        self.color = 'lightblue'  # type: ignore[assignment]
-        self.outline_color = 'white'  # type: ignore[assignment]
-        self.edge_color = 'white'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
-        self.axes.z_color = 'blue'  # type: ignore[assignment]
+        self.color = 'lightblue'
+        self.outline_color = 'white'
+        self.edge_color = 'white'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class ParaViewTheme(Theme):
@@ -3357,18 +3359,18 @@ class ParaViewTheme(Theme):
         """Initialize theme."""
         super().__init__()
         self.name = 'paraview'
-        self.background = 'paraview'  # type: ignore[assignment]
+        self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
         self.font.label_size = 16
-        self.font.color = 'white'  # type: ignore[assignment]
+        self.font.color = 'white'
         self.show_edges = False
-        self.color = 'white'  # type: ignore[assignment]
-        self.outline_color = 'white'  # type: ignore[assignment]
-        self.edge_color = 'black'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'gold'  # type: ignore[assignment]
-        self.axes.z_color = 'green'  # type: ignore[assignment]
+        self.color = 'white'
+        self.outline_color = 'white'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'gold'
+        self.axes.z_color = 'green'
 
 
 class DocumentTheme(Theme):
@@ -3402,19 +3404,19 @@ class DocumentTheme(Theme):
         """Initialize the theme."""
         super().__init__()
         self.name = 'document'
-        self.background = 'white'  # type: ignore[assignment]
+        self.background = 'white'
         self.cmap = 'viridis'
         self.font.size = 18
         self.font.title_size = 18
         self.font.label_size = 18
-        self.font.color = 'black'  # type: ignore[assignment]
+        self.font.color = 'black'
         self.show_edges = False
-        self.color = 'lightblue'  # type: ignore[assignment]
-        self.outline_color = 'black'  # type: ignore[assignment]
-        self.edge_color = 'black'  # type: ignore[assignment]
-        self.axes.x_color = 'tomato'  # type: ignore[assignment]
-        self.axes.y_color = 'seagreen'  # type: ignore[assignment]
-        self.axes.z_color = 'blue'  # type: ignore[assignment]
+        self.color = 'lightblue'
+        self.outline_color = 'black'
+        self.edge_color = 'black'
+        self.axes.x_color = 'tomato'
+        self.axes.y_color = 'seagreen'
+        self.axes.z_color = 'blue'
 
 
 class DocumentProTheme(DocumentTheme):

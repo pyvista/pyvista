@@ -221,10 +221,10 @@ def compare_images(  # noqa: PLR0917
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData
-    from pyvista import Plotter
-    from pyvista import read
-    from pyvista import wrap
+    from pyvista import ImageData  # noqa: PLC0415
+    from pyvista import Plotter  # noqa: PLC0415
+    from pyvista import read  # noqa: PLC0415
+    from pyvista import wrap  # noqa: PLC0415
 
     def to_img(img):
         if isinstance(img, ImageData):  # pragma: no cover

@@ -5,14 +5,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 import os
 import sys
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-
-from .helpers import wrap
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.helpers import wrap
 
 
 def _padded_bins(mesh, density):
@@ -56,6 +57,10 @@ def voxelize(  # noqa: PLR0917
 ):
     """Voxelize mesh to UnstructuredGrid.
 
+    .. deprecated:: 0.46
+
+        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize` instead.
+
     Parameters
     ----------
     mesh : pyvista.DataSet
@@ -93,7 +98,7 @@ def voxelize(  # noqa: PLR0917
 
     See Also
     --------
-    pyvista.voxelize_volume
+    pyvista.DataSetFilters.voxelize_rectilinear
         Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
     pyvista.DataSetFilters.voxelize_binary_mask
@@ -105,46 +110,78 @@ def voxelize(  # noqa: PLR0917
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = examples.download_bunny_coarse().clean()
-    >>> vox = pv.voxelize(mesh, density=0.01)
-    >>> vox.plot(show_edges=True)
+    >>> mesh = examples.download_bunny_coarse().clean()  # doctest:+SKIP
+    >>> vox = pv.voxelize(mesh, density=0.01)  # doctest:+SKIP
+    >>> vox.plot(show_edges=True)  # doctest:+SKIP
 
     Create a voxelized mesh using unequal density dimensions.
 
-    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
-    >>> vox.plot(show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])  # doctest:+SKIP
+    >>> vox.plot(show_edges=True)  # doctest:+SKIP
 
     Create an equal density voxel volume without enclosing input mesh.
 
-    >>> vox = pv.voxelize(mesh, density=0.01)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=0.01)  # doctest:+SKIP
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest:+SKIP
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)  # doctest:+SKIP
 
     Create an equal density voxel volume enclosing input mesh.
 
-    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)  # doctest:+SKIP
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest:+SKIP
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)  # doctest:+SKIP
 
     Create a voxelized mesh that does not fit the input mesh's bounds. Notice the
     cropped rectangular box.
 
-    >>> mesh = pv.Cube(x_length=0.25)
-    >>> vox = pv.voxelize(mesh=mesh, density=0.2)
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
-    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
-    >>> pl.show()
+    >>> mesh = pv.Cube(x_length=0.25)  # doctest:+SKIP
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2)  # doctest:+SKIP
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')  # doctest:+SKIP
+    >>> _ = pl.add_mesh(
+    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
+    ... )  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
     now complete. Notice that the voxel size was updated to fit the bounds in the first
     direction.
 
-    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
-    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
-    >>> pl.show()
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)  # doctest:+SKIP
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')  # doctest:+SKIP
+    >>> _ = pl.add_mesh(
+    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
+    ... )  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
+
+    """
+    # Deprecated on v0.46.0, estimated removal on v0.49.0
+    warnings.warn(
+        '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
+        PyVistaDeprecationWarning,
+    )
+    return _voxelize_legacy(
+        mesh=mesh,
+        density=density,
+        check_surface=check_surface,
+        enclosed=enclosed,
+        fit_bounds=fit_bounds,
+    )
+
+
+def _voxelize_legacy(
+    mesh,
+    *,
+    density=None,
+    check_surface: bool = True,
+    enclosed: bool = False,
+    fit_bounds: bool = False,
+):
+    """Voxelize mesh to UnstructuredGrid.
+
+    The public `voxelize` function is deprecated but we need to keep it for
+    generating the PyVista logo.
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
@@ -202,7 +239,7 @@ def voxelize(  # noqa: PLR0917
         # Normalise cells to unit size
         ugrid_norm = ugrid.copy()
         surface_norm = surface.copy()
-        ugrid_norm.points /= np.array(density)  # type: ignore[misc]
+        ugrid_norm.points /= np.array(density)
         surface_norm.points /= np.array(density)
         # Select cells if they're within one unit of the surface
         ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
@@ -233,6 +270,11 @@ def voxelize_volume(  # noqa: PLR0917
     Creates a voxel volume that encloses the input mesh and discretizes the cells
     within the volume that intersect or are contained within the input mesh.
     ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
+
+    .. deprecated:: 0.46
+
+        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_rectilinear`
+        instead.
 
     Parameters
     ----------
@@ -266,7 +308,7 @@ def voxelize_volume(  # noqa: PLR0917
 
     See Also
     --------
-    pyvista.voxelize
+    pyvista.DataSetFilters.voxelize
         Similar function that returns a :class:`pyvista.UnstructuredGrid` of
         :attr:`~pyvista.CellType.VOXEL` cells.
 
@@ -285,59 +327,75 @@ def voxelize_volume(  # noqa: PLR0917
     Load file from PyVista examples.
 
     >>> from pyvista import examples
-    >>> mesh = examples.download_cow()
+    >>> mesh = examples.download_cow()  # doctest:+SKIP
 
     Create an equal density voxel volume and plot the result.
 
-    >>> vox = pv.voxelize_volume(mesh, density=0.15)
-    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
-    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+    >>> vox = pv.voxelize_volume(mesh, density=0.15)  # doctest:+SKIP
+    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]  # doctest:+SKIP
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)  # doctest:+SKIP
 
     Slice the voxel volume to view ``InsideMesh``.
 
-    >>> slices = vox.slice_orthogonal()
-    >>> slices.plot(scalars='InsideMesh', show_edges=True)
+    >>> slices = vox.slice_orthogonal()  # doctest:+SKIP
+    >>> slices.plot(scalars='InsideMesh', show_edges=True)  # doctest:+SKIP
 
     Create a voxel volume from unequal density dimensions and plot result.
 
-    >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
-    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+    >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])  # doctest:+SKIP
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)  # doctest:+SKIP
 
     Slice the unequal density voxel volume to view ``InsideMesh``.
 
-    >>> slices = vox.slice_orthogonal()
-    >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+    >>> slices = vox.slice_orthogonal()  # doctest:+SKIP
+    >>> slices.plot(
+    ...     scalars='InsideMesh', show_edges=True, cpos=cpos
+    ... )  # doctest:+SKIP
 
     Create an equal density voxel volume without enclosing input mesh.
 
-    >>> vox = pv.voxelize_volume(mesh, density=0.15)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+    >>> vox = pv.voxelize_volume(mesh, density=0.15)  # doctest:+SKIP
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest:+SKIP
+    >>> vox.plot(
+    ...     scalars='SelectedPoints', show_edges=True, cpos=cpos
+    ... )  # doctest:+SKIP
 
     Create an equal density voxel volume enclosing input mesh.
 
-    >>> vox = pv.voxelize_volume(mesh, density=0.15, enclosed=True)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+    >>> vox = pv.voxelize_volume(
+    ...     mesh, density=0.15, enclosed=True
+    ... )  # doctest:+SKIP
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest:+SKIP
+    >>> vox.plot(
+    ...     scalars='SelectedPoints', show_edges=True, cpos=cpos
+    ... )  # doctest:+SKIP
 
     Create an equal density voxel volume that does not fit the input mesh's bounds.
 
-    >>> mesh = pv.examples.load_nut()
-    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5)
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
-    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
-    >>> pl.show()
+    >>> mesh = pv.examples.load_nut()  # doctest:+SKIP
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5)  # doctest:+SKIP
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)  # doctest:+SKIP
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     Create an equal density voxel volume that fits the input mesh's bounds.
 
-    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5, fit_bounds=True)
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
-    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
-    >>> pl.show()
+    >>> vox = pv.voxelize_volume(
+    ...     mesh=mesh, density=2.5, fit_bounds=True
+    ... )  # doctest:+SKIP
+    >>> pl = pv.Plotter()  # doctest:+SKIP
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)  # doctest:+SKIP
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
 
     """
+    # Deprecated on v0.46.0, estimated removal on v0.49.0
+    warnings.warn(
+        '`pyvista.voxelize_volume` is deprecated. Use '
+        '`pyvista.DataSetFilters.voxelize_rectilinear` instead.',
+        PyVistaDeprecationWarning,
+    )
     mesh = wrap(mesh)
     if density is None:
         density = mesh.length / 100
@@ -741,7 +799,7 @@ def sample_function(  # noqa: PLR0917
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
     compute_normals: bool = False,  # noqa: FBT001, FBT002
-    output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
+    output_type: np.dtype = np.double,  # type: ignore[assignment]
     capping: bool = False,  # noqa: FBT001, FBT002
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
@@ -836,7 +894,7 @@ def sample_function(  # noqa: PLR0917
 
     """
     # internal import to avoide circular dependency
-    from pyvista.core.filters import _update_alg
+    from pyvista.core.filters import _update_alg  # noqa: PLC0415
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)

@@ -140,7 +140,7 @@ def create_axes_marker(  # noqa: PLR0917
     tip_length=0.2,
     ambient=0.5,
     label_size=(0.25, 0.1),
-):
+) -> _vtk.vtkAxesActor:
     """Create an axis actor.
 
     Parameters
@@ -669,7 +669,7 @@ def opacity_transfer_function(  # noqa: PLR0917
                 if not interpolate:
                     msg = 'No interpolation.'
                     raise ValueError(msg)
-                from scipy.interpolate import interp1d
+                from scipy.interpolate import interp1d  # noqa: PLC0415
 
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
@@ -747,7 +747,7 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib as mpl
+    import matplotlib as mpl  # noqa: PLC0415
 
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):

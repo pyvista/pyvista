@@ -10,12 +10,13 @@ import numpy as np
 
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
 from .renderer import Renderer
 
 
-class Renderers:
+class Renderers(_NoNewAttrMixin):
     """Organize Renderers for ``pyvista.Plotter``.
 
     Parameters
@@ -203,7 +204,7 @@ class Renderers:
                         if self.loc_to_group((i, j)) is not None:
                             msg = f'Groups cannot overlap. Overlap found at position {(i, j)}.'
                             raise ValueError(msg)
-                    self.groups = np.concatenate(  # type: ignore[assignment]
+                    self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)),
                         axis=0,
                     )

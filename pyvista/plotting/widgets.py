@@ -14,6 +14,7 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -75,6 +76,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     return event_map[interaction_event]
 
 
+@abstract_class
 class WidgetHelper:
     """An internal class to manage widgets.
 
@@ -1559,9 +1561,8 @@ class WidgetHelper:
         >>> pl.show()
 
         """
-        if self.iren is None:  # type: ignore[attr-defined]
-            msg = 'Cannot add a widget to a closed plotter.'
-            raise RuntimeError(msg)
+        msg = 'Cannot add a widget to a closed plotter.'
+        iren = self._get_iren_not_none(msg)  # type: ignore[attr-defined]
 
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
@@ -1628,7 +1629,7 @@ class WidgetHelper:
                     try_callback(callback, value)
 
         slider_widget = _vtk.vtkSliderWidget()
-        slider_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        slider_widget.SetInteractor(iren.interactor)
         slider_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         slider_widget.SetRepresentation(slider_rep)
         slider_widget.GetRepresentation().SetTitleHeight(title_height)  # type: ignore[attr-defined]
@@ -2281,9 +2282,8 @@ class WidgetHelper:
         :ref:`distance_measurement_example`
 
         """
-        if self.iren is None:  # type: ignore[attr-defined]
-            msg = 'Cannot add a widget to a closed plotter.'
-            raise RuntimeError(msg)
+        msg = 'Cannot add a widget to a closed plotter.'
+        iren = self._get_iren_not_none(msg)  # type: ignore[attr-defined]
 
         if color is None:
             color = pyvista.global_theme.font.color.float_rgb
@@ -2295,25 +2295,25 @@ class WidgetHelper:
         representation = _vtk.vtkDistanceRepresentation3D()
         representation.SetHandleRepresentation(handle)
         widget = _vtk.vtkDistanceWidget()
-        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        widget.SetInteractor(iren.interactor)
         widget.SetRepresentation(representation)
 
         handle.GetProperty().SetColor(*color.float_rgb)
         representation.GetLabelProperty().SetColor(*color.float_rgb)
         representation.GetLineProperty().SetColor(*color.float_rgb)
 
-        self.iren.picker = PickerType.POINT  # type: ignore[attr-defined]
+        iren.picker = PickerType.POINT
 
         def place_point(*_):
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
             representation.GetPoint1DisplayPosition(p1)  # type: ignore[arg-type]
             representation.GetPoint2DisplayPosition(p2)  # type: ignore[arg-type]
-            if self.iren.picker.Pick(p1, self.renderer):  # type: ignore[attr-defined]
-                pos1 = self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
+            if iren.picker.Pick(p1, self.renderer):  # type: ignore[attr-defined]
+                pos1 = iren.picker.GetPickPosition()
                 representation.GetPoint1Representation().SetWorldPosition(pos1)
-            if self.iren.picker.Pick(p2, self.renderer):  # type: ignore[attr-defined]
-                pos2 = self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
+            if iren.picker.Pick(p2, self.renderer):  # type: ignore[attr-defined]
+                pos2 = iren.picker.GetPickPosition()
                 representation.GetPoint2Representation().SetWorldPosition(pos2)
             representation.BuildRepresentation()
 
@@ -2649,9 +2649,8 @@ class WidgetHelper:
         Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
-        if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
-            msg = 'Cannot add a widget to a closed plotter.'
-            raise RuntimeError(msg)
+        msg = 'Cannot add a widget to a closed plotter.'
+        self._get_iren_not_none(msg)  # type: ignore[attr-defined]
 
         def create_button(color1, color2, color3, *, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
@@ -2799,9 +2798,8 @@ class WidgetHelper:
         >>> p.show()
 
         """
-        if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
-            msg = 'Cannot add a widget to a closed plotter.'
-            raise RuntimeError(msg)
+        msg = 'Cannot add a widget to a closed plotter.'
+        self._get_iren_not_none(msg)  # type: ignore[attr-defined]
 
         if radio_button_group not in self.radio_button_widget_dict:
             self.radio_button_widget_dict[radio_button_group] = []
@@ -2927,6 +2925,17 @@ class WidgetHelper:
         -------
         :vtk:`vtkCameraOrientationWidget`
             Camera orientation widget.
+
+        See Also
+        --------
+        :meth:`~pyvista.Plotter.add_axes`
+            Add arrow-style axes as an orientation widget.
+
+        :meth:`~pyvista.Plotter.add_box_axes`
+            Add an axes box as an orientation widget.
+
+        :ref:`axes_objects_example`
+            Example showing different axes objects.
 
         Examples
         --------

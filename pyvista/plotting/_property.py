@@ -6,15 +6,14 @@ import pyvista
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _check_range
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
 from .opts import InterpolationType
 
 
-@no_new_attr
-class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
+class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.
@@ -251,7 +250,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         if culling is not None:
             self.culling = culling
         if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
-            import warnings
+            import warnings  # noqa: PLC0415
 
             warnings.warn(
                 '`edge_opacity` cannot be used under VTK v9.3.0. '
@@ -1186,7 +1185,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -1195,7 +1194,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     @anisotropy.setter
     def anisotropy(self, value: float):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
@@ -1226,7 +1225,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        from pyvista import examples  # avoid circular import
+        from pyvista import examples  # avoid circular import  # noqa: PLC0415
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
@@ -1238,7 +1237,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 
-        pl.camera_position = 'xy'  # type: ignore[assignment]
+        pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
 
     def copy(self) -> Property:
@@ -1262,7 +1261,7 @@ class Property(_vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
-        from pyvista.core.errors import VTKVersionError
+        from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
         props = [
             f'{type(self).__name__} ({hex(id(self))})',

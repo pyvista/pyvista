@@ -102,7 +102,7 @@ def check_subdtype(
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
 
-    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):  # type: ignore[arg-type]
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
         if len(base_dtype) == 1:
@@ -253,13 +253,13 @@ def check_sorted(
     second_item = array[tuple(second_slice)]
 
     if ascending and not strict:
-        is_sorted = np.all(first_item <= second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item <= second_item)
     elif ascending and strict:
-        is_sorted = np.all(first_item < second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item < second_item)
     elif not ascending and not strict:
-        is_sorted = np.all(first_item >= second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item >= second_item)
     else:  # not ascending and strict
-        is_sorted = np.all(first_item > second_item)  # type: ignore[operator]
+        is_sorted = np.all(first_item > second_item)
 
     if not is_sorted:
         # Show the array's elements in error msg if array is small
@@ -631,7 +631,7 @@ def check_shape(
     if not isinstance(shape, list):
         shape = [shape]
 
-    array_shape = np.shape(array)
+    array_shape = np.shape(array)  # type: ignore[arg-type]
     for input_shape in shape:
         valid_shape = _validate_shape_value(input_shape)
         if _shape_is_allowed(array_shape, valid_shape):
@@ -1217,7 +1217,7 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     if _is_valid_dim(shape):
         return (cast('int', shape),)
     if isinstance(shape, tuple) and all(map(_is_valid_dim, shape)):
-        return cast('_Shape', shape)
+        return shape
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error
