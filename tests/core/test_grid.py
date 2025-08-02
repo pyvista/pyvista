@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
+import platform
 import re
 from typing import TYPE_CHECKING
 import weakref
@@ -1363,26 +1364,38 @@ def test_gaussian_smooth():
     assert not np.all(uniform.active_scalars == values)
 
 
-# Ignore VTK error emitted when using bool type indices for VTK < 9.4
-@pytest.mark.ignore_vtk_error_catcher
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells(ind, hexbeam):
-    # Some versions of VTK emit errors for the bool array case which we ignore
-    with pv.vtk_message_policy('ignore'):
+    # Ignore VTK error emitted when using bool type indices for VTK < 9.4
+    if (
+        isinstance(ind, np.ndarray)
+        and platform.system() == 'Linux'
+        and pv.vtk_version_info < (9, 4, 0)
+    ):
+        with pv.vtk_verbosity('off'):
+            grid_copy = hexbeam.remove_cells(ind)
+    else:
         grid_copy = hexbeam.remove_cells(ind)
-        assert grid_copy.n_cells < hexbeam.n_cells
+    assert grid_copy.n_cells < hexbeam.n_cells
 
 
-# Ignore VTK error emitted when using bool type indices for VTK < 9.4
-@pytest.mark.ignore_vtk_error_catcher
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells_not_inplace(ind, hexbeam):
-    # Some versions of VTK emit errors for the bool array case which we ignore
-    with pv.vtk_message_policy('ignore'):
-        grid_copy = hexbeam.copy()  # copy to protect
+    grid_copy = hexbeam.copy()  # copy to protect
+
+    # Ignore VTK error emitted when using bool type indices for VTK < 9.4
+    if (
+        isinstance(ind, np.ndarray)
+        and platform.system() == 'Linux'
+        and pv.vtk_version_info < (9, 4, 0)
+    ):
+        with pv.vtk_verbosity('off'):
+            grid_w_removed = grid_copy.remove_cells(ind)
+    else:
         grid_w_removed = grid_copy.remove_cells(ind)
-        assert grid_w_removed.n_cells < hexbeam.n_cells
-        assert grid_copy.n_cells == hexbeam.n_cells
+
+    assert grid_w_removed.n_cells < hexbeam.n_cells
+    assert grid_copy.n_cells == hexbeam.n_cells
 
 
 def test_remove_cells_invalid(hexbeam):

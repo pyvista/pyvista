@@ -135,10 +135,10 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
         self._original_state = None  # Reset
 
     @overload
-    def __call__(self: Self, state: None) -> T: ...
+    def __call__(self: Self) -> T: ...
     @overload
-    def __call__(self: Self, state: T) -> Self: ...
-    def __call__(self: Self, state: T | None = None) -> Self | T:
+    def __call__(self: Self, state: T, **kwargs) -> Self: ...
+    def __call__(self: Self, state: T | None = None, **kwargs) -> Self | T:
         """Call the context manager."""
         if state is None:
             return self._state
@@ -146,7 +146,7 @@ class _StateManager(contextlib.AbstractContextManager[None], ABC, Generic[T]):
         self._validate_state(state)
 
         # Create new instance and store the local state to be restored when exiting
-        output = self.__class__()
+        output = self.__class__(**kwargs)
         output._original_state = self._state
         output._state = state
         return output
@@ -317,7 +317,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 vtk_snake_case = _vtkSnakeCase()
 
 
-_VTKMessagePolicyOptions = Literal['mixed', 'warning', 'error', 'ignore']
+_VTKMessagePolicyOptions = Literal['mixed', 'warning', 'error']
 
 
 class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
@@ -377,6 +377,13 @@ class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
 
     """
 
+    send_to_logging: bool = True
+
+    def __init__(self, *, send_to_logging: bool | None = None) -> None:
+        super().__init__()
+        if send_to_logging is not None:
+            self.send_to_logging = send_to_logging
+
     @property
     def _state(self) -> _VTKMessagePolicyOptions:
         import pyvista as pv  # noqa: PLC0415
@@ -389,37 +396,39 @@ class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
 
         pv._VTK_MESSAGE_POLICY_STATE = state
 
-    @staticmethod
-    def _call_function(func, *args, **kwargs):  # noqa: ANN001, ANN205
+    def _call_function(self, func, *args, **kwargs):  # noqa: ANN001, ANN202
         import pyvista as pv  # noqa: PLC0415
 
-        message_policy = pv._VTK_MESSAGE_POLICY_STATE
-        if message_policy == 'ignore':
+        if pv.vtk_verbosity() == 'off':
             return func(*args, **kwargs)
-        with pv.VtkErrorCatcher(raise_errors=False, emit_warnings=False) as catcher:
-            # Disable vtk verbosity to avoid duplicate output from VTK and from python
-            with pv.vtk_verbosity('off'):
-                output = func(*args, **kwargs)
-
+        with pv.VtkErrorCatcher(
+            raise_errors=False, emit_warnings=False, send_to_logging=self.send_to_logging
+        ) as catcher:
+            output = func(*args, **kwargs)
             warning_msg = catcher._runtime_warning_message
             error_msg = catcher._runtime_error_message
+
+            message_policy = pv._VTK_MESSAGE_POLICY_STATE
+            preamble = (
+                f'The following VTK event(s) were detected by PyVista while calling {func}:\n'
+            )
             if message_policy == 'warning':
                 # Combine messages and emit warning
                 message = f'{warning_msg}\n{error_msg}'.strip()
                 if message:
-                    catcher._emit_warning(message)
+                    catcher._emit_warning(preamble + message)
             elif message_policy == 'error':
                 # Combine messages and raise error
                 message = f'{warning_msg}\n{error_msg}'.strip()
                 if message:
-                    catcher._raise_error(message)
+                    catcher._raise_error(preamble + message)
             elif message_policy == 'mixed':
                 # Emit warnings as warnings
                 if warning_msg:
-                    catcher._emit_warning(warning_msg)
+                    catcher._emit_warning(preamble + warning_msg)
                 # Raise errors as errors
                 if error_msg:
-                    catcher._raise_error(error_msg)
+                    catcher._raise_error(preamble + error_msg)
 
                 # def emit_warning(self, msg) -> None:
                 #     """Parse different event types and passes them to logging."""

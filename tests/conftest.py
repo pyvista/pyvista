@@ -90,12 +90,14 @@ def global_variables_reset():
 @pytest.fixture(autouse=True)
 def catch_vtk_errors(request):
     """Raise a RuntimeError when vtk errors are emitted."""
-    if request.node.get_closest_marker('ignore_vtk_error_catcher'):
+    if request.node.get_closest_marker('skip_catch_vtk_errors'):
         yield
         return
 
     with pyvista.VtkErrorCatcher() as catcher:
         yield catcher
+    if getattr(catcher, 'skip', False):
+        return
 
     events = catcher.events
     if events:
@@ -109,8 +111,7 @@ def catch_vtk_errors(request):
             'The offending VTK call (e.g. `obj.Update()`) should be wrapped and called using '
             '`pyvista.vtk_message_policy._call_function()` instead.\n'
             'Then, use `pytest.raises` or `pytest.warns` to catch the error(s) or use '
-            "`pyvista.vtk_message_policy('ignore')`\n"
-            'to ignore any vtk errors that may be raised.'
+            "`pyvista.vtk_verbosity('off') to fully silence vtk errors/warnings.`\n"
         )
         msg = f'{msg_start}\n{events_formatted}\n\n{msg_end}'
         raise RuntimeError(msg)

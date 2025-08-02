@@ -237,9 +237,9 @@ image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'ignore_vtk_error_catcher: Ignore any errors caught by the catch_vtk_errors fixture for this test.',
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
+  'skip_catch_vtk_errors: Skip usage of catch_vtk_errors fixture for this test.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',

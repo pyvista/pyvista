@@ -190,6 +190,7 @@ class Observer(_NoNewAttrMixin):
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
+            alert = alert.strip()
         except Exception:  # noqa: BLE001
             return '', '', '', message
         else:
@@ -208,6 +209,10 @@ class Observer(_NoNewAttrMixin):
         On an event occurrence, this function executes.
 
         """
+        verbosity = pyvista.vtk_verbosity()
+        if verbosity == 'off' or (verbosity == 'error' and self.event_type == 'WarningEvent'):
+            # Ignore callback
+            return
         try:
             self.__event_occurred = True
             self.__message_etc = message

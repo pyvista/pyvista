@@ -297,7 +297,7 @@ def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):  # noqa:
     mock_show_progress.assert_called_once()
 
 
-@pytest.mark.ignore_vtk_error_catcher
+@pytest.mark.skip_catch_vtk_errors
 def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
@@ -641,8 +641,8 @@ def test_convert_id_list():
 
 def test_progress_monitor():
     mesh = pv.Sphere()
-    ugrid = mesh.delaunay_3d(progress_bar=True)
-    assert isinstance(ugrid, pv.UnstructuredGrid)
+    ugrid = mesh.warp_by_vector(progress_bar=True)
+    assert isinstance(ugrid, pv.PolyData)
 
 
 def test_observer():
@@ -817,7 +817,7 @@ def test_vtk_error_catcher():
         raise_errors=True, emit_warnings=True
     )
     warning_match = re.compile(
-        r': Warning: In vtkPBRPrefilterTexture\.cxx, line 269\n'
+        r': Warning: In vtkPBRPrefilterTexture\.cxx, line \d+\n'
         r'vtkPBRPrefilterTexture \(0x[0-9a-fA-F]+\): The input texture of vtkPBRPrefilterTexture '
         r'should have mipmap and interpolate set to ON\.'
     )

@@ -435,7 +435,7 @@ class BaseReader(_NoNewAttrMixin):
         return data
 
     def _update_information(self) -> None:
-        self.reader.UpdateInformation()
+        pyvista.vtk_message_policy._call_function(self.reader.UpdateInformation)
 
     def _set_defaults(self) -> None:
         """Set defaults on reader, if needed."""
