@@ -3462,6 +3462,8 @@ def test_plot_composite_rgba(multiblock_poly):
     pl.show()
 
 
+# Ignore VTK error during teardown: ERROR: Bad table range: [inf, -inf] vtkLookupTable.cxx
+@pytest.mark.skip_catch_vtk_errors
 def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 

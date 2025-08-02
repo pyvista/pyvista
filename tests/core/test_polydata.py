@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from math import pi
 import pathlib
 from pathlib import Path
@@ -681,7 +682,12 @@ def test_intersection(sphere, sphere_shifted):
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
-    curv = sphere.curvature(curv_type)
+    func = functools.partial(sphere.curvature, curv_type)
+    if curv_type in ['maximum', 'minimum']:
+        with pytest.warns(pv.VTKOutputMessageWarning, match='large computation error'):
+            curv = func()
+    else:
+        curv = func()
     assert np.any(curv)
     assert curv.size == sphere.n_points
 

@@ -81,9 +81,11 @@ def get_property_return_type(prop: property):
     return None
 
 
-def test_bounds_tuple(class_with_bounds):
+def test_bounds_tuple(class_with_bounds, catch_vtk_errors):
     if _vtk.is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
+    if class_with_bounds is pv.DataSetMapper:
+        catch_vtk_errors.skip = True
 
     # Define kwargs as required for some cases.
     kwargs = {}
@@ -105,11 +107,13 @@ def test_bounds_tuple(class_with_bounds):
     assert return_type == 'BoundsTuple'
 
 
-def test_bounds_size(class_with_bounds):
+def test_bounds_size(class_with_bounds, catch_vtk_errors):
     if _vtk.is_vtk_attribute(class_with_bounds, 'bounds'):
         pytest.skip('bounds is defined by vtk, not pyvista.')
     elif class_with_bounds.__name__.endswith('Source'):
         pytest.skip('Source objects use bounds as setters.')
+    if class_with_bounds is pv.DataSetMapper:
+        catch_vtk_errors.skip = True
 
     # Define kwargs as required for some cases.
     kwargs = {}
@@ -131,9 +135,11 @@ def test_bounds_size(class_with_bounds):
     assert return_type == 'tuple[float, float, float]'
 
 
-def test_center_tuple(class_with_center):
+def test_center_tuple(class_with_center, catch_vtk_errors):
     if _vtk.is_vtk_attribute(class_with_center, 'center'):
         pytest.skip('center is defined by vtk, not pyvista.')
+    if class_with_center is pv.DataSetMapper:
+        catch_vtk_errors.skip = True
 
     # Define kwargs as required for some cases.
     kwargs = {}

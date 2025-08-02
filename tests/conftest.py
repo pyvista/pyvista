@@ -87,6 +87,36 @@ def global_variables_reset():
     pyvista.FIGURE_PATH = tmp_figurepath
 
 
+@pytest.fixture(autouse=True)
+def catch_vtk_errors(request):
+    """Raise a RuntimeError when vtk errors are emitted."""
+    if request.node.get_closest_marker('skip_catch_vtk_errors'):
+        yield
+        return
+
+    with pyvista.VtkErrorCatcher() as catcher:
+        yield catcher
+    if getattr(catcher, 'skip', False):
+        return
+
+    events = catcher.events
+    if events:
+        n_events = len(events)
+        msg_start = (
+            f'{n_events} {"error was" if n_events == 1 else "errors were"} caught by '
+            f'{catcher.__class__.__name__} during test execution:'
+        )
+        events_formatted = '\n'.join(repr(e) for e in events)
+        msg_end = (
+            'The offending VTK call (e.g. `obj.Update()`) should be wrapped and called using '
+            '`pyvista.vtk_message_policy._call_function()` instead.\n'
+            'Then, use `pytest.raises` or `pytest.warns` to catch the error(s) or use '
+            "`pyvista.vtk_verbosity('off') to fully silence vtk errors/warnings.`\n"
+        )
+        msg = f'{msg_start}\n{events_formatted}\n\n{msg_end}'
+        raise RuntimeError(msg)
+
+
 @pytest.fixture(scope='session', autouse=True)
 def set_mpl():
     """Avoid matplotlib windows popping up."""
@@ -108,6 +138,9 @@ def reset_global_state():
 
     pyvista.vtk_verbosity('info')
     assert pyvista.vtk_verbosity() == 'info'
+
+    pyvista.vtk_message_policy('warning')
+    assert pyvista.vtk_message_policy() == 'warning'
 
     pyvista.PICKLE_FORMAT = 'vtk'
 
