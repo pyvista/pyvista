@@ -284,6 +284,8 @@ def test_pbr(sphere, verify_image_cache):
     verify_image_cache.high_variance_test = True
 
     texture = examples.load_globe_texture()
+    texture.mipmap = True
+    texture.interpolate = True
 
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture)

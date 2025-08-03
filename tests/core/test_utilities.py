@@ -789,8 +789,8 @@ def test_vtk_error_catcher():
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
     error_match = (
         r'ERROR: The update extent specified in the information for output port 0 on algorithm '
-        r'vtkTrivialProducer \(0x[0-9a-fA-F]+\) is 0 39 0 39 0 39, which is outside the whole '
-        r'extent 0 3 0 3 0 3\. vtkStreamingDemandDrivenPipeline\.cxx (?:0x)?[0-9a-fA-F]+'
+        r'vtkTrivialProducer \(0x?[0-9a-fA-F]+\) is 0 39 0 39 0 39, which is outside the whole '
+        r'extent 0 3 0 3 0 3\. vtkStreamingDemandDrivenPipeline\.cxx 0x?[0-9a-fA-F]+'
     )
     with pytest.raises(RuntimeError, match=error_match):  # noqa: PT012
         with error_catcher:
