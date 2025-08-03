@@ -3273,7 +3273,6 @@ def test_many_multi_pass(verify_image_cache):
     if pyvista.vtk_version_info < (9, 1, 0):
         with pyvista.vtk_verbosity('off'):
             pl.show()
-    pl.show()
 
 
 def test_plot_composite_many_options(multiblock_poly):
