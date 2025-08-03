@@ -22,6 +22,7 @@ updates:
     labels:
       - "maintenance"
       - "dependencies"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -35,6 +36,7 @@ updates:
     labels:
       - "maintenance"
       - "dependencies"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: "devcontainers"
     directory: "/"
@@ -44,3 +46,4 @@ updates:
     labels:
       - "maintenance"
       - "dependencies"
+    rebase-strategy: "disabled"
