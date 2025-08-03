@@ -76,7 +76,8 @@ def test_axes_actor_shaft_len(axes_actor):
     axes_actor.shaft_length = 1
     assert axes_actor.shaft_length == (1, 1, 1)
 
-    axes_actor.shaft_length = (1, 2, 3)
+    with pv.vtk_verbosity('off'):
+        axes_actor.shaft_length = (1, 2, 3)
     assert axes_actor.shaft_length == (1, 2, 3)
 
 
@@ -84,7 +85,8 @@ def test_axes_actor_tip_len(axes_actor):
     axes_actor.tip_length = 1
     assert axes_actor.tip_length == (1, 1, 1)
 
-    axes_actor.tip_length = (1, 2, 3)
+    with pv.vtk_verbosity('off'):
+        axes_actor.tip_length = (1, 2, 3)
     assert axes_actor.tip_length == (1, 2, 3)
 
 

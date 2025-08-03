@@ -2005,6 +2005,7 @@ def test_image_properties():
     mesh = pv.PolyData(rr, tris)
     p = pv.Plotter()
     p.add_mesh(mesh, color=True)
+    pv.global_theme.camera.viewup = (-1.0, 0.0, 0.0)
     p.renderer.camera_position = (0.0, 0.0, 1.0)
     p.renderer.ResetCamera()
     p.enable_parallel_projection()
