@@ -377,7 +377,7 @@ class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
 
     """
 
-    send_to_logging: bool = True
+    send_to_logging: bool = False
 
     def __init__(self, *, send_to_logging: bool | None = None) -> None:
         super().__init__()

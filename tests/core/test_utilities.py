@@ -818,7 +818,7 @@ def test_vtk_error_catcher():
     )
     warning_match = re.compile(
         r': Warning: In vtkPBRPrefilterTexture\.cxx, line \d+\n'
-        r'vtkPBRPrefilterTexture \(0x[0-9a-fA-F]+\): The input texture of vtkPBRPrefilterTexture '
+        r'vtkPBRPrefilterTexture \(0x?[0-9a-fA-F]+\): The input texture of vtkPBRPrefilterTexture '
         r'should have mipmap and interpolate set to ON\.'
     )
     with pytest.warns(pv.VTKOutputMessageWarning, match=warning_match):  # noqa: PT031

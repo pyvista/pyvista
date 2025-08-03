@@ -3270,6 +3270,9 @@ def test_many_multi_pass(verify_image_cache):
     pl.add_blurring()
     pl.enable_shadows()
     pl.enable_eye_dome_lighting()
+    if pyvista.vtk_version_info < (9, 1, 0):
+        with pyvista.vtk_verbosity('off'):
+            pl.show()
     pl.show()
 
 
