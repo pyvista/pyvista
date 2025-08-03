@@ -32,7 +32,7 @@ try:
     from pyvista.trame.views import PyVistaRemoteLocalView
     from pyvista.trame.views import PyVistaRemoteView
     from pyvista.trame.views import _BasePyVistaView
-except:
+except ImportError:
     has_trame = False
 
 pytestmark = [
