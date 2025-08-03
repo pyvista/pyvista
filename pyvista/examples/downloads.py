@@ -7328,6 +7328,8 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
     >>> from pyvista import examples
     >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> texture = examples.download_dikhololo_night()
+    >>> texture.mipmap = True  # Recommended for use as environment texture
+    >>> texture.interpolate = True  # Recommended for use as environment texture
     >>> pl = pv.Plotter()
     >>> pl.import_gltf(gltf_file)
     >>> pl.set_environment_texture(texture)
