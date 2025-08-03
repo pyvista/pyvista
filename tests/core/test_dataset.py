@@ -609,8 +609,9 @@ def test_set_active_vectors_fail(hexbeam):
 
     hexbeam.point_data['scalar_arr'] = np.zeros([hexbeam.n_points])
 
-    with pytest.raises(ValueError):  # noqa: PT011
-        hexbeam.set_active_vectors('scalar_arr')
+    with pv.vtk_verbosity('off'):
+        with pytest.raises(ValueError):  # noqa: PT011
+            hexbeam.set_active_vectors('scalar_arr')
 
     assert hexbeam.active_vectors_name == 'vector_arr'
     active_component_consistency_check(hexbeam, 'vectors', 'point')
