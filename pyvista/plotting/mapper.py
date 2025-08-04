@@ -67,6 +67,9 @@ class _BaseMapper(
                     z_max =  0.5)
 
         """
+        if self.dataset is None:
+            with pyvista.vtk_verbosity('off'):
+                return BoundsTuple(*self.GetBounds())
         return BoundsTuple(*self.GetBounds())
 
     @property
@@ -79,6 +82,9 @@ class _BaseMapper(
             Center of the active renderer.
 
         """
+        if self.dataset is None:
+            with pyvista.vtk_verbosity('off'):
+                return self.GetCenter()
         return self.GetCenter()
 
     def copy(self) -> _BaseMapper:

@@ -697,9 +697,49 @@ class DisableVtkSnakeCase:
                     else:
                         warnings.warn(msg, RuntimeWarning)
 
+    @staticmethod
+    def post_check(catcher):
+        if catcher.error_events:
+            raise RuntimeError
+        if catcher.warning_events:
+            raise RuntimeError
+
     def __getattribute__(self, item):
+        # Bypass checks for critical introspection attributes
+        if item in {
+            '__class__',
+            '__dict__',
+            '__module__',
+            '__annotations__',
+            '__weakref__',
+            '__slots__',
+            '__getattribute__',
+        }:
+            return object.__getattribute__(self, item)
+
         DisableVtkSnakeCase.check_attribute(self, item)
-        return object.__getattribute__(self, item)
+
+        import pyvista as pv  # noqa: PLC0415
+
+        catcher = pv.VtkErrorCatcher()
+        with catcher:
+            # Get the raw attribute
+            value = object.__getattribute__(self, item)
+
+            # Only wrap if it's callable
+            if callable(value):
+
+                def wrapper(*args, **kwargs):
+                    result = value(*args, **kwargs)
+                    DisableVtkSnakeCase.post_check(catcher)
+                    return result
+
+                # Rebind method to preserve self for instance methods
+                return wrapper
+
+            # For properties / data, call post-check immediately
+        DisableVtkSnakeCase.post_check(catcher)
+        return value
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
