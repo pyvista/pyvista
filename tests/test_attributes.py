@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import pyvista
 import pyvista as pv
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core._vtk_core import VTKObjectWrapperCheckSnakeCase
@@ -96,7 +97,8 @@ def try_init_pyvista_object(class_):
     # Init object but skip if abstract
     kwargs = get_default_class_init_kwargs(class_)
     try:
-        instance = class_(**kwargs)
+        with pyvista.vtk_verbosity('off'):
+            instance = class_(**kwargs)
     except (ImportError, VTKVersionError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:
