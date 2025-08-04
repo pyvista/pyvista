@@ -751,21 +751,12 @@ def _generate_vtk_err():
 
 
 def _generate_vtk_warn():
-    """Simple operation which generates a VTK error."""
+    """Simple operation which generates a VTK warning."""
 
-    texture = ex.download_cake_easy_texture()
-
-    renderer = vtk.vtkRenderer()
-    renderer.UseImageBasedLightingOn()
-    renderer.SetEnvironmentTexture(texture)
-
-    render_window = vtk.vtkRenderWindow()
-    render_window.AddRenderer(renderer)
-    render_window.SetOffScreenRendering(True)
-    interactor = vtk.vtkRenderWindowInteractor()
-    interactor.SetRenderWindow(render_window)
-
-    render_window.Render()
+    # Merge empty polydata
+    merge = vtk.vtkMergeFilter()
+    merge.AddInputData(vtk.vtkPolyData())
+    merge.Update()
 
 
 def test_vtk_error_catcher():
@@ -817,9 +808,8 @@ def test_vtk_error_catcher():
         raise_errors=True, emit_warnings=True
     )
     warning_match = re.compile(
-        r': Warning: In vtkPBRPrefilterTexture\.cxx, line \d+\n'
-        r'vtkPBRPrefilterTexture \(0x?[0-9a-fA-F]+\): The input texture of vtkPBRPrefilterTexture '
-        r'should have mipmap and interpolate set to ON\.'
+        r': Warning: In vtkMergeFilter\.cxx, line \d+\n'
+        r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
     )
     with pytest.warns(pv.VTKOutputMessageWarning, match=warning_match):  # noqa: PT031
         with pytest.raises(pv.VTKOutputMessageError, match=error_match):  # noqa: PT012
