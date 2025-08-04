@@ -680,6 +680,7 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points == sphere_shifted.n_points
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
     func = functools.partial(sphere.curvature, curv_type)

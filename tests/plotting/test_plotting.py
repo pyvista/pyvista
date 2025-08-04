@@ -3259,6 +3259,7 @@ def test_ssao_pass_from_helper():
 
 
 @pytest.mark.skip_windows
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_many_multi_pass(verify_image_cache):
     verify_image_cache.high_variance_test = True
 
@@ -3270,9 +3271,7 @@ def test_many_multi_pass(verify_image_cache):
     pl.add_blurring()
     pl.enable_shadows()
     pl.enable_eye_dome_lighting()
-    if pyvista.vtk_version_info < (9, 1, 0):
-        with pyvista.vtk_verbosity('off'):
-            pl.show()
+    pl.show()
 
 
 def test_plot_composite_many_options(multiblock_poly):

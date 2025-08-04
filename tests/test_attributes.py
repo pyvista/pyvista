@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import pyvista
 import pyvista as pv
 from pyvista.core._vtk_core import DisableVtkSnakeCase
 from pyvista.core._vtk_core import VTKObjectWrapperCheckSnakeCase
@@ -15,6 +14,8 @@ from pyvista.core.errors import PyVistaAttributeError
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.charts import _vtkWrapper
+
+pytestmark = pytest.mark.skip_catch_vtk_errors
 
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
@@ -95,8 +96,7 @@ def try_init_pyvista_object(class_):
     # Init object but skip if abstract
     kwargs = get_default_class_init_kwargs(class_)
     try:
-        with pyvista.vtk_verbosity('off'):
-            instance = class_(**kwargs)
+        instance = class_(**kwargs)
     except (ImportError, VTKVersionError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:
