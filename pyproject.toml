@@ -55,7 +55,7 @@ jupyter = [
 pinned = [ # Pinned versions of core dependencies
   'matplotlib<3.10.2',
   'numpy<2.4.0',
-  'pillow<11.3.0',
+  'pillow<11.4.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
   'typing-extensions<4.15.0',
@@ -117,7 +117,7 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.4.1',
+  'jupyterlab==4.4.5',
   'lxml==6.0.0',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
@@ -218,6 +218,7 @@ doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error',
 
+  "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
