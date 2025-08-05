@@ -457,7 +457,7 @@ class AxesAssembly(_XYZAssembly):
         # Init shaft and tip datasets
         self._shaft_and_tip_geometry_source = geometry_source
         shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
-        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets, strict=True):
+        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets, strict=False):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
 
     def __init__(
@@ -489,7 +489,7 @@ class AxesAssembly(_XYZAssembly):
 
         _XYZAssembly.__init__(
             self,
-            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors, strict=True)),  # type: ignore[arg-type]
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors, strict=False)),  # type: ignore[arg-type]
             xyz_label_actors=self._label_actors,
             x_label=x_label,
             y_label=y_label,
@@ -882,7 +882,7 @@ class AxesAssembly(_XYZAssembly):
             raise ValueError(msg)
 
         # Sequence is valid, now set values
-        for actor, val in zip(actors, values, strict=True):
+        for actor, val in zip(actors, values, strict=False):
             setattr(actor.prop, name, val)
 
     def get_actor_prop(self, name: str):
@@ -964,7 +964,7 @@ class AxesAssembly(_XYZAssembly):
     def _update_label_positions(self):
         labels = self._label_actors
         position_vectors = self._get_offset_label_position_vectors(self.label_position)
-        for label, position in zip(labels, position_vectors, strict=True):
+        for label, position in zip(labels, position_vectors, strict=False):
             label.relative_position = position
 
 
@@ -1136,9 +1136,9 @@ class AxesAssemblySymmetric(AxesAssembly):
 
         _XYZAssembly.__init__(
             self,
-            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors, strict=True)),  # type: ignore[arg-type]
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors, strict=False)),  # type: ignore[arg-type]
             xyz_label_actors=tuple(
-                zip(self._label_actors, self._label_actors_symmetric, strict=True)
+                zip(self._label_actors, self._label_actors_symmetric, strict=False)
             ),  # type: ignore[arg-type]
             x_label=x_label,
             y_label=y_label,
@@ -1334,7 +1334,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         )
         labels_minus = self._label_actors_symmetric
         vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
-        for label, position in zip(labels_minus, vector_position_minus, strict=True):
+        for label, position in zip(labels_minus, vector_position_minus, strict=False):
             label.relative_position = position
 
 
@@ -1560,7 +1560,7 @@ class PlanesAssembly(_XYZAssembly):
         self._planes = self._geometry_source.output
         self._plane_sources = self._geometry_source.sources
 
-        for actor, dataset in zip(self._plane_actors, self.planes, strict=True):
+        for actor, dataset in zip(self._plane_actors, self.planes, strict=False):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
 
         # Init label actors
@@ -1954,7 +1954,7 @@ class PlanesAssembly(_XYZAssembly):
             opacity, broadcast=True, dtype_out=float, to_tuple=True
         )
         self._opacity = valid_opacity
-        for actor, opacity_ in zip(self._plane_actors, valid_opacity, strict=True):
+        for actor, opacity_ in zip(self._plane_actors, valid_opacity, strict=False):
             actor.prop.opacity = opacity_
 
     @property

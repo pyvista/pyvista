@@ -645,7 +645,7 @@ class MultiBlock(
             other_ids = []
             other_names = []
             other_blocks = []
-            for id_, name, block in zip(ids, names, self, strict=True):
+            for id_, name, block in zip(ids, names, self, strict=False):
                 if isinstance(block, MultiBlock):
                     multi_ids.append(id_)
                     multi_names.append(name)
@@ -664,7 +664,7 @@ class MultiBlock(
                 blocks = [*multi_blocks, *other_blocks]
 
         # Iterate through ids, names, blocks
-        for id_, name, block in zip(ids, names, blocks, strict=True):
+        for id_, name, block in zip(ids, names, blocks, strict=False):
             if (skip_none and block is None) or (
                 skip_empty and (block is not None and block.is_empty)
             ):
@@ -1973,7 +1973,7 @@ class MultiBlock(
             return False
 
         return not any(
-            self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other, strict=True)
+            self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other, strict=False)
         )
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671

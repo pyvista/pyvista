@@ -2673,7 +2673,7 @@ class PolyDataFilters(DataSetFilters):
             )
 
             for id_r, origin, second_point in zip(
-                retry_ray_indices, origins_retry, second_points, strict=True
+                retry_ray_indices, origins_retry, second_points, strict=False
             ):
                 locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
                 if locs.any():

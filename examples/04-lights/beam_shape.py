@@ -129,7 +129,7 @@ hemi_template = pv.Sphere().clip()
 centers = [(0, 0, 0), (0, 1.5, 0), (0, 1.5 * 0.5, 1.5 * 3**0.5 / 2)]
 exponents = [1, 0.3, 5]
 
-for center, exponent in zip(centers, exponents, strict=True):
+for center, exponent in zip(centers, exponents, strict=False):
     hemi = hemi_template.copy()
     hemi.translate(center, inplace=True)
     plotter.add_mesh(hemi, color='cyan', smooth_shading=True)

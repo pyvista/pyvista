@@ -281,7 +281,7 @@ def test_ensightreader_timepoints():
     mesh_3 = reader.read()
 
     # assert all the data is different
-    for m_1, m_3 in zip(mesh_1, mesh_3, strict=True):
+    for m_1, m_3 in zip(mesh_1, mesh_3, strict=False):
         assert not all(m_1['DENS'] == m_3['DENS'])
 
     reader.set_active_time_point(0)

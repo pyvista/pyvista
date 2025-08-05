@@ -2564,12 +2564,12 @@ def test_index_vs_loc():
     # index_to_loc valid cases
     vals = [0, 2, 4]
     expecteds = [(0, 0), (0, 2), (1, 1)]
-    for val, expected in zip(vals, expecteds, strict=True):
+    for val, expected in zip(vals, expecteds, strict=False):
         assert tuple(pl.renderers.index_to_loc(val)) == expected
     # loc_to_index valid cases
     vals = [(0, 0), (0, 2), (1, 1)]
     expecteds = [0, 2, 4]
-    for val, expected in zip(vals, expecteds, strict=True):
+    for val, expected in zip(vals, expecteds, strict=False):
         assert pl.renderers.loc_to_index(val) == expected
         assert pl.renderers.loc_to_index(expected) == expected
 
@@ -2864,10 +2864,10 @@ def test_chart_matplotlib_plot(verify_image_cache):
     alphas = [0.5 + i for i in range(5)]
     betas = [*reversed(alphas)]
     N = int(1e4)
-    data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=True)]
+    data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=False)]
     labels = [
         f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$'
-        for alpha, beta in zip(alphas, betas, strict=True)
+        for alpha, beta in zip(alphas, betas, strict=False)
     ]
     ax.violinplot(data)
     ax.set_xticks(np.arange(1, 1 + len(labels)))

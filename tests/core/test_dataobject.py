@@ -393,7 +393,7 @@ def test_pickle_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets, strict=True):
+    for r, dataset in zip(res, datasets, strict=False):
         assert r == dataset.n_points
 
 

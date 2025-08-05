@@ -50,7 +50,7 @@ centers = [
 
 solids = [
     pv.PlatonicSolid(kind, radius=0.4, center=center)
-    for kind, center in zip(kinds, centers, strict=True)
+    for kind, center in zip(kinds, centers, strict=False)
 ]
 
 # download and align teapotahedron
