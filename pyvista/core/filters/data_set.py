@@ -4174,7 +4174,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Add a point array ``'vtkOriginalPointIds'`` that identifies the original
             points the extracted points correspond to.
 
-            .. versionadded:: 0.46
+            .. versionadded:: 0.47
 
         pass_cell_ids : bool, default: True
             Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
