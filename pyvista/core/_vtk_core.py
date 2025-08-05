@@ -10,6 +10,7 @@ the entire library.
 from __future__ import annotations
 
 import contextlib
+import functools
 import sys
 from typing import NamedTuple
 import warnings
@@ -697,49 +698,43 @@ class DisableVtkSnakeCase:
                     else:
                         warnings.warn(msg, RuntimeWarning)
 
-    @staticmethod
-    def post_check(catcher):
-        if catcher.error_events:
-            raise RuntimeError
-        if catcher.warning_events:
-            raise RuntimeError
-
     def __getattribute__(self, item):
-        # Bypass checks for critical introspection attributes
-        if item in {
-            '__class__',
-            '__dict__',
-            '__module__',
-            '__annotations__',
-            '__weakref__',
-            '__slots__',
-            '__getattribute__',
-        }:
-            return object.__getattribute__(self, item)
-
         DisableVtkSnakeCase.check_attribute(self, item)
+        value = object.__getattribute__(self, item)
 
+        # Emit VTK warnings or errors after the access
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is not None:
+            import pyvista as pv  # noqa: PLC0415
+
+            pv.vtk_message_policy._error_catcher._emit_warnings_and_raise_errors()
+
+        return value
+
+    def __init_subclass__(cls):
+        # Automatically decorate all public instance methods
+        for name, attr in cls.__dict__.items():
+            if isinstance(attr, property):
+                # Only wrap the setter
+                setter = attr.fset
+                if setter is not None and not name.startswith('_'):
+                    wrapped_setter = with_vtk_error_check(setter)
+                    new_prop = property(attr.fget, wrapped_setter, attr.fdel)
+                    setattr(cls, name, new_prop)
+            elif callable(attr) and not name.startswith('_'):
+                setattr(cls, name, with_vtk_error_check(attr))
+
+
+def with_vtk_error_check(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
         import pyvista as pv  # noqa: PLC0415
 
-        catcher = pv.VtkErrorCatcher()
-        with catcher:
-            # Get the raw attribute
-            value = object.__getattribute__(self, item)
+        out = func(*args, **kwargs)
+        pv.vtk_message_policy._error_catcher._emit_warnings_and_raise_errors()
+        return out
 
-            # Only wrap if it's callable
-            if callable(value):
-
-                def wrapper(*args, **kwargs):
-                    result = value(*args, **kwargs)
-                    DisableVtkSnakeCase.post_check(catcher)
-                    return result
-
-                # Rebind method to preserve self for instance methods
-                return wrapper
-
-            # For properties / data, call post-check immediately
-        DisableVtkSnakeCase.post_check(catcher)
-        return value
+    return wrapper
 
 
 def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01

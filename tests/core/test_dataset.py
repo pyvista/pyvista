@@ -609,11 +609,14 @@ def test_set_active_vectors_fail(hexbeam):
 
     hexbeam.point_data['scalar_arr'] = np.zeros([hexbeam.n_points])
 
-    with pytest.warns(
-        pv.VTKOutputMessageWarning,
-        match='Can not set attribute Vectors. Incorrect number of components.',
-    ):
-        with pytest.raises(ValueError, match='z'):
+    with pv.vtk_verbosity('error'):
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                'Data field (scalar_arr) with type (FieldAssociation.POINT) '
+                'could not be set as the active vectors'
+            ),
+        ):
             hexbeam.set_active_vectors('scalar_arr')
 
     assert hexbeam.active_vectors_name == 'vector_arr'

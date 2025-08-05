@@ -15,6 +15,7 @@ from typing import get_args
 from typing import overload
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.observers import VtkErrorCatcher
 
 if TYPE_CHECKING:
     from typing import Protocol
@@ -317,7 +318,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 vtk_snake_case = _vtkSnakeCase()
 
 
-_VTKMessagePolicyOptions = Literal['mixed', 'warning', 'error']
+_VTKMessagePolicyOptions = Literal['mixed', 'warning', 'error', 'off']
 
 
 class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
@@ -379,6 +380,8 @@ class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
 
     send_to_logging: bool = False
 
+    _error_catcher = VtkErrorCatcher()
+
     def __init__(self, *, send_to_logging: bool | None = None) -> None:
         super().__init__()
         if send_to_logging is not None:
@@ -395,6 +398,10 @@ class _VTKMessagePolicy(_StateManager[_VTKMessagePolicyOptions]):
         import pyvista as pv  # noqa: PLC0415
 
         pv._VTK_MESSAGE_POLICY_STATE = state
+        if state == 'off':
+            self._error_catcher._stop_observing()
+        else:
+            self._error_catcher._start_observing()
 
     def _call_function(self, func, *args, **kwargs):  # noqa: ANN001, ANN202
         import pyvista as pv  # noqa: PLC0415

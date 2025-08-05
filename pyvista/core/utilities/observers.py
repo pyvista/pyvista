@@ -91,6 +91,10 @@ class VtkErrorCatcher:
 
     def __enter__(self: Self) -> Self:
         """Observe VTK string output window for errors."""
+        self._start_observing()
+        return self
+
+    def _start_observing(self):
         output_window = _vtk.vtkStringOutputWindow()
         error_win = _vtk.vtkOutputWindow()
         self._error_output_orig = error_win.GetInstance()
@@ -104,13 +108,16 @@ class VtkErrorCatcher:
         obs.observe(output_window)
         self._warning_observer = obs
 
-        return self
-
     def __exit__(self, *args):
         """Stop observing VTK string output window."""
+        self._stop_observing()
+        self._emit_warnings_and_raise_errors()
+
+    def _stop_observing(self):
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
 
+    def _emit_warnings_and_raise_errors(self):
         if self.emit_warnings and self.warning_events:
             self._emit_warning(self._runtime_warning_message)
         if self.raise_errors and self.error_events:
