@@ -4180,7 +4180,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
             the extracted cells correspond to.
 
-            .. versionadded:: 0.46
+            .. versionadded:: 0.47
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
