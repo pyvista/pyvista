@@ -3318,7 +3318,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 
 @pytest.mark.skip_windows('Test fails on Windows because of opacity')
 @skip_lesser_9_4_X
-def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):  # noqa: ARG001
+def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     pl = pv.Plotter()
 
     actor, mapper = pl.add_composite(
@@ -3646,7 +3646,7 @@ def test_charts_sin():
     chart.show()
 
 
-def test_lookup_table(verify_image_cache):  # noqa: ARG001
+def test_lookup_table():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3657,7 +3657,7 @@ def test_lookup_table(verify_image_cache):  # noqa: ARG001
     lut.plot()
 
 
-def test_lookup_table_nan_hidden(verify_image_cache):  # noqa: ARG001
+def test_lookup_table_nan_hidden():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3667,7 +3667,7 @@ def test_lookup_table_nan_hidden(verify_image_cache):  # noqa: ARG001
     lut.plot()
 
 
-def test_lookup_table_above_below_opacity(verify_image_cache):  # noqa: ARG001
+def test_lookup_table_above_below_opacity():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'blue'
