@@ -651,6 +651,7 @@ class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__()
         if vtk_version_info >= (9, 4):
             # Check for VTK base classes and call the override method
             for base in cls.__bases__:
@@ -712,6 +713,7 @@ class DisableVtkSnakeCase:
         return value
 
     def __init_subclass__(cls):
+        super().__init_subclass__()
         # Automatically decorate all public instance methods
         for name, attr in cls.__dict__.items():
             if isinstance(attr, property):
