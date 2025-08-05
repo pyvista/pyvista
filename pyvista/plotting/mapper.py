@@ -15,8 +15,9 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _BoundsSizeMixin
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from .colors import Color
@@ -27,10 +28,10 @@ from .utilities.algorithms import set_algorithm_input
 
 
 @abstract_class
-class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
+class _BaseMapper(
+    _NoNewAttrMixin, _BoundsSizeMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper
+):
     """Base Mapper with methods common to other mappers."""
-
-    _new_attr_exceptions = ('_theme',)
 
     def __init__(self, theme=None, **kwargs) -> None:
         self._theme = pyvista.themes.Theme()
@@ -98,7 +99,7 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         # any connection with the original
         new_mapper.ShallowCopy(self)
         if hasattr(self, 'dataset'):
-            new_mapper.dataset = self.dataset  # type: ignore[attr-defined]
+            new_mapper.dataset = self.dataset
         return new_mapper
 
     @property
@@ -370,7 +371,6 @@ class _BaseMapper(_vtk.DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
         self.Update()
 
 
-@no_new_attr
 class _DataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
 
@@ -916,7 +916,6 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
-@no_new_attr
 class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 

@@ -54,14 +54,6 @@ def test_cone_source():
     assert algo.radius == 0.0
 
 
-def test_text_3d_raises():
-    match = re.escape(
-        f'Attribute "foo" does not exist and cannot be added to type {pv.Text3DSource.__name__}'
-    )
-    with pytest.raises(AttributeError, match=match):
-        pv.Text3DSource().foo = 1
-
-
 @given(bounds=lists(integers()).filter(lambda x: len(x) != 6))
 def test_box_source_bounds_raises(bounds):
     b = pv.BoxSource()
@@ -197,12 +189,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         normal=normal,
     )
     out = src.output
-    bnds = out.bounds
-    actual_width, actual_height, actual_depth = (
-        bnds.x_max - bnds.x_min,
-        bnds.y_max - bnds.y_min,
-        bnds.z_max - bnds.z_min,
-    )
+    actual_width, actual_height, actual_depth = out.bounds_size
 
     # Compute expected values
     empty_string = string.isspace()
@@ -218,8 +205,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         # For width and height, create an unscaled version for reference
         src_not_scaled = pv.Text3DSource(string=string, center=center)
         out_not_scaled = src_not_scaled.output
-        bnds = out_not_scaled.bounds
-        unscaled_width, unscaled_height = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min
+        unscaled_width, unscaled_height, _ = out_not_scaled.bounds_size
         if width is None and height is not None:
             expected_width = unscaled_width * actual_height / unscaled_height
         elif width is not None and height is None:

@@ -9,6 +9,8 @@ from pyvista.core.dataobject import DataObject
 from pyvista.core.dataset import DataSet
 from pyvista.core.grid import Grid
 from pyvista.core.pointset import PointGrid
+from pyvista.core.pointset import PolyData
+from pyvista.core.pointset import UnstructuredGrid
 from pyvista.core.pointset import _PointSet
 
 _GridType = TypeVar('_GridType', bound=Grid)
@@ -30,3 +32,8 @@ _DataSetOrMultiBlockType.__doc__ = (
 
 _DataObjectType = TypeVar('_DataObjectType', bound=DataObject)
 _DataObjectType.__doc__ = """Type variable for :class:`~pyvista.DataObject` classes."""
+
+
+# Undocumented
+_PolyDataType = TypeVar('_PolyDataType', bound=PolyData)  # noqa: PYI018
+_UnstructuredGridType = TypeVar('_UnstructuredGridType', bound=UnstructuredGrid)  # noqa: PYI018

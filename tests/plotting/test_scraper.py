@@ -33,7 +33,7 @@ def test_scraper_with_app(tmpdir, monkeypatch):
 
     # add cone, change view to test that it takes effect
     plotters[0].iren.initialize()
-    plotters[0].app = QApplication([])  # fake QApplication
+    pv.set_new_attribute(plotters[0], 'app', QApplication([]))  # fake QApplication
     plotters[0].add_mesh(pv.Cone())
     plotters[0].camera_position = 'xy'
 

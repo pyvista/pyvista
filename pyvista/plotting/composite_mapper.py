@@ -15,6 +15,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
     from ._typing import ColorLike
 
 
-class BlockAttributes:
+class BlockAttributes(_NoNewAttrMixin):
     """Block attributes used to set the attributes of a block.
 
     Parameters
@@ -260,7 +261,11 @@ class BlockAttributes:
         )
 
 
-class CompositeAttributes(_vtk.DisableVtkSnakeCase, _vtk.vtkCompositeDataDisplayAttributes):
+class CompositeAttributes(
+    _NoNewAttrMixin,
+    _vtk.DisableVtkSnakeCase,
+    _vtk.vtkCompositeDataDisplayAttributes,
+):
     """Block attributes.
 
     Parameters
@@ -556,6 +561,8 @@ class CompositePolyDataMapper(
         if interpolate_before_map is not None:
             self.interpolate_before_map = interpolate_before_map
 
+        self._orig_scalars_name: str | None = None
+
     @property
     def dataset(self) -> pyvista.MultiBlock:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
@@ -639,7 +646,7 @@ class CompositePolyDataMapper(
         >>> actor, mapper = pl.add_composite(
         ...     dataset, scalars='data', show_scalar_bar=False
         ... )
-        >>> mapper.nan_color = 'r'
+        >>> pv.global_theme.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
 

@@ -18,6 +18,8 @@ from .dataobject import DataObject
 from .errors import CellSizeError
 from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
+from .utilities.misc import _BoundsSizeMixin
+from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from typing import Any
@@ -41,7 +43,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
     return np.int32
 
 
-class Cell(DataObject, _vtk.vtkGenericCell):
+class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
@@ -616,7 +618,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
+class CellArray(
+    _NoNewAttrMixin,
+    _vtk.DisableVtkSnakeCase,
+    _vtk.vtkPyVistaOverride,
+    _vtk.vtkCellArray,
+):
     """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from

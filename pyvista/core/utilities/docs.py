@@ -57,7 +57,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
 
     # deal with our decorators properly
@@ -69,13 +69,13 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         obj = obj.__wrapped__
     try:
         fn = inspect.getsourcefile(obj)
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001  # pragma: no cover
         fn = None
 
     if not fn:  # pragma: no cover
         try:
             fn = inspect.getsourcefile(sys.modules[obj.__module__])
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
         return None
 
@@ -84,7 +84,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001 # pragma: no cover
         lineno = None
 
     linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
@@ -92,7 +92,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))  # noqa: UP031
+        kind = f'release/{".".join(pyvista.__version__.split(".")[:2])}'
 
     blob_or_edit = 'edit' if edit else 'blob'
 

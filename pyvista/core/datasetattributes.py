@@ -18,6 +18,7 @@ from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
+from .utilities.misc import _NoNewAttrMixin
 
 T = TypeVar('T')
 
@@ -52,7 +53,9 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
-class DataSetAttributes(_vtk.VTKObjectWrapper):
+class DataSetAttributes(
+    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.VTKObjectWrapperCheckSnakeCase
+):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
     This class provides the ability to pick one of the present arrays as the

@@ -1528,37 +1528,43 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+        "'padding', 'background_value']",
     ),
     'margin': (
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+        "'padding', 'background_value']",
     ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', 'background_value']",  # noqa: E501
+        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
+        "'background_value']",
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
+        "'padding', 'background_value']",
     ),
     'dims_offset': (
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+        "'background_value']",
     ),
     'dimensions': (
         dict(dimensions=CROPPED_DIMENSIONS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', 'background_value']",  # noqa: E501
+        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+        "'background_value']",
     ),
     'mask': (
         dict(mask=MASK_ARRAY_NAME),

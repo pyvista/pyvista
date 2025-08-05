@@ -92,10 +92,13 @@ TEST_CASE_IDS = [case.test_id for case in TEST_CASES]
 def test_example_has_cross_reference_to_api(test_case):
     if not test_case.has_crossref_to_api:
         msg = (
-            "Example must include at least one cross-reference to PyVista's core or plotting API.\n "  # noqa: E501
-            'E.g. if the example shows how to use `my_function`, then include a reference to `my_function`.\n'  # noqa: E501
+            "Example must include at least one cross-reference to PyVista's core or "
+            'plotting API.\n '
+            'E.g. if the example shows how to use `my_function`, then include a reference to '
+            '`my_function`.\n'
             'E.g. use :class:`~pyvista.Plotter` to reference the `Plotter` class.\n'
-            'E.g. use :meth:`~pyvista.DataSetFilters.transform` to reference the `transform` filter.\n'  # noqa: E501
+            'E.g. use :meth:`~pyvista.DataSetFilters.transform` to reference the '
+            '`transform` filter.\n'
         )
         pytest.fail(msg)
 
@@ -107,8 +110,10 @@ def test_example_has_cross_reference_from_api(test_case):
 
     if not test_case.has_crossref_from_api:
         msg = (
-            "Example must include at least one cross-reference from PyVista's core or plotting API.\n"  # noqa: E501
-            'E.g. if the example shows how to use `my_function` with dataset `download_some_dataset`\n'  # noqa: E501
+            "Example must include at least one cross-reference from PyVista's core or "
+            'plotting API.\n'
+            'E.g. if the example shows how to use `my_function` with dataset '
+            '`download_some_dataset`\n'
             f'then consider including a reference:\n'
             f'    :ref:`{test_case.anchor}`\n'
             f'in the docstring of `my_function` and/or `download_some_dataset`.'

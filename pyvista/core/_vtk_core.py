@@ -237,6 +237,12 @@ from vtkmodules.vtkCommonDataModel import VTK_VERTEX as VTK_VERTEX
 from vtkmodules.vtkCommonDataModel import VTK_VOXEL as VTK_VOXEL
 from vtkmodules.vtkCommonDataModel import VTK_WEDGE as VTK_WEDGE
 from vtkmodules.vtkCommonDataModel import vtkAbstractCellLocator as vtkAbstractCellLocator
+from vtkmodules.vtkCommonDataModel import vtkBezierCurve as vtkBezierCurve
+from vtkmodules.vtkCommonDataModel import vtkBezierHexahedron as vtkBezierHexahedron
+from vtkmodules.vtkCommonDataModel import vtkBezierQuadrilateral as vtkBezierQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkBezierTetra as vtkBezierTetra
+from vtkmodules.vtkCommonDataModel import vtkBezierTriangle as vtkBezierTriangle
+from vtkmodules.vtkCommonDataModel import vtkBezierWedge as vtkBezierWedge
 from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuad as vtkBiQuadraticQuad
 from vtkmodules.vtkCommonDataModel import (
     vtkBiQuadraticQuadraticHexahedron as vtkBiQuadraticQuadraticHexahedron,
@@ -266,6 +272,11 @@ from vtkmodules.vtkCommonDataModel import vtkImplicitFunction as vtkImplicitFunc
 from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform as vtkIterativeClosestPointTransform,
 )
+from vtkmodules.vtkCommonDataModel import vtkLagrangeCurve as vtkLagrangeCurve
+from vtkmodules.vtkCommonDataModel import vtkLagrangeHexahedron as vtkLagrangeHexahedron
+from vtkmodules.vtkCommonDataModel import vtkLagrangeQuadrilateral as vtkLagrangeQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkLagrangeTriangle as vtkLagrangeTriangle
+from vtkmodules.vtkCommonDataModel import vtkLagrangeWedge as vtkLagrangeWedge
 from vtkmodules.vtkCommonDataModel import vtkLine as vtkLine
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet as vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator as vtkNonMergingPointLocator
@@ -724,3 +735,18 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
     cls = _find_defining_class(obj if isinstance(obj, type) else obj.__class__, attr)
     return cls is not None and cls.__module__.startswith('vtkmodules')
+
+
+class VTKObjectWrapperCheckSnakeCase(VTKObjectWrapper):
+    """Superclass for classes that wrap VTK objects with Python objects.
+
+    This class overrides __getattr__ to disable the VTK snake case API.
+    """
+
+    def __getattr__(self, name: str):
+        """Forward unknown attribute requests to VTKArray's __getattr__."""
+        if self.VTKObject is not None:
+            # Check if forwarding snake_case attributes
+            DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
+            return getattr(self.VTKObject, name)
+        raise AttributeError
