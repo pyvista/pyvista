@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import functools
+import inspect
 import sys
 from typing import NamedTuple
 import warnings
@@ -723,7 +724,9 @@ class DisableVtkSnakeCase:
                     wrapped_setter = with_vtk_error_check(setter)
                     new_prop = property(attr.fget, wrapped_setter, attr.fdel)
                     setattr(cls, name, new_prop)
-            elif callable(attr) and not name.startswith('_'):
+
+            elif inspect.isfunction(attr) and not name.startswith('_'):
+                # Only wrap plain functions (not types, enums, methods, etc.)
                 setattr(cls, name, with_vtk_error_check(attr))
 
 
