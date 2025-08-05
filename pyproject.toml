@@ -550,7 +550,6 @@ keep-runtime-typing = true # Preserve types, even if a file imports `from __futu
 [tool.repo-review]
 ignore = [
   'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
-  'MY104', # temporarily disabled unused-ignore check after dropping Python 3.9/VTK 9.0.3 support
   'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
   'PY004', # we have a 'doc' folder, not 'docs'
