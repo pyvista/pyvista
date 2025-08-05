@@ -251,7 +251,6 @@ xfail_strict = true
 
 [tool.mypy]
 check_untyped_defs = true
-disable_error_code = ['unused-ignore']
 disallow_any_generics = true
 disallow_subclassing_any = true
 enable_error_code = ['redundant-expr', 'truthy-bool']
