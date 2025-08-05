@@ -933,7 +933,7 @@ def test_download_gltf_damaged_helmet():
 
 
 @pytest.mark.needs_vtk_version(
-    (9, 1),
+    less_than=(9, 1),
     reason='Skip until glTF extension KHR_texture_transform is supported.',
 )
 def test_download_gltf_sheen_chair():

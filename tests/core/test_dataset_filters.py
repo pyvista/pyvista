@@ -20,7 +20,6 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.celltype import CellType
@@ -676,7 +675,7 @@ def test_glyph(datasets, sphere):
     sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
     # tries to orient but multiple orientation vectors are possible
     with pytest.warns(
-        pyvista.VTKOutputMessageWarning, match='Turning indexing off: no data to index with'
+        pv.VTKOutputMessageWarning, match='Turning indexing off: no data to index with'
     ):
         with pytest.warns(
             UserWarning, match=r'It is unclear which one to use. orient will be set to False'
