@@ -237,6 +237,12 @@ from vtkmodules.vtkCommonDataModel import VTK_VERTEX as VTK_VERTEX
 from vtkmodules.vtkCommonDataModel import VTK_VOXEL as VTK_VOXEL
 from vtkmodules.vtkCommonDataModel import VTK_WEDGE as VTK_WEDGE
 from vtkmodules.vtkCommonDataModel import vtkAbstractCellLocator as vtkAbstractCellLocator
+from vtkmodules.vtkCommonDataModel import vtkBezierCurve as vtkBezierCurve
+from vtkmodules.vtkCommonDataModel import vtkBezierHexahedron as vtkBezierHexahedron
+from vtkmodules.vtkCommonDataModel import vtkBezierQuadrilateral as vtkBezierQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkBezierTetra as vtkBezierTetra
+from vtkmodules.vtkCommonDataModel import vtkBezierTriangle as vtkBezierTriangle
+from vtkmodules.vtkCommonDataModel import vtkBezierWedge as vtkBezierWedge
 from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuad as vtkBiQuadraticQuad
 from vtkmodules.vtkCommonDataModel import (
     vtkBiQuadraticQuadraticHexahedron as vtkBiQuadraticQuadraticHexahedron,
@@ -266,6 +272,11 @@ from vtkmodules.vtkCommonDataModel import vtkImplicitFunction as vtkImplicitFunc
 from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform as vtkIterativeClosestPointTransform,
 )
+from vtkmodules.vtkCommonDataModel import vtkLagrangeCurve as vtkLagrangeCurve
+from vtkmodules.vtkCommonDataModel import vtkLagrangeHexahedron as vtkLagrangeHexahedron
+from vtkmodules.vtkCommonDataModel import vtkLagrangeQuadrilateral as vtkLagrangeQuadrilateral
+from vtkmodules.vtkCommonDataModel import vtkLagrangeTriangle as vtkLagrangeTriangle
+from vtkmodules.vtkCommonDataModel import vtkLagrangeWedge as vtkLagrangeWedge
 from vtkmodules.vtkCommonDataModel import vtkLine as vtkLine
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet as vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator as vtkNonMergingPointLocator
