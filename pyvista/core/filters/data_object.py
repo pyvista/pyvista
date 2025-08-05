@@ -223,7 +223,7 @@ class DataObjectFilters:
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [self.point_data, self.cell_data]
-        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=False):
+        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
             for vector_name in vector_names:
                 if vector_name is None:
                     continue
@@ -1324,7 +1324,7 @@ class DataObjectFilters:
                     )
 
                     for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                        self_iter, a_iter, b_iter, active_scalars_info_, strict=False
+                        self_iter, a_iter, b_iter, active_scalars_info_, strict=True
                     ):
                         crinkled = extract_cells_from_block(
                             block_self, block_a, block_b, scalars_info

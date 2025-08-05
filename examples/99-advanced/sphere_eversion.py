@@ -199,7 +199,7 @@ x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(0, 1, n_steps)
 alphas = np.linspace(0, alpha_final, n_steps)
 etas = np.linspace(1, eta_final, n_steps)
-for xi, alpha, eta in zip(xis, alphas, etas, strict=False):
+for xi, alpha, eta in zip(xis, alphas, etas, strict=True):
     x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 
@@ -230,7 +230,7 @@ x, y, z = cylinder_to_wormhole(h, phi, t, p, q)
 xis = np.linspace(1, 0, n_steps + 1)[1:]
 alphas = np.linspace(alpha_final, 0, n_steps + 1)[1:]
 etas = np.linspace(eta_final, 1, n_steps + 1)[1:]
-for xi, alpha in zip(xis, alphas, strict=False):
+for xi, alpha in zip(xis, alphas, strict=True):
     x2, y2, z2 = close_wormhole(x, y, z, eta, xi, alpha)
     save_frame(x2, y2, z2)
 

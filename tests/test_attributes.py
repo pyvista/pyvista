@@ -65,7 +65,7 @@ def pytest_generate_tests(metafunc):
 
             inherits_from_vtk = {
                 name: cls
-                for name, cls in zip(class_names, class_types, strict=False)
+                for name, cls in zip(class_names, class_types, strict=True)
                 if inherits_from_vtk(cls)
             }
             assert inherits_from_vtk
@@ -86,7 +86,7 @@ def pytest_generate_tests(metafunc):
 
         class_map = {
             name: cls
-            for name, cls in zip(class_names, class_types, strict=False)
+            for name, cls in zip(class_names, class_types, strict=True)
             if not name.startswith('_') and not issubclass(cls, tuple(SKIP_SUBCLASS))
         }
         metafunc.parametrize('pyvista_class', list(class_map.values()), ids=list(class_map.keys()))

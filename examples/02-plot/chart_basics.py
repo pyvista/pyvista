@@ -162,10 +162,10 @@ f, ax = plt.subplots(
 alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]
 N = int(1e4)
-data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=False)]
+data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=True)]
 labels = [
     f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$'
-    for alpha, beta in zip(alphas, betas, strict=False)
+    for alpha, beta in zip(alphas, betas, strict=True)
 ]
 ax.violinplot(data)
 ax.set_xticks(np.arange(1, 1 + len(labels)))

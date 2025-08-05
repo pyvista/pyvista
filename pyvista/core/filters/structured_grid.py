@@ -123,7 +123,7 @@ class StructuredGridFilters(DataSetFilters):
             raise RuntimeError(msg)
 
         # check dimensions are compatible
-        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions, strict=False)):  # type: ignore[attr-defined]
+        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions, strict=True)):  # type: ignore[attr-defined]
             if i == axis:
                 continue
             if dim1 != dim2:

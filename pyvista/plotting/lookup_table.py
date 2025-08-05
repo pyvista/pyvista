@@ -963,7 +963,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
 
         vtk_str = self.GetAnnotations()
         values = [str(vtk_str.GetValue(ii)) for ii in range(n_items)]
-        return dict(zip(keys, values, strict=False))
+        return dict(zip(keys, values, strict=True))
 
     @annotations.setter
     def annotations(self, values: dict[float, str] | None):

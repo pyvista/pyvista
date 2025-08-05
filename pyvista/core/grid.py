@@ -763,8 +763,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         clipped = pyvista.ImageDataFilters._clip_extent(voi, clip_to=self.extent)
         if strict_index and (
-            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2], strict=False))
-            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2], strict=False))
+            any(min_ < clp for min_, clp in zip(voi[::2], clipped[::2], strict=True))
+            or any(max_ > clp for max_, clp in zip(voi[1::2], clipped[1::2], strict=True))
         ):
             msg = (
                 f'The requested volume of interest {tuple(voi)} '

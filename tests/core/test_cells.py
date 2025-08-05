@@ -174,7 +174,7 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_cell_type(cell, type_):
     assert cell.type == type_
 
@@ -184,22 +184,22 @@ def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'dim'), zip(cells, dims, strict=True), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'np'), zip(cells, npoints, strict=True), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'nf'), zip(cells, nfaces, strict=True), ids=cell_ids)
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'ne'), zip(cells, nedges, strict=True), ids=cell_ids)
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
@@ -304,12 +304,12 @@ def test_cell_center_value():
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=False), ids=cell_ids)
+@pytest.mark.parametrize(('cell', 'type_'), zip(cells, types, strict=True), ids=cell_ids)
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 

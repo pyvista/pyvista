@@ -588,7 +588,7 @@ def test_merge_main_has_priority(input_, main_has_priority):
         """Return True if scalars on two meshes only differ by point order."""
         return all(
             new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=False)
+            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
             for j in (this.points == point).all(-1).nonzero()
         )
 
