@@ -115,20 +115,20 @@ def catch_vtk_errors(request):
 
         # Remove any globally filtered events
         messages = filter_vtk_message(messages)
-        n_messages = len(messages)
-        msg_start = (
-            f'{n_messages} {"error/warning was" if n_messages == 1 else "errors/warnings were"} '
-            f'caught by {catcher.__class__.__name__} during test execution:'
-        )
-        messages_formatted = '\n'.join(messages)
-        msg_end = (
-            'The offending VTK call (e.g. `obj.Update()`) should be wrapped and called using '
-            '`pyvista.vtk_message_policy._call_function()` instead.\n'
-            'Then, use `pytest.raises` or `pytest.warns` to catch the error(s) or use '
-            "`pyvista.vtk_verbosity('off') to fully silence vtk errors/warnings.`\n"
-        )
-        msg = f'{msg_start}\n{messages_formatted}\n\n{msg_end}'
-        raise RuntimeError(msg)
+        if (n_msg := len(messages)) > 0:
+            msg_start = (
+                f'{n_msg} {"error/warning was" if n_msg == 1 else "errors/warnings were"} '
+                f'caught by {catcher.__class__.__name__} during test execution:'
+            )
+            messages_formatted = '\n'.join(messages)
+            msg_end = (
+                'The offending VTK call (e.g. `obj.Update()`) should be wrapped and called using '
+                '`pyvista.vtk_message_policy._call_function()` instead.\n'
+                'Then, use `pytest.raises` or `pytest.warns` to catch the error(s) or use '
+                "`pyvista.vtk_verbosity('off') to fully silence vtk errors/warnings.`\n"
+            )
+            msg = f'{msg_start}\n{messages_formatted}\n\n{msg_end}'
+            raise RuntimeError(msg)
 
 
 @pytest.fixture(scope='session', autouse=True)
