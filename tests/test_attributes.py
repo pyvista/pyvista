@@ -16,8 +16,6 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.charts import _vtkWrapper
 
-pytestmark = pytest.mark.skip_catch_vtk_errors
-
 
 def get_all_pyvista_classes() -> tuple[tuple[str, ...], tuple[type, ...]]:
     """Return all classes defined in the pyvista package."""

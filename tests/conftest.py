@@ -28,6 +28,9 @@ NUMPY_VERSION_INFO = VersionInfo(
     micro=int(np.__version__.split('.')[2]),
 )
 
+FILTERED_VTK_MESSAGES = ['libOSMesa not found', 'Failed to load EGL']
+FILTERED_VTK_PATTERNS = [re.compile(pattern) for pattern in FILTERED_VTK_MESSAGES]
+
 
 def flaky_test(
     test_function=None, *, times: int = 3, exceptions: tuple[Exception, ...] = (AssertionError,)
@@ -94,6 +97,13 @@ def catch_vtk_errors(request):
         yield
         return
 
+    def filter_vtk_message(errors: list[str]) -> list[str]:
+        return [
+            err
+            for err in errors
+            if not any(pattern.search(err) for pattern in FILTERED_VTK_PATTERNS)
+        ]
+
     with pyvista.VtkErrorCatcher() as catcher:
         yield catcher
     if getattr(catcher, 'skip', False):
@@ -101,19 +111,23 @@ def catch_vtk_errors(request):
 
     events = catcher.events
     if events:
-        n_events = len(events)
+        messages = [repr(e) for e in events]
+
+        # Remove any globally filtered events
+        messages = filter_vtk_message(messages)
+        n_messages = len(messages)
         msg_start = (
-            f'{n_events} {"error was" if n_events == 1 else "errors were"} caught by '
-            f'{catcher.__class__.__name__} during test execution:'
+            f'{n_messages} {"error/warning was" if n_messages == 1 else "errors/warnings were"} '
+            f'caught by {catcher.__class__.__name__} during test execution:'
         )
-        events_formatted = '\n'.join(repr(e) for e in events)
+        messages_formatted = '\n'.join(messages)
         msg_end = (
             'The offending VTK call (e.g. `obj.Update()`) should be wrapped and called using '
             '`pyvista.vtk_message_policy._call_function()` instead.\n'
             'Then, use `pytest.raises` or `pytest.warns` to catch the error(s) or use '
             "`pyvista.vtk_verbosity('off') to fully silence vtk errors/warnings.`\n"
         )
-        msg = f'{msg_start}\n{events_formatted}\n\n{msg_end}'
+        msg = f'{msg_start}\n{messages_formatted}\n\n{msg_end}'
         raise RuntimeError(msg)
 
 
