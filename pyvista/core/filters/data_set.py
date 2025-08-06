@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
@@ -10,6 +9,7 @@ import functools
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -1749,7 +1749,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             # use a single glyph, ignore indices
             alg.SetSourceData(geoms[0])
         else:
-            for index, subgeom in zip(indices, geoms, strict=False):
+            for index, subgeom in zip(indices, geoms):
                 alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
@@ -5001,11 +5001,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         multi = pyvista.MultiBlock()
         if values is not None:
             value_names = value_names or [None] * len(values)
-            for name, val in zip(value_names, values, strict=False):
+            for name, val in zip(value_names, values):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
             range_names = range_names or [None] * len(ranges)
-            for name, rng in zip(range_names, ranges, strict=False):
+            for name, rng in zip(range_names, ranges):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
@@ -6944,7 +6944,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
             # Pack/sort array
             packed_array = np.zeros_like(arr)
-            for num_in, num_out in zip(label_numbers_in, label_numbers_out, strict=False):
+            for num_in, num_out in zip(label_numbers_in, label_numbers_out):
                 packed_array[arr == num_in] = num_out
 
             result = self if inplace else self.copy(deep=True)
@@ -7304,7 +7304,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 cast('list[ColorLike]', list(colors.values()))
             )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
-            items = zip(colors.keys(), color_rgb_sequence, strict=False)
+            items = zip(colors.keys(), color_rgb_sequence)
 
         else:
             if array.ndim > 1:
@@ -7379,7 +7379,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 keys = np.unique(array)
                 values = itertools.cycle(color_rgb_sequence)
 
-            items = zip(keys, values, strict=False)
+            items = zip(keys, values)
 
         colors_out = np.full(
             (len(array), num_components), default_channel_value, dtype=color_dtype

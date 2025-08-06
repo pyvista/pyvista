@@ -3,36 +3,24 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:
-    from typing import TypeAlias
-
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
     from pyvista.core._typing_core._array_like import NumberType
-
-    # Local type aliases for finite nested structures
-    _FiniteNestedList: TypeAlias = (
-        list[NumberType]
-        | list[list[NumberType]]
-        | list[list[list[NumberType]]]
-        | list[list[list[list[NumberType]]]]
-    )
-    _FiniteNestedTuple: TypeAlias = (
-        tuple[NumberType]
-        | tuple[tuple[NumberType]]
-        | tuple[tuple[tuple[NumberType]]]
-        | tuple[tuple[tuple[tuple[NumberType]]]]
-    )
+    from pyvista.core._typing_core._array_like import _FiniteNestedList
+    from pyvista.core._typing_core._array_like import _FiniteNestedTuple
 
 
 def _cast_to_list(
     arr: _ArrayLikeOrScalar[NumberType],
-) -> NumberType | _FiniteNestedList[NumberType]:
+) -> Union[NumberType, _FiniteNestedList[NumberType]]:
     """Cast an array to a nested list.
 
     Parameters
@@ -51,7 +39,7 @@ def _cast_to_list(
 
 def _cast_to_tuple(
     arr: ArrayLike[NumberType],
-) -> NumberType | _FiniteNestedTuple[NumberType]:
+) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
     """Cast an array to a nested tuple.
 
     Parameters
@@ -78,7 +66,7 @@ def _cast_to_numpy(
     /,
     *,
     as_any: bool = True,
-    dtype: npt.DTypeLike | None = None,
+    dtype: Optional[npt.DTypeLike] = None,
     copy: bool = False,
     must_be_real: bool = False,
 ) -> NumpyArray[NumberType]:
@@ -131,6 +119,8 @@ def _cast_to_numpy(
 
     """
     # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
     except AttributeError:

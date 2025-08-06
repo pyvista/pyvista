@@ -41,6 +41,7 @@ from typing import Any
 from typing import Generic
 from typing import Protocol
 from typing import TypeVar
+from typing import Union
 from typing import cast
 from typing import final
 from typing import runtime_checkable
@@ -69,8 +70,13 @@ _FilePropIntType_co = TypeVar(
     covariant=True,
 )
 
-DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
-DatasetType = type[pv.DataSet] | type[pv.Texture] | type[NumpyArray[Any]] | type[pv.MultiBlock]
+DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
+DatasetType = Union[
+    type[pv.DataSet],
+    type[pv.Texture],
+    type[NumpyArray[Any]],
+    type[pv.MultiBlock],
+]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
@@ -703,7 +709,7 @@ def _load_as_multiblock(
             for path in paths
         ]
 
-    for file, name in zip(files, names, strict=False):
+    for file, name in zip(files, names):
         if not isinstance(file, _DatasetLoader):
             continue  # type: ignore[unreachable]
         loaded = file.load()

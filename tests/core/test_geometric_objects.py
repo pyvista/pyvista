@@ -776,7 +776,6 @@ def test_ellipse():
         range(5),
         [4, 8, 6, 12, 20],
         [4, 6, 8, 20, 12],
-        strict=False,
     ),
 )
 def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):

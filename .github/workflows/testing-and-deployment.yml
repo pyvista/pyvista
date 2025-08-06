@@ -79,6 +79,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - { os: macos-13, python-version: "3.9" }
           - { os: macos-14, python-version: "3.10" }
           - { os: macos-latest, python-version: "3.11" }
           - { os: macos-latest, python-version: "3.12" }
@@ -145,6 +146,12 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
+          - python-version: "3.9"
+            vtk-version: "9.0.3" # Requires numpy~=1.23
+            numpy-version: "1.23"
+          - python-version: "3.9"
+            vtk-version: "9.1"
+            numpy-version: "1.26" # Test numpy 1.26
           - python-version: "3.10"
             vtk-version: "9.2.2"
             numpy-version: "latest"
@@ -203,7 +210,7 @@ jobs:
         run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Limit Matplotlib for VTK<9.2.2
-        if: ${{ matrix.vtk-version == '9.1' }}
+        if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
         run: pip install 'matplotlib<3.6'
 
       - name: Install latest numpy 2.0 beta/rc
@@ -264,7 +271,7 @@ jobs:
           twine check --strict dist/*
 
       - name: Upload to PyPi
-        if: matrix.python-version == '3.10' && startsWith(github.ref, 'refs/tags/v')
+        if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
         run: |
           twine upload --skip-existing dist/pyvista*
         env:
@@ -363,7 +370,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:

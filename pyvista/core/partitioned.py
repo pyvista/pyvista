@@ -107,7 +107,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     ):
         """Set a partition with a VTK data object."""
         if isinstance(index, slice):
-            for i, d in zip(range(self.n_partitions)[index], data, strict=False):
+            for i, d in zip(range(self.n_partitions)[index], data):
                 self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:

@@ -1235,7 +1235,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # Inspired from Mayavi's version of Raymond Maple 3-lights illumination
         intensities = [1, 0.6, 0.5]
         all_angles = [(45.0, 45.0), (-30.0, -60.0), (-30.0, 60.0)]
-        for intensity, angles in zip(intensities, all_angles, strict=False):
+        for intensity, angles in zip(intensities, all_angles):
             light = pyvista.Light(light_type='camera light')
             light.intensity = intensity
             light.position = _to_pos(*angles)

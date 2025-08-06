@@ -18,7 +18,6 @@ from collections.abc import Sequence
 from collections.abc import Sized
 from numbers import Number
 import reprlib
-import types
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Union
@@ -39,14 +38,14 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core._array_like import _NumberType
 
 
-_Shape = tuple[()] | tuple[int, ...]
-_ShapeLike = int | _Shape
+_Shape = Union[tuple[()], tuple[int, ...]]
+_ShapeLike = Union[int, _Shape]
 
 
 def check_subdtype(
-    input_obj: npt.DTypeLike | _ArrayLikeOrScalar[NumberType],
+    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
     /,
-    base_dtype: npt.DTypeLike | tuple[npt.DTypeLike, ...] | list[npt.DTypeLike],
+    base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
     *,
     name: str = 'Input',
 ) -> None:
@@ -911,8 +910,7 @@ def check_instance(
         raise TypeError(msg)
 
     # Get class info from generics
-    origin = get_origin(classinfo)
-    if origin is Union or origin is types.UnionType:
+    if get_origin(classinfo) is Union:
         classinfo = get_args(classinfo)
 
     # Count num classes
