@@ -7,6 +7,7 @@ from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import matplotlib as mpl
 import pytest
 import vtk
 
@@ -364,13 +365,22 @@ def test_cmap(default_theme):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
+    cmap_obj = pv.get_cmap_safe(cmap)
+    assert isinstance(cmap_obj, mpl.colors.Colormap)
+    default_theme.cmap = cmap_obj
+    assert default_theme.cmap == cmap_obj
+
+    cmap_list = ['red', 'green', 'blue']
+    default_theme.cmap = cmap_list
+    assert default_theme.cmap == cmap_list
+
     match = "Invalid colormap 'not a color map'"
     with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
     match = (
-        "cmap must be an instance of any type (<class 'str'>, <class 'list'>). "
-        "Got <class 'NoneType'> instead."
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>, "
+        "<class 'matplotlib.colors.Colormap'>). Got <class 'NoneType'> instead."
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
