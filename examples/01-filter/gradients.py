@@ -47,7 +47,7 @@ def gradients_to_dict(arr):
         ['du/dx', 'du/dy', 'du/dz', 'dv/dx', 'dv/dy', 'dv/dz', 'dw/dx', 'dw/dy', 'dw/dz'],
     )
     keys = keys.reshape((3, 3))[:, : arr.shape[1]].ravel()
-    return dict(zip(keys, mesh_g['gradient'].T))
+    return dict(zip(keys, mesh_g['gradient'].T, strict=False))
 
 
 gradients = gradients_to_dict(mesh_g['gradient'])

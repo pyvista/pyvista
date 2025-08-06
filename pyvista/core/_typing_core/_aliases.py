@@ -6,7 +6,7 @@ import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
-from typing import Union
+from typing import TypeAlias
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -34,38 +34,23 @@ else:
 #
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
-Number = Union[int, float]
+Number = int | float
 
-VectorLike = _ArrayLike1D[NumberType]
-VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
+VectorLike: TypeAlias = _ArrayLike1D[NumberType]
 
-Includes sequences and numpy arrays.
-"""
+MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
 
-MatrixLike = _ArrayLike2D[NumberType]
-MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
+ArrayLike: TypeAlias = _ArrayLike[NumberType]
 
-Includes singly-nested sequences and numpy arrays.
-"""
+# Create a float-specific matrix type for rotation use
+FloatMatrixLike: TypeAlias = _ArrayLike2D[float]
 
-ArrayLike = _ArrayLike[NumberType]
-ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
-
-Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
-"""
 if Rotation is not None:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
+    RotationLike: TypeAlias = FloatMatrixLike | _vtk.vtkMatrix3x3 | Rotation
 else:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
-RotationLike.__doc__ = """Array or object representing a spatial rotation.
+    RotationLike: TypeAlias = FloatMatrixLike | _vtk.vtkMatrix3x3  # type: ignore[no-redef,misc]
 
-Includes 3x3 arrays and SciPy Rotation objects.
-"""
-
-TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
-TransformLike.__doc__ = """Array or object representing a spatial transformation.
-
-Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
+TransformLike: TypeAlias = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
 
 
 class BoundsTuple(NamedTuple):
@@ -93,7 +78,7 @@ class BoundsTuple(NamedTuple):
         field_size = max(len(f) for f in fields)
         name = self.__class__.__name__
         whitespace = (len(name) + 1) * ' '
-        for i, items in enumerate(zip(fields, split_strings)):
+        for i, items in enumerate(zip(fields, split_strings, strict=False)):
             field, parts = items
             left, right = parts
             aligned = f'{left:>{pad_left}}{dot}{right}'
@@ -105,15 +90,11 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike = Union[MatrixLike[int], VectorLike[int]]
+CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
 
-CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
+CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+_ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]  # noqa: PYI047
 
-InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
-InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
-
-Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
-"""
+InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
