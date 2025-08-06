@@ -109,7 +109,7 @@ mesh_0 = reader.read()
 reader.set_active_time_value(time_values[1])
 mesh_1 = reader.read()
 
-for block_0, block_1 in zip(mesh_0, mesh_1, strict=False):
+for block_0, block_1 in zip(mesh_0, mesh_1):
     block_1['DENS_DIFF'] = block_1['DENS'] - block_0['DENS']
 
 # %%

@@ -186,7 +186,7 @@ class MultiBlock(
                 self.SetBlock(i, wrap(block))
 
     def _items(self) -> Iterable[tuple[str | None, _TypeMultiBlockLeaf]]:
-        yield from zip(self.keys(), self, strict=False)
+        yield from zip(self.keys(), self)
 
     _OrderLiteral = Literal['nested_first', 'nested_last']
 
@@ -645,7 +645,7 @@ class MultiBlock(
             other_ids = []
             other_names = []
             other_blocks = []
-            for id_, name, block in zip(ids, names, self, strict=False):
+            for id_, name, block in zip(ids, names, self):
                 if isinstance(block, MultiBlock):
                     multi_ids.append(id_)
                     multi_names.append(name)
@@ -664,7 +664,7 @@ class MultiBlock(
                 blocks = [*multi_blocks, *other_blocks]
 
         # Iterate through ids, names, blocks
-        for id_, name, block in zip(ids, names, blocks, strict=False):
+        for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
                 skip_empty and (block is not None and block.is_empty)
             ):
@@ -1588,7 +1588,7 @@ class MultiBlock(
         """
         # Code based on collections.abc
         if isinstance(datasets, MultiBlock):
-            for key, data in zip(datasets.keys(), datasets, strict=False):
+            for key, data in zip(datasets.keys(), datasets):
                 self.append(data, key)
         else:
             for v in datasets:
@@ -1972,9 +1972,7 @@ class MultiBlock(
         if not self.keys() == other.keys():
             return False
 
-        return not any(
-            self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other, strict=False)
-        )
+        return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 

@@ -4,6 +4,7 @@ from collections import Counter
 from pathlib import Path
 import re
 from typing import NamedTuple
+from typing import Optional
 
 import pytest
 
@@ -18,7 +19,7 @@ class _TestCaseTuple(NamedTuple):
     file_path: str
     has_crossref_to_api: bool
     has_crossref_from_api: bool
-    anchor: str | None
+    anchor: Optional[str]
 
 
 def find_files_with_extension(root_dir: str, ext: str) -> list[str]:

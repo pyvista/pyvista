@@ -14,6 +14,7 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.9',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
@@ -26,7 +27,6 @@ dependencies = [
   'vtk!=9.4.0',
   'vtk!=9.4.1',
   'vtk<9.6.0',
-  'vtk>=9.1.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -34,7 +34,7 @@ keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
-requires-python = '>=3.10'
+requires-python = '>=3.9'
 
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']

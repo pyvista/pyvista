@@ -11,6 +11,7 @@ from typing import Any
 from typing import Literal
 from typing import TextIO
 from typing import TypeVar
+from typing import Union
 from typing import cast
 from typing import overload
 import warnings
@@ -39,15 +40,15 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-PathStrSeq = str | Path | Sequence['PathStrSeq']
+PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
 if TYPE_CHECKING:
-    _VTKWriterAlias = (
-        _vtk.vtkXMLPartitionedDataSetWriter
-        | _vtk.vtkXMLWriter
-        | _vtk.vtkDataWriter
-        | _vtk.vtkHDFWriter
-    )
+    _VTKWriterAlias = Union[
+        _vtk.vtkXMLPartitionedDataSetWriter,
+        _vtk.vtkXMLWriter,
+        _vtk.vtkDataWriter,
+        _vtk.vtkHDFWriter,
+    ]
     _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')
@@ -1114,7 +1115,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         offsets_ = np.cumsum(offsets)
 
-        return [arr[i1 + 1 : i2] for i1, i2 in itertools.pairwise(offsets_)]
+        return [arr[i1 + 1 : i2] for i1, i2 in zip(offsets_[:-1], offsets_[1:])]
 
     polyhedron_faces = split(mesh.polyhedron_faces)
 
@@ -1150,9 +1151,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         cells = []
         offset = mesh.offset
 
-        for i, (i1, i2, vtk_celltype) in enumerate(
-            zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
-        ):
+        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
             cell = connectivity[i1:i2]
 
             if vtk_celltype == pyvista.CellType.POLYHEDRON:
@@ -1194,7 +1193,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = {
-        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in itertools.pairwise(indices)]
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
         for k, v in vtk_cell_data.items()
     }
 

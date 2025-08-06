@@ -624,12 +624,12 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
 
 def test_check_type():
     check_type(0, int, name='abc')
-    check_type(0, int)
+    check_type(0, Union[int])
     with pytest.raises(TypeError):
         check_type('str', int)
     with pytest.raises(TypeError):
         check_type(0, int, name=1)
-    check_type(0, int | float)
+    check_type(0, Union[int, float])
 
 
 @pytest.mark.skipif(
@@ -637,7 +637,7 @@ def test_check_type():
     reason='Union type input requires python3.10 or higher',
 )
 def test_check_type_union():
-    check_type(0, int | float)
+    check_type(0, Union[int, float])
 
 
 def test_check_string():
@@ -807,6 +807,8 @@ def test_check_sorted(shape, axis, ascending, strict):
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
     # needed to support numpy <1.25
+    # needed to support vtk 9.0.3
+    # check for removal when support for vtk 9.0.3 is removed
     try:
         AxisError = np.exceptions.AxisError
     except AttributeError:

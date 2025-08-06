@@ -8,6 +8,8 @@ from inspect import Signature
 import os
 import platform
 import re
+from typing import Optional
+from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
@@ -361,25 +363,25 @@ def pytest_runtest_setup(item: pytest.Item):
                 Parameter(
                     'args',
                     kind=Parameter.VAR_POSITIONAL,
-                    annotation=int | tuple[int],
+                    annotation=Union[int, tuple[int]],
                 ),
                 Parameter(
                     'at_least',
                     kind=Parameter.KEYWORD_ONLY,
-                    annotation=tuple[int] | None,
+                    annotation=Optional[tuple[int]],
                     default=None,
                 ),
                 Parameter(
                     'less_than',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=tuple[int] | None,
+                    annotation=Optional[tuple[int]],
                 ),
                 Parameter(
                     'reason',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=str | None,
+                    annotation=Optional[str],
                 ),
             ]
         )
@@ -458,13 +460,13 @@ def pytest_runtest_setup(item: pytest.Item):
                     p := 'processor',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=str | None,
+                    annotation=Union[str, None],
                 ),
                 Parameter(
                     m := 'machine',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=str | None,
+                    annotation=Union[str, None],
                 ),
             ]
         )

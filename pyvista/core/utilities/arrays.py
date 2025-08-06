@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TypeVar
+from typing import Union
 from typing import cast
 from typing import overload
 
@@ -489,7 +490,7 @@ def get_array_association(  # noqa: PLR0917
         msg = f'Data field ({preference}) not supported.'
         raise ValueError(msg)
 
-    matches = [pref for pref, array in zip(preferences, arrays, strict=False) if array is not None]
+    matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
     # optionally raise if no match
     if not matches:
         if err:
@@ -974,16 +975,16 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoT
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
 
-_JSONValueType = (
-    dict[str, '_JSONValueType']
-    | list['_JSONValueType']
-    | tuple['_JSONValueType']
-    | str
-    | int
-    | float
-    | bool
-    | None
-)
+_JSONValueType = Union[
+    dict[str, '_JSONValueType'],
+    list['_JSONValueType'],
+    tuple['_JSONValueType'],
+    str,
+    int,
+    float,
+    bool,
+    None,
+]
 
 
 class _SerializedDictArray(_vtk.DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]

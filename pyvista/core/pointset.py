@@ -11,6 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Union
 from typing import cast
 import warnings
 
@@ -55,20 +56,20 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
-    _PolyDataWriterAlias = (
-        _vtk.vtkPLYWriter
-        | _vtk.vtkXMLPolyDataWriter
-        | _vtk.vtkSTLWriter
-        | _vtk.vtkPolyDataWriter
-        | _vtk.vtkHoudiniPolyDataWriter
-        | _vtk.vtkOBJWriter
-        | _vtk.vtkIVWriter
-        | _vtk.vtkHDFWriter
-    )
+    _PolyDataWriterAlias = Union[
+        _vtk.vtkPLYWriter,
+        _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkSTLWriter,
+        _vtk.vtkPolyDataWriter,
+        _vtk.vtkHoudiniPolyDataWriter,
+        _vtk.vtkOBJWriter,
+        _vtk.vtkIVWriter,
+        _vtk.vtkHDFWriter,
+    ]
 
-    _UnstructuredGridWriterAlias = (
-        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
-    )
+    _UnstructuredGridWriterAlias = Union[
+        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
+    ]
 
 
 DEFAULT_INPLACE_WARNING = (
@@ -2195,9 +2196,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             face_count = 0
 
             for i, n_faces in zip(
-                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON),
-                face_counts,
-                strict=False,
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
             ):
                 locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
                 face_count += n_faces
