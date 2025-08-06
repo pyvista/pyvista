@@ -510,6 +510,7 @@ def test_voxelize_fit_bounds(function, uniform):
     assert np.isclose(vox.bounds.z_max, uniform.bounds.z_max)
 
 
+@pytest.mark.skip_catch_vtk_errors
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
