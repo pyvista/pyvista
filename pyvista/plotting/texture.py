@@ -183,7 +183,7 @@ class Texture(DataObject, _vtk.vtkTexture):
           in the range 0.0-1.0
         * ``'map'`` - All scalar data will be mapped through the lookup table.
 
-        .. versionadded:: 0.46
+        .. versionadded:: 0.47
 
         """
         mode = self.GetColorMode()
