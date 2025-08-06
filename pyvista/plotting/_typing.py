@@ -76,7 +76,10 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
-CameraOptions = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+CameraOptions = Union[
+    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso'],
+    Sequence[Union[list[float], tuple[float, float, float]]],
+]
 
 
 class BackfaceArgs(TypedDict, total=False):
