@@ -162,6 +162,22 @@ def test_clip_box(datasets):
     assert clp is not None
 
 
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_clip_box_no_unused_points(as_composite):
+    mesh = pv.Cube()
+    mesh = pv.MultiBlock([mesh]) if as_composite else mesh
+    new_bounds = (
+        mesh.bounds.x_min,
+        mesh.bounds.x_max,
+        mesh.bounds.y_min,
+        mesh.bounds.y_max,
+        0.2,
+        0.4,
+    )
+    clipped = mesh.clip_box(bounds=new_bounds, invert=False)
+    assert np.allclose(clipped.bounds, new_bounds)
+
+
 def test_clip_box_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.clip_box(invert=False, progress_bar=True)

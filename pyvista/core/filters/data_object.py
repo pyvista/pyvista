@@ -1611,6 +1611,13 @@ class DataObjectFilters:
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+
+        if np.allclose(clipped.bounds, self.bounds):
+            clipped = (
+                clipped.generic_filter('remove_unused_points')
+                if isinstance(clipped, pyvista.MultiBlock)
+                else clipped.remove_unused_points()
+            )
         return clipped
 
     @_deprecate_positional_args(allowed=['implicit_function'])
