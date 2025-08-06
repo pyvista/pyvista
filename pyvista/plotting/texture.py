@@ -32,10 +32,9 @@ class Texture(DataObject, _vtk.vtkTexture):
     the scene, or even as a environment cubemap as in the case of
     :ref:`pbr_example` and :ref:`planets_example`.
 
-    .. versionchanged:: 0.46
+    .. versionchanged:: 0.47
 
-        Multi-component textures (with RGB(A) scalars) now use ``'direct'`` :attr:`color_mode`
-        by default.
+        All textures now use ``'direct'`` :attr:`color_mode` by default.
 
     Parameters
     ----------
