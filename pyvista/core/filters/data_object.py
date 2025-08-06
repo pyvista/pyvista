@@ -1480,6 +1480,14 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+        input_bounds = self.bounds
+        if isinstance(result, tuple):
+            result = (
+                _remove_unused_points_post_clip(input_bounds, result[0]),
+                _remove_unused_points_post_clip(input_bounds, result[1]),
+            )
+        else:
+            result = _remove_unused_points_post_clip(input_bounds, result)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1611,14 +1619,7 @@ class DataObjectFilters:
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-
-        if np.allclose(clipped.bounds, self.bounds):
-            clipped = (
-                clipped.generic_filter('remove_unused_points')
-                if isinstance(clipped, pyvista.MultiBlock)
-                else clipped.remove_unused_points()
-            )
-        return clipped
+        return _remove_unused_points_post_clip(self.bounds, clipped)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
@@ -3054,3 +3055,15 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _remove_unused_points_post_clip(input_bounds, clip_output):
+    if np.allclose(clip_output.bounds, input_bounds) and not isinstance(
+        clip_output, pyvista.PointSet
+    ):
+        return (
+            clip_output.generic_filter('remove_unused_points')
+            if isinstance(clip_output, pyvista.MultiBlock)
+            else clip_output.remove_unused_points()
+        )
+    return clip_output

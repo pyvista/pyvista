@@ -40,7 +40,13 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     assert None not in multi
     assert None in multi.recursive_iterator()
 
+    # Center datasets at origin so that clip actually removes part of the mesh
+    for block in multi.recursive_iterator(skip_none=True):
+        center = np.array(block.center)
+        block.translate(-center, inplace=True)
+
     for dataset in multi:
+        bounds_before_clip = dataset.bounds
         clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
         assert clips is not None
 
@@ -60,6 +66,9 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
                 assert clip.n_blocks == dataset.n_blocks
             else:
                 assert isinstance(clip, pv.UnstructuredGrid)
+
+            bounds_after_clip = clip.bounds
+            assert not np.allclose(bounds_before_clip, bounds_after_clip)
 
 
 def test_clip_filter_normal(datasets):
