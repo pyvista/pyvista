@@ -646,14 +646,22 @@ def test_progress_monitor():
 
 
 def test_observer():
-    msg = 'KIND: In PATH, line 0\nfoo (ADDRESS): ALERT'
+    msg = 'KIND: In PATH, line 0\nfoo (0x000000): ALERT'
     obs = Observer()
     ret = obs.parse_message('foo')
     assert ret[3] == 'foo'
     ret = obs.parse_message(msg)
-    assert ret[3] == 'ALERT'
+    assert ret[0] == 'KIND' == ret.kind
+    assert ret[1] == 'PATH' == ret.path
+    assert ret[2] == '0x000000' == ret.address
+    assert ret[4] == '0' == ret.line
+    assert ret[5] == 'foo' == ret.name
+    assert ret[3] == 'ALERT' == ret.alert
+    assert repr(ret) == msg
+
     for kind in ['WARNING', 'ERROR']:
         obs.log_message(kind, 'foo')
+
     # Pass positionally as that's what VTK will do
     obs(None, None, msg)
     assert obs.has_event_occurred()
@@ -665,6 +673,20 @@ def test_observer():
     obs.observe(alg)
     with pytest.raises(RuntimeError, match='algorithm'):
         obs.observe(alg)
+
+
+def test_observer_default_event():
+    msg = 'This message does not match parsing regex!'
+    obs = Observer()
+    ret = obs.parse_message(msg)
+    assert ret.kind == ''
+    assert ret.path == ''
+    assert ret.address == ''
+    assert ret.line == ''
+    assert ret.name == ''
+    assert ret.alert == msg
+
+    assert repr(ret) == msg
 
 
 @pytest.mark.parametrize('point', [1, object(), None])
@@ -735,25 +757,14 @@ def test_apply_transformation_to_points():
 
 def _generate_vtk_err():
     """Simple operation which generates a VTK error."""
-    x, y, z = np.meshgrid(
-        np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
-    )
-    mesh = pv.StructuredGrid(x, y, z)
-    x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
-    mesh2 = pv.StructuredGrid(x2, y2, z2)
-
-    alg = vtk.vtkStreamTracer()
-    obs = pv.Observer()
-    obs.observe(alg)
-    alg.SetInputDataObject(mesh)
-    alg.SetSourceData(mesh2)
-    alg.Update()
+    # vtkWriter.cxx:55     ERR| vtkDataWriter (0x141efbd10): No input provided!
+    writer = vtk.vtkDataWriter()
+    writer.Write()
 
 
 def _generate_vtk_warn():
     """Simple operation which generates a VTK warning."""
-
-    # Merge empty polydata
+    # vtkMergeFilter.cxx:277   WARN| vtkMergeFilter (0x600003c18000): Nothing to merge!
     merge = vtk.vtkMergeFilter()
     merge.AddInputData(vtk.vtkPolyData())
     merge.Update()
@@ -778,12 +789,11 @@ def test_vtk_error_catcher():
 
     # raise_errors: True
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(raise_errors=True)
-    error_match = (
-        r'ERROR: The update extent specified in the information for output port 0 on algorithm '
-        r'vtkTrivialProducer \(0x?[0-9a-fA-F]+\) is 0 39 0 39 0 39, which is outside the whole '
-        r'extent 0 3 0 3 0 3\. vtkStreamingDemandDrivenPipeline\.cxx 0x?[0-9a-fA-F]+'
+    error_match = re.compile(
+        r'ERROR: In vtkWriter\.cxx, line \d+\n'
+        r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!'
     )
-    with pytest.raises(RuntimeError, match=error_match):  # noqa: PT012
+    with pytest.raises(RuntimeError, match=re.compile(error_match)):  # noqa: PT012
         with error_catcher:
             _generate_vtk_err()
             _generate_vtk_warn()
@@ -795,7 +805,7 @@ def test_vtk_error_catcher():
     error_catcher = pv.core.utilities.observers.VtkErrorCatcher(
         raise_errors=True, emit_warnings=True
     )
-    error_match2 = f'{error_match}\n{error_match}'
+    error_match2 = re.compile(f'{error_match.pattern}\n{error_match.pattern}')
     with pytest.raises(pv.VTKOutputMessageError, match=error_match2):  # noqa: PT012
         with error_catcher:
             _generate_vtk_err()
@@ -808,7 +818,7 @@ def test_vtk_error_catcher():
         raise_errors=True, emit_warnings=True
     )
     warning_match = re.compile(
-        r': Warning: In vtkMergeFilter\.cxx, line \d+\n'
+        r'Warning: In vtkMergeFilter\.cxx, line \d+\n'
         r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
     )
     with pytest.warns(pv.VTKOutputMessageWarning, match=warning_match):  # noqa: PT031

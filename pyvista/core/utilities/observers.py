@@ -162,9 +162,16 @@ class VtkEvent(NamedTuple):
     path: str
     address: str
     alert: str
+    line: str
+    name: str
 
     def __repr__(self):
-        return f'{self.kind}: {self.alert} {self.path} {self.address}'.strip()
+        if all(self):
+            return (
+                f'{self.kind}: In {self.path}, line {self.line}\n'
+                f'{self.name} ({self.address}): {self.alert}'
+            ).strip()
+        return self.alert
 
 
 class Observer(_NoNewAttrMixin):
@@ -191,17 +198,26 @@ class Observer(_NoNewAttrMixin):
         self._event_history_etc: list[str] = []
 
     @staticmethod
-    def parse_message(message):  # numpydoc ignore=RT01
+    def parse_message(message) -> VtkEvent:  # numpydoc ignore=RT01
         """Parse the given message."""
-        # Message format
-        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
-        try:
-            kind, path, address, alert = regex.findall(message)[0]
-            alert = alert.strip()
-        except Exception:  # noqa: BLE001
-            return '', '', '', message
-        else:
-            return kind, path, address, alert
+        regex = re.compile(
+            r'(?P<kind>[a-zA-Z]+): In (?P<path>\S+), line (?P<line>\d+)\n'
+            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\): (?P<alert>.+)'
+        )
+
+        match = regex.match(message)
+        if match:
+            d = match.groupdict()
+            kind = d.get('kind', '')
+            path = d.get('path', '')
+            line = d.get('line', '')
+            name = d.get('name', '')
+            address = d.get('address', '')
+            alert = d.get('alert', '').strip()
+            return VtkEvent(
+                kind=kind, path=path, line=line, name=name, address=address, alert=alert
+            )
+        return VtkEvent(kind='', path='', line='', name='', address='', alert=message)
 
     def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
@@ -223,13 +239,13 @@ class Observer(_NoNewAttrMixin):
         try:
             self.__event_occurred = True
             self.__message_etc = message
-            kind, path, address, alert = self.parse_message(message)
-            self.__message = alert
+            event = self.parse_message(message)
+            self.__message = event.alert
             if self.store_history:
-                self.event_history.append(VtkEvent(kind, path, address, alert))
+                self.event_history.append(event)
                 self._event_history_etc.append(message)
             if self.__log:
-                self.log_message(kind, alert)
+                self.log_message(event.kind, event.alert)
         except Exception:  # noqa: BLE001  # pragma: no cover
             try:
                 if len(message) > 120:
