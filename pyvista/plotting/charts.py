@@ -151,7 +151,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     before the property decorator.
     """
     # Ensure we are operating on a method
-    if not callable(member) and not isinstance(member, property):  # pragma: no cover
+    if not callable(member):  # pragma: no cover
         msg = '`member` must be a callable.'
         raise TypeError(msg)
 
@@ -1233,8 +1233,8 @@ class _Chart(DocSubs):
         l, b, w, h = self._geometry
         return l <= pos[0] <= l + w and b <= pos[1] <= b + h
 
-    @doc_subs
     @property
+    @doc_subs
     def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
@@ -1264,8 +1264,8 @@ class _Chart(DocSubs):
             raise ValueError(msg)
         self._size = val
 
-    @doc_subs
     @property
+    @doc_subs
     def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
@@ -1295,8 +1295,8 @@ class _Chart(DocSubs):
             raise ValueError(msg)
         self._loc = val
 
-    @doc_subs
     @property
+    @doc_subs
     def border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color.
 
@@ -1321,8 +1321,8 @@ class _Chart(DocSubs):
     def border_color(self, val) -> None:
         self._background.BorderPen.color = val
 
-    @doc_subs
     @property
+    @doc_subs
     def border_width(self):  # numpydoc ignore=RT01
         """Return or set the chart's border width.
 
@@ -1348,8 +1348,8 @@ class _Chart(DocSubs):
         self._background.BorderPen.width = val
         self._background.ActiveBorderPen.width = val
 
-    @doc_subs
     @property
+    @doc_subs
     def border_style(self):  # numpydoc ignore=RT01
         """Return or set the chart's border style.
 
@@ -1375,8 +1375,8 @@ class _Chart(DocSubs):
         self._background.BorderPen.style = val
         self._background.ActiveBorderPen.style = val
 
-    @doc_subs
     @property
+    @doc_subs
     def active_border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color in interactive mode.
 
@@ -1406,8 +1406,8 @@ class _Chart(DocSubs):
     def active_border_color(self, val) -> None:
         self._background.ActiveBorderPen.color = val
 
-    @doc_subs
     @property
+    @doc_subs
     def background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color.
 
@@ -1430,8 +1430,8 @@ class _Chart(DocSubs):
     def background_color(self, val) -> None:
         self._background.BackgroundBrush.color = val
 
-    @doc_subs
     @property
+    @doc_subs
     def background_texture(self):  # numpydoc ignore=RT01
         """Return or set the chart's background texture.
 
@@ -1456,8 +1456,8 @@ class _Chart(DocSubs):
         self._background.BackgroundBrush.texture = val
         self._background.ActiveBackgroundBrush.texture = val
 
-    @doc_subs
     @property
+    @doc_subs
     def active_background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color in interactive mode.
 
@@ -1485,8 +1485,8 @@ class _Chart(DocSubs):
     def active_background_color(self, val) -> None:
         self._background.ActiveBackgroundBrush.color = val
 
-    @doc_subs
     @property
+    @doc_subs
     def visible(self):  # numpydoc ignore=RT01
         """Return or set the chart's visibility.
 
@@ -1536,8 +1536,8 @@ class _Chart(DocSubs):
         """
         self.visible = not self.visible
 
-    @doc_subs
     @property
+    @doc_subs
     def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
 
@@ -1560,8 +1560,8 @@ class _Chart(DocSubs):
     def title(self, val) -> None:
         self.SetTitle(val)  # type: ignore[attr-defined]
 
-    @doc_subs
     @property
+    @doc_subs
     def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
 
@@ -1699,8 +1699,8 @@ class _Plot(DocSubs):
         if hasattr(self, 'SetBrush'):
             self.SetBrush(self._brush)
 
-    @doc_subs
     @property
+    @doc_subs
     def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
 
@@ -1727,8 +1727,8 @@ class _Plot(DocSubs):
         self.pen.color = val
         self.brush.color = val
 
-    @doc_subs
     @property
+    @doc_subs
     def pen(self):  # numpydoc ignore=RT01
         """Pen object controlling how lines in this plot are drawn.
 
@@ -1754,8 +1754,8 @@ class _Plot(DocSubs):
         """
         return self._pen
 
-    @doc_subs
     @property
+    @doc_subs
     def brush(self):  # numpydoc ignore=RT01
         """Brush object controlling how shapes in this plot are filled.
 
@@ -1781,8 +1781,8 @@ class _Plot(DocSubs):
         """
         return self._brush
 
-    @doc_subs
     @property
+    @doc_subs
     def line_width(self):  # numpydoc ignore=RT01
         """Return or set the line width of all lines drawn in this plot.
 
@@ -1809,8 +1809,8 @@ class _Plot(DocSubs):
     def line_width(self, val) -> None:
         self.pen.width = val
 
-    @doc_subs
     @property
+    @doc_subs
     def line_style(self):  # numpydoc ignore=RT01
         """Return or set the line style of all lines drawn in this plot.
 
@@ -1836,8 +1836,8 @@ class _Plot(DocSubs):
     def line_style(self, val) -> None:
         self.pen.style = val
 
-    @doc_subs
     @property
+    @doc_subs
     def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
 
@@ -1862,8 +1862,8 @@ class _Plot(DocSubs):
         self._label = '' if val is None else val
         self.SetLabel(self._label)  # type: ignore[attr-defined]
 
-    @doc_subs
     @property
+    @doc_subs
     def visible(self):  # numpydoc ignore=RT01
         """Return or set the this plot's visibility.
 
@@ -1936,8 +1936,8 @@ class _MultiCompPlot(_Plot):
         self.SetLabels(self._labels)  # type: ignore[attr-defined]
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
-    @doc_subs
     @property
+    @doc_subs
     def color_scheme(self):  # numpydoc ignore=RT01
         """Return or set the plot's color scheme.
 
@@ -1976,8 +1976,8 @@ class _MultiCompPlot(_Plot):
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
-    @doc_subs
     @property
+    @doc_subs
     def colors(self):  # numpydoc ignore=RT01
         """Return or set the plot's colors.
 
@@ -2026,8 +2026,8 @@ class _MultiCompPlot(_Plot):
                 msg = 'Invalid colors specified, falling back to default color scheme.'
                 raise ValueError(msg) from e
 
-    @doc_subs
     @property
+    @doc_subs
     def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
 
@@ -2057,8 +2057,8 @@ class _MultiCompPlot(_Plot):
         # lookup tables and brushes) stay synchronized.
         self.colors = [val]
 
-    @doc_subs
     @property
+    @doc_subs
     def labels(self):  # numpydoc ignore=RT01
         """Return or set the this plot's labels, as shown in the chart's legend.
 
@@ -2095,8 +2095,8 @@ class _MultiCompPlot(_Plot):
             msg = 'Invalid labels specified.'
             raise ValueError(msg)
 
-    @doc_subs
     @property
+    @doc_subs
     def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
 
