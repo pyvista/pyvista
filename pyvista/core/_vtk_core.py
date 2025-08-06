@@ -722,7 +722,8 @@ class DisableVtkSnakeCase:
                 setter = attr.fset
                 if setter is not None and not name.startswith('_'):
                     wrapped_setter = with_vtk_error_check(setter)
-                    new_prop = property(attr.fget, wrapped_setter, attr.fdel)
+                    # Explicitly retain the original docstring (needed if using @doc_subs)
+                    new_prop = property(attr.fget, wrapped_setter, attr.fdel, doc=attr.__doc__)
                     setattr(cls, name, new_prop)
 
             elif inspect.isfunction(attr) and not name.startswith('_'):
