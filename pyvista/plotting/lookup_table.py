@@ -749,7 +749,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
     @_deprecate_positional_args(allowed=['cmap', 'n_values'])
     def apply_cmap(
         self,
-        cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
+        cmap: ColormapOptions,
         n_values: int = 256,
         flip: bool = False,  # noqa: FBT001, FBT002
     ):
