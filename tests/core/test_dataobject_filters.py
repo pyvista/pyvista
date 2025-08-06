@@ -180,8 +180,8 @@ def test_clip_box_no_unused_points(as_composite):
         mesh.bounds.x_max,
         mesh.bounds.y_min,
         mesh.bounds.y_max,
-        0.2,
-        0.4,
+        mesh.bounds.z_min + (mesh.bounds.z_max - mesh.bounds.z_min) * 7 / 10,
+        mesh.bounds.z_min + (mesh.bounds.z_max - mesh.bounds.z_min) * 8 / 10,
     )
     clipped = mesh.clip_box(bounds=new_bounds, invert=False)
     assert np.allclose(clipped.bounds, new_bounds)
