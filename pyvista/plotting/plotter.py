@@ -117,7 +117,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BackfaceArgs
-    from pyvista.plotting._typing import CameraOptions
+    from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
@@ -1916,7 +1916,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location: CameraPosition | CameraOptions) -> None:
+    def camera_position(self, camera_location: CameraPositionOptions) -> None:
         self.renderer.camera_position = camera_location
 
     @property
@@ -6997,7 +6997,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         full_screen: bool | None = None,  # noqa: FBT001
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
-        cpos: CameraPosition | None = None,
+        cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
