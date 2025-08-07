@@ -657,7 +657,7 @@ def test_observer():
     assert ret[4] == '0' == ret.line
     assert ret[5] == 'foo' == ret.name
     assert ret[3] == 'ALERT' == ret.alert
-    assert repr(ret) == msg
+    assert str(ret) == msg
 
     for kind in ['WARNING', 'ERROR']:
         obs.log_message(kind, 'foo')
@@ -686,7 +686,7 @@ def test_observer_default_event():
     assert ret.name == ''
     assert ret.alert == msg
 
-    assert repr(ret) == msg
+    assert str(ret) == msg
 
 
 @pytest.mark.parametrize('point', [1, object(), None])

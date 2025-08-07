@@ -141,12 +141,12 @@ class VtkErrorCatcher:
     @property
     def _runtime_error_message(self) -> str:  # numpydoc ignore=RT01
         """List of VTK error events formatted as runtime errors."""
-        return '\n'.join([repr(e) for e in self.error_events])
+        return '\n'.join([str(e) for e in self.error_events])
 
     @property
     def _runtime_warning_message(self) -> str:  # numpydoc ignore=RT01
         """List of VTK error events formatted as runtime errors."""
-        return '\n'.join([repr(e) for e in self.warning_events])
+        return '\n'.join([str(e) for e in self.warning_events])
 
     def _raise_error(self, message: str):
         raise pyvista.VTKOutputMessageError(message)
@@ -165,7 +165,7 @@ class VtkEvent(NamedTuple):
     line: str
     name: str
 
-    def __repr__(self):
+    def __str__(self):
         if all(self):
             return (
                 f'{self.kind}: In {self.path}, line {self.line}\n'
