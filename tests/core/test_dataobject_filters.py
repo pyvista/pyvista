@@ -71,6 +71,13 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
             assert not np.allclose(bounds_before_clip, bounds_after_clip)
 
 
+def test_clip_filter_remove_unused_points():
+    poly = pv.PointSet()
+    poly.points = [[-1, -1, -1]]
+    clipped = poly.clip('x', remove_unused_points=False)
+    assert clipped.n_points == 1
+
+
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
