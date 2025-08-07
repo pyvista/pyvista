@@ -201,8 +201,9 @@ class Observer(_NoNewAttrMixin):
     def parse_message(message) -> VtkEvent:  # numpydoc ignore=RT01
         """Parse the given message."""
         regex = re.compile(
-            r'(?P<kind>[a-zA-Z]+): In (?P<path>\S+), line (?P<line>\d+)\n'
-            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\): (?P<alert>.+)'
+            r'(?P<kind>[a-zA-Z]+): In (?P<path>.+?), line (?P<line>\d+)\r?\n'
+            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\): (?P<alert>.+)',
+            re.DOTALL,
         )
 
         match = regex.match(message)
