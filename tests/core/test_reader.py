@@ -105,7 +105,8 @@ def test_xmlunstructuredgridreader(tmpdir):
 
     reader = pv.get_reader(tmpfile.strpath)
     assert reader.path == tmpfile.strpath
-    if pv.vtk_version_info < (9, 3, 0):
+    vtk_version = pv.vtk_version_info
+    if (9, 1, 0) <= vtk_version < (9, 3, 0):
         match = 'No Points element available in first piece found in file'
         with pytest.warns(pv.VTKOutputMessageWarning, match=match):
             new_mesh = reader.read()
