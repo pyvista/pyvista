@@ -101,6 +101,9 @@ def test_camera_position():
     cpos = plotter.camera_position
     assert isinstance(cpos, pv.CameraPosition)
 
+    # Test str format is a list
+    assert eval(str(cpos)) == cpos.to_list()
+
     # Test repr format is init-able
     cpos2 = eval('pv.' + repr(cpos))
     assert cpos2 == cpos
