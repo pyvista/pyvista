@@ -185,11 +185,11 @@ class Observer(_NoNewAttrMixin):
         store_history: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Initialize observer."""
-        self.__event_occurred = False
-        self.__message = None
-        self.__message_etc = None
+        self.__event_occurred: bool = False
+        self.__message: str | None = None
+        self.__message_etc: str | None = None
         self.CallDataType = 'string0'
-        self.__observing = False
+        self.__observing: bool = False
         self.event_type = event_type
         self.__log = log
 
@@ -202,7 +202,7 @@ class Observer(_NoNewAttrMixin):
         """Parse the given message."""
         regex = re.compile(
             r'(?P<kind>[a-zA-Z]+): In (?P<path>.+?), line (?P<line>\d+)\r?\n'
-            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\): (?P<alert>.+)',
+            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\): (?P<alert>.+?)\s*$',
             re.DOTALL,
         )
 

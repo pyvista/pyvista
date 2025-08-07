@@ -795,7 +795,7 @@ def test_vtk_error_catcher():
             r'vtkDataWriter \(0x?[0-9a-fA-F]+\): No input provided!'
         )
         if pv.vtk_version_info > (9, 2, 0)
-        else None  # Skip match for older VTK (different path reported)
+        else 'No input provided!'  # Simpler match for older VTK (different path reported)
     )
     with pytest.raises(RuntimeError, match=re.compile(error_match)):  # noqa: PT012
         with error_catcher:
@@ -827,7 +827,7 @@ def test_vtk_error_catcher():
             r'vtkMergeFilter \(0x?[0-9a-fA-F]+\): Nothing to merge!'
         )
         if pv.vtk_version_info > (9, 2, 0)
-        else None
+        else 'Nothing to merge!'  # Simpler match for older VTK (different path reported)
     )  # Skip match for older VTK (different path reported)
     with pytest.warns(pv.VTKOutputMessageWarning, match=warning_match):  # noqa: PT031
         with pytest.raises(pv.VTKOutputMessageError, match=error_match):  # noqa: PT012
