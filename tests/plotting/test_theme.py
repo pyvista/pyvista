@@ -360,20 +360,13 @@ def test_camera_parallel_scale(default_theme):
     assert pl2.parallel_scale == 2.0
 
 
-def test_cmap(default_theme):
-    cmap = 'jet'
+@pytest.mark.parametrize('cmap', ['jet', mpl.colormaps['jet'], ['red', 'green', 'blue']])
+def test_cmap(default_theme, cmap):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    cmap_obj = pv.get_cmap_safe(cmap)
-    assert isinstance(cmap_obj, mpl.colors.Colormap)
-    default_theme.cmap = cmap_obj
-    assert default_theme.cmap == cmap_obj
 
-    cmap_list = ['red', 'green', 'blue']
-    default_theme.cmap = cmap_list
-    assert default_theme.cmap == cmap_list
-
+def test_cmap_raises(default_theme):
     match = "Invalid colormap 'not a color map'"
     with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
