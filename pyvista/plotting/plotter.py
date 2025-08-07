@@ -51,7 +51,6 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
-pyvista.OFF_SCREEN = True
 from . import _vtk
 from ._plotting import _common_arg_parser
 from ._plotting import prepare_smooth_shading
