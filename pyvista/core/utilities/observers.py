@@ -201,8 +201,8 @@ class Observer(_NoNewAttrMixin):
     def parse_message(message) -> VtkEvent:  # numpydoc ignore=RT01
         """Parse the given message."""
         regex = re.compile(
-            r'(?P<kind>[a-zA-Z]+): In (?P<path>.+?), line (?P<line>\d+)\r?\n'
-            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\): (?P<alert>.+?)\s*$',
+            r'(?P<kind>[a-zA-Z]+):\sIn\s(?P<path>.+?),\sline\s(?P<line>\d+)\r?\n'
+            r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\):\s(?P<alert>.+)',
             re.DOTALL,
         )
 
@@ -218,7 +218,7 @@ class Observer(_NoNewAttrMixin):
             return VtkEvent(
                 kind=kind, path=path, line=line, name=name, address=address, alert=alert
             )
-        return VtkEvent(kind='', path='', line='', name='', address='', alert=message)
+        return VtkEvent(kind='', path='', line='', name='', address='', alert=message.strip())
 
     def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
