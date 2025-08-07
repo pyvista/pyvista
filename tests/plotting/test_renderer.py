@@ -98,7 +98,12 @@ def test_camera_position():
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
-    assert isinstance(plotter.camera_position, pv.CameraPosition)
+    cpos = plotter.camera_position
+    assert isinstance(cpos, pv.CameraPosition)
+
+    # Test repr format is init-able
+    cpos2 = eval('pv.' + repr(cpos))
+    assert cpos2 == cpos
 
 
 @pytest.mark.skip_plotting
