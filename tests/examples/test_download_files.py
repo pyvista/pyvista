@@ -937,8 +937,10 @@ def test_download_gltf_damaged_helmet():
     reason='Skip until glTF extension KHR_texture_transform is supported.',
 )
 def test_download_gltf_sheen_chair():
-    match =('glTF extension KHR_texture_transform is required in this model, '
-            'but not supported by this loader.')
+    match = (
+        'glTF extension KHR_texture_transform is required in this model, '
+        'but not supported by this loader.'
+    )
     filename = examples.gltf.download_sheen_chair()
     assert Path(filename).is_file()
     pl = pv.Plotter()
