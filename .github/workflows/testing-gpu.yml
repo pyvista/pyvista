@@ -1,0 +1,71 @@
+name: Build Documentation on Self-Hosted
+
+# self-hosted agent `gpu-runner-0` has the following packages installed:
+# libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime nvidia-driver-575-server
+# 
+#
+
+# zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
+on: # zizmor: ignore[cache-poisoning]
+  pull_request: # Uses cache
+  workflow_dispatch: # Able to not use cache by user demand
+    inputs:
+      cache:
+        description: "Use build cache"
+        required: false
+        default: "true"
+  # No cache enabled for `schedule` and `push`
+  schedule:
+    - cron: "0 0 1 * *" # once a month on main
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  USE_CACHE: ${{
+    (
+    (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
+    (github.event_name == 'pull_request') ||
+    (github.event_name == 'push')
+    ) &&
+    !startsWith(github.ref, 'refs/tags/v') &&
+    !startsWith(github.ref, 'refs/heads/release/') &&
+    !startsWith(github.ref, 'refs/heads/main')
+    }}
+  PYDEVD_DISABLE_FILE_VALIDATION: "1"
+  PYTEST_ADDOPTS: "--color=yes"
+  FORCE_COLOR: "True"
+  # VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
+
+jobs:
+  doc:
+    name: Test docbuild
+    runs-on: [self-hosted, gpu]
+    env:
+      PYVISTA_OFF_SCREEN: "True"
+      ALLOW_PLOTTING: true
+      SHELLOPTS: "errexit:pipefail"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install PyVista and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install . --group docs
+
+      - name: PyVista Report
+        run: |
+          python -c "import pyvista;print(pyvista.Report())"
