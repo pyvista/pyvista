@@ -3058,9 +3058,13 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 
 def _remove_unused_points_post_clip(input_bounds, clip_output):
-    if np.allclose(clip_output.bounds, input_bounds) and not isinstance(
-        clip_output, pyvista.PointSet
-    ):
+    # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
+    # https://github.com/pyvista/pyvista/issues/6511
+    # https://github.com/pyvista/pyvista/issues/7738
+
+    # Unused points are correctly removed sometimes, so for performance we only
+    # remove points when the clipped bounds match input bounds
+    if np.allclose(clip_output.bounds, input_bounds):
         return (
             clip_output.generic_filter('remove_unused_points')
             if isinstance(clip_output, pyvista.MultiBlock)
