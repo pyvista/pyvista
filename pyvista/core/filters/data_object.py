@@ -1400,7 +1400,6 @@ class DataObjectFilters:
         return_clipped: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
-        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -1438,13 +1437,6 @@ class DataObjectFilters:
             clip. This adds the ``"cell_ids"`` array to the ``cell_data``
             attribute that tracks the original cell IDs of the original
             dataset.
-
-        remove_unused_points : bool, default: True
-            Post-process the clipped output using
-            :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points`. If ``False``,
-            the clipped output `may` contain unused points left over from the clip. For
-            :class:`~pyvista.PointSet` meshes, this option has no effect, and unused points
-            are never removed since this would remove `all` points.
 
         Returns
         -------
@@ -1489,14 +1481,13 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
         input_bounds = self.bounds
-        if remove_unused_points:
-            if isinstance(result, tuple):
-                result = (
-                    _remove_unused_points_post_clip(input_bounds, result[0]),
-                    _remove_unused_points_post_clip(input_bounds, result[1]),
-                )
-            else:
-                result = _remove_unused_points_post_clip(input_bounds, result)
+        if isinstance(result, tuple):
+            result = (
+                _remove_unused_points_post_clip(input_bounds, result[0]),
+                _remove_unused_points_post_clip(input_bounds, result[1]),
+            )
+        else:
+            result = _remove_unused_points_post_clip(input_bounds, result)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1515,7 +1506,6 @@ class DataObjectFilters:
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         merge_points: bool = True,  # noqa: FBT001, FBT002
         crinkle: bool = False,  # noqa: FBT001, FBT002
-        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -1552,13 +1542,6 @@ class DataObjectFilters:
             clip. This adds the ``"cell_ids"`` array to the ``cell_data``
             attribute that tracks the original cell IDs of the original
             dataset.
-
-        remove_unused_points : bool, default: True
-            Post-process the clipped output using
-            :meth:`~pyvista.UnstructuredGridFilters.remove_unused_points`. If ``False``,
-            the clipped output `may` contain unused points left over from the clip. For
-            :class:`~pyvista.PointSet` meshes, this option has no effect, and unused points
-            are never removed since this would remove `all` points.
 
         Returns
         -------
@@ -1636,9 +1619,7 @@ class DataObjectFilters:
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        if remove_unused_points:
-            clipped = _remove_unused_points_post_clip(self.bounds, clipped)
-        return clipped
+        return _remove_unused_points_post_clip(self.bounds, clipped)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
