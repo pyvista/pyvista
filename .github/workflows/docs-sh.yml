@@ -1,4 +1,7 @@
-name: Build Documentation
+name: Build Documentation on Self-Hosted
+
+# self-hosted agent has the following packages installed
+# libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
 
 # zizmor ignore note: All caching for pushes to main should be disabled with the `USE_CACHE` env var
 on: # zizmor: ignore[cache-poisoning]
@@ -44,7 +47,7 @@ permissions:
 jobs:
   doc:
     name: Build Documentation
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, gpu]
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
@@ -59,10 +62,10 @@ jobs:
           python-version: "3.13"
           cache: "pip"
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
-          version: 3.0
+      # - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+      #   with:
+      #     packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+      #     version: 3.0
 
       - name: Install PyVista and dependencies
         run: |
