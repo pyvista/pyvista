@@ -8,6 +8,12 @@ Contents:
 
     some_plots
     some_autodocs
+    single_autodoc
+
+.. |my_figure| image:: sc000.png
+
+|my_figure|
+
 
 Indices and Tables
 ==================

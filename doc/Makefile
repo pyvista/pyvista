@@ -18,15 +18,6 @@ help:
 
 .PHONY: help Makefile
 
-clean:
-	rm -rf $(BUILDDIR)/*
-	rm -rf $(SOURCEDIR)/examples/
-	rm -f errors.txt
-	rm -f sphinx_warnings.txt
-	rm -rf $(SOURCEDIR)/images/auto-generated
-	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
-	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
-	rm -rf $(SOURCEDIR)/tags
 
 clean-except-examples:
 	rm -rf $(BUILDDIR)/*
@@ -34,7 +25,12 @@ clean-except-examples:
 	rm -f sphinx_warnings.txt
 	rm -rf $(SOURCEDIR)/images/auto-generated
 	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
+	rm -rf $(SOURCEDIR)/tags
+	rm -rf $(SOURCEDIR)/api/examples/dataset-gallery/
 	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
+
+clean: clean-except-examples
+	rm -rf $(SOURCEDIR)/examples/
 
 # remove autosummary files
 clean-autosummary:

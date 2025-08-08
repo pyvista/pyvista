@@ -16,8 +16,8 @@ from tests.conftest import flaky_test
 pytest.importorskip('sphinx')
 
 # skip all tests if unable to render
-if not system_supports_plotting():
-    pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
+# if not system_supports_plotting():
+#     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
 ENVIRONMENT_HOOKS = ['PYVISTA_PLOT_SKIP', 'PYVISTA_PLOT_SKIP_OPTIONAL']
 

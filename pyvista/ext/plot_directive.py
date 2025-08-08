@@ -80,6 +80,14 @@ The ``pyvista-plot`` directive supports the following options:
         directive is executed is controlled by the ``plot_skip_optional``
         boolean variable in :file:`conf.py`.
 
+    output-name : str
+        If specified, this string is used as the base name for the generated
+        output files instead of the automatically computed hash-based name.
+        The resulting image files will follow the standard numbering scheme
+        (e.g., ``<module>-<function>-<output-name>_<fig-num>_00.png``). This
+        allows referencing the image by a predictable, fixed path in other RST
+        files, avoiding the need for wildcards or post-build path replacement.
+
 Additionally, this directive supports all the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
@@ -126,7 +134,7 @@ These options can be set by defining global variables of the same name in
 """
 
 from __future__ import annotations
-
+import hashlib
 import doctest
 import os
 from os.path import relpath
@@ -203,6 +211,7 @@ class PlotDirective(Directive):
         'force_static': directives.flag,
         'skip': _option_boolean,
         'optional': directives.flag,
+        'output-name': directives.unchanged,
     }
 
     def run(self):
@@ -540,6 +549,16 @@ def render_figures(
     return results
 
 
+def hash_plot_code(code: str, options: dict) -> str:
+    parts = [
+        'pvplot:v1',
+        'ctx=' + str('context' in options),
+        code,
+    ]
+    h = hashlib.sha256('\n'.join(parts).encode('utf-8')).hexdigest()
+    return h[:16]  # 16 is sufficient
+
+
 def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
@@ -547,7 +566,6 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     nofigs = 'nofigs' in options
     optional = 'optional' in options
     force_static = 'force_static' in options
-
     default_fmt = 'png'
 
     options.setdefault('include-source', config.pyvista_plot_include_source)
@@ -560,6 +578,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
 
     rst_file = document.attributes['source']
     rst_dir = str(Path(rst_file).parent)
+    function_name = None
 
     if len(arguments):
         if not config.pyvista_plot_basedir:
@@ -589,14 +608,13 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         source_file_name = rst_file
         code = textwrap.dedent('\n'.join(map(str, content)))
 
-        # note: this reuses the existing matplotlib plot counter if available
-        counter = document.attributes.get('_plot_counter', 0) + 1
-        document.attributes['_plot_counter'] = counter
         base = Path(source_file_name).stem
         ext = Path(source_file_name).suffix
-        output_base = f'{base}-{counter}{ext}'
-        function_name = None
         caption = options.get('caption', '')
+
+        # always provide a unique hash
+        code_hash = hash_plot_code(code, options)
+        output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
     source_ext = Path(output_base).suffix
