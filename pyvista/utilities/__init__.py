@@ -41,7 +41,8 @@ def _try_import(module, name):
 
 @deprecated(
     'The pyvista.utilities module has been deprecated. '
-    'Use pyvista.core.utilities or pyvista.plotting.utilities instead'
+    'Use pyvista.core.utilities or pyvista.plotting.utilities instead',
+    category=None,  # Suppress runtime warning as it already has custom __getattr__ warning
 )
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` and warn if it's from a deprecated module.

@@ -105,7 +105,10 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     name: str
 
 
-@deprecated('ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead')
+@deprecated(
+    'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead',
+    category=PyVistaDeprecationWarning,
+)
 class ActiveArrayInfo(_NoNewAttrMixin):
     """Active array info class with support for pickling.
 

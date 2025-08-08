@@ -673,7 +673,10 @@ class CellArray(
 
     # PEP 702: Mark deprecated parameter combinations
     @overload
-    @deprecated("Parameter 'n_cells' is deprecated and no longer used")
+    @deprecated(
+        "Parameter 'n_cells' is deprecated and no longer used",
+        category=PyVistaDeprecationWarning,
+    )
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
@@ -682,7 +685,10 @@ class CellArray(
     ) -> None: ...
 
     @overload
-    @deprecated("Parameter 'deep' is deprecated and no longer used")
+    @deprecated(
+        "Parameter 'deep' is deprecated and no longer used",
+        category=PyVistaDeprecationWarning,
+    )
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
@@ -691,7 +697,10 @@ class CellArray(
     ) -> None: ...
 
     @overload
-    @deprecated("Parameters 'n_cells' and 'deep' are deprecated and no longer used")
+    @deprecated(
+        "Parameters 'n_cells' and 'deep' are deprecated and no longer used",
+        category=PyVistaDeprecationWarning,
+    )
     def __init__(
         self: Self,
         cells: CellsLike | None = None,
