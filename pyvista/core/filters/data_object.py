@@ -3106,7 +3106,7 @@ def _cast_output_to_match_input_type(
         return mesh_out
 
     return (
-        cast_output_blocks(output_mesh, input_mesh)
+        cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
         if isinstance(output_mesh, pyvista.MultiBlock)
-        else cast_output(output_mesh, input_mesh)
+        else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
     )
