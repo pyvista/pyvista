@@ -1480,6 +1480,14 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+
+        if isinstance(result, tuple):
+            result = (
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
+        else:
+            result = _cast_output_to_match_input_type(result, self)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1554,6 +1562,36 @@ class DataObjectFilters:
         See :ref:`clip_with_plane_box_example` for more examples using this filter.
 
         """
+        CELL_IDS = 'cell_ids'
+
+        def add_cell_ids_to_self() -> None:
+            def add_ids_to_mesh(dataset: DataSet):
+                if not isinstance(dataset, pyvista.PointSet):
+                    dataset.cell_data[CELL_IDS] = np.arange(dataset.n_cells)
+
+            if isinstance(self, pyvista.MultiBlock):
+                for block in self.recursive_iterator(skip_none=True):
+                    add_ids_to_mesh(block)
+                return
+            add_ids_to_mesh(self)
+            return
+
+        def extract_crinkle_cells_from_output(input_mesh, output_mesh):
+            def extract_crinkle_cells(mesh_in: DataSet, mesh_out: DataSet):
+                if CELL_IDS in mesh_out.cell_data.keys():
+                    return mesh_in.extract_cells(np.unique(mesh_out.cell_data[CELL_IDS]))
+                return mesh_in
+
+            if isinstance(output_mesh, pyvista.MultiBlock):
+                for (ids, _, block_in), block_out in zip(
+                    output_mesh.recursive_iterator('all', skip_none=True),
+                    input_mesh.recursive_iterator(skip_none=True),
+                ):
+                    extracted = extract_crinkle_cells(block_in, block_out)
+                    output_mesh.replace(ids, extracted)
+                return output_mesh
+            return extract_crinkle_cells(input_mesh, output_mesh)
+
         if bounds is None:
 
             def _get_quarter(dmin, dmax):
@@ -1595,7 +1633,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            add_cell_ids_to_self()
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -1610,8 +1648,8 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        return clipped
+            clipped = extract_crinkle_cells_from_output(self, clipped)
+        return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
@@ -3047,3 +3085,31 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _cast_output_to_match_input_type(
+    output_mesh: DataSet | MultiBlock, input_mesh: DataSet | MultiBlock
+):
+    # Ensure output type matches input type
+
+    def cast_output(mesh_out: DataSet, mesh_in: DataSet):
+        if isinstance(mesh_in, pyvista.PolyData) and not isinstance(mesh_out, pyvista.PolyData):
+            return mesh_out.extract_geometry()
+        elif isinstance(mesh_in, pyvista.PointSet) and not isinstance(mesh_out, pyvista.PointSet):
+            return mesh_out.cast_to_pointset()
+        return mesh_out
+
+    def cast_output_blocks(mesh_out: MultiBlock, mesh_in: MultiBlock):
+        # Replace all blocks in the output mesh with cast versions that match the input
+        for (ids, _, block_out), block_in in zip(
+            mesh_out.recursive_iterator('all', skip_none=True),
+            mesh_in.recursive_iterator(skip_none=True),
+        ):
+            mesh_out.replace(ids, cast_output(block_out, block_in))
+        return mesh_out
+
+    return (
+        cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
+        if isinstance(output_mesh, pyvista.MultiBlock)
+        else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
+    )
