@@ -228,7 +228,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'BackfaceArgs'),
     (r'py:.*', 'CullingOptions'),
     (r'py:.*', 'OpacityOptions'),
-    (r'py:.*', 'CameraPosition'),
+    (r'py:.*', 'CameraPositionOptions'),
     (r'py:.*', 'StyleOptions'),
     (r'py:.*', 'FontFamilyOptions'),
     (r'py:.*', 'HorizontalOptions'),
