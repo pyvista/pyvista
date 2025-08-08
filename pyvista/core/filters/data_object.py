@@ -1450,9 +1450,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData | tuple[pyvista.PolyData]
-            Clipped mesh when ``return_clipped=False``,
-            otherwise a tuple containing the unclipped and clipped datasets.
+        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing the
+            unclipped and clipped meshes. Output mesh type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1555,8 +1558,18 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Clipped dataset.
+        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing the
+            unclipped and clipped meshes. Output mesh type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
+
+            .. versionchanged:: 0.47
+
+                The output type now matches the input type for :class:`~pyvista.PointSet` and
+                :class:`~pyvista.PolyData`. This matches the behavior of :meth:`clip`.
+                Previously, these types would return :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
