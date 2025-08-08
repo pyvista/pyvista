@@ -8,26 +8,12 @@ import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:
-    from typing import TypeAlias
-
     from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumberType
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import _FiniteNestedList
+    from pyvista.core._typing_core import _FiniteNestedTuple
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
-    from pyvista.core._typing_core._array_like import NumberType
-
-    # Local type aliases for finite nested structures
-    _FiniteNestedList: TypeAlias = (
-        list[NumberType]
-        | list[list[NumberType]]
-        | list[list[list[NumberType]]]
-        | list[list[list[list[NumberType]]]]
-    )
-    _FiniteNestedTuple: TypeAlias = (
-        tuple[NumberType]
-        | tuple[tuple[NumberType]]
-        | tuple[tuple[tuple[NumberType]]]
-        | tuple[tuple[tuple[tuple[NumberType]]]]
-    )
 
 
 def _cast_to_list(

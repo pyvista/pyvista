@@ -14,6 +14,8 @@ from ._aliases import TransformLike as TransformLike
 from ._aliases import VectorLike as VectorLike
 from ._array_like import NumberType as NumberType
 from ._array_like import NumpyArray as NumpyArray
+from ._array_like import _FiniteNestedList as _FiniteNestedList
+from ._array_like import _FiniteNestedTuple as _FiniteNestedTuple
 from ._dataset_types import _DataObjectType as _DataObjectType
 from ._dataset_types import _DataSetOrMultiBlockType as _DataSetOrMultiBlockType
 from ._dataset_types import _DataSetType as _DataSetType

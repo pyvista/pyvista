@@ -66,9 +66,24 @@ _ArrayLike4D: TypeAlias = (
     | Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]]
 )
 
-_ArrayLike: TypeAlias = (  # noqa: PYI047
+_ArrayLike: TypeAlias = (
     _ArrayLike1D[NumberType]
     | _ArrayLike2D[NumberType]
     | _ArrayLike3D[NumberType]
     | _ArrayLike4D[NumberType]
+)
+
+# Finite nested structures using concrete list and tuple types
+_FiniteNestedList: TypeAlias = (
+    list[NumberType]
+    | list[list[NumberType]]
+    | list[list[list[NumberType]]]
+    | list[list[list[list[NumberType]]]]
+)
+
+_FiniteNestedTuple: TypeAlias = (
+    tuple[NumberType]
+    | tuple[tuple[NumberType]]
+    | tuple[tuple[tuple[NumberType]]]
+    | tuple[tuple[tuple[tuple[NumberType]]]]
 )
