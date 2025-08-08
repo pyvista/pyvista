@@ -1559,7 +1559,7 @@ class DataObjectFilters:
         Returns
         -------
         DataSet | MultiBlock
-            Clipped mesh. Output mesh type matches input type for
+            Clipped mesh. Output type matches input type for
             :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
             :class:`~pyvista.MultiBlock`; otherwise the output type is
             :class:`~pyvista.UnstructuredGrid`.
