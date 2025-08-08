@@ -1280,8 +1280,10 @@ class DataObjectFilters:
                 if VTK_CELL_IDS_KEYS in (cell_data := output.cell_data):
                     del cell_data[VTK_CELL_IDS_KEYS]
                 association, name = active_scalars_info_
-                dataset.set_active_scalars(name, preference=association)
-                output.set_active_scalars(name, preference=association)
+                if not dataset.is_empty:
+                    dataset.set_active_scalars(name, preference=association)
+                if not output.is_empty:
+                    output.set_active_scalars(name, preference=association)
                 return output
 
             def extract_crinkle_cells(dataset, a_, b_, _):
@@ -1298,9 +1300,17 @@ class DataObjectFilters:
                     def extract_cells_from_block(  # noqa: PLR0917
                         block_, clipped_a, clipped_b, active_scalars_info_
                     ):
-                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
-                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
-
+                        set_a = (
+                            set(clipped_a.cell_data[CELL_IDS_KEY])
+                            if CELL_IDS_KEY in clipped_a.cell_data.keys()
+                            else set()
+                        )
+                        set_b = (
+                            set(clipped_b.cell_data[CELL_IDS_KEY])
+                            if CELL_IDS_KEY in clipped_b.cell_data.keys()
+                            else set()
+                        )
+                        set_b = set_b - set_a
                         # Need to cast as int dtype explicitly to ensure empty arrays have
                         # the right type required by extract_cells
                         array_a = np.array(list(set_a), dtype=INT_DTYPE)

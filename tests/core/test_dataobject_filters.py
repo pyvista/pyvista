@@ -30,7 +30,8 @@ from tests.core.test_dataset_filters import normals
 
 
 @pytest.mark.parametrize('return_clipped', [True, False])
-def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkle):
     """This tests the clip filter on all datatypes available filters"""
     # Remove None blocks in the root block but keep the none block in the nested MultiBlock
     multi = multiblock_all_with_nested_and_none
@@ -41,7 +42,9 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     assert None in multi.recursive_iterator()
 
     for dataset in multi:
-        clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
+        clips = dataset.clip(
+            normal='x', invert=True, return_clipped=return_clipped, crinkle=crinkle
+        )
         assert clips is not None
 
         if return_clipped:
