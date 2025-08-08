@@ -15,7 +15,6 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
@@ -131,11 +130,7 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         """Initialize."""
         self.association = association
         self.name = name
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
-            'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
-            PyVistaDeprecationWarning,
-        )
+        # Note: deprecation warning is handled by PEP 702 @deprecated decorator on the class
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
         """Return a copy of this object.

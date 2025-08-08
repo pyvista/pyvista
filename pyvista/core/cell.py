@@ -728,13 +728,14 @@ class CellArray(
         if cells is not None:
             self.cells = cells
 
-        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (('n_cells', n_cells), ('deep', deep)):
-            if v is not None:
-                warnings.warn(
-                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+        # Runtime warnings for deprecated parameters
+        # (PEP 702 overloads provide static analysis warnings)
+        if n_cells is not None or deep is not None:
+            warnings.warn(
+                'CellArray parameters `n_cells` and `deep` are deprecated and no longer used.',
+                PyVistaDeprecationWarning,
+                stacklevel=2,
+            )
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
