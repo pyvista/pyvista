@@ -238,11 +238,7 @@ class UnstructuredGridFilters(DataSetFilters):
         cell_array.InsertNextCell(1)
 
         # Extract all the cells, except for the dummy cell
-        out = out.extract_cells(np.arange(self.n_cells))
-        if (name := 'vtkOriginalPointIds') in (data := out.point_data):
-            del data[name]
-        if (name := 'vtkOriginalCellIds') in (data := out.cell_data):
-            del data[name]
+        out = out.extract_cells(np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False)
 
         if inplace:
             self.copy_from(out)
