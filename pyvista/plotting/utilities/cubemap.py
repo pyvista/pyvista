@@ -119,8 +119,9 @@ def _cubemap_from_paths(image_paths):
             raise FileNotFoundError(msg)
 
     texture = pyvista.Texture()  # type: ignore[abstract]
-    texture.SetMipmap(True)
-    texture.SetInterpolate(True)
+    texture.mipmap = True
+    texture.interpolate = True
+    texture.color_mode = 'direct'
     texture.cube_map = True  # Must be set prior to setting images
 
     # add each image to the cubemap
