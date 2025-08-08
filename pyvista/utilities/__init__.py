@@ -4,7 +4,15 @@ from __future__ import annotations
 
 import importlib
 import inspect
+
+# PEP 702: @deprecated is in warnings module in Python 3.13+, typing_extensions for older versions
+import sys
 import warnings
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 # Places to look for the utility
 _MODULES = [
@@ -31,6 +39,10 @@ def _try_import(module, name):
     return feature, import_path
 
 
+@deprecated(
+    'The pyvista.utilities module has been deprecated. '
+    'Use pyvista.core.utilities or pyvista.plotting.utilities instead'
+)
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` and warn if it's from a deprecated module.
 
