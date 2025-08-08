@@ -36,7 +36,7 @@ NamedColormaps = Union[
     '_CMCRAMERI_CMAPS_LITERAL',
 ]
 
-ColormapOptions = Union[NamedColormaps, list[str], mpl.colors.Colormap]
+ColormapOptions = NamedColormaps | list[str] | mpl.colors.Colormap
 
 ColorLike = Union[
     tuple[int, int, int],
