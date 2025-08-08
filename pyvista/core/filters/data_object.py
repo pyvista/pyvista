@@ -1480,14 +1480,20 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+
         input_bounds = self.bounds
         if isinstance(result, tuple):
             result = (
-                _remove_unused_points_post_clip(input_bounds, result[0]),
-                _remove_unused_points_post_clip(input_bounds, result[1]),
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
+            result = (
+                _remove_unused_points_post_clip(result[0], input_bounds),
+                _remove_unused_points_post_clip(result[1], input_bounds),
             )
         else:
-            result = _remove_unused_points_post_clip(input_bounds, result)
+            result = _cast_output_to_match_input_type(result, self)
+            result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1619,7 +1625,9 @@ class DataObjectFilters:
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        return _remove_unused_points_post_clip(self.bounds, clipped)
+        # Post-process to cast output type and clean the points
+        clipped = _cast_output_to_match_input_type(clipped, self)
+        return _remove_unused_points_post_clip(clipped, self.bounds)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
@@ -3057,17 +3065,48 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
-def _remove_unused_points_post_clip(input_bounds, clip_output):
+def _remove_unused_points_post_clip(clip_output, input_bounds):
     # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
     # https://github.com/pyvista/pyvista/issues/7738
 
-    # Unused points are correctly removed sometimes, so for performance we only
-    # remove points when the clipped bounds match input bounds
-    if np.allclose(clip_output.bounds, input_bounds):
-        return (
-            clip_output.generic_filter('remove_unused_points')
-            if isinstance(clip_output, pyvista.MultiBlock)
-            else clip_output.remove_unused_points()
-        )
-    return clip_output
+    def maybe_remove_unused_points(mesh: DataSet):
+        # Unused points are correctly removed sometimes, so for performance we only
+        # remove points when the clipped bounds match input bounds
+        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+            return mesh.remove_unused_points()
+        return mesh
+
+    return (
+        clip_output.generic_filter(maybe_remove_unused_points)
+        if isinstance(clip_output, pyvista.MultiBlock)
+        else maybe_remove_unused_points(clip_output)
+    )
+
+
+def _cast_output_to_match_input_type(
+    output_mesh: DataSet | MultiBlock, input_mesh: DataSet | MultiBlock
+):
+    # Ensure output type matches input type
+
+    def cast_output(mesh_out: DataSet, mesh_in: DataSet):
+        if isinstance(mesh_in, pyvista.PolyData) and not isinstance(mesh_out, pyvista.PolyData):
+            return mesh_out.extract_geometry()
+        elif isinstance(mesh_in, pyvista.PointSet) and not isinstance(mesh_out, pyvista.PointSet):
+            return mesh_out.cast_to_pointset()
+        return mesh_out
+
+    def cast_output_blocks(mesh_out: MultiBlock, mesh_in: MultiBlock):
+        # Replace all blocks in the output mesh with cast versions that match the input
+        for (ids, _, block_out), block_in in zip(
+            mesh_out.recursive_iterator('all', skip_none=True),
+            mesh_in.recursive_iterator(skip_none=True),
+        ):
+            mesh_out.replace(ids, cast_output(block_out, block_in))
+        return mesh_out
+
+    return (
+        cast_output_blocks(output_mesh, input_mesh)
+        if isinstance(output_mesh, pyvista.MultiBlock)
+        else cast_output(output_mesh, input_mesh)
+    )

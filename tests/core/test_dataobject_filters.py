@@ -71,6 +71,24 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
             assert not np.allclose(bounds_before_clip, bounds_after_clip)
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
+    n_points_in = pointset.n_points
+    mesh = pv.MultiBlock([pointset]) if as_composite else pointset
+    # Make sure we clip such that none of the points are removed
+    # This ensures output bounds == input bounds which hits a branch where
+    # remove_unused_points may be called
+    bounds = pointset.bounds
+    clipped = mesh.clip(origin=(bounds.x_max + 1, bounds.y_max, bounds.z_max))
+    assert np.allclose(clipped.bounds, bounds)
+
+    pointset_out = clipped[0] if as_composite else clipped
+    assert isinstance(pointset_out, pv.PointSet)
+    n_points_out = pointset_out.n_points
+    assert n_points_in == n_points_out
+
+
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
@@ -136,7 +154,13 @@ def test_clip_box(datasets):
     for dataset in datasets:
         clp = dataset.clip_box(invert=True, progress_bar=True)
         assert clp is not None
-        assert isinstance(clp, pv.UnstructuredGrid)
+        if isinstance(dataset, pv.PointSet):
+            assert isinstance(clp, pv.PointSet)
+        elif isinstance(dataset, pv.PolyData):
+            assert isinstance(clp, pv.PolyData)
+        else:
+            assert isinstance(clp, pv.UnstructuredGrid)
+
         clp2 = dataset.clip_box(merge_points=False)
         assert clp2 is not None
 
