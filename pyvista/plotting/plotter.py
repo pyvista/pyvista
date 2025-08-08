@@ -2593,7 +2593,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         lighting: bool | None = None,  # noqa: FBT001
         n_colors: int = 256,
         interpolate_before_map: bool | None = True,  # noqa: FBT001, FBT002
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,  # noqa: FBT001
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -3128,7 +3128,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         lighting: bool | None = None,  # noqa: FBT001
         n_colors: int = 256,
         interpolate_before_map: bool | None = None,  # noqa: FBT001
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,  # noqa: FBT001
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -4061,7 +4061,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         resolution: VectorLike[float] | None = None,
         opacity: OpacityOptions | NumpyArray[float] = 'linear',
         n_colors: int = 256,
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,  # noqa: FBT001, FBT002
         reset_camera: bool | None = None,  # noqa: FBT001
         name: str | None = None,
