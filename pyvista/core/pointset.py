@@ -2197,7 +2197,6 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             for i, n_faces in zip(
                 np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON),
                 face_counts,
-                strict=False,
             ):
                 locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
                 face_count += n_faces
