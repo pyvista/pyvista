@@ -379,7 +379,7 @@ class ImageDataFilters(DataSetFilters):
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
         indices = tuple(
             _set_default_start_and_stop(slc, low, dim)
-            for slc, low, dim in zip((i, j, k), lower, self.dimensions, strict=False)
+            for slc, low, dim in zip((i, j, k), lower, self.dimensions)
         )
         voi = self._compute_voi_from_index(
             indices, index_mode=index_mode, strict_index=strict_index
@@ -920,7 +920,7 @@ class ImageDataFilters(DataSetFilters):
             padding = _validate_padding(margin_)
             # Do not pad singleton dims
             singleton_dims = np.array(self.dimensions) == 1
-            mask = [x for pair in zip(singleton_dims, singleton_dims, strict=False) for x in pair]
+            mask = [x for pair in zip(singleton_dims, singleton_dims) for x in pair]
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 

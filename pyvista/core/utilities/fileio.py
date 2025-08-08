@@ -1150,9 +1150,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         cells = []
         offset = mesh.offset
 
-        for i, (i1, i2, vtk_celltype) in enumerate(
-            zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
-        ):
+        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
             cell = connectivity[i1:i2]
 
             if vtk_celltype == pyvista.CellType.POLYHEDRON:
