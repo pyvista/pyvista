@@ -571,14 +571,32 @@ def render_figures(
     return results
 
 
+def _contains_doctest(text: str) -> bool:
+    """Check if the text contains doctest markers."""
+    r = re.compile(r'^\s*>>>', re.MULTILINE)
+    m = r.search(text)
+    return bool(m)
+
+
 def hash_plot_code(code: str, options: dict) -> str:
+    """Generate a hash of the plot code."""
+    # convert to plain script if doctest code
+    script = doctest.script_from_examples(code) if _contains_doctest(code) else code
+
+    lines = []
+    for line in script.splitlines():
+        line_without_comments = re.sub(r'(?<!["\'])#.*', '', line).strip()
+        if line_without_comments:
+            lines.append(line_without_comments)
+    clean_script = textwrap.dedent('\n'.join(lines))
+
     parts = [
-        'pvplot:v1',
         'ctx=' + str('context' in options),
-        code,
+        clean_script,
     ]
-    h = hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()
-    return h[:16]  # 16 is sufficient
+
+    # first 16 char should be sufficient
+    return hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()[:16]
 
 
 def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
