@@ -401,6 +401,11 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
+        # set backend each time to avoid mpl from showing mpl figures
+        import matplotlib as mpl
+
+        mpl.use('Agg', force=True)  # must import before pyvista
+
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
