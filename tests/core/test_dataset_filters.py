@@ -222,6 +222,21 @@ def test_clip_surface():
     assert isinstance(clipped, pv.UnstructuredGrid)
 
 
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_surface_output_type(datasets, crinkle):
+    for dataset in datasets:
+        clp = dataset.clip_surface(dataset.extract_geometry(), crinkle=crinkle)
+        assert clp is not None
+        if isinstance(dataset, pv.PointSet):
+            assert isinstance(clp, pv.PointSet)
+        elif isinstance(dataset, pv.PolyData):
+            assert isinstance(clp, pv.PolyData)
+        elif isinstance(dataset, pv.MultiBlock):
+            assert isinstance(clp, pv.MultiBlock)
+        else:
+            assert isinstance(clp, pv.UnstructuredGrid)
+
+
 def test_clip_closed_surface():
     closed_surface = pv.Sphere()
     clipped = closed_surface.clip_closed_surface(progress_bar=True)

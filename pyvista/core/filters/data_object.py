@@ -1280,8 +1280,10 @@ class DataObjectFilters:
                 if VTK_CELL_IDS_KEYS in (cell_data := output.cell_data):
                     del cell_data[VTK_CELL_IDS_KEYS]
                 association, name = active_scalars_info_
-                dataset.set_active_scalars(name, preference=association)
-                output.set_active_scalars(name, preference=association)
+                if not dataset.is_empty:
+                    dataset.set_active_scalars(name, preference=association)
+                if not output.is_empty:
+                    output.set_active_scalars(name, preference=association)
                 return output
 
             def extract_crinkle_cells(dataset, a_, b_, _):
@@ -1298,9 +1300,17 @@ class DataObjectFilters:
                     def extract_cells_from_block(  # noqa: PLR0917
                         block_, clipped_a, clipped_b, active_scalars_info_
                     ):
-                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
-                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
-
+                        set_a = (
+                            set(clipped_a.cell_data[CELL_IDS_KEY])
+                            if CELL_IDS_KEY in clipped_a.cell_data.keys()
+                            else set()
+                        )
+                        set_b = (
+                            set(clipped_b.cell_data[CELL_IDS_KEY])
+                            if CELL_IDS_KEY in clipped_b.cell_data.keys()
+                            else set()
+                        )
+                        set_b = set_b - set_a
                         # Need to cast as int dtype explicitly to ensure empty arrays have
                         # the right type required by extract_cells
                         array_a = np.array(list(set_a), dtype=INT_DTYPE)
@@ -1440,9 +1450,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData | tuple[pyvista.PolyData]
-            Clipped mesh when ``return_clipped=False``,
-            otherwise a tuple containing the unclipped and clipped datasets.
+        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing the
+            unclipped and clipped meshes. Output mesh type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1480,6 +1493,14 @@ class DataObjectFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+
+        if isinstance(result, tuple):
+            result = (
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
+        else:
+            result = _cast_output_to_match_input_type(result, self)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1537,8 +1558,17 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Clipped dataset.
+        DataSet | MultiBlock
+            Clipped mesh. Output type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
+
+            .. versionchanged:: 0.47
+
+                The output type now matches the input type for :class:`~pyvista.PointSet` and
+                :class:`~pyvista.PolyData`. This matches the behavior of :meth:`clip`.
+                Previously, these types would return :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1554,6 +1584,36 @@ class DataObjectFilters:
         See :ref:`clip_with_plane_box_example` for more examples using this filter.
 
         """
+        CELL_IDS = 'cell_ids'
+
+        def add_cell_ids_to_self() -> None:
+            def add_ids_to_mesh(dataset: DataSet):
+                if not isinstance(dataset, pyvista.PointSet):
+                    dataset.cell_data[CELL_IDS] = np.arange(dataset.n_cells)
+
+            if isinstance(self, pyvista.MultiBlock):
+                for block in self.recursive_iterator(skip_none=True):
+                    add_ids_to_mesh(block)
+                return
+            add_ids_to_mesh(self)
+            return
+
+        def extract_crinkle_cells_from_output(input_mesh, output_mesh):
+            def extract_crinkle_cells(mesh_in: DataSet, mesh_out: DataSet):
+                if CELL_IDS in mesh_out.cell_data.keys():
+                    return mesh_in.extract_cells(np.unique(mesh_out.cell_data[CELL_IDS]))
+                return mesh_in
+
+            if isinstance(output_mesh, pyvista.MultiBlock):
+                for (ids, _, block_in), block_out in zip(
+                    output_mesh.recursive_iterator('all', skip_none=True),
+                    input_mesh.recursive_iterator(skip_none=True),
+                ):
+                    extracted = extract_crinkle_cells(block_in, block_out)
+                    output_mesh.replace(ids, extracted)
+                return output_mesh
+            return extract_crinkle_cells(input_mesh, output_mesh)
+
         if bounds is None:
 
             def _get_quarter(dmin, dmax):
@@ -1595,7 +1655,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            add_cell_ids_to_self()
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -1610,8 +1670,8 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        return clipped
+            clipped = extract_crinkle_cells_from_output(self, clipped)
+        return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
@@ -3047,3 +3107,31 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _cast_output_to_match_input_type(
+    output_mesh: DataSet | MultiBlock, input_mesh: DataSet | MultiBlock
+):
+    # Ensure output type matches input type
+
+    def cast_output(mesh_out: DataSet, mesh_in: DataSet):
+        if isinstance(mesh_in, pyvista.PolyData) and not isinstance(mesh_out, pyvista.PolyData):
+            return mesh_out.extract_geometry()
+        elif isinstance(mesh_in, pyvista.PointSet) and not isinstance(mesh_out, pyvista.PointSet):
+            return mesh_out.cast_to_pointset()
+        return mesh_out
+
+    def cast_output_blocks(mesh_out: MultiBlock, mesh_in: MultiBlock):
+        # Replace all blocks in the output mesh with cast versions that match the input
+        for (ids, _, block_out), block_in in zip(
+            mesh_out.recursive_iterator('all', skip_none=True),
+            mesh_in.recursive_iterator(skip_none=True),
+        ):
+            mesh_out.replace(ids, cast_output(block_out, block_in))
+        return mesh_out
+
+    return (
+        cast_output_blocks(output_mesh, input_mesh)  # type: ignore[arg-type]
+        if isinstance(output_mesh, pyvista.MultiBlock)
+        else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
+    )
