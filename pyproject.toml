@@ -116,6 +116,7 @@ docs = [
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
+  'joblib==1.5.1',
   'jupyter_sphinx==0.5.3',
   'jupyterlab==4.4.5',
   'lxml==6.0.0',
@@ -147,7 +148,7 @@ docs = [
   'trame-vuetify==3.0.1',
   'trame==3.11.0',
   'trimesh==4.7.1',
-  'vtk-xref==0.1.0',
+  'vtk-xref==0.1.1',
   { include-group = 'pinned' },
 ]
 
