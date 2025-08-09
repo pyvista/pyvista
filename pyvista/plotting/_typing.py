@@ -8,6 +8,8 @@ from typing import Literal
 from typing import TypedDict
 from typing import Union
 
+import matplotlib as mpl
+
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
@@ -27,13 +29,14 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-
-ColormapOptions = Union[
+NamedColormaps = Union[
     '_MATPLOTLIB_CMAPS_LITERAL',
     '_CMOCEAN_CMAPS_LITERAL',
     '_COLORCET_CMAPS_LITERAL',
     '_CMCRAMERI_CMAPS_LITERAL',
 ]
+
+ColormapOptions = Union[NamedColormaps, list[str], mpl.colors.Colormap]
 
 ColorLike = Union[
     tuple[int, int, int],
