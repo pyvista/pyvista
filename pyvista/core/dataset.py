@@ -6,13 +6,15 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
+
+# PEP 702: @deprecated is in warnings module in Python 3.13+, typing_extensions for older versions
+import sys
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import overload
-import warnings
 
 import numpy as np
 
@@ -42,6 +44,11 @@ from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -97,6 +104,10 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
     name: str
 
 
+@deprecated(
+    'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead',
+    category=PyVistaDeprecationWarning,
+)
 class ActiveArrayInfo(_NoNewAttrMixin):
     """Active array info class with support for pickling.
 
@@ -119,11 +130,7 @@ class ActiveArrayInfo(_NoNewAttrMixin):
         """Initialize."""
         self.association = association
         self.name = name
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
-            'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
-            PyVistaDeprecationWarning,
-        )
+        # Note: deprecation warning is handled by PEP 702 @deprecated decorator on the class
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
         """Return a copy of this object.

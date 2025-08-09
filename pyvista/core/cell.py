@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import cast
+from typing import overload
 import warnings
 
 import numpy as np
@@ -31,6 +32,14 @@ if TYPE_CHECKING:
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
+
+# PEP 702: @deprecated is in warnings module in Python 3.13+, typing_extensions for older versions
+import sys
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.int64]:
@@ -662,6 +671,49 @@ class CellArray(
 
     """
 
+    # PEP 702: Mark deprecated parameter combinations
+    @overload
+    @deprecated(
+        "Parameter 'n_cells' is deprecated and no longer used",
+        category=PyVistaDeprecationWarning,
+    )
+    def __init__(
+        self: Self,
+        cells: CellsLike | None = None,
+        n_cells: int = ...,
+        deep: bool | None = None,  # noqa: FBT001
+    ) -> None: ...
+
+    @overload
+    @deprecated(
+        "Parameter 'deep' is deprecated and no longer used",
+        category=PyVistaDeprecationWarning,
+    )
+    def __init__(
+        self: Self,
+        cells: CellsLike | None = None,
+        n_cells: int | None = None,
+        deep: bool = ...,  # noqa: FBT001
+    ) -> None: ...
+
+    @overload
+    @deprecated(
+        "Parameters 'n_cells' and 'deep' are deprecated and no longer used",
+        category=PyVistaDeprecationWarning,
+    )
+    def __init__(
+        self: Self,
+        cells: CellsLike | None = None,
+        n_cells: int = ...,
+        deep: bool = ...,  # noqa: FBT001
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: Self,
+        cells: CellsLike | None = None,
+    ) -> None: ...
+
     @_deprecate_positional_args(allowed=['cells'])
     def __init__(
         self: Self,
@@ -676,13 +728,14 @@ class CellArray(
         if cells is not None:
             self.cells = cells
 
-        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (('n_cells', n_cells), ('deep', deep)):
-            if v is not None:
-                warnings.warn(
-                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+        # Runtime warnings for deprecated parameters
+        # (PEP 702 overloads provide static analysis warnings)
+        if n_cells is not None or deep is not None:
+            warnings.warn(
+                'CellArray parameters `n_cells` and `deep` are deprecated and no longer used.',
+                PyVistaDeprecationWarning,
+                stacklevel=2,
+            )
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
