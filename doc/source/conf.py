@@ -697,7 +697,7 @@ class PlaceHolderImage(Image):
 
 def report_parallel_safety(app: Sphinx, *_) -> None:
     """Raise an error if an extension is blocking a parallel build."""
-    if app.parallel:
+    if app.parallel > 1:
         for name, ext in sorted(app.extensions.items()):
             read_safe = getattr(ext, 'parallel_read_safe', None)
             write_safe = getattr(ext, 'parallel_write_safe', None)
