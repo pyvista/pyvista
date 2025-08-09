@@ -128,6 +128,7 @@ These options can be set by defining global variables of the same name in
 from __future__ import annotations
 
 import doctest
+import hashlib
 import os
 from os.path import relpath
 from pathlib import Path
@@ -359,7 +360,7 @@ TEMPLATE = """
 
        .. tab-item:: Static Scene
 
-           .. figure:: {{ build_dir }}/{{ img.stem }}.png
+           .. image:: {{ build_dir }}/{{ img.stem }}.png
               {% for option in options -%}
               {{ option }}
               {% endfor %}
@@ -371,7 +372,7 @@ TEMPLATE = """
 
    {{ caption }}  {# appropriate leading whitespace added beforehand #}
    {% else %}
-   .. figure:: {{ build_dir }}/{{ img.basename }}
+   .. image:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
       {{ option }}
       {% endfor %}
@@ -540,6 +541,16 @@ def render_figures(
     return results
 
 
+def hash_plot_code(code: str, options: dict) -> str:
+    parts = [
+        'pvplot:v1',
+        'ctx=' + str('context' in options),
+        code,
+    ]
+    h = hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()
+    return h[:16]  # 16 is sufficient
+
+
 def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
     """Run the plot directive."""
     document = state_machine.document
@@ -589,14 +600,14 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         source_file_name = rst_file
         code = textwrap.dedent('\n'.join(map(str, content)))
 
-        # note: this reuses the existing matplotlib plot counter if available
-        counter = document.attributes.get('_plot_counter', 0) + 1
-        document.attributes['_plot_counter'] = counter
         base = Path(source_file_name).stem
         ext = Path(source_file_name).suffix
-        output_base = f'{base}-{counter}{ext}'
         function_name = None
         caption = options.get('caption', '')
+
+        # always provide a unique hash
+        code_hash = hash_plot_code(code, options)
+        output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
     source_ext = Path(output_base).suffix
