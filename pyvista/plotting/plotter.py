@@ -1886,9 +1886,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
         >>> pl.camera_position
-        [(0.02430, 0.0336, 0.9446),
-         (0.02430, 0.0336, -0.02225),
-         (0.0, 1.0, 0.0)]
+        CameraPosition(position=(0.02430, 0.0336, 0.9446),
+                       focal_point=(0.02430, 0.0336, -0.02225),
+                       viewup=(0.0, 1.0, 0.0))
+
         >>> pl.camera_position = [
         ...     (0.3914, 0.4542, 0.7670),
         ...     (0.0243, 0.0336, -0.0222),
