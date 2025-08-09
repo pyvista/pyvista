@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
@@ -141,18 +140,27 @@ def test_axes_actor_tip_type(axes_actor):
 
 
 def test_axes_actor_axis_labels_deprecated(axes_actor):
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
+    with pytest.raises(
+        pv.PyVistaAttributeError,
+        match="Attribute 'x_axis_label' does not exist and cannot be added",
+    ):
         axes_actor.x_axis_label = 'Axis X'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
+    with pytest.raises(
+        pv.PyVistaAttributeError,
+        match="Attribute 'y_axis_label' does not exist and cannot be added",
+    ):
         axes_actor.y_axis_label = 'Axis Y'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
+    with pytest.raises(
+        pv.PyVistaAttributeError,
+        match="Attribute 'z_axis_label' does not exist and cannot be added",
+    ):
         axes_actor.z_axis_label = 'Axis Z'
 
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
+    with pytest.raises(AttributeError, match="'AxesActor' object has no attribute 'x_axis_label'"):
         _ = axes_actor.x_axis_label
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
+    with pytest.raises(AttributeError, match="'AxesActor' object has no attribute 'y_axis_label'"):
         _ = axes_actor.y_axis_label
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
+    with pytest.raises(AttributeError, match="'AxesActor' object has no attribute 'z_axis_label'"):
         _ = axes_actor.z_axis_label
 
 
