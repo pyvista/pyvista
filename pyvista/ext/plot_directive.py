@@ -390,7 +390,7 @@ TEMPLATE = """
 
        .. tab-item:: Static Scene
 
-           .. image:: {{ build_dir }}/{{ img.stem }}.png
+           .. figure:: {{ build_dir }}/{{ img.stem }}.png
               {% for option in options -%}
               {{ option }}
               {% endfor %}
@@ -402,7 +402,7 @@ TEMPLATE = """
 
    {{ caption }}  {# appropriate leading whitespace added beforehand #}
    {% else %}
-   .. image:: {{ build_dir }}/{{ img.basename }}
+   .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
       {{ option }}
       {% endfor %}
@@ -654,7 +654,6 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         function_name = None
         caption = options.get('caption', '')
 
-        # provide a unique hash
         if use_counter:
             counter = document.attributes.get('_plot_counter', 0) + 1
             document.attributes['_plot_counter'] = counter

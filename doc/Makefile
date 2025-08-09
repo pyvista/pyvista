@@ -48,9 +48,6 @@ phtml:
 update-intersphinx:
 	cd intersphinx && ./update.sh
 
-build-gallery-cards:
-	cd source && python make_tables.py
-
 # nitpicky linkcheck
 linkcheck:
 	@$(SPHINXBUILD) -b linkcheck "$(SOURCEDIR)" -D nitpicky=1 -d _build/doctrees . _build/linkcheck
