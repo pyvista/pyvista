@@ -719,6 +719,3 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
-
-    # right before writing, patch the gallery placeholders
-    # app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
