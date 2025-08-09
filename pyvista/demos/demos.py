@@ -270,7 +270,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(mesh, scalars='Height', show_scalar_bar=False, smooth_shading=True)
-    plotter.camera_position = cpos  # type: ignore[assignment]
+    plotter.camera_position = cpos
     plotter.show(
         title='Wave Example',
         window_size=[800, 600],
@@ -432,7 +432,7 @@ def plot_beam(notebook=None):
         rng=[-d.max(), d.max()],
         cmap=cmap,  # type: ignore[arg-type]
     )
-    plotter.camera_position = cpos  # type: ignore[assignment]
+    plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
     plotter.show()
 
