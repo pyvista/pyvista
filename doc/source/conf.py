@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
+import warnings
 
 from atsphinx.mini18n import get_template_dir
 from docutils.parsers.rst.directives.images import Image
@@ -21,6 +22,16 @@ if TYPE_CHECKING:
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
+
+# ignore joblib warnings from sphinx-gallery parallel build:
+# .../site-packages/joblib/externals/loky/process_executor.py:782: UserWarning:
+# A worker stopped while some jobs were given to the executor. This can be
+# caused by a too short worker timeout or by a memory leak.
+warnings.filterwarnings(
+    'ignore',
+    category=UserWarning,
+    message='A worker stopped while some jobs were given to the executor',
+)
 
 # This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
