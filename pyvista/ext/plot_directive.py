@@ -123,6 +123,19 @@ The plot directive has the following configuration options:
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
+
+**Directive Configuration Settings**
+
+Globally, you can set if the file names should be either:
+
+* Deterministic, based on directive source hash:
+  ``<BASENAME>-<HASH>_<INDEX>_<SUBINDEX>.<EXT>`` (Default)
+* Indexed, based on location in document:
+  ``<BASENAME>-<DOC-INDEX>_<INDEX>_<SUBINDEX>.<EXT>``
+
+Enable indexed naming this by setting ``pyvista_plot_use_counter=True``. Note
+that indexed is incompatible with parallel builds due to race conditions.
+
 """
 
 from __future__ import annotations
@@ -150,6 +163,10 @@ import pyvista
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from sphinx.application import Sphinx
+    from sphinx.config import Config
+
 
 pyvista.BUILDING_GALLERY = True
 pyvista.OFF_SCREEN = True
@@ -221,7 +238,7 @@ class PlotDirective(Directive):
             raise self.error(str(e))
 
 
-def setup(app):
+def setup(app: Sphinx):
     """Set up the plot directive."""
     setup.app = app
     setup.config = app.config
@@ -239,7 +256,7 @@ def setup(app):
         'plot_skip_optional',
     ]
 
-    def raise_on_legacy_config(app, config):
+    def raise_on_legacy_config(app: Sphinx, config: Config) -> None:
         """Raise a RuntimeError when using legacy configuration parameters.
 
         These parameters conflict with matplotlib's ``plot_directive``.
@@ -258,6 +275,19 @@ def setup(app):
 
     app.connect('config-inited', raise_on_legacy_config)
 
+    def check_counter_for_parallel_build(app: Sphinx, config: Config) -> None:
+        if config.pyvista_plot_use_counter and app.parallel > 1:
+            msg = (
+                "The 'pyvista_plot_use_counter' option cannot be enabled for parallel builds."
+                " Set 'pyvista_plot_use_counter = False' in your conf.py"
+                ' or disable parallel builds.'
+            )
+            raise RuntimeError(msg)
+
+    # Connect the new function to the 'config-inited' event
+    app.connect('config-inited', check_counter_for_parallel_build)
+
+    app.add_config_value('pyvista_plot_use_counter', False, 'env')
     app.add_config_value('pyvista_plot_include_source', True, False)
     app.add_config_value('pyvista_plot_basedir', None, True)
     app.add_config_value('pyvista_plot_html_show_formats', True, True)
@@ -558,6 +588,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
     nofigs = 'nofigs' in options
     optional = 'optional' in options
     force_static = 'force_static' in options
+    use_counter = config.pyvista_plot_use_counter
 
     default_fmt = 'png'
 
@@ -605,9 +636,14 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         function_name = None
         caption = options.get('caption', '')
 
-        # always provide a unique hash
-        code_hash = hash_plot_code(code, options)
-        output_base = f'{base}-{code_hash}{ext}'
+        # provide a unique hash
+        if use_counter:
+            counter = document.attributes.get('_plot_counter', 0) + 1
+            document.attributes['_plot_counter'] = counter
+            output_base = f'{base}-{counter}{ext}'
+        else:
+            code_hash = hash_plot_code(code, options)
+            output_base = f'{base}-{code_hash}{ext}'
 
     base = Path(output_base).stem
     source_ext = Path(output_base).suffix
