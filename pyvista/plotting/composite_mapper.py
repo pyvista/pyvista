@@ -183,10 +183,6 @@ class BlockAttributes(_NoNewAttrMixin):
 
         If opacity has not been set this will be ``None``.
 
-        Warnings
-        --------
-        VTK 9.0.3 has a bug where changing the opacity to less than 1.0 also
-        changes the edge visibility on the block that is partially transparent.
 
         Examples
         --------
@@ -481,11 +477,7 @@ class CompositeAttributes(
 
         """
         try:
-            if vtk_version_info <= (9, 0, 3):  # pragma: no cover
-                vtk_ref = _vtk.reference(0)  # needed for <=9.0.3
-                block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)  # type: ignore[arg-type]
-            else:
-                block = self.DataObjectFromIndex(index, self._dataset)
+            block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             msg = f'Invalid block key: {index}'
             raise KeyError(msg) from None

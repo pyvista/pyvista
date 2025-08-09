@@ -8,8 +8,8 @@ import importlib.util
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
 
     from mypy.plugin import ClassDefContext
     from mypy.types import Instance

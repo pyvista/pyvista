@@ -41,7 +41,6 @@ from typing import Any
 from typing import Generic
 from typing import Protocol
 from typing import TypeVar
-from typing import Union
 from typing import cast
 from typing import final
 from typing import runtime_checkable
@@ -70,13 +69,8 @@ _FilePropIntType_co = TypeVar(
     covariant=True,
 )
 
-DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetType = Union[
-    type[pv.DataSet],
-    type[pv.Texture],
-    type[NumpyArray[Any]],
-    type[pv.MultiBlock],
-]
+DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
+DatasetType = type[pv.DataSet] | type[pv.Texture] | type[NumpyArray[Any]] | type[pv.MultiBlock]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
