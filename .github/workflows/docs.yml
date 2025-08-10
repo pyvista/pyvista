@@ -97,7 +97,11 @@ jobs:
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: make -C doc html SPHINXOPTS="-j2" # Public GitHub runners have 2 real cores
+        run: |
+          make -C doc \
+          gen-external-examples \
+          gen-dataset-gallery \
+          html SPHINXOPTS="-j2" # Public GitHub runners have 2 real cores
 
       - name: Dump Sphinx Warnings and Errors
         if: always()

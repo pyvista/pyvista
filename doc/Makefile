@@ -18,22 +18,25 @@ help:
 
 .PHONY: help Makefile
 
-clean-except-examples:
-	rm -rf $(BUILDDIR)/*
-	rm -f errors.txt
-	rm -f sphinx_warnings.txt
-	rm -rf $(SOURCEDIR)/images/auto-generated
-	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
-	rm -rf $(SOURCEDIR)/tags
-	rm -rf $(SOURCEDIR)/api/examples/dataset-gallery/
-	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
+clean-dataset-gallery:
+	rm -rf "$(SOURCEDIR)/api/examples/dataset-gallery"
 
-clean: clean-except-examples
-	rm -rf $(SOURCEDIR)/examples/
+clean-external-examples:
+	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
 
 # remove autosummary files
 clean-autosummary:
 	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
+
+clean-except-examples: clean-dataset-gallery clean-external-examples clean-autosummary
+	rm -rf $(BUILDDIR)/*
+	rm -f errors.txt
+	rm -f sphinx_warnings.txt
+	rm -rf $(SOURCEDIR)/images/auto-generated
+	rm -rf $(SOURCEDIR)/tags
+
+clean: clean-except-examples
+	rm -rf $(SOURCEDIR)/examples/
 
 # build html docs in parallel using all available CPUs
 # WARNING: this is a resource hog
@@ -47,6 +50,25 @@ phtml:
 
 update-intersphinx:
 	cd intersphinx && ./update.sh
+
+gen-dataset-gallery:
+	@if [ ! -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
+		echo "Dataset gallery directory not found, running make_table.py..."; \
+		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery"; \
+		cd "$(SOURCEDIR)" && python make_tables.py; \
+	else \
+		echo "Dataset gallery directory already exists, skipping generation."; \
+		echo "Run clean-dataset-gallery to clear the gallery."; \
+	fi
+
+gen-external-examples:
+	@if [ ! -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
+		echo "external_examples.rst not found, running make_external_examples.py..."; \
+		cd "$(SOURCEDIR)" && python make_external_gallery.py; \
+	else \
+		echo "The file external_examples.rst already exists, skipping generation."; \
+		echo "Run clean-external-examples to clear the file."; \
+	fi
 
 # nitpicky linkcheck
 linkcheck:

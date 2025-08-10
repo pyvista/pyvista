@@ -40,11 +40,7 @@ warnings.filterwarnings(
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
-import make_external_gallery
 import make_tables
-
-make_external_gallery.make_example_gallery()
-make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
