@@ -69,9 +69,10 @@ def test_show_grid_axes_ranges_with_all_edges():
 def test_show_bounds_with_scaling(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    actor0 = plotter.show_bounds()
-    assert actor0.GetUseTextActor3D()
-    plotter.set_scale(0.5, 0.5, 2)
+    with pytest.warns():
+        actor0 = plotter.show_bounds()
+        assert actor0.GetUseTextActor3D()
+        plotter.set_scale(0.5, 0.5, 2)
     actor1 = plotter.show_bounds()
     assert not actor1.GetUseTextActor3D()
 
