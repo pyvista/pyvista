@@ -22,3 +22,10 @@ def reset_global_theme():
     pyvista.set_plot_theme('document_build')
     yield
     pyvista.set_plot_theme('document_build')
+
+
+@pytest.fixture(autouse=True)
+def catch_vtk_errors():
+    """Raise a RuntimeError when vtk errors are emitted."""
+    with pyvista.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
+        yield

@@ -284,6 +284,8 @@ def test_pbr(sphere, verify_image_cache):
     verify_image_cache.high_variance_test = True
 
     texture = examples.load_globe_texture()
+    texture.mipmap = True
+    texture.interpolate = True
 
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture)
@@ -2005,6 +2007,7 @@ def test_image_properties():
     mesh = pv.PolyData(rr, tris)
     p = pv.Plotter()
     p.add_mesh(mesh, color=True)
+    pv.global_theme.camera.viewup = (-1.0, 0.0, 0.0)
     p.renderer.camera_position = (0.0, 0.0, 1.0)
     p.renderer.ResetCamera()
     p.enable_parallel_projection()
@@ -3256,6 +3259,7 @@ def test_ssao_pass_from_helper():
 
 
 @pytest.mark.skip_windows
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_many_multi_pass(verify_image_cache):
     verify_image_cache.high_variance_test = True
 
@@ -3462,6 +3466,8 @@ def test_plot_composite_rgba(multiblock_poly):
     pl.show()
 
 
+# Ignore VTK error during teardown: ERROR: Bad table range: [inf, -inf] vtkLookupTable.cxx
+@pytest.mark.skip_catch_vtk_errors
 def test_plot_composite_bool(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
 

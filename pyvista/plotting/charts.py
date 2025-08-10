@@ -20,6 +20,7 @@ from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .colors import COLOR_SCHEMES
@@ -4108,7 +4109,7 @@ class BoxPlot(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _MultiCompPlot, _vtk.vt
 
         """
         self._table.update({f'data_{i}': np.asarray(d) for i, d in enumerate(data)})
-        self._quartiles.Update()
+        _update_alg(self._quartiles)
 
 
 class ChartBox(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):

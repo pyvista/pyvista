@@ -15,6 +15,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import try_callback
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
@@ -79,7 +80,7 @@ class RectangleSelection(_NoNewAttrMixin):
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
-        frustum_source.Update()
+        _update_alg(frustum_source)
         return pyvista.wrap(frustum_source.GetOutput())
 
     @property
@@ -1174,7 +1175,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
-                    extract.Update()
+                    _update_alg(extract)
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
