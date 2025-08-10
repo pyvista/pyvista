@@ -3470,6 +3470,47 @@ def test_align_xyz():
     assert np.allclose(aligned.center, mesh.center)
 
 
+def test_align_xyz_merge_points():
+    xyz_axes = np.eye(3)
+    points = np.vstack([xyz_axes, -xyz_axes])
+    # Add a bunch of duplicate points at +Z
+    biased_axis = xyz_axes[2]
+    points_with_duplicates = np.vstack([points, [biased_axis.tolist()] * 100])
+
+    _, matrix_no_duplicates = pv.PolyData(points).align_xyz(return_matrix=True)
+    _, matrix_with_duplicates_merged = pv.PolyData(points_with_duplicates).align_xyz(
+        merge_points=True, return_matrix=True
+    )
+    _, matrix_with_duplicates_not_merged = pv.PolyData(points_with_duplicates).align_xyz(
+        merge_points=False, return_matrix=True
+    )
+
+    axes_no_duplicates = matrix_no_duplicates[:3, :3]
+    axes_with_duplicates_merged = matrix_with_duplicates_merged[:3, :3]
+    axes_with_duplicates_not_merged = matrix_with_duplicates_not_merged[:3, :3]
+
+    # Duplicates removed - expect same result
+    assert np.array_equal(axes_no_duplicates, xyz_axes)
+    assert np.array_equal(axes_with_duplicates_merged, xyz_axes)
+    assert not np.array_equal(axes_with_duplicates_not_merged, xyz_axes)
+
+    # Duplicates not removed - expect principal axis is the biased axis
+    assert np.array_equal(axes_with_duplicates_not_merged[0], biased_axis)
+
+
+def test_align_xyz_cell_centers():
+    ellipse = pv.ParametricEllipsoid(1, 2, 3)
+    _, matrix = ellipse.align_xyz(cell_centers=False, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(ellipse.points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+    _, matrix = ellipse.align_xyz(cell_centers=True, return_matrix=True)
+    axes = matrix[:3, :3]
+    expected_axes = pv.principal_axes(ellipse.cell_centers().points)
+    assert np.array_equal(np.abs(axes), np.abs(expected_axes))
+
+
 def test_align_xyz_return_matrix():
     mesh = examples.download_oblique_cone()
     initial_bounds = mesh.bounds

@@ -176,6 +176,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
         axis_2_direction: VectorLike[float] | str | None = None,
+        cell_centers: bool = True,
+        merge_points: bool = False,
         return_matrix: bool = False,
     ):
         """Align a dataset to the x-y-z axes.
@@ -217,6 +219,24 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
             name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        cell_centers : bool, default: True
+            Use the mesh's :meth:`cell_centers` when computing the mesh's
+            :func:`~pyvista.principal_axes` for the alignment. Any points not associated
+            with cells are treated as vertex cells for this purpose. Set this to
+            ``False`` to use the mes mesh's points for the alignment.
+
+        merge_points : bool, default: False
+            Use :meth:`merge_points` to merge coincident points before computing the
+            mesh's :func:`~pyvista.principal_axes` for the alignment. Enabling this
+            option can improve the alignment since duplicate points can bias the
+            principal axes computation. By default this is ``False`` and the mesh's
+            points are used as-is without merging.
+
+            .. note::
+
+                The points are only merged for the alignment. The points of the returned
+                mesh are *not* merged.
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
@@ -348,7 +368,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector_
 
-        axes, std = pyvista.principal_axes(self.points, return_std=True)
+        # Get points and compute principal axes
+        input_mesh = self.cell_centers() if cell_centers else self
+        points = input_mesh.merge_points().points if merge_points else input_mesh.points
+        axes, std = pyvista.principal_axes(points, return_std=True)
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
             # Set directions of first two axes to +X,+Y by default
