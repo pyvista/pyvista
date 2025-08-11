@@ -2004,15 +2004,16 @@ class Color(_NoNewAttrMixin):
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
-def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
-    """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
+    """Fetch a colormap by name from matplotlib, colorcet, cmocean, or cmcrameri.
 
     See :ref:`named_colormaps` for supported colormaps.
 
     Parameters
     ----------
-    cmap : str or list of str
-        Name of the colormap to fetch. If the input is a list of strings,
+    cmap : str | list[str] | matplotlib.colors.Colormap
+        Name of the colormap to fetch. If the input is a list of strings, the
+        strings must be color names (from :ref:`named_colors`), and
         it will create a ``ListedColormap`` with the input list.
 
     Returns
@@ -2028,7 +2029,7 @@ def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
         If the input is a list of items that are not strings.
 
     """
-    _validation.check_instance(cmap, (str, list), name='cmap')
+    _validation.check_instance(cmap, (str, list, colors.Colormap), name='cmap')
 
     def get_3rd_party_cmap(cmap_):
         cmap_sources = {
@@ -2061,6 +2062,8 @@ def get_cmap_safe(cmap: ColormapOptions | list[str]) -> colors.Colormap:
                 raise ModuleNotFoundError(msg)
         return None
 
+    if isinstance(cmap, colors.Colormap):
+        return cmap
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
         if cmap in IPYGANY_MAP:

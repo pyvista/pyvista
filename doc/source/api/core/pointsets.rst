@@ -81,12 +81,6 @@ classes inherit all methods from their corresponding VTK :vtk:`vtkPointSet`,
    pyvista.StructuredGrid
    pyvista.ExplicitStructuredGrid
 
-.. _vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
-.. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
-.. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html
-.. _vtkExplicitStructuredGrid: https://vtk.org/doc/nightly/html/classvtkExplicitStructuredGrid.html
-
 
 PolyData Creation
 -----------------
