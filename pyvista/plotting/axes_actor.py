@@ -441,8 +441,8 @@ class AxesActor(
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the axes labels.
 
-        This property may be used as an alternative to using :attr:`~x_axis_label`,
-        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
+        This property may be used as an alternative to using :attr:`~x_label`,
+        :attr:`~y_label`, and :attr:`~z_label` separately.
 
         .. versionadded:: 0.44.0
 
