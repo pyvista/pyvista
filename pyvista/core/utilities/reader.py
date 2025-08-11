@@ -888,7 +888,8 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
     @property
     def number_time_points(self):  # noqa: D102
-        if (item := self.reader.GetTimeSets().GetItem(self.active_time_set)) is None:
+        item = self.reader.GetTimeSets().GetItem(self.active_time_set)
+        if item is None:
             return 0
         return item.GetSize()
 
