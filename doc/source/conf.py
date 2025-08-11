@@ -401,6 +401,10 @@ class ResetPyVista:
         import matplotlib as mpl
 
         mpl.use('Agg', force=True)  # must import before pyvista
+        mpl.pyplot.close('all')
+        mpl.rcdefaults()
+        mpl.pyplot.figure().clear()
+        mpl.pyplot.close()
 
         import pyvista
 
