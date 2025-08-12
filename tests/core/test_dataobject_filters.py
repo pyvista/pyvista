@@ -71,8 +71,6 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     n_points_in = pointset.n_points
     mesh = pv.MultiBlock([pointset]) if as_composite else pointset
     # Make sure we clip such that none of the points are removed
-    # This ensures output bounds == input bounds which hits a branch where
-    # remove_unused_points may be called
     bounds = pointset.bounds
     clipped = mesh.clip(origin=(bounds.x_max + 1, bounds.y_max, bounds.z_max))
     pointset_out = clipped[0] if as_composite else clipped
