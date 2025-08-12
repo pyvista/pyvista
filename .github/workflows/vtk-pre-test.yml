@@ -40,7 +40,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - uses: actions/cache@v4
         with:
@@ -50,9 +55,7 @@ jobs:
             Examples-1-
 
       - name: Install PyVista Testing Requirements
-        run: |
-          pip install --upgrade pip
-          pip install . --group test
+        run: uv sync --group test
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         with:
@@ -61,13 +64,13 @@ jobs:
 
       - name: Install nightly VTK
         run: |
-          pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+          uv pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista -v tests/core tests/examples --test_downloads
+        run: uv run python -m pytest --cov=pyvista -v tests/core tests/examples --test_downloads
 
       - name: Plotting Testing (uses GL)
-        run: xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+        run: uv run xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -79,7 +82,7 @@ jobs:
       - name: Software Report
         if: always()
         run: |
-          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          uv run xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
-          pip list
-          pip show vtk
+          uv pip list
+          uv pip show vtk
