@@ -7,7 +7,6 @@ import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
-from typing import TypeAlias
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -37,42 +36,39 @@ else:
 # always be added to the dictionary and documented
 Number = int | float
 
-VectorLike: TypeAlias = _ArrayLike1D[NumberType]
-with contextlib.suppress(AttributeError):  # __doc__ is read-only for union types
-    VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
+VectorLike = _ArrayLike1D[NumberType]
+VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
 
 Includes sequences and numpy arrays.
 """
 
-MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
-with contextlib.suppress(AttributeError):  # __doc__ is read-only for union types
-    MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
+MatrixLike = _ArrayLike2D[NumberType]
+MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
 
 Includes singly-nested sequences and numpy arrays.
 """
 
-ArrayLike: TypeAlias = _ArrayLike[NumberType]
-with contextlib.suppress(AttributeError):  # __doc__ is read-only for union types
-    ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
+ArrayLike = _ArrayLike[NumberType]
+ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
 
 # Create a float-specific matrix type for rotation use
-FloatMatrixLike: TypeAlias = _ArrayLike2D[float]
+FloatMatrixLike = _ArrayLike2D[float]
 
 if Rotation is not None:
-    RotationLike: TypeAlias = FloatMatrixLike | _vtk.vtkMatrix3x3 | Rotation
+    RotationLike = FloatMatrixLike | _vtk.vtkMatrix3x3 | Rotation
 else:
-    RotationLike: TypeAlias = FloatMatrixLike | _vtk.vtkMatrix3x3  # type: ignore[no-redef,misc]
-with contextlib.suppress(AttributeError):  # __doc__ is read-only for union types
+    RotationLike = FloatMatrixLike | _vtk.vtkMatrix3x3  # type: ignore[no-redef,misc]
+with contextlib.suppress(AttributeError):
     RotationLike.__doc__ = """Array or object representing a spatial rotation.
 
 Includes 3x3 arrays and SciPy Rotation objects.
 """
 
-TransformLike: TypeAlias = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
-with contextlib.suppress(AttributeError):  # __doc__ is read-only for union types
+TransformLike = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
+with contextlib.suppress(AttributeError):
     TransformLike.__doc__ = """Array or object representing a spatial transformation.
 
 Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
@@ -115,15 +111,15 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
+CellsLike = MatrixLike[int] | VectorLike[int]
 
-CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
+CellArrayLike = CellsLike | _vtk.vtkCellArray
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar: TypeAlias = NumberType | ArrayLike[NumberType]
+_ArrayLikeOrScalar = NumberType | ArrayLike[NumberType]
 
 InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
-with contextlib.suppress(AttributeError):  # __doc__ is read-only for union types
+with contextlib.suppress(AttributeError):
     InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
 
 Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.

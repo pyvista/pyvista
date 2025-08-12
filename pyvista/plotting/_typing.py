@@ -82,12 +82,12 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
-CameraPositionOptions = Union[
-    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso'],
-    VectorLike[float],
-    MatrixLike[float],
-    CameraPosition,
-]
+CameraPositionOptions = (
+    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+    | VectorLike[float]
+    | MatrixLike[float]
+    | CameraPosition
+)
 
 
 class BackfaceArgs(TypedDict, total=False):
