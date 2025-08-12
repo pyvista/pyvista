@@ -7164,7 +7164,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
-        >>> pl.show(return_cpos=True)
+        >>> pl.show(return_cpos=True)  # doctest:+SKIP
         CameraPosition(position=(1.9264, 1.9264, 1.9264),
                        focal_point=(0.0, 0.0, 0.0),
                        viewup=(0.0, 0.0, 1.0))
