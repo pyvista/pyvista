@@ -397,10 +397,10 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
-        # set backend each time to avoid mpl from showing mpl figures
-        import matplotlib as mpl
+        import matplotlib as mpl  # must import before pyvista
 
-        mpl.use('Agg', force=True)  # must import before pyvista
+        # clear all mpl figures, force non-interactive backend, and reset defaults
+        mpl.use('Agg', force=True)
         mpl.pyplot.close('all')
         mpl.rcdefaults()
         mpl.pyplot.figure().clear()
