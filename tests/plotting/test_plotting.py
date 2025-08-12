@@ -5276,8 +5276,8 @@ def test_clip_box_crinkle(as_multiblock):
     if as_multiblock:
         mesh = pv.MultiBlock([mesh])
     bounds = mesh.bounds
-    x_size, _, z_size = mesh.bounds_size
-    bounds_lower = (
+    x_size, _, _ = mesh.bounds_size
+    bounds_right = (
         bounds.x_min,
         bounds.x_min + x_size / 2,
         bounds.y_min,
@@ -5285,7 +5285,7 @@ def test_clip_box_crinkle(as_multiblock):
         bounds.z_min,
         bounds.z_max,
     )
-    bounds_upper = (
+    bounds_left = (
         bounds.x_min + x_size / 2,
         bounds.x_max,
         bounds.y_min,
@@ -5293,12 +5293,12 @@ def test_clip_box_crinkle(as_multiblock):
         bounds.z_min,
         bounds.z_max,
     )
-    clipped_lower = mesh.clip_box(bounds_lower, crinkle=True)
-    clipped_upper = mesh.clip_box(bounds_upper, crinkle=True)
-    clipped_lower.translate((0.1, 0, 0), inplace=True)
+    clipped_right = mesh.clip_box(bounds_right, crinkle=True)
+    clipped_left = mesh.clip_box(bounds_left, crinkle=True)
+    clipped_right.translate((0.1, 0, 0), inplace=True)
 
     pl = pv.Plotter()
-    pl.add_mesh(clipped_lower, show_edges=True)
-    pl.add_mesh(clipped_upper, show_edges=True)
+    pl.add_mesh(clipped_right, show_edges=True)
+    pl.add_mesh(clipped_left, show_edges=True)
     pl.view_xy()
     pl.show()

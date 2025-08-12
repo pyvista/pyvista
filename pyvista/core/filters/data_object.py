@@ -2968,7 +2968,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 
 class _Crinkler:
-    CELL_IDS_KEY = 'cell_ids'
+    CELL_IDS = 'cell_ids'
     INT_DTYPE = np.int64
     ITER_KWARGS: ClassVar = dict(skip_none=True)
 
@@ -2988,10 +2988,10 @@ class _Crinkler:
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
-                if _Crinkler.CELL_IDS_KEY in clipped_a.cell_data.keys():
+                if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
                     return _Crinkler.extract_cells(
                         block_,
-                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS_KEY]),
+                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
                         active_scalars_info_,
                     )
                 return clipped_a
@@ -3001,13 +3001,13 @@ class _Crinkler:
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
                 set_a = (
-                    set(clipped_a.cell_data[_Crinkler.CELL_IDS_KEY])
-                    if _Crinkler.CELL_IDS_KEY in clipped_a.cell_data.keys()
+                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
                     else set()
                 )
                 set_b = (
-                    set(clipped_b.cell_data[_Crinkler.CELL_IDS_KEY])
-                    if _Crinkler.CELL_IDS_KEY in clipped_b.cell_data.keys()
+                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
                     else set()
                 )
                 set_b = set_b - set_a
@@ -3063,7 +3063,7 @@ class _Crinkler:
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
-            block.cell_data[_Crinkler.CELL_IDS_KEY] = np.arange(
+            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
                 block.n_cells, dtype=_Crinkler.INT_DTYPE
             )
         return active_scalars_info
