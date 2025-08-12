@@ -23,7 +23,7 @@ from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 
-COLORMAPS = ['Greys']
+COLORMAPS = ['Greys', mpl.colormaps['viridis'], ['red', 'green', 'blue']]
 
 if importlib.util.find_spec('cmocean'):
     COLORMAPS.append('algae')

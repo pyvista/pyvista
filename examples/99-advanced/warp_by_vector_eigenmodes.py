@@ -218,20 +218,26 @@ vol.dimensions = [*grid.dimensions[0:2], nz]
 for i, mode_index in enumerate(mode_indices):
     eigenvector = vr[:, mode_index]
     displacement_points = np.zeros_like(vol.points)
+
     for weight, (component, p, q, r) in zip(eigenvector, quadruplets):
         displacement_points[:, component] += (
             weight * vol.points[:, 0] ** p * vol.points[:, 1] ** q * vol.points[:, 2] ** r
         )
-    if displacement_points.max() > 0.0:
-        displacement_points /= displacement_points.max()
+
+    # normalize magnitude
+    displacement_magnitude = np.linalg.norm(displacement_points, axis=1)
+    max_magnitude = np.max(displacement_magnitude)
+    if max_magnitude > 0.0:
+        displacement_points /= max_magnitude
+
     vol[f'eigenmode_{i:02}'] = displacement_points
 
 warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
 pl = pv.Plotter()
-pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False)
-pl.add_mesh(warped, scalars=warpby)
+pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False, clim=(0.0, 1.0))
+pl.add_mesh(warped, scalars=warpby, clim=(0.0, 1.0))
 pl.show()
 
 # %%
@@ -247,5 +253,10 @@ for i, j in product(range(2), range(4)):
         f'mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz',
         font_size=10,
     )
-    pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)
+    pl.add_mesh(
+        vol.warp_by_vector(vector, factor=0.03),
+        scalars=vector,
+        show_scalar_bar=False,
+        clim=(0.0, 1.0),
+    )
 pl.show()

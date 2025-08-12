@@ -30,7 +30,7 @@ from .misc import abstract_class
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-HDF_HELP = 'https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format'
+HDF_HELP = 'https://docs.vtk.org/en/latest/vtk_file_formats/index.html#vtkhdf'
 
 
 def _lazy_vtk_instantiation(module_name, class_name):
