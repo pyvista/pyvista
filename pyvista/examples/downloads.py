@@ -6179,6 +6179,9 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
+            Another HDR texture.
+
     """
     return _download_dataset(_dataset_parched_canal_4k, load=load)
 
@@ -7260,19 +7263,20 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> texture = examples.download_dikhololo_night()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(texture)
-    >>> pl.show()
+    >>> texture.plot()
 
     .. seealso::
 
         :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
+            Another HDR texture.
+
+        :ref:`load_gltf_example`
+            See additional examples using this dataset.
 
     """
     return _download_dataset(_dataset_dikhololo_night, load=load)
