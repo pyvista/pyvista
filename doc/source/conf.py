@@ -228,6 +228,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'BackfaceArgs'),
     (r'py:.*', 'CullingOptions'),
     (r'py:.*', 'OpacityOptions'),
+    (r'py:.*', 'CameraPositionOptions'),
     (r'py:.*', 'StyleOptions'),
     (r'py:.*', 'FontFamilyOptions'),
     (r'py:.*', 'HorizontalOptions'),
@@ -384,6 +385,15 @@ class ResetPyVista:
 
         If default documentation settings are modified in any example, reset here.
         """
+        import matplotlib as mpl  # must import before pyvista
+
+        # clear all mpl figures, force non-interactive backend, and reset defaults
+        mpl.use('Agg', force=True)
+        mpl.pyplot.close('all')
+        mpl.rcdefaults()
+        mpl.pyplot.figure().clear()
+        mpl.pyplot.close()
+
         import pyvista
 
         pyvista._wrappers['vtkPolyData'] = pyvista.PolyData

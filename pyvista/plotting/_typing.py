@@ -11,10 +11,13 @@ from typing import Union
 import matplotlib as mpl
 
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
+from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
+from pyvista.core._typing_core import VectorLike
 
 from . import _vtk
+from .renderer import CameraPosition
 
 if TYPE_CHECKING:
     from pyvista.plotting.themes import Theme
@@ -79,7 +82,12 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
-CameraOptions = Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+CameraPositionOptions = Union[
+    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso'],
+    VectorLike[float],
+    MatrixLike[float],
+    CameraPosition,
+]
 
 
 class BackfaceArgs(TypedDict, total=False):
