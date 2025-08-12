@@ -309,7 +309,7 @@ def fit_plane_to_points(  # noqa: PLR0917
     ...     position=(-117, 76, 235),
     ...     focal_point=(1.69, -1.38, 0),
     ...     viewup=(0.189, 0.957, -0.22),
-    ... ]
+    ... )
     >>> pl.show()
 
     Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
