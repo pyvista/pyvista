@@ -171,6 +171,18 @@ def test_clip_box():
     assert clp is not None
 
 
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_empty(crinkle):
+    out = pv.PolyData().clip(crinkle=crinkle, return_clipped=False)
+    assert out.is_empty
+
+    out1, out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
+    assert out1.is_empty
+
+    out = pv.PolyData().clip_box(crinkle=crinkle)
+    assert out.is_empty
+
+
 def test_clip_box_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.clip_box(invert=False, progress_bar=True)

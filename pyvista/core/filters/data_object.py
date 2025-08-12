@@ -2977,8 +2977,10 @@ class _Crinkler:
         # Extract cells and remove arrays, and restore active scalars
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
         association, name = active_scalars_info_
-        dataset.set_active_scalars(name, preference=association)
-        output.set_active_scalars(name, preference=association)
+        if not dataset.is_empty:
+            dataset.set_active_scalars(name, preference=association)
+        if not output.is_empty:
+            output.set_active_scalars(name, preference=association)
         return output
 
     @staticmethod
@@ -2986,18 +2988,29 @@ class _Crinkler:
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
-                return _Crinkler.extract_cells(
-                    block_,
-                    np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS_KEY]),
-                    active_scalars_info_,
-                )
+                if _Crinkler.CELL_IDS_KEY in clipped_a.cell_data.keys():
+                    return _Crinkler.extract_cells(
+                        block_,
+                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS_KEY]),
+                        active_scalars_info_,
+                    )
+                return clipped_a
         else:
             # Extract cells when `return_clipped=True`
             def extract_cells_from_block(  # noqa: PLR0917
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
-                set_a = set(clipped_a.cell_data[_Crinkler.CELL_IDS_KEY])
-                set_b = set(clipped_b.cell_data[_Crinkler.CELL_IDS_KEY]) - set_a
+                set_a = (
+                    set(clipped_a.cell_data[_Crinkler.CELL_IDS_KEY])
+                    if _Crinkler.CELL_IDS_KEY in clipped_a.cell_data.keys()
+                    else set()
+                )
+                set_b = (
+                    set(clipped_b.cell_data[_Crinkler.CELL_IDS_KEY])
+                    if _Crinkler.CELL_IDS_KEY in clipped_b.cell_data.keys()
+                    else set()
+                )
+                set_b = set_b - set_a
 
                 # Need to cast as int dtype explicitly to ensure empty arrays have
                 # the right type required by extract_cells
