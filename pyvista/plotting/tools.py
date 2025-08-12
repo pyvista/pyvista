@@ -61,9 +61,6 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
         ``True`` when system supports plotting.
 
     """
-    if os.environ.get('WAYLAND_DISPLAY'):  # pragma: no cover
-        return True
-
     if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
         return True
 
@@ -87,6 +84,9 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
         return 'DISPLAY' in os.environ
 
     # Linux case
+    if os.environ.get('WAYLAND_DISPLAY'):  # pragma: no cover
+        return True
+
     try:
         proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
         proc.communicate(timeout=10)
