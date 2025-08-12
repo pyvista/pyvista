@@ -5298,7 +5298,7 @@ def test_clip_box_crinkle(as_multiblock):
     clipped_lower.translate((0.1, 0, 0), inplace=True)
 
     pl = pv.Plotter()
-    pl.add_mesh(clipped_lower, color='blue', show_edges=True)
-    pl.add_mesh(clipped_upper, color='red', show_edges=True)
+    pl.add_mesh(clipped_lower, show_edges=True)
+    pl.add_mesh(clipped_upper, show_edges=True)
     pl.view_xy()
     pl.show()
