@@ -37,15 +37,15 @@ start playing around with pyvista in jupyterlab. For example:
 
 Create your own Docker Container with PyVista
 ---------------------------------------------
-Clone PyVista and cd into this directory to create your own customized docker image.
+Clone PyVista and build it to create your own customized docker image.
 
 .. code-block:: bash
 
   git clone https://github.com/pyvista/pyvista
-  cd pyvista/docker
-  IMAGE=my-pyvista-jupyterlab:v0.1.0
-  docker build -t $IMAGE .
-  docker push $IMAGE
+  pip install build
+  python -m build --sdist
+  IMAGE=my-pyvista-jupyterlab
+  docker build -t $IMAGE -f docker/jupyter.Dockerfile .
 
 If you wish to have off-screen GPU support when rending on jupyterlab,
 see the notes about building with EGL at :ref:`building_vtk`,
