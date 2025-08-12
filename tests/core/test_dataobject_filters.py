@@ -154,15 +154,12 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
     for dataset in multiblock_all_with_nested_and_none:
         clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        if isinstance(dataset, pv.PointSet):
-            assert isinstance(clp, pv.PointSet)
-        elif isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
-        elif isinstance(dataset, pv.MultiBlock):
-            assert isinstance(clp, pv.MultiBlock)
-        else:
-            assert isinstance(clp, pv.UnstructuredGrid)
-
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock))
+        if isinstance(clp, pv.MultiBlock):
+            assert all(
+                isinstance(block, pv.UnstructuredGrid)
+                for block in clp.recursive_iterator(skip_none=True)
+            )
         clp2 = dataset.clip_box(merge_points=False)
         assert clp2 is not None
 
@@ -197,6 +194,18 @@ def test_clip_box():
     cube = pv.Cube().rotate_x(33, inplace=False)
     clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
     assert clp is not None
+
+
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_empty(crinkle):
+    out = pv.PolyData().clip(crinkle=crinkle, return_clipped=False)
+    assert out.is_empty
+
+    out1, out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
+    assert out1.is_empty
+
+    out = pv.PolyData().clip_box(crinkle=crinkle)
+    assert out.is_empty
 
 
 def test_clip_box_composite(multiblock_all):
