@@ -116,7 +116,6 @@ def _cast_to_numpy(
         NumPy ndarray.
 
     """
-    # needed to support numpy <1.25
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
     except AttributeError:
