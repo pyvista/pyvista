@@ -337,9 +337,3 @@ the flexibility of PyVista and the raw power of VTK.
 .. note::
    You can use :func:`pyvista.Polygon` for a one line replacement of
    the above VTK code.
-
-
-.. _vtkDataArray: https://vtk.org/doc/nightly/html/classvtkDataArray.html
-.. _vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
-.. _vtkpoints: https://vtk.org/doc/nightly/html/classvtkPoints.html

@@ -117,7 +117,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BackfaceArgs
-    from pyvista.plotting._typing import CameraOptions
+    from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
@@ -792,8 +792,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
 
-        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
-        for limitations regarding the exporter.
+        See :vtk:`vtkGLTFExporter` for limitations regarding the exporter.
 
         Parameters
         ----------
@@ -918,8 +917,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def export_vrml(self, filename: str | Path) -> None:
         """Export the current rendering scene as a VRML file.
 
-        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
-        for limitations regarding the exporter.
+        See :vtk:`vtkVRMLExporter` for limitations regarding the exporter.
 
         Parameters
         ----------
@@ -1916,7 +1914,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location: CameraPosition | CameraOptions) -> None:
+    def camera_position(self, camera_location: CameraPositionOptions) -> None:
         self.renderer.camera_position = camera_location
 
     @property
@@ -2593,7 +2591,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         lighting: bool | None = None,  # noqa: FBT001
         n_colors: int = 256,
         interpolate_before_map: bool | None = True,  # noqa: FBT001, FBT002
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,  # noqa: FBT001
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -3128,7 +3126,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         lighting: bool | None = None,  # noqa: FBT001
         n_colors: int = 256,
         interpolate_before_map: bool | None = None,  # noqa: FBT001
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,  # noqa: FBT001
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -4061,7 +4059,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         resolution: VectorLike[float] | None = None,
         opacity: OpacityOptions | NumpyArray[float] = 'linear',
         n_colors: int = 256,
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,  # noqa: FBT001, FBT002
         reset_camera: bool | None = None,  # noqa: FBT001
         name: str | None = None,
@@ -6997,7 +6995,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         full_screen: bool | None = None,  # noqa: FBT001
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
-        cpos: CameraPosition | None = None,
+        cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
