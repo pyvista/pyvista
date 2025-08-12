@@ -52,7 +52,7 @@ def supports_open_gl():
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():  # noqa: PLR0911
+def _system_supports_plotting() -> bool:  # noqa: PLR0911
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -61,6 +61,9 @@ def _system_supports_plotting():  # noqa: PLR0911
         ``True`` when system supports plotting.
 
     """
+    if os.environ.get('WAYLAND_DISPLAY'):  # pragma: no cover
+        return True
+
     if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
         return True
 
@@ -93,7 +96,7 @@ def _system_supports_plotting():  # noqa: PLR0911
         return proc.returncode == 0
 
 
-def system_supports_plotting():
+def system_supports_plotting() -> bool:
     """Check if the environment supports plotting.
 
     Returns
