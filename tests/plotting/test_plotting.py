@@ -3425,7 +3425,6 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
-    # needed to support numpy <1.25
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except AttributeError:
