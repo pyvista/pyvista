@@ -30,7 +30,11 @@ from pyvista import examples
 pine_roots = examples.download_pine_roots()
 
 # Plot the raw data
-cpos = [(40.6018, -280.533, 47.0172), (40.6018, 37.2813, 50.1953), (0.0, 0.0, 1.0)]
+cpos = pv.CameraPosition(
+    position=(40.6018, -280.533, 47.0172),
+    focal_point=(40.6018, 37.2813, 50.1953),
+    viewup=(0.0, 0.0, 1.0),
+)
 p = pv.Plotter()
 p.add_mesh(pine_roots, color='#965434')
 p.add_mesh(pine_roots.outline())
@@ -105,7 +109,9 @@ scalar_bar_args = dict(
     fmt='%.f',
 )
 
-cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+cpos = pv.CameraPosition(
+    position=(10.5, 12.2, 18.3), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 1.0, 0.0)
+)
 
 conn.plot(
     categories=True,

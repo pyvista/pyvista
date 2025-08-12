@@ -50,7 +50,11 @@ colors *= 255
 colors = colors.astype(np.uint8)
 
 # obtained camera position with `cpos = pl.show(return_cpos)`
-cpos = [(11.6159, -1.2803, 1.5338), (4.1354, 1.4796, 1.2711), (-0.0352, -0.0004, 1.0)]
+cpos = pv.CameraPosition(
+    position=(11.6159, -1.2803, 1.5338),
+    focal_point=(4.1354, 1.4796, 1.2711),
+    viewup=(-0.0352, -0.0004, 1.0),
+)
 
 # Since we're using physically based rendering (PBR), let's also download a
 # skybox cubemap use it as an environment texture. For PBR to work well you

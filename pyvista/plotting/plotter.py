@@ -7106,7 +7106,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        cpos : list
+        cpos : CameraPosition
             List of camera position, focal point, and view up.
             Returned only when ``return_cpos=True`` or set in the
             default global or plot theme.
@@ -7153,10 +7153,10 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
-        >>> pl.show(return_cpos=True)  # doctest:+SKIP
-        [(2.223005211686484, -0.3126909484828709, 2.4686209867735065),
-        (0.0, 0.0, 0.0),
-        (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
+        >>> pl.show(return_cpos=True)
+        CameraPosition(position=(1.9264, 1.9264, 1.9264),
+                       focal_point=(0.0, 0.0, 0.0),
+                       viewup=(0.0, 0.0, 1.0))
 
         """
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})

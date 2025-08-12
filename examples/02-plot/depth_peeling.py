@@ -41,7 +41,9 @@ p.add_text('Standard')
 p.add_mesh(spheres.copy(), **dargs)
 
 p.link_views()
-p.camera_position = [(11.7, 4.7, -4.33), (0.0, 0.0, 0.0), (0.3, 0.07, 0.9)]
+p.camera_position = pv.CameraPosition(
+    position=(11.7, 4.7, -4.33), focal_point=(0.0, 0.0, 0.0), viewup=(0.3, 0.07, 0.9)
+)
 p.show()
 
 # %%
@@ -63,7 +65,9 @@ p.add_text('Standard')
 p.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
 p.link_views()
-p.camera_position = [(43.6, 49.5, 19.8), (0.0, 2.25, 0.0), (-0.57, 0.70, -0.42)]
+p.camera_position = pv.CameraPosition(
+    position=(43.6, 49.5, 19.8), focal_point=(0.0, 2.25, 0.0), viewup=(-0.57, 0.70, -0.42)
+)
 
 p.show()
 
@@ -86,7 +90,9 @@ p.add_text('Standard')
 p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
 
 p.link_views()
-p.camera_position = [(418.3, 659.0, 53.8), (90.2, 111.5, 90.0), (0.03, 0.05, 1.0)]
+p.camera_position = pv.CameraPosition(
+    position=(418.3, 659.0, 53.8), focal_point=(90.2, 111.5, 90.0), viewup=(0.03, 0.05, 1.0)
+)
 p.show()
 # %%
 # .. tags:: plot

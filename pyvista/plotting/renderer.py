@@ -3461,11 +3461,11 @@ class Renderer(
         ...         color=color,
         ...     )
         >>> pl.camera.zoom(1.8)
-        >>> pl.camera_position = [
-        ...     (4.74, 0.959, 0.525),
-        ...     (0.363, 0.3116, 0.132),
-        ...     (-0.088, -0.0075, 0.996),
-        ... ]
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(4.74, 0.959, 0.525),
+        ...     focal_point=(0.363, 0.3116, 0.132),
+        ...     viewup=(-0.088, -0.0075, 0.996),
+        ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
 

@@ -248,11 +248,11 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
 
     """
     # camera position
-    cpos = [
-        (6.879481857604187, -32.143727535933195, 23.05622921691103),
-        (-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
-        (-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
-    ]
+    cpos = pyvista.CameraPosition(
+        position=(6.879481857604187, -32.143727535933195, 23.05622921691103),
+        focal_point=(-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
+        viewup=(-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
+    )
 
     # Make data
     X = np.arange(-10, 10, 0.25)
@@ -270,7 +270,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(mesh, scalars='Height', show_scalar_bar=False, smooth_shading=True)
-    plotter.camera_position = cpos  # type: ignore[assignment]
+    plotter.camera_position = cpos
     plotter.show(
         title='Wave Example',
         window_size=[800, 600],
@@ -415,11 +415,11 @@ def plot_beam(notebook=None):
     grid.points[:, 1] += d
 
     # Camera position
-    cpos = [
-        (11.915126303095157, 6.11392754955802, 3.6124956735471914),
-        (0.0, 0.375, 2.0),
-        (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
-    ]
+    cpos = pyvista.CameraPosition(
+        position=(11.915126303095157, 6.11392754955802, 3.6124956735471914),
+        focal_point=(0.0, 0.375, 2.0),
+        viewup=(-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
+    )
 
     cmap = 'bwr'
 
@@ -432,7 +432,7 @@ def plot_beam(notebook=None):
         rng=[-d.max(), d.max()],
         cmap=cmap,  # type: ignore[arg-type]
     )
-    plotter.camera_position = cpos  # type: ignore[assignment]
+    plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
     plotter.show()
 

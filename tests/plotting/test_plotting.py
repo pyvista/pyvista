@@ -1938,7 +1938,9 @@ def test_link_views_camera_set():
     p.subplot(0, 1)
     p.add_mesh(wavelet, color='red')
     p.link_views()
-    p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+    p.camera_position = pv.CameraPosition(
+        position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+    )
     p.show()
 
 
@@ -4012,7 +4014,9 @@ def test_add_point_scalar_labels_fmt():
     p = pv.Plotter()
     p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
     p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36, fmt='%.3f')
-    p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
+    p.camera_position = pv.CameraPosition(
+        position=(7, 4, 5), focal_point=(4.4, 7.0, 7.2), viewup=(0.8, 0.5, 0.25)
+    )
     p.show()
 
 
@@ -4474,11 +4478,11 @@ def test_show_bounds_no_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4496,11 +4500,11 @@ def test_show_bounds_n_labels():
         ytitle='Northing',
         ztitle='Elevation',
     )
-    plotter.camera_position = [
-        (1.97, 1.89, 1.66),
-        (0.05, -0.05, 0.00),
-        (-0.36, -0.36, 0.85),
-    ]
+    plotter.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.00),
+        viewup=(-0.36, -0.36, 0.85),
+    )
     plotter.show()
 
 
@@ -4975,7 +4979,9 @@ def test_contour_labels_boundary_style(
     plot_boundary_labels(internal_mesh)
     plot.add_text(INTERNAL, position='lower_left')
 
-    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.camera_position = pv.CameraPosition(
+        position=(5, 4, 3.5), focal_point=(1, 1, 1), viewup=(0.0, 0.0, 1.0)
+    )
     plot.show(return_cpos=True)
 
 
