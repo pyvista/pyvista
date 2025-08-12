@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
@@ -138,22 +137,6 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.CONE
     axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
-
-
-def test_axes_actor_axis_labels_deprecated(axes_actor):
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        axes_actor.x_axis_label = 'Axis X'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        axes_actor.y_axis_label = 'Axis Y'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        axes_actor.z_axis_label = 'Axis Z'
-
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        _ = axes_actor.x_axis_label
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        _ = axes_actor.y_axis_label
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        _ = axes_actor.z_axis_label
 
 
 def test_axes_actor_labels_individual(axes_actor):
