@@ -806,7 +806,6 @@ def test_check_sorted(shape, axis, ascending, strict):
     num_elements = np.prod(shape)
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
-    # needed to support numpy <1.25
     try:
         AxisError = np.exceptions.AxisError
     except AttributeError:
