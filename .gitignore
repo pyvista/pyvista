@@ -97,7 +97,7 @@ doc/source/tags/
 
 # emacs
 *#
-.#
+.#*
 flycheck*
 
 # vim
