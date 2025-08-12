@@ -102,6 +102,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: ${{ env.USE_CACHE == 'true' }}
+          cache-dependency-glob: pyproject.toml
 
       - name: Restore example data cache
         uses: actions/cache/restore@v4
@@ -184,6 +185,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - name: Cache example data
         uses: actions/cache/restore@v4
@@ -306,6 +308,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - name: Cache example data
         uses: actions/cache/restore@v4
@@ -385,6 +388,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - name: Cache example data
         uses: actions/cache/restore@v4
