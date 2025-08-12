@@ -53,21 +53,22 @@ jupyter = [
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
+  'colour-science<0.5.0',
   'matplotlib<3.10.2',
+  'mypy==1.17.1',
   'numpy<2.4.0',
   'pillow<11.4.0',
   'pooch<1.9.0',
+  'scipy<1.14.0',
   'scooby<0.11.0',
+  'sphinx<8.0.0',
+  'trame-vtk==2.9.1',
+  'trame==3.11.0',
+  'trimesh==4.7.1',
   'typing-extensions<4.15.0',
 ]
 
-typing = [
-  'mypy<1.17.0',
-  'npt-promote==0.2',
-  'numpy>=2.0.0',
-  'trimesh<4.7.0',
-  { include-group = 'pinned' },
-]
+typing = ['npt-promote==0.2', 'numpy>=2.0.0', { include-group = 'pinned' }]
 
 test = [
   'cmcrameri<1.10.0',
@@ -92,17 +93,13 @@ test = [
   'pytest_cases<3.10.0',
   'pytest_mock<3.15.0',
   'retry-requests<2.1.0',
-  'scipy<1.17.0',
   'sphinx-book-theme<1.2.0',
   'sphinx-gallery<0.20.0',
   'sphinx<8.3.0',
   'sphinx_design<0.7.0',
   'sympy<1.15.0',
   'tqdm<4.68.0',
-  'trame-vtk>=2.5.8,<2.9.1',
   'trame-vuetify>=2.3.1,<3.0.2',
-  'trame>=2.5.2,<3.10.3',
-  'trimesh<4.7.0',
   'typing-extensions<4.15.0',
   { include-group = 'pinned' },
 ]
@@ -112,7 +109,6 @@ docs = [
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
-  'colour-science==0.4.6',
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
@@ -121,14 +117,12 @@ docs = [
   'lxml==6.0.0',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==1.17.1',
   'numpydoc==1.9.0',
   'osmnx==2.0.5',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
   'pytest-pyvista==0.2.0',
   'pytest-sphinx==0.6.3',
-  'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
@@ -138,15 +132,11 @@ docs = [
   'sphinx-sitemap==2.7.2',
   'sphinx-tags==0.4.0',
   'sphinx-toolbox==4.0.0',
-  'sphinx==8.2.3',
   'sphinxcontrib-asciinema==0.4.2',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.10.0',
   'sympy==1.14.0',
-  'trame-vtk==2.9.1',
   'trame-vuetify==3.0.1',
-  'trame==3.11.0',
-  'trimesh==4.7.1',
   'vtk-xref==0.1.0',
   { include-group = 'pinned' },
 ]

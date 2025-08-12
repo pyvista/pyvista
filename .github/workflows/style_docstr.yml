@@ -25,7 +25,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.13
-          cache: "pip"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
 
       - uses: actions/cache@v4
         with:
@@ -35,18 +39,16 @@ jobs:
             Examples-Data-
 
       - name: Install pyvista and doctest requirements
-        run: |
-          pip install --upgrade pip
-          pip install -e . --group test
+        run: uv sync --group test
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Software Report
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          uv run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
-          pip list
+          uv pip list
 
       - name: Test Package Docstrings
         run: make doctest-modules
@@ -67,10 +69,13 @@ jobs:
         with:
           python-version: 3.13
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
+
       - name: Install test dependencies
-        run: |
-          pip install --upgrade pip
-          pip install . --group docs
+        run: uv sync --group docs
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
