@@ -1554,6 +1554,36 @@ class DataObjectFilters:
         See :ref:`clip_with_plane_box_example` for more examples using this filter.
 
         """
+        CELL_IDS = 'cell_ids'
+
+        def add_cell_ids_to_self() -> None:
+            def add_ids_to_mesh(dataset: DataSet):
+                if not isinstance(dataset, pyvista.PointSet):
+                    dataset.cell_data[CELL_IDS] = np.arange(dataset.n_cells)
+
+            if isinstance(self, pyvista.MultiBlock):
+                for block in self.recursive_iterator(skip_none=True):
+                    add_ids_to_mesh(block)
+                return
+            add_ids_to_mesh(self)
+            return
+
+        def extract_crinkle_cells_from_output(input_mesh, output_mesh):
+            def extract_crinkle_cells(mesh_in: DataSet, mesh_out: DataSet):
+                if CELL_IDS in mesh_out.cell_data.keys():
+                    return mesh_in.extract_cells(np.unique(mesh_out.cell_data[CELL_IDS]))
+                return mesh_in
+
+            if isinstance(output_mesh, pyvista.MultiBlock):
+                for (ids, _, block_in), block_out in zip(
+                    input_mesh.recursive_iterator('all', skip_none=True),
+                    output_mesh.recursive_iterator(skip_none=True),
+                ):
+                    extracted = extract_crinkle_cells(block_in, block_out)
+                    output_mesh.replace(ids, extracted)
+                return output_mesh
+            return extract_crinkle_cells(input_mesh, output_mesh)
+
         if bounds is None:
 
             def _get_quarter(dmin, dmax):
@@ -1595,7 +1625,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            add_cell_ids_to_self()
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -1610,7 +1640,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
+            clipped = extract_crinkle_cells_from_output(self, clipped)
         return clipped
 
     @_deprecate_positional_args(allowed=['implicit_function'])

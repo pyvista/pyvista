@@ -5245,7 +5245,6 @@ def test_plot_wireframe_style():
     sphere.plot(style='wireframe')
 
 
-# Skip tests less 9.1 due to slightly above threshold error
 @pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 @pytest.mark.parametrize('return_clipped', ['return_clipped', None])
@@ -5264,5 +5263,42 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
 
     pl = pv.Plotter()
     pl.add_mesh(clipped, show_edges=True)
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 1)
+@pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
+def test_clip_box_crinkle(as_multiblock):
+    as_multiblock = bool(as_multiblock)
+
+    mesh = examples.download_bunny_coarse()
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+    bounds = mesh.bounds
+    x_size, _, z_size = mesh.bounds_size
+    bounds_lower = (
+        bounds.x_min,
+        bounds.x_min + x_size / 2,
+        bounds.y_min,
+        bounds.y_max,
+        bounds.z_min,
+        bounds.z_max,
+    )
+    bounds_upper = (
+        bounds.x_min + x_size / 2,
+        bounds.x_max,
+        bounds.y_min,
+        bounds.y_max,
+        bounds.z_min,
+        bounds.z_max,
+    )
+    clipped_lower = mesh.clip_box(bounds_lower, crinkle=True)
+    clipped_upper = mesh.clip_box(bounds_upper, crinkle=True)
+    clipped_lower.translate((0.1, 0, 0), inplace=True)
+
+    pl = pv.Plotter()
+    pl.add_mesh(clipped_lower, color='blue', show_edges=True)
+    pl.add_mesh(clipped_upper, color='red', show_edges=True)
     pl.view_xy()
     pl.show()

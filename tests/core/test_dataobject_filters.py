@@ -123,14 +123,23 @@ def test_transform_raises(sphere):
         sphere.transform(matrix, inplace=False)
 
 
-def test_clip_box(datasets):
-    for dataset in datasets:
-        clp = dataset.clip_box(invert=True, progress_bar=True)
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
+    multiblock_all_with_nested_and_none.clean()
+    for dataset in multiblock_all_with_nested_and_none:
+        clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        assert isinstance(clp, pv.UnstructuredGrid)
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock))
+        if isinstance(clp, pv.MultiBlock):
+            assert all(
+                isinstance(block, pv.UnstructuredGrid)
+                for block in clp.recursive_iterator(skip_none=True)
+            )
         clp2 = dataset.clip_box(merge_points=False)
         assert clp2 is not None
 
+
+def test_clip_box():
     dataset = examples.load_airplane()
     # test length 3 bounds
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
