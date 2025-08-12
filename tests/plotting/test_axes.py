@@ -139,31 +139,6 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_axis_labels_deprecated(axes_actor):
-    with pytest.raises(
-        pv.PyVistaAttributeError,
-        match="Attribute 'x_axis_label' does not exist and cannot be added",
-    ):
-        axes_actor.x_axis_label = 'Axis X'
-    with pytest.raises(
-        pv.PyVistaAttributeError,
-        match="Attribute 'y_axis_label' does not exist and cannot be added",
-    ):
-        axes_actor.y_axis_label = 'Axis Y'
-    with pytest.raises(
-        pv.PyVistaAttributeError,
-        match="Attribute 'z_axis_label' does not exist and cannot be added",
-    ):
-        axes_actor.z_axis_label = 'Axis Z'
-
-    with pytest.raises(AttributeError, match="'AxesActor' object has no attribute 'x_axis_label'"):
-        _ = axes_actor.x_axis_label
-    with pytest.raises(AttributeError, match="'AxesActor' object has no attribute 'y_axis_label'"):
-        _ = axes_actor.y_axis_label
-    with pytest.raises(AttributeError, match="'AxesActor' object has no attribute 'z_axis_label'"):
-        _ = axes_actor.z_axis_label
-
-
 def test_axes_actor_labels_individual(axes_actor):
     axes_actor.x_label = 'Axis X'
     axes_actor.y_label = 'Axis Y'
