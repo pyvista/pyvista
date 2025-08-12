@@ -3111,7 +3111,6 @@ def test_plot_complex_value(plane, verify_image_cache):
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
 
-    # needed to support numpy <1.25
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except AttributeError:
