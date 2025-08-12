@@ -42,6 +42,7 @@ Clone PyVista and build it to create your own customized docker image.
 .. code-block:: bash
 
   git clone https://github.com/pyvista/pyvista
+  cd pyvista
   pip install build
   python -m build --sdist
   IMAGE=my-pyvista-jupyterlab
