@@ -13,9 +13,10 @@ import warnings
 
 from typing_extensions import ParamSpec
 
+from pyvista._version import version_info
+
 if TYPE_CHECKING:
     from collections.abc import Callable
-from pyvista._version import version_info
 
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
