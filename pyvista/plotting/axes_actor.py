@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-import warnings
 
 import pyvista
 from pyvista.core._typing_core import BoundsTuple
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -443,8 +441,8 @@ class AxesActor(
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the axes labels.
 
-        This property may be used as an alternative to using :attr:`~x_axis_label`,
-        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
+        This property may be used as an alternative to using :attr:`~x_label`,
+        :attr:`~y_label`, and :attr:`~z_label` separately.
 
         .. versionadded:: 0.44.0
 
@@ -473,37 +471,6 @@ class AxesActor(
         self.z_label = labels[2]
 
     @property
-    def x_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the x-axis.
-
-        .. deprecated:: 0.44.0
-
-            This parameter is deprecated. Use :attr:`x_label` instead.
-
-        """
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            'Use of `x_axis_label` is deprecated. Use `x_label` instead.',
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-        return self.GetXAxisLabelText()  # pragma: no cover
-
-    @x_axis_label.setter
-    def x_axis_label(self, label: str):
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            'Use of `x_axis_label` is deprecated. Use `x_label` instead.',
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-        self.SetXAxisLabelText(label)  # pragma: no cover
-
-    @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the x-axis.
 
@@ -523,37 +490,6 @@ class AxesActor(
         self.SetXAxisLabelText(label)
 
     @property
-    def y_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the y-axis.
-
-        .. deprecated:: 0.44.0
-
-            This parameter is deprecated. Use :attr:`y_label` instead.
-
-        """
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            'Use of `y_axis_label` is deprecated. Use `y_label` instead.',
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-        return self.GetYAxisLabelText()  # pragma: no cover
-
-    @y_axis_label.setter
-    def y_axis_label(self, label: str):
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            'Use of `y_axis_label` is deprecated. Use `y_label` instead.',
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-        self.SetYAxisLabelText(label)  # pragma: no cover
-
-    @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the y-axis.
 
@@ -571,37 +507,6 @@ class AxesActor(
     @y_label.setter
     def y_label(self, label: str):
         self.SetYAxisLabelText(label)
-
-    @property
-    def z_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the z-axis.
-
-        .. deprecated:: 0.44.0
-
-            This parameter is deprecated. Use :attr:`z_label` instead.
-
-        """
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            'Use of `z_axis_label` is deprecated. Use `z_label` instead.',
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-        return self.GetZAxisLabelText()  # pragma: no cover
-
-    @z_axis_label.setter
-    def z_axis_label(self, label: str):
-        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            'Use of `z_axis_label` is deprecated. Use `z_label` instead.',
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            msg = 'Remove this deprecated property'
-            raise RuntimeError(msg)
-        self.SetZAxisLabelText(label)  # pragma: no cover
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01

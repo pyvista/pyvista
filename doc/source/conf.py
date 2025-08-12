@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
-import importlib.util
 import locale
 import os
 from pathlib import Path
@@ -406,10 +405,6 @@ class ResetPyVista:
 reset_pyvista = ResetPyVista()
 
 
-# skip building the osmnx example if osmnx is not installed
-has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
-
-
 sphinx_gallery_conf = {
     'abort_on_example_error': True,  # Fail early
     # convert rst to md for ipynb
@@ -419,7 +414,7 @@ sphinx_gallery_conf = {
     # path where to save gallery generated examples
     'gallery_dirs': ['examples'],
     # Pattern to search for example files
-    'filename_pattern': r'\.py' if has_osmnx else r'(?!osmnx-example)\.py',
+    'filename_pattern': r'\.py',
     # Remove the "Download all examples" button from the top level gallery
     'download_all_examples': False,
     # Remove sphinx configuration comments from code blocks
