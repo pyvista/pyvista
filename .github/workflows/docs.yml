@@ -70,10 +70,11 @@ jobs:
           version: 3.0
 
       - name: Install PyVista and dependencies
+        env:
+          UV_OVERRIDE: "scipy>=1.10.0"
         run: |
           uv cache clean
-          echo "scipy>=1.10.0" > constraints.txt
-          uv sync --group docs --refresh --constraint constraints.txt
+          uv sync --group docs --refresh
 
       - name: PyVista Report
         run: |
