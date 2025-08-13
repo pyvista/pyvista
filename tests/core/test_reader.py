@@ -315,6 +315,15 @@ def test_ensightreader_time_sets():
         reader.set_active_time_set(2)
 
 
+def test_ensightreader_non_time_series_data():
+    filename = examples.download_file('simple_tetra/example.case')
+    examples.download_file('simple_tetra/example.geo')
+
+    reader = pv.get_reader(filename)
+    assert reader.number_time_points == 0
+    assert reader.time_values == []
+
+
 def test_dcmreader():
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
