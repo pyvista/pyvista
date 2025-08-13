@@ -35,11 +35,9 @@ jobs:
           cache-dependency-glob: pyproject.toml
 
       - name: Install PyVista test requirements
-        env:
-          UV_OVERRIDE: "scipy>=1.10.0"
         run: |
           uv cache clean
-          uv sync --group typing --refresh
+          uv sync --group typing --upgrade
 
       - name: Run Mypy
         run: uv run mypy

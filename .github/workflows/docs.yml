@@ -70,11 +70,9 @@ jobs:
           version: 3.0
 
       - name: Install PyVista and dependencies
-        env:
-          UV_OVERRIDE: "scipy>=1.10.0"
         run: |
           uv cache clean
-          uv sync --group docs --refresh
+          uv sync --group docs --upgrade
 
       - name: PyVista Report
         run: |
