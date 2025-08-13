@@ -13,7 +13,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
 from pyvista.examples.downloads import _get_user_data_path
-from pyvista.examples.downloads import _get_vtk_data_path
+from pyvista.examples.downloads import _get_vtk_data_source
 from pyvista.examples.downloads import _warn_if_path_not_accessible
 from tests.examples.test_dataset_loader import DatasetLoaderTestCase
 from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
@@ -162,17 +162,25 @@ def test_local_file_cache():
 
 
 @pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
-def test_get_vtk_data_path_with_env_var(monkeypatch, endswith):
-    path = '/my/local/path' + endswith
+def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
+    path = (tmp_path / 'mypath').as_posix() + endswith
     monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
-    source, file_cache = _get_vtk_data_path()
+    path_no_trailing_slash = path.removesuffix('/')
+    match = (
+        f'The given {downloads._VTK_DATA_VARNAME} is not a valid directory '
+        f'and will not be used:\n{path_no_trailing_slash}'
+    )
+    with pytest.warns(UserWarning, match=match):
+        _ = _get_vtk_data_source()
+    Path(path).mkdir()
+    source, file_cache = _get_vtk_data_source()
     assert source.endswith('/Data/')  # it should append Data and /
     assert file_cache is True
 
 
 def test_get_vtk_data_path_without_env_var(monkeypatch):
     monkeypatch.delenv(downloads._VTK_DATA_VARNAME, raising=False)
-    source, file_cache = _get_vtk_data_path()
+    source, file_cache = _get_vtk_data_source()
     assert source == downloads._DEFAULT_VTK_DATA_SOURCE
     assert file_cache is False
 
@@ -193,7 +201,6 @@ def test_get_user_data_path_env_var_invalid(monkeypatch, tmp_path):
         f'The given {downloads._USERDATA_PATH_VARNAME} is not a valid directory '
         f'and will not be used:\n{not_a_dir}'
     )
-
     with pytest.warns(UserWarning, match=match):
         result = _get_user_data_path()
     # should fall back to pooch path
@@ -226,9 +233,7 @@ def test_warn_if_path_not_accessible_file_blocks(tmp_path):
 
 
 def test_warn_if_path_not_accessible_no_write_permission():
-    system_dir = (
-        pathlib.Path('/var/root') if os.name != 'nt' else pathlib.Path('C:\\Windows\\System32')
-    )
+    system_dir = pathlib.Path('/etc') if os.name != 'nt' else pathlib.Path('C:\\Windows\\System32')
     assert system_dir.exists()
     assert not os.access(system_dir, os.W_OK)
     blocked_dir = system_dir / 'blocked'

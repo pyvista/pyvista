@@ -67,43 +67,47 @@ _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
 
-def _get_vtk_data_path() -> tuple[str, bool]:
+def _warn_invalid_dir_not_used(path, env_var):
+    msg = f'The given {env_var} is not a valid directory and will not be used:\n{path}'
+    warnings.warn(msg)
+
+
+def _get_vtk_data_source() -> tuple[str, bool]:
     # If available, a local vtk-data instance will be used for examples
+    # Set default output
+    source = _DEFAULT_VTK_DATA_SOURCE
+    file_cache = False
     if _VTK_DATA_VARNAME in os.environ:
-        _path = os.environ[_VTK_DATA_VARNAME]
+        path = Path(os.environ[_VTK_DATA_VARNAME])
+        if not path.is_dir():
+            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+        else:
+            if path.name != 'Data':
+                # append 'Data' if user does not provide it
+                path = path / 'Data'
 
-        if Path(_path).name != 'Data':
-            # append 'Data' if user does not provide it
-            _path = str(Path(_path) / 'Data')
+            # pooch assumes this is a URL so we have to take care of this
+            path_str = path.as_posix()
+            if not path_str.endswith('/'):
+                path_str += '/'
 
-        # pooch assumes this is a URL so we have to take care of this
-        if not _path.endswith('/'):
-            _path = _path + '/'
-        source = _path
-        file_cache = True
-    else:
-        source = _DEFAULT_VTK_DATA_SOURCE
-        file_cache = False
+            source = path_str
+            file_cache = True
     return source, file_cache
 
 
 def _get_user_data_path() -> str:
     # Allow user to override the local path
+    # Set default output
+    output_path = _DEFAULT_USER_DATA_PATH
     if _USERDATA_PATH_VARNAME in os.environ:
         path = Path(os.environ[_USERDATA_PATH_VARNAME])
         if not path.is_dir():
-            msg = (
-                f'The given {_USERDATA_PATH_VARNAME} is not a valid directory '
-                f'and will not be used:\n{path}'
-            )
-            warnings.warn(msg)
-            return _DEFAULT_USER_DATA_PATH
+            _warn_invalid_dir_not_used(path, _USERDATA_PATH_VARNAME)
         else:
             # Use user-specified path
-            return str(path)
-    else:
-        # Use default pooch path
-        return _DEFAULT_USER_DATA_PATH
+            output_path = str(path)
+    return output_path
 
 
 def _warn_if_path_not_accessible(path, msg: str):
@@ -119,7 +123,7 @@ def _warn_if_path_not_accessible(path, msg: str):
         warnings.warn(msg)
 
 
-SOURCE, _FILE_CACHE = _get_vtk_data_path()
+SOURCE, _FILE_CACHE = _get_vtk_data_source()
 USER_DATA_PATH = _get_user_data_path()
 
 _user_data_path_warn_msg = (
