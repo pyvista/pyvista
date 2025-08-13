@@ -102,7 +102,7 @@ jobs:
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: make -C doc html
+        run: uv run make -C doc html
 
       - name: Dump Sphinx Warnings and Errors
         if: always()

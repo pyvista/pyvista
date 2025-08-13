@@ -54,10 +54,10 @@ jobs:
           uv pip list
 
       - name: Test Package Docstrings
-        run: make doctest-modules
+        run: uv run make doctest-modules
 
       - name: Test Package Docstrings with Local Namespace
-        run: make doctest-modules-local-namespace
+        run: uv run make doctest-modules-local-namespace
 
   vale:
     name: Vale

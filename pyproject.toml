@@ -109,6 +109,7 @@ docs = [
   'cmcrameri==1.9.0',
   'cmocean==4.0.3',
   'colorcet==3.1.0',
+  'docutils>=0.16', # provides rst2html for Vale
   'enum-tools==0.13.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
