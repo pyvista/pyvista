@@ -136,6 +136,8 @@ Globally, you can set if the file names should be either:
 Enable indexed naming this by setting ``pyvista_plot_use_counter=True``. Note
 that indexed is incompatible with parallel builds due to race conditions.
 
+.. versionchanged:: 0.47
+    Hash-based image naming is now used by default.
 """
 
 from __future__ import annotations
