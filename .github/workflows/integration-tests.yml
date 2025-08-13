@@ -103,8 +103,7 @@ jobs:
           pyvista: false
       - run: uv pip install --system -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
       - run: uv pip install --system -ve .
-      - run: uv run pytest ./tests
-        working-directory: pyvistaqt
+      - run: cd pyvistaqt && python -m pytest ./tests
 
   geovista:
     name: GeoVista
