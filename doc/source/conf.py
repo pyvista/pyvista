@@ -697,6 +697,8 @@ locale_dirs = ['../../pyvista-doc-translations/locale']
 class PlaceHolderImage(Image):
     """A custom Image directive that checks for placeholders in an image path."""
 
+    gen_image_path = Path(make_tables.DATASET_GALLERY_IMAGE_DIR).relative_to('..')
+
     def run(self):  # noqa: D102
         image_path_str = self.arguments[0]
 
@@ -705,7 +707,7 @@ class PlaceHolderImage(Image):
             # Fill in the placeholder with the first matching image. This will
             # not respect order of generation.
             basename = image_path.name.replace('PLACEHOLDER', '*')
-            actual_image = next(image_path.parent.glob(basename), None)
+            actual_image = next(self.gen_image_path.glob(basename), None)
             if actual_image:
                 self.arguments[0] = str(actual_image)
 
@@ -734,5 +736,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
     app.connect('html-page-context', pv_html_page_context)
+
+    # right before writing, patch the gallery placeholders
+    app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')

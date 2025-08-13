@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
+from typing import Union
 from typing import final
 from typing import get_args
 import warnings
@@ -29,6 +30,7 @@ import warnings
 import cmcrameri
 import cmocean
 import colorcet
+import docutils
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -3402,6 +3404,29 @@ def make_all_tables() -> list[str]:  # noqa: D103
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     return make_all_carousels(CAROUSEL_LIST)
+
+
+def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
+    def find_matching_image(filename_with_placeholder: str) -> Union[bool, str]:
+        """Find the image in the gallery without the placeholder."""
+        basename = Path(filename_with_placeholder).name.replace(PLACEHOLDER, '*')
+
+        # move up one since sphinx runs at the Makefile directory
+        gallery_path = Path(DATASET_GALLERY_IMAGE_DIR).relative_to('..')
+        actual_file = next(Path(gallery_path).glob(basename), None)
+        if actual_file:
+            return str(Path(node_image['uri']).parent / actual_file.name)
+        return filename_with_placeholder
+
+    uri = node_image.get('uri', '')
+    if PLACEHOLDER in uri:
+        node_image['uri'] = find_matching_image(uri)
+
+
+def patch_gallery_placeholders(_app, doctree: docutils.nodes.document, _docname: str) -> None:
+    """Patch the gallery card placeholders inplace."""
+    for img in doctree.traverse(docutils.nodes.image):
+        _update_image_placeholders(img)
 
 
 if __name__ == '__main__':
