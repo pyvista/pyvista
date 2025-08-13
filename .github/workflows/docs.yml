@@ -72,12 +72,13 @@ jobs:
       - name: Install PyVista and dependencies
         run: |
           uv cache clean
-          uv sync --group docs --refresh --system
+          echo "scipy>=1.10.0" > constraints.txt
+          uv sync --group docs --refresh --constraint constraints.txt
 
       - name: PyVista Report
         run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
+          uv run python -c "import pyvista;print(pyvista.Report())"
+          echo PYVISTA_EXAMPLE_DATA_PATH=$(uv run python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
           uv pip list
 
       - name: Cache Sphinx-Gallery Examples
@@ -114,7 +115,7 @@ jobs:
 
       - name: Test Documentation
         if: always()
-        run: pytest tests/doc/tst_doc_build.py
+        run: uv run pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
         if: always()

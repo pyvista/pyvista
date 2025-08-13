@@ -37,13 +37,14 @@ jobs:
       - name: Install PyVista test requirements
         run: |
           uv cache clean
-          uv sync --group typing --refresh --system
+          echo "scipy>=1.10.0" > constraints.txt
+          uv sync --group typing --refresh --constraint constraints.txt
 
       - name: Run Mypy
-        run: mypy
+        run: uv run mypy
 
       - name: Software Report
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          uv run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           uv pip list
