@@ -42,15 +42,14 @@ jobs:
       - name: Install pyvista and doctest requirements
         run: |
           uv cache clean
-          uv pip install --system 'scipy>=1.9.0'
-          uv sync --group test --refresh
+          uv sync --group test --refresh --system
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
 
       - name: Software Report
         run: |
-          uv run python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           uv pip list
 
@@ -82,8 +81,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv cache clean
-          uv pip install --system 'scipy>=1.9.0'
-          uv sync --group docs --refresh
+          uv sync --group docs --refresh --system
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
