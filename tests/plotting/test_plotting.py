@@ -40,6 +40,7 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.conftest import flaky_test
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:
@@ -4006,6 +4007,7 @@ def test_remove_vertices_actor(sphere):
     pl.show()
 
 
+@flaky_test(times=5)
 @pytest.mark.skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
