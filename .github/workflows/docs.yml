@@ -70,7 +70,9 @@ jobs:
           version: 3.0
 
       - name: Install PyVista and dependencies
-        run: uv sync --group docs
+        run: |
+          uv cache clean
+          uv sync --group docs --refresh
 
       - name: PyVista Report
         run: |

@@ -56,15 +56,15 @@ jobs:
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
-        run: uv pip install numpy scipy matplotlib nibabel "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0" qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
+        run: uv pip install --system numpy scipy matplotlib nibabel "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0" qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
       - name: Install PyVista
-        run: uv pip install -ve . # pyvista
+        run: uv pip install --system -ve . # pyvista
       - run: uv run python -c "import pyvista; assert not pyvista.OFF_SCREEN, f'{pyvista.OFF_SCREEN=} should be False'"
         name: Ensure OFF_SCREEN is False
       - name: Install PyVistaQt main
-        run: uv pip install -v git+https://github.com/pyvista/pyvistaqt.git
+        run: uv pip install --system -v git+https://github.com/pyvista/pyvistaqt.git
       - name: Install MNE
-        run: uv pip install -ve . # mne
+        run: uv pip install --system -ve . # mne
         working-directory: mne-python
       - name: MNE Info
         run: uv run mne sys_info -p
@@ -101,8 +101,8 @@ jobs:
         with:
           qt: true
           pyvista: false
-      - run: uv pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
-      - run: uv pip install -ve .
+      - run: uv pip install --system -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
+      - run: uv pip install --system -ve .
       - run: uv run pytest ./tests
         working-directory: pyvistaqt
 
@@ -130,9 +130,9 @@ jobs:
           cache-dependency-glob: pyproject.toml
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
-        run: uv pip install -ve . # pyvista
+        run: uv pip install --system -ve . # pyvista
       - name: Install GeoVista
-        run: uv pip install -ve .[test,exam,cmap] # geovista
+        run: uv pip install --system -ve .[test,exam,cmap] # geovista
         working-directory: geovista
       - name: Download cartopy assets
         run: |
@@ -162,11 +162,11 @@ jobs:
       - name: Install PyVista
         run: |
           uv pip install -e . --system
-          uv pip install pytest pytest-cov
+          uv pip install --system pytest pytest-cov
 
       - name: Install requirements
         run: |
-          uv pip install -r examples_trame/requirements.txt
+          uv pip install --system -r examples_trame/requirements.txt
       - name: Run examples
         working-directory: examples_trame
         run: uv run pytest -v ./tests

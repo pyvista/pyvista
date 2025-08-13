@@ -35,7 +35,9 @@ jobs:
           cache-dependency-glob: pyproject.toml
 
       - name: Install PyVista test requirements
-        run: uv sync --group typing
+        run: |
+          uv cache clean
+          uv sync --group typing --refresh
 
       - name: Run Mypy
         run: uv run mypy
