@@ -28,7 +28,6 @@ import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
-import pickle
 import shutil
 import sys
 from typing import cast
@@ -42,7 +41,6 @@ from pooch.utils import get_logger
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
@@ -5424,67 +5422,6 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_osmnx_graph(load=True):  # noqa: FBT002
-    """Load a simple street map from Open Street Map.
-
-    Generated from:
-
-    .. code-block:: python
-
-        >>> import osmnx as ox  # doctest:+SKIP
-        >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
-        >>> graph = ox.graph_from_address(
-        ...     address, dist=500, network_type='drive'
-        ... )  # doctest:+SKIP
-        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    networkx.classes.multidigraph.MultiDiGraph
-        An osmnx graph of the streets of Holzgerlingen, Germany.
-
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-    """
-    # Deprecated on v0.44.0, estimated removal on v0.47.0
-    warnings.warn(
-        '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
-        PyVistaDeprecationWarning,
-    )
-    if pyvista._version.version_info >= (0, 47):
-        msg = 'Remove this deprecated function'
-        raise RuntimeError(msg)
-    if not importlib.util.find_spec('osmnx'):
-        msg = 'Install `osmnx` to use this example'
-        raise ImportError(msg)
-    return _download_dataset(_dataset_osmnx_graph, load=load)
-
-
-def _osmnx_graph_read_func(filename):
-    return pickle.load(Path(filename).open('rb'))
-
-
-_dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
-    'osmnx_graph.p',
-    read_func=_osmnx_graph_read_func,
-)
-
-
-@_deprecate_positional_args
 def download_cavity(load=True):  # noqa: FBT002
     """Download cavity OpenFOAM example.
 
@@ -6241,6 +6178,9 @@ def download_parched_canal_4k(load=True):  # noqa: FBT002
 
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
+            Another HDR texture.
 
     """
     return _download_dataset(_dataset_parched_canal_4k, load=load)
@@ -7323,19 +7263,20 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
 
     Examples
     --------
-    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> gltf_file = examples.gltf.download_damaged_helmet()
     >>> texture = examples.download_dikhololo_night()
-    >>> pl = pv.Plotter()
-    >>> pl.import_gltf(gltf_file)
-    >>> pl.set_environment_texture(texture)
-    >>> pl.show()
+    >>> texture.plot()
 
     .. seealso::
 
         :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
+            Another HDR texture.
+
+        :ref:`load_gltf_example`
+            See additional examples using this dataset.
 
     """
     return _download_dataset(_dataset_dikhololo_night, load=load)

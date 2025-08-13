@@ -31,7 +31,9 @@ from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Sequence
+    from typing import ClassVar
 
     from pyvista import DataSet
     from pyvista import MultiBlock
@@ -1266,91 +1268,7 @@ class DataObjectFilters:
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
-            CELL_IDS_KEY = 'cell_ids'
-            VTK_POINT_IDS_KEYS = 'vtkOriginalPointIds'
-            VTK_CELL_IDS_KEYS = 'vtkOriginalCellIds'
-            INT_DTYPE = np.int64
-            ITER_KWARGS = dict(skip_none=True)
-
-            def extract_cells(dataset, ids, active_scalars_info_):
-                # Extract cells and remove arrays, and restore active scalars
-                output = dataset.extract_cells(ids)
-                if VTK_POINT_IDS_KEYS in (point_data := output.point_data):
-                    del point_data[VTK_POINT_IDS_KEYS]
-                if VTK_CELL_IDS_KEYS in (cell_data := output.cell_data):
-                    del cell_data[VTK_CELL_IDS_KEYS]
-                association, name = active_scalars_info_
-                dataset.set_active_scalars(name, preference=association)
-                output.set_active_scalars(name, preference=association)
-                return output
-
-            def extract_crinkle_cells(dataset, a_, b_, _):
-                if b_ is None:
-                    # Extract cells when `return_clipped=False`
-                    def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
-                        return extract_cells(
-                            block_,
-                            np.unique(clipped_a.cell_data[CELL_IDS_KEY]),
-                            active_scalars_info_,
-                        )
-                else:
-                    # Extract cells when `return_clipped=True`
-                    def extract_cells_from_block(  # noqa: PLR0917
-                        block_, clipped_a, clipped_b, active_scalars_info_
-                    ):
-                        set_a = set(clipped_a.cell_data[CELL_IDS_KEY])
-                        set_b = set(clipped_b.cell_data[CELL_IDS_KEY]) - set_a
-
-                        # Need to cast as int dtype explicitly to ensure empty arrays have
-                        # the right type required by extract_cells
-                        array_a = np.array(list(set_a), dtype=INT_DTYPE)
-                        array_b = np.array(list(set_b), dtype=INT_DTYPE)
-
-                        clipped_a = extract_cells(block_, array_a, active_scalars_info_)
-                        clipped_b = extract_cells(block_, array_b, active_scalars_info_)
-                        return clipped_a, clipped_b
-
-                def extract_cells_from_multiblock(  # noqa: PLR0917
-                    multi_in, multi_a, multi_b, active_scalars_info_
-                ):
-                    # Iterate though input and output multiblocks
-                    # `multi_b` may be None depending on `return_clipped`
-                    self_iter = multi_in.recursive_iterator('all', **ITER_KWARGS)
-                    a_iter = multi_a.recursive_iterator(**ITER_KWARGS)
-                    b_iter = (
-                        multi_b.recursive_iterator(**ITER_KWARGS)
-                        if multi_b is not None
-                        else itertools.repeat(None)
-                    )
-
-                    for (ids, _, block_self), block_a, block_b, scalars_info in zip(
-                        self_iter, a_iter, b_iter, active_scalars_info_
-                    ):
-                        crinkled = extract_cells_from_block(
-                            block_self, block_a, block_b, scalars_info
-                        )
-                        # Replace blocks with crinkled ones
-                        if block_b is None:
-                            # Only need to replace one block
-                            multi_a.replace(ids, crinkled)
-                        else:
-                            multi_a.replace(ids, crinkled[0])
-                            multi_b.replace(ids, crinkled[1])
-                    return multi_a if multi_b is None else (multi_a, multi_b)
-
-                if isinstance(dataset, pyvista.MultiBlock):
-                    return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
-                return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
-
-            # Add Cell IDs to all blocks and keep track of scalars to restore later
-            active_scalars_info = []
-            if isinstance(self, pyvista.MultiBlock):
-                blocks = self.recursive_iterator('blocks', **ITER_KWARGS)  # type: ignore[call-overload]
-            else:
-                blocks = [self]
-            for block in blocks:
-                active_scalars_info.append(block.active_scalars_info)
-                block.cell_data[CELL_IDS_KEY] = np.arange(block.n_cells, dtype=INT_DTYPE)
+            active_scalars_info = _Crinkler.add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -1382,11 +1300,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler.extract_crinkle_cells(self, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
@@ -1609,7 +1527,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            self.cell_data['cell_ids'] = np.arange(self.n_cells)
+            active_scalars_info = _Crinkler.add_cell_ids(self)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -1624,9 +1542,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
-        # Post-process to cast output type and clean the points
-        clipped = _cast_output_to_match_input_type(clipped, self)
+            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
@@ -3110,3 +3026,105 @@ def _cast_output_to_match_input_type(
         if isinstance(output_mesh, pyvista.MultiBlock)
         else cast_output(output_mesh, input_mesh)  # type: ignore[arg-type]
     )
+
+
+class _Crinkler:
+    CELL_IDS = 'cell_ids'
+    INT_DTYPE = np.int64
+    ITER_KWARGS: ClassVar = dict(skip_none=True)
+
+    @staticmethod
+    def extract_cells(dataset, ids, active_scalars_info_):
+        # Extract cells and remove arrays, and restore active scalars
+        output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
+        association, name = active_scalars_info_
+        if not dataset.is_empty:
+            dataset.set_active_scalars(name, preference=association)
+        if not output.is_empty:
+            output.set_active_scalars(name, preference=association)
+        return output
+
+    @staticmethod
+    def extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+        if b_ is None:
+            # Extract cells when `return_clipped=False`
+            def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
+                if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
+                    return _Crinkler.extract_cells(
+                        block_,
+                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
+                        active_scalars_info_,
+                    )
+                return clipped_a
+        else:
+            # Extract cells when `return_clipped=True`
+            def extract_cells_from_block(  # noqa: PLR0917
+                block_, clipped_a, clipped_b, active_scalars_info_
+            ):
+                set_a = (
+                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
+                    else set()
+                )
+                set_b = (
+                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
+                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
+                    else set()
+                )
+                set_b = set_b - set_a
+
+                # Need to cast as int dtype explicitly to ensure empty arrays have
+                # the right type required by extract_cells
+                array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
+                array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
+
+                clipped_a = _Crinkler.extract_cells(block_, array_a, active_scalars_info_)
+                clipped_b = _Crinkler.extract_cells(block_, array_b, active_scalars_info_)
+                return clipped_a, clipped_b
+
+        def extract_cells_from_multiblock(  # noqa: PLR0917
+            multi_in, multi_a, multi_b, active_scalars_info_
+        ):
+            # Iterate though input and output multiblocks
+            # `multi_b` may be None depending on `return_clipped`
+            self_iter = multi_in.recursive_iterator('all', **_Crinkler.ITER_KWARGS)
+            a_iter = multi_a.recursive_iterator(**_Crinkler.ITER_KWARGS)
+            b_iter = (
+                multi_b.recursive_iterator(**_Crinkler.ITER_KWARGS)
+                if multi_b is not None
+                else itertools.repeat(None)
+            )
+
+            for (ids, _, block_self), block_a, block_b, scalars_info in zip(
+                self_iter, a_iter, b_iter, active_scalars_info_
+            ):
+                crinkled = extract_cells_from_block(block_self, block_a, block_b, scalars_info)
+                # Replace blocks with crinkled ones
+                if block_b is None:
+                    # Only need to replace one block
+                    multi_a.replace(ids, crinkled)
+                else:
+                    multi_a.replace(ids, crinkled[0])
+                    multi_b.replace(ids, crinkled[1])
+            return multi_a if multi_b is None else (multi_a, multi_b)
+
+        if isinstance(dataset, pyvista.MultiBlock):
+            return extract_cells_from_multiblock(dataset, a_, b_, active_scalars_info)
+        return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
+
+    @staticmethod
+    def add_cell_ids(dataset: DataSet | MultiBlock):
+        # Add Cell IDs to all blocks and keep track of scalars to restore later
+        active_scalars_info = []
+        if isinstance(dataset, pyvista.MultiBlock):
+            blocks: Iterable[DataSet] = dataset.recursive_iterator(
+                'blocks', **_Crinkler.ITER_KWARGS
+            )
+        else:
+            blocks = [dataset]
+        for block in blocks:
+            active_scalars_info.append(block.active_scalars_info)
+            block.cell_data[_Crinkler.CELL_IDS] = np.arange(
+                block.n_cells, dtype=_Crinkler.INT_DTYPE
+            )
+        return active_scalars_info
