@@ -161,8 +161,10 @@ def test_local_file_cache():
         downloads.FETCHER.registry.pop(basename, None)
 
 
-def test_get_vtk_data_path_with_env_var(monkeypatch):
-    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, '/my/local/path')
+@pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
+def test_get_vtk_data_path_with_env_var(monkeypatch, endswith):
+    path = '/my/local/path' + endswith
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
     source, file_cache = _get_vtk_data_path()
     assert source.endswith('/Data/')  # it should append Data and /
     assert file_cache is True

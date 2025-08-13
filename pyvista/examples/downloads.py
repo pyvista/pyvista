@@ -81,7 +81,6 @@ def _get_vtk_data_path() -> tuple[str, bool]:
             _path = _path + '/'
         source = _path
         file_cache = True
-
     else:
         source = _DEFAULT_VTK_DATA_SOURCE
         file_cache = False
@@ -89,7 +88,7 @@ def _get_vtk_data_path() -> tuple[str, bool]:
 
 
 def _get_user_data_path() -> str:
-    # allow user to override the local path
+    # Allow user to override the local path
     if _USERDATA_PATH_VARNAME in os.environ:
         path = Path(os.environ[_USERDATA_PATH_VARNAME])
         if not path.is_dir():
@@ -97,18 +96,18 @@ def _get_user_data_path() -> str:
                 f'The given {_USERDATA_PATH_VARNAME} is not a valid directory '
                 f'and will not be used:\n{path}'
             )
-
             warnings.warn(msg)
             return _DEFAULT_USER_DATA_PATH
         else:
+            # Use user-specified path
             return str(path)
     else:
-        # use default pooch path
+        # Use default pooch path
         return _DEFAULT_USER_DATA_PATH
 
 
 def _warn_if_path_not_accessible(path, msg: str):
-    # provide helpful message if pooch path is inaccessible
+    # Provide helpful message if pooch path is inaccessible
     try:
         if not Path(path).is_dir():
             Path(path).mkdir(exist_ok=True, parents=True)
