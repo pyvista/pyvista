@@ -83,6 +83,11 @@ jobs:
           uv cache clean
           uv sync --group docs --upgrade
 
+      - name: Install docutils for rst2html
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-docutils
+
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
       # GHA SHA is pinned to a reviewdog branch commit
