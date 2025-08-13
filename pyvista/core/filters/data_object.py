@@ -1466,10 +1466,8 @@ class DataObjectFilters:
 
         Returns
         -------
-        UnstructuredGrid | MultiBlock
-            Clipped mesh. Output type is :class:`~pyvista.UnstructuredGrid` if the input is
-            a :class:`~pyvista.DataSet`, or a :class:`~pyvista.MultiBlock` with
-            ``UnstructuredGrid`` blocks if the input is :class:`~pyvista.MultiBlock`.
+        pyvista.UnstructuredGrid
+            Clipped dataset.
 
         Examples
         --------

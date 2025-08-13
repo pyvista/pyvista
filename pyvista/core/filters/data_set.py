@@ -653,13 +653,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             :class:`~pyvista.MultiBlock`; otherwise the output type is
             :class:`~pyvista.UnstructuredGrid`.
 
-            .. versionchanged:: 0.47
-
-                The output type now matches the input type for :class:`~pyvista.PointSet` and
-                :class:`~pyvista.PolyData`. This matches the behavior of
-                :meth:`~pyvista.DataObjectFilters.clip`. Previously, these types would return
-                :class:`~pyvista.UnstructuredGrid`.
-
         Examples
         --------
         Clip a cube with a sphere.
