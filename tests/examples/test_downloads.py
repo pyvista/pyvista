@@ -163,7 +163,9 @@ def test_local_file_cache():
 
 @pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
 def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
-    path = (tmp_path / 'mypath').as_posix() + endswith
+    path = (tmp_path / 'mypath').as_posix()
+    if endswith:
+        path = path + os.sep + endswith
     monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
     path_no_trailing_slash = path.removesuffix('/')
     match = (
@@ -172,7 +174,7 @@ def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
     )
     with pytest.warns(UserWarning, match=match):
         _ = _get_vtk_data_source()
-    Path(path).mkdir()
+    Path(path).mkdir(parents=True)
     source, file_cache = _get_vtk_data_source()
     assert source.endswith('/Data/')  # it should append Data and /
     assert file_cache is True
