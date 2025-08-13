@@ -43,6 +43,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - name: Create PyVista package
         run: |

@@ -52,6 +52,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
@@ -94,6 +95,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
       - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
       - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
         with:
@@ -125,6 +127,7 @@ jobs:
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
         with:
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
         run: uv pip install -ve . # pyvista
@@ -157,7 +160,9 @@ jobs:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
       - name: Install PyVista
-        run: uv sync --group test
+        run: |
+          uv pip install -e . --system
+          uv pip install pytest pytest-cov
 
       - name: Install requirements
         run: |
