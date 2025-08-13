@@ -48,18 +48,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
-        run: pip install numpy scipy matplotlib nibabel "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0" qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
+        run: uv pip install numpy scipy matplotlib nibabel "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0" qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
       - name: Install PyVista
-        run: pip install -ve . # pyvista
+        run: uv pip install -ve . # pyvista
       - run: python -c "import pyvista; assert not pyvista.OFF_SCREEN, f'{pyvista.OFF_SCREEN=} should be False'"
         name: Ensure OFF_SCREEN is False
       - name: Install PyVistaQt main
-        run: pip install -v git+https://github.com/pyvista/pyvistaqt.git
+        run: uv pip install -v git+https://github.com/pyvista/pyvistaqt.git
       - name: Install MNE
-        run: pip install -ve . # mne
+        run: uv pip install -ve . # mne
         working-directory: mne-python
       - name: MNE Info
         run: mne sys_info -p
@@ -86,13 +90,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
       - run: git clone https://github.com/pyvista/pyvistaqt.git --single-branch
       - uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19
         with:
           qt: true
           pyvista: false
-      - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
-      - run: pip install -ve .
+      - run: uv pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
+      - run: uv pip install -ve .
       - run: pytest ./tests
         working-directory: pyvistaqt
 
@@ -113,11 +121,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
       - run: git clone https://github.com/bjlittle/geovista.git --single-branch
       - name: Install PyVista
-        run: pip install -ve . # pyvista
+        run: uv pip install -ve . # pyvista
       - name: Install GeoVista
-        run: pip install -ve .[test,exam,cmap] # geovista
+        run: uv pip install -ve .[test,exam,cmap] # geovista
         working-directory: geovista
       - name: Download cartopy assets
         run: |
