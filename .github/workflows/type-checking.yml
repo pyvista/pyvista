@@ -37,6 +37,7 @@ jobs:
       - name: Install PyVista test requirements
         run: |
           uv cache clean
+          uv pip install --system 'scipy>=1.9.0'
           uv sync --group typing --refresh
 
       - name: Run Mypy
