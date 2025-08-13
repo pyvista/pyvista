@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
+import subprocess
+import sys
+import textwrap
 
 import pytest
 import requests
@@ -155,3 +158,29 @@ def test_local_file_cache():
         downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)
+
+
+def run_in_subprocess(env_var_value):
+    code = textwrap.dedent(f"""
+        import os, warnings
+        os.environ['PYVISTA_USERDATA_PATH'] = {str(env_var_value)!r}
+        warnings.simplefilter("always")
+        import pyvista.examples
+    """)
+    result = subprocess.run(
+        [sys.executable, '-c', code], check=False, capture_output=True, text=True
+    )
+    return result.stderr + result.stdout
+
+
+def test_userdata_path_invalid(tmp_path):
+    bad_path = tmp_path / 'nonexistent'
+    output = run_in_subprocess(bad_path)
+    assert f'Ignoring invalid PYVISTA_USERDATA_PATH:\n{bad_path!s}' in output
+
+
+def test_userdata_path_valid(tmp_path):
+    good_path = tmp_path
+    good_path.mkdir(exist_ok=True)
+    output = run_in_subprocess(good_path)
+    assert 'Ignoring invalid PYVISTA_USERDATA_PATH' not in output

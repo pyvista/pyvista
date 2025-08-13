@@ -81,7 +81,7 @@ else:
 
 # allow user to override the local path
 default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
-if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
+if 'PYVISTA_USERDATA_PATH' in os.environ:
     if not (path := Path(os.environ['PYVISTA_USERDATA_PATH'])).is_dir():
         warnings.warn(f'Ignoring invalid PYVISTA_USERDATA_PATH:\n{path}')
         USER_DATA_PATH = default_user_data_path
