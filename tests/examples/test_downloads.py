@@ -53,7 +53,8 @@ def _is_valid_url(url):
         return True
 
 
-@flaky_test(times=3)  # sometimes fails due to GitHub
+# sometimes fails due to GitHub server issues
+@flaky_test(times=3, exceptions=(AssertionError, pytest.fail.Exception))
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
