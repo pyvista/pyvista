@@ -39,6 +39,7 @@ from scipy.stats import linregress
 import pyvista as pv
 from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
@@ -98,8 +99,6 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
-
-PLACEHOLDER = 'GALLERY-URI-PLACEHOLDER'
 
 
 def _aligned_dedent(txt):
