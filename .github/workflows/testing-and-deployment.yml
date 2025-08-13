@@ -115,11 +115,11 @@ jobs:
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: pytest -v --ignore=tests/plotting --test_downloads
+        run: pytest -v --ignore=tests/plotting --test_downloads -n2
 
       - name: Test Plotting
         if: always()
-        run: pytest -v tests/plotting --disallow_unused_cache
+        run: pytest -v tests/plotting --disallow_unused_cache -n2
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -221,7 +221,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -n2
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
@@ -236,7 +236,7 @@ jobs:
       - name: Plotting Testing (uses GL)
         if: always()
         run: |
-          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
+          xvfb-run -a python -m pytest $LINUX_PLOTTING_ARGS -n2
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -322,7 +322,7 @@ jobs:
           pip install --upgrade vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads  -n2
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
@@ -337,7 +337,7 @@ jobs:
       - name: Plotting Testing (uses GL)
         if: always()
         run: |
-          xvfb-run python -m pytest $LINUX_PLOTTING_ARGS
+          xvfb-run -a python -m pytest $LINUX_PLOTTING_ARGS -n2
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -401,11 +401,11 @@ jobs:
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
 
       - name: Test Core API
-        run: python -m pytest -v --ignore=tests/plotting --test_downloads
+        run: python -m pytest -v --ignore=tests/plotting --test_downloads -n2
 
       - name: Test Plotting
         if: always()
-        run: python -m pytest -v tests/plotting --disallow_unused_cache
+        run: python -m pytest -v tests/plotting --disallow_unused_cache -n2
 
       - name: Upload Images for Failed Tests
         if: always()
