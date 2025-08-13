@@ -93,7 +93,6 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/plot_directive/api/examples/_autosummary'
 DATASET_GALLERY_IMAGE_EXT_DICT = {
     'can': None,
     'cavity': None,
-    'osmnx_graph': None,
     'gpr_data_array': None,
     'sphere_vectors': None,
     'single_sphere_animation': '.gif',
