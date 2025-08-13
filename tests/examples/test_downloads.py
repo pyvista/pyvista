@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import os
+import pathlib
 from pathlib import Path
 from pathlib import PureWindowsPath
-import subprocess
-import sys
-import textwrap
 
 import pytest
 import requests
@@ -14,6 +12,9 @@ from retry_requests import retry
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
+from pyvista.examples.downloads import _get_user_data_path
+from pyvista.examples.downloads import _get_vtk_data_path
+from pyvista.examples.downloads import _warn_if_path_not_accessible
 from tests.examples.test_dataset_loader import DatasetLoaderTestCase
 from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
 from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
@@ -160,27 +161,74 @@ def test_local_file_cache():
         downloads.FETCHER.registry.pop(basename, None)
 
 
-def run_in_subprocess(env_var_value):
-    code = textwrap.dedent(f"""
-        import os, warnings
-        os.environ['PYVISTA_USERDATA_PATH'] = {str(env_var_value)!r}
-        warnings.simplefilter("always")
-        import pyvista.examples
-    """)
-    result = subprocess.run(
-        [sys.executable, '-c', code], check=False, capture_output=True, text=True
+def test_get_vtk_data_path_with_env_var(monkeypatch):
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, '/my/local/path')
+    source, file_cache = _get_vtk_data_path()
+    assert source.endswith('/Data/')  # it should append Data and /
+    assert file_cache is True
+
+
+def test_get_vtk_data_path_without_env_var(monkeypatch):
+    monkeypatch.delenv(downloads._VTK_DATA_VARNAME, raising=False)
+    source, file_cache = _get_vtk_data_path()
+    assert source == downloads._DEFAULT_VTK_DATA_SOURCE
+    assert file_cache is False
+
+
+def test_get_user_data_path_env_var_valid(monkeypatch, tmp_path):
+    valid_dir = tmp_path / 'valid'
+    valid_dir.mkdir()
+    monkeypatch.setenv(downloads._USERDATA_PATH_VARNAME, str(valid_dir))
+    result = _get_user_data_path()
+    assert result == str(valid_dir)
+
+
+def test_get_user_data_path_env_var_invalid(monkeypatch, tmp_path):
+    not_a_dir = tmp_path / 'file'
+    not_a_dir.write_text('not a directory')
+    monkeypatch.setenv(downloads._USERDATA_PATH_VARNAME, str(not_a_dir))
+    match = (
+        f'The given {downloads._USERDATA_PATH_VARNAME} is not a valid directory '
+        f'and will not be used:\n{not_a_dir}'
     )
-    return result.stderr + result.stdout
+
+    with pytest.warns(UserWarning, match=match):
+        result = _get_user_data_path()
+    # should fall back to pooch path
+    assert result == downloads._DEFAULT_USER_DATA_PATH
 
 
-def test_userdata_path_invalid(tmp_path):
-    bad_path = tmp_path / 'nonexistent'
-    output = run_in_subprocess(bad_path)
-    assert f'Ignoring invalid PYVISTA_USERDATA_PATH:\n{bad_path!s}' in output
+def test_get_user_data_path_no_env_var(monkeypatch):
+    monkeypatch.delenv(downloads._USERDATA_PATH_VARNAME, raising=False)
+    result = _get_user_data_path()
+    assert result == downloads._DEFAULT_USER_DATA_PATH
 
 
-def test_userdata_path_valid(tmp_path):
-    good_path = tmp_path
-    good_path.mkdir(exist_ok=True)
-    output = run_in_subprocess(good_path)
-    assert 'Ignoring invalid PYVISTA_USERDATA_PATH' not in output
+def test_warn_if_path_not_accessible_creates_dir(tmp_path):
+    path = tmp_path / 'newdir'
+    assert not path.exists()
+    # Should create without warning
+    _warn_if_path_not_accessible(path, 'MY_ENV')
+    assert path.is_dir()
+
+
+def test_warn_if_path_not_accessible_file_blocks(tmp_path):
+    blocked_path = tmp_path / 'blocked'
+    blocked_path.write_text('not a dir')
+    match = (
+        f'Unable to access path: {blocked_path}\nManually specify the PyVista examples cache '
+        'with the PYVISTA_USERDATA_PATH environment variable.'
+    )
+    with pytest.warns(UserWarning, match=match):
+        _warn_if_path_not_accessible(blocked_path, downloads._user_data_path_warn_msg)
+
+
+def test_warn_if_path_not_accessible_no_write_permission():
+    system_dir = (
+        pathlib.Path('/var/root') if os.name != 'nt' else pathlib.Path('C:\\Windows\\System32')
+    )
+    assert system_dir.exists()
+    assert not os.access(system_dir, os.W_OK)
+    blocked_dir = system_dir / 'blocked'
+    with pytest.warns(UserWarning, match='Unable to access'):
+        _warn_if_path_not_accessible(blocked_dir, downloads._user_data_path_warn_msg)

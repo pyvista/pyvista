@@ -60,49 +60,74 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 CACHE_VERSION = 3
 
+_USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
+_VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
-# If available, a local vtk-data instance will be used for examples
-if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
-    _path = os.environ['PYVISTA_VTK_DATA']
+_DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+_DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
 
-    if Path(_path).name != 'Data':
-        # append 'Data' if user does not provide it
-        _path = str(Path(_path) / 'Data')
 
-    # pooch assumes this is a URL so we have to take care of this
-    if not _path.endswith('/'):
-        _path = _path + '/'
-    SOURCE = _path
-    _FILE_CACHE = True
+def _get_vtk_data_path() -> tuple[str, bool]:
+    # If available, a local vtk-data instance will be used for examples
+    if _VTK_DATA_VARNAME in os.environ:
+        _path = os.environ[_VTK_DATA_VARNAME]
 
-else:
-    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
-    _FILE_CACHE = False
+        if Path(_path).name != 'Data':
+            # append 'Data' if user does not provide it
+            _path = str(Path(_path) / 'Data')
 
-# allow user to override the local path
-default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
-if 'PYVISTA_USERDATA_PATH' in os.environ:
-    if not (path := Path(os.environ['PYVISTA_USERDATA_PATH'])).is_dir():
-        warnings.warn(f'Ignoring invalid PYVISTA_USERDATA_PATH:\n{path}')
-        USER_DATA_PATH = default_user_data_path
+        # pooch assumes this is a URL so we have to take care of this
+        if not _path.endswith('/'):
+            _path = _path + '/'
+        source = _path
+        file_cache = True
+
     else:
-        USER_DATA_PATH = str(Path(os.environ['PYVISTA_USERDATA_PATH']))
-else:
-    # use default pooch path
-    USER_DATA_PATH = default_user_data_path
+        source = _DEFAULT_VTK_DATA_SOURCE
+        file_cache = False
+    return source, file_cache
 
-    # provide helpful message if pooch path is inaccessible
-    if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
-        try:
-            Path(USER_DATA_PATH).mkdir(exist_ok=True, parents=True)
-            if not os.access(USER_DATA_PATH, os.W_OK):
-                raise OSError
-        except (PermissionError, OSError):
-            # Warn, don't raise just in case there's an environment issue.
-            warnings.warn(
-                f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                ' examples cache with the PYVISTA_USERDATA_PATH environment variable.',
+
+def _get_user_data_path() -> str:
+    # allow user to override the local path
+    if _USERDATA_PATH_VARNAME in os.environ:
+        path = Path(os.environ[_USERDATA_PATH_VARNAME])
+        if not path.is_dir():
+            msg = (
+                f'The given {_USERDATA_PATH_VARNAME} is not a valid directory '
+                f'and will not be used:\n{path}'
             )
+
+            warnings.warn(msg)
+            return _DEFAULT_USER_DATA_PATH
+        else:
+            return str(path)
+    else:
+        # use default pooch path
+        return _DEFAULT_USER_DATA_PATH
+
+
+def _warn_if_path_not_accessible(path, msg: str):
+    # provide helpful message if pooch path is inaccessible
+    try:
+        if not Path(path).is_dir():
+            Path(path).mkdir(exist_ok=True, parents=True)
+            if not os.access(path, os.W_OK):  # pragma: no cover
+                raise OSError
+    except (PermissionError, OSError):
+        # Warn, don't raise just in case there's an environment issue.
+        msg = f'Unable to access path: {path}\n{msg}'
+        warnings.warn(msg)
+
+
+SOURCE, _FILE_CACHE = _get_vtk_data_path()
+USER_DATA_PATH = _get_user_data_path()
+
+_user_data_path_warn_msg = (
+    f'Manually specify the PyVista examples cache with the '
+    f'{_USERDATA_PATH_VARNAME} environment variable.'
+)
+_warn_if_path_not_accessible(USER_DATA_PATH, _user_data_path_warn_msg)
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
 # with hashes because we don't want to have to add in all of them individually
