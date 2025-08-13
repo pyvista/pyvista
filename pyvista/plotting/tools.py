@@ -90,7 +90,7 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
     try:
         proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
         proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):
+    except (OSError, TimeoutExpired):  # pragma: no cover
         # possible we have EGL support
         return supports_open_gl()
     else:  # pragma: no cover
