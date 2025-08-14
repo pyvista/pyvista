@@ -107,10 +107,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.config.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.config.python-version }}
+          python-version: ${{ matrix.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Restore example data cache
@@ -139,12 +139,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
