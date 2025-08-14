@@ -3405,7 +3405,7 @@ def make_all_tables() -> list[str]:  # noqa: D103
 
 
 def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
-    def find_matching_image(filename_with_placeholder: str) -> Union[bool, str]:
+    def find_matching_image(filename_with_placeholder: str) -> bool | str:
         """Find the image in the gallery without the placeholder."""
         basename = Path(filename_with_placeholder).name.replace(PLACEHOLDER, '*')
 
