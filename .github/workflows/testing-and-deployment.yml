@@ -113,7 +113,11 @@ jobs:
       #     cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Set Python PATH
-        run: echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
+        run: |
+          echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
+          ln -sf /opt/homebrew/bin/python${{ matrix.python-version }} ${{ github.workspace }}/bin/python
+          ln -sf /opt/homebrew/bin/pip${{ matrix.python-version }} ${{ github.workspace }}/bin/pip
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       # - name: Restore example data cache
       #   uses: actions/cache/restore@v4
