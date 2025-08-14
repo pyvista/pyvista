@@ -4,6 +4,7 @@ import os
 import pathlib
 from pathlib import Path
 from pathlib import PureWindowsPath
+import re
 
 import pytest
 import requests
@@ -172,7 +173,7 @@ def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
         f'The given {downloads._VTK_DATA_VARNAME} is not a valid directory '
         f'and will not be used:\n{path_no_trailing_slash}'
     )
-    with pytest.warns(UserWarning, match=match):
+    with pytest.warns(UserWarning, match=re.escape(match)):
         _ = _get_vtk_data_source()
     Path(path).mkdir(parents=True)
     source, file_cache = _get_vtk_data_source()
@@ -203,7 +204,7 @@ def test_get_user_data_path_env_var_invalid(monkeypatch, tmp_path):
         f'The given {downloads._USERDATA_PATH_VARNAME} is not a valid directory '
         f'and will not be used:\n{not_a_dir.as_posix()}'
     )
-    with pytest.warns(UserWarning, match=match):
+    with pytest.warns(UserWarning, match=re.escape(match)):
         result = _get_user_data_path()
     # should fall back to pooch path
     assert result == downloads._DEFAULT_USER_DATA_PATH
@@ -230,7 +231,7 @@ def test_warn_if_path_not_accessible_file_blocks(tmp_path):
         f'Unable to access path: {blocked_path}\nManually specify the PyVista examples cache '
         'with the PYVISTA_USERDATA_PATH environment variable.'
     )
-    with pytest.warns(UserWarning, match=match):
+    with pytest.warns(UserWarning, match=re.escape(match)):
         _warn_if_path_not_accessible(blocked_path.as_posix(), downloads._user_data_path_warn_msg)
 
 
