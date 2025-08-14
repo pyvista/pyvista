@@ -112,13 +112,10 @@ jobs:
       #     python-version: ${{ matrix.python-version }}
       #     cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
-      - name: Set Python PATH
+      - name: Set Python PATH and create a virtual env
         run: |
-          echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
-          mkdir -p ${{ github.workspace }}/bin
-          ln -sf /opt/homebrew/bin/python${{ matrix.python-version }} ${{ github.workspace }}/bin/python
-          ln -sf /opt/homebrew/bin/pip${{ matrix.python-version }} ${{ github.workspace }}/bin/pip
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+          /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
+          echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
       # - name: Restore example data cache
       #   uses: actions/cache/restore@v4
