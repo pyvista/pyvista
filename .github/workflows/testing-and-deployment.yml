@@ -115,17 +115,6 @@ jobs:
       - name: Set Python PATH
         run: echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
 
-      - name: Setup pyenv
-        run: |
-          export PYENV_ROOT="$HOME/.pyenv"
-          export PATH="$PYENV_ROOT/bin:$PATH"
-          eval "$(pyenv init -)"
-          pyenv install ${{ matrix.python-version }}
-          pyenv global ${{ matrix.python-version }}
-          echo "PYENV_ROOT=$HOME/.pyenv" >> $GITHUB_ENV
-          echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
-          echo "$HOME/.pyenv/shims" >> $GITHUB_PATH
-
       - name: Restore example data cache
         uses: actions/cache/restore@v4
         with:
