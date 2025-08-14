@@ -85,15 +85,15 @@ jobs:
           #   runner-labels: "macos-13"
 
           # Self-hosted runner configurations
-          - os: self-hosted
-            python-version: "3.10"
-            runner-labels: ["self-hosted", "macOS", "ARM64"]
-          - os: self-hosted
-            python-version: "3.11"
-            runner-labels: ["self-hosted", "macOS", "ARM64"]
-          - os: self-hosted
-            python-version: "3.12"
-            runner-labels: ["self-hosted", "macOS", "ARM64"]
+          # - os: self-hosted
+          #   python-version: "3.10"
+          #   runner-labels: ["self-hosted", "macOS", "ARM64"]
+          # - os: self-hosted
+          #   python-version: "3.11"
+          #   runner-labels: ["self-hosted", "macOS", "ARM64"]
+          # - os: self-hosted
+          #   python-version: "3.12"
+          #   runner-labels: ["self-hosted", "macOS", "ARM64"]
           - os: self-hosted
             python-version: "3.13"
             runner-labels: ["self-hosted", "macOS", "ARM64"]
