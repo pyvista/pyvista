@@ -52,7 +52,7 @@ def supports_open_gl():
     return SUPPORTS_OPENGL
 
 
-def _system_supports_plotting():  # noqa: PLR0911
+def _system_supports_plotting() -> bool:  # noqa: PLR0911
     """Check if the environment supports plotting on Windows, Linux, or Mac OS.
 
     Returns
@@ -84,16 +84,20 @@ def _system_supports_plotting():  # noqa: PLR0911
         return 'DISPLAY' in os.environ
 
     # Linux case
+    if os.environ.get('WAYLAND_DISPLAY'):  # pragma: no cover
+        return True
+
     try:
         proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
         proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):
-        return False
+    except (OSError, TimeoutExpired):  # pragma: no cover
+        # possible we have EGL support
+        return supports_open_gl()
     else:  # pragma: no cover
         return proc.returncode == 0
 
 
-def system_supports_plotting():
+def system_supports_plotting() -> bool:
     """Check if the environment supports plotting.
 
     Returns
