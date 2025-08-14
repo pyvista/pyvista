@@ -117,19 +117,12 @@ def _cast_to_numpy(
 
     """
     try:
-        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
-    except AttributeError:
-        # we only type for newer numpy, and this branch only touched in older numpy
-        if not TYPE_CHECKING:
-            VisibleDeprecationWarning = np.VisibleDeprecationWarning
-
-    try:
         out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
 
         if copy and out is arr:
             # we requested a copy but didn't end up with one
             out = out.copy()
-    except (ValueError, VisibleDeprecationWarning) as e:
+    except ValueError as e:
         msg = f'Input cannot be cast as {np.ndarray}.'
         raise ValueError(msg) from e
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):

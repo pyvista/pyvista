@@ -18,7 +18,7 @@ classifiers = [
 ]
 dependencies = [
   'matplotlib>=3.0.1',
-  'numpy>=1.21.0', # minimum typing support
+  'numpy>=1.26.0',
   'pillow',
   'pooch',
   'scooby>=0.5.1',
@@ -449,7 +449,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/__init__.py' = ['ANN']
 'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
-'pyvista/core/_typing_core/_aliases.py' = ['PYI047']
+'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_like.py' = ['PYI047']
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']

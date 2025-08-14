@@ -45,6 +45,18 @@ _NumberType = TypeVar(  # noqa: PYI018
 
 NumpyArray = npt.NDArray[NumberType]
 
+_FiniteNestedList = (
+    list[NumberType]
+    | list[list[NumberType]]
+    | list[list[list[NumberType]]]
+    | list[list[list[list[NumberType]]]]
+)
+_FiniteNestedTuple = (
+    tuple[NumberType]
+    | tuple[tuple[NumberType]]
+    | tuple[tuple[tuple[NumberType]]]
+    | tuple[tuple[tuple[tuple[NumberType]]]]
+)
 
 _ArrayLike1D = NumpyArray[NumberType] | Sequence[NumberType] | Sequence[NumpyArray[NumberType]]
 _ArrayLike2D = (
@@ -62,25 +74,9 @@ _ArrayLike4D = (
     | Sequence[Sequence[Sequence[Sequence[NumberType]]]]
     | Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]]
 )
-
 _ArrayLike = (
     _ArrayLike1D[NumberType]
     | _ArrayLike2D[NumberType]
     | _ArrayLike3D[NumberType]
     | _ArrayLike4D[NumberType]
-)
-
-# Finite nested structures using concrete list and tuple types
-_FiniteNestedList = (
-    list[NumberType]
-    | list[list[NumberType]]
-    | list[list[list[NumberType]]]
-    | list[list[list[list[NumberType]]]]
-)
-
-_FiniteNestedTuple = (
-    tuple[NumberType]
-    | tuple[tuple[NumberType]]
-    | tuple[tuple[tuple[NumberType]]]
-    | tuple[tuple[tuple[tuple[NumberType]]]]
 )

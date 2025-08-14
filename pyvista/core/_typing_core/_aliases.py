@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
+from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -34,7 +34,7 @@ else:
 #
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
-Number = int | float
+Number = Union[int, float]
 
 VectorLike = _ArrayLike1D[NumberType]
 VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
@@ -53,23 +53,17 @@ ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
-
-# Create a float-specific matrix type for rotation use
-FloatMatrixLike = _ArrayLike2D[float]
-
 if Rotation is not None:
-    RotationLike = FloatMatrixLike | _vtk.vtkMatrix3x3 | Rotation
+    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
 else:
-    RotationLike = FloatMatrixLike | _vtk.vtkMatrix3x3  # type: ignore[no-redef,misc]
-with contextlib.suppress(AttributeError):
-    RotationLike.__doc__ = """Array or object representing a spatial rotation.
+    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
+RotationLike.__doc__ = """Array or object representing a spatial rotation.
 
 Includes 3x3 arrays and SciPy Rotation objects.
 """
 
-TransformLike = RotationLike | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
-with contextlib.suppress(AttributeError):
-    TransformLike.__doc__ = """Array or object representing a spatial transformation.
+TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
+TransformLike.__doc__ = """Array or object representing a spatial transformation.
 
 Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 
@@ -111,16 +105,15 @@ class BoundsTuple(NamedTuple):
         return f'{name}({joined_lines})'
 
 
-CellsLike = MatrixLike[int] | VectorLike[int]
+CellsLike = Union[MatrixLike[int], VectorLike[int]]
 
-CellArrayLike = CellsLike | _vtk.vtkCellArray
+CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
-_ArrayLikeOrScalar = NumberType | ArrayLike[NumberType]
+_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
-InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
-with contextlib.suppress(AttributeError):
-    InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
+InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
+InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
 
 Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
 """
