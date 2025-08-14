@@ -52,6 +52,10 @@ def check_gc(request):
 
     pv.close_all()
 
+    # Skip GC check if test failed
+    if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
+        return
+
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
     msg = 'Not all objects GCed:\n'
