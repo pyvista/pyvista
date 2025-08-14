@@ -4,18 +4,33 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
-import importlib.util
 import locale
 import os
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
+import warnings
 
 from atsphinx.mini18n import get_template_dir
+from docutils.parsers.rst.directives.images import Image
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
+
+# ignore joblib warnings from sphinx-gallery parallel build:
+# .../site-packages/joblib/externals/loky/process_executor.py:782: UserWarning:
+# A worker stopped while some jobs were given to the executor. This can be
+# caused by a too short worker timeout or by a memory leak.
+warnings.filterwarnings(
+    'ignore',
+    category=UserWarning,
+    message='A worker stopped while some jobs were given to the executor',
+)
 
 # This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
@@ -24,11 +39,7 @@ faulthandler.enable()
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
-import make_external_gallery
 import make_tables
-
-make_external_gallery.make_example_gallery()
-make_tables.make_all_tables()
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
@@ -406,10 +417,6 @@ class ResetPyVista:
 reset_pyvista = ResetPyVista()
 
 
-# skip building the osmnx example if osmnx is not installed
-has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
-
-
 sphinx_gallery_conf = {
     'abort_on_example_error': True,  # Fail early
     # convert rst to md for ipynb
@@ -419,7 +426,7 @@ sphinx_gallery_conf = {
     # path where to save gallery generated examples
     'gallery_dirs': ['examples'],
     # Pattern to search for example files
-    'filename_pattern': r'\.py' if has_osmnx else r'(?!osmnx-example)\.py',
+    'filename_pattern': r'\.py',
     # Remove the "Download all examples" button from the top level gallery
     'download_all_examples': False,
     # Remove sphinx configuration comments from code blocks
@@ -436,9 +443,10 @@ sphinx_gallery_conf = {
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
     'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
+    'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
-suppress_warnings = ['config.cache']
+suppress_warnings = ['config.cache', 'image.not_readable']
 
 import re
 
@@ -681,7 +689,51 @@ mini18n_support_languages = ['en', 'ja']
 locale_dirs = ['../../pyvista-doc-translations/locale']
 
 
-def setup(app):  # noqa: D103
+class PlaceHolderImage(Image):
+    """A custom Image directive that checks for placeholders in an image path."""
+
+    gen_image_path = Path(make_tables.DATASET_GALLERY_IMAGE_DIR).relative_to('..')
+
+    def run(self):  # noqa: D102
+        image_path_str = self.arguments[0]
+
+        if make_tables.PLACEHOLDER in image_path_str:
+            image_path = Path(image_path_str)
+            # Fill in the placeholder with the first matching image. This will
+            # not respect order of generation.
+            basename = image_path.name.replace('PLACEHOLDER', '*')
+            actual_image = next(self.gen_image_path.glob(basename), None)
+            if actual_image:
+                self.arguments[0] = str(actual_image)
+
+        return super().run()
+
+
+def report_parallel_safety(app: Sphinx, *_) -> None:
+    """Raise an error if an extension is blocking a parallel build."""
+    if app.parallel > 1:
+        for name, ext in sorted(app.extensions.items()):
+            read_safe = getattr(ext, 'parallel_read_safe', None)
+            write_safe = getattr(ext, 'parallel_write_safe', None)
+            if read_safe is not True or write_safe is not True:
+                msg = (
+                    f'Parallel build enabled but extension "{name}" is not fully parallel '
+                    f'safe (read_safe={read_safe}, write_safe={write_safe})'
+                )
+                raise RuntimeError(msg)
+
+
+def configure_backend(app: Sphinx) -> None:  # noqa: D103
+    app.add_directive('image', PlaceHolderImage)
+
+
+def setup(app: Sphinx) -> None:  # noqa: D103
+    app.connect('config-inited', report_parallel_safety)
+    app.connect('builder-inited', configure_backend)
     app.connect('html-page-context', pv_html_page_context)
+
+    # right before writing, patch the gallery placeholders
+    app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')

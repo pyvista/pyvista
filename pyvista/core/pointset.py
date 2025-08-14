@@ -12,7 +12,6 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -31,7 +30,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import PyVistaDeprecationWarning
 from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
@@ -866,10 +864,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             ('n_lines', n_lines),
         ):
             if v is not None:
-                warnings.warn(
-                    f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'PolyData constructor parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
