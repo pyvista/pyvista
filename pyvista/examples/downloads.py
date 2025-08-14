@@ -80,7 +80,7 @@ def _get_vtk_data_source() -> tuple[str, bool]:
     if _VTK_DATA_VARNAME in os.environ:
         path = Path(os.environ[_VTK_DATA_VARNAME])
         if not path.is_dir():
-            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+            _warn_invalid_dir_not_used(path.as_posix(), _VTK_DATA_VARNAME)
         else:
             if path.name != 'Data':
                 # append 'Data' if user does not provide it
@@ -110,7 +110,7 @@ def _get_user_data_path() -> str:
     return output_path
 
 
-def _warn_if_path_not_accessible(path, msg: str):
+def _warn_if_path_not_accessible(path: str | Path, msg: str):
     # Provide helpful message if pooch path is inaccessible
     try:
         if not Path(path).is_dir():

@@ -198,10 +198,10 @@ def test_get_user_data_path_env_var_valid(monkeypatch, tmp_path):
 def test_get_user_data_path_env_var_invalid(monkeypatch, tmp_path):
     not_a_dir = tmp_path / 'file'
     not_a_dir.write_text('not a directory')
-    monkeypatch.setenv(downloads._USERDATA_PATH_VARNAME, str(not_a_dir))
+    monkeypatch.setenv(downloads._USERDATA_PATH_VARNAME, not_a_dir.as_posix())
     match = (
         f'The given {downloads._USERDATA_PATH_VARNAME} is not a valid directory '
-        f'and will not be used:\n{not_a_dir}'
+        f'and will not be used:\n{not_a_dir.as_posix()}'
     )
     with pytest.warns(UserWarning, match=match):
         result = _get_user_data_path()
@@ -231,7 +231,7 @@ def test_warn_if_path_not_accessible_file_blocks(tmp_path):
         'with the PYVISTA_USERDATA_PATH environment variable.'
     )
     with pytest.warns(UserWarning, match=match):
-        _warn_if_path_not_accessible(blocked_path, downloads._user_data_path_warn_msg)
+        _warn_if_path_not_accessible(blocked_path.as_posix(), downloads._user_data_path_warn_msg)
 
 
 def test_warn_if_path_not_accessible_no_write_permission():
