@@ -107,12 +107,29 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        continue-on-error: true
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+      # - name: Set up Python ${{ matrix.python-version }}
+      #   uses: actions/setup-python@v5
+      #   continue-on-error: true
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
+      #     cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+
+      - name: Install pyenv and Python
+        run: |
+          curl https://pyenv.run | bash
+          ~/.pyenv/bin/pyenv install ${{ matrix.python-version }}
+          ~/.pyenv/bin/pyenv global ${{ matrix.python-version }}
+
+      - name: Setup pyenv
+        run: |
+          export PYENV_ROOT="$HOME/.pyenv"
+          export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init -)"
+          pyenv install ${{ matrix.python-version }}
+          pyenv global ${{ matrix.python-version }}
+          echo "PYENV_ROOT=$HOME/.pyenv" >> $GITHUB_ENV
+          echo "$HOME/.pyenv/bin" >> $GITHUB_PATH
+          echo "$HOME/.pyenv/shims" >> $GITHUB_PATH
 
       - name: Restore example data cache
         uses: actions/cache/restore@v4
