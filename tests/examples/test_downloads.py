@@ -166,7 +166,7 @@ def test_local_file_cache():
 def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
     path = (tmp_path / 'mypath').as_posix()
     if endswith:
-        path = path + os.sep + endswith
+        path = path + '/' + endswith
     monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
     path_no_trailing_slash = path.removesuffix('/')
     match = (

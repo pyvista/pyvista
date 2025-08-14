@@ -68,7 +68,7 @@ _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/
 
 
 def _warn_invalid_dir_not_used(path, env_var):
-    msg = f'The given {env_var} is not a valid directory and will not be used:\n{path}'
+    msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
     warnings.warn(msg)
 
 
@@ -80,7 +80,7 @@ def _get_vtk_data_source() -> tuple[str, bool]:
     if _VTK_DATA_VARNAME in os.environ:
         path = Path(os.environ[_VTK_DATA_VARNAME])
         if not path.is_dir():
-            _warn_invalid_dir_not_used(path.as_posix(), _VTK_DATA_VARNAME)
+            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
         else:
             if path.name != 'Data':
                 # append 'Data' if user does not provide it
