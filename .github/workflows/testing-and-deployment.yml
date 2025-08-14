@@ -115,6 +115,7 @@ jobs:
       - name: Set Python PATH
         run: |
           echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
+          mkdir -p ${{ github.workspace }}/bin
           ln -sf /opt/homebrew/bin/python${{ matrix.python-version }} ${{ github.workspace }}/bin/python
           ln -sf /opt/homebrew/bin/pip${{ matrix.python-version }} ${{ github.workspace }}/bin/pip
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
