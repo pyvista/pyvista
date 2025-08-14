@@ -40,38 +40,38 @@ permissions:
   id-token: none
 
 jobs:
-  cache-vtk-data:
-    name: Cache vtk-data Repo
-    runs-on: ubuntu-22.04
-    outputs:
-      key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
-    steps:
-      - name: Get vtk-data commit
-        run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
+  # cache-vtk-data:
+  #   name: Cache vtk-data Repo
+  #   runs-on: ubuntu-22.04
+  #   outputs:
+  #     key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
+  #   steps:
+  #     - name: Get vtk-data commit
+  #       run: echo VTK_DATA_COMMIT=$(git ls-remote https://github.com/pyvista/vtk-data HEAD | awk '{ print $1}') >> $GITHUB_ENV
 
-      - name: Test if the example data cache exists
-        id: restore-cache-vtk-data
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
-          lookup-only: true
+  #     - name: Test if the example data cache exists
+  #       id: restore-cache-vtk-data
+  #       uses: actions/cache/restore@v4
+  #       with:
+  #         path: ${{ env.CACHE_FOLDER_NAME }}
+  #         key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+  #         lookup-only: true
 
-      - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
-        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: pyvista/vtk-data
-          path: ${{ env.CACHE_FOLDER_NAME }}
+  #     - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
+  #       if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: pyvista/vtk-data
+  #         path: ${{ env.CACHE_FOLDER_NAME }}
 
-      - name: Create the example data cache
-        if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
-        id: save-cache-vtk-data
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-${{ env.VTK_DATA_COMMIT }}
-          enableCrossOsArchive: true
+  #     - name: Create the example data cache
+  #       if: steps.restore-cache-vtk-data.outputs.cache-hit != 'true'
+  #       id: save-cache-vtk-data
+  #       uses: actions/cache/save@v4
+  #       with:
+  #         path: ${{ env.CACHE_FOLDER_NAME }}
+  #         key: vtk-data-${{ env.VTK_DATA_COMMIT }}
+  #         enableCrossOsArchive: true
 
   macOS:
     name: Mac OS Unit Testing
@@ -99,9 +99,7 @@ jobs:
             runner-labels: ["self-hosted", "macOS", "ARM64"]
 
     runs-on: ${{ matrix.runner-labels }}
-
-    needs: cache-vtk-data
-
+    # needs: cache-vtk-data
     steps:
       - uses: actions/checkout@v4
         with:
@@ -114,11 +112,9 @@ jobs:
       #     python-version: ${{ matrix.python-version }}
       #     cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
-      - name: Install pyenv and Python
+      - name: Set Python PATH
         run: |
-          curl https://pyenv.run | bash
-          ~/.pyenv/bin/pyenv install ${{ matrix.python-version }}
-          ~/.pyenv/bin/pyenv global ${{ matrix.python-version }}
+          echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
 
       - name: Setup pyenv
         run: |
