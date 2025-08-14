@@ -220,10 +220,10 @@ filterwarnings = [
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*PYVISTA_USERDATA_PATH is not a valid directory.*:UserWarning',
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
-  'ignore:Ignoring invalid PYVISTA_USERDATA_PATH.*:UserWarning',
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
