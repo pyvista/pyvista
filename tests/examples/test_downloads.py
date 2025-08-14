@@ -228,8 +228,8 @@ def test_warn_if_path_not_accessible_file_blocks(tmp_path):
     blocked_path = tmp_path / 'blocked'
     blocked_path.write_text('not a dir')
     match = (
-        f'Unable to access path: {blocked_path}\nManually specify the PyVista examples cache '
-        'with the PYVISTA_USERDATA_PATH environment variable.'
+        f'Unable to access path: {blocked_path.as_posix()}\nManually specify the PyVista '
+        f'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
         _warn_if_path_not_accessible(blocked_path.as_posix(), downloads._user_data_path_warn_msg)
