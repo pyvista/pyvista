@@ -11,7 +11,7 @@ from typing_extensions import TypeIs
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 
-JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'none']
+JupyterBackendOptions = Literal['static', 'client', 'server', 'trame', 'html', 'vtk-wasm', 'none']
 ALLOWED_BACKENDS = get_args(JupyterBackendOptions)
 
 
@@ -52,6 +52,18 @@ def _validate_jupyter_backend(
             msg = 'Please install trame dependencies: pip install "pyvista[jupyter]"'
             raise ImportError(msg)
 
+    if backend == 'vtk-wasm':
+        try:
+            import trame_vtklocal  # noqa: F401, PLC0415
+            import vtk  # noqa: F401, PLC0415
+        except ImportError:  # pragma: no cover
+            msg = (
+                'VTK-WASM backend requires VTK>=9.3 and trame-vtklocal. '
+                'Install: pip install --extra-index-url https://wheels.vtk.org '
+                '"vtk>=9.3" trame-vtklocal'
+            )
+            raise ImportError(msg)
+
     return backend
 
 
@@ -87,6 +99,11 @@ def set_jupyter_backend(backend, name=None, **kwargs):  # noqa: ARG001
 
         * ``'html'`` : Export/serialize the scene graph to be rendered
           with the Trame client backend but in a static HTML file.
+
+        * ``'vtk-wasm'`` : Use VTK WebAssembly for client-side rendering.
+          This provides native VTK performance in the browser without
+          requiring a server connection. Requires ``vtk>=9.3`` and
+          ``trame-vtklocal`` to be installed.
 
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
