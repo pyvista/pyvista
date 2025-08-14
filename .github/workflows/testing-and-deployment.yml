@@ -113,8 +113,7 @@ jobs:
       #     cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Set Python PATH
-        run: |
-          echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
+        run: echo "/opt/homebrew/opt/python@${{ matrix.python-version }}/bin" >> $GITHUB_PATH
 
       - name: Setup pyenv
         run: |
