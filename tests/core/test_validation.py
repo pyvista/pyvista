@@ -807,17 +807,12 @@ def test_check_sorted(shape, axis, ascending, strict):
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
     try:
-        AxisError = np.exceptions.AxisError
-    except AttributeError:
-        AxisError = np.AxisError
-
-    try:
         # Create ascending array with duplicate values
         arr_ascending = np.repeat(arr_strict_ascending, 2, axis=axis)
         # Create descending arrays
         arr_descending = np.flip(arr_ascending, axis=axis)
         arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
-    except AxisError:
+    except np.exceptions.AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError,

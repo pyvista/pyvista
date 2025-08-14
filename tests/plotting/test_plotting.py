@@ -3111,16 +3111,11 @@ def test_plot_complex_value(plane, verify_image_cache):
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
 
-    try:
-        ComplexWarning = np.exceptions.ComplexWarning
-    except AttributeError:
-        ComplexWarning = np.ComplexWarning
-
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
@@ -3425,13 +3420,8 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
-    try:
-        ComplexWarning = np.exceptions.ComplexWarning
-    except AttributeError:
-        ComplexWarning = np.ComplexWarning
-
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
     pl.show()
 

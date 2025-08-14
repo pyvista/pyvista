@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
-from typing import Union
 from typing import final
 from typing import get_args
 import warnings
