@@ -43,6 +43,15 @@ from pyvista.plotting.utilities import algorithms
 from tests.conftest import flaky_test
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
+# flaky tests need to capture RegressionError as well
+try:
+    from pytest_pyvista import RegressionError
+
+    flaky_error_types = (AssertionError, RegressionError)
+except ImportError:
+    flaky_error_types = (AssertionError,)
+
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
@@ -4007,7 +4016,7 @@ def test_remove_vertices_actor(sphere):
     pl.show()
 
 
-@flaky_test(times=5)
+@flaky_test(exceptions=flaky_error_types)
 @pytest.mark.skip_windows
 def test_add_point_scalar_labels_fmt():
     mesh = examples.load_uniform().slice()
