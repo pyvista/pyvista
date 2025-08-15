@@ -5032,10 +5032,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
-            if platform.system() != 'Darwin':
+            if platform.system() != 'Darwin' and platform.machine() == 'arm64':
                 # Up to vtk==9.5.0, render windows aren't closed on MacOS,
-                # so the resources are not freed making this unnecessary. We need this
-                # disabled so we can use NSAutoreleasePool.
+                # so the resources are not freed making this unnecessary. Also,
+                # we need this disabled so we can use NSAutoreleasePool.
                 # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
                 self.ren_win.Finalize()
 
