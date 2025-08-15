@@ -283,3 +283,8 @@ glad to add it.
     if new_text != existing:
         with Path(path).open('w', encoding='utf-8') as fid:
             fid.write(new_text)
+        print(f'Wrote external example gallery to {path}')  # noqa: T201
+
+
+if __name__ == '__main__':
+    make_example_gallery()

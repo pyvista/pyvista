@@ -13,6 +13,8 @@ from . import _vtk_core as _vtk
 
 _CELL_TYPE_TO_NUM_POINTS: dict[np.uint8, int] = {}
 
+PLACEHOLDER = 'IMAGE-HASH-PLACEHOLDER'
+
 _DROPDOWN_TEMPLATE = """
 .. dropdown:: More info
     :icon: info
@@ -46,7 +48,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
             :link: pyvista.examples.cells.{}
             :link-type: any
 
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-{}_00_00.png
 
     .. grid-item::
         :columns: 12 8 8 8
@@ -1064,7 +1066,7 @@ class CellType(IntEnum):
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
-                    _example, _example, badges, _short_doc, _long_doc
+                    _example, _example, PLACEHOLDER, badges, _short_doc, _long_doc
                 )
             )
 
