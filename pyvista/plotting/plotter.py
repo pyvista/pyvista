@@ -792,8 +792,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
 
-        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
-        for limitations regarding the exporter.
+        See :vtk:`vtkGLTFExporter` for limitations regarding the exporter.
 
         Parameters
         ----------
@@ -918,8 +917,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def export_vrml(self, filename: str | Path) -> None:
         """Export the current rendering scene as a VRML file.
 
-        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
-        for limitations regarding the exporter.
+        See :vtk:`vtkVRMLExporter` for limitations regarding the exporter.
 
         Parameters
         ----------
