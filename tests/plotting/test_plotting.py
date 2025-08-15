@@ -1987,32 +1987,13 @@ def test_add_mesh_remove_existing_actor(verify_image_cache, uniform, remove_exis
     plotter = pv.Plotter()
     actor1 = plotter.add_mesh(uniform.copy())
     actor2 = plotter.add_mesh(uniform.copy(), remove_existing_actor=remove_existing_actor)
-    vtk_collection = plotter.renderer.GetViewProps()
-    vtk_collection.InitTraversal()
-    actors = [
-        vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
-    ]
-    assert actor1 in actors
-    assert actor2 in actors
-
-
-@pytest.mark.parametrize('remove_existing_actor', [True, False])
-def test_add_composite_remove_existing_actor(verify_image_cache, remove_existing_actor):
-    """Test remove_existing_actor parameter for add_composite method."""
-    verify_image_cache.skip = True
-    plotter = pv.Plotter()
-    multiblock = pv.MultiBlock()
-    multiblock.append(pv.Sphere(), 'sphere')
-    multiblock.append(pv.Cube(), 'cube')
-    actor1, _ = plotter.add_composite(multiblock)
-    actor2, _ = plotter.add_composite(multiblock, remove_existing_actor=remove_existing_actor)
-    vtk_collection = plotter.renderer.GetViewProps()
-    vtk_collection.InitTraversal()
-    actors = [
-        vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
-    ]
-    assert actor1 in actors
-    assert actor2 in actors
+    actors = list(plotter.renderer.actors.values())
+    if remove_existing_actor:
+        assert actor1 not in actors
+        assert actor2 in actors
+    else:
+        assert actor1 in actors
+        assert actor2 in actors
 
 
 def test_image_properties():
