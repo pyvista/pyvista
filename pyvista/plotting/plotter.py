@@ -2958,7 +2958,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             texture,
             rgb,
             interpolation,
-            _,  # remove_existing_actor (unused)
+            remove_existing_actor,
             vertex_color,
             vertex_style,
             vertex_opacity,
@@ -3104,6 +3104,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             name=name,
             pickable=pickable,
             render=render,
+            remove_existing_actor=remove_existing_actor,
         )
 
         return actor, mapper
