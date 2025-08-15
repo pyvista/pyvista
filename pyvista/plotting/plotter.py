@@ -314,6 +314,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self._initialized = False
 
+        if platform.system() == 'Darwin':
+            from Foundation import NSAutoreleasePool  # noqa: PLC0415
+
+            self._ns_pool = NSAutoreleasePool.alloc().init()
+        else:
+            self._ns_pool = None
+
         self.mapper: _BaseMapper | None = None
         self.volume: Volume | None = None
         self.text: CornerAnnotation | Text | None = None
@@ -5037,7 +5044,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
+            # Only finalize when not on MacOS. otherwise, segfault due
+            # to NSAutoreleasePool (double release?)
+            if platform.system() != 'Darwin':
+                self.ren_win.Finalize()
+
             del self.ren_win
 
     def close(self) -> None:
@@ -5087,6 +5098,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # gallery to allow it to collect.
         if not pyvista.BUILDING_GALLERY and _ALL_PLOTTERS is not None:
             _ALL_PLOTTERS.pop(self._id_name, None)
+
+        # Patch MacOS memory leak
+        self._ns_pool = None
 
         # this helps managing closed plotters
         self._closed = True
