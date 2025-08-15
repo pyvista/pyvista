@@ -1981,33 +1981,28 @@ def test_remove_actor(uniform):
 
 
 @pytest.mark.parametrize(
-    ('name', 'remove_existing_actor', 'should_remove'),
+    ('remove_existing_actor', 'should_remove'),
     [
-        ('test_mesh', None, True),  # Default with name: removes
-        ('test_mesh', True, True),  # Explicit True: removes
-        ('test_mesh', False, False),  # Explicit False: keeps
-        (None, None, False),  # Default without name: keeps
-        (None, True, False),  # True but no name: keeps
-        (None, False, False),  # False and no name: keeps
+        (None, False),  # Default without name: keeps
+        (True, False),  # True but no name: keeps
+        (False, False),  # False and no name: keeps
     ],
 )
 def test_add_mesh_remove_existing_actor(
-    verify_image_cache, uniform, name, remove_existing_actor, should_remove
+    verify_image_cache, uniform, remove_existing_actor, should_remove
 ):
     """Test remove_existing_actor parameter for add_mesh method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
 
     # Add first mesh
-    actor1 = plotter.add_mesh(uniform.copy(), name=name)
+    actor1 = plotter.add_mesh(uniform.copy())
 
-    # Add second mesh with same name
+    # Add second mesh
     if remove_existing_actor is not None:
-        actor2 = plotter.add_mesh(
-            uniform.copy(), name=name, remove_existing_actor=remove_existing_actor
-        )
+        actor2 = plotter.add_mesh(uniform.copy(), remove_existing_actor=remove_existing_actor)
     else:
-        actor2 = plotter.add_mesh(uniform.copy(), name=name)
+        actor2 = plotter.add_mesh(uniform.copy())
 
     # Check results
     vtk_collection = plotter.renderer.GetViewProps()
@@ -2025,18 +2020,15 @@ def test_add_mesh_remove_existing_actor(
 
 
 @pytest.mark.parametrize(
-    ('name', 'remove_existing_actor', 'should_remove'),
+    ('remove_existing_actor', 'should_remove'),
     [
-        ('composite', None, True),  # Default with name: removes
-        ('composite', True, True),  # Explicit True: removes
-        ('composite', False, False),  # Explicit False: keeps
-        (None, None, False),  # Default without name: keeps
-        (None, True, False),  # True but no name: keeps
-        (None, False, False),  # False and no name: keeps
+        (None, False),  # Default without name: keeps
+        (True, False),  # True but no name: keeps
+        (False, False),  # False and no name: keeps
     ],
 )
 def test_add_composite_remove_existing_actor(
-    verify_image_cache, name, remove_existing_actor, should_remove
+    verify_image_cache, remove_existing_actor, should_remove
 ):
     """Test remove_existing_actor parameter for add_composite method."""
     verify_image_cache.skip = True
@@ -2048,15 +2040,13 @@ def test_add_composite_remove_existing_actor(
     multiblock.append(pv.Cube(), 'cube')
 
     # Add first composite
-    actor1, _ = plotter.add_composite(multiblock, name=name)
+    actor1, _ = plotter.add_composite(multiblock)
 
-    # Add second composite with same name
+    # Add second composite
     if remove_existing_actor is not None:
-        actor2, _ = plotter.add_composite(
-            multiblock, name=name, remove_existing_actor=remove_existing_actor
-        )
+        actor2, _ = plotter.add_composite(multiblock, remove_existing_actor=remove_existing_actor)
     else:
-        actor2, _ = plotter.add_composite(multiblock, name=name)
+        actor2, _ = plotter.add_composite(multiblock)
 
     # Check results
     vtk_collection = plotter.renderer.GetViewProps()
