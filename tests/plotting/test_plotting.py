@@ -1999,10 +1999,10 @@ def test_add_mesh_remove_existing_actor(
     plotter = pv.Plotter()
 
     # Add first mesh
-    actor1 = plotter.add_mesh(uniform.copy(), name=name, color='red')
+    actor1 = plotter.add_mesh(uniform.copy(), name=name)
 
     # Add second mesh with same name
-    kwargs = {'name': name, 'color': 'blue'}
+    kwargs = {'name': name}
     if remove_existing_actor is not None:
         kwargs['remove_existing_actor'] = remove_existing_actor
     actor2 = plotter.add_mesh(uniform.copy(), **kwargs)
@@ -2046,10 +2046,10 @@ def test_add_composite_remove_existing_actor(
     multiblock.append(pv.Cube(), 'cube')
 
     # Add first composite
-    actor1, _ = plotter.add_composite(multiblock, name=name, color='red')
+    actor1, _ = plotter.add_composite(multiblock, name=name)
 
     # Add second composite with same name
-    kwargs = {'name': name, 'color': 'blue'}
+    kwargs = {'name': name}
     if remove_existing_actor is not None:
         kwargs['remove_existing_actor'] = remove_existing_actor
     actor2, _ = plotter.add_composite(multiblock, **kwargs)
