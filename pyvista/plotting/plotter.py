@@ -11,7 +11,6 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
-import ctypes
 from functools import wraps
 import io
 from itertools import cycle
@@ -135,19 +134,23 @@ if TYPE_CHECKING:
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
 
+# for MacOS memory leak
+_GLOBAL_POOL = None
+_POOL_REFS = 0
+_ALLOW_DRAIN = (
+    platform.system() == 'Darwin'
+    and os.environ.get('PYVISTA_NO_DRAIN_MAC_OS', 'false').lower() != 'true'
+)
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
-    # this won't work under wayland
-    try:
-        X11 = ctypes.CDLL('libX11.so')
-        X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
-    except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
-        KILL_DISPLAY = False
+    from pyvista.core.errors import DeprecationError
+
+    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
+    DeprecationError(msg)
 
 
 def close_all() -> bool:
@@ -314,12 +317,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self._initialized = False
 
-        if platform.system() == 'Darwin':
+        # for MacOS memory leak
+        if platform.system() == 'Darwin':  # pragma: no cover
             from Foundation import NSAutoreleasePool  # noqa: PLC0415
 
-            self._ns_pool = NSAutoreleasePool.alloc().init()
-        else:
-            self._ns_pool = None
+            global _GLOBAL_POOL, _POOL_REFS  # noqa: PLW0603
+            if _GLOBAL_POOL is None and _ALLOW_DRAIN:
+                _GLOBAL_POOL = NSAutoreleasePool.alloc().init()
+            _POOL_REFS += 1
 
         self.mapper: _BaseMapper | None = None
         self.volume: Volume | None = None
@@ -5076,16 +5081,10 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # grab the display id before clearing the window
         # this is an experimental feature
-        if KILL_DISPLAY:  # pragma: no cover
-            disp_id = None
-            if self.render_window is not None:
-                disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
 
         if self.iren is not None:
             self.iren.close()
-            if KILL_DISPLAY:  # pragma: no cover
-                _kill_display(disp_id)
             self.iren = None
 
         # end movie
@@ -5099,8 +5098,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if not pyvista.BUILDING_GALLERY and _ALL_PLOTTERS is not None:
             _ALL_PLOTTERS.pop(self._id_name, None)
 
-        # Patch MacOS memory leak
-        self._ns_pool = None
+        # Address MacOS memory leak
+
+        if _ALLOW_DRAIN:
+            global _GLOBAL_POOL, _POOL_REFS  # noqa: PLW0603
+            _POOL_REFS -= 1
+            if _GLOBAL_POOL and _POOL_REFS == 0:
+                # only deallocate (and trigger drain) when there are no plotters remaining
+                _GLOBAL_POOL = None
 
         # this helps managing closed plotters
         self._closed = True
@@ -7476,29 +7481,3 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
 _ALL_PLOTTERS: dict[str, BasePlotter] = {}
-
-
-def _kill_display(disp_id: str | None) -> None:  # pragma: no cover
-    """Forcibly close the display on Linux.
-
-    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
-
-    And more details into why...
-    https://stackoverflow.com/questions/64811503
-
-    Notes
-    -----
-    This is to be used experimentally and is known to cause issues
-    on `pyvistaqt`
-
-    """
-    if platform.system() != 'Linux':
-        msg = 'This method only works on Linux'
-        raise OSError(msg)
-
-    if disp_id:
-        cdisp_id = int(disp_id[1:].split('_')[0], 16)
-
-        # this is unsafe as events might be queued, but sometimes the
-        # window fails to close if we don't just close it
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()
