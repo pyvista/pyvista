@@ -1980,6 +1980,113 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
+@pytest.mark.parametrize(
+    ('name', 'remove_existing_actor', 'should_remove_first'),
+    [
+        ('test_mesh', None, True),  # Default with name: removes
+        ('test_mesh', True, True),  # Explicit True: removes
+        ('test_mesh', False, False),  # Explicit False: keeps
+        (None, None, False),  # Default without name: keeps
+        (None, True, False),  # True but no name: keeps
+        (None, False, False),  # False and no name: keeps
+    ],
+)
+def test_remove_existing_actor_parameter(
+    verify_image_cache, uniform, name, remove_existing_actor, should_remove_first
+):
+    verify_image_cache.skip = True
+    plotter = pv.Plotter()
+
+    # Add first actor
+    actor1 = plotter.add_mesh(uniform.copy(), name=name, color='red')
+
+    # Get the actual VTK collection count (not the dict count)
+    vtk_collection = plotter.renderer.GetViewProps()
+    initial_vtk_count = vtk_collection.GetNumberOfItems()
+
+    # Add second actor with same name
+    kwargs = {'name': name, 'color': 'blue'}
+    if remove_existing_actor is not None:
+        kwargs['remove_existing_actor'] = remove_existing_actor
+    actor2 = plotter.add_mesh(uniform.copy(), **kwargs)
+
+    final_vtk_count = vtk_collection.GetNumberOfItems()
+
+    # Check if first actor was removed based on expected behavior
+    if should_remove_first:
+        # First actor should be removed, only second remains
+        assert final_vtk_count == initial_vtk_count
+        # Check actor1 is not in the VTK collection
+        vtk_collection.InitTraversal()
+        actors_in_collection = [vtk_collection.GetNextProp() for _ in range(final_vtk_count)]
+        assert actor1 not in actors_in_collection
+        assert actor2 in actors_in_collection
+    else:
+        # Both actors should be present in the VTK collection
+        assert final_vtk_count == initial_vtk_count + 1
+        # Check both actors are in the VTK collection
+        vtk_collection.InitTraversal()
+        actors_in_collection = [vtk_collection.GetNextProp() for _ in range(final_vtk_count)]
+        assert actor1 in actors_in_collection
+        assert actor2 in actors_in_collection
+
+
+@pytest.mark.parametrize(
+    ('name', 'remove_existing_actor', 'should_remove_first'),
+    [
+        ('composite', None, True),  # Default with name: removes
+        ('composite', True, True),  # Explicit True: removes
+        ('composite', False, False),  # Explicit False: keeps
+        (None, None, False),  # Default without name: keeps
+        (None, True, False),  # True but no name: keeps
+        (None, False, False),  # False and no name: keeps
+    ],
+)
+def test_remove_existing_actor_composite(
+    verify_image_cache, name, remove_existing_actor, should_remove_first
+):
+    verify_image_cache.skip = True
+    plotter = pv.Plotter()
+
+    # Create a multiblock dataset
+    multiblock = pv.MultiBlock()
+    multiblock.append(pv.Sphere(), 'sphere')
+    multiblock.append(pv.Cube(), 'cube')
+
+    # Add first composite
+    actor1, _ = plotter.add_composite(multiblock, name=name, color='red')
+
+    # Get the actual VTK collection count (not the dict count)
+    vtk_collection = plotter.renderer.GetViewProps()
+    initial_vtk_count = vtk_collection.GetNumberOfItems()
+
+    # Add second composite with same name
+    kwargs = {'name': name, 'color': 'blue'}
+    if remove_existing_actor is not None:
+        kwargs['remove_existing_actor'] = remove_existing_actor
+    actor2, _ = plotter.add_composite(multiblock, **kwargs)
+
+    final_vtk_count = vtk_collection.GetNumberOfItems()
+
+    # Check if first actor was removed based on expected behavior
+    if should_remove_first:
+        # First actor should be removed, only second remains
+        assert final_vtk_count == initial_vtk_count
+        # Check actor1 is not in the VTK collection
+        vtk_collection.InitTraversal()
+        actors_in_collection = [vtk_collection.GetNextProp() for _ in range(final_vtk_count)]
+        assert actor1 not in actors_in_collection
+        assert actor2 in actors_in_collection
+    else:
+        # Both actors should be present in the VTK collection
+        assert final_vtk_count == initial_vtk_count + 1
+        # Check both actors are in the VTK collection
+        vtk_collection.InitTraversal()
+        actors_in_collection = [vtk_collection.GetNextProp() for _ in range(final_vtk_count)]
+        assert actor1 in actors_in_collection
+        assert actor2 in actors_in_collection
+
+
 def test_image_properties():
     mesh = examples.load_uniform()
     p = pv.Plotter()
