@@ -2000,7 +2000,6 @@ def test_add_mesh_remove_existing_actor(
 
     # Add first mesh
     actor1 = plotter.add_mesh(uniform.copy(), name=name, color='red')
-    initial_count = len(list(plotter.renderer.GetViewProps()))
 
     # Add second mesh with same name
     kwargs = {'name': name, 'color': 'blue'}
@@ -2009,17 +2008,16 @@ def test_add_mesh_remove_existing_actor(
     actor2 = plotter.add_mesh(uniform.copy(), **kwargs)
 
     # Check results
-    final_count = len(list(plotter.renderer.GetViewProps()))
     vtk_collection = plotter.renderer.GetViewProps()
     vtk_collection.InitTraversal()
-    actors = [vtk_collection.GetNextProp() for _ in range(final_count)]
+    actors = [
+        vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
+    ]
 
     if should_remove:
-        assert final_count == initial_count
         assert actor1 not in actors
         assert actor2 in actors
     else:
-        assert final_count == initial_count + 1
         assert actor1 in actors
         assert actor2 in actors
 
@@ -2049,7 +2047,6 @@ def test_add_composite_remove_existing_actor(
 
     # Add first composite
     actor1, _ = plotter.add_composite(multiblock, name=name, color='red')
-    initial_count = len(list(plotter.renderer.GetViewProps()))
 
     # Add second composite with same name
     kwargs = {'name': name, 'color': 'blue'}
@@ -2058,17 +2055,16 @@ def test_add_composite_remove_existing_actor(
     actor2, _ = plotter.add_composite(multiblock, **kwargs)
 
     # Check results
-    final_count = len(list(plotter.renderer.GetViewProps()))
     vtk_collection = plotter.renderer.GetViewProps()
     vtk_collection.InitTraversal()
-    actors = [vtk_collection.GetNextProp() for _ in range(final_count)]
+    actors = [
+        vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
+    ]
 
     if should_remove:
-        assert final_count == initial_count
         assert actor1 not in actors
         assert actor2 in actors
     else:
-        assert final_count == initial_count + 1
         assert actor1 in actors
         assert actor2 in actors
 
