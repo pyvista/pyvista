@@ -1018,13 +1018,17 @@ class Renderer(
             if name and name in self._actors:
                 rv = self.remove_actor(name, reset_camera=False, render=False)
             elif len(self._actors) > 0:
-                # Remove the most recently added mesh actor when no name is provided
-                # Look for the last actor that is not a scalar bar
-                for actor_name in reversed(list(self._actors.keys())):
+                # Remove all mesh actors when no name is provided
+                # Look for all actors that are not scalar bars
+                actors_to_remove = []
+                for actor_name in list(self._actors.keys()):
                     existing_actor = self._actors[actor_name]
                     if not isinstance(existing_actor, _vtk.vtkScalarBarActor):
-                        rv = self.remove_actor(actor_name, reset_camera=False, render=False)
-                        break
+                        actors_to_remove.append(actor_name)
+
+                # Remove all mesh actors
+                for actor_name in actors_to_remove:
+                    self.remove_actor(actor_name, reset_camera=False, render=False)
 
         if name is None:
             name = (
