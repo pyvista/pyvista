@@ -1425,3 +1425,57 @@ support those Python versions. As much as we would prefer to follow
 .. _Python versions: https://endoflife.date/python
 .. _VTK versions: https://pypi.org/project/vtk/
 .. _SPEC 0: https://scientific-python.org/specs/spec-0000/
+
+
+Self-hosted runners
+-------------------
+GitHub hosted runners are the preferred way of running PyVista's CI. However
+given the volume of development, the number of workflows, and the need to test
+across several operating systems, it may be necessary to use self-hosted
+runners due to GitHub's concurrency limits.
+
+Any PyVista self-hosted runner must:
+
+- Be as compatible as possible with a GitHub hosted runner.
+- Use labels to denote hardware and software and match GitHub's labels whenever
+  possible (e.g. ``GPU``, ``ubuntu-22.04``, ``macos-15``)
+- Be secure against intrusion and follow best cybersecurity practices (e.g. no
+  ``sudo`` permissions, dedicated and isolated VLAN)
+- Require a compatible CI/CD workflow.
+- Provide runner documentation here.
+- Be on a host with a battery backup.
+
+Setting up a runner on bare metal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Visit PyVista's `Create self-hosted runner
+<https://github.com/organizations/pyvista/settings/actions/runners/new>`_.
+
+Follow the directions to download, run and install. If the runner is intended
+to run public workflows, add the runner to the ``pyvista-self-hosted`` group.
+
+Follow your OSes instructions to enable a service for the runner (if
+applicable) to ensure the runner restarts should it be interrupted.
+
+PyVista Hosts and Runners
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Apple 2024 Mac mini M4
+^^^^^^^^^^^^^^^^^^^^^^
+- CPU: 10-core CPU ARM64 (Apple Silicon)
+- GPU: 10-core GPU
+- Storage: 256 GB SSD
+- Memory: 16 GB Unified Memory
+- OS: MacOS 15
+
+With the following runners
+- macos-arm-runner-0
+- macos-arm-runner-1
+- macos-arm-runner-2
+- macos-arm-runner-3
+- macos-arm-runner-4
+
+**Notes**
+- Testing showed peak memory usage of ~2GB per runner for the
+  ``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
+  the OS, there's room to spare. Should we encounter memory issues we can disable
+  runners.
