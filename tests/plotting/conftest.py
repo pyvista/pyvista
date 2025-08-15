@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import gc
 import inspect
+import platform
 
 import pytest
 
@@ -15,6 +16,7 @@ from pyvista.plotting import system_supports_plotting
 # these are set here because we only need them for plotting tests
 pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
+APPLE_SILICON = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 # Configure skip_plotting marker
@@ -39,6 +41,7 @@ def _is_vtk(obj):
 
 
 @pytest.fixture(autouse=True)
+@pytest.mark.skipif(not APPLE_SILICON, reason='Memory leak fix is only for Apple Silicon')
 def macos_memory_leak(request):  # noqa: ARG001
     # Without this, only 500 render windows can be created in a single Python
     # process on MacOS using Apple silicon
