@@ -39,6 +39,20 @@ def _is_vtk(obj):
 
 
 @pytest.fixture(autouse=True)
+def macos_memory_leak(request):  # noqa: ARG001
+    # Without this, only 500 render windows can be created in a single Python
+    # process on MacOS using Apple silicon
+    # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+    from Foundation import NSAutoreleasePool  # for macOS
+
+    pool = NSAutoreleasePool.alloc().init()
+    yield
+
+    # pool goes out of scope and resources get collected
+    del pool
+
+
+@pytest.fixture(autouse=True)
 def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
     if request.node.get_closest_marker('skip_check_gc'):

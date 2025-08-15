@@ -134,17 +134,9 @@ if TYPE_CHECKING:
     from pyvista.trame.jupyter import EmbeddableWidget
     from pyvista.trame.jupyter import Widget
 
-# for MacOS memory leak
-_GLOBAL_POOL = None
-_POOL_REFS = 0
-_ALLOW_DRAIN = (
-    platform.system() == 'Darwin'
-    and os.environ.get('PYVISTA_NO_DRAIN_MAC_OS', 'false').lower() != 'true'
-)
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
-# EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
     from pyvista.core.errors import DeprecationError
@@ -316,15 +308,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
         self._initialized = False
-
-        # for MacOS memory leak
-        if platform.system() == 'Darwin':  # pragma: no cover
-            from Foundation import NSAutoreleasePool  # noqa: PLC0415
-
-            global _GLOBAL_POOL, _POOL_REFS  # noqa: PLW0603
-            if _GLOBAL_POOL is None and _ALLOW_DRAIN:
-                _GLOBAL_POOL = NSAutoreleasePool.alloc().init()
-            _POOL_REFS += 1
 
         self.mapper: _BaseMapper | None = None
         self.volume: Volume | None = None
@@ -5049,9 +5032,11 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
-            # Only finalize when not on MacOS. otherwise, segfault due
-            # to NSAutoreleasePool (double release?)
             if platform.system() != 'Darwin':
+                # Up to vtk==9.5.0, render windows aren't closed on MacOS,
+                # so the resources are not freed making this unnecessary. We need this
+                # disabled so we can use NSAutoreleasePool.
+                # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
                 self.ren_win.Finalize()
 
             del self.ren_win
@@ -5097,15 +5082,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # gallery to allow it to collect.
         if not pyvista.BUILDING_GALLERY and _ALL_PLOTTERS is not None:
             _ALL_PLOTTERS.pop(self._id_name, None)
-
-        # Address MacOS memory leak
-
-        if _ALLOW_DRAIN:
-            global _GLOBAL_POOL, _POOL_REFS  # noqa: PLW0603
-            _POOL_REFS -= 1
-            if _GLOBAL_POOL and _POOL_REFS == 0:
-                # only deallocate (and trigger drain) when there are no plotters remaining
-                _GLOBAL_POOL = None
 
         # this helps managing closed plotters
         self._closed = True

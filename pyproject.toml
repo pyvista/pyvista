@@ -18,7 +18,6 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
-  'PyObjc; sys_platform == "darwin"', # see pyvista/pulls/7828
   'matplotlib>=3.0.1',
   'numpy>=1.21.0', # minimum typing support
   'pillow',
@@ -71,6 +70,7 @@ typing = [
 ]
 
 test = [
+  'PyObjc; sys_platform == "darwin"', # see pyvista/pulls/7828
   'cmcrameri<1.10.0',
   'cmocean<4.0.4',
   'colorcet<3.2.0',
