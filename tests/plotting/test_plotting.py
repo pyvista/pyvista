@@ -1980,116 +1980,97 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
-def _get_vtk_collection_actors(vtk_collection):
-    """Helper to get all actors from VTK collection."""
-    vtk_collection.InitTraversal()
-    return [vtk_collection.GetNextProp() for _ in range(vtk_collection.GetNumberOfItems())]
-
-
-def _assert_actor_presence(vtk_collection, actor1, actor2, should_remove_first, initial_count):
-    """Helper to assert actor presence in VTK collection based on expected behavior."""
-    final_count = vtk_collection.GetNumberOfItems()
-    actors_in_collection = _get_vtk_collection_actors(vtk_collection)
-
-    if should_remove_first:
-        # First actor should be removed, only second remains
-        assert final_count == initial_count, f'Expected {initial_count} actors, got {final_count}'
-        assert actor1 not in actors_in_collection, 'First actor should be removed'
-        assert actor2 in actors_in_collection, 'Second actor should be present'
-    else:
-        # Both actors should be present
-        assert final_count == initial_count + 1, (
-            f'Expected {initial_count + 1} actors, got {final_count}'
-        )
-        assert actor1 in actors_in_collection, 'First actor should be present'
-        assert actor2 in actors_in_collection, 'Second actor should be present'
-
-
-# Test parameters for remove_existing_actor behavior
-REMOVE_EXISTING_ACTOR_PARAMS = [
-    # Named actor tests - should remove by default or when explicit True
-    pytest.param('test_actor', None, 'remove', id='named_default_removes'),
-    pytest.param('test_actor', True, 'remove', id='named_explicit_true_removes'),
-    pytest.param('test_actor', False, 'keep', id='named_explicit_false_keeps'),
-    # Unnamed actor tests - should always keep both actors
-    pytest.param(None, None, 'keep', id='unnamed_default_keeps'),
-    pytest.param(None, True, 'keep', id='unnamed_true_keeps'),
-    pytest.param(None, False, 'keep', id='unnamed_false_keeps'),
-]
-
-
-def _test_remove_existing_actor_behavior(
-    verify_image_cache, add_func, data, name, remove_existing_actor, expected_behavior
+@pytest.mark.parametrize(
+    ('name', 'remove_existing_actor', 'should_remove'),
+    [
+        ('test_mesh', None, True),  # Default with name: removes
+        ('test_mesh', True, True),  # Explicit True: removes
+        ('test_mesh', False, False),  # Explicit False: keeps
+        (None, None, False),  # Default without name: keeps
+        (None, True, False),  # True but no name: keeps
+        (None, False, False),  # False and no name: keeps
+    ],
+)
+def test_add_mesh_remove_existing_actor(
+    verify_image_cache, uniform, name, remove_existing_actor, should_remove
 ):
-    """Common test logic for remove_existing_actor parameter."""
+    """Test remove_existing_actor parameter for add_mesh method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
 
-    # Add first actor
-    result1 = add_func(plotter, data, name=name, color='red')
-    actor1 = result1[0] if isinstance(result1, tuple) else result1
+    # Add first mesh
+    actor1 = plotter.add_mesh(uniform.copy(), name=name, color='red')
+    initial_count = len(list(plotter.renderer.GetViewProps()))
 
-    vtk_collection = plotter.renderer.GetViewProps()
-    initial_count = vtk_collection.GetNumberOfItems()
-
-    # Add second actor with same name
+    # Add second mesh with same name
     kwargs = {'name': name, 'color': 'blue'}
     if remove_existing_actor is not None:
         kwargs['remove_existing_actor'] = remove_existing_actor
-    result2 = add_func(plotter, data, **kwargs)
-    actor2 = result2[0] if isinstance(result2, tuple) else result2
+    actor2 = plotter.add_mesh(uniform.copy(), **kwargs)
 
-    # Verify behavior
-    should_remove_first = expected_behavior == 'remove'
-    _assert_actor_presence(vtk_collection, actor1, actor2, should_remove_first, initial_count)
+    # Check results
+    final_count = len(list(plotter.renderer.GetViewProps()))
+    vtk_collection = plotter.renderer.GetViewProps()
+    vtk_collection.InitTraversal()
+    actors = [vtk_collection.GetNextProp() for _ in range(final_count)]
 
-
-@pytest.mark.parametrize(
-    ('name', 'remove_existing_actor', 'expected_behavior'),
-    REMOVE_EXISTING_ACTOR_PARAMS,
-)
-def test_add_mesh_remove_existing_actor(
-    verify_image_cache, uniform, name, remove_existing_actor, expected_behavior
-):
-    """Test remove_existing_actor parameter for add_mesh method."""
-
-    def add_mesh_wrapper(plotter, data, **kwargs):
-        return plotter.add_mesh(data.copy(), **kwargs)
-
-    _test_remove_existing_actor_behavior(
-        verify_image_cache,
-        add_mesh_wrapper,
-        uniform,
-        name,
-        remove_existing_actor,
-        expected_behavior,
-    )
+    if should_remove:
+        assert final_count == initial_count
+        assert actor1 not in actors
+        assert actor2 in actors
+    else:
+        assert final_count == initial_count + 1
+        assert actor1 in actors
+        assert actor2 in actors
 
 
 @pytest.mark.parametrize(
-    ('name', 'remove_existing_actor', 'expected_behavior'),
-    REMOVE_EXISTING_ACTOR_PARAMS,
+    ('name', 'remove_existing_actor', 'should_remove'),
+    [
+        ('composite', None, True),  # Default with name: removes
+        ('composite', True, True),  # Explicit True: removes
+        ('composite', False, False),  # Explicit False: keeps
+        (None, None, False),  # Default without name: keeps
+        (None, True, False),  # True but no name: keeps
+        (None, False, False),  # False and no name: keeps
+    ],
 )
 def test_add_composite_remove_existing_actor(
-    verify_image_cache, name, remove_existing_actor, expected_behavior
+    verify_image_cache, name, remove_existing_actor, should_remove
 ):
     """Test remove_existing_actor parameter for add_composite method."""
+    verify_image_cache.skip = True
+    plotter = pv.Plotter()
+
     # Create test data
     multiblock = pv.MultiBlock()
     multiblock.append(pv.Sphere(), 'sphere')
     multiblock.append(pv.Cube(), 'cube')
 
-    def add_composite_wrapper(plotter, data, **kwargs):
-        return plotter.add_composite(data, **kwargs)
+    # Add first composite
+    actor1, _ = plotter.add_composite(multiblock, name=name, color='red')
+    initial_count = len(list(plotter.renderer.GetViewProps()))
 
-    _test_remove_existing_actor_behavior(
-        verify_image_cache,
-        add_composite_wrapper,
-        multiblock,
-        name,
-        remove_existing_actor,
-        expected_behavior,
-    )
+    # Add second composite with same name
+    kwargs = {'name': name, 'color': 'blue'}
+    if remove_existing_actor is not None:
+        kwargs['remove_existing_actor'] = remove_existing_actor
+    actor2, _ = plotter.add_composite(multiblock, **kwargs)
+
+    # Check results
+    final_count = len(list(plotter.renderer.GetViewProps()))
+    vtk_collection = plotter.renderer.GetViewProps()
+    vtk_collection.InitTraversal()
+    actors = [vtk_collection.GetNextProp() for _ in range(final_count)]
+
+    if should_remove:
+        assert final_count == initial_count
+        assert actor1 not in actors
+        assert actor2 in actors
+    else:
+        assert final_count == initial_count + 1
+        assert actor1 in actors
+        assert actor2 in actors
 
 
 def test_image_properties():
