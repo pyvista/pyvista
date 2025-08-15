@@ -1983,8 +1983,8 @@ def test_remove_actor(uniform):
 @pytest.mark.parametrize(
     ('remove_existing_actor', 'should_remove'),
     [
-        (True, False),  # True but no name: keeps
-        (False, False),  # False and no name: keeps
+        (True, False),
+        (False, False),
     ],
 )
 def test_add_mesh_remove_existing_actor(
@@ -1993,20 +1993,13 @@ def test_add_mesh_remove_existing_actor(
     """Test remove_existing_actor parameter for add_mesh method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
-
-    # Add first mesh
     actor1 = plotter.add_mesh(uniform.copy())
-
-    # Add second mesh
     actor2 = plotter.add_mesh(uniform.copy(), remove_existing_actor=remove_existing_actor)
-
-    # Check results
     vtk_collection = plotter.renderer.GetViewProps()
     vtk_collection.InitTraversal()
     actors = [
         vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
     ]
-
     if should_remove:
         assert actor1 not in actors
         assert actor2 in actors
@@ -2018,8 +2011,8 @@ def test_add_mesh_remove_existing_actor(
 @pytest.mark.parametrize(
     ('remove_existing_actor', 'should_remove'),
     [
-        (True, False),  # True but no name: keeps
-        (False, False),  # False and no name: keeps
+        (True, False),
+        (False, False),
     ],
 )
 def test_add_composite_remove_existing_actor(
@@ -2028,25 +2021,16 @@ def test_add_composite_remove_existing_actor(
     """Test remove_existing_actor parameter for add_composite method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
-
-    # Create test data
     multiblock = pv.MultiBlock()
     multiblock.append(pv.Sphere(), 'sphere')
     multiblock.append(pv.Cube(), 'cube')
-
-    # Add first composite
     actor1, _ = plotter.add_composite(multiblock)
-
-    # Add second composite
     actor2, _ = plotter.add_composite(multiblock, remove_existing_actor=remove_existing_actor)
-
-    # Check results
     vtk_collection = plotter.renderer.GetViewProps()
     vtk_collection.InitTraversal()
     actors = [
         vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
     ]
-
     if should_remove:
         assert actor1 not in actors
         assert actor2 in actors
