@@ -1985,8 +1985,8 @@ def test_add_mesh_remove_existing_actor(verify_image_cache, uniform, remove_exis
     """Test remove_existing_actor parameter for add_mesh method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
-    actor1 = plotter.add_mesh(uniform.copy())
-    actor2 = plotter.add_mesh(uniform.copy(), remove_existing_actor=remove_existing_actor)
+    actor1 = plotter.add_mesh(uniform.copy(), name='test_mesh')
+    actor2 = plotter.add_mesh(uniform.copy(), name='test_mesh', remove_existing_actor=remove_existing_actor)
     actors = list(plotter.renderer.actors.values())
     if remove_existing_actor:
         assert actor1 not in actors
