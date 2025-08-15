@@ -2002,10 +2002,12 @@ def test_add_mesh_remove_existing_actor(
     actor1 = plotter.add_mesh(uniform.copy(), name=name)
 
     # Add second mesh with same name
-    kwargs = {'name': name}
     if remove_existing_actor is not None:
-        kwargs['remove_existing_actor'] = remove_existing_actor
-    actor2 = plotter.add_mesh(uniform.copy(), **kwargs)
+        actor2 = plotter.add_mesh(
+            uniform.copy(), name=name, remove_existing_actor=remove_existing_actor
+        )
+    else:
+        actor2 = plotter.add_mesh(uniform.copy(), name=name)
 
     # Check results
     vtk_collection = plotter.renderer.GetViewProps()
@@ -2049,10 +2051,12 @@ def test_add_composite_remove_existing_actor(
     actor1, _ = plotter.add_composite(multiblock, name=name)
 
     # Add second composite with same name
-    kwargs = {'name': name}
     if remove_existing_actor is not None:
-        kwargs['remove_existing_actor'] = remove_existing_actor
-    actor2, _ = plotter.add_composite(multiblock, **kwargs)
+        actor2, _ = plotter.add_composite(
+            multiblock, name=name, remove_existing_actor=remove_existing_actor
+        )
+    else:
+        actor2, _ = plotter.add_composite(multiblock, name=name)
 
     # Check results
     vtk_collection = plotter.renderer.GetViewProps()
