@@ -1006,24 +1006,13 @@ class Renderer(
             Actor properties.
 
         """
+        # Remove actor by that name if present
+        rv = None
+        if name and remove_existing_actor:
+            rv = self.remove_actor(name, reset_camera=False, render=False)
+
         if isinstance(actor, _vtk.vtkMapper):
             actor = Actor(mapper=actor, name=name)
-
-        # Only apply remove_existing_actor logic for mesh actors, not scalar bars
-        rv = None
-        if remove_existing_actor and not isinstance(actor, _vtk.vtkScalarBarActor):
-            if name and name in self._actors:
-                # Remove specific named actor
-                rv = self.remove_actor(name, reset_camera=False, render=False)
-            elif self._actors:
-                # Remove all mesh actors when no name is provided
-                mesh_actors = [
-                    actor_name
-                    for actor_name, existing_actor in self._actors.items()
-                    if not isinstance(existing_actor, _vtk.vtkScalarBarActor)
-                ]
-                for actor_name in mesh_actors:
-                    self.remove_actor(actor_name, reset_camera=False, render=False)
 
         if name is None:
             name = (

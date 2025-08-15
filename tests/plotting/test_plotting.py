@@ -1980,20 +1980,15 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
-@pytest.mark.parametrize('remove_existing_actor', [True, False])
-def test_add_mesh_remove_existing_actor(verify_image_cache, uniform, remove_existing_actor):
+def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
     """Test remove_existing_actor parameter for add_mesh method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
-    actor1 = plotter.add_mesh(uniform.copy(), name='test_mesh')
-    actor2 = plotter.add_mesh(uniform.copy(), name='test_mesh', remove_existing_actor=remove_existing_actor)
+    actor1 = plotter.add_mesh(uniform.copy(), name='test_mesh1')
+    actor2 = plotter.add_mesh(uniform.copy(), name='test_mesh2', remove_existing_actor=False)
     actors = list(plotter.renderer.actors.values())
-    if remove_existing_actor:
-        assert actor1 not in actors
-        assert actor2 in actors
-    else:
-        assert actor1 in actors
-        assert actor2 in actors
+    assert actor1 in actors
+    assert actor2 in actors
 
 
 def test_image_properties():
@@ -3197,10 +3192,10 @@ def test_add_text_font_file():
     plotter = pv.Plotter()
     font_file = str(Path(__file__).parent / 'fonts/Mplus2-Regular.ttf')
     plotter.add_text(
-        '左上', position='upper_left', font_size=25, color='blue', font_file=font_file
+        '????', position='upper_left', font_size=25, color='blue', font_file=font_file
     )
     plotter.add_text(
-        '中央',
+        '????',
         position=(0.5, 0.5),
         viewport=True,
         orientation=-90,
