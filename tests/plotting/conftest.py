@@ -40,19 +40,20 @@ def _is_vtk(obj):
         return False
 
 
-@pytest.fixture(autouse=True)
-@pytest.mark.skipif(not APPLE_SILICON, reason='Memory leak fix is only for Apple Silicon')
-def macos_memory_leak(request):  # noqa: ARG001
-    # Without this, only 500 render windows can be created in a single Python
-    # process on MacOS using Apple silicon
-    # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713
-    from Foundation import NSAutoreleasePool  # for macOS
+if APPLE_SILICON:
 
-    pool = NSAutoreleasePool.alloc().init()
-    yield
+    @pytest.fixture(autouse=True)
+    def macos_memory_leak(request):  # noqa: ARG001
+        # Without this, only 500 render windows can be created in a single Python
+        # process on MacOS using Apple silicon
+        # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+        from Foundation import NSAutoreleasePool  # for macOS
 
-    # pool goes out of scope and resources get collected
-    del pool
+        pool = NSAutoreleasePool.alloc().init()
+        yield
+
+        # pool goes out of scope and resources get collected
+        del pool
 
 
 @pytest.fixture(autouse=True)

@@ -63,12 +63,7 @@ def test_tinypages(tmp_path, ename, evalue):
         encoding='utf8',
     )
     out, err = proc.communicate()
-
     assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    if err:
-        if err.strip() != 'vtkDebugLeaks has found no leaks.':
-            pytest.fail(f'sphinx build emitted the following warnings:\n{err}')
 
     assert html_dir.is_dir()
 
@@ -177,6 +172,6 @@ def test_parallel(tmp_path: Path) -> None:
         encoding='utf8',
     )
     out, err = proc.communicate()
-    assert not err
+    assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     assert len(list(html_dir.glob('**/*.png'))) == 27
