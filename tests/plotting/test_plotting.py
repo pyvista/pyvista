@@ -1980,16 +1980,8 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
-@pytest.mark.parametrize(
-    ('remove_existing_actor', 'should_remove'),
-    [
-        (True, False),
-        (False, False),
-    ],
-)
-def test_add_mesh_remove_existing_actor(
-    verify_image_cache, uniform, remove_existing_actor, should_remove
-):
+@pytest.mark.parametrize('remove_existing_actor', [True, False])
+def test_add_mesh_remove_existing_actor(verify_image_cache, uniform, remove_existing_actor):
     """Test remove_existing_actor parameter for add_mesh method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
@@ -2000,24 +1992,12 @@ def test_add_mesh_remove_existing_actor(
     actors = [
         vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
     ]
-    if should_remove:
-        assert actor1 not in actors
-        assert actor2 in actors
-    else:
-        assert actor1 in actors
-        assert actor2 in actors
+    assert actor1 in actors
+    assert actor2 in actors
 
 
-@pytest.mark.parametrize(
-    ('remove_existing_actor', 'should_remove'),
-    [
-        (True, False),
-        (False, False),
-    ],
-)
-def test_add_composite_remove_existing_actor(
-    verify_image_cache, remove_existing_actor, should_remove
-):
+@pytest.mark.parametrize('remove_existing_actor', [True, False])
+def test_add_composite_remove_existing_actor(verify_image_cache, remove_existing_actor):
     """Test remove_existing_actor parameter for add_composite method."""
     verify_image_cache.skip = True
     plotter = pv.Plotter()
@@ -2031,12 +2011,8 @@ def test_add_composite_remove_existing_actor(
     actors = [
         vtk_collection.GetNextProp() for _ in range(len(list(plotter.renderer.GetViewProps())))
     ]
-    if should_remove:
-        assert actor1 not in actors
-        assert actor2 in actors
-    else:
-        assert actor1 in actors
-        assert actor2 in actors
+    assert actor1 in actors
+    assert actor2 in actors
 
 
 def test_image_properties():
