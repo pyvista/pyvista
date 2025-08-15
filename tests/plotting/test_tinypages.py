@@ -133,6 +133,7 @@ def test_tinypages(tmp_path, ename, evalue):
 
 
 @pytest.mark.skip_windows('path issues on Azure Windows CI')
+@pytest.mark.skip_mac('Apple Silicon issues with "buildPipelineState failed"')
 @pytest.mark.skip_check_gc
 def test_parallel(tmp_path: Path) -> None:
     """Ensure that labeling image serial fails."""

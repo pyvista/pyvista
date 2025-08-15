@@ -80,9 +80,9 @@ jobs:
       matrix:
         include:
           # GitHub-hosted runner configuration
-          # - os: macos-13
-          #   python-version: "3.9"
-          #   runner-labels: "macos-13"
+          - os: macos-13
+            python-version: "3.9"
+            runner-labels: "macos-13"
 
           # Self-hosted runner configurations
           - os: self-hosted
