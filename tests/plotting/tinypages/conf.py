@@ -99,3 +99,6 @@ def _str_examples(self):
 
 
 SphinxDocString._str_examples = _str_examples
+
+# required for testing
+pyvista_plot_use_counter = os.environ.get('PYVISTA_PLOT_USE_COUNTER', 'true').lower() == 'true'
