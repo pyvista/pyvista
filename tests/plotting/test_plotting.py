@@ -3192,7 +3192,7 @@ def test_add_text_font_file():
     plotter = pv.Plotter()
     font_file = str(Path(__file__).parent / 'fonts/Mplus2-Regular.ttf')
     plotter.add_text(
-        '????', position='upper_left', font_size=25, color='blue', font_file=font_file
+        '左上', position='upper_left', font_size=25, color='blue', font_file=font_file
     )
     plotter.add_text(
         '????',
