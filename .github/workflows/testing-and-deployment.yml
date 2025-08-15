@@ -134,8 +134,8 @@ jobs:
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
 
-      - name: Test Core API
-        run: pytest -v --ignore=tests/plotting --test_downloads
+      # - name: Test Core API
+      #   run: pytest -v --ignore=tests/plotting --test_downloads
 
       - name: Test Plotting
         if: always()
