@@ -119,12 +119,12 @@ jobs:
           /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
           echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-      - name: Restore example data cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
+      # - name: Restore example data cache
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: ${{ env.CACHE_FOLDER_NAME }}
+      #     key: ${{ needs.cache-vtk-data.outputs.key }}
+      #     enableCrossOsArchive: true
 
       - name: Install PyVista test dependencies
         run: |
