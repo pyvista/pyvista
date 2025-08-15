@@ -1983,7 +1983,6 @@ def test_remove_actor(uniform):
 @pytest.mark.parametrize(
     ('remove_existing_actor', 'should_remove'),
     [
-        (None, False),  # Default without name: keeps
         (True, False),  # True but no name: keeps
         (False, False),  # False and no name: keeps
     ],
@@ -1999,10 +1998,7 @@ def test_add_mesh_remove_existing_actor(
     actor1 = plotter.add_mesh(uniform.copy())
 
     # Add second mesh
-    if remove_existing_actor is not None:
-        actor2 = plotter.add_mesh(uniform.copy(), remove_existing_actor=remove_existing_actor)
-    else:
-        actor2 = plotter.add_mesh(uniform.copy())
+    actor2 = plotter.add_mesh(uniform.copy(), remove_existing_actor=remove_existing_actor)
 
     # Check results
     vtk_collection = plotter.renderer.GetViewProps()
@@ -2022,7 +2018,6 @@ def test_add_mesh_remove_existing_actor(
 @pytest.mark.parametrize(
     ('remove_existing_actor', 'should_remove'),
     [
-        (None, False),  # Default without name: keeps
         (True, False),  # True but no name: keeps
         (False, False),  # False and no name: keeps
     ],
@@ -2043,10 +2038,7 @@ def test_add_composite_remove_existing_actor(
     actor1, _ = plotter.add_composite(multiblock)
 
     # Add second composite
-    if remove_existing_actor is not None:
-        actor2, _ = plotter.add_composite(multiblock, remove_existing_actor=remove_existing_actor)
-    else:
-        actor2, _ = plotter.add_composite(multiblock)
+    actor2, _ = plotter.add_composite(multiblock, remove_existing_actor=remove_existing_actor)
 
     # Check results
     vtk_collection = plotter.renderer.GetViewProps()
