@@ -1437,13 +1437,47 @@ runners due to GitHub's concurrency limits.
 Any PyVista self-hosted runner must:
 
 - Be as compatible as possible with a GitHub hosted runner.
-- Use labels to denote hardware and software and match GitHub's labels whenever
-  possible (e.g. ``GPU``, ``ubuntu-22.04``, ``macos-15``)
+- Use labels to denote the OS of a runner that are the same as GitHub's labels
+  appended with ``self-hosted`` to ensure that there isn't overlap with GitHub
+  labels.  For example, ``macos-15-self-hosted``. Additional labels may be
+  specified (e.g. ``GPU``), but there must always be an OS label. Do not use a
+  label that overlaps with GitHub's labels.
 - Be secure against intrusion and follow best cybersecurity practices (e.g. no
   ``sudo`` permissions, dedicated and isolated VLAN)
 - Require a compatible CI/CD workflow.
 - Provide runner documentation here.
 - Be on a host with a battery backup.
+
+GitHub Runner Workflow Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When setting up the GitHub workflow and using a ``matrix``, ensure that the
+name of each job in the matrix is fixed rather than dependent on labels. This
+way the the `Branch Protection Rules
+<https://github.com/pyvista/pyvista/settings/branches>`_ can use the same
+status check label regardless of if it is self hosted.
+
+.. code-block:: yml
+
+  macOS:
+    name: ${{ matrix.job-name }}
+    needs: cache-vtk-data
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # GitHub-hosted runner configuration
+          - job-name: MacOS Unit Testing (Python 3.9)
+            python-version: "3.9"
+            runner-labels: "macos-13"
+          # Self-hosted runner configurations
+          - job-name: MacOS Unit Testing (Python 3.10)
+            python-version: "3.10"
+            runner-labels: "macos-15-self-hosted"
+
+With this approach, a job can be configured to use GitHub's hosted runners simply
+by changing ``"macos-15-self-hosted"`` to ``"macos-15"``.
+
 
 Setting up a runner on bare metal
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

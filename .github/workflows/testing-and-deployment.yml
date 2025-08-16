@@ -74,29 +74,29 @@ jobs:
           enableCrossOsArchive: true
 
   macOS:
-    name: Mac OS Unit Testing
+    name: ${{ matrix.name }}
     needs: cache-vtk-data
     strategy:
       fail-fast: false
       matrix:
         include:
           # GitHub-hosted runner configuration
-          - os: macos-13
+          - name: MacOS Unit Testing (Python 3.9)
             python-version: "3.9"
             runner-labels: "macos-13"
           # Self-hosted runner configurations
-          - os: self-hosted
+          - name: MacOS Unit Testing (Python 3.10)
             python-version: "3.10"
-            runner-labels: ["self-hosted", "macOS", "ARM64"] # GH: macos-14
-          - os: self-hosted
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (Python 3.11)
             python-version: "3.11"
-            runner-labels: ["self-hosted", "macOS", "ARM64"] # GH: macos-latest
-          - os: self-hosted
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (Python 3.12)
             python-version: "3.12"
-            runner-labels: ["self-hosted", "macOS", "ARM64"] # GH: macos-latest
-          - os: self-hosted
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (Python 3.13)
             python-version: "3.13"
-            runner-labels: ["self-hosted", "macOS", "ARM64"] # GH: 'macos-latest'
+            runner-labels: "macos-15-self-hosted"
 
     runs-on: ${{ matrix.runner-labels }}
     steps:
