@@ -5033,7 +5033,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
             apple_silicon = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-            if not apple_silicon:
+            if not apple_silicon:  # pragma: no cover
                 # Up to vtk==9.5.0, render windows aren't closed on MacOS,
                 # so the resources are not freed making this unnecessary. Also,
                 # we need this disabled so we can use NSAutoreleasePool.

@@ -1446,7 +1446,8 @@ Any PyVista self-hosted runner must:
 - Be on a host with a battery backup.
 
 Setting up a runner on bare metal
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Visit PyVista's `Create self-hosted runner
 <https://github.com/organizations/pyvista/settings/actions/runners/new>`_.
 
@@ -1475,7 +1476,7 @@ With the following runners
 - macos-arm-runner-4
 
 **Notes**
-- Testing showed peak memory usage of ~2GB per runner for the
-  ``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
-  the OS, there's room to spare. Should we encounter memory issues we can disable
-  runners.
+Testing showed peak memory usage of ~2GB per runner for the
+``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
+the OS, there's room to spare. Should we encounter memory issues we can disable
+runners.
