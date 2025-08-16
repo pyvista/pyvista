@@ -80,6 +80,8 @@ with contextlib.suppress(ImportError):
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+
 
 @pytest.fixture
 def transform():
@@ -709,6 +711,10 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
+@pytest.mark.skipif(
+    NUMPY_VERSION_INFO < (2, 3) and IS_ARM_MAC,
+    reason='Specific to Mac M4. See https://github.com/numpy/numpy/issues/28687',
+)
 def test_apply_transformation_to_points():
     mesh = ex.load_airplane()
     points = mesh.points
@@ -1229,11 +1235,9 @@ CASE_3 = (  # non-coplanar points
     ],
 )
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    NUMPY_VERSION_INFO < (1, 26) or IS_ARM_MAC,
     reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(

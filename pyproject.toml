@@ -70,6 +70,7 @@ typing = [
 ]
 
 test = [
+  'PyObjc; sys_platform == "darwin"', # see pyvista/pulls/7828
   'cmcrameri<1.10.0',
   'cmocean<4.0.4',
   'colorcet<3.2.0',
