@@ -138,6 +138,12 @@ jobs:
       - name: Software Report (Core Dependencies)
         run: python -c "import pyvista; print(pyvista.Report());"
 
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        if: always()
+        with:
+          packages: libgl1
+          version: 3.0
+
       - name: Install Testing Requirements
         run: |
           pip install --upgrade pip
