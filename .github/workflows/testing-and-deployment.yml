@@ -117,12 +117,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Cache example data
-        uses: actions/cache/restore@v4
+      # - name: Cache example data
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: ${{ env.CACHE_FOLDER_NAME }}
+      #     key: ${{ needs.cache-vtk-data.outputs.key }}
+      #     enableCrossOsArchive: true
+
+      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        if: always()
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
-          enableCrossOsArchive: true
+          packages: libgl1
+          version: 3.0
 
       - name: Build wheel and install pyvista
         run: |
@@ -137,12 +143,6 @@ jobs:
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
         run: python -c "import pyvista; print(pyvista.Report());"
-
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        if: always()
-        with:
-          packages: libgl1
-          version: 3.0
 
       - name: Install Testing Requirements
         run: |
