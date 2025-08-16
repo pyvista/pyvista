@@ -32,7 +32,7 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
   CACHE_FOLDER_NAME: vtk-data
-  PYVISTA_USERDATA_PATH: ${{ github.workspace }}/vtk-data
+  PYVISTA_VTK_DATA: ${{ github.workspace }}/vtk-data
   LINUX_PLOTTING_ARGS: >
     tests/plotting -v --cov=pyvista --cov-append --cov-report=xml --cov-branch --disallow_unused_cache
 
