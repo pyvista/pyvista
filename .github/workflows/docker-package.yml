@@ -39,10 +39,16 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
       - name: Create PyVista package
         run: |
-          pip install build
-          python -m build --sdist
+          uv pip install build
+          uv run python -m build --sdist
 
       - name: Log into the Container registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772

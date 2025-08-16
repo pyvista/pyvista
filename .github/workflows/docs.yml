@@ -58,7 +58,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         with:
@@ -67,14 +72,14 @@ jobs:
 
       - name: Install PyVista and dependencies
         run: |
-          pip install --upgrade pip
-          pip install . --group docs
+          uv cache clean
+          uv sync --group docs --upgrade
 
       - name: PyVista Report
         run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
-          pip list
+          uv run python -c "import pyvista;print(pyvista.Report())"
+          echo PYVISTA_EXAMPLE_DATA_PATH=$(uv run python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
+          uv pip list
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
@@ -99,7 +104,7 @@ jobs:
 
       - name: Build Documentation
         run: |
-          make -C doc \
+          uv run make -C doc \
           gen-external-examples \
           gen-dataset-gallery \
           html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
@@ -114,7 +119,7 @@ jobs:
 
       - name: Test Documentation
         if: always()
-        run: pytest tests/doc/tst_doc_build.py
+        run: uv run pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -141,7 +146,7 @@ jobs:
       - name: Build I18N Documentation
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
-          make -C doc \
+          uv run make -C doc \
           gen-external-examples \
           gen-dataset-gallery \
           mini18n-html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
@@ -250,9 +255,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39
+        with:
+          cache-dependency-glob: pyproject.toml
       - name: Install Dependencies
         run: |
-          pip install cookiecutter
+          uv tool install cookiecutter
       - uses: actions/download-artifact@v4
         with:
           name: pyvista-notebooks
@@ -260,7 +269,7 @@ jobs:
 
       - name: Make Cookiecutter
         run: |
-          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          uv tool run cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
           rm -rf ./pyvista-examples/notebooks/
           cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
