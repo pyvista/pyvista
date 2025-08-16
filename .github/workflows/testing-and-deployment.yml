@@ -196,7 +196,9 @@ jobs:
 
       - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
-        run: uv add vtk==${{ matrix.vtk-version }}
+        run: |
+          uv remove vtk
+          uv add vtk==${{ matrix.vtk-version }}
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
