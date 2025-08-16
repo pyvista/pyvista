@@ -624,12 +624,12 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
 
 def test_check_type():
     check_type(0, int, name='abc')
-    check_type(0, Union[int])
+    check_type(0, int)
     with pytest.raises(TypeError):
         check_type('str', int)
     with pytest.raises(TypeError):
         check_type(0, int, name=1)
-    check_type(0, Union[int, float])
+    check_type(0, int | float)
 
 
 @pytest.mark.skipif(
@@ -637,7 +637,7 @@ def test_check_type():
     reason='Union type input requires python3.10 or higher',
 )
 def test_check_type_union():
-    check_type(0, Union[int, float])
+    check_type(0, int | float)
 
 
 def test_check_string():
@@ -806,21 +806,13 @@ def test_check_sorted(shape, axis, ascending, strict):
     num_elements = np.prod(shape)
     arr_strict_ascending = np.arange(num_elements).reshape(shape)
 
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        AxisError = np.exceptions.AxisError
-    except AttributeError:
-        AxisError = np.AxisError
-
     try:
         # Create ascending array with duplicate values
         arr_ascending = np.repeat(arr_strict_ascending, 2, axis=axis)
         # Create descending arrays
         arr_descending = np.flip(arr_ascending, axis=axis)
         arr_strict_descending = np.flip(arr_strict_ascending, axis=axis)
-    except AxisError:
+    except np.exceptions.AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError,
