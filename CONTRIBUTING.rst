@@ -1457,7 +1457,7 @@ way the the `Branch Protection Rules
 <https://github.com/pyvista/pyvista/settings/branches>`_ can use the same
 status check label regardless of if it is self hosted.
 
-.. code-block:: yml
+.. code-block:: yaml
 
   macOS:
     name: ${{ matrix.job-name }}
