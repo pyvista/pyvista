@@ -124,11 +124,10 @@ jobs:
       #     key: ${{ needs.cache-vtk-data.outputs.key }}
       #     enableCrossOsArchive: true
 
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        if: always()
-        with:
-          packages: libgl1
-          version: 3.0
+      - name: Build wheel and install pyvista
+        run: |
+          sudo apt update
+          sudo apt install xvfb libgl1
 
       - name: Build wheel and install pyvista
         run: |
@@ -166,12 +165,6 @@ jobs:
 
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
-
-      - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        if: always()
-        with:
-          packages: xvfb
-          version: 3.0
 
       - name: Software Report (Plotting Dependencies)
         if: always()
