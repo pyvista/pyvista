@@ -42,7 +42,7 @@ permissions:
 jobs:
   cache-vtk-data:
     name: Cache vtk-data Repo
-    runs-on: ubuntu-22.04-self-hosted
+    runs-on: "ubuntu-22.04-self-hosted"
     outputs:
       key: ${{ steps.restore-cache-vtk-data.outputs.cache-primary-key }}
     steps:
@@ -75,7 +75,7 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
-    runs-on: ubuntu-22.04-self-hosted
+    runs-on: "ubuntu-22.04-self-hosted"
     needs: cache-vtk-data
     strategy:
       fail-fast: false
