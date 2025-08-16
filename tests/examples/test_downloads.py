@@ -140,27 +140,29 @@ def test_file_copier(tmpdir):
         examples.downloads._file_copier('not a file', output_file, None)
 
 
-def test_local_file_cache():
+def test_local_file_cache(tmp_path: Path):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
     basename = Path(examples.planefile).name
     dirname = str(Path(examples.planefile).parent)
     downloads.FETCHER.registry[basename] = None
+    old_path = downloads.FETCHER.path
 
     try:
         downloads.FETCHER.base_url = dirname + '/'
         downloads.FETCHER.registry[basename] = None
+        downloads.FETCHER.path = tmp_path
         downloads._FILE_CACHE = True
         filename = downloads._download_and_read(basename, load=False)
         assert Path(filename).is_file()
 
         dataset = downloads._download_and_read(basename, load=True)
         assert isinstance(dataset, pv.DataSet)
-        Path(filename).unlink()
 
     finally:
         downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)
+        downloads.FETCHER.path = old_path
 
 
 @pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
