@@ -68,7 +68,8 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     # Test valid url
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
-        if not _is_valid_url(url):
+        # Check is_file() in case local cache of vtk-data is used
+        if not (Path(url).is_file() or _is_valid_url(url)):
             pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
 
