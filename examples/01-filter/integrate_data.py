@@ -39,7 +39,9 @@ plotter.add_mesh(
     lighting=False,
 )
 plotter.add_axes()
-plotter.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
+plotter.camera_position = pyvista.CameraPosition(
+    position=(10, 9.5, -43), focal_point=(87.0, 73.5, 123.0), viewup=(-0.5, -0.7, 0.5)
+)
 plotter.show()
 
 # %%

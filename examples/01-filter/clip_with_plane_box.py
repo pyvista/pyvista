@@ -30,7 +30,9 @@ p = pv.Plotter()
 p.add_mesh(dataset, style='wireframe', color='blue', label='Input')
 p.add_mesh(clipped, label='Clipped')
 p.add_legend()
-p.camera_position = [(0.24, 0.32, 0.7), (0.02, 0.03, -0.02), (-0.12, 0.93, -0.34)]
+p.camera_position = pv.CameraPosition(
+    position=(0.24, 0.32, 0.7), focal_point=(0.02, 0.03, -0.02), viewup=(-0.12, 0.93, -0.34)
+)
 p.show()
 
 

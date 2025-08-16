@@ -132,7 +132,9 @@ plotter.add_mesh(mesh_1.copy(), scalars='DENS_DIFF', show_scalar_bar=False)
 plotter.add_text('DENS Difference')
 
 plotter.link_views()
-plotter.camera_position = ((0.5, 0, 8), (0.5, 0, 0), (0, 1, 0))
+plotter.camera_position = pyvista.CameraPosition(
+    position=(0.5, 0, 8), focal_point=(0.5, 0, 0), viewup=(0, 1, 0)
+)
 
 plotter.show()
 

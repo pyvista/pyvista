@@ -46,7 +46,9 @@ p.set_environment_texture(cubemap)  # For reflecting the environment off the mes
 p.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
 
 # Define a nice camera perspective
-cpos = [(-313.40, 66.09, 1000.61), (0.0, 0.0, 0.0), (0.018, 0.99, -0.06)]
+cpos = pv.CameraPosition(
+    position=(-313.40, 66.09, 1000.61), focal_point=(0.0, 0.0, 0.0), viewup=(0.018, 0.99, -0.06)
+)
 
 p.show(cpos=cpos)
 
@@ -95,7 +97,9 @@ plotter.add_light(light)
 
 
 # plot with a good camera position
-plotter.camera_position = [(9.51, 13.92, 15.81), (-2.836, -0.93, 10.2), (-0.22, -0.18, 0.959)]
+plotter.camera_position = pv.CameraPosition(
+    position=(9.51, 13.92, 15.81), focal_point=(-2.836, -0.93, 10.2), viewup=(-0.22, -0.18, 0.959)
+)
 cpos = plotter.show()
 # %%
 # .. tags:: plot

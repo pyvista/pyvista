@@ -256,9 +256,17 @@ class CameraPosition(_NoNewAttrMixin):
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         """List representation method."""
         return '[{},\n {},\n {}]'.format(*self.to_list())
+
+    def __repr__(self) -> str:
+        """Explicit representation of CameraPosition."""
+        return (
+            f'{CameraPosition.__name__}(position={self._position},\n'
+            f'               focal_point={self._focal_point},\n'
+            f'               viewup={self._viewup})'
+        )
 
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
@@ -3453,11 +3461,11 @@ class Renderer(
         ...         color=color,
         ...     )
         >>> pl.camera.zoom(1.8)
-        >>> pl.camera_position = [
-        ...     (4.74, 0.959, 0.525),
-        ...     (0.363, 0.3116, 0.132),
-        ...     (-0.088, -0.0075, 0.996),
-        ... ]
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(4.74, 0.959, 0.525),
+        ...     focal_point=(0.363, 0.3116, 0.132),
+        ...     viewup=(-0.088, -0.0075, 0.996),
+        ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
 

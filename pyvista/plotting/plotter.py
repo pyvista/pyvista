@@ -1876,17 +1876,31 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Examples
         --------
-        Return camera's position and then reposition it via a list of tuples.
+        Return the camera's position.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True, reset_camera=True)
-        >>> pl.camera_position
+        >>> cpos = pl.camera_position
+
+        Show the camera position.
+
+        >>> cpos
+        CameraPosition(position=(0.02430, 0.0336, 0.9446),
+                       focal_point=(0.02430, 0.0336, -0.02225),
+                       viewup=(0.0, 1.0, 0.0))
+
+        Use ``print`` or ``str`` to obtain a list representation instead.
+
+        >>> print(cpos)
         [(0.02430, 0.0336, 0.9446),
          (0.02430, 0.0336, -0.02225),
          (0.0, 1.0, 0.0)]
+
+        Reposition it via a list of tuples.
+
         >>> pl.camera_position = [
         ...     (0.3914, 0.4542, 0.7670),
         ...     (0.0243, 0.0336, -0.0222),
@@ -7103,7 +7117,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        cpos : list
+        cpos : CameraPosition
             List of camera position, focal point, and view up.
             Returned only when ``return_cpos=True`` or set in the
             default global or plot theme.
@@ -7151,9 +7165,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.show(return_cpos=True)  # doctest:+SKIP
-        [(2.223005211686484, -0.3126909484828709, 2.4686209867735065),
-        (0.0, 0.0, 0.0),
-        (-0.6839951597283509, -0.47207319712073137, 0.5561452310578585)]
+        CameraPosition(position=(1.9264, 1.9264, 1.9264),
+                       focal_point=(0.0, 0.0, 0.0),
+                       viewup=(0.0, 0.0, 1.0))
 
         """
         jupyter_kwargs = kwargs.pop('jupyter_kwargs', {})

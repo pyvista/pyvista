@@ -59,7 +59,9 @@ p.add_mesh(
     **dargs,
 )
 p.link_views()
-p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
+p.camera_position = pv.CameraPosition(
+    position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
+)
 p.show()
 
 # %%
@@ -88,7 +90,9 @@ p.add_mesh(
     **dargs,
 )
 p.link_views()
-p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
+p.camera_position = pv.CameraPosition(
+    position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
+)
 p.show()
 
 # %%
@@ -120,7 +124,9 @@ p.add_mesh(
     **dargs,
 )
 p.link_views()
-p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+p.camera_position = pv.CameraPosition(
+    position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+)
 p.show()
 
 # %%
@@ -147,7 +153,9 @@ p.add_mesh(
     **dargs,
 )
 p.link_views()
-p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
+p.camera_position = pv.CameraPosition(
+    position=(55.0, 16, 31), focal_point=(-5.0, 0.0, 0.0), viewup=(-0.22, 0.97, -0.09)
+)
 p.show()
 
 # %%

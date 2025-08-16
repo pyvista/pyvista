@@ -238,7 +238,11 @@ make_double_slider('value_range', 2)
 make_double_slider('saturation_range', 3)
 make_double_slider('scalar_range', 4)
 
-pl.camera_position = [(9.021, 5.477, 7.780), (-0.679, 1.349, 0.874), (-0.498, -0.228, 0.836)]
+pl.camera_position = pv.CameraPosition(
+    position=(9.021, 5.477, 7.780),
+    focal_point=(-0.679, 1.349, 0.874),
+    viewup=(-0.498, -0.228, 0.836),
+)
 cpos = pl.show(return_cpos=True)
 # %%
 # .. tags:: plot
