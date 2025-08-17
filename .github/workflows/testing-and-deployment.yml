@@ -275,7 +275,7 @@ jobs:
         run: |
           uv tool install build
           uv tool install twine
-          uv tool run build
+          uv tool run --from build pyproject-build
           uv tool run twine check --strict dist/*
 
       - name: Upload to PyPi
