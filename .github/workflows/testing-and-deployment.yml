@@ -84,24 +84,24 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          # - python-version: "3.9"
-          #   vtk-version: "9.0.3" # Requires numpy~=1.23
-          #   numpy-version: "1.23"
-          # - python-version: "3.9"
-          #   vtk-version: "9.1"
-          #   numpy-version: "1.26" # Test numpy 1.26
-          # - python-version: "3.10"
-          #   vtk-version: "9.2.2"
-          #   numpy-version: "latest"
-          # - python-version: "3.11"
-          #   vtk-version: "9.2.6"
-          #   numpy-version: "latest"
-          # - python-version: "3.12"
-          #   vtk-version: "9.3.1"
-          #   numpy-version: "latest"
-          # - python-version: "3.13"
-          #   vtk-version: "9.4.2"
-          #   numpy-version: "latest"
+          - python-version: "3.9"
+            vtk-version: "9.0.3" # Requires numpy~=1.23
+            numpy-version: "1.23"
+          - python-version: "3.9"
+            vtk-version: "9.1"
+            numpy-version: "1.26" # Test numpy 1.26
+          - python-version: "3.10"
+            vtk-version: "9.2.2"
+            numpy-version: "latest"
+          - python-version: "3.11"
+            vtk-version: "9.2.6"
+            numpy-version: "latest"
+          - python-version: "3.12"
+            vtk-version: "9.3.1"
+            numpy-version: "latest"
+          - python-version: "3.13"
+            vtk-version: "9.4.2"
+            numpy-version: "latest"
           - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
@@ -117,12 +117,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      # - name: Cache example data
-      #   uses: actions/cache/restore@v4
-      #   with:
-      #     path: ${{ env.CACHE_FOLDER_NAME }}
-      #     key: ${{ needs.cache-vtk-data.outputs.key }}
-      #     enableCrossOsArchive: true
+      - name: Cache example data
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.CACHE_FOLDER_NAME }}
+          key: ${{ needs.cache-vtk-data.outputs.key }}
+          enableCrossOsArchive: true
 
       - name: Build wheel and install pyvista
         run: |
