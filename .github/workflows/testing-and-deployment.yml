@@ -194,6 +194,11 @@ jobs:
           key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
+      - name: Install PyVista with test dependencies (excluding typing)
+        run: |
+          # Install test dependencies first, but exclude typing group that requires numpy>=2.0.0
+          uv sync --group test
+
       - name: Set up vtk
         if: ${{ matrix.vtk-version != 'latest' }}
         run: |
@@ -202,7 +207,9 @@ jobs:
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
-        run: uv add 'numpy~=${{ matrix.numpy-version }}.0'
+        run: |
+          uv pip uninstall numpy -y
+          uv pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Limit Matplotlib for VTK<9.2.2
         if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
@@ -213,9 +220,6 @@ jobs:
         run: |
           uv remove numpy matplotlib
           uv add --index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple --prerelease=allow matplotlib numpy
-
-      - name: Install PyVista with test dependencies
-        run: uv sync --group test
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
