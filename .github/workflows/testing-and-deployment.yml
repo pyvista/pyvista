@@ -219,7 +219,7 @@ jobs:
         if: ${{ matrix.numpy-version == 'nightly' }}
         run: |
           uv remove numpy matplotlib
-          uv add --index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple --prerelease=allow matplotlib numpy
+          uv add --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple --prerelease=allow matplotlib numpy
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
