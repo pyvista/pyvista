@@ -40,6 +40,12 @@ class DatasetLoaderTestCase:
     dataset_loader: tuple[str, _DatasetLoader]
 
 
+@pytest.fixture(autouse=True)
+def ignore_local_vtk_data_cache(monkeypatch):
+    """Ignore local cache and force SOURCE to always be _DEFAULT_VTK_DATA_SOURCE for tests."""
+    monkeypatch.setattr(downloads, 'SOURCE', downloads._DEFAULT_VTK_DATA_SOURCE)
+
+
 def _generate_dataset_loader_test_cases_from_module(
     module: ModuleType,
 ) -> list[DatasetLoaderTestCase]:

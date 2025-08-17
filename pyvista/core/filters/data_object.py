@@ -1358,9 +1358,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData | tuple[pyvista.PolyData]
-            Clipped mesh when ``return_clipped=False``,
-            otherwise a tuple containing the unclipped and clipped datasets.
+        DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
+            Clipped mesh when ``return_clipped=False`` or a tuple containing the
+            unclipped and clipped meshes. Output mesh type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -1399,19 +1402,21 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
+        # Post-process clip to fix output type and remove unused points
+        # Remove unused points first to avoid double casting
         input_bounds = self.bounds
         if isinstance(result, tuple):
-            result = (
-                _cast_output_to_match_input_type(result[0], self),
-                _cast_output_to_match_input_type(result[1], self),
-            )
             result = (
                 _remove_unused_points_post_clip(result[0], input_bounds),
                 _remove_unused_points_post_clip(result[1], input_bounds),
             )
+            result = (
+                _cast_output_to_match_input_type(result[0], self),
+                _cast_output_to_match_input_type(result[1], self),
+            )
         else:
-            result = _cast_output_to_match_input_type(result, self)
             result = _remove_unused_points_post_clip(result, input_bounds)
+            result = _cast_output_to_match_input_type(result, self)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)

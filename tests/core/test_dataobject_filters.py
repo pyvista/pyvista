@@ -30,7 +30,8 @@ from tests.core.test_dataset_filters import normals
 
 
 @pytest.mark.parametrize('return_clipped', [True, False])
-def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkle):
     """This tests the clip filter on all datatypes available filters"""
     # Remove None blocks in the root block but keep the none block in the nested MultiBlock
     multi = multiblock_all_with_nested_and_none
@@ -47,7 +48,9 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
 
     for dataset in multi:
         bounds_before_clip = dataset.bounds
-        clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
+        clips = dataset.clip(
+            normal='x', invert=True, return_clipped=return_clipped, crinkle=crinkle
+        )
         assert clips is not None
 
         if return_clipped:
@@ -82,8 +85,13 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     bounds = pointset.bounds
     clipped = mesh.clip(origin=(bounds.x_max + 1, bounds.y_max, bounds.z_max))
     assert np.allclose(clipped.bounds, bounds)
-
     pointset_out = clipped[0] if as_composite else clipped
+
+    if as_composite and pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+        assert pointset_out.is_empty
+        pytest.xfail("VTK 9.4 bug where clipping PointSet doesn't work")
+    assert np.allclose(clipped.bounds, bounds)
+
     assert isinstance(pointset_out, pv.PointSet)
     n_points_out = pointset_out.n_points
     assert n_points_in == n_points_out
