@@ -208,7 +208,7 @@ jobs:
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
         run: |
-          uv pip uninstall numpy -y
+          uv pip uninstall numpy
           uv pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Limit Matplotlib for VTK<9.2.2
