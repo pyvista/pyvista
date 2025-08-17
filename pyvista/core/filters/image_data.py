@@ -1004,6 +1004,10 @@ class ImageDataFilters(DataSetFilters):
     ):
         """Dilates one value and erodes another.
 
+        .. deprecated:: 0.47.0
+            :meth:`image_dilate_erode` is deprecated. Use :meth:`dilate`, :meth:`erode`,
+            :meth:`open`, or :meth:`close` instead.
+
         ``image_dilate_erode`` will dilate one value and erode another. It uses
         an elliptical footprint, and only erodes/dilates on the boundary of the
         two values. The filter is restricted to the X, Y, and Z axes for now.
@@ -1062,6 +1066,12 @@ class ImageDataFilters(DataSetFilters):
         >>> idilate.plot()
 
         """
+        warnings.warn(
+            'image_dilate_erode is deprecated. Use dilate, erode, open, or close instead.',
+            PyVistaDeprecationWarning,
+            stacklevel=2,
+        )
+
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
@@ -1087,6 +1097,280 @@ class ImageDataFilters(DataSetFilters):
         alg.SetErodeValue(erode_value)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation and Erosion')
         return _get_output(alg)
+
+    def dilate(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        *,
+        continuous=False,
+        progress_bar=False,
+    ):
+        """Dilate the image data.
+
+        This filter dilates the input image data. It can operate on both
+        binary and continuous data depending on the ``continuous`` parameter.
+
+        Parameters
+        ----------
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        continuous : bool, default: False
+            If True, use continuous dilation which is suitable for grayscale/continuous
+            data. If False, use binary dilation.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been dilated.
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        Dilate a binary image.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> dilated = ithresh.dilate()
+        >>> dilated.plot()
+
+        """
+        if continuous:
+            alg = _vtk.vtkImageContinuousDilate3D()
+        else:
+            alg = _vtk.vtkImageDilateErode3D()
+            alg.SetDilateValue(1.0)
+            alg.SetErodeValue(0.0)
+
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            set_default_active_scalars(self)
+            field, scalars = self.active_scalars_info
+            if field.value == 1:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = self.get_array_association(scalars, preference='point')
+            if field.value == 1:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
+        )
+        alg.SetKernelSize(*kernel_size)
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Dilation')
+        return _get_output(alg)
+
+    def erode(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        *,
+        continuous=False,
+        progress_bar=False,
+    ):
+        """Erode the image data.
+
+        This filter erodes the input image data. It can operate on both
+        binary and continuous data depending on the ``continuous`` parameter.
+
+        Parameters
+        ----------
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        continuous : bool, default: False
+            If True, use continuous erosion which is suitable for grayscale/continuous
+            data. If False, use binary erosion.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been eroded.
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        Erode a binary image.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> eroded = ithresh.erode()
+        >>> eroded.plot()
+
+        """
+        if continuous:
+            alg = _vtk.vtkImageContinuousErode3D()
+        else:
+            alg = _vtk.vtkImageDilateErode3D()
+            alg.SetDilateValue(0.0)
+            alg.SetErodeValue(1.0)
+
+        alg.SetInputDataObject(self)
+        if scalars is None:
+            set_default_active_scalars(self)
+            field, scalars = self.active_scalars_info
+            if field.value == 1:
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
+        else:
+            field = self.get_array_association(scalars, preference='point')
+            if field.value == 1:
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
+        )
+        alg.SetKernelSize(*kernel_size)
+        _update_alg(alg, progress_bar=progress_bar, message='Performing Erosion')
+        return _get_output(alg)
+
+    def open(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        *,
+        progress_bar=False,
+    ):
+        """Perform morphological opening on the image data.
+
+        Opening is an erosion followed by a dilation. It is used to remove
+        small objects/noise while preserving the shape and size of larger objects.
+
+        Parameters
+        ----------
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been opened.
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        Perform morphological opening on a binary image.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> opened = ithresh.open()
+        >>> opened.plot()
+
+        """
+        # Opening = erosion followed by dilation
+        # First erode
+        eroded = self.erode(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+        # Then dilate the result
+        return eroded.dilate(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+
+    def close(
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        *,
+        progress_bar=False,
+    ):
+        """Perform morphological closing on the image data.
+
+        Closing is a dilation followed by an erosion. It is used to fill
+        small holes/gaps while preserving the shape and size of larger objects.
+
+        Parameters
+        ----------
+        kernel_size : sequence[int], default: (3, 3, 3)
+            Determines the size of the kernel along the three axes.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Dataset that has been closed.
+
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
+
+        Examples
+        --------
+        Perform morphological closing on a binary image.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> uni = examples.load_uniform()
+        >>> ithresh = uni.image_threshold([400, 600])
+        >>> closed = ithresh.close()
+        >>> closed.plot()
+
+        """
+        # Closing = dilation followed by erosion
+        # First dilate
+        dilated = self.dilate(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
+        # Then erode the result
+        return dilated.erode(kernel_size=kernel_size, scalars=scalars, progress_bar=progress_bar)
 
     @_deprecate_positional_args(allowed=['threshold'])
     def image_threshold(  # noqa: PLR0917
