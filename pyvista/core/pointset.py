@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Union
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -32,7 +31,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import PyVistaDeprecationWarning
 from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
@@ -186,7 +184,7 @@ class _PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self) -> _PointSet:
+    def points_to_double(self) -> Self:
         """Convert the points datatype to double precision.
 
         Returns
@@ -867,10 +865,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             ('n_lines', n_lines),
         ):
             if v is not None:
-                warnings.warn(
-                    f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'PolyData constructor parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
@@ -2259,8 +2255,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return a the vtk cell connectivity as a numpy array.
+    def cell_connectivity(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
         padding.
@@ -2791,7 +2787,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return self.extract_subset(voi, rate, boundary=False)
 
     @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind, inplace: bool = False):  # noqa: FBT001, FBT002
+    def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
         Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
@@ -3313,7 +3309,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid.save(filename, binary=binary)
 
     @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -3357,7 +3353,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return grid
 
     @_deprecate_positional_args
-    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
+    def show_cells(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -3726,7 +3722,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return sorted(indices)
 
     @_deprecate_positional_args
-    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
+    def compute_connectivity(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
@@ -3775,7 +3771,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             return grid
 
     @_deprecate_positional_args
-    def compute_connections(self, inplace: bool = False):  # noqa: FBT001, FBT002
+    def compute_connections(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Compute an array with the number of connected cell faces.
 
         This method calculates the number of topological cell

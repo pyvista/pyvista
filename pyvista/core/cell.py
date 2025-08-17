@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -16,7 +15,6 @@ from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataobject import DataObject
 from .errors import CellSizeError
-from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import _NoNewAttrMixin
@@ -679,10 +677,8 @@ class CellArray(
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
             if v is not None:
-                warnings.warn(
-                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'CellArray parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     @property
     def cells(self: Self) -> NumpyArray[int]:

@@ -99,6 +99,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation
+        if: always()
         run: tox r -e docs-test --colored=yes
 
       - name: Upload Images for Failed Tests
@@ -126,7 +127,10 @@ jobs:
       - name: Build I18N Documentation
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
-          make -C doc mini18n-html
+          make -C doc \
+          gen-external-examples \
+          gen-dataset-gallery \
+          mini18n-html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
           rm -rf doc/_build/mini18n-html
 

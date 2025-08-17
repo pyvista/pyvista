@@ -30,7 +30,8 @@ from tests.core.test_dataset_filters import normals
 
 
 @pytest.mark.parametrize('return_clipped', [True, False])
-def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkle):
     """This tests the clip filter on all datatypes available filters"""
     # Remove None blocks in the root block but keep the none block in the nested MultiBlock
     multi = multiblock_all_with_nested_and_none
@@ -41,7 +42,9 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
     assert None in multi.recursive_iterator()
 
     for dataset in multi:
-        clips = dataset.clip(normal='x', invert=True, return_clipped=return_clipped)
+        clips = dataset.clip(
+            normal='x', invert=True, return_clipped=return_clipped, crinkle=crinkle
+        )
         assert clips is not None
 
         if return_clipped:
@@ -60,6 +63,26 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped):
                 assert clip.n_blocks == dataset.n_blocks
             else:
                 assert isinstance(clip, pv.UnstructuredGrid)
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
+    n_points_in = pointset.n_points
+    mesh = pv.MultiBlock([pointset]) if as_composite else pointset
+    # Make sure we clip such that none of the points are removed
+    bounds = pointset.bounds
+    clipped = mesh.clip(origin=(bounds.x_max + 1, bounds.y_max, bounds.z_max))
+    pointset_out = clipped[0] if as_composite else clipped
+
+    if as_composite and pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
+        assert pointset_out.is_empty
+        pytest.xfail("VTK 9.4 bug where clipping PointSet doesn't work")
+    assert np.allclose(clipped.bounds, bounds)
+
+    assert isinstance(pointset_out, pv.PointSet)
+    n_points_out = pointset_out.n_points
+    assert n_points_in == n_points_out
 
 
 def test_clip_filter_normal(datasets):
@@ -123,14 +146,23 @@ def test_transform_raises(sphere):
         sphere.transform(matrix, inplace=False)
 
 
-def test_clip_box(datasets):
-    for dataset in datasets:
-        clp = dataset.clip_box(invert=True, progress_bar=True)
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
+    multiblock_all_with_nested_and_none.clean()
+    for dataset in multiblock_all_with_nested_and_none:
+        clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        assert isinstance(clp, pv.UnstructuredGrid)
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock))
+        if isinstance(clp, pv.MultiBlock):
+            assert all(
+                isinstance(block, pv.UnstructuredGrid)
+                for block in clp.recursive_iterator(skip_none=True)
+            )
         clp2 = dataset.clip_box(merge_points=False)
         assert clp2 is not None
 
+
+def test_clip_box():
     dataset = examples.load_airplane()
     # test length 3 bounds
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False, progress_bar=True)
@@ -160,6 +192,18 @@ def test_clip_box(datasets):
     cube = pv.Cube().rotate_x(33, inplace=False)
     clp = vol.clip_box(bounds=cube, invert=False, crinkle=True)
     assert clp is not None
+
+
+@pytest.mark.parametrize('crinkle', [True, False])
+def test_clip_empty(crinkle):
+    out = pv.PolyData().clip(crinkle=crinkle, return_clipped=False)
+    assert out.is_empty
+
+    out1, out2 = pv.PolyData().clip(crinkle=crinkle, return_clipped=True)
+    assert out1.is_empty
+
+    out = pv.PolyData().clip_box(crinkle=crinkle)
+    assert out.is_empty
 
 
 def test_clip_box_composite(multiblock_all):

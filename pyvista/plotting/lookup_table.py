@@ -749,7 +749,7 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
     @_deprecate_positional_args(allowed=['cmap', 'n_values'])
     def apply_cmap(
         self,
-        cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
+        cmap: ColormapOptions,
         n_values: int = 256,
         flip: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -1166,6 +1166,6 @@ class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable
         else:
             try:
                 return np.array([self.map_value(item) for item in value])
-            except:
+            except (TypeError, ValueError):
                 msg = 'LookupTable __call__ expects a single value or an iterable.'
                 raise TypeError(msg)

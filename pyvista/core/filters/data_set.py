@@ -27,6 +27,7 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
+from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -609,8 +610,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
-        This will return a :class:`pyvista.UnstructuredGrid` of the clipped
-        mesh. Geometry of the input dataset will be preserved where possible.
+        The clipped mesh type matches the input type for :class:`~pyvista.PointSet` and
+        :class:`~pyvista.PolyData`, otherwise the output type is
+        :class:`~pyvista.UnstructuredGrid`.
+        Geometry of the input dataset will be preserved where possible.
         Geometries near the clip intersection will be triangulated/tessellated.
 
         Parameters
@@ -644,8 +647,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData
-            Clipped surface.
+        DataSet
+            Clipped mesh. Output type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -671,7 +677,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
-        return DataSetFilters._clip_with_function(
+        clipped = DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
@@ -679,6 +685,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+        return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['value'])
     def threshold(  # type: ignore[misc]  # noqa: PLR0917
@@ -2305,7 +2312,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if inplace:
             try:
                 self.copy_from(output, deep=False)
-            except:
+            except TypeError:
                 pass
             else:
                 return self
@@ -4152,10 +4159,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             plt.show()
 
     @_deprecate_positional_args(allowed=['ind'])
-    def extract_cells(  # type: ignore[misc]
+    def extract_cells(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         ind: int | VectorLike[int],
         invert: bool = False,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
+        pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a subset of the grid.
@@ -4167,6 +4176,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         invert : bool, default: False
             Invert the selection.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+            .. versionadded:: 0.47
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+            .. versionadded:: 0.47
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4224,6 +4245,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ind = subgrid.point_data['vtkOriginalPointIds']
             subgrid.points = self.points[ind]
 
+        # Process output arrays
+        if (name := 'vtkOriginalPointIds') in (data := subgrid.point_data) and not pass_point_ids:
+            del data[name]
+        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
+            del data[name]
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -4232,6 +4258,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,  # noqa: FBT001, FBT002
         include_cells: bool = True,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
+        pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
@@ -4249,6 +4277,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         include_cells : bool, default: True
             Specifies if the cells shall be returned or not.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+            .. versionadded:: 0.47
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+            .. versionadded:: 0.47
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4301,7 +4341,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
-        return _get_output(extract_sel)
+        output = _get_output(extract_sel)
+
+        # Process output arrays
+        if (name := 'vtkOriginalPointIds') in (data := output.point_data) and not pass_point_ids:
+            del data[name]
+        if (name := 'vtkOriginalCellIds') in (data := output.cell_data) and not pass_cell_ids:
+            del data[name]
+        return output
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -5081,19 +5128,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 id_mask,
                 adjacent_cells=adjacent_cells,
                 include_cells=include_cells,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
             )
         else:
             output = self.extract_cells(
                 id_mask,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
             )
-
-        # Process output arrays
-        if (POINT_IDS := 'vtkOriginalPointIds') in output.point_data and not pass_point_ids:
-            output.point_data.remove(POINT_IDS)
-        if (CELL_IDS := 'vtkOriginalCellIds') in output.cell_data and not pass_cell_ids:
-            output.cell_data.remove(CELL_IDS)
 
         return output
 
