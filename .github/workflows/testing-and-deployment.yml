@@ -127,7 +127,7 @@ jobs:
       - name: Build wheel and install pyvista
         run: |
           sudo apt-get update
-          sudo apt-get install xvfb libgl1 -y
+          sudo apt-get install libxrender1 xvfb libgl1 -y
 
       - name: Build wheel and install pyvista
         run: |
