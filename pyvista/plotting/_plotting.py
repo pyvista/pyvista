@@ -251,7 +251,7 @@ def _common_arg_parser(
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
         # Default to False when no name is provided
-        if remove_existing_actor is None:
+        if remove_existing_actor is None:  # pragma: no cover
             remove_existing_actor = False
     # Default to True when a name is provided (for backwards compatibility)
     elif remove_existing_actor is None:
