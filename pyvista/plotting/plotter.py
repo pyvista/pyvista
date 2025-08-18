@@ -137,8 +137,7 @@ if TYPE_CHECKING:
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
-KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
-if KILL_DISPLAY:  # pragma: no cover
+if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
 
     msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
@@ -5036,7 +5035,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             if not apple_silicon:  # pragma: no cover
                 # Up to vtk==9.5.0, render windows aren't closed on MacOS,
                 # so the resources are not freed making this unnecessary. Also,
-                # we need this disabled so we can use NSAutoreleasePool.
+                # we need this disabled so we can use NSAutoreleasePool in unit
+                # testing.
                 # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
                 self.ren_win.Finalize()
 
@@ -5065,10 +5065,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mapper = None
         self.text = None
 
-        # grab the display id before clearing the window
-        # this is an experimental feature
         self._clear_ren_win()
-
         if self.iren is not None:
             self.iren.close()
             self.iren = None

@@ -152,6 +152,7 @@ def test_local_file_cache(tmp_path: Path):
         downloads.FETCHER.registry[basename] = None
         downloads.FETCHER.path = tmp_path
         downloads._FILE_CACHE = True
+        downloads.FETCHER.path = tmp_path
         filename = downloads._download_and_read(basename, load=False)
         assert Path(filename).is_file()
 
