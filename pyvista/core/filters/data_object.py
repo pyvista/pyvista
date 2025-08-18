@@ -1407,16 +1407,16 @@ class DataObjectFilters:
         input_bounds = self.bounds
         if isinstance(result, tuple):
             result = (
-                _remove_unused_points_post_clip(result[0], input_bounds),
-                _remove_unused_points_post_clip(result[1], input_bounds),
-            )
-            result = (
                 _cast_output_to_match_input_type(result[0], self),
                 _cast_output_to_match_input_type(result[1], self),
             )
+            result = (
+                _remove_unused_points_post_clip(result[0], input_bounds),
+                _remove_unused_points_post_clip(result[1], input_bounds),
+            )
         else:
-            result = _remove_unused_points_post_clip(result, input_bounds)
             result = _cast_output_to_match_input_type(result, self)
+            result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
