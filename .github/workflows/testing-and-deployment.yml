@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner-labels: "ubuntu-22.04-self-hosted-v2"
+          - runner-labels: "ubuntu-22.04"
           - runner-labels: "ubuntu-22.04-self-hosted-v2"
 
     runs-on: ${{ matrix.runner-labels }}
