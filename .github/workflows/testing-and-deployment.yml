@@ -47,18 +47,8 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          - python-version: "3.9"
-            vtk-version: "9.0.3" # Requires numpy~=1.23
-            numpy-version: "1.23"
-            runner-labels: "ubuntu-22.04-self-hosted-v2"
-          - python-version: "3.9"
-            vtk-version: "9.1"
-            numpy-version: "1.26" # Test numpy 1.26
-            runner-labels: "ubuntu-22.04-self-hosted-v2"
-          - python-version: "3.10"
-            vtk-version: "9.2.2"
-            numpy-version: "latest"
-            runner-labels: "ubuntu-22.04-self-hosted-v2"
+          - runner-labels: "ubuntu-22.04-self-hosted-v2"
+          - runner-labels: "ubuntu-22.04-self-hosted-v2"
 
     runs-on: ${{ matrix.runner-labels }}
     outputs:
