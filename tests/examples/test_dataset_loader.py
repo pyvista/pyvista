@@ -152,16 +152,13 @@ def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.Monkey
     # copy datasets from the pyvista repo to the local repository
 
     [
-        shutil.copyfile(os.path.join(examples.dir_path, base), os.path.join(repository_path, base))
+        shutil.copyfile(Path(examples.dir_path) / base, repository_path / base)
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(
-        os.path.join(tmp_path, 'archive.zip'),
-        os.path.join(repository_path, 'archive.zip'),
-    )
+    shutil.make_archive(tmp_path / 'archive', 'zip', repository_path)
+    shutil.move(tmp_path / 'archive.zip', repository_path / 'archive.zip')
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher from the existing one
@@ -173,7 +170,14 @@ def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.Monkey
     monkeypatch.setattr(downloads, 'FETCHER', FETCHER)
     monkeypatch.setattr(downloads, '_FILE_CACHE', True)
 
-    return repository_path
+    # make sure any "downloaded" files (moved from repo -> cache) are cleared
+    cached_paths = [downloads.FETCHER.path / base for base in downloadable_basenames]
+    [file.unlink() for file in cached_paths if os.path.isfile(file)]
+
+    yield repository_path
+
+    # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
+    [file.unlink() for file in cached_paths if os.path.isfile(file)]
 
 
 @pytest.mark.usefixtures('examples_local_repository_tmp_dir')
