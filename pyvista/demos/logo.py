@@ -121,7 +121,9 @@ def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
+    mesh_letters: pyvista.PolyData | dict[str, pyvista.PolyData] = (
+        pyvista.PolyData() if merge else {}
+    )
 
     # spacing between letters
     space_factor = 0.9

@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataset import DataSet
 
 
 @abstract_class
@@ -1154,19 +1155,19 @@ class ImageDataFilters(DataSetFilters):
         if continuous:
             alg = _vtk.vtkImageContinuousDilate3D()
         else:
-            alg = _vtk.vtkImageDilateErode3D()
-            alg.SetDilateValue(1.0)
-            alg.SetErodeValue(0.0)
+            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
+            alg.SetDilateValue(1.0)  # type: ignore[attr-defined]
+            alg.SetErodeValue(0.0)  # type: ignore[attr-defined]
 
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(cast('DataSet', self))
+            field, scalars = cast('DataSet', self).active_scalars_info
             if field.value == 1:
                 msg = 'If `scalars` not given, active scalars must be point array.'
                 raise ValueError(msg)
         else:
-            field = self.get_array_association(scalars, preference='point')
+            field = cast('DataSet', self).get_array_association(scalars, preference='point')
             if field.value == 1:
                 msg = 'Can only process point data, given `scalars` are cell data.'
                 raise ValueError(msg)
@@ -1237,19 +1238,19 @@ class ImageDataFilters(DataSetFilters):
         if continuous:
             alg = _vtk.vtkImageContinuousErode3D()
         else:
-            alg = _vtk.vtkImageDilateErode3D()
-            alg.SetDilateValue(0.0)
-            alg.SetErodeValue(1.0)
+            alg = _vtk.vtkImageDilateErode3D()  # type: ignore[assignment]
+            alg.SetDilateValue(0.0)  # type: ignore[attr-defined]
+            alg.SetErodeValue(1.0)  # type: ignore[attr-defined]
 
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(cast('DataSet', self))
+            field, scalars = cast('DataSet', self).active_scalars_info
             if field.value == 1:
                 msg = 'If `scalars` not given, active scalars must be point array.'
                 raise ValueError(msg)
         else:
-            field = self.get_array_association(scalars, preference='point')
+            field = cast('DataSet', self).get_array_association(scalars, preference='point')
             if field.value == 1:
                 msg = 'Can only process point data, given `scalars` are cell data.'
                 raise ValueError(msg)
