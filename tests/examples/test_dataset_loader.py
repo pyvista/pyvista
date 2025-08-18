@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 import inspect
 from itertools import starmap
@@ -131,11 +132,10 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
 
 
 @pytest.fixture
-def examples_local_repository_tmp_dir(tmp_path):
+def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Create a local repository with a bunch of datasets available for download."""
     # setup
-    repository_path = os.path.join(tmp_path, 'repo')
-    os.mkdir(repository_path)
+    (repository_path := tmp_path / 'repo').mkdir()
 
     downloadable_basenames = [
         'airplane.ply',
@@ -164,25 +164,16 @@ def examples_local_repository_tmp_dir(tmp_path):
     )
     downloadable_basenames.append('archive.zip')
 
-    # initialize downloads fetcher
+    # initialize downloads fetcher from the existing one
+    FETCHER = copy.deepcopy(downloads.FETCHER)
     for base in downloadable_basenames:
-        downloads.FETCHER.registry[base] = None
-    downloads.FETCHER.base_url = str(repository_path) + '/'
-    downloads._FILE_CACHE = True
+        FETCHER.registry[base] = None
+    FETCHER.base_url = str(repository_path) + '/'
 
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_paths = [os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames]
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    monkeypatch.setattr(downloads, 'FETCHER', FETCHER)
+    monkeypatch.setattr(downloads, '_FILE_CACHE', True)
 
-    yield repository_path
-
-    # teardown
-    downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
-    downloads._FILE_CACHE = False
-    [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
-
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    return repository_path
 
 
 @pytest.mark.usefixtures('examples_local_repository_tmp_dir')
