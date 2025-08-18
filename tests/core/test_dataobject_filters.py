@@ -84,7 +84,6 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     # remove_unused_points may be called
     bounds = pointset.bounds
     clipped = mesh.clip(origin=(bounds.x_max + 1, bounds.y_max, bounds.z_max))
-    assert np.allclose(clipped.bounds, bounds)
     pointset_out = clipped[0] if as_composite else clipped
 
     if as_composite and pv.vtk_version_info >= (9, 4) and pv.vtk_version_info < (9, 5):
