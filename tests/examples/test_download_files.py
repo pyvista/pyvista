@@ -50,7 +50,7 @@ def _cache_missing():
 
 @pytest.fixture(scope='module', autouse=True)
 def check_cache_on_ci():
-    if (not _on_ci()) or _cache_missing():
+    if not (_on_ci() and _cache_missing()):
         return
 
     assert examples.downloads._FILE_CACHE, (
@@ -64,7 +64,7 @@ def requests_fixture(mocker: pytest_mock.MockerFixture):
     """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
     since can cause flakiness dut to GH rate limits.
     """
-    if (not _on_ci()) or _cache_missing():
+    if not (_on_ci() and _cache_missing()):
         yield
         return
 
