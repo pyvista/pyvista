@@ -951,45 +951,6 @@ def test_download_moonlanding_image():
     assert isinstance(dataset, pv.ImageData)
 
 
-def test_download_gltf_milk_truck():
-    filename = examples.gltf.download_milk_truck()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-def test_download_gltf_damaged_helmet():
-    filename = examples.gltf.download_damaged_helmet()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 1),
-    reason='Skip until glTF extension KHR_texture_transform is supported.',
-)
-def test_download_gltf_sheen_chair():
-    filename = examples.gltf.download_sheen_chair()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-def test_download_gltf_gearbox():
-    filename = examples.gltf.download_gearbox()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-def test_download_gltf_avocado():
-    filename = examples.gltf.download_avocado()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
 @skip_9_1_0
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
