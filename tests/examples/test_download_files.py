@@ -35,13 +35,27 @@ def _on_ci():
     return os.environ.get('CI', 'false').lower() == 'true'
 
 
+def _cache_missing():
+    """Test if a cache-miss occurred in CI, inducing that the user
+    env variable is pointing to either an non-existing or empty directory.
+    """
+    if (var_name := examples.downloads._VTK_DATA_VARNAME) not in (env := os.environ):
+        return False
+
+    root = Path(env[var_name])
+    if not root.is_dir():
+        return False
+    return any(root.iterdir())
+
+
 @pytest.fixture(scope='module', autouse=True)
 def check_cache_on_ci():
-    if not _on_ci():
+    if (not _on_ci()) or _cache_missing():
         return
 
     assert examples.downloads._FILE_CACHE, (
-        f'Expected `_FILE_CACHE` to be True on CI. Source is set to {examples.downloads.SOURCE}'
+        'Expected `_FILE_CACHE` to be True on CI when no cache-miss occurred. '
+        f'Source is set to {examples.downloads.SOURCE}'
     )
 
 
@@ -50,7 +64,7 @@ def requests_fixture(mocker: pytest_mock.MockerFixture):
     """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
     since can cause flakiness dut to GH rate limits.
     """
-    if not _on_ci():
+    if (not _on_ci()) or _cache_missing():
         yield
         return
 
