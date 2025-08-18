@@ -150,7 +150,6 @@ def test_local_file_cache(tmp_path: Path):
     try:
         downloads.FETCHER.base_url = dirname + '/'
         downloads.FETCHER.registry[basename] = None
-        downloads.FETCHER.path = tmp_path
         downloads._FILE_CACHE = True
         downloads.FETCHER.path = tmp_path
         filename = downloads._download_and_read(basename, load=False)
