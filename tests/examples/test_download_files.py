@@ -31,18 +31,32 @@ pytestmark = pytest.mark.needs_download
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
+def _on_ci():
+    return os.environ.get('CI', 'false').lower() == 'true'
+
+
+@pytest.fixture(scope='module', autouse=True)
+def check_cache_on_ci():
+    if not _on_ci():
+        return
+
+    assert examples.downloads._FILE_CACHE, (
+        f'Expected `_FILE_CACHE` to be True on CI. Source is set to {examples.downloads.SOURCE}'
+    )
+
+
 @pytest.fixture(autouse=True)
 def requests_fixture(mocker: pytest_mock.MockerFixture):
     """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
     since can cause flakiness dut to GH rate limits.
     """
-    if os.environ.get('CI', 'false').lower() == 'false':
+    if not _on_ci():
         yield
         return
 
     spy = mocker.spy(requests, 'get')
     yield
-    assert spy.call_count == 0
+    assert spy.call_count == 0, spy.mock_calls
 
 
 def test_download_single_sphere_animation():
