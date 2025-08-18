@@ -1403,7 +1403,6 @@ class DataObjectFilters:
         )
 
         # Post-process clip to fix output type and remove unused points
-        # Remove unused points first to avoid double casting
         input_bounds = self.bounds
         if isinstance(result, tuple):
             result = (
