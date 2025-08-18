@@ -11,7 +11,6 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
-import ctypes
 from functools import wraps
 import io
 from itertools import cycle
@@ -138,16 +137,11 @@ if TYPE_CHECKING:
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
-# EXPERIMENTAL: permit pyvista to kill the render window
-KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
-if KILL_DISPLAY:  # pragma: no cover
-    # this won't work under wayland
-    try:
-        X11 = ctypes.CDLL('libX11.so')
-        X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
-    except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
-        KILL_DISPLAY = False
+if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
+    from pyvista.core.errors import DeprecationError
+
+    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
+    DeprecationError(msg)
 
 
 def close_all() -> bool:
@@ -5047,7 +5041,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
+            apple_silicon = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+            if not apple_silicon:  # pragma: no cover
+                # Up to vtk==9.5.0, render windows aren't closed on MacOS,
+                # so the resources are not freed making this unnecessary. Also,
+                # we need this disabled so we can use NSAutoreleasePool in unit
+                # testing.
+                # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+                self.ren_win.Finalize()
+
             del self.ren_win
 
     def close(self) -> None:
@@ -5073,18 +5075,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mapper = None
         self.text = None
 
-        # grab the display id before clearing the window
-        # this is an experimental feature
-        if KILL_DISPLAY:  # pragma: no cover
-            disp_id = None
-            if self.render_window is not None:
-                disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
-
         if self.iren is not None:
             self.iren.close()
-            if KILL_DISPLAY:  # pragma: no cover
-                _kill_display(disp_id)
             self.iren = None
 
         # end movie
@@ -7472,29 +7465,3 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
 _ALL_PLOTTERS: dict[str, BasePlotter] = {}
-
-
-def _kill_display(disp_id: str | None) -> None:  # pragma: no cover
-    """Forcibly close the display on Linux.
-
-    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
-
-    And more details into why...
-    https://stackoverflow.com/questions/64811503
-
-    Notes
-    -----
-    This is to be used experimentally and is known to cause issues
-    on `pyvistaqt`
-
-    """
-    if platform.system() != 'Linux':
-        msg = 'This method only works on Linux'
-        raise OSError(msg)
-
-    if disp_id:
-        cdisp_id = int(disp_id[1:].split('_')[0], 16)
-
-        # this is unsafe as events might be queued, but sometimes the
-        # window fails to close if we don't just close it
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()
