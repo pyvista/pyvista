@@ -137,7 +137,7 @@ if TYPE_CHECKING:
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
-if os.environ.get('PYVISTA_KILL_DISPLAY'):
+if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
     from pyvista.core.errors import DeprecationError
 
     msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
