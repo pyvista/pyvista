@@ -46,7 +46,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
           - runner-labels: "ubuntu-22.04-self-hosted-v2"
           - runner-labels: "ubuntu-22.04-self-hosted-v2"
 
