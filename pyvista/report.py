@@ -172,7 +172,12 @@ class Report(scooby.Report):
         """Generate a :class:`scooby.Report` instance."""
         from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
 
-        from pyvista.plotting.tools import check_math_text_support  # noqa: PLC0415
+        try:
+            from pyvista.plotting.tools import check_math_text_support  # noqa: PLC0415
+        except ImportError:  # pragma: no cover
+            # import can fail due to missing GL libraries
+            def check_math_text_support() -> bool:
+                return False
 
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
