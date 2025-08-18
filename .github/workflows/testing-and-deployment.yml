@@ -183,7 +183,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-vtk-data.outputs.key }}
+          key: foo
           enableCrossOsArchive: true
 
       - name: Build wheel and install pyvista
