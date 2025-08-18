@@ -10,20 +10,39 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
 import pytest
 from pytest_cases import parametrize
+import requests
 
 import pyvista as pv
 from pyvista import examples
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
+
+
+@pytest.fixture(autouse=True)
+def requests_fixture(mocker: pytest_mock.MockerFixture):
+    """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
+    since can cause flakiness dut to GH rate limits.
+    """
+    if os.environ.get('CI', 'false').lower() == 'false':
+        yield
+        return
+
+    spy = mocker.spy(requests, 'get')
+    yield
+    assert spy.call_count == 0
 
 
 def test_download_single_sphere_animation():
