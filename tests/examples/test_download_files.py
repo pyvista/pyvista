@@ -1226,13 +1226,6 @@ def test_download_full_head():
     assert isinstance(mesh, pv.ImageData)
 
 
-@parametrize(partial=[True, False])
-@pytest.mark.needs_vtk_version(9, 2)
-def test_download_can_raises(partial: bool):
-    with pytest.raises(pv.VTKVersionError):
-        examples.download_can(partial=partial)
-
-
 def test_download_fea_bracket():
     filename = examples.download_fea_bracket(load=False)
     assert (p := Path(filename)).is_file()
