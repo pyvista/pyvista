@@ -723,8 +723,15 @@ def parse_font_family(font_family: str) -> int:
     return FONTS[font_family].value
 
 
-def check_math_text_support() -> None:
-    """Raise a DeprecationError as this has been moved."""
+def check_math_text_support() -> False:  # pragma: no cover
+    """Raise a DeprecationError as this has been moved.
+
+    Returns
+    -------
+    bool
+        Returns False for compatibility.
+
+    """
     from pyvista.core.errors import DeprecationError  # noqa: PLC0415
 
     # Deprecated on v0.47.0, estimated removal on v0.50.0
@@ -732,10 +739,18 @@ def check_math_text_support() -> None:
     DeprecationError(msg)
 
 
-def check_matplotlib_vtk_compatibility() -> None:
-    """Raise a DeprecationError as this has been moved."""
+def check_matplotlib_vtk_compatibility() -> False:  # pragma: no cover
+    """Raise a DeprecationError as this has been moved.
+
+    Returns
+    -------
+    bool
+        Returns False for compatibility.
+
+    """
     from pyvista.core.errors import DeprecationError  # noqa: PLC0415
 
     # Deprecated on v0.47.0, estimated removal on v0.50.0
     msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
     DeprecationError(msg)
+    return False  # returning bool for compatibility
