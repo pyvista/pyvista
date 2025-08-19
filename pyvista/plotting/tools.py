@@ -738,6 +738,8 @@ def check_math_text_support() -> bool:  # pragma: no cover
     msg = '`check_math_text_support` is now imported from `pyvista.report`'
     DeprecationError(msg)
 
+    return False
+
 
 def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
     """Raise a DeprecationError as this has been moved.
