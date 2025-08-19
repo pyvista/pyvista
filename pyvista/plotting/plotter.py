@@ -3160,6 +3160,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         backface_params: BackfaceArgs | Property | None = None,
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
+        remove_existing_actor: bool | None = None,  # noqa: FBT001
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3508,6 +3509,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
                 available, `edge_opacity` is set to 1.
 
+        remove_existing_actor : bool, optional
+            Remove any existing actor in the renderer with the same name before adding
+            this actor. By default, this is ``True`` when ``name`` is provided, and
+            ``False`` when ``name`` is ``None``. Set to ``False`` to improve performance
+            when adding multiple named actors, particularly during initial scene setup
+            where no actors exist yet.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3699,6 +3707,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 render=render,
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
+                remove_existing_actor=remove_existing_actor,
                 **kwargs,
             )
             return actor
@@ -3748,6 +3757,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             texture=texture,
             rgb=rgb,
             style=style,
+            remove_existing_actor=remove_existing_actor,
             **kwargs,
         )
 
