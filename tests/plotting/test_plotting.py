@@ -5245,7 +5245,6 @@ def test_plot_wireframe_style():
     sphere.plot(style='wireframe')
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 @pytest.mark.parametrize('return_clipped', ['return_clipped', None])
 def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
@@ -5267,7 +5266,6 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 def test_clip_box_crinkle(as_multiblock):
     as_multiblock = bool(as_multiblock)
