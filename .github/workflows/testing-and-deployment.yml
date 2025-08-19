@@ -81,20 +81,20 @@ jobs:
       matrix:
         include:
           # GitHub-hosted runner configuration
-          - name: MacOS Unit Testing (Python 3.9)
+          - name: MacOS Unit Testing (3.9)
             python-version: "3.9"
             runner-labels: "macos-13"
           # Self-hosted runner configurations
-          - name: MacOS Unit Testing (Python 3.10)
+          - name: MacOS Unit Testing (3.10)
             python-version: "3.10"
             runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (Python 3.11)
+          - name: MacOS Unit Testing (3.11)
             python-version: "3.11"
             runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (Python 3.12)
+          - name: MacOS Unit Testing (3.12)
             python-version: "3.12"
             runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (Python 3.13)
+          - name: MacOS Unit Testing (3.13)
             python-version: "3.13"
             runner-labels: "macos-15-self-hosted"
 
