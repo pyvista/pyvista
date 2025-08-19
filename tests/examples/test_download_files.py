@@ -10,20 +10,67 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
 import pytest
 from pytest_cases import parametrize
+import requests
 
 import pyvista as pv
 from pyvista import examples
+
+if TYPE_CHECKING:
+    import pytest_mock
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
+
+
+def _on_ci():
+    return os.environ.get('CI', 'false').lower() == 'true'
+
+
+def _cache_missing():
+    """Test if a cache-miss occurred in CI, inducing that the user
+    env variable is pointing to either an non-existing or empty directory.
+    """
+    if (var_name := examples.downloads._VTK_DATA_VARNAME) not in (env := os.environ):
+        return False
+
+    root = Path(env[var_name])
+    if not root.is_dir():
+        return False
+    return any(root.iterdir())
+
+
+@pytest.fixture(scope='module', autouse=True)
+def check_cache_on_ci():
+    if not (_on_ci() and _cache_missing()):
+        return
+
+    assert examples.downloads._FILE_CACHE, (
+        'Expected `_FILE_CACHE` to be True on CI when no cache-miss occurred. '
+        f'Source is set to {examples.downloads.SOURCE}'
+    )
+
+
+@pytest.fixture(autouse=True)
+def requests_fixture(mocker: pytest_mock.MockerFixture):
+    """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
+    since can cause flakiness dut to GH rate limits.
+    """
+    if not (_on_ci() and _cache_missing()):
+        yield
+        return
+
+    spy = mocker.spy(requests, 'get')
+    yield
+    assert spy.call_count == 0, spy.mock_calls
 
 
 def test_download_single_sphere_animation():
@@ -916,45 +963,6 @@ def test_download_cells_nd():
 def test_download_moonlanding_image():
     dataset = examples.download_moonlanding_image()
     assert isinstance(dataset, pv.ImageData)
-
-
-def test_download_gltf_milk_truck():
-    filename = examples.gltf.download_milk_truck()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-def test_download_gltf_damaged_helmet():
-    filename = examples.gltf.download_damaged_helmet()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 1),
-    reason='Skip until glTF extension KHR_texture_transform is supported.',
-)
-def test_download_gltf_sheen_chair():
-    filename = examples.gltf.download_sheen_chair()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-def test_download_gltf_gearbox():
-    filename = examples.gltf.download_gearbox()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
-
-
-def test_download_gltf_avocado():
-    filename = examples.gltf.download_avocado()
-    assert Path(filename).is_file()
-    pl = pv.Plotter()
-    pl.import_gltf(filename)
 
 
 @skip_9_1_0
