@@ -534,6 +534,18 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Raise extract geometry are not supported."""
         raise PointSetCellOperationError
 
+    def extract_all_edges(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def compute_cell_sizes(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
+    def cell_quality(self, *args, **kwargs):  # noqa: ARG002
+        """Raise extract all edges are not supported."""
+        raise PointSetCellOperationError
+
 
 class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
