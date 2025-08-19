@@ -723,7 +723,7 @@ def parse_font_family(font_family: str) -> int:
     return FONTS[font_family].value
 
 
-def check_math_text_support() -> False:  # pragma: no cover
+def check_math_text_support() -> bool:  # pragma: no cover
     """Raise a DeprecationError as this has been moved.
 
     Returns
@@ -739,7 +739,7 @@ def check_math_text_support() -> False:  # pragma: no cover
     DeprecationError(msg)
 
 
-def check_matplotlib_vtk_compatibility() -> False:  # pragma: no cover
+def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
     """Raise a DeprecationError as this has been moved.
 
     Returns
