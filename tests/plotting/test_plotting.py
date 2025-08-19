@@ -310,7 +310,6 @@ def test_pbr(sphere, verify_image_cache):
 
 
 @pytest.mark.parametrize('resample', [True, 0.5])
-@pytest.mark.needs_vtk_version(9, 2)
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
@@ -2782,7 +2781,6 @@ def test_collision_plot(verify_image_cache):
 
 
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -4249,7 +4247,6 @@ def test_plot_texture_flip_y(texture):
     texture.flip_y().plot()
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 @pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
