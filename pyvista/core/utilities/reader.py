@@ -1546,10 +1546,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         # AddFileName supports reading multiple q files
         for q_filename in files:
-            if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-                self.reader.AddFileName(str(q_filename))
-            else:
-                self.reader.AddFileName(q_filename)
+            self.reader.AddFileName(q_filename)
 
     @property
     def auto_detect_format(self):
@@ -2608,13 +2605,6 @@ class HDFReader(BaseReader):
 
     _vtk_module_name = 'vtkIOHDF'
     _vtk_class_name = 'vtkHDFReader'
-
-    def __init__(self, path):
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = f'{self.__class__.__name__} is only available for vtk>=9.1'
-            raise pyvista.VTKVersionError(msg)
-
-        super().__init__(path)
 
     @wraps(BaseReader.read)
     def read(self):  # type: ignore[override]
