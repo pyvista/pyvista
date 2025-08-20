@@ -253,7 +253,6 @@ LEGEND_FACES = {
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('face', LEGEND_FACES.values(), ids=LEGEND_FACES.keys())
 def test_legend_face(face):
     pl = pv.Plotter()
@@ -282,7 +281,6 @@ def test_legend_from_glyph(sphere, verify_image_cache):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_from_multiple_glyph(plane2x2):
     pl = pv.Plotter()
     plane2x2['Normals2'] = -1 * plane2x2['Normals'].copy()
@@ -316,7 +314,6 @@ def test_legend_using_add_legend(plane2x2):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_using_add_legend_with_glyph(plane2x2):
     pl = pv.Plotter()
 
@@ -337,7 +334,6 @@ def test_legend_using_add_legend_with_glyph(plane2x2):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_legend_using_add_legend_only_labels(plane2x2):
     pl = pv.Plotter()
 
@@ -353,7 +349,6 @@ def test_legend_using_add_legend_only_labels(plane2x2):
 
 
 @pytest.mark.usefixtures('verify_image_cache')
-@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('use_dict_labels', [True, False], ids=['dict', 'no_dict'])
 def test_legend_using_add_legend_dict(use_dict_labels):
     sphere_label = 'sphere'

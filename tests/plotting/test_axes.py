@@ -166,7 +166,6 @@ def test_axes_actor_labels_group(axes_actor):
         axes_actor.labels = ['1', '2']
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_axes_actor_properties():
     prop = pv.ActorProperties(_vtk.vtkProperty())
 

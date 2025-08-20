@@ -65,7 +65,6 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
                 assert isinstance(clip, pv.UnstructuredGrid)
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     n_points_in = pointset.n_points
@@ -378,7 +377,6 @@ def test_cell_centers_no_cell_data(cube):
     assert not cube.cell_centers(pass_cell_data=False).cell_data
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_cell_center_pointset(airplane):
     pointset = airplane.cast_to_pointset()
     result = pointset.cell_centers(progress_bar=True)
