@@ -48,12 +48,6 @@ from vtkmodules.util.numpy_support import get_vtk_array_type as get_vtk_array_ty
 from vtkmodules.util.numpy_support import numpy_to_vtk as numpy_to_vtk
 from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray as numpy_to_vtkIdTypeArray
 from vtkmodules.util.numpy_support import vtk_to_numpy as vtk_to_numpy
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.util.pickle_support import (
-        serialize_VTK_data_object as serialize_VTK_data_object,
-    )
-
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase as VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonComputationalGeometry import vtkKochanekSpline as vtkKochanekSpline
 from vtkmodules.vtkCommonComputationalGeometry import (
@@ -233,6 +227,7 @@ from vtkmodules.vtkCommonDataModel import VTK_TRIANGLE_STRIP as VTK_TRIANGLE_STR
 from vtkmodules.vtkCommonDataModel import (
     VTK_TRIQUADRATIC_HEXAHEDRON as VTK_TRIQUADRATIC_HEXAHEDRON,
 )
+from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID as VTK_TRIQUADRATIC_PYRAMID
 from vtkmodules.vtkCommonDataModel import VTK_VERTEX as VTK_VERTEX
 from vtkmodules.vtkCommonDataModel import VTK_VOXEL as VTK_VOXEL
 from vtkmodules.vtkCommonDataModel import VTK_WEDGE as VTK_WEDGE
@@ -321,15 +316,11 @@ from vtkmodules.vtkCommonDataModel import vtkTetra as vtkTetra
 from vtkmodules.vtkCommonDataModel import vtkTriangle as vtkTriangle
 from vtkmodules.vtkCommonDataModel import vtkTriangleStrip as vtkTriangleStrip
 from vtkmodules.vtkCommonDataModel import vtkTriQuadraticHexahedron as vtkTriQuadraticHexahedron
+from vtkmodules.vtkCommonDataModel import vtkTriQuadraticPyramid as vtkTriQuadraticPyramid
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid as vtkUnstructuredGrid
 from vtkmodules.vtkCommonDataModel import vtkVertex as vtkVertex
 from vtkmodules.vtkCommonDataModel import vtkVoxel as vtkVoxel
 from vtkmodules.vtkCommonDataModel import vtkWedge as vtkWedge
-
-with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.2
-    from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID as VTK_TRIQUADRATIC_PYRAMID
-    from vtkmodules.vtkCommonDataModel import vtkTriQuadraticPyramid as vtkTriQuadraticPyramid
-
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm as vtkAlgorithm
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithmOutput as vtkAlgorithmOutput
 from vtkmodules.vtkCommonExecutionModel import vtkCompositeDataPipeline as vtkCompositeDataPipeline
@@ -364,9 +355,6 @@ from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance as vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes as vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties as vtkMassProperties
-
-with contextlib.suppress(ImportError):  # Introduced VTK 9.4
-    from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation
@@ -391,10 +379,6 @@ from vtkmodules.vtkFiltersFlowPaths import (
     vtkEvenlySpacedStreamlines2D as vtkEvenlySpacedStreamlines2D,
 )
 from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer as vtkStreamTracer
-
-with contextlib.suppress(ImportError):  # Introduced VTK v9.1.0
-    from vtkmodules.vtkFiltersGeneral import vtkRemovePolyData as vtkRemovePolyData
-
 from vtkmodules.vtkFiltersGeneral import vtkAxes as vtkAxes
 from vtkmodules.vtkFiltersGeneral import (
     vtkBooleanOperationPolyDataFilter as vtkBooleanOperationPolyDataFilter,
@@ -416,6 +400,7 @@ from vtkmodules.vtkFiltersGeneral import (
 from vtkmodules.vtkFiltersGeneral import (
     vtkRectilinearGridToTetrahedra as vtkRectilinearGridToTetrahedra,
 )
+from vtkmodules.vtkFiltersGeneral import vtkRemovePolyData as vtkRemovePolyData
 from vtkmodules.vtkFiltersGeneral import vtkShrinkFilter as vtkShrinkFilter
 from vtkmodules.vtkFiltersGeneral import vtkTableBasedClipDataSet as vtkTableBasedClipDataSet
 from vtkmodules.vtkFiltersGeneral import vtkTableToPolyData as vtkTableToPolyData
@@ -461,24 +446,11 @@ from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints as vtkSelectEn
 from vtkmodules.vtkFiltersModeling import vtkSubdivideTetra as vtkSubdivideTetra
 from vtkmodules.vtkFiltersModeling import vtkTrimmedExtrusionFilter as vtkTrimmedExtrusionFilter
 from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes as vtkIntegrateAttributes
-
-with contextlib.suppress(ImportError):
-    # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
-    from vtkmodules.vtkFiltersParallelDIY2 import (
-        vtkRedistributeDataSetFilter as vtkRedistributeDataSetFilter,
-    )
-
+from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud as vtkConvertToPointCloud
 from vtkmodules.vtkFiltersPoints import vtkGaussianKernel as vtkGaussianKernel
 from vtkmodules.vtkFiltersPoints import vtkPointInterpolator as vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import vtkArcSource as vtkArcSource
 from vtkmodules.vtkFiltersSources import vtkArrowSource as vtkArrowSource
-
-with contextlib.suppress(ImportError):
-    # Deprecated in 9.3
-    from vtkmodules.vtkFiltersSources import (  # type: ignore[attr-defined]
-        vtkCapsuleSource as vtkCapsuleSource,
-    )
-
 from vtkmodules.vtkFiltersSources import vtkConeSource as vtkConeSource
 from vtkmodules.vtkFiltersSources import vtkCubeSource as vtkCubeSource
 from vtkmodules.vtkFiltersSources import vtkCylinderSource as vtkCylinderSource
@@ -496,18 +468,12 @@ from vtkmodules.vtkFiltersSources import vtkSphereSource as vtkSphereSource
 from vtkmodules.vtkFiltersSources import vtkSuperquadricSource as vtkSuperquadricSource
 from vtkmodules.vtkFiltersSources import vtkTessellatedBoxSource as vtkTessellatedBoxSource
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles as vtkComputeQuartiles
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkFiltersStatistics import vtkLengthDistribution as vtkLengthDistribution
+from vtkmodules.vtkFiltersStatistics import vtkLengthDistribution as vtkLengthDistribution
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane as vtkTextureMapToPlane
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere as vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality as vtkCellQuality
 from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter as vtkCellSizeFilter
 from vtkmodules.vtkFiltersVerdict import vtkMeshQuality as vtkMeshQuality
-
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
-
 from vtkmodules.vtkImagingCore import vtkAbstractImageInterpolator as vtkAbstractImageInterpolator
 from vtkmodules.vtkImagingCore import vtkExtractVOI as vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageConstantPad as vtkImageConstantPad
@@ -521,6 +487,10 @@ from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincIn
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource
+from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
+from vtkmodules.vtkImagingFourier import vtkImageButterworthLowPass as vtkImageButterworthLowPass
+from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
+from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth as vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D as vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkGaussianSplatter as vtkGaussianSplatter
@@ -538,10 +508,6 @@ from vtkmodules.vtkIOGeometry import vtkIVWriter as vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter as vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader as vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter as vtkSTLWriter
-
-with contextlib.suppress(ImportError):  # Introduced VTK v9.4.0
-    from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
-
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader as vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader as vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader as vtkDataSetReader
@@ -556,6 +522,9 @@ from vtkmodules.vtkIOLegacy import vtkStructuredGridReader as vtkStructuredGridR
 from vtkmodules.vtkIOLegacy import vtkStructuredGridWriter as vtkStructuredGridWriter
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridReader as vtkUnstructuredGridReader
 from vtkmodules.vtkIOLegacy import vtkUnstructuredGridWriter as vtkUnstructuredGridWriter
+from vtkmodules.vtkIOParallelXML import (
+    vtkXMLPartitionedDataSetWriter as vtkXMLPartitionedDataSetWriter,
+)
 from vtkmodules.vtkIOPLY import vtkPLYReader as vtkPLYReader
 from vtkmodules.vtkIOPLY import vtkPLYWriter as vtkPLYWriter
 from vtkmodules.vtkIOXML import vtkXMLImageDataReader as vtkXMLImageDataReader
@@ -580,12 +549,13 @@ from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter as vtkXMLUnstructur
 from vtkmodules.vtkIOXML import vtkXMLWriter as vtkXMLWriter
 
 with contextlib.suppress(ImportError):
+    # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D as vtkImageDilateErode3D
 
 try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem as vtkPythonItem
 except ImportError:  # pragma: no cover
-    # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
+    # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
 
     class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
         """Empty placeholder."""
@@ -598,28 +568,34 @@ except ImportError:  # pragma: no cover
             raise VTKVersionError(msg)
 
 
-from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass as vtkImageButterworthHighPass
-from vtkmodules.vtkImagingFourier import vtkImageButterworthLowPass as vtkImageButterworthLowPass
-from vtkmodules.vtkImagingFourier import vtkImageFFT as vtkImageFFT
-from vtkmodules.vtkImagingFourier import vtkImageRFFT as vtkImageRFFT
-
-# 9.1+ imports
 with contextlib.suppress(ImportError):
-    from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud as vtkConvertToPointCloud
+    # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
+    from vtkmodules.vtkFiltersParallelDIY2 import (
+        vtkRedistributeDataSetFilter as vtkRedistributeDataSetFilter,
+    )
 
-with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.3
-    from vtkmodules.vtkRenderingCore import vtkViewport as vtkViewport
+with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
+    from vtkmodules.util.pickle_support import (
+        serialize_VTK_data_object as serialize_VTK_data_object,
+    )
 
-# 9.3+ imports
-with contextlib.suppress(ImportError):
+with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
+    from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality as vtkBoundaryMeshQuality
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.3.0
     from vtkmodules.vtkFiltersCore import vtkPackLabels as vtkPackLabels
     from vtkmodules.vtkFiltersCore import vtkSurfaceNets3D as vtkSurfaceNets3D
 
-# 9.1+ imports
-with contextlib.suppress(ImportError):
-    from vtkmodules.vtkIOParallelXML import (
-        vtkXMLPartitionedDataSetWriter as vtkXMLPartitionedDataSetWriter,
+with contextlib.suppress(ImportError):  # Deprecated in VTK 9.3.0
+    from vtkmodules.vtkFiltersSources import (  # type: ignore[attr-defined]
+        vtkCapsuleSource as vtkCapsuleSource,
     )
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
+    from vtkmodules.vtkIOHDF import vtkHDFWriter as vtkHDFWriter
+
+with contextlib.suppress(ImportError):  # Introduced VTK 9.4.0
+    from vtkmodules.vtkFiltersCore import vtkOrientPolyData as vtkOrientPolyData
 
 
 class VersionInfo(NamedTuple):
