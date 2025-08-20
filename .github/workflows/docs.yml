@@ -59,7 +59,7 @@ jobs:
         if: runner.environment == 'self-hosted'
         run: |
           echo "SPHINX_JOBS=-j8" >> $GITHUB_ENV
-          # echo "VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow" >> $GITHUB_ENV
+          echo "VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow" >> $GITHUB_ENV
           # echo "VTK_DEFAULT_EGL_DEVICE_INDEX=1" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v5
