@@ -43,7 +43,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
-    _WRITERS: ClassVar[dict[str, _vtk.vtkAlgorithm]] = {
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkAlgorithm]]] = {
         '.vtpd': _vtk.vtkXMLPartitionedDataSetWriter
     }
 
