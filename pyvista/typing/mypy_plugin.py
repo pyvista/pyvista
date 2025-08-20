@@ -6,6 +6,7 @@ __all__: list[str] = ['promote_type']
 
 import importlib.util
 from typing import TYPE_CHECKING
+from typing import TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -16,7 +17,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
 
-def promote_type(*types: type) -> Callable[[Any], Any]:  # noqa: ARG001
+T = TypeVar('T', bound=type)
+
+
+def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
     """Duck-type type-promotion decorator used by the mypy plugin.
 
     Apply this decorator to a class to promote its type statically.

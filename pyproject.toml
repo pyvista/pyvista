@@ -84,6 +84,7 @@ test = [
   'numpydoc<1.10.0',
   'pandas<=2.4.0',
   'pyanalyze<=0.13.1',
+  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
   'pytest-cov<6.3.0',
   'pytest-mypy-plugins<3.3.0',
   'pytest-pyvista==0.2.0',
@@ -221,7 +222,6 @@ filterwarnings = [
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*PYVISTA_USERDATA_PATH is not a valid directory.*:UserWarning',
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
@@ -229,6 +229,7 @@ filterwarnings = [
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
+  'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
 

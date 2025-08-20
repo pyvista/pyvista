@@ -1980,6 +1980,17 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
+def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
+    """Test remove_existing_actor parameter for add_mesh method."""
+    verify_image_cache.skip = True
+    plotter = pv.Plotter()
+    actor1 = plotter.add_mesh(uniform.copy(), name='test_mesh1')
+    actor2 = plotter.add_mesh(uniform.copy(), name='test_mesh2', remove_existing_actor=False)
+    actors = list(plotter.renderer.actors.values())
+    assert actor1 in actors
+    assert actor2 in actors
+
+
 def test_image_properties():
     mesh = examples.load_uniform()
     p = pv.Plotter()
@@ -3241,7 +3252,8 @@ def test_ssao_pass(verify_image_cache):
 
 
 @skip_mesa
-def test_ssao_pass_from_helper():
+def test_ssao_pass_from_helper(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True  # high variance (~1000) on MacOS 15
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
