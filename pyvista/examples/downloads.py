@@ -5826,8 +5826,6 @@ def download_can_crushed_hdf(load=True):  # noqa: FBT002
 
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
 
-        :ref:`Can Dataset <can_dataset>`
-
     """
     return _download_dataset(_dataset_can_crushed_hdf, load=load)
 
@@ -5870,8 +5868,6 @@ def download_can_crushed_vtu(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
