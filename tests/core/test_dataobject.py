@@ -338,12 +338,12 @@ def test_default_pickle_format():
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 @pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
-def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_path):
+def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, file_ext, tmp_path):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
         pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
-    for dataset in datasets:
+    for dataset in datasets_no_pointset:
         if file_ext is not None:
             filepath_save = tmp_path / ('data_object' + file_ext)
             if file_ext == '':
@@ -385,15 +385,15 @@ def n_points(dataset):
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_multiprocessing(datasets, pickle_format):
+def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
         pytest.xfail('VTK version not supported.')
 
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
-        res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets):
+        res = p.map(n_points, datasets_no_pointset)
+    for r, dataset in zip(res, datasets_no_pointset):
         assert r == dataset.n_points
 
 

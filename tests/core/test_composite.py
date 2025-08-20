@@ -1396,7 +1396,7 @@ def test_flatten(multiblock_all_with_nested_and_none):
     expected_n_blocks = len(root_names) + len(nested_names)
 
     match = (
-        "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
+        "Block at index [7][0] with name 'Block-00' cannot be flattened. Another block \n"
         "with the same name already exists. Use `name_mode='reset'` "
         'or `check_duplicate_keys=False`.'
     )
@@ -1521,6 +1521,7 @@ def test_block_types(multiblock_all_with_nested_and_none):
         pv.PolyData,
         pv.UnstructuredGrid,
         pv.StructuredGrid,
+        pv.PointSet
     }
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)
