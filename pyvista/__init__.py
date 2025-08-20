@@ -21,6 +21,8 @@ from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetTyp
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._vtk_core import _MIN_SUPPORTED_VTK_VERSION
+from pyvista.core._vtk_core import VersionInfo
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
@@ -36,11 +38,10 @@ if TYPE_CHECKING:
 # get the int type from vtk
 ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
 
-# determine if using at least vtk 9.1.0
-if vtk_version_info < (9, 2, 0):  # pragma: no cover
+if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    msg = 'VTK version must be 9.2.0 or greater.'
+    msg = f'VTK version must be {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)} or greater.'
     raise VTKVersionError(msg)
 
 # catch annoying numpy/vtk future warning:
