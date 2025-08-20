@@ -39,7 +39,7 @@ NamedColormaps = Union[
     '_CMCRAMERI_CMAPS_LITERAL',
 ]
 
-ColormapOptions = Union[NamedColormaps, list[str], mpl.colors.Colormap]
+ColormapOptions = NamedColormaps | list[str] | mpl.colors.Colormap
 
 ColorLike = Union[
     tuple[int, int, int],
@@ -49,7 +49,7 @@ ColorLike = Union[
     Sequence[int],
     Sequence[float],
     NumpyArray[float],
-    dict[str, Union[int, float, str]],
+    dict[str, int | float | str],
     str,
     'Color',
     _vtk.vtkColor3ub,
@@ -82,12 +82,12 @@ OpacityOptions = Literal[
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
-CameraPositionOptions = Union[
-    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso'],
-    VectorLike[float],
-    MatrixLike[float],
-    CameraPosition,
-]
+CameraPositionOptions = (
+    Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
+    | VectorLike[float]
+    | MatrixLike[float]
+    | CameraPosition
+)
 
 
 class BackfaceArgs(TypedDict, total=False):
