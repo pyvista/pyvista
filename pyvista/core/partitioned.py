@@ -43,7 +43,9 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
-    _WRITERS: ClassVar[str, _vtk.vtkAlgorithm] = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
+    _WRITERS: ClassVar[dict[str, _vtk.vtkAlgorithm]] = {
+        '.vtpd': _vtk.vtkXMLPartitionedDataSetWriter
+    }
 
     if _vtk.vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter

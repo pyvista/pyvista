@@ -646,8 +646,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         else:
             filename_mtl_path = Path(filename_mtl).expanduser().resolve()
         if filename_mtl_path.is_file():
-            importer.SetFileNameMTL(filename_mtl_path)
-            importer.SetTexturePath(filename_mtl_path.parents[0])
+            importer.SetFileNameMTL(str(filename_mtl_path))
+            importer.SetTexturePath(str(filename_mtl_path.parents[0]))
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
