@@ -1521,7 +1521,7 @@ def test_block_types(multiblock_all_with_nested_and_none):
         pv.PolyData,
         pv.UnstructuredGrid,
         pv.StructuredGrid,
-        pv.PointSet
+        pv.PointSet,
     }
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)
