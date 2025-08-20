@@ -2435,7 +2435,6 @@ def _compute_unit_cell_quality(
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
@@ -2464,7 +2463,6 @@ def xfail_distortion_returns_one(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
     """Test that the actual computed measure for a unit cell matches the reported value."""
     xfail_wedge_negative_volume(info)
@@ -2475,7 +2473,6 @@ def test_cell_quality_info_unit_cell_value(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
     """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
@@ -2499,7 +2496,6 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_normal_range(info):
     """Test that the normal range is broader than the acceptable range."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
@@ -2510,7 +2506,6 @@ def test_cell_quality_info_normal_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_full_range(info):
     """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
@@ -2521,7 +2516,6 @@ def test_cell_quality_info_full_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_degenerate_cell(info):
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_distortion_returns_one(info)
@@ -2537,7 +2531,6 @@ def test_cell_quality_info_degenerate_cell(info):
     )
 
 
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_raises():
     match = re.escape(
         "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"

@@ -101,7 +101,6 @@ def test_add_mesh_isovalue_raises():
         pl.add_mesh_isovalue(mesh=sp, scalars='foo')
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_add_mesh_isovalue_pointset_raises():
     pl = pv.Plotter()
     with pytest.raises(
@@ -493,7 +492,6 @@ def test_widget_radio_button_plotter_closed(uniform):
         p.add_radio_button_widget(callback=func, radio_button_group='group')
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_add_camera_orientation_widget():
     p = pv.Plotter()
     p.add_camera_orientation_widget()
@@ -548,7 +546,6 @@ def test_add_volume_clip_plane(uniform):
     pl.close()
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_plot_pointset_widgets(pointset):
     pointset = pointset.elevation()
 
@@ -920,7 +917,6 @@ def test_clear_sphere_widget():
     pl.show(cpos='xy')
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_clear_camera_widget():
     mesh = pv.Cube()
