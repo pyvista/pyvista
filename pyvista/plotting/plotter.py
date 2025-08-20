@@ -5814,11 +5814,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise TypeError(msg)
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
-            if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-                msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
-                raise VTKVersionError(msg)
             # Extract points filter
             pc_algo = _vtk.vtkConvertToPointCloud()
             set_algorithm_input(pc_algo, algo)
