@@ -167,7 +167,11 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
 
 N = 8  # maximum order of x^p y^q z^r polynomials
 rho = 8.0  # g/cm^3
-l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
+
+# Due to a cube's symmetry there will be repeated pairs or triplets for certain
+# eigenmodes. Here we introduce slight asymmetry to ensure that we select the
+# same first "repeated" mode for the symmetric mode sets.
+l1, l2, l3 = 0.200001, 0.200002, 0.200003  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
@@ -229,6 +233,10 @@ for i, mode_index in enumerate(mode_indices):
     max_magnitude = np.max(displacement_magnitude)
     if max_magnitude > 0.0:
         displacement_points /= max_magnitude
+
+    # for repeatability, ensure that the first point always has positive displacement
+    if displacement_points[0, 0] < 0.0:
+        displacement_points = -displacement_points
 
     vol[f'eigenmode_{i:02}'] = displacement_points
 
