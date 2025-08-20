@@ -642,14 +642,12 @@ def _get_vtk_version():
 
 class VTKVersionInfo(VersionInfo):
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
-        if (other := VersionInfo(*other)) < (
-            min_supported := VersionInfo(*_MIN_SUPPORTED_VTK_VERSION)
-        ):
+        if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:
             from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
 
             msg = (
-                f'Comparing against unsupported VTK version {other:}. '
-                f'Minimum supported is {min_supported:}.'
+                f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
+                f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
             )
             raise VTKVersionError(msg)
 

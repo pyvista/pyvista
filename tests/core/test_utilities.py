@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 import contextlib
 import json
+import operator
 import os
 from pathlib import Path
 import pickle
@@ -161,7 +162,7 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
-def test_version():
+def test_vtk_version_info():
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -174,6 +175,13 @@ def test_version():
     assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
     assert pv.vtk_version_info >= pv._MIN_SUPPORTED_VTK_VERSION
+
+
+@pytest.mark.parametrize('operation', [operator.le, operator.lt, operator.gt, operator.ge])
+def test_vtk_version_info_raises(operation):
+    match = 'Comparing against unsupported VTK version 1.2.3. Minimum supported is 9.2.0.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        operation(pv.vtk_version_info, (1, 2, 3))
 
 
 def test_createvectorpolydata_error():
