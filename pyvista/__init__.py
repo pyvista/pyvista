@@ -37,10 +37,10 @@ if TYPE_CHECKING:
 ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
 
 # determine if using at least vtk 9.1.0
-if vtk_version_info < (9, 1, 0):  # pragma: no cover
+if vtk_version_info < (9, 2, 0):  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    msg = 'VTK version must be 9.1.0 or greater.'
+    msg = 'VTK version must be 9.2.0 or greater.'
     raise VTKVersionError(msg)
 
 # catch annoying numpy/vtk future warning:
