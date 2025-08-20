@@ -15,7 +15,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -986,23 +985,18 @@ def test_find_cells_intersecting_line():
     linea = [0, 0, 0.0]
     lineb = [0.0, 0, 1.0]
 
-    if pv.vtk_version_info >= (9, 2, 0):
-        indices = mesh.find_cells_intersecting_line(linea, lineb)
-        assert len(indices) == 1
+    indices = mesh.find_cells_intersecting_line(linea, lineb)
+    assert len(indices) == 1
 
-        # test tolerance
-        indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
-        assert len(indices) == 2
+    # test tolerance
+    indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
+    assert len(indices) == 2
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
-
-    else:
-        with pytest.raises(VTKVersionError):
-            indices = mesh.find_cells_intersecting_line(linea, lineb)
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
 
 
 def test_find_cells_within_bounds():

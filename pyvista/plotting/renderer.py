@@ -848,11 +848,6 @@ class Renderer(
         >>> pl.show()
 
         """
-        if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
-
-            msg = 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.'
-            raise VTKVersionError(msg)
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
@@ -3790,9 +3785,7 @@ class Renderer(
         # cube_map textures cannot use spherical harmonics
         if texture.cube_map:
             self.AutomaticLightCreationOff()
-            # disable spherical harmonics was added in 9.1.0
-            if hasattr(self, 'UseSphericalHarmonicsOff'):
-                self.UseSphericalHarmonicsOff()
+            self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
 

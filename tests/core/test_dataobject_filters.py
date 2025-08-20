@@ -579,9 +579,6 @@ def test_cell_quality():
 def test_cell_quality_measures(ant):
     # Get quality measures from type hints
     hinted_measures = list(get_args(_CellQualityLiteral))
-    if pv.vtk_version_info < (9, 2):
-        # This measure was removed from VTK's API
-        hinted_measures.insert(1, 'aspect_beta')
 
     # Get quality measures from the VTK class
     actual_measures = list(_get_cell_quality_measures().keys())

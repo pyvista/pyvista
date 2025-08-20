@@ -2137,10 +2137,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 
 @pytest.mark.skip_windows
-def test_opacity_by_array_direct(plane, verify_image_cache):
-    # VTK regression 9.0.1 --> 9.1.0
-    verify_image_cache.high_variance_test = True
-
+def test_opacity_by_array_direct(plane):
     # test with opacity parm as an array, both cell and point sized
     plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pv.Plotter()
@@ -3342,8 +3339,7 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
     )
 
     # Note: set the camera position before making the blocks invisible
-    #
-    # VTK 9.1.0+ ignores invisible blocks when computing camera bounds.
+    # VTK ignores invisible blocks when computing camera bounds.
     pl.camera_position = 'xy'
     mapper.block_attr[2].color = 'blue'
     mapper.block_attr[3].visible = False
