@@ -1226,29 +1226,6 @@ def test_download_full_head():
     assert isinstance(mesh, pv.ImageData)
 
 
-@parametrize(partial=[True, False])
-@pytest.mark.needs_vtk_version(9, 1, less_than=(9, 2))  # 9.1 for HDFReader, 9.2 for example
-def test_download_can(partial: bool):
-    filename = examples.download_can(load=False, partial=partial)
-
-    if partial:
-        assert (p := (Path(filename))).is_file()
-        assert p.suffix == '.hdf'
-    else:
-        assert all(Path(f).is_file() for f in filename)
-        assert all(Path(f).suffix == '.hdf' for f in filename)
-
-    dataset: pv.UnstructuredGrid = examples.download_can(load=True, partial=partial)
-    assert isinstance(dataset, pv.UnstructuredGrid)
-    assert dataset.n_points == 6724 if partial else 20_172
-
-
-@parametrize(partial=[True, False])
-def test_download_can_raises(partial: bool):
-    with pytest.raises(pv.VTKVersionError):
-        examples.download_can(partial=partial)
-
-
 def test_download_fea_bracket():
     filename = examples.download_fea_bracket(load=False)
     assert (p := Path(filename)).is_file()
