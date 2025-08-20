@@ -26,7 +26,6 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
 from tests.conftest import flaky_test
 
@@ -3238,18 +3237,14 @@ def test_extrude_rotate():
     assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
-    if not pv.vtk_version_info >= (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
-    else:
-        poly = line.extrude_rotate(
-            rotation_axis=rotation_axis,
-            resolution=resolution,
-            progress_bar=True,
-            capping=True,
-        )
-        assert poly.n_cells == line.n_points - 1
-        assert poly.n_points == (resolution + 1) * line.n_points
+    poly = line.extrude_rotate(
+        rotation_axis=rotation_axis,
+        resolution=resolution,
+        progress_bar=True,
+        capping=True,
+    )
+    assert poly.n_cells == line.n_points - 1
+    assert poly.n_points == (resolution + 1) * line.n_points
 
     with pytest.raises(ValueError):  # noqa: PT011
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)

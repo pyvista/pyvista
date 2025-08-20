@@ -2105,9 +2105,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                     ids_to_keep |= set(extracted['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
                 if len(ids_to_remove) != 0:
-                    if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-                        msg = '`connectivity` with PolyData requires vtk>=9.1.0'
-                        raise VTKVersionError(msg)
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))

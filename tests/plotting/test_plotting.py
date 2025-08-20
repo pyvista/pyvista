@@ -89,11 +89,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
-skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')  # noqa: N816
-skip_lesser_9_0_X = pytest.mark.needs_vtk_version(  # noqa: N816
-    9, 1, reason='Functions not implemented before 9.0.X'
-)
 skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 3, reason='Functions not implemented before 9.3.X'
 )
@@ -256,7 +251,6 @@ def test_import_3ds():
     pl.show()
 
 
-@skip_9_0_X
 def test_import_obj():
     download_obj_file = examples.download_room_surface_mesh(load=False)
     pl = pv.Plotter()
@@ -269,7 +263,6 @@ def test_import_obj():
     pl.show()
 
 
-@skip_9_0_X
 def test_import_obj_with_texture():
     filename = examples.download_doorman(load=False)
     pl = pv.Plotter()
@@ -2039,7 +2032,6 @@ def test_volume_rendering_from_plotter(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@skip_9_0_X
 def test_volume_rendering_rectilinear(uniform):
     grid = uniform.cast_to_rectilinear_grid()
 
@@ -2858,7 +2850,6 @@ def test_chart_plot():
     pl.show()
 
 
-@skip_9_1_0
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3019,7 +3010,6 @@ def test_rectlinear_edge_case(verify_image_cache):
     rec_grid.plot(show_edges=True, cpos='xy')
 
 
-@skip_9_1_0
 def test_pointset_plot(pointset):
     pointset.plot()
 
@@ -3028,14 +3018,12 @@ def test_pointset_plot(pointset):
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_as_points(pointset):
     pl = pv.Plotter()
     pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_vtk():
     pointset = vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
@@ -3046,7 +3034,6 @@ def test_pointset_plot_vtk():
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_as_points_vtk():
     pointset = vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
@@ -3160,13 +3147,6 @@ def test_add_text():
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
     'MathText requires matplotlib<3.6',
 )
-@pytest.mark.filterwarnings(
-    r'ignore:Passing individual properties to FontProperties'
-    r'\(\):matplotlib.MatplotlibDeprecationWarning',
-    r'ignore:.*MathtextBackendBitmap.*:matplotlib.MatplotlibDeprecationWarning'
-    if pv.vtk_version_info <= (9, 1)
-    else '',
-)
 @pytest.mark.usefixtures('recwarn')
 def test_add_text_latex():
     """Test LaTeX symbols.
@@ -3211,7 +3191,6 @@ def test_plot_categories_true(sphere):
 
 
 @pytest.mark.skip_windows
-@skip_9_0_X
 def test_depth_of_field():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3219,7 +3198,6 @@ def test_depth_of_field():
     pl.show()
 
 
-@skip_9_0_X
 def test_blurring():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3517,13 +3495,10 @@ def test_bool_scalars(sphere):
 
 
 @pytest.mark.skip_windows('Test fails on Windows because of pbr')
-@skip_9_1_0  # pbr required
+# pbr required
 def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
     prop = pv.Property(interpolation='pbr', metallic=1.0)
-
-    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pv.vtk_version_info < (9, 2)
     prop.plot()
 
 
@@ -3633,7 +3608,6 @@ def test_remove_bounds_axes(sphere):
     pl.show()
 
 
-@skip_9_1_0
 def test_charts_sin():
     x = np.linspace(0, 2 * np.pi, 20)
     y = np.sin(x)
@@ -4061,7 +4035,6 @@ def test_algorithm_add_points():
     pl.show()
 
 
-@skip_9_1_0
 def test_algorithm_add_point_labels():
     algo = pv.ConeSource()
     elev = vtk.vtkElevationFilter()
@@ -4074,7 +4047,6 @@ def test_algorithm_add_point_labels():
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_to_polydata_algorithm(pointset):
     alg = vtk.vtkElevationFilter()
     alg.SetInputDataObject(pointset)
@@ -5059,7 +5031,6 @@ def test_orthogonal_planes_source_push(distance):
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
 @pytest.mark.skip_windows
-@skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
     [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
@@ -5070,7 +5041,6 @@ def test_orthogonal_planes_source_resolution(resolution):
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
 
 
-@skip_9_1_0
 @pytest.mark.skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
@@ -5103,7 +5073,7 @@ def test_planes_assembly():
     plot.show()
 
 
-@skip_9_1_0  # Difference in clipping generates error of approx 500
+# Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
     ('label_kwarg', 'camera_position'),
