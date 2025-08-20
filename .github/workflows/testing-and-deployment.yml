@@ -122,7 +122,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: foo
+          key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install PyVista test dependencies
@@ -202,7 +202,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: foo
+          key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Build wheel and install pyvista
@@ -405,7 +405,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: foo
+          key: ${{ needs.cache-vtk-data.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Set up headless display
