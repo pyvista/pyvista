@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
     from .dataset import DataSet
     from .utilities.arrays import FieldAssociation
+    from .utilities.fileio import _VTKWriterAlias
 
 
 class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
@@ -43,7 +44,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkAlgorithm]]] = {
+    _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {
         '.vtpd': _vtk.vtkXMLPartitionedDataSetWriter
     }
 
