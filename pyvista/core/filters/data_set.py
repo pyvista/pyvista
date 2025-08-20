@@ -6149,11 +6149,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
-        # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
-        # work correctly, returning the wrong number of partitions.
-        if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-            msg = '`partition` requires vtk>=9.1.0'
-            raise VTKVersionError(msg)
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '

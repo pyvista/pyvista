@@ -1238,10 +1238,6 @@ def test_cast_to_poly_points_implicit(uniform):
 
 
 def test_partition(hexbeam):
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            hexbeam.partition(2)
-        return
     # split as composite
     n_part = 2
     out = hexbeam.partition(n_part)
