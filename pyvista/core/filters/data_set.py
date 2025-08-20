@@ -8134,8 +8134,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         mesh fits the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         .. versionadded:: 0.46
 
@@ -8188,9 +8187,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` is specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -8313,29 +8309,17 @@ def _set_threshold_limit(alg, *, value, method, invert):
         raise TypeError(msg)
     alg.SetInvert(invert)
     # Set values and function
-    if pyvista.vtk_version_info >= (9, 1):
-        if isinstance(value, (np.ndarray, Sequence)):
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
-            alg.SetLowerThreshold(value[0])
-            alg.SetUpperThreshold(value[1])
-        # Single value
-        elif method.lower() == 'lower':
-            alg.SetLowerThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-        elif method.lower() == 'upper':
-            alg.SetUpperThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
-        else:
-            msg = 'Invalid method choice. Either `lower` or `upper`'
-            raise ValueError(msg)
-    # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-    elif isinstance(value, (np.ndarray, Sequence)):
-        alg.ThresholdBetween(value[0], value[1])
+    if isinstance(value, (np.ndarray, Sequence)):
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
+        alg.SetLowerThreshold(value[0])
+        alg.SetUpperThreshold(value[1])
     # Single value
     elif method.lower() == 'lower':
-        alg.ThresholdByLower(value)
+        alg.SetLowerThreshold(value)
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
     elif method.lower() == 'upper':
-        alg.ThresholdByUpper(value)
+        alg.SetUpperThreshold(value)
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
     else:
         msg = 'Invalid method choice. Either `lower` or `upper`'
         raise ValueError(msg)

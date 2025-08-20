@@ -342,9 +342,9 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
-
+    needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
-    for item_mark in item.iter_markers('needs_vtk_version'):
+    for item_mark in item.iter_markers(needs_vtk_version):
         sig = Signature(
             [
                 Parameter(
@@ -377,6 +377,16 @@ def pytest_runtest_setup(item: pytest.Item):
         _max = (_max,) if isinstance(_max, int) else _max
 
         curr_version = pyvista.vtk_version_info
+
+        if _min is not None:
+            try:
+                curr_version < _min  # noqa: B015
+            except pyvista.VTKVersionError:
+                msg = (
+                    f'The {needs_vtk_version!r} marker is no longer necessary\n'
+                    f'and can be removed from test {item}.'
+                )
+                raise pyvista.VTKVersionError(msg)
 
         if _max is None and curr_version < _min:
             reason = item_mark.kwargs.get(

@@ -276,12 +276,8 @@ def test_extract_all_edges(datasets):
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
-    if pv.vtk_version_info < (9, 1):
-        with pytest.raises(VTKVersionError):
-            datasets[0].extract_all_edges(use_all_points=True)
-    else:
-        edges = datasets[0].extract_all_edges(use_all_points=True)
-        assert edges.n_lines
+    edges = datasets[0].extract_all_edges(use_all_points=True)
+    assert edges.n_lines
 
 
 def test_extract_all_edges_no_data():

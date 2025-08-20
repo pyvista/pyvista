@@ -30,7 +30,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -328,9 +327,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         the class being abstract.
 
         """
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.1.0'
-            raise VTKVersionError(msg)
         return super().__new__(cls, *args, **kwargs)
 
     @_deprecate_positional_args(allowed=['var_inp'])
