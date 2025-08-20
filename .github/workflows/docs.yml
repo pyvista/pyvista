@@ -44,16 +44,29 @@ permissions:
 jobs:
   doc:
     name: Build Documentation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-self-hosted
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
-      SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
+      SPHINX_JOBS: "-j8" # Public GitHub runners have 2 real cores, private up to 8
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: Set environment for self-hosted
+        if: runner.environment == 'self-hosted'
+        run: |
+          echo "SPHINX_JOBS=-j8" >> $GITHUB_ENV
+          # echo "VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow" >> $GITHUB_ENV
+          # echo "VTK_DEFAULT_EGL_DEVICE_INDEX=1" >> $GITHUB_ENV
+
+      - name: Set environment for GitHub-hosted
+        if: runner.environment != 'self-hosted'
+        run: |
+          echo "SPHINX_JOBS=-j2" >> $GITHUB_ENV
+          # echo "VTK_DEFAULT_OPENGL_WINDOW=vtkOSOpenGLRenderWindow" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v5
         with:
@@ -61,6 +74,7 @@ jobs:
           cache: "pip"
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
+        if: runner.environment != 'self-hosted'
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
