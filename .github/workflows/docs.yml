@@ -49,7 +49,7 @@ jobs:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
-      SPHINX_JOBS: "-j8" # Public GitHub runners have 2 real cores, private up to 8
+      SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,12 +61,6 @@ jobs:
           echo "SPHINX_JOBS=-j8" >> $GITHUB_ENV
           # echo "VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow" >> $GITHUB_ENV
           # echo "VTK_DEFAULT_EGL_DEVICE_INDEX=1" >> $GITHUB_ENV
-
-      - name: Set environment for GitHub-hosted
-        if: runner.environment != 'self-hosted'
-        run: |
-          echo "SPHINX_JOBS=-j2" >> $GITHUB_ENV
-          # echo "VTK_DEFAULT_OPENGL_WINDOW=vtkOSOpenGLRenderWindow" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v5
         with:
