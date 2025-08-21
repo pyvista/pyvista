@@ -52,6 +52,9 @@ from vtkmodules.vtkInteractionStyle import (
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget as vtkBoxWidget
 from vtkmodules.vtkInteractionWidgets import vtkButtonWidget as vtkButtonWidget
 from vtkmodules.vtkInteractionWidgets import (
+    vtkCameraOrientationWidget as vtkCameraOrientationWidget,
+)
+from vtkmodules.vtkInteractionWidgets import (
     vtkDistanceRepresentation3D as vtkDistanceRepresentation3D,
 )
 from vtkmodules.vtkInteractionWidgets import vtkDistanceWidget as vtkDistanceWidget
