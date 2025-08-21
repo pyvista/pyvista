@@ -310,3 +310,94 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 
 
 vtk_snake_case = _vtkSnakeCase()
+
+
+_AllowNewAttributesOptions = Literal['private', 'any', 'none']
+
+
+class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
+    """Context manager to control setting new attributes on PyVista classes.
+
+    Python allows arbitrarily setting new attributes on objects at any time,
+    but PyVista's classes do not always allow this. By default, setting a
+    new attribute is only allowed when the attribute's name has a leading
+    underscore "``_``", i.e. it is a private attribute; attempting to
+    set a new public attribute raises an ``AttributeError``.
+
+    This context manager may be used to allow or disallow setting `any` new
+    attribute, public or private, either globally or within a context.
+
+    .. versionadded:: 0.47
+
+    Parameters
+    ----------
+    mode : 'private' | 'any' | 'none'
+        Control if setting new attributes is allowed.
+
+        - 'private': Allow setting private attributes, but do not allow setting public attributes.
+        - 'any': Allow setting any new attribute, either private or public.
+        - 'none': Do not allow setting new attributes, regardless if they are private or public.
+
+        ``'private'`` is used by default, ``'any'`` removes all restrictions, and ``'none'``
+         is most strict.
+
+        .. note::
+
+            An attribute is considered private if its name has a leading underscore "``_``".
+
+    See Also
+    --------
+    pyvista.set_new_attribute
+        Function for setting any new attribute on a PyVista object.
+
+    Examples
+    --------
+    Get the default attribute mode.
+
+    >>> import pyvista as pv
+    >>> pv.allow_new_attributes()
+    'private'
+
+    Setting new `private` attributes on PyVista objects is allowed by default.
+
+    >>> mesh = pv.PolyData()
+    >>> mesh._foo = 42  # OK
+    >>> mesh.foo = 42  # ERROR # doctest: +SKIP
+
+    Do not allow setting new attributes.
+
+    >>> _ = pv.allow_new_attributes('none')
+    >>> mesh._foo = 42  # ERROR # doctest:+SKIP
+    >>> mesh.foo = 42  # ERROR # doctest:+SKIP
+
+    Note that this state is global and will persist between function calls. Set it
+    back to its original state explicitly.
+
+    >>> _ = pv.allow_new_attributes('private')
+
+    Use it as a context manager instead. This way, the state is only temporarily
+    modified and is automatically restored.
+
+    >>> with pv.allow_new_attributes('any'):
+    ...     mesh._foo = 42  # OK
+    ...     mesh.foo = 42  # OK
+
+    >>> pv.allow_new_attributes()
+    'private'
+
+    """
+
+    @property
+    def _state(self) -> _AllowNewAttributesOptions:
+        from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
+
+        return _ALLOW_NEW_ATTRIBUTES_MODE
+
+    @_state.setter
+    def _state(self, state: _AllowNewAttributesOptions) -> None:
+        import pyvista as pv  # noqa: PLC0415
+
+        pv._ALLOW_NEW_ATTRIBUTES_MODE = state
+
+
+allow_new_attributes = _AllowNewAttributes()
