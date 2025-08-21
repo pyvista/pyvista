@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import gc
 import inspect
+import platform
 
 import pytest
 
@@ -15,6 +16,7 @@ from pyvista.plotting import system_supports_plotting
 # these are set here because we only need them for plotting tests
 pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
+APPLE_SILICON = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 # Configure skip_plotting marker
@@ -38,6 +40,22 @@ def _is_vtk(obj):
         return False
 
 
+if APPLE_SILICON:
+
+    @pytest.fixture(autouse=True)
+    def macos_memory_leak(request):  # noqa: ARG001
+        # Without this, only 500 render windows can be created in a single Python
+        # process on MacOS using Apple silicon
+        # See https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+        from Foundation import NSAutoreleasePool  # for macOS
+
+        pool = NSAutoreleasePool.alloc().init()
+        yield
+
+        # pool goes out of scope and resources get collected
+        del pool
+
+
 @pytest.fixture(autouse=True)
 def check_gc(request):
     """Ensure that all VTK objects are garbage-collected by Python."""
@@ -51,6 +69,10 @@ def check_gc(request):
     yield
 
     pv.close_all()
+
+    # Skip GC check if test failed
+    if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
+        return
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]

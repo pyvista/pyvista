@@ -89,11 +89,6 @@ skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly 
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
-skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
-skip_9_0_X = pytest.mark.needs_vtk_version(9, 1, 0, reason='Flaky on 9.0.X')  # noqa: N816
-skip_lesser_9_0_X = pytest.mark.needs_vtk_version(  # noqa: N816
-    9, 1, reason='Functions not implemented before 9.0.X'
-)
 skip_lesser_9_3_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 3, reason='Functions not implemented before 9.3.X'
 )
@@ -256,7 +251,6 @@ def test_import_3ds():
     pl.show()
 
 
-@skip_9_0_X
 def test_import_obj():
     download_obj_file = examples.download_room_surface_mesh(load=False)
     pl = pv.Plotter()
@@ -269,7 +263,6 @@ def test_import_obj():
     pl.show()
 
 
-@skip_9_0_X
 def test_import_obj_with_texture():
     filename = examples.download_doorman(load=False)
     pl = pv.Plotter()
@@ -312,7 +305,6 @@ def test_pbr(sphere, verify_image_cache):
 
 
 @pytest.mark.parametrize('resample', [True, 0.5])
-@pytest.mark.needs_vtk_version(9, 2)
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
@@ -1220,9 +1212,7 @@ def test_enable_picking_gc():
 def test_left_button_down():
     plotter = pv.Plotter()
 
-    attr = (
-        'GetOffScreenFramebuffer' if pyvista.vtk_version_info < (9, 1) else 'GetRenderFramebuffer'
-    )
+    attr = 'GetRenderFramebuffer'
     if hasattr(renwin := plotter.render_window, attr):
         if not getattr(renwin, attr)().GetFBOIndex():
             # This only fails for VTK<9.2.3
@@ -1982,6 +1972,17 @@ def test_remove_actor(uniform):
     plotter.show()
 
 
+def test_add_mesh_remove_existing_actor(verify_image_cache, uniform):
+    """Test remove_existing_actor parameter for add_mesh method."""
+    verify_image_cache.skip = True
+    plotter = pv.Plotter()
+    actor1 = plotter.add_mesh(uniform.copy(), name='test_mesh1')
+    actor2 = plotter.add_mesh(uniform.copy(), name='test_mesh2', remove_existing_actor=False)
+    actors = list(plotter.renderer.actors.values())
+    assert actor1 in actors
+    assert actor2 in actors
+
+
 def test_image_properties():
     mesh = examples.load_uniform()
     p = pv.Plotter()
@@ -2032,7 +2033,6 @@ def test_volume_rendering_from_plotter(uniform):
 
 
 @skip_windows_mesa  # due to opacity
-@skip_9_0_X
 def test_volume_rendering_rectilinear(uniform):
     grid = uniform.cast_to_rectilinear_grid()
 
@@ -2140,10 +2140,7 @@ def test_plot_eye_dome_lighting_enable_disable(airplane):
 
 
 @pytest.mark.skip_windows
-def test_opacity_by_array_direct(plane, verify_image_cache):
-    # VTK regression 9.0.1 --> 9.1.0
-    verify_image_cache.high_variance_test = True
-
+def test_opacity_by_array_direct(plane):
     # test with opacity parm as an array, both cell and point sized
     plane_shift = plane.translate((0, 0, 1), inplace=False)
     pl = pv.Plotter()
@@ -2785,7 +2782,6 @@ def test_collision_plot(verify_image_cache):
 
 
 @pytest.mark.skip_mac('MacOS CI fails when downloading examples')
-@pytest.mark.needs_vtk_version(9, 2, 0)
 def test_chart_plot():
     """Basic test to verify chart plots correctly"""
     # Chart 1 (bottom left)
@@ -2852,7 +2848,6 @@ def test_chart_plot():
     pl.show()
 
 
-@skip_9_1_0
 def test_chart_matplotlib_plot(verify_image_cache):
     """Test integration with matplotlib"""
     # Seeing CI failures for Conda job that need to be addressed
@@ -3013,7 +3008,6 @@ def test_rectlinear_edge_case(verify_image_cache):
     rec_grid.plot(show_edges=True, cpos='xy')
 
 
-@skip_9_1_0
 def test_pointset_plot(pointset):
     pointset.plot()
 
@@ -3022,14 +3016,12 @@ def test_pointset_plot(pointset):
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_as_points(pointset):
     pl = pv.Plotter()
     pl.add_points(pointset, scalars=range(pointset.n_points), show_scalar_bar=False)
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_vtk():
     pointset = vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
@@ -3040,7 +3032,6 @@ def test_pointset_plot_vtk():
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_plot_as_points_vtk():
     pointset = vtk.vtkPointSet()
     points = pv.vtk_points(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]))
@@ -3114,19 +3105,11 @@ def test_plot_complex_value(plane, verify_image_cache):
     data = np.arange(plane.n_points, dtype=np.complex128)
     data += np.linspace(0, 1, plane.n_points) * -1j
 
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        ComplexWarning = np.exceptions.ComplexWarning
-    except AttributeError:
-        ComplexWarning = np.ComplexWarning
-
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         plane.plot(scalars=data)
 
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         pl.add_mesh(plane, scalars=data, show_scalar_bar=True)
     pl.show()
 
@@ -3161,13 +3144,6 @@ def test_add_text():
     not check_math_text_support(),
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, '
     'MathText requires matplotlib<3.6',
-)
-@pytest.mark.filterwarnings(
-    r'ignore:Passing individual properties to FontProperties'
-    r'\(\):matplotlib.MatplotlibDeprecationWarning',
-    r'ignore:.*MathtextBackendBitmap.*:matplotlib.MatplotlibDeprecationWarning'
-    if pv.vtk_version_info <= (9, 1)
-    else '',
 )
 @pytest.mark.usefixtures('recwarn')
 def test_add_text_latex():
@@ -3213,7 +3189,6 @@ def test_plot_categories_true(sphere):
 
 
 @pytest.mark.skip_windows
-@skip_9_0_X
 def test_depth_of_field():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3221,7 +3196,6 @@ def test_depth_of_field():
     pl.show()
 
 
-@skip_9_0_X
 def test_blurring():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), show_edges=True)
@@ -3252,7 +3226,8 @@ def test_ssao_pass(verify_image_cache):
 
 
 @skip_mesa
-def test_ssao_pass_from_helper():
+def test_ssao_pass_from_helper(verify_image_cache):
+    verify_image_cache.macos_skip_image_cache = True  # high variance (~1000) on MacOS 15
     ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
 
     ugrid.plot(ssao=True)
@@ -3323,7 +3298,7 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
 
 @pytest.mark.skip_windows('Test fails on Windows because of opacity')
 @skip_lesser_9_4_X
-def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
+def test_plot_composite_poly_scalars_opacity(multiblock_poly):
     pl = pv.Plotter()
 
     actor, mapper = pl.add_composite(
@@ -3340,9 +3315,6 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
 
     pl.camera_position = 'xy'
 
-    # 9.0.3 has a bug where VTK changes the edge visibility on blocks that are
-    # also opaque. Don't verify the image of that version.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     pl.show()
 
 
@@ -3370,12 +3342,8 @@ def test_plot_composite_poly_no_scalars(multiblock_poly):
         lighting=False,
     )
 
-    # Note: set the camera position before making the blocks invisible to be
-    # consistent between 9.0.3 and 9.1+
-    #
-    # 9.0.3 still considers invisible blocks when determining camera bounds, so
-    # there will be some empty space where the invisible block is for 9.0.3,
-    # while 9.1.0 ignores invisible blocks when computing camera bounds.
+    # Note: set the camera position before making the blocks invisible
+    # VTK ignores invisible blocks when computing camera bounds.
     pl.camera_position = 'xy'
     mapper.block_attr[2].color = 'blue'
     mapper.block_attr[3].visible = False
@@ -3438,16 +3406,8 @@ def test_plot_composite_poly_complex(multiblock_poly):
     # make a multi_multi for better coverage
     multi_multi = pv.MultiBlock([multiblock_poly, multiblock_poly])
 
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        ComplexWarning = np.exceptions.ComplexWarning
-    except AttributeError:
-        ComplexWarning = np.ComplexWarning
-
     pl = pv.Plotter()
-    with pytest.warns(ComplexWarning, match='Casting complex'):
+    with pytest.warns(np.exceptions.ComplexWarning, match='Casting complex'):
         pl.add_composite(multi_multi, scalars='data')
     pl.show()
 
@@ -3535,13 +3495,10 @@ def test_bool_scalars(sphere):
 
 
 @pytest.mark.skip_windows('Test fails on Windows because of pbr')
-@skip_9_1_0  # pbr required
+# pbr required
 def test_property_pbr(verify_image_cache):
     verify_image_cache.macos_skip_image_cache = True
     prop = pv.Property(interpolation='pbr', metallic=1.0)
-
-    # VTK flipped the Z axis for the cubemap between 9.1 and 9.2
-    verify_image_cache.skip = pv.vtk_version_info < (9, 2)
     prop.plot()
 
 
@@ -3651,7 +3608,6 @@ def test_remove_bounds_axes(sphere):
     pl.show()
 
 
-@skip_9_1_0
 def test_charts_sin():
     x = np.linspace(0, 2 * np.pi, 20)
     y = np.sin(x)
@@ -3661,7 +3617,7 @@ def test_charts_sin():
     chart.show()
 
 
-def test_lookup_table(verify_image_cache):
+def test_lookup_table():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
@@ -3669,26 +3625,20 @@ def test_lookup_table(verify_image_cache):
     lut.nan_color = 'r'
     lut.nan_opacity = 0.5
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
-def test_lookup_table_nan_hidden(verify_image_cache):
+def test_lookup_table_nan_hidden():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'black'
     lut.above_range_color = 'grey'
     lut.nan_opacity = 0
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
-def test_lookup_table_above_below_opacity(verify_image_cache):
+def test_lookup_table_above_below_opacity():
     lut = pv.LookupTable('viridis')
     lut.n_values = 8
     lut.below_range_color = 'blue'
@@ -3698,9 +3648,6 @@ def test_lookup_table_above_below_opacity(verify_image_cache):
     lut.nan_color = 'r'
     lut.nan_opacity = 0.5
 
-    # There are minor variations within 9.0.3 that slightly invalidate the
-    # image cache.
-    verify_image_cache.skip = pv.vtk_version_info == (9, 0, 3)
     lut.plot()
 
 
@@ -4088,7 +4035,6 @@ def test_algorithm_add_points():
     pl.show()
 
 
-@skip_9_1_0
 def test_algorithm_add_point_labels():
     algo = pv.ConeSource()
     elev = vtk.vtkElevationFilter()
@@ -4101,7 +4047,6 @@ def test_algorithm_add_point_labels():
     pl.show()
 
 
-@skip_9_1_0
 def test_pointset_to_polydata_algorithm(pointset):
     alg = vtk.vtkElevationFilter()
     alg.SetInputDataObject(pointset)
@@ -4255,7 +4200,6 @@ def test_plot_texture_flip_y(texture):
     texture.flip_y().plot()
 
 
-@pytest.mark.needs_vtk_version(9, 2, 0)
 @pytest.mark.skipif(CI_WINDOWS, reason='Windows CI testing segfaults on pbr')
 @pytest.mark.needs_vtk_version(less_than=(9, 3), reason='This is broken on VTK 9.3')
 def test_plot_cubemap_alone(cubemap, verify_image_cache):
@@ -5087,7 +5031,6 @@ def test_orthogonal_planes_source_push(distance):
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
 @pytest.mark.skip_windows
-@skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
     [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
@@ -5098,7 +5041,6 @@ def test_orthogonal_planes_source_resolution(resolution):
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
 
 
-@skip_9_1_0
 @pytest.mark.skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
@@ -5131,7 +5073,7 @@ def test_planes_assembly():
     plot.show()
 
 
-@skip_9_1_0  # Difference in clipping generates error of approx 500
+# Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
     ('label_kwarg', 'camera_position'),
@@ -5251,8 +5193,6 @@ def test_plot_wireframe_style():
     sphere.plot(style='wireframe')
 
 
-# Skip tests less 9.1 due to slightly above threshold error
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
 @pytest.mark.parametrize('return_clipped', ['return_clipped', None])
 def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
@@ -5270,5 +5210,41 @@ def test_clip_multiblock_crinkle(return_clipped, as_multiblock):
 
     pl = pv.Plotter()
     pl.add_mesh(clipped, show_edges=True)
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.parametrize('as_multiblock', ['as_multiblock', None])
+def test_clip_box_crinkle(as_multiblock):
+    as_multiblock = bool(as_multiblock)
+
+    mesh = examples.download_bunny_coarse()
+    if as_multiblock:
+        mesh = pv.MultiBlock([mesh])
+    bounds = mesh.bounds
+    x_size, _, _ = mesh.bounds_size
+    bounds_right = (
+        bounds.x_min,
+        bounds.x_min + x_size / 2,
+        bounds.y_min,
+        bounds.y_max,
+        bounds.z_min,
+        bounds.z_max,
+    )
+    bounds_left = (
+        bounds.x_min + x_size / 2,
+        bounds.x_max,
+        bounds.y_min,
+        bounds.y_max,
+        bounds.z_min,
+        bounds.z_max,
+    )
+    clipped_right = mesh.clip_box(bounds_right, crinkle=True)
+    clipped_left = mesh.clip_box(bounds_left, crinkle=True)
+    clipped_right.translate((0.1, 0, 0), inplace=True)
+
+    pl = pv.Plotter()
+    pl.add_mesh(clipped_right, show_edges=True)
+    pl.add_mesh(clipped_left, show_edges=True)
     pl.view_xy()
     pl.show()

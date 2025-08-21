@@ -11,7 +11,6 @@ import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
 from copy import deepcopy
-import ctypes
 from functools import wraps
 import io
 from itertools import cycle
@@ -118,7 +117,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import BackfaceArgs
-    from pyvista.plotting._typing import CameraOptions
+    from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import Chart
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
@@ -139,16 +138,11 @@ if TYPE_CHECKING:
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
-# EXPERIMENTAL: permit pyvista to kill the render window
-KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
-if KILL_DISPLAY:  # pragma: no cover
-    # this won't work under wayland
-    try:
-        X11 = ctypes.CDLL('libX11.so')
-        X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
-    except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
-        KILL_DISPLAY = False
+if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
+    from pyvista.core.errors import DeprecationError
+
+    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
+    DeprecationError(msg)
 
 
 def close_all() -> bool:
@@ -533,10 +527,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
 
         importer = vtkGLTFImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)  # type: ignore[arg-type]
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         _update_alg(importer)
 
@@ -573,10 +564,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkVRMLImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)  # type: ignore[arg-type]
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         _update_alg(importer)
 
@@ -609,10 +597,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtk3DSImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)  # type: ignore[arg-type]
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         _update_alg(importer)
 
@@ -656,22 +641,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(str(filename) if pyvista.vtk_version_info < (9, 2, 2) else filename)  # type:ignore[arg-type]
+        importer.SetFileName(filename)  # type:ignore[arg-type]
         if filename_mtl is None:
             filename_mtl_path = filename.with_suffix('.mtl')
         else:
             filename_mtl_path = Path(filename_mtl).expanduser().resolve()
         if filename_mtl_path.is_file():
-            importer.SetFileNameMTL(
-                str(filename_mtl_path)
-                if pyvista.vtk_version_info < (9, 2, 2)
-                else filename_mtl_path  # type: ignore[arg-type]
-            )
-            importer.SetTexturePath(
-                str(filename_mtl_path.parents[0])  # type: ignore[arg-type]
-                if pyvista.vtk_version_info < (9, 2, 2)
-                else filename_mtl_path.parents[0]
-            )
+            importer.SetFileNameMTL(str(filename_mtl_path))
+            importer.SetTexturePath(str(filename_mtl_path.parents[0]))
         importer.SetRenderWindow(self.render_window)
         _update_alg(importer)
 
@@ -793,8 +770,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
 
-        See https://vtk.org/doc/nightly/html/classvtkGLTFExporter.html
-        for limitations regarding the exporter.
+        See :vtk:`vtkGLTFExporter` for limitations regarding the exporter.
 
         Parameters
         ----------
@@ -919,8 +895,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
     def export_vrml(self, filename: str | Path) -> None:
         """Export the current rendering scene as a VRML file.
 
-        See `vtk.VRMLExporter <https://vtk.org/doc/nightly/html/classvtkVRMLExporter.html>`_
-        for limitations regarding the exporter.
+        See :vtk:`vtkVRMLExporter` for limitations regarding the exporter.
 
         Parameters
         ----------
@@ -1917,7 +1892,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location: CameraPosition | CameraOptions) -> None:
+    def camera_position(self, camera_location: CameraPositionOptions) -> None:
         self.renderer.camera_position = camera_location
 
     @property
@@ -2378,11 +2353,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args) -> None:  # noqa: ARG002
         """Register the event for a left button down click."""
-        attr = (
-            'GetOffScreenFramebuffer'
-            if pyvista.vtk_version_info < (9, 1)
-            else 'GetRenderFramebuffer'
-        )
+        attr = 'GetRenderFramebuffer'
         if (
             hasattr(renwin := self.render_window, attr)
             and not getattr(renwin, attr)().GetFBOIndex()
@@ -2594,7 +2565,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         lighting: bool | None = None,  # noqa: FBT001
         n_colors: int = 256,
         interpolate_before_map: bool | None = True,  # noqa: FBT001, FBT002
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,  # noqa: FBT001
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -3129,7 +3100,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         lighting: bool | None = None,  # noqa: FBT001
         n_colors: int = 256,
         interpolate_before_map: bool | None = None,  # noqa: FBT001
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
         reset_camera: bool | None = None,  # noqa: FBT001
         scalar_bar_args: ScalarBarArgs | None = None,
@@ -3169,6 +3140,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         backface_params: BackfaceArgs | Property | None = None,
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
+        remove_existing_actor: bool | None = None,  # noqa: FBT001
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3517,6 +3489,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
                 available, `edge_opacity` is set to 1.
 
+        remove_existing_actor : bool, optional
+            Remove any existing actor in the renderer with the same name before adding
+            this actor. By default, this is ``True`` when ``name`` is provided, and
+            ``False`` when ``name`` is ``None``. Set to ``False`` to improve performance
+            when adding multiple named actors, particularly during initial scene setup
+            where no actors exist yet.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3708,6 +3687,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 render=render,
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
+                remove_existing_actor=remove_existing_actor,
                 **kwargs,
             )
             return actor
@@ -3757,6 +3737,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             texture=texture,
             rgb=rgb,
             style=style,
+            remove_existing_actor=remove_existing_actor,
             **kwargs,
         )
 
@@ -4062,7 +4043,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         resolution: VectorLike[float] | None = None,
         opacity: OpacityOptions | NumpyArray[float] = 'linear',
         n_colors: int = 256,
-        cmap: ColormapOptions | list[str] | LookupTable | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,  # noqa: FBT001, FBT002
         reset_camera: bool | None = None,  # noqa: FBT001
         name: str | None = None,
@@ -5040,7 +5021,15 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         """Clear the render window."""
         # Not using `render_window` property here to enforce clean up
         if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
+            apple_silicon = platform.system() == 'Darwin' and platform.machine() == 'arm64'
+            if not apple_silicon:  # pragma: no cover
+                # Up to vtk==9.5.0, render windows aren't closed on MacOS,
+                # so the resources are not freed making this unnecessary. Also,
+                # we need this disabled so we can use NSAutoreleasePool in unit
+                # testing.
+                # see https://gitlab.kitware.com/vtk/vtk/-/issues/18713
+                self.ren_win.Finalize()
+
             del self.ren_win
 
     def close(self) -> None:
@@ -5066,18 +5055,9 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         self.mapper = None
         self.text = None
 
-        # grab the display id before clearing the window
-        # this is an experimental feature
-        if KILL_DISPLAY:  # pragma: no cover
-            disp_id = None
-            if self.render_window is not None:
-                disp_id = self.render_window.GetGenericDisplayId()
         self._clear_ren_win()
-
         if self.iren is not None:
             self.iren.close()
-            if KILL_DISPLAY:  # pragma: no cover
-                _kill_display(disp_id)
             self.iren = None
 
         # end movie
@@ -5814,11 +5794,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise TypeError(msg)
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
-            if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-                msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
-                raise VTKVersionError(msg)
             # Extract points filter
             pc_algo = _vtk.vtkConvertToPointCloud()
             set_algorithm_input(pc_algo, algo)
@@ -6223,10 +6198,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             )
             raise ValueError(msg)
         writer.CompressOff()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            writer.SetFilePrefix(str(filepath.with_suffix('')))
-        else:
-            writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
+        writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -6559,10 +6531,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            exporter.SetFilePrefix(str(filename.with_suffix('')))
-        else:
-            exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
+        exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
@@ -6998,7 +6967,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         full_screen: bool | None = None,  # noqa: FBT001
         screenshot: str | Path | io.BytesIO | bool = False,  # noqa: FBT001, FBT002
         return_img: bool = False,  # noqa: FBT001, FBT002
-        cpos: CameraPosition | None = None,
+        cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | None = None,
         return_viewer: bool = False,  # noqa: FBT001, FBT002
         return_cpos: bool | None = None,  # noqa: FBT001
@@ -7465,29 +7434,3 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
 _ALL_PLOTTERS: dict[str, BasePlotter] = {}
-
-
-def _kill_display(disp_id: str | None) -> None:  # pragma: no cover
-    """Forcibly close the display on Linux.
-
-    See: https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
-
-    And more details into why...
-    https://stackoverflow.com/questions/64811503
-
-    Notes
-    -----
-    This is to be used experimentally and is known to cause issues
-    on `pyvistaqt`
-
-    """
-    if platform.system() != 'Linux':
-        msg = 'This method only works on Linux'
-        raise OSError(msg)
-
-    if disp_id:
-        cdisp_id = int(disp_id[1:].split('_')[0], 16)
-
-        # this is unsafe as events might be queued, but sometimes the
-        # window fails to close if we don't just close it
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id,)).start()

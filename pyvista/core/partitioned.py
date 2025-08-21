@@ -16,11 +16,13 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import ClassVar
 
     from typing_extensions import Self
 
     from .dataset import DataSet
     from .utilities.arrays import FieldAssociation
+    from .utilities.fileio import _VTKWriterAlias
 
 
 class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet):  # type: ignore[type-arg]
@@ -42,11 +44,12 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     """
 
-    if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
+    _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {
+        '.vtpd': _vtk.vtkXMLPartitionedDataSetWriter
+    }
 
-        if _vtk.vtk_version_info >= (9, 4):
-            _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
+    if _vtk.vtk_version_info >= (9, 4):
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""

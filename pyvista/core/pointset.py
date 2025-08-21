@@ -11,9 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Union
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -32,8 +30,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import PyVistaDeprecationWarning
-from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -57,20 +53,20 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
-    _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter,
-        _vtk.vtkXMLPolyDataWriter,
-        _vtk.vtkSTLWriter,
-        _vtk.vtkPolyDataWriter,
-        _vtk.vtkHoudiniPolyDataWriter,
-        _vtk.vtkOBJWriter,
-        _vtk.vtkIVWriter,
-        _vtk.vtkHDFWriter,
-    ]
+    _PolyDataWriterAlias = (
+        _vtk.vtkPLYWriter
+        | _vtk.vtkXMLPolyDataWriter
+        | _vtk.vtkSTLWriter
+        | _vtk.vtkPolyDataWriter
+        | _vtk.vtkHoudiniPolyDataWriter
+        | _vtk.vtkOBJWriter
+        | _vtk.vtkIVWriter
+        | _vtk.vtkHDFWriter
+    )
 
-    _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
-    ]
+    _UnstructuredGridWriterAlias = (
+        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
+    )
 
 
 DEFAULT_INPLACE_WARNING = (
@@ -187,7 +183,7 @@ class _PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self) -> _PointSet:
+    def points_to_double(self) -> Self:
         """Convert the points datatype to double precision.
 
         Returns
@@ -300,11 +296,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
-    Notes
-    -----
-    This class requires ``vtk>=9.1.0``. This is an abstract class in
-    ``vtk<9.1.0`` and cannot be instantiated.
-
     Examples
     --------
     Create a simple point cloud of 10 points from a numpy array.
@@ -332,9 +323,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         the class being abstract.
 
         """
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.1.0'
-            raise VTKVersionError(msg)
         return super().__new__(cls, *args, **kwargs)
 
     @_deprecate_positional_args(allowed=['var_inp'])
@@ -868,10 +856,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             ('n_lines', n_lines),
         ):
             if v is not None:
-                warnings.warn(
-                    f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'PolyData constructor parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
@@ -2199,7 +2185,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             face_count = 0
 
             for i, n_faces in zip(
-                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON),
+                face_counts,
             ):
                 locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
                 face_count += n_faces
@@ -2794,7 +2781,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return self.extract_subset(voi, rate, boundary=False)
 
     @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind, inplace: bool = False):  # noqa: FBT001, FBT002
+    def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide cells without deleting them.
 
         Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
@@ -3316,7 +3303,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid.save(filename, binary=binary)
 
     @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -3360,7 +3347,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return grid
 
     @_deprecate_positional_args
-    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
+    def show_cells(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -3729,7 +3716,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return sorted(indices)
 
     @_deprecate_positional_args
-    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:  # noqa: FBT001, FBT002
+    def compute_connectivity(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
@@ -3778,7 +3765,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             return grid
 
     @_deprecate_positional_args
-    def compute_connections(self, inplace: bool = False):  # noqa: FBT001, FBT002
+    def compute_connections(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
         """Compute an array with the number of connected cell faces.
 
         This method calculates the number of topological cell

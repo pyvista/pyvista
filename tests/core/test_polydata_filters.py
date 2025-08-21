@@ -161,9 +161,6 @@ def test_triangulate_contours():
         assert cell.type == pv.CellType.TRIANGLE
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader'
-)
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()

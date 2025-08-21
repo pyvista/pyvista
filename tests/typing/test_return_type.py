@@ -154,3 +154,14 @@ def test_center_tuple(class_with_center):
     # Test type annotations
     return_type = get_property_return_type(class_with_center.center)
     assert return_type == 'tuple[float, float, float]'
+
+
+def test_bounds_tuple_repr_scientific_notation():
+    actual = repr(pv.UnstructuredGrid().extract_cells(0).bounds)
+    expected = """BoundsTuple(x_min =  1e+299,
+            x_max = -1e+299,
+            y_min =  1e+299,
+            y_max = -1e+299,
+            z_min =  1e+299,
+            z_max = -1e+299)"""
+    assert actual == expected

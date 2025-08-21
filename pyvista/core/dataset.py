@@ -25,7 +25,6 @@ from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
-from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
@@ -2193,10 +2192,6 @@ class DataSet(DataSetFilters, DataObject):
         array([  86, 1653])
 
         """
-        if pyvista.vtk_version_info < (9, 2, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.2.0'
-            raise VTKVersionError(msg)
-
         if np.array(pointa).size != 3:
             msg = 'Point A must be a length three tuple of floats.'
             raise TypeError(msg)

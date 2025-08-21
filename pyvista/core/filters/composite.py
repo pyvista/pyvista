@@ -18,7 +18,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from pyvista import MultiBlock
     from pyvista.core.composite import _TypeMultiBlockLeaf

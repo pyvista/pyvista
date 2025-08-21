@@ -1459,10 +1459,7 @@ class DiscSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
             Center in ``[x, y, z]``.
 
         """
-        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
-            return self.GetCenter()
-        else:  # pragma: no cover
-            return (0.0, 0.0, 0.0)
+        return self.GetCenter()
 
     @center.setter
     def center(self: DiscSource, center: VectorLike[float]) -> None:
@@ -1474,13 +1471,7 @@ class DiscSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkDiskSource):
             Center in ``[x, y, z]``.
 
         """
-        if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
-            self.SetCenter(*center)
-        else:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
-            raise VTKVersionError(msg)
+        self.SetCenter(*center)
 
     @property
     def inner(self: DiscSource) -> float:
@@ -1803,10 +1794,7 @@ class SphereSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkSphereSour
             Center in ``[x, y, z]``.
 
         """
-        if pyvista.vtk_version_info >= (9, 2):
-            return self.GetCenter()
-        else:  # pragma: no cover
-            return (0.0, 0.0, 0.0)
+        return self.GetCenter()
 
     @center.setter
     def center(self: SphereSource, center: VectorLike[float]) -> None:
@@ -1818,13 +1806,7 @@ class SphereSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkSphereSour
             Center in ``[x, y, z]``.
 
         """
-        if pyvista.vtk_version_info >= (9, 2):
-            self.SetCenter(*center)
-        else:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-            msg = 'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
-            raise VTKVersionError(msg)
+        self.SetCenter(*center)
 
     @property
     def radius(self: SphereSource) -> float:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
@@ -9,7 +10,6 @@ import functools
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -26,6 +26,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_object import DataObjectFilters
+from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -609,8 +610,10 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
-        This will return a :class:`pyvista.UnstructuredGrid` of the clipped
-        mesh. Geometry of the input dataset will be preserved where possible.
+        The clipped mesh type matches the input type for :class:`~pyvista.PointSet` and
+        :class:`~pyvista.PolyData`, otherwise the output type is
+        :class:`~pyvista.UnstructuredGrid`.
+        Geometry of the input dataset will be preserved where possible.
         Geometries near the clip intersection will be triangulated/tessellated.
 
         Parameters
@@ -644,8 +647,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData
-            Clipped surface.
+        DataSet
+            Clipped mesh. Output type matches input type for
+            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
+            :class:`~pyvista.MultiBlock`; otherwise the output type is
+            :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -671,7 +677,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
-        return DataSetFilters._clip_with_function(
+        clipped = DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
@@ -679,6 +685,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+        return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['value'])
     def threshold(  # type: ignore[misc]  # noqa: PLR0917
@@ -2098,9 +2105,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                     ids_to_keep |= set(extracted['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
                 if len(ids_to_remove) != 0:
-                    if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-                        msg = '`connectivity` with PolyData requires vtk>=9.1.0'
-                        raise VTKVersionError(msg)
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
@@ -4152,10 +4156,12 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             plt.show()
 
     @_deprecate_positional_args(allowed=['ind'])
-    def extract_cells(  # type: ignore[misc]
+    def extract_cells(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         ind: int | VectorLike[int],
         invert: bool = False,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
+        pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a subset of the grid.
@@ -4167,6 +4173,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         invert : bool, default: False
             Invert the selection.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+            .. versionadded:: 0.47
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+            .. versionadded:: 0.47
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4224,6 +4242,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             ind = subgrid.point_data['vtkOriginalPointIds']
             subgrid.points = self.points[ind]
 
+        # Process output arrays
+        if (name := 'vtkOriginalPointIds') in (data := subgrid.point_data) and not pass_point_ids:
+            del data[name]
+        if (name := 'vtkOriginalCellIds') in (data := subgrid.cell_data) and not pass_cell_ids:
+            del data[name]
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -4232,6 +4255,8 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,  # noqa: FBT001, FBT002
         include_cells: bool = True,  # noqa: FBT001, FBT002
+        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
+        pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
@@ -4249,6 +4274,18 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         include_cells : bool, default: True
             Specifies if the cells shall be returned or not.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+            .. versionadded:: 0.47
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+            .. versionadded:: 0.47
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -4301,7 +4338,14 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
-        return _get_output(extract_sel)
+        output = _get_output(extract_sel)
+
+        # Process output arrays
+        if (name := 'vtkOriginalPointIds') in (data := output.point_data) and not pass_point_ids:
+            del data[name]
+        if (name := 'vtkOriginalCellIds') in (data := output.cell_data) and not pass_cell_ids:
+            del data[name]
+        return output
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -5081,19 +5125,17 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                 id_mask,
                 adjacent_cells=adjacent_cells,
                 include_cells=include_cells,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
             )
         else:
             output = self.extract_cells(
                 id_mask,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
             )
-
-        # Process output arrays
-        if (POINT_IDS := 'vtkOriginalPointIds') in output.point_data and not pass_point_ids:
-            output.point_data.remove(POINT_IDS)
-        if (CELL_IDS := 'vtkOriginalCellIds') in output.cell_data and not pass_cell_ids:
-            output.cell_data.remove(CELL_IDS)
 
         return output
 
@@ -5999,8 +6041,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Area or volume is also provided in point data.
 
-        This filter uses the VTK :vtk:`vtkIntegrateAttributes`
-        and requires VTK v9.1.0 or newer.
+        This filter uses :vtk:`vtkIntegrateAttributes`.
 
         Parameters
         ----------
@@ -6033,10 +6074,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`integrate_data_example` for more examples using this filter.
 
         """
-        if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
-            msg = '`integrate_data` requires VTK 9.1.0 or newer.'
-            raise VTKVersionError(msg)
-
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
@@ -6107,11 +6144,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
-        # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
-        # work correctly, returning the wrong number of partitions.
-        if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-            msg = '`partition` requires vtk>=9.1.0'
-            raise VTKVersionError(msg)
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
@@ -7743,30 +7775,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             poly_ijk = _preprocess_polydata(surface)
 
             if spacing is None:
-                less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
-                if (
-                    cell_length_percentile is not None or cell_length_sample_size is not None
-                ) and less_than_vtk92:
-                    msg = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-                    raise TypeError(msg)
-
-                if less_than_vtk92:
-                    # Compute spacing from mesh length
-                    spacing = surface.length / 100
-                else:
-                    # Estimate spacing from cell length percentile
-                    cell_length_percentile = (
-                        0.1 if cell_length_percentile is None else cell_length_percentile
-                    )
-                    cell_length_sample_size = (
-                        100_000 if cell_length_sample_size is None else cell_length_sample_size
-                    )
-                    spacing = _length_distribution_percentile(
-                        poly_ijk,
-                        cell_length_percentile,
-                        cell_length_sample_size,
-                        progress_bar=progress_bar,
-                    )
+                # Estimate spacing from cell length percentile
+                cell_length_percentile = (
+                    0.1 if cell_length_percentile is None else cell_length_percentile
+                )
+                cell_length_sample_size = (
+                    100_000 if cell_length_sample_size is None else cell_length_sample_size
+                )
+                spacing = _length_distribution_percentile(
+                    poly_ijk,
+                    cell_length_percentile,
+                    cell_length_sample_size,
+                    progress_bar=progress_bar,
+                )
             # Spacing is specified directly. Make sure other params are not set.
             elif cell_length_percentile is not None or cell_length_sample_size is not None:
                 msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
@@ -8089,8 +8110,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         mesh fits the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         .. versionadded:: 0.46
 
@@ -8143,9 +8163,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` is specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -8268,29 +8285,17 @@ def _set_threshold_limit(alg, *, value, method, invert):
         raise TypeError(msg)
     alg.SetInvert(invert)
     # Set values and function
-    if pyvista.vtk_version_info >= (9, 1):
-        if isinstance(value, (np.ndarray, Sequence)):
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
-            alg.SetLowerThreshold(value[0])
-            alg.SetUpperThreshold(value[1])
-        # Single value
-        elif method.lower() == 'lower':
-            alg.SetLowerThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-        elif method.lower() == 'upper':
-            alg.SetUpperThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
-        else:
-            msg = 'Invalid method choice. Either `lower` or `upper`'
-            raise ValueError(msg)
-    # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-    elif isinstance(value, (np.ndarray, Sequence)):
-        alg.ThresholdBetween(value[0], value[1])
+    if isinstance(value, (np.ndarray, Sequence)):
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
+        alg.SetLowerThreshold(value[0])
+        alg.SetUpperThreshold(value[1])
     # Single value
     elif method.lower() == 'lower':
-        alg.ThresholdByLower(value)
+        alg.SetLowerThreshold(value)
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
     elif method.lower() == 'upper':
-        alg.ThresholdByUpper(value)
+        alg.SetUpperThreshold(value)
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
     else:
         msg = 'Invalid method choice. Either `lower` or `upper`'
         raise ValueError(msg)

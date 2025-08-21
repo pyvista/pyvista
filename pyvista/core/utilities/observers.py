@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING
 from typing import NamedTuple
 import warnings
 
-import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -41,10 +40,7 @@ def set_error_output_file(filename):
     """
     filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
-    if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-        fileOutputWindow.SetFileName(str(filename))
-    else:
-        fileOutputWindow.SetFileName(filename)
+    fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow

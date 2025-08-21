@@ -16,7 +16,6 @@ cell_example_functions = [
 ]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 @parametrize('cell_example', cell_example_functions)
 def test_area_and_volume(cell_example):
     mesh = cell_example()
@@ -241,7 +240,6 @@ def test_triquadratic_hexahedron():
     assert grid.n_points == 27
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_triquadratic_pyramid():
     grid = cells.TriQuadraticPyramid()
     assert grid.celltypes[0] == CellType.TRIQUADRATIC_PYRAMID
