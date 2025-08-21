@@ -14,33 +14,6 @@ import sys
 from typing import NamedTuple
 import warnings
 
-from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
-from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
-from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource as vtkImageEllipsoidSource
-from vtkmodules.vtkImagingSources import vtkImageGaussianSource as vtkImageGaussianSource
-from vtkmodules.vtkImagingSources import vtkImageGridSource as vtkImageGridSource
-from vtkmodules.vtkImagingSources import vtkImageMandelbrotSource as vtkImageMandelbrotSource
-from vtkmodules.vtkImagingSources import vtkImageNoiseSource as vtkImageNoiseSource
-from vtkmodules.vtkImagingSources import vtkImageSinusoidSource as vtkImageSinusoidSource
-
-# vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
-# VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
-try:
-    from vtkmodules.vtkFiltersCore import vtkExtractEdges as vtkExtractEdges
-except ImportError:
-    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
-        vtkExtractEdges as vtkExtractEdges,
-    )
-
-# vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
-# VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
-try:
-    from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator as vtkCellTreeLocator
-except ImportError:
-    from vtkmodules.vtkFiltersGeneral import (  # type: ignore[attr-defined, no-redef]
-        vtkCellTreeLocator as vtkCellTreeLocator,
-    )
-
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray as VTKArray
 from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper as VTKObjectWrapper
 from vtkmodules.numpy_interface.dataset_adapter import numpyTovtkDataArray as numpyTovtkDataArray
@@ -132,6 +105,7 @@ from vtkmodules.vtkCommonCore import vtkFileOutputWindow as vtkFileOutputWindow
 from vtkmodules.vtkCommonCore import vtkFloatArray as vtkFloatArray
 from vtkmodules.vtkCommonCore import vtkIdList as vtkIdList
 from vtkmodules.vtkCommonCore import vtkIdTypeArray as vtkIdTypeArray
+from vtkmodules.vtkCommonCore import vtkInformation as vtkInformation
 from vtkmodules.vtkCommonCore import vtkIntArray as vtkIntArray
 from vtkmodules.vtkCommonCore import vtkLogger as vtkLogger
 from vtkmodules.vtkCommonCore import vtkLongArray as vtkLongArray
@@ -152,6 +126,7 @@ from vtkmodules.vtkCommonCore import vtkUnsignedIntArray as vtkUnsignedIntArray
 from vtkmodules.vtkCommonCore import vtkUnsignedLongArray as vtkUnsignedLongArray
 from vtkmodules.vtkCommonCore import vtkUnsignedLongLongArray as vtkUnsignedLongLongArray
 from vtkmodules.vtkCommonCore import vtkUnsignedShortArray as vtkUnsignedShortArray
+from vtkmodules.vtkCommonCore import vtkVersion as vtkVersion
 from vtkmodules.vtkCommonCore import vtkWeakReference as vtkWeakReference
 from vtkmodules.vtkCommonDataModel import VTK_BEZIER_CURVE as VTK_BEZIER_CURVE
 from vtkmodules.vtkCommonDataModel import VTK_BEZIER_HEXAHEDRON as VTK_BEZIER_HEXAHEDRON
@@ -249,6 +224,7 @@ from vtkmodules.vtkCommonDataModel import vtkBiQuadraticTriangle as vtkBiQuadrat
 from vtkmodules.vtkCommonDataModel import vtkCell as vtkCell
 from vtkmodules.vtkCommonDataModel import vtkCellArray as vtkCellArray
 from vtkmodules.vtkCommonDataModel import vtkCellLocator as vtkCellLocator
+from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator as vtkCellTreeLocator
 from vtkmodules.vtkCommonDataModel import vtkColor3ub as vtkColor3ub
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet as vtkCompositeDataSet
 from vtkmodules.vtkCommonDataModel import vtkConvexPointSet as vtkConvexPointSet
@@ -349,6 +325,7 @@ from vtkmodules.vtkFiltersCore import vtkElevationFilter as vtkElevationFilter
 from vtkmodules.vtkFiltersCore import (
     vtkExplicitStructuredGridToUnstructuredGrid as vtkExplicitStructuredGridToUnstructuredGrid,
 )
+from vtkmodules.vtkFiltersCore import vtkExtractEdges as vtkExtractEdges
 from vtkmodules.vtkFiltersCore import vtkFeatureEdges as vtkFeatureEdges
 from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D as vtkFlyingEdges3D
 from vtkmodules.vtkFiltersCore import vtkGlyph3D as vtkGlyph3D
@@ -501,6 +478,12 @@ from vtkmodules.vtkImagingHybrid import (
 from vtkmodules.vtkImagingMorphological import (
     vtkImageConnectivityFilter as vtkImageConnectivityFilter,
 )
+from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource as vtkImageEllipsoidSource
+from vtkmodules.vtkImagingSources import vtkImageGaussianSource as vtkImageGaussianSource
+from vtkmodules.vtkImagingSources import vtkImageGridSource as vtkImageGridSource
+from vtkmodules.vtkImagingSources import vtkImageMandelbrotSource as vtkImageMandelbrotSource
+from vtkmodules.vtkImagingSources import vtkImageNoiseSource as vtkImageNoiseSource
+from vtkmodules.vtkImagingSources import vtkImageSinusoidSource as vtkImageSinusoidSource
 from vtkmodules.vtkImagingStencil import vtkImageStencil as vtkImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil as vtkPolyDataToImageStencil
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter as vtkHoudiniPolyDataWriter
