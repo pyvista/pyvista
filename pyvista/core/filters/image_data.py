@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -3511,17 +3511,8 @@ class ImageDataFilters(DataSetFilters):
             if point_seeds is None:
                 msg = '`point_seeds` must be specified when `extraction_mode="seeded"`.'
                 raise ValueError(msg)
-
-            # PointSet requires vtk >= 9.1.0
-            # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
             elif not isinstance(point_seeds, _vtk.vtkDataSet):
-                if pyvista.vtk_version_info >= (9, 1, 0):
-                    point_seeds = pyvista.PointSet(point_seeds)
-                else:
-                    # Assign points outside the constructor to not create useless cells
-                    tmp = point_seeds
-                    point_seeds = pyvista.PolyData()
-                    point_seeds.SetPoints(pyvista.vtk_points(tmp, force_float=True))
+                point_seeds = pyvista.PointSet(point_seeds)
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)

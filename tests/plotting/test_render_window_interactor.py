@@ -76,7 +76,6 @@ def test_picker_raises(picker, mocker: MockerFixture):
     m.assert_called_once_with(picker)
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_observers():
     pl = pv.Plotter()
 
@@ -326,7 +325,6 @@ def test_add_pick_observer():
     pl.iren.add_pick_observer(empty_callback)
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:

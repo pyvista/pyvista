@@ -74,30 +74,45 @@ jobs:
           enableCrossOsArchive: true
 
   macOS:
-    name: Mac OS Unit Testing
+    name: ${{ matrix.name }}
+    needs: cache-vtk-data
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - { os: macos-13, python-version: "3.9" }
-          - { os: macos-14, python-version: "3.10" }
-          - { os: macos-latest, python-version: "3.11" }
-          - { os: macos-latest, python-version: "3.12" }
-          - { os: macos-latest, python-version: "3.13" }
+        include:
+          # Self-hosted runner configurations
+          - name: MacOS Unit Testing (3.10)
+            python-version: "3.10"
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.11)
+            python-version: "3.11"
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.12)
+            python-version: "3.12"
+            runner-labels: "macos-15-self-hosted"
+          - name: MacOS Unit Testing (3.13)
+            python-version: "3.13"
+            runner-labels: "macos-15-self-hosted"
 
-    runs-on: ${{ matrix.config.os }}
-    needs: cache-vtk-data
-
+    runs-on: ${{ matrix.runner-labels }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ matrix.config.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        if: runner.environment != 'self-hosted'
         uses: actions/setup-python@v5
+        continue-on-error: true
         with:
-          python-version: ${{ matrix.config.python-version }}
+          python-version: ${{ matrix.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
+
+      - name: Set Python PATH and create a virtual env
+        if: runner.environment == 'self-hosted'
+        run: |
+          /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
+          echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
       - name: Restore example data cache
         uses: actions/cache/restore@v4
@@ -125,14 +140,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: failed_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          name: failed_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _failed_test_images
 
       - name: Upload Generated Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: generated_test_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
+          name: generated_test_images-${{ github.job }}-${{ join(matrix.* , '-') }}
           path: _generated_test_images
 
   Linux:
@@ -146,15 +161,9 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          - python-version: "3.9"
-            vtk-version: "9.0.3" # Requires numpy~=1.23
-            numpy-version: "1.23"
-          - python-version: "3.9"
-            vtk-version: "9.1"
-            numpy-version: "1.26" # Test numpy 1.26
           - python-version: "3.10"
             vtk-version: "9.2.2"
-            numpy-version: "latest"
+            numpy-version: "1.26"
           - python-version: "3.11"
             vtk-version: "9.2.6"
             numpy-version: "latest"
@@ -208,10 +217,6 @@ jobs:
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
         run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
-
-      - name: Limit Matplotlib for VTK<9.2.2
-        if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
-        run: pip install 'matplotlib<3.6'
 
       - name: Install latest numpy 2.0 beta/rc
         if: ${{ matrix.numpy-version == 'nightly' }}
@@ -271,7 +276,7 @@ jobs:
           twine check --strict dist/*
 
       - name: Upload to PyPi
-        if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
+        if: matrix.python-version == '3.10' && startsWith(github.ref, 'refs/tags/v')
         run: |
           twine upload --skip-existing dist/pyvista*
         env:
@@ -364,13 +369,14 @@ jobs:
   windows:
     name: Windows Unit Testing
     runs-on: windows-latest
+    timeout-minutes: 60
     needs: cache-vtk-data
     env:
       CI_WINDOWS: true
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:

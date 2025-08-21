@@ -11,7 +11,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Union
 from typing import cast
 
 import numpy as np
@@ -31,7 +30,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -54,20 +52,20 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
-    _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter,
-        _vtk.vtkXMLPolyDataWriter,
-        _vtk.vtkSTLWriter,
-        _vtk.vtkPolyDataWriter,
-        _vtk.vtkHoudiniPolyDataWriter,
-        _vtk.vtkOBJWriter,
-        _vtk.vtkIVWriter,
-        _vtk.vtkHDFWriter,
-    ]
+    _PolyDataWriterAlias = (
+        _vtk.vtkPLYWriter
+        | _vtk.vtkXMLPolyDataWriter
+        | _vtk.vtkSTLWriter
+        | _vtk.vtkPolyDataWriter
+        | _vtk.vtkHoudiniPolyDataWriter
+        | _vtk.vtkOBJWriter
+        | _vtk.vtkIVWriter
+        | _vtk.vtkHDFWriter
+    )
 
-    _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
-    ]
+    _UnstructuredGridWriterAlias = (
+        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
+    )
 
 
 DEFAULT_INPLACE_WARNING = (
@@ -297,11 +295,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
-    Notes
-    -----
-    This class requires ``vtk>=9.1.0``. This is an abstract class in
-    ``vtk<9.1.0`` and cannot be instantiated.
-
     Examples
     --------
     Create a simple point cloud of 10 points from a numpy array.
@@ -329,9 +322,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         the class being abstract.
 
         """
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.1.0'
-            raise VTKVersionError(msg)
         return super().__new__(cls, *args, **kwargs)
 
     @_deprecate_positional_args(allowed=['var_inp'])
@@ -2204,7 +2194,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             face_count = 0
 
             for i, n_faces in zip(
-                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON), face_counts
+                np.flatnonzero(self.celltypes == pyvista.CellType.POLYHEDRON),
+                face_counts,
             ):
                 locations[i] = [n_faces, *(np.arange(n_faces) + face_count)]
                 face_count += n_faces

@@ -52,6 +52,9 @@ from vtkmodules.vtkInteractionStyle import (
 from vtkmodules.vtkInteractionWidgets import vtkBoxWidget as vtkBoxWidget
 from vtkmodules.vtkInteractionWidgets import vtkButtonWidget as vtkButtonWidget
 from vtkmodules.vtkInteractionWidgets import (
+    vtkCameraOrientationWidget as vtkCameraOrientationWidget,
+)
+from vtkmodules.vtkInteractionWidgets import (
     vtkDistanceRepresentation3D as vtkDistanceRepresentation3D,
 )
 from vtkmodules.vtkInteractionWidgets import vtkDistanceWidget as vtkDistanceWidget
@@ -91,12 +94,6 @@ from vtkmodules.vtkRenderingContext2D import vtkContextActor as vtkContextActor
 from vtkmodules.vtkRenderingContext2D import vtkContextScene as vtkContextScene
 from vtkmodules.vtkRenderingContext2D import vtkImageItem as vtkImageItem
 from vtkmodules.vtkRenderingContext2D import vtkPen as vtkPen
-
-try:
-    from vtkmodules.vtkRenderingCore import vtkHardwarePicker as vtkHardwarePicker
-except ImportError:  # pragma: no cover
-    # VTK < 9.2 is missing this class
-    vtkHardwarePicker = None  # type: ignore[assignment, misc] # noqa: N816
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_OFF as VTK_RESOLVE_OFF
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_POLYGON_OFFSET as VTK_RESOLVE_POLYGON_OFFSET
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_SHIFT_ZBUFFER as VTK_RESOLVE_SHIFT_ZBUFFER
@@ -114,6 +111,7 @@ from vtkmodules.vtkRenderingCore import vtkCompositePolyDataMapper as vtkComposi
 from vtkmodules.vtkRenderingCore import vtkCoordinate as vtkCoordinate
 from vtkmodules.vtkRenderingCore import vtkDataSetMapper as vtkDataSetMapper
 from vtkmodules.vtkRenderingCore import vtkFollower as vtkFollower
+from vtkmodules.vtkRenderingCore import vtkHardwarePicker as vtkHardwarePicker
 from vtkmodules.vtkRenderingCore import vtkImageActor as vtkImageActor
 from vtkmodules.vtkRenderingCore import vtkInteractorStyle as vtkInteractorStyle
 from vtkmodules.vtkRenderingCore import vtkLight as vtkLight
@@ -140,6 +138,7 @@ from vtkmodules.vtkRenderingCore import vtkSkybox as vtkSkybox
 from vtkmodules.vtkRenderingCore import vtkTextActor as vtkTextActor
 from vtkmodules.vtkRenderingCore import vtkTextProperty as vtkTextProperty
 from vtkmodules.vtkRenderingCore import vtkTexture as vtkTexture
+from vtkmodules.vtkRenderingCore import vtkViewport as vtkViewport
 from vtkmodules.vtkRenderingCore import vtkVolume as vtkVolume
 from vtkmodules.vtkRenderingCore import vtkVolumeProperty as vtkVolumeProperty
 from vtkmodules.vtkRenderingCore import vtkWindowToImageFilter as vtkWindowToImageFilter

@@ -22,10 +22,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
-from typing import Union
 from typing import final
 from typing import get_args
-import warnings
 
 import cmcrameri
 import cmocean
@@ -40,7 +38,6 @@ import pyvista as pv
 from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import PLACEHOLDER
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CELL_QUALITY_LOOKUP
 from pyvista.core.utilities.cell_quality import _CellTypesLiteral
@@ -92,7 +89,6 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/plot_directive/api/examples/_autosummary'
 # Generated docstring images are assumed to have '.png' extension
 # Define special cases for specific datasets here. Use `None` if no image is generated.
 DATASET_GALLERY_IMAGE_EXT_DICT = {
-    'can': None,
     'cavity': None,
     'gpr_data_array': None,
     'sphere_vectors': None,
@@ -2025,44 +2021,25 @@ class DatasetCard:
 
     @staticmethod
     def _generate_dataset_properties(loader):
-        try:
-            # Get data from loader
-            if isinstance(loader, _Downloadable):
-                loader.download()
+        # Get data from loader
+        if isinstance(loader, _Downloadable):
+            loader.download()
 
-            # properties collected by the loader
-            file_size = DatasetPropsGenerator.generate_file_size(loader)
-            num_files = DatasetPropsGenerator.generate_num_files(loader)
-            file_ext = DatasetPropsGenerator.generate_file_ext(loader)
-            reader_type = DatasetPropsGenerator.generate_reader_type(loader)
-            dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
-            datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
+        # properties collected by the loader
+        file_size = DatasetPropsGenerator.generate_file_size(loader)
+        num_files = DatasetPropsGenerator.generate_num_files(loader)
+        file_ext = DatasetPropsGenerator.generate_file_ext(loader)
+        reader_type = DatasetPropsGenerator.generate_reader_type(loader)
+        dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+        datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
-            # properties collected directly from the dataset
-            n_cells = DatasetPropsGenerator.generate_n_cells(loader)
-            n_points = DatasetPropsGenerator.generate_n_points(loader)
-            length = DatasetPropsGenerator.generate_length(loader)
-            dimensions = DatasetPropsGenerator.generate_dimensions(loader)
-            spacing = DatasetPropsGenerator.generate_spacing(loader)
-            n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
-
-        except VTKVersionError:
-            # Exception is caused by 'download_can'
-            # Set default values
-            NOT_AVAILABLE = '``Not available``'
-            file_size = NOT_AVAILABLE
-            num_files = NOT_AVAILABLE
-            file_ext = NOT_AVAILABLE
-            reader_type = NOT_AVAILABLE
-            dataset_type = NOT_AVAILABLE
-            datasource_links = NOT_AVAILABLE
-
-            n_cells = None
-            n_points = None
-            length = None
-            dimensions = None
-            spacing = None
-            n_arrays = None
+        # properties collected directly from the dataset
+        n_cells = DatasetPropsGenerator.generate_n_cells(loader)
+        n_points = DatasetPropsGenerator.generate_n_points(loader)
+        length = DatasetPropsGenerator.generate_length(loader)
+        dimensions = DatasetPropsGenerator.generate_dimensions(loader)
+        spacing = DatasetPropsGenerator.generate_spacing(loader)
+        n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
 
         return (
             file_size,
@@ -2609,16 +2586,10 @@ class DatasetCardFetcher:
 
                 # Load data
                 print(f'loading datasets... {dataset_name}', flush=True)
-                try:
-                    if isinstance(dataset_loader, _Downloadable):
-                        dataset_loader.download()
-                except pv.VTKVersionError as err:
-                    # caused by 'download_can', this error is handled later
-                    msg = f'could not load {dataset_name} due to {err!r}'
-                    warnings.warn(msg, UserWarning)
-                else:
-                    dataset_loader.load_and_store_dataset()
-                    assert dataset_loader.dataset is not None
+                if isinstance(dataset_loader, _Downloadable):
+                    dataset_loader.download()
+                dataset_loader.load_and_store_dataset()
+                assert dataset_loader.dataset is not None
 
     @classmethod
     def generate_rst_all_cards(cls):
@@ -3405,7 +3376,7 @@ def make_all_tables() -> list[str]:  # noqa: D103
 
 
 def _update_image_placeholders(node_image: docutils.nodes.image) -> None:
-    def find_matching_image(filename_with_placeholder: str) -> Union[bool, str]:
+    def find_matching_image(filename_with_placeholder: str) -> bool | str:
         """Find the image in the gallery without the placeholder."""
         basename = Path(filename_with_placeholder).name.replace(PLACEHOLDER, '*')
 

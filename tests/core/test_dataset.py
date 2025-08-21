@@ -15,7 +15,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import dataset
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.errors import VTKVersionError
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -986,23 +985,18 @@ def test_find_cells_intersecting_line():
     linea = [0, 0, 0.0]
     lineb = [0.0, 0, 1.0]
 
-    if pv.vtk_version_info >= (9, 2, 0):
-        indices = mesh.find_cells_intersecting_line(linea, lineb)
-        assert len(indices) == 1
+    indices = mesh.find_cells_intersecting_line(linea, lineb)
+    assert len(indices) == 1
 
-        # test tolerance
-        indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
-        assert len(indices) == 2
+    # test tolerance
+    indices = mesh.find_cells_intersecting_line(linea, lineb, tolerance=0.01)
+    assert len(indices) == 2
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0], [1.0, 0, 0.0])
 
-        with pytest.raises(TypeError):
-            mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
-
-    else:
-        with pytest.raises(VTKVersionError):
-            indices = mesh.find_cells_intersecting_line(linea, lineb)
+    with pytest.raises(TypeError):
+        mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
 
 
 def test_find_cells_within_bounds():
@@ -1184,7 +1178,6 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
@@ -1202,7 +1195,6 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
@@ -1240,10 +1232,6 @@ def test_cast_to_poly_points_implicit(uniform):
 
 
 def test_partition(hexbeam):
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(VTKVersionError):
-            hexbeam.partition(2)
-        return
     # split as composite
     n_part = 2
     out = hexbeam.partition(n_part)
