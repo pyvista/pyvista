@@ -113,7 +113,7 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Install tox-uv
-        run: pip install tox-uv
+        run: python${{ matrix.python-version }} -m pip install tox-uv
 
       - name: Core Testing (no GL)
         run: tox run -e py${{ matrix.python-version }}-core --colored=yes
