@@ -14,12 +14,11 @@ classifiers = [
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
   'Programming Language :: Python :: 3.13',
-  'Programming Language :: Python :: 3.9',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
   'matplotlib>=3.0.1',
-  'numpy>=1.21.0', # minimum typing support
+  'numpy>=1.21.0',
   'pillow',
   'pooch',
   'scooby>=0.5.1',
@@ -27,6 +26,7 @@ dependencies = [
   'vtk!=9.4.0',
   'vtk!=9.4.1',
   'vtk<9.6.0',
+  'vtk>=9.2.2',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -34,7 +34,7 @@ keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
 readme = 'README.rst'
-requires-python = '>=3.9'
+requires-python = '>=3.10'
 
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
@@ -383,6 +383,7 @@ ignore = [
   'ANN401', # Disallow `Any`
   'B028', # https://github.com/pyvista/pyvista/pull/6030
   'B904', # https://github.com/pyvista/pyvista/pull/6022
+  'B905', # zip() without explicit strict parameter - will be addressed in separate PR
   'COM812', # May cause conflicts when used with the formatter
   'D105', # Missing docstring in magic method
   'D107', # Missing docstring in `__init__`
@@ -449,6 +450,8 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/__init__.py' = ['ANN']
 'pyvista/_plot.py' = ['ANN']
 'pyvista/conftest.py' = ['ANN']
+'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
+'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']
 'pyvista/core/_validation/_cast_array.py' = ['ANN']
 'pyvista/core/_validation/validate.py' = ['ANN202']
 'pyvista/core/_vtk_core.py' = ['ANN', 'PLC0414']

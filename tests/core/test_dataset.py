@@ -1184,7 +1184,6 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
     pointset = sphere.cast_to_pointset()
@@ -1202,7 +1201,6 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class')
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)

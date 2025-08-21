@@ -607,7 +607,6 @@ def test_openfoamreader_arrays_time():
     assert reader.time_values == [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0, reason='OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 def test_openfoamreader_active_time():
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -795,7 +794,6 @@ def test_openfoam_case_type():
         reader.case_type = 'wrong_value'
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
@@ -969,7 +967,6 @@ def test_avsucd_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(9, 1)
 def test_hdf_reader():
     filename = examples.download_can_crushed_hdf(load=False)
     reader = pv.get_reader(filename)
