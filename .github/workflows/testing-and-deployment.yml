@@ -243,7 +243,7 @@ jobs:
     if: |
       (github.event_name != 'pull_request' && github.event_name != 'push') ||
       contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
-    name: Linux VTK Dev Testing ${{github.event_name == 'schedule' }}
+    name: Linux VTK Dev Testing
     permissions:
       contents: read
     runs-on: ubuntu-22.04
