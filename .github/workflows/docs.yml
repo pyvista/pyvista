@@ -44,7 +44,7 @@ permissions:
 jobs:
   doc:
     name: Build Documentation
-    runs-on: ubuntu-22.04-self-hosted
+    runs-on: ubuntu-22.04-gpu-self-hosted
     env:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
