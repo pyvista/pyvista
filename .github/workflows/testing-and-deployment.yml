@@ -284,7 +284,7 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes # zizmor: ignore[template-injection]
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_main --colored=yes
 
       - name: Upload Generated Images
         if: always()
