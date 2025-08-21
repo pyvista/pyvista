@@ -728,14 +728,8 @@ def test_openfoam_cell_to_point_default():
 
 
 def test_openfoam_patch_arrays():
-    # vtk version 9.1.0 changed the way patch names are handled.
-    vtk_version = pv.vtk_version_info
-    if vtk_version >= (9, 1, 0):
-        patch_array_key = 'boundary'
-        reader_patch_prefix = 'patch/'
-    else:
-        patch_array_key = 'Patches'
-        reader_patch_prefix = ''
+    patch_array_key = 'boundary'
+    reader_patch_prefix = 'patch/'
 
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
@@ -980,12 +974,6 @@ def test_hdf_reader():
     assert mesh.n_cells == 4800
 
 
-def test_hdf_reader_raises(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0))
-    with pytest.raises(pv.VTKVersionError):
-        pv.HDFReader('foo')
-
-
 def test_xdmf_reader():
     filename = examples.download_meshio_xdmf(load=False)
 
@@ -1037,9 +1025,6 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.'
-)
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join('temp.vtpd')
     partitions = pv.PartitionedDataSet(
@@ -1079,9 +1064,6 @@ def test_gambitreader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
     reader = pv.get_reader(filename)
@@ -1114,9 +1096,6 @@ def test_gesignareader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-@pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.'
-)
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
     reader = pv.get_reader(filename)

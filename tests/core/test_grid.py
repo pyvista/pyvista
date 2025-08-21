@@ -30,10 +30,6 @@ HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
 STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
-pointsetmark = pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class'
-)
-
 
 def test_volume(hexbeam):
     assert hexbeam.volume > 0.0
@@ -670,7 +666,6 @@ def test_no_copy_structured_mesh_points_setter(structured_points):
     assert np.may_share_memory(mesh.points, source)
 
 
-@pointsetmark
 def test_no_copy_pointset_init():
     source = np.random.default_rng().random((100, 3))
     mesh = pv.PointSet(source)
@@ -682,7 +677,6 @@ def test_no_copy_pointset_init():
     assert np.may_share_memory(mesh.points, source)
 
 
-@pointsetmark
 def test_no_copy_pointset_points_setter():
     source = np.random.default_rng().random((100, 3))
     mesh = pv.PointSet()
@@ -1776,7 +1770,6 @@ def test_explicit_structured_grid_clean():
     assert egrid.n_points == grid.n_points
 
 
-@pointsetmark
 def test_structured_grid_cast_to_explicit_structured_grid():
     grid = examples.download_office()
     grid = grid.hide_cells(np.arange(80, 120))
