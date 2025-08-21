@@ -12,7 +12,6 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import VTKVersionError
 from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
@@ -627,11 +626,6 @@ def test_affine_widget(sphere):
 
     pl = pv.Plotter(window_size=(400, 400))
     actor = pl.add_mesh(sphere)
-
-    if pv.vtk_version_info < (9, 2):
-        with pytest.raises(VTKVersionError):
-            pl.add_affine_transform_widget(actor)
-        return
 
     with pytest.raises(TypeError, match='callable'):
         pl.add_affine_transform_widget(actor, interact_callback='foo')
