@@ -138,6 +138,7 @@ docs = [
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.7.2',
   'sphinx-tags==0.4.0',
+  'sphinx-togglebutton==0.3.2',
   'sphinx-toolbox==4.0.0',
   'sphinx==8.2.3',
   'sphinxcontrib-asciinema==0.4.2',
@@ -203,13 +204,18 @@ ignore-words = 'doc/styles/Vocab/pyvista/accept.txt'
 quiet-level = 3
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
 
-[tool.coverage.run]
-omit = [
-  'pyvista/conftest.py',
-  'pyvista/plotting/theme.py', # kept for backwards compatibility
+[tool.coverage]
+html.show_contexts = true
+html.skip_covered = false
+report.exclude_also = [
+  '^\s*@overload.*\n\s*def .*\(.*$',
+  '^\s*if TYPE_CHECKING:',
 ]
-[tool.coverage.report]
-exclude_also = ['^\s*@overload.*\n\s*def .*\(.*$', '^\s*if TYPE_CHECKING:']
+report.omit = [
+  '*/pyvista/conftest.py',
+  '*/pyvista/plotting/theme.py', # kept for backwards compatibility
+]
+run.branch = true
 
 [tool.pytest.ini_options]
 addopts = ['--strict-config', '--strict-markers', '-ra']
