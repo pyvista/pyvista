@@ -6041,7 +6041,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Area or volume is also provided in point data.
 
-        This filter uses the VTK :vtk:`vtkIntegrateAttributes`.
+        This filter uses :vtk:`vtkIntegrateAttributes`.
 
         Parameters
         ----------
