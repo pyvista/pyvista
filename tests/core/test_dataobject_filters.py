@@ -276,12 +276,8 @@ def test_extract_all_edges(datasets):
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
-    if pv.vtk_version_info < (9, 1):
-        with pytest.raises(VTKVersionError):
-            datasets[0].extract_all_edges(use_all_points=True)
-    else:
-        edges = datasets[0].extract_all_edges(use_all_points=True)
-        assert edges.n_lines
+    edges = datasets[0].extract_all_edges(use_all_points=True)
+    assert edges.n_lines
 
 
 def test_extract_all_edges_no_data():
@@ -583,9 +579,6 @@ def test_cell_quality():
 def test_cell_quality_measures(ant):
     # Get quality measures from type hints
     hinted_measures = list(get_args(_CellQualityLiteral))
-    if pv.vtk_version_info < (9, 2):
-        # This measure was removed from VTK's API
-        hinted_measures.insert(1, 'aspect_beta')
 
     # Get quality measures from the VTK class
     actual_measures = list(_get_cell_quality_measures().keys())
