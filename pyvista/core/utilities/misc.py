@@ -314,7 +314,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
         if sys.meta_path is not None:
             # Get mode for setting new attributes
             try:
-                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE
+                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
             except ImportError:
                 # Circular import, set to False to disallow new attributes during initial import
                 _ALLOW_NEW_ATTRIBUTES_MODE = False
@@ -334,7 +334,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                     and frozen_by is type(self)
                     and not (key in type(self).__dict__ or hasattr(self, key))
                 ):
-                    from pyvista import PyVistaAttributeError
+                    from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
                     msg = (
                         f'Attribute {key!r} does not exist and cannot be added to class '
@@ -379,7 +379,7 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     """
     if hasattr(obj, name):
-        from pyvista import PyVistaAttributeError
+        from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
         msg = (
             f'Attribute {name!r} already exists. '
