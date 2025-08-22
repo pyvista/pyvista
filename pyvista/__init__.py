@@ -30,6 +30,8 @@ from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report
+from pyvista.report import check_math_text_support as check_math_text_support
+from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotlib_vtk_compatibility
 from pyvista.report import get_gpu_info as get_gpu_info
 
 if TYPE_CHECKING:
