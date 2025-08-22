@@ -28,7 +28,6 @@ if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
-skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
 def _on_ci():
@@ -259,7 +258,6 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
-@skip_9_1_0
 def test_download_can_crushed_hdf():
     path = examples.download_can_crushed_hdf(load=False)
     assert Path(path).is_file()
@@ -924,7 +922,6 @@ def test_download_dual_sphere_animation():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-@skip_9_1_0
 def test_download_cgns_structured():
     filename = examples.download_cgns_structured(load=False)
     assert Path(filename).is_file()
@@ -941,7 +938,6 @@ def test_download_tecplot_ascii():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-@skip_9_1_0
 def test_download_cgns_multi():
     filename = examples.download_cgns_multi(load=False)
     assert Path(filename).is_file()
@@ -965,7 +961,6 @@ def test_download_moonlanding_image():
     assert isinstance(dataset, pv.ImageData)
 
 
-@skip_9_1_0
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
     assert Path(filename).is_file()
@@ -976,7 +971,6 @@ def test_download_cloud_dark_matter():
     assert dataset.n_points == 32314
 
 
-@skip_9_1_0
 def test_download_cloud_dark_matter_dense():
     filename = examples.download_cloud_dark_matter_dense(load=False)
     assert Path(filename).is_file()
@@ -1224,30 +1218,6 @@ def test_download_full_head():
 
     mesh = examples.download_full_head()
     assert isinstance(mesh, pv.ImageData)
-
-
-@parametrize(partial=[True, False])
-@pytest.mark.needs_vtk_version(9, 1, less_than=(9, 2))  # 9.1 for HDFReader, 9.2 for example
-def test_download_can(partial: bool):
-    filename = examples.download_can(load=False, partial=partial)
-
-    if partial:
-        assert (p := (Path(filename))).is_file()
-        assert p.suffix == '.hdf'
-    else:
-        assert all(Path(f).is_file() for f in filename)
-        assert all(Path(f).suffix == '.hdf' for f in filename)
-
-    dataset: pv.UnstructuredGrid = examples.download_can(load=True, partial=partial)
-    assert isinstance(dataset, pv.UnstructuredGrid)
-    assert dataset.n_points == 6724 if partial else 20_172
-
-
-@parametrize(partial=[True, False])
-@pytest.mark.needs_vtk_version(9, 2)
-def test_download_can_raises(partial: bool):
-    with pytest.raises(pv.VTKVersionError):
-        examples.download_can(partial=partial)
 
 
 def test_download_fea_bracket():

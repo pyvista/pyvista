@@ -36,7 +36,6 @@ except ImportError:
     has_trame = False
 
 pytestmark = [
-    pytest.mark.needs_vtk_version(9, 1),
     pytest.mark.skipif(not has_trame, reason='Requires trame'),
     pytest.mark.skip_plotting,
     pytest.mark.skip_check_gc,

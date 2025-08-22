@@ -15,7 +15,7 @@ sys.path.append(str(Path(__file__).parent))
 # https://github.com/pyvista/pyvista/pull/7747
 warnings.filterwarnings(
     'ignore',
-    message=r'Ignoring invalid PYVISTA_USERDATA_PATH.*',
+    message=r'(?s).*PYVISTA_VTK_DATA is not a valid directory.*',
     category=UserWarning,
 )
 
