@@ -28,6 +28,67 @@ def get_gpu_info():  # numpydoc ignore=RT01
     return '' if proc.returncode else proc.stdout.decode()
 
 
+def check_matplotlib_vtk_compatibility() -> bool:
+    """Check if VTK and Matplotlib versions are compatible for MathText rendering.
+
+    This function is primarily geared towards checking if MathText rendering is
+    supported with the given versions of VTK and Matplotlib. It follows the
+    version constraints:
+
+    * VTK <= 9.2.2 requires Matplotlib < 3.6
+    * VTK > 9.2.2 requires Matplotlib >= 3.6
+
+    Other version combinations of VTK and Matplotlib will work without
+    errors, but some features (like MathText/LaTeX rendering) may
+    silently fail.
+
+    Returns
+    -------
+    bool
+        True if the versions of VTK and Matplotlib are compatible for MathText
+        rendering, False otherwise.
+
+    Raises
+    ------
+    RuntimeError
+        If the versions of VTK and Matplotlib cannot be checked.
+
+    """
+    import matplotlib as mpl  # noqa: PLC0415
+
+    from pyvista import vtk_version_info  # noqa: PLC0415
+
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
+    if vtk_version_info <= (9, 2, 2):
+        return not mpl_vers >= (3, 6)
+    elif vtk_version_info > (9, 2, 2):
+        return mpl_vers >= (3, 6)
+    msg = 'Uncheckable versions.'  # pragma: no cover
+    raise RuntimeError(msg)  # pragma: no cover
+
+
+def check_math_text_support() -> bool:
+    """Check if MathText and LaTeX symbols are supported.
+
+    Returns
+    -------
+    bool
+        ``True`` if both MathText and LaTeX symbols are supported, ``False``
+        otherwise.
+
+    """
+    # Something seriously sketchy is happening with this VTK code
+    # It seems to hijack stdout and stderr?
+    # See https://github.com/pyvista/pyvista/issues/4732
+    # This is a hack to get around that by executing the code in a subprocess
+    # and capturing the output:
+    # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
+    _cmd = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
+    return math_text_support and check_matplotlib_vtk_compatibility()
+
+
 class GPUInfo:
     """A class to hold GPU details."""
 
@@ -171,8 +232,6 @@ class Report(scooby.Report):
     ):
         """Generate a :class:`scooby.Report` instance."""
         from vtkmodules.vtkRenderingCore import vtkRenderWindow  # noqa: PLC0415
-
-        from pyvista.plotting.tools import check_math_text_support  # noqa: PLC0415
 
         # Mandatory packages
         core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
