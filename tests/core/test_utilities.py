@@ -179,7 +179,8 @@ def test_vtk_version_info():
 
 @pytest.mark.parametrize('operation', [operator.le, operator.lt, operator.gt, operator.ge])
 def test_vtk_version_info_raises(operation):
-    match = 'Comparing against unsupported VTK version 1.2.3. Minimum supported is 9.2.0.'
+    version_str = '.'.join(map(str, pv._MIN_SUPPORTED_VTK_VERSION))
+    match = f'Comparing against unsupported VTK version 1.2.3. Minimum supported is {version_str}'
     with pytest.raises(pv.VTKVersionError, match=match):
         operation(pv.vtk_version_info, (1, 2, 3))
 
@@ -205,7 +206,7 @@ def test_min_supported_vtk_version_matches_pyproject():
         return tuple(map(int, min_vtk.split('.')))
 
     from_pyproject = get_min_vtk_version_from_pyproject()
-    from_code = _vtk._MIN_SUPPORTED_VTK_VERSION
+    from_code = pv._MIN_SUPPORTED_VTK_VERSION
     msg = (
         f"Min VTK version specified in 'pyproject.toml' should match the "
         f'min version specified in {_vtk.__name__!r}'

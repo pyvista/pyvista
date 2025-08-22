@@ -376,16 +376,16 @@ def pytest_runtest_setup(item: pytest.Item):
         _min = (_min,) if isinstance(_min, int) else _min
         _max = (_max,) if isinstance(_max, int) else _max
 
-        curr_version = pyvista.vtk_version_info
-
-        if (_min is not None and _min <= curr_version) or (
-            _max is not None and _max <= curr_version
+        if (_min is not None and _min <= pyvista._MIN_SUPPORTED_VTK_VERSION) or (
+            _max is not None and _max <= pyvista._MIN_SUPPORTED_VTK_VERSION
         ):
             msg = (
                 f'The {needs_vtk_version!r} marker is no longer necessary\n'
                 f'and can be removed from test {item}.'
             )
             raise pyvista.VTKVersionError(msg)
+
+        curr_version = pyvista.vtk_version_info
 
         if _max is None and curr_version < _min:
             reason = item_mark.kwargs.get(
