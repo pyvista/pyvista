@@ -49,7 +49,7 @@ jobs:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
-      SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
+      SPHINX_JOBS: "-j1" # Public GitHub runners have 2 real cores
     steps:
       - uses: actions/checkout@v4
         with:
