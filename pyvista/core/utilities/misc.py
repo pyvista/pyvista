@@ -335,8 +335,8 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
 
                 msg = (
                     f'Attribute {key!r} does not exist and cannot be added to class '
-                    f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new '
-                    f'attributes.'
+                    f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
+                    f'or `pyvista.allow_new_attributes` to set new attributes.'
                 )
                 raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
