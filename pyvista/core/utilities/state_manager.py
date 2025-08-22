@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 import contextlib
-import os
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
@@ -402,9 +401,3 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
 
 
 allow_new_attributes = _AllowNewAttributes()
-
-
-def _get_default_allow_new_attributes() -> _AllowNewAttributesOptions:
-    private: Literal['private'] = 'private'
-    from_env = os.environ.get('_PYVISTA_ALLOW_NEW_ATTRIBUTES', private).lower()
-    return True if from_env == 'true' else False if from_env == 'false' else private
