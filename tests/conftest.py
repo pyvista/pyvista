@@ -107,8 +107,8 @@ def reset_global_state():
     pyvista.vtk_verbosity('info')
     assert pyvista.vtk_verbosity() == 'info'
 
-    pyvista.allow_new_attributes('none')
-    assert pyvista.allow_new_attributes() == 'none'
+    pyvista.allow_new_attributes(False)
+    assert pyvista.allow_new_attributes() is False
 
     pyvista.PICKLE_FORMAT = 'vtk'
 

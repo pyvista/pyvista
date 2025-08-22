@@ -323,7 +323,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
 
             # Check if setting a new attribute is allowed
             if not (
-                _ALLOW_NEW_ATTRIBUTES_MODE == 'any'
+                _ALLOW_NEW_ATTRIBUTES_MODE is True
                 or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
             ):
                 # Check if this class froze itself. Any frozen state already set by parent classes,
@@ -372,9 +372,9 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     >>> mesh.foo
     42
 
-    This is equivalent to using :data:`allow_new_attributes` with the ``'any'`` mode.
+    This is equivalent to using :data:`allow_new_attributes` with ``True``.
 
-    >>> with pv.allow_new_attributes('any'):
+    >>> with pv.allow_new_attributes(True):
     ...     mesh.foo = 42
 
     .. versionadded:: 0.46

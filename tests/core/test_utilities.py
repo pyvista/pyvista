@@ -1333,7 +1333,7 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
 
     match = (
         "Attribute 'ham' does not exist and cannot be added to class 'A'\nUse "
-        "`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes."
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.'
     )
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         setattr(a, ham, eggs)
@@ -2364,8 +2364,8 @@ def test_allow_new_attributes():
     def set_public():
         _ = pv.PolyData().foo = 42
 
-    pv.allow_new_attributes('none')
-    assert pv.allow_new_attributes() == 'none'
+    pv.allow_new_attributes(False)
+    assert pv.allow_new_attributes() is False
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         set_private()
     with pytest.raises(pv.PyVistaAttributeError, match=match):
@@ -2377,8 +2377,8 @@ def test_allow_new_attributes():
     with pytest.raises(pv.PyVistaAttributeError, match=match):
         set_public()
 
-    pv.allow_new_attributes('any')
-    assert pv.allow_new_attributes() == 'any'
+    pv.allow_new_attributes(True)
+    assert pv.allow_new_attributes() is True
     set_private()
     set_public()
 

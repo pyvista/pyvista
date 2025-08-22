@@ -313,7 +313,7 @@ class _vtkSnakeCase(_StateManager[_VtkSnakeCaseOptions]):  # noqa: N801
 vtk_snake_case = _vtkSnakeCase()
 
 
-_AllowNewAttributesOptions = Literal['private', 'any', 'none']
+_AllowNewAttributesOptions = Literal['private', True, False]
 
 
 class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
@@ -367,7 +367,7 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
 
     Do not allow setting new attributes.
 
-    >>> _ = pv.allow_new_attributes('none')
+    >>> _ = pv.allow_new_attributes(False)
     >>> mesh._foo = 42  # ERROR # doctest:+SKIP
     >>> mesh.foo = 42  # ERROR # doctest:+SKIP
 
@@ -379,7 +379,7 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
     Use it as a context manager instead. This way, the state is only temporarily
     modified and is automatically restored.
 
-    >>> with pv.allow_new_attributes('any'):
+    >>> with pv.allow_new_attributes(True):
     ...     mesh._foo = 42  # OK
     ...     mesh.foo = 42  # OK
 
