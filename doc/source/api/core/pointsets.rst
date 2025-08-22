@@ -51,8 +51,7 @@ data:
    demos.plot_datasets('StructuredGrid')
 
 
-The :class:`pyvista.PointSet` (as of ``vtk==9.1.0``) is a concrete class for
-storing a set of points.
+The :class:`pyvista.PointSet` is a concrete class for storing a set of points.
 
 .. jupyter-execute::
    :hide-code:
@@ -80,12 +79,6 @@ classes inherit all methods from their corresponding VTK :vtk:`vtkPointSet`,
    pyvista.UnstructuredGrid
    pyvista.StructuredGrid
    pyvista.ExplicitStructuredGrid
-
-.. _vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
-.. _vtkPolyData: https://www.vtk.org/doc/nightly/html/classvtkPolyData.html
-.. _vtkUnstructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
-.. _vtkStructuredGrid: https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html
-.. _vtkExplicitStructuredGrid: https://vtk.org/doc/nightly/html/classvtkExplicitStructuredGrid.html
 
 
 PolyData Creation

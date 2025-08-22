@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.9+.
+PyVista is supported on Python versions 3.10+.
 
 For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
@@ -64,6 +64,23 @@ To install this package with ``conda`` run::
     conda install -c conda-forge pyvista
 
 .. asciinema:: 507565
+
+
+Pixi
+~~~~
+
+`Pixi <https://pixi.sh/>`_ is a modern package management tool that provides fast, reliable, and reproducible software environments. It can be used as an alternative to conda/mamba for managing PyVista installations.
+
+To install PyVista using pixi, first ensure you have pixi installed (see `pixi installation instructions <https://pixi.sh/latest/#installation>`_), then run::
+
+    pixi add pyvista
+
+This will add PyVista to your ``pixi.toml`` file and install it in your project environment. To use PyVista in your pixi environment::
+
+    pixi shell
+    python -c 'import pyvista; print(pyvista.__version__)'
+
+Pixi automatically handles all dependencies and ensures compatibility across different platforms.
 
 
 Installing the Current Development Branch from GitHub
@@ -234,7 +251,7 @@ After logging into the remote server, install Miniconda and related packages:
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p miniconda
     echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.9
+    conda create --name vtk_env python=3.10
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
     pip install jupyter pyvista trame
@@ -278,7 +295,7 @@ related packages:
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     bash miniconda.sh -b -p miniconda
     echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
-    conda create --name vtk_env python=3.9
+    conda create --name vtk_env python=3.10
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
     pip install jupyter pyvista[jupyter] trame

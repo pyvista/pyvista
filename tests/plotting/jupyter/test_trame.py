@@ -32,11 +32,10 @@ try:
     from pyvista.trame.views import PyVistaRemoteLocalView
     from pyvista.trame.views import PyVistaRemoteView
     from pyvista.trame.views import _BasePyVistaView
-except:
+except ImportError:
     has_trame = False
 
 pytestmark = [
-    pytest.mark.needs_vtk_version(9, 1),
     pytest.mark.skipif(not has_trame, reason='Requires trame'),
     pytest.mark.skip_plotting,
     pytest.mark.skip_check_gc,
@@ -151,9 +150,9 @@ def test_trame(client_type):
     assert len(pl.actors) == 1
 
     server.state[viewer.AXIS] = True
-    assert not hasattr(pl.renderer, 'axes_actor')
+    assert pl.renderer.axes_actor is None
     viewer.on_axis_visibility_change(**server.state.to_dict())
-    assert hasattr(pl.renderer, 'axes_actor')
+    assert pl.renderer.axes_actor is not None
     server.state[viewer.AXIS] = False
     viewer.on_axis_visibility_change(**server.state.to_dict())
 

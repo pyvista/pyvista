@@ -8,8 +8,6 @@ from inspect import Signature
 import os
 import platform
 import re
-from typing import Optional
-from typing import Union
 
 import numpy as np
 from numpy.random import default_rng
@@ -279,17 +277,6 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
-def pytest_configure(config: pytest.Config):
-    """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
-    warnings = config.getini('filterwarnings')
-
-    if pyvista.vtk_version_info < (9, 1):
-        warnings.append(
-            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin '
-            r'.{1}bool.*:DeprecationWarning'
-        )
-
-
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
@@ -363,25 +350,25 @@ def pytest_runtest_setup(item: pytest.Item):
                 Parameter(
                     'args',
                     kind=Parameter.VAR_POSITIONAL,
-                    annotation=Union[int, tuple[int]],
+                    annotation=int | tuple[int],
                 ),
                 Parameter(
                     'at_least',
                     kind=Parameter.KEYWORD_ONLY,
-                    annotation=Optional[tuple[int]],
+                    annotation=tuple[int] | None,
                     default=None,
                 ),
                 Parameter(
                     'less_than',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Optional[tuple[int]],
+                    annotation=tuple[int] | None,
                 ),
                 Parameter(
                     'reason',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Optional[str],
+                    annotation=str | None,
                 ),
             ]
         )
@@ -460,13 +447,13 @@ def pytest_runtest_setup(item: pytest.Item):
                     p := 'processor',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Union[str, None],
+                    annotation=str | None,
                 ),
                 Parameter(
                     m := 'machine',
                     kind=Parameter.KEYWORD_ONLY,
                     default=None,
-                    annotation=Union[str, None],
+                    annotation=str | None,
                 ),
             ]
         )

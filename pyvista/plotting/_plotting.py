@@ -207,6 +207,7 @@ def _common_arg_parser(
     texture,
     rgb,
     style,
+    remove_existing_actor=None,
     **kwargs,
 ):
     """Parse arguments in common between add_volume, composite, and mesh."""
@@ -249,9 +250,11 @@ def _common_arg_parser(
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
-        remove_existing_actor = False
-    else:
-        # check if this actor already exists
+        # Default to False when no name is provided
+        if remove_existing_actor is None:  # pragma: no cover
+            remove_existing_actor = False
+    # Default to True when a name is provided (for backwards compatibility)
+    elif remove_existing_actor is None:
         remove_existing_actor = True
 
     nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)

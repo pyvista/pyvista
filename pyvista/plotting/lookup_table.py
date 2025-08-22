@@ -12,7 +12,7 @@ import numpy as np
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import convert_array
-from pyvista.core.utilities.misc import no_new_attr
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from . import _vtk
 from .colors import Color
@@ -27,7 +27,7 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):  # noqa: N801
+class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
     """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
@@ -91,8 +91,7 @@ class lookup_table_ndarray(np.ndarray):  # noqa: N801
     __getattr__ = _vtk.VTKArray.__getattr__
 
 
-@no_new_attr
-class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
+class LookupTable(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     """Scalar to RGBA mapping table.
 
     A lookup table is an array that maps input values to output values. When
@@ -750,7 +749,7 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
     @_deprecate_positional_args(allowed=['cmap', 'n_values'])
     def apply_cmap(
         self,
-        cmap: ColormapOptions | list[str] | mpl.colors.Colormap,
+        cmap: ColormapOptions,
         n_values: int = 256,
         flip: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -1167,6 +1166,6 @@ class LookupTable(_vtk.DisableVtkSnakeCase, _vtk.vtkLookupTable):
         else:
             try:
                 return np.array([self.map_value(item) for item in value])
-            except:
+            except (TypeError, ValueError):
                 msg = 'LookupTable __call__ expects a single value or an iterable.'
                 raise TypeError(msg)

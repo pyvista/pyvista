@@ -167,7 +167,11 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
 
 N = 8  # maximum order of x^p y^q z^r polynomials
 rho = 8.0  # g/cm^3
-l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
+
+# Due to a cube's symmetry there will be repeated pairs or triplets for certain
+# eigenmodes. Here we introduce slight asymmetry to ensure that we select the
+# same first "repeated" mode for the symmetric mode sets.
+l1, l2, l3 = 0.200001, 0.200002, 0.200003  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
@@ -218,20 +222,30 @@ vol.dimensions = [*grid.dimensions[0:2], nz]
 for i, mode_index in enumerate(mode_indices):
     eigenvector = vr[:, mode_index]
     displacement_points = np.zeros_like(vol.points)
+
     for weight, (component, p, q, r) in zip(eigenvector, quadruplets):
         displacement_points[:, component] += (
             weight * vol.points[:, 0] ** p * vol.points[:, 1] ** q * vol.points[:, 2] ** r
         )
-    if displacement_points.max() > 0.0:
-        displacement_points /= displacement_points.max()
+
+    # normalize magnitude
+    displacement_magnitude = np.linalg.norm(displacement_points, axis=1)
+    max_magnitude = np.max(displacement_magnitude)
+    if max_magnitude > 0.0:
+        displacement_points /= max_magnitude
+
+    # for repeatability, ensure that the first point always has positive displacement
+    if displacement_points[0, 0] < 0.0:
+        displacement_points = -displacement_points
+
     vol[f'eigenmode_{i:02}'] = displacement_points
 
 warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
 pl = pv.Plotter()
-pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False)
-pl.add_mesh(warped, scalars=warpby)
+pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False, clim=(0.0, 1.0))
+pl.add_mesh(warped, scalars=warpby, clim=(0.0, 1.0))
 pl.show()
 
 # %%
@@ -247,5 +261,10 @@ for i, j in product(range(2), range(4)):
         f'mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz',
         font_size=10,
     )
-    pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)
+    pl.add_mesh(
+        vol.warp_by_vector(vector, factor=0.03),
+        scalars=vector,
+        show_scalar_bar=False,
+        clim=(0.0, 1.0),
+    )
 pl.show()

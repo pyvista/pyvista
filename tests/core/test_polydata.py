@@ -1453,14 +1453,11 @@ def test_irregular_faces_mutable():
 def test_n_faces_etc_deprecated(cells: str):
     n_cells = 'n_' + cells
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
-    with pytest.warns(
-        pv.PyVistaDeprecationWarning,
-        match=f'`PolyData` constructor parameter `{n_cells}` is deprecated and no longer used',
+    with pytest.raises(
+        TypeError,
+        match=f'PolyData constructor parameter `{n_cells}` is deprecated and no longer used',
     ):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-    if pv._version.version_info[:2] > (0, 47):
-        msg = f'Convert `PolyData` `{n_cells}` deprecation warning to error'
-        raise RuntimeError(msg)
     if pv._version.version_info[:2] > (0, 48):
         msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
         raise RuntimeError(msg)

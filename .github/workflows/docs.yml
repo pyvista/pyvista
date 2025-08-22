@@ -36,7 +36,7 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
-  VTK_DEFAULT_OPENGL_WINDOW: "vtkOSOpenGLRenderWindow"
+  VTK_DEFAULT_OPENGL_WINDOW: "vtkEGLRenderWindow"
 
 permissions:
   id-token: none
@@ -49,6 +49,7 @@ jobs:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
+      SPHINX_JOBS: "-j2" # Public GitHub runners have 2 real cores
     steps:
       - uses: actions/checkout@v4
         with:
@@ -97,7 +98,11 @@ jobs:
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Build Documentation
-        run: make -C doc html
+        run: |
+          make -C doc \
+          gen-external-examples \
+          gen-dataset-gallery \
+          html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
 
       - name: Dump Sphinx Warnings and Errors
         if: always()
@@ -108,6 +113,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation
+        if: always()
         run: pytest tests/doc/tst_doc_build.py
 
       - name: Upload Images for Failed Tests
@@ -135,7 +141,10 @@ jobs:
       - name: Build I18N Documentation
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
         run: |
-          make -C doc mini18n-html
+          make -C doc \
+          gen-external-examples \
+          gen-dataset-gallery \
+          mini18n-html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
           find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
           rm -rf doc/_build/mini18n-html
 

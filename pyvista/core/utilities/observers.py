@@ -12,9 +12,9 @@ import threading
 import traceback
 from typing import NamedTuple
 
-import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 
 def set_error_output_file(filename):
@@ -35,10 +35,7 @@ def set_error_output_file(filename):
     """
     filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
-    if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-        fileOutputWindow.SetFileName(str(filename))
-    else:
-        fileOutputWindow.SetFileName(filename)
+    fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
@@ -101,7 +98,7 @@ class VtkEvent(NamedTuple):
     alert: str
 
 
-class Observer:
+class Observer(_NoNewAttrMixin):
     """A standard class for observing VTK objects."""
 
     @_deprecate_positional_args(allowed=['event_type'])
@@ -130,7 +127,7 @@ class Observer:
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
-        except:
+        except Exception:  # noqa: BLE001
             return '', '', '', message
         else:
             return kind, path, address, alert
@@ -157,7 +154,7 @@ class Observer:
                 self.event_history.append(VtkEvent(kind, path, address, alert))
             if self.__log:
                 self.log_message(kind, alert)
-        except Exception:  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             try:
                 if len(message) > 120:
                     message = f'{message[:100]!r} ... ({len(message)} characters)'
@@ -168,7 +165,7 @@ class Observer:
                     file=sys.__stdout__,
                 )
                 traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pass
 
     def has_event_occurred(self):  # numpydoc ignore=RT01
@@ -215,7 +212,7 @@ def send_errors_to_logging():  # numpydoc ignore=RT01
     return obs.observe(error_output)
 
 
-class ProgressMonitor:
+class ProgressMonitor(_NoNewAttrMixin):
     """A standard class for monitoring the progress of a VTK algorithm.
 
     This must be use in a ``with`` context and it will block keyboard

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import cast
-import warnings
 
 import numpy as np
 
@@ -16,8 +15,9 @@ from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataobject import DataObject
 from .errors import CellSizeError
-from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
+from .utilities.misc import _BoundsSizeMixin
+from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from typing import Any
@@ -41,7 +41,7 @@ def _get_vtk_id_type() -> type[np.int32 | np.int64]:
     return np.int32
 
 
-class Cell(DataObject, _vtk.vtkGenericCell):
+class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
     """Wrapping of :vtk:`vtkCell`.
 
     This class provides the capability to access a given cell topology and can
@@ -616,7 +616,12 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
-class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellArray):
+class CellArray(
+    _NoNewAttrMixin,
+    _vtk.DisableVtkSnakeCase,
+    _vtk.vtkPyVistaOverride,
+    _vtk.vtkCellArray,
+):
     """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
@@ -672,10 +677,8 @@ class CellArray(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride, _vtk.vtkCellA
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
             if v is not None:
-                warnings.warn(
-                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
-                    PyVistaDeprecationWarning,
-                )
+                msg = f'CellArray parameter `{k}` is deprecated and no longer used.'
+                raise TypeError(msg)
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
