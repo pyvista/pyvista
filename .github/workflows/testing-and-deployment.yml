@@ -224,8 +224,8 @@ jobs:
       - name: Install latest numpy 2.0 beta/rc
         if: ${{ matrix.numpy-version == 'nightly' }}
         run: |
-          uv remove numpy matplotlib
-          uv add --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple --prerelease=allow matplotlib numpy
+          uv pip uninstall numpy matplotlib
+          uv pip install --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple --prerelease=allow matplotlib numpy
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
