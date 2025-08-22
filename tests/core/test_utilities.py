@@ -184,6 +184,35 @@ def test_vtk_version_info_raises(operation):
         operation(pv.vtk_version_info, (1, 2, 3))
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
+)
+def test_min_supported_vtk_version_matches_pyproject():
+    def get_min_vtk_version_from_pyproject():
+        # locate pyproject.toml relative to package
+        pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+        with pyproject_path.open('rb') as f:
+            pyproject_data = tomllib.load(f)
+
+        # dependencies live under [project]
+        dependencies = pyproject_data.get('project', {}).get('dependencies', [])
+
+        # find the first vtk>= spec
+        min_vtk = next(dep.split('>=')[1] for dep in dependencies if 'vtk>=' in dep)
+        assert isinstance(min_vtk, str)
+        assert len(min_vtk) > 0
+        return tuple(map(int, min_vtk.split('.')))
+
+    from_pyproject = get_min_vtk_version_from_pyproject()
+    from_code = _vtk._MIN_SUPPORTED_VTK_VERSION
+    msg = (
+        f"Min VTK version specified in 'pyproject.toml' should match the "
+        f'min version specified in {_vtk.__name__!r}'
+    )
+    assert from_pyproject == from_code, msg
+
+
 def test_createvectorpolydata_error():
     orig = np.random.default_rng().random((3, 1))
     with pytest.raises(ValueError, match='orig array must be 3D'):

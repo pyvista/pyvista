@@ -649,7 +649,7 @@ class VTKVersionInfo(VersionInfo):
 
 
 vtk_version_info = VTKVersionInfo(*_get_vtk_version())
-_MIN_SUPPORTED_VTK_VERSION = (9, 2, 0)
+_MIN_SUPPORTED_VTK_VERSION = (9, 2, 2)
 
 
 class vtkPyVistaOverride:  # noqa: N801
