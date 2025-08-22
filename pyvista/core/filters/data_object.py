@@ -2042,7 +2042,7 @@ class DataObjectFilters:
     @_deprecate_positional_args
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        use_all_points: bool = True,  # noqa: FBT001, FBT002
+        use_all_points: bool = False,  # noqa: FBT001, FBT002
         clear_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):

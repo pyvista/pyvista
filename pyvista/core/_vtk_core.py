@@ -585,8 +585,8 @@ class VersionInfo(NamedTuple):
     """Version information as a named tuple."""
 
     major: int
-    minor: int = 0
-    micro: int = 0
+    minor: int
+    micro: int
 
     def __str__(self):
         return str((self.major, self.minor, self.micro))
@@ -594,9 +594,6 @@ class VersionInfo(NamedTuple):
     @staticmethod
     def _format(version: tuple[int, int, int]):
         return '.'.join(map(str, version))
-
-    def __format__(self, format_spec='pep440'):
-        return VersionInfo._format(self)
 
 
 def _get_vtk_version():
