@@ -79,7 +79,6 @@ def test_clean_grid(hexbeam):
     assert cleaned.n_points == 165
 
 
-@pytest.mark.needs_vtk_version(9, 2)
 @pytest.mark.parametrize('inplace', [True, False])
 @pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
 def test_remove_unused_points(mesh_type, inplace):

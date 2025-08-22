@@ -41,13 +41,11 @@ from pooch.utils import get_logger
 import pyvista
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _DownloadableFile
-from pyvista.examples._dataset_loader import _load_and_merge
 from pyvista.examples._dataset_loader import _load_as_cubemap
 from pyvista.examples._dataset_loader import _load_as_multiblock
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
@@ -5791,79 +5789,6 @@ _dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
 
 
 @_deprecate_positional_args
-def download_can(partial=False, load=True):  # noqa: FBT002
-    """Download the can dataset mesh.
-
-    File obtained from `Kitware <https://www.kitware.com/>`_. Used
-    for testing hdf files.
-
-    Parameters
-    ----------
-    partial : bool, default: False
-        Load part of the dataset.
-
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.PolyData | str | list[str]
-        The example ParaView can DataSet or file path(s).
-
-    Examples
-    --------
-    Plot the can dataset.
-
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_can()  # doctest:+SKIP
-    >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
-
-    .. seealso::
-
-        :ref:`Can Dataset <can_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
-
-    """
-    if pyvista.vtk_version_info > (9, 1, 0):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
-
-    if partial:
-        return _download_dataset(__can_partial, load=load)
-    else:
-        return _download_dataset(_dataset_can, load=load)
-
-
-def _dataset_can_files_func():
-    if pyvista.vtk_version_info > (9, 1, 0):
-        msg = (
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
-        raise VTKVersionError(msg)
-    can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
-    can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
-    can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
-    return can_0, can_1, can_2
-
-
-_dataset_can = _MultiFileDownloadableDatasetLoader(
-    files_func=_dataset_can_files_func,
-    load_func=_load_and_merge,
-)
-__can_partial = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
-
-
-@_deprecate_positional_args
 def download_can_crushed_hdf(load=True):  # noqa: FBT002
     """Download the crushed can dataset.
 
@@ -5900,8 +5825,6 @@ def download_can_crushed_hdf(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_hdf, load=load)
@@ -5945,8 +5868,6 @@ def download_can_crushed_vtu(load=True):  # noqa: FBT002
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
-
-        :ref:`Can Dataset <can_dataset>`
 
     """
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
@@ -6091,9 +6012,8 @@ def download_cgns_multi(load=True):  # noqa: FBT002
 
 def _cgns_multi_read_func(filename):
     reader = pyvista.get_reader(filename)
-    # disable reading the boundary patch. As of VTK 9.1.0 this generates
-    # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
-    # yet."
+    # Disable reading the boundary patch. This generates messages like
+    # "Skipping BC_t node: BC_t type 'BCFarfield' not supported yet."
     reader.load_boundary_patch = False
     return reader.read()
 
