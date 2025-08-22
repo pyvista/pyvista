@@ -418,6 +418,44 @@ def test_needs_vtk_version_reason(tests: str, match: list[str], pytester: pytest
     results.stdout.re_match_lines(match)
 
 
+def test_needs_vtk_version_raises_vtk_version_error(
+    pytester: pytest.Pytester,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 0, 0))
+    tests = """
+    import pytest
+
+    @pytest.mark.needs_vtk_version(9, 0, 0)
+    def test1(): ...
+
+    @pytest.mark.needs_vtk_version(8, 9, 9)
+    def test2(): ...
+
+    @pytest.mark.needs_vtk_version(less_than=(9, 0, 0))
+    def test3(): ...
+
+    @pytest.mark.needs_vtk_version(less_than=(8, 9, 9))
+    def test4(): ...
+
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(skipped=0, passed=0, errors=4)
+    expected_patterns = [
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test1>\.',
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test2>\.',
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test3>\.',
+        r".*VTKVersionError: The 'needs_vtk_version' marker is no longer necessary",
+        r'.*and can be removed from test <Function test4>\.',
+    ]
+    results.stdout.re_match_lines(expected_patterns)
+
+
 @pytest.mark.skipif(os.name != 'nt', reason='Needs Windows platform to run')
 def test_skip_windows(
     pytester: pytest.Pytester,
