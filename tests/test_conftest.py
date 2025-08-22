@@ -172,6 +172,7 @@ class CasesNeedsVtk:
 
         value = (8, 2, 0) if greater else (9, 2, 0)
         monkeypatch.setattr(pyvista, 'vtk_version_info', value)
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=0 if greater else 5, skipped=5 if greater else 0)
 
@@ -196,6 +197,7 @@ class CasesNeedsVtk:
 
         value = (8, 2, 0) if lower else (9, 2, 0)
         monkeypatch.setattr(pyvista, 'vtk_version_info', value)
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=3 if lower else 0, skipped=0 if lower else 3)
 
@@ -215,6 +217,7 @@ class CasesNeedsVtk:
         """
 
         monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 1, 0))
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(skipped=2)
 
@@ -231,6 +234,7 @@ class CasesNeedsVtk:
         """
 
         monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 1, 0))
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=1)
 
@@ -251,6 +255,7 @@ class CasesNeedsVtk:
         """
 
         monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2, 0))
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(skipped=2)
 
@@ -281,6 +286,7 @@ class CasesNeedsVtk:
 
         value = (9, 0, 0) if between else (9, 2, 0)
         monkeypatch.setattr(pyvista, 'vtk_version_info', value)
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, dict(passed=5 if between else 0, skipped=0 if between else 5)
 
@@ -368,6 +374,7 @@ class CasesNeedsVtk:
         """
 
         monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2))
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, [
             r'SKIPPED.*Test needs VTK version >= \(9, 1, 0\), current is \(8, 2\)',
@@ -388,6 +395,7 @@ class CasesNeedsVtk:
         """
 
         monkeypatch.setattr(pyvista, 'vtk_version_info', (8, 2))
+        monkeypatch.setattr(pyvista, '_MIN_SUPPORTED_VTK_VERSION', (8, 0, 0))
 
         return tests, ['SKIPPED.*foo']
 
