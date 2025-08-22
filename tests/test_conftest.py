@@ -113,36 +113,6 @@ def test_warnings_turned_to_errors(
     assert 'test_no_warnings' in report.passed
 
 
-@pytest.mark.parametrize('greater', [True, False])
-def test_warning_vtk(
-    pytester: pytest.Pytester,
-    results_parser: PytesterStdoutParser,
-    monkeypatch: pytest.MonkeyPatch,
-    greater: bool,
-):
-    tests = """
-    import pytest, warnings
-
-    def test_warning():
-        msg = "`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here."
-        warnings.warn(msg, DeprecationWarning)
-
-    """  # noqa: E501
-    monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 0) if not greater else (9, 1))
-
-    p = pytester.makepyfile(tests)
-    results = pytester.runpytest(p)
-
-    results.assert_outcomes(
-        passed=1 if not greater else 0,
-        failed=0 if not greater else 1,
-    )
-
-    results = results_parser.parse(results=results)
-    report = RunResultsReport(results)
-    assert 'test_warning' in (report.failed if greater else report.passed)
-
-
 @pytest.mark.parametrize('cml', [True, False])
 def test_downloads_mark(
     cml,
