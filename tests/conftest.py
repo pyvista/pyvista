@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import os
+
+os.environ['_PYVISTA_ALLOW_NEW_ATTRIBUTES'] = 'false'
+
 import functools
 from importlib import metadata
 from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
-import os
 import platform
 import re
 
@@ -99,6 +102,11 @@ def set_mpl():
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
+    # Default is to allow new 'private' attributes for downstream packages,
+    # but for PyVista itself we enforce no new attributes
+    pyvista.allow_new_attributes(False)
+    assert pyvista.allow_new_attributes() is False
+
     yield
 
     pyvista.vtk_snake_case('error')

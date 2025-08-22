@@ -316,10 +316,8 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
             try:
                 from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE
             except ImportError:
-                # Circular import, set default value
-                from pyvista.core.utilities.state_manager import _get_default_allow_new_attributes
-
-                _ALLOW_NEW_ATTRIBUTES_MODE = _get_default_allow_new_attributes()
+                # Circular import, set to False to disallow new attributes during initial import
+                _ALLOW_NEW_ATTRIBUTES_MODE = False
 
             # Check if setting a new attribute is allowed
             if not (
