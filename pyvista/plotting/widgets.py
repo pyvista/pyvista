@@ -2910,9 +2910,6 @@ class WidgetHelper:
     def add_camera_orientation_widget(self, animate: bool = True, n_frames=20):  # noqa: FBT001, FBT002
         """Add a camera orientation widget to the active renderer.
 
-        .. note::
-           This widget requires ``vtk>=9.1.0``.
-
         Parameters
         ----------
         animate : bool, default: True
@@ -2949,15 +2946,7 @@ class WidgetHelper:
         >>> plotter.show()
 
         """
-        try:
-            from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
-        except ImportError:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = 'vtkCameraOrientationWidget requires vtk>=9.1.0'
-            raise VTKVersionError(msg)
-
-        widget = vtkCameraOrientationWidget()
+        widget = _vtk.vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)  # type: ignore[attr-defined]
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
