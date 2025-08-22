@@ -467,6 +467,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
 'pyvista/core/utilities/helpers.py' = ['ANN']
 'pyvista/core/utilities/image_sources.py' = ['ANN']
+'pyvista/core/utilities/misc.py' = ['PLC0415']
 'pyvista/core/utilities/observers.py' = ['ANN']
 'pyvista/core/utilities/parametric_objects.py' = ['N802']
 'pyvista/core/utilities/reader.py' = ['ANN', 'N802']

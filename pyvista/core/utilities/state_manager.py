@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 import contextlib
+import os
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import Literal
@@ -401,3 +402,8 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
 
 
 allow_new_attributes = _AllowNewAttributes()
+
+
+def _get_default_allow_new_attributes() -> _AllowNewAttributesOptions:
+    # Use stricter 'none' mode with CI
+    return 'none' if os.environ.get('CI', 'false').lower() == 'true' else 'private'

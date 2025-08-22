@@ -24,6 +24,7 @@ from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetT
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
+from pyvista.core.utilities.state_manager import _get_default_allow_new_attributes
 from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
@@ -79,7 +80,7 @@ DEFAULT_SCALARS_NAME = 'Data'
 MAX_N_COLOR_BARS = 10
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
-_ALLOW_NEW_ATTRIBUTES_MODE: Literal['private', 'any', 'none'] = 'private'
+_ALLOW_NEW_ATTRIBUTES_MODE = _get_default_allow_new_attributes()
 
 
 # Import all modules for type checkers and linters

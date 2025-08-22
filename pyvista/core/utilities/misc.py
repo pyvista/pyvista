@@ -311,10 +311,12 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
         try:
-            from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
+            from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE
         except ImportError:
             # Circular import, set default value
-            _ALLOW_NEW_ATTRIBUTES_MODE = 'private'
+            from pyvista.core.utilities.state_manager import _get_default_allow_new_attributes
+
+            _ALLOW_NEW_ATTRIBUTES_MODE = _get_default_allow_new_attributes()
 
         # Check if setting a new attribute is allowed
         if not (
@@ -331,7 +333,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                 and frozen_by is type(self)
                 and not (key in type(self).__dict__ or hasattr(self, key))
             ):
-                from pyvista import PyVistaAttributeError  # noqa: PLC0415
+                from pyvista import PyVistaAttributeError
 
                 msg = (
                     f'Attribute {key!r} does not exist and cannot be added to class '
@@ -376,7 +378,7 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     """
     if hasattr(obj, name):
-        from pyvista import PyVistaAttributeError  # noqa: PLC0415
+        from pyvista import PyVistaAttributeError
 
         msg = (
             f'Attribute {name!r} already exists. '
