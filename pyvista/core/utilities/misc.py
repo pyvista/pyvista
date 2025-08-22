@@ -310,37 +310,40 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
-        try:
-            from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE
-        except ImportError:
-            # Circular import, set default value
-            from pyvista.core.utilities.state_manager import _get_default_allow_new_attributes
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is not None:
+            # Get mode for setting new attributes
+            try:
+                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE
+            except ImportError:
+                # Circular import, set default value
+                from pyvista.core.utilities.state_manager import _get_default_allow_new_attributes
 
-            _ALLOW_NEW_ATTRIBUTES_MODE = _get_default_allow_new_attributes()
+                _ALLOW_NEW_ATTRIBUTES_MODE = _get_default_allow_new_attributes()
 
-        # Check if setting a new attribute is allowed
-        if not (
-            _ALLOW_NEW_ATTRIBUTES_MODE == 'any'
-            or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
-        ):
-            # Check if this class froze itself. Any frozen state already set by parent classes,
-            # e.g. by calling super().__init__(), will be ignored. This allows subclasses to set
-            # attributes during init without being affected by a parent class init.
-            frozen = self.__dict__.get('__frozen', False)
-            frozen_by = self.__dict__.get('__frozen_by_class', None)
-            if (
-                frozen
-                and frozen_by is type(self)
-                and not (key in type(self).__dict__ or hasattr(self, key))
+            # Check if setting a new attribute is allowed
+            if not (
+                _ALLOW_NEW_ATTRIBUTES_MODE == 'any'
+                or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
             ):
-                from pyvista import PyVistaAttributeError
+                # Check if this class froze itself. Any frozen state already set by parent classes,
+                # e.g. by calling super().__init__(), will be ignored. This allows subclasses to
+                # set attributes during init without being affected by a parent class init.
+                frozen = self.__dict__.get('__frozen', False)
+                frozen_by = self.__dict__.get('__frozen_by_class', None)
+                if (
+                    frozen
+                    and frozen_by is type(self)
+                    and not (key in type(self).__dict__ or hasattr(self, key))
+                ):
+                    from pyvista import PyVistaAttributeError
 
-                msg = (
-                    f'Attribute {key!r} does not exist and cannot be added to class '
-                    f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
-                    f'or `pyvista.allow_new_attributes` to set new attributes.'
-                )
-                raise PyVistaAttributeError(msg)
+                    msg = (
+                        f'Attribute {key!r} does not exist and cannot be added to class '
+                        f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
+                        f'or `pyvista.allow_new_attributes` to set new attributes.'
+                    )
+                    raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
 
 

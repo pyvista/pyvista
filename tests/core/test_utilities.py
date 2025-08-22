@@ -2353,19 +2353,34 @@ def test_vtk_snake_case():
 
 
 def test_allow_new_attributes():
-    assert pv.allow_new_attributes() == 'private'
+    match = (
+        "Attribute '_?foo' does not exist and cannot be added to class 'PolyData'\nUse "
+        '`pyvista.set_new_attribute` or `pyvista.allow_new_attributes` to set new attributes.'
+    )
 
-    match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
+    def set_private():
+        _ = pv.PolyData()._foo = 42
+
+    def set_public():
+        _ = pv.PolyData().foo = 42
+
+    pv.allow_new_attributes('none')
+    assert pv.allow_new_attributes() == 'none'
     with pytest.raises(pv.PyVistaAttributeError, match=match):
-        _ = pv.PolyData().information
+        set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
 
-    pv.vtk_snake_case('allow')
-    assert pv.vtk_snake_case() == 'allow'
-    _ = pv.PolyData().information
+    pv.allow_new_attributes('private')
+    assert pv.allow_new_attributes() == 'private'
+    set_private()
+    with pytest.raises(pv.PyVistaAttributeError, match=match):
+        set_public()
 
-    with pv.vtk_snake_case('warning'):
-        with pytest.warns(RuntimeWarning, match=match):
-            _ = pv.PolyData().information
+    pv.allow_new_attributes('any')
+    assert pv.allow_new_attributes() == 'any'
+    set_private()
+    set_public()
 
 
 T = TypeVar('T')
