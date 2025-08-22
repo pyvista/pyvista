@@ -59,9 +59,9 @@ def check_matplotlib_vtk_compatibility() -> bool:
     from pyvista import vtk_version_info  # noqa: PLC0415
 
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
-    if vtk_version_info < (9, 3, 0):
+    if vtk_version_info <= (9, 2, 2):
         return not mpl_vers >= (3, 6)
-    elif vtk_version_info >= (9, 3, 0):
+    elif vtk_version_info > (9, 2, 2):
         return mpl_vers >= (3, 6)
     msg = 'Uncheckable versions.'  # pragma: no cover
     raise RuntimeError(msg)  # pragma: no cover
