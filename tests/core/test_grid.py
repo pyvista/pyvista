@@ -1748,9 +1748,6 @@ def test_explicit_structured_grid_raise_init():
         )
 
 
-@pytest.mark.needs_vtk_version(
-    9, 2, 2, reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean'
-)
 def test_explicit_structured_grid_clean():
     grid = examples.load_explicit_structured()
 
