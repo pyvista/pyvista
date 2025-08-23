@@ -313,18 +313,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     """
 
-    def __new__(cls, *args, **kwargs):
-        """Construct a new PointSet object.
-
-        Wrapping this is necessary for us to show an informative error
-        message when the VTK version is too old, causing PointSet to be
-        an abstract class. Since we inherit the ``__new__()`` method of
-        :vtk:`vtkPointSet`, we would otherwise see a generic error about
-        the class being abstract.
-
-        """
-        return super().__new__(cls, *args, **kwargs)
-
     @_deprecate_positional_args(allowed=['var_inp'])
     def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
         """Initialize the pointset."""

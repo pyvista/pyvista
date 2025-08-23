@@ -1402,13 +1402,20 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
+        # Post-process clip to fix output type and remove unused points
+        input_bounds = self.bounds
         if isinstance(result, tuple):
             result = (
                 _cast_output_to_match_input_type(result[0], self),
                 _cast_output_to_match_input_type(result[1], self),
             )
+            result = (
+                _remove_unused_points_post_clip(result[0], input_bounds),
+                _remove_unused_points_post_clip(result[1], input_bounds),
+            )
         else:
             result = _cast_output_to_match_input_type(result, self)
+            result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -1540,7 +1547,7 @@ class DataObjectFilters:
         clipped = _get_output(alg, oport=port)
         if crinkle:
             clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
-        return clipped
+        return _remove_unused_points_post_clip(clipped, self.bounds)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
@@ -2976,6 +2983,25 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _remove_unused_points_post_clip(clip_output, input_bounds):
+    # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
+    # https://github.com/pyvista/pyvista/issues/6511
+    # https://github.com/pyvista/pyvista/issues/7738
+
+    def maybe_remove_unused_points(mesh: DataSet):
+        # Unused points are correctly removed sometimes, so for performance we only
+        # remove points when the clipped bounds match input bounds
+        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+            return mesh.remove_unused_points()
+        return mesh
+
+    return (
+        clip_output.generic_filter(maybe_remove_unused_points)
+        if isinstance(clip_output, pyvista.MultiBlock)
+        else maybe_remove_unused_points(clip_output)
+    )
 
 
 def _cast_output_to_match_input_type(

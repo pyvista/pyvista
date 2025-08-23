@@ -40,17 +40,6 @@ def _lazy_vtk_instantiation(module_name, class_name):
     return getattr(module, class_name)()
 
 
-def lazy_vtkPOpenFOAMReader():
-    """Lazy import of the :vtk:`vtkPOpenFOAMReader`."""
-    from vtkmodules.vtkIOParallel import vtkPOpenFOAMReader  # noqa: PLC0415
-    from vtkmodules.vtkParallelCore import vtkDummyController  # noqa: PLC0415
-
-    # Workaround waiting for the fix to be upstream (MR 9195 gitlab.kitware.com/vtk/vtk)
-    reader = vtkPOpenFOAMReader()
-    reader.SetController(vtkDummyController())
-    return reader
-
-
 def get_reader(filename, force_ext=None):
     """Get a reader for fine-grained control of reading data files.
 
@@ -1231,9 +1220,8 @@ class POpenFOAMReader(OpenFOAMReader):
     parallel reconstructed data, and decomposed data.
     """
 
-    _class_reader = staticmethod(lazy_vtkPOpenFOAMReader)
-    _vtk_module_name = ''
-    _vtk_class_name = ''
+    _vtk_module_name = 'vtkIOParallel'
+    _vtk_class_name = 'vtkPOpenFOAMReader'
 
     @property
     def case_type(self):
