@@ -32,12 +32,9 @@ warnings.filterwarnings(
     message='A worker stopped while some jobs were given to the executor',
 )
 
-# ignore Python 3.13 multiprocessing compatibility warnings with joblib/loky
-warnings.filterwarnings(
-    'ignore',
-    category=ValueError,
-    message='Cannot register.*for automatic cleanup: unknown resource type',
-)
+# Python 3.13 multiprocessing compatibility: ValueError exceptions from joblib/loky
+# cannot be suppressed with warning filters. Instead, we disable parallel processing
+# for Python 3.13 in the sphinx_gallery_conf below.
 
 # This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
