@@ -104,7 +104,7 @@ jobs:
 
       - name: Build Documentation
         run: |
-          uv run make \
+          uv run make -C doc \
           gen-external-examples \
           gen-dataset-gallery \
           html SPHINXOPTS="${{ env.SPHINX_JOBS }}"
