@@ -1060,11 +1060,11 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh = uni.image_threshold([400, 600])
         >>> ithresh.plot()
 
-        Note how there is a hole in the thresholded image. Apply a dilation/
-        erosion filter with a large kernel to fill that hole in.
+        Note how there is a hole in the thresholded image. Apply a closing
+        filter with a large kernel to fill that hole in.
 
-        >>> idilate = ithresh.image_dilate_erode(kernel_size=[5, 5, 5])
-        >>> idilate.plot()
+        >>> iclosed = ithresh.close(kernel_size=[5, 5, 5])
+        >>> iclosed.plot()
 
         """
         warnings.warn(
