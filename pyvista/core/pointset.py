@@ -30,7 +30,6 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
-from .errors import VTKVersionError
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -296,11 +295,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         this to ``False`` to allow non-float types, though this may lead to
         truncation of intermediate floats when transforming datasets.
 
-    Notes
-    -----
-    This class requires ``vtk>=9.1.0``. This is an abstract class in
-    ``vtk<9.1.0`` and cannot be instantiated.
-
     Examples
     --------
     Create a simple point cloud of 10 points from a numpy array.
@@ -317,21 +311,6 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
     >>> pset.plot(point_size=10)
 
     """
-
-    def __new__(cls, *args, **kwargs):
-        """Construct a new PointSet object.
-
-        Wrapping this is necessary for us to show an informative error
-        message when the VTK version is too old, causing PointSet to be
-        an abstract class. Since we inherit the ``__new__()`` method of
-        :vtk:`vtkPointSet`, we would otherwise see a generic error about
-        the class being abstract.
-
-        """
-        if pyvista.vtk_version_info < (9, 1, 0):
-            msg = 'pyvista.PointSet requires VTK >= 9.1.0'
-            raise VTKVersionError(msg)
-        return super().__new__(cls, *args, **kwargs)
 
     @_deprecate_positional_args(allowed=['var_inp'])
     def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:  # noqa: FBT001, FBT002
