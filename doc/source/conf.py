@@ -32,10 +32,6 @@ warnings.filterwarnings(
     message='A worker stopped while some jobs were given to the executor',
 )
 
-# Python 3.13 multiprocessing compatibility: ValueError exceptions from joblib/loky
-# cannot be suppressed with warning filters. Instead, we disable parallel processing
-# for Python 3.13 in the sphinx_gallery_conf below.
-
 # This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
 # during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
@@ -447,8 +443,7 @@ sphinx_gallery_conf = {
     'reset_modules': (reset_pyvista,),
     'reset_modules_order': 'both',
     'junit': str(Path('sphinx-gallery') / 'junit-results.xml'),
-    'parallel': sys.version_info
-    < (3, 13),  # Disable for Python 3.13 due to multiprocessing issues
+    'parallel': True,  # use the same number of workers as "-j" in sphinx
 }
 
 suppress_warnings = ['config.cache', 'image.not_readable']
