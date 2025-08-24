@@ -7,10 +7,7 @@ import pytest
 
 import pyvista as pv
 
-skip_lesser_9_2_2 = pytest.mark.needs_vtk_version(9, 2, 2, reason='Requires VTK>=9.2.2')
 
-
-@skip_lesser_9_2_2
 def test_clean_points():
     """Test on a set of points."""
     n_unique_points = 100
@@ -46,7 +43,6 @@ def test_clean_points():
     assert grid_orig == grid
 
 
-@skip_lesser_9_2_2
 def test_clean_grid(hexbeam):
     hexbeam_shifted = hexbeam.translate([1, 0, 0])
 
