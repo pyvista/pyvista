@@ -3121,6 +3121,76 @@ def test_image_dilate_erode_deprecation():
         volume.image_dilate_erode()
 
 
+def test_morphological_filters_progress_bar():
+    """Test morphological filters with progress_bar parameter."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    data = np.zeros((5, 5, 5))
+    data[2, 2, 2] = 1
+    volume.point_data['data'] = data.flatten(order='F')
+
+    # Test progress_bar parameter for all morphological operations
+    dilated = volume.dilate(progress_bar=True)
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(progress_bar=True)
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(progress_bar=True)
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(progress_bar=True)
+    assert isinstance(closed, pv.ImageData)
+
+
+def test_morphological_filters_no_active_scalars_cell_data():
+    """Test morphological filters error when active scalars are cell data."""
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    volume.cell_data['cell_data'] = np.zeros(4 * 4 * 4)
+    volume.set_active_scalars('cell_data', preference='cell')
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.dilate()
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.erode()
+
+    # For open and close, the error will come from the internal dilate/erode calls
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.open()
+
+    with pytest.raises(
+        ValueError, match='If `scalars` not given, active scalars must be point array'
+    ):
+        volume.close()
+
+
+def test_morphological_filters_custom_kernel_size():
+    """Test morphological filters with custom kernel sizes."""
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    data = np.zeros((10, 10, 10))
+    data[5, 5, 5] = 1
+    volume.point_data['data'] = data.flatten(order='F')
+
+    # Test with different kernel sizes
+    dilated = volume.dilate(kernel_size=(5, 5, 5))
+    assert isinstance(dilated, pv.ImageData)
+
+    eroded = volume.erode(kernel_size=(2, 2, 2))
+    assert isinstance(eroded, pv.ImageData)
+
+    opened = volume.open(kernel_size=(4, 4, 4))
+    assert isinstance(opened, pv.ImageData)
+
+    closed = volume.close(kernel_size=(3, 2, 1))
+    assert isinstance(closed, pv.ImageData)
+
+
 def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
     volume_thresholded = uniform.image_threshold(threshold)
