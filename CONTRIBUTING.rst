@@ -570,6 +570,14 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
         tox run -e py3.11-plotting # run plotting tests (requires graphics library)
         tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
 
+    To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
+    ``tox`` arguments from ``pytest`` ones such that:
+
+    .. code-block:: bash
+
+        tox run -e py3.11 -- -k "filters" # run all tests whose name match `filters`
+        tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
+
     For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
 
 Unit testing can take some time, if you wish to speed it up, set the
