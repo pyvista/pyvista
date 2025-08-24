@@ -597,8 +597,12 @@ class VersionInfo(NamedTuple):
     def __str__(self):
         return str((self.major, self.minor, self.micro))
 
+    @staticmethod
+    def _format(version: tuple[int, int, int]):
+        return '.'.join(map(str, version))
 
-def VTKVersionInfo():  # noqa: N802
+
+def _get_vtk_version():
     """Return the vtk version as a namedtuple.
 
     Returns
@@ -613,13 +617,45 @@ def VTKVersionInfo():  # noqa: N802
         minor = ver.GetVTKMinorVersion()
         micro = ver.GetVTKBuildVersion()
     except AttributeError:  # pragma: no cover
-        warnings.warn('Unable to detect VTK version. Defaulting to v4.0.0')
-        major, minor, micro = (4, 0, 0)
-
+        msg = (
+            f'Unable to detect VTK version. '
+            f'Defaulting to {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION)}'
+        )
+        warnings.warn(msg)
+        major, minor, micro = _MIN_SUPPORTED_VTK_VERSION
     return VersionInfo(major, minor, micro)
 
 
-vtk_version_info = VTKVersionInfo()
+class VTKVersionInfo(VersionInfo):
+    def _check_min_supported(self, other: tuple[int, int, int]) -> None:
+        if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
+            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
+
+            msg = (
+                f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
+                f'Minimum supported is {VersionInfo._format(_MIN_SUPPORTED_VTK_VERSION):}.'
+            )
+            raise VTKVersionError(msg)
+
+    def __lt__(self, other):
+        self._check_min_supported(other)
+        return super().__lt__(other)
+
+    def __le__(self, other):
+        self._check_min_supported(other)
+        return super().__le__(other)
+
+    def __gt__(self, other):
+        self._check_min_supported(other)
+        return super().__gt__(other)
+
+    def __ge__(self, other):
+        self._check_min_supported(other)
+        return super().__ge__(other)
+
+
+vtk_version_info = VTKVersionInfo(*_get_vtk_version())
+_MIN_SUPPORTED_VTK_VERSION = (9, 2, 2)
 
 
 class vtkPyVistaOverride:  # noqa: N801
