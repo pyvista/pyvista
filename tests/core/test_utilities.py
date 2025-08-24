@@ -1557,6 +1557,7 @@ def test_transform_rotate(transform):
 @pytest.mark.parametrize(
     ('method', 'args'),
     [
+        ('compose', (pv.Transform(ROTATION).translate(VECTOR),)),
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
         ('flip_x', ()),
@@ -1577,9 +1578,14 @@ def test_transform_with_point(transform, multiply_mode, method, args):
     transform.point = vector
     func(transform, *args)
 
-    expected_transform = Transform().translate(-vector)
-    func(expected_transform, *args)
-    expected_transform.translate(vector)
+    if method == 'compose':
+        expected_transform = Transform().translate(-vector)
+        func(expected_transform, ROTATION)
+        expected_transform.translate(vector + vector)
+    else:
+        expected_transform = Transform().translate(-vector)
+        func(expected_transform, *args)
+        expected_transform.translate(vector)
 
     assert np.array_equal(transform.matrix, expected_transform.matrix)
     assert transform.n_transformations == 3
@@ -1589,11 +1595,16 @@ def test_transform_with_point(transform, multiply_mode, method, args):
     transform.identity()  # reset
     func(transform, *args, point=vector2)  # override point
 
-    expected_transform = Transform().translate(-vector2)
-    func(expected_transform, *args)
-    expected_transform.translate(vector2)
+    if method == 'compose':
+        expected_transform = Transform().translate(-vector2)
+        func(expected_transform, ROTATION)
+        expected_transform.translate(vector2 + vector)
+    else:
+        expected_transform = Transform().translate(-vector2)
+        func(expected_transform, *args)
+        expected_transform.translate(vector2)
 
-    assert np.array_equal(transform.matrix, expected_transform.matrix)
+    assert np.allclose(transform.matrix, expected_transform.matrix)
     assert transform.n_transformations == 3
 
 
@@ -1952,6 +1963,23 @@ def test_transform_init():
 
     transform = Transform(matrix.tolist())
     assert np.array_equal(transform.matrix, matrix)
+
+
+def test_transform_equivalent_methods():
+    def assert_transform_equivalence(tr_a: pv.Transform, tr_b: pv.Transform):
+        A = (tr_a * tr_b.inverse_matrix).matrix
+        B = np.eye(4)
+        assert np.allclose(A, B)
+
+    # All these transformations should be the same
+    tr1 = pv.Transform(ROTATION, point=VECTOR)
+    tr2 = pv.Transform(point=VECTOR).rotate(ROTATION)
+    tr3 = pv.Transform().rotate(ROTATION, point=VECTOR)
+    tr4 = pv.Transform().translate(-np.array(VECTOR)).rotate(ROTATION).translate(VECTOR)
+
+    (assert_transform_equivalence(tr1, tr2),)
+    assert_transform_equivalence(tr1, tr3)
+    assert_transform_equivalence(tr1, tr4)
 
 
 def test_transform_chain_methods():
