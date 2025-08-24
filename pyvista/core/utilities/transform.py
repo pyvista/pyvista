@@ -1431,8 +1431,10 @@ class Transform(
 
     @matrix.setter
     def matrix(self: Transform, trans: TransformLike) -> None:
-        self.identity()
-        self.compose(trans)
+        array = _validation.validate_transform4x4(
+            trans, must_be_finite=self.check_finite, name='matrix'
+        )
+        self.SetMatrix(vtkmatrix_from_array(array))
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
