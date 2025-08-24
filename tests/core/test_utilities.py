@@ -192,7 +192,11 @@ def test_vtk_version_info_raises(operation):
 def test_min_supported_vtk_version_matches_pyproject():
     def get_min_vtk_version_from_pyproject():
         # locate pyproject.toml relative to package
-        pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+        root = Path(
+            os.environ.get('TOX_ROOT', Path(pv.__file__).parents[1])
+        )  # to make the test work when pyvista is installed via tox
+        pyproject_path = root / 'pyproject.toml'
+
         with pyproject_path.open('rb') as f:
             pyproject_data = tomllib.load(f)
 
