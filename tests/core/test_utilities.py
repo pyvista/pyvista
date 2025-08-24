@@ -1977,7 +1977,7 @@ def test_transform_equivalent_methods():
     tr3 = pv.Transform().rotate(ROTATION, point=VECTOR)
     tr4 = pv.Transform().translate(-np.array(VECTOR)).rotate(ROTATION).translate(VECTOR)
 
-    (assert_transform_equivalence(tr1, tr2),)
+    assert_transform_equivalence(tr1, tr2)
     assert_transform_equivalence(tr1, tr3)
     assert_transform_equivalence(tr1, tr4)
 
