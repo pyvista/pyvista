@@ -528,57 +528,57 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
             pip install tox
             tox run -e py3.11 # change to the python version targeted
 
-.. admonition:: tox usage
-    :class: hint dropdown
+        .. admonition:: tox usage
+            :class: hint dropdown
 
-    When using ``tox``, specific test environments can be used to test against various
-    dependencies versions (mostly ``numpy`` and ``vtk``). The full list is available by running:
+            When using ``tox``, specific test environments can be used to test against various
+            dependencies versions (mostly ``numpy`` and ``vtk``). The full list is available by running:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-        tox list
+                tox list
 
-    For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
-    on the main branch, simply run:
+            For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
+            on the main branch, simply run:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-        tox run -e py3.11-vtk_main
+                tox run -e py3.11-vtk_main
 
-    Note that several dependencies versions are already predefined in the ``tox.ini`` configuration
-    and can be specified with ``tox`` factors such that:
+            Note that several dependencies versions are already predefined in the ``tox.ini`` configuration
+            and can be specified with ``tox`` factors such that:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-        tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
-        tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+                tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
 
-    If you need to tests dependencies that are not predefined in the configuration, you can always override them such
-    that:
+            If you need to tests dependencies that are not predefined in the configuration, you can always override them such
+            that:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-        tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
-        tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
+                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
 
-    By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
-    To only run core or plotting tests, add `core` or `plotting` factors to the environment name such that:
+            By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
+            To only run core or plotting tests, add `core` or `plotting` factors to the environment name such that:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-        tox run -e py3.11-core # run core tests (no need for graphics library)
-        tox run -e py3.11-plotting # run plotting tests (requires graphics library)
-        tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+                tox run -e py3.11-core # run core tests (no need for graphics library)
+                tox run -e py3.11-plotting # run plotting tests (requires graphics library)
+                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
 
-    To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
-    ``tox`` arguments from ``pytest`` ones such that:
+            To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
+            ``tox`` arguments from ``pytest`` ones such that:
 
-    .. code-block:: bash
+            .. code-block:: bash
 
-        tox run -e py3.11 -- -k "filters" # run all tests whose name match `filters`
-        tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
+                tox run -e py3.11 -- -k "filters" # run all tests whose name match `filters`
+                tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
 
-    For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
+            For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
