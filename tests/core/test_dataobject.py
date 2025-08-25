@@ -398,12 +398,12 @@ def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
+def test_pickle_multiblock(multiblock_all_no_pointset_with_nested_and_none, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
         pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
-    multiblock = multiblock_all_with_nested_and_none
+    multiblock = multiblock_all_no_pointset_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
         match = (
