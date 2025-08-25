@@ -562,7 +562,7 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
                 tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
 
             By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
-            To only run core or plotting tests, add `core` or `plotting` factors to the environment name such that:
+            To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
 
             .. code-block:: bash
 
