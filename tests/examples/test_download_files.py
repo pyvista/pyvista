@@ -28,7 +28,6 @@ if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
-skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 
 
 def _on_ci():
@@ -259,7 +258,6 @@ def test_download_cake_easy_texture():
     assert isinstance(data, pv.Texture)
 
 
-@skip_9_1_0
 def test_download_can_crushed_hdf():
     path = examples.download_can_crushed_hdf(load=False)
     assert Path(path).is_file()
@@ -924,7 +922,6 @@ def test_download_dual_sphere_animation():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-@skip_9_1_0
 def test_download_cgns_structured():
     filename = examples.download_cgns_structured(load=False)
     assert Path(filename).is_file()
@@ -941,7 +938,6 @@ def test_download_tecplot_ascii():
     assert isinstance(dataset, pv.MultiBlock)
 
 
-@skip_9_1_0
 def test_download_cgns_multi():
     filename = examples.download_cgns_multi(load=False)
     assert Path(filename).is_file()
@@ -965,7 +961,6 @@ def test_download_moonlanding_image():
     assert isinstance(dataset, pv.ImageData)
 
 
-@skip_9_1_0
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
     assert Path(filename).is_file()
@@ -976,7 +971,6 @@ def test_download_cloud_dark_matter():
     assert dataset.n_points == 32314
 
 
-@skip_9_1_0
 def test_download_cloud_dark_matter_dense():
     filename = examples.download_cloud_dark_matter_dense(load=False)
     assert Path(filename).is_file()
