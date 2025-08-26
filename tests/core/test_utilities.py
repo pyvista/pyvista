@@ -1978,9 +1978,11 @@ def test_transform_equivalent_methods():
     tr3 = pv.Transform().rotate(ROTATION, point=VECTOR)
     tr4 = pv.Transform().translate(-np.array(VECTOR)).rotate(ROTATION).translate(VECTOR)
 
-    assert_transform_equivalence(tr1, tr2)
-    assert_transform_equivalence(tr1, tr3)
-    assert_transform_equivalence(tr1, tr4)
+trans = [tr1, tr2, tr3, tr4]
+
+import itertools
+for _tr1,_tr2 in itertools.combinations(trans, 2):
+    assert_transform_equivalence(_tr1, _tr2)
 
 
 def test_transform_chain_methods():
