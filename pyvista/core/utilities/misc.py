@@ -308,8 +308,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
         object.__setattr__(self, '__frozen', True)
         object.__setattr__(self, '__frozen_by_class', this_class)
 
-    def __setattr__(self, key: str, value: Any) -> None:
-        """Prevent adding new attributes to classes using "normal" methods."""
+    def _check_new_attribute(self, key: str) -> None:
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is not None:
             # Get mode for setting new attributes
@@ -339,9 +338,14 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                     msg = (
                         f'Attribute {key!r} does not exist and cannot be added to class '
                         f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
-                        f'or `pyvista.allow_new_attributes` to set new attributes.'
+                        f'or `pyvista.allow_new_attributes` to set new attributes.\n'
+                        f'Setting new private variables (with `_` prefix) is allowed by default.'
                     )
                     raise PyVistaAttributeError(msg)
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """Prevent adding new attributes to classes using "normal" methods."""
+        self._check_new_attribute(key)
         object.__setattr__(self, key, value)
 
 

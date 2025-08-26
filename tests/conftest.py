@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import os
-
-os.environ['_PYVISTA_ALLOW_NEW_ATTRIBUTES'] = 'false'
-
 import functools
 from importlib import metadata
 from inspect import BoundArguments
 from inspect import Parameter
 from inspect import Signature
+import os
 import platform
 import re
 
