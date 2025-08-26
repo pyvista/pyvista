@@ -166,18 +166,14 @@ def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.Monkey
     for base in downloadable_basenames:
         FETCHER.registry[base] = None
     FETCHER.base_url = str(repository_path) + '/'
+    (cache_path := tmp_path / 'cache').mkdir()
+    FETCHER.path = cache_path
 
     monkeypatch.setattr(downloads, 'FETCHER', FETCHER)
     monkeypatch.setattr(downloads, '_FILE_CACHE', True)
+    monkeypatch.setattr(downloads, 'USER_DATA_PATH', cache_path)
 
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_paths = [downloads.FETCHER.path / base for base in downloadable_basenames]
-    [file.unlink() for file in cached_paths if os.path.isfile(file)]
-
-    yield repository_path
-
-    # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [file.unlink() for file in cached_paths if os.path.isfile(file)]
+    return repository_path
 
 
 @pytest.mark.usefixtures('examples_local_repository_tmp_dir')
