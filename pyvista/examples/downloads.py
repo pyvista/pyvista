@@ -44,6 +44,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.fileio import read
 from pyvista.core.utilities.fileio import read_texture
+from pyvista.core.utilities.state_manager import _update_alg
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _DownloadableFile
 from pyvista.examples._dataset_loader import _load_as_cubemap
@@ -1515,7 +1516,7 @@ def _sparse_points_reader(saved_file):
     table_points.SetXColumn('x')
     table_points.SetYColumn('y')
     table_points.SetZColumn('z')
-    table_points.Update()
+    _update_alg(table_points)
     return pyvista.wrap(table_points.GetOutput())
 
 
@@ -3652,7 +3653,7 @@ def _kitchen_split_load_func(mesh):
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)  # type: ignore[call-overload]
-        alg.Update()
+        _update_alg(alg)
         result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
@@ -7213,6 +7214,8 @@ def download_dikhololo_night(load=True):  # noqa: FBT002
     --------
     >>> from pyvista import examples
     >>> texture = examples.download_dikhololo_night()
+    >>> texture.mipmap = True  # Recommended for use as environment texture
+    >>> texture.interpolate = True  # Recommended for use as environment texture
     >>> texture.plot()
 
     .. seealso::

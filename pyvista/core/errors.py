@@ -203,6 +203,24 @@ class PyVistaAttributeError(AttributeError):
         super().__init__(message)
 
 
+class VTKOutputMessageError(RuntimeError):
+    """Exception when a VTK output message is detected.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self,
+        message='VTK output message was detected by PyVista.',
+    ) -> None:  # numpydoc ignore=PR01,RT01
+        """Call the base class constructor with the custom message."""
+        super().__init__(message)
+
+
 class PyVistaDeprecationWarning(Warning):
     """Non-supressed Deprecation Warning."""
 
@@ -213,3 +231,7 @@ class PyVistaFutureWarning(Warning):
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
+
+
+class VTKOutputMessageWarning(RuntimeWarning):
+    """Warning when a VTK output message is detected."""

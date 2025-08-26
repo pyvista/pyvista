@@ -30,19 +30,9 @@ from typing import cast
 
 import pyvista
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.observers import ProgressMonitor
 
 if TYPE_CHECKING:
     from pyvista.core import _vtk_core as _vtk
-
-
-def _update_alg(alg, *, progress_bar: bool = False, message='') -> None:
-    """Update an algorithm with or without a progress bar."""
-    if progress_bar:
-        with ProgressMonitor(alg, message=message):
-            alg.Update()
-    else:
-        alg.Update()
 
 
 def _get_output(
@@ -91,5 +81,4 @@ __all__ = [
     'StructuredGridFilters',
     'UnstructuredGridFilters',
     '_get_output',
-    '_update_alg',
 ]

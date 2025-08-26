@@ -49,6 +49,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from ._plotting import _common_arg_parser
@@ -528,7 +529,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         importer = vtkGLTFImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
-        importer.Update()
+        _update_alg(importer)
 
         # set camera position to a three.js viewing perspective
         if set_camera:
@@ -565,7 +566,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         importer = vtkVRMLImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
-        importer.Update()
+        _update_alg(importer)
 
     def import_3ds(self, filename: str | Path) -> None:
         """Import a 3DS file into the plotter.
@@ -598,7 +599,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         importer = vtk3DSImporter()
         importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
-        importer.Update()
+        _update_alg(importer)
 
     def import_obj(self, filename: str | Path, filename_mtl: str | Path | None = None) -> None:
         """Import from .obj wavefront files.
@@ -649,7 +650,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             importer.SetFileNameMTL(str(filename_mtl_path))
             importer.SetTexturePath(str(filename_mtl_path.parents[0]))
         importer.SetRenderWindow(self.render_window)
-        importer.Update()
+        _update_alg(importer)
 
     def export_html(self, filename: str | Path | None) -> io.StringIO | None:
         """Export this plotter as an interactive scene to a HTML file.
@@ -877,7 +878,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         exporter.SetFileName(filename)
         exporter.SetInlineData(inline_data)
         exporter.SetSaveNormal(save_normals)
-        exporter.Update()
+        _update_alg(exporter)
 
         # rotate back if applicable
         if rotate_scene:
@@ -6075,12 +6076,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
         arrow = _vtk.vtkArrowSource()
-        arrow.Update()
+        _update_alg(arrow)
         glyph3D = _vtk.vtkGlyph3D()
         glyph3D.SetSourceData(arrow.GetOutput())
         glyph3D.SetInputData(pdata)
         glyph3D.SetVectorModeToUseVector()
-        glyph3D.Update()
+        _update_alg(glyph3D)
 
         arrows = wrap(glyph3D.GetOutput())
         return self.add_mesh(arrows, **kwargs)
@@ -6204,7 +6205,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         writer.SetWrite3DPropsAsRasterImage(raster)
         if painter:
             writer.UsePainterSettings()
-        writer.Update()
+        _update_alg(writer)
 
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917

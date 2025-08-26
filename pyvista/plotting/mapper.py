@@ -18,6 +18,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.state_manager import _update_alg
 
 from . import _vtk
 from .colors import Color
@@ -65,6 +66,9 @@ class _BaseMapper(
                     z_max =  0.5)
 
         """
+        if self.dataset is None:
+            with pyvista.vtk_verbosity('off'):
+                return BoundsTuple(*self.GetBounds())
         return BoundsTuple(*self.GetBounds())
 
     @property
@@ -77,6 +81,9 @@ class _BaseMapper(
             Center of the active renderer.
 
         """
+        if self.dataset is None:
+            with pyvista.vtk_verbosity('off'):
+                return self.GetCenter()
         return self.GetCenter()
 
     def copy(self) -> _BaseMapper:
@@ -368,7 +375,7 @@ class _BaseMapper(
 
     def update(self) -> None:
         """Update this mapper."""
-        self.Update()
+        _update_alg(self)
 
 
 class _DataSetMapper(_BaseMapper):

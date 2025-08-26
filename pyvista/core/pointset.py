@@ -41,6 +41,7 @@ from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+from .utilities.state_manager import _update_alg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -112,7 +113,7 @@ class _PointSet(DataSet):
         alg = _vtk.vtkCenterOfMass()
         alg.SetInputDataObject(self)
         alg.SetUseScalarsAsWeights(scalars_weight)
-        alg.Update()
+        _update_alg(alg)
         return np.array(alg.GetCenter())
 
     def shallow_copy(self, to_copy: DataSet) -> None:  # type: ignore[override]
@@ -1548,6 +1549,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         0.5183
 
         """
+        if self.is_empty:
+            return 0.0
         mprop = _vtk.vtkMassProperties()
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
@@ -1688,7 +1691,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         alg.BoundaryEdgesOn()
         alg.NonManifoldEdgesOn()
         alg.SetInputDataObject(self)
-        alg.Update()
+        _update_alg(alg)
         return alg.GetOutput().GetNumberOfCells()
 
     @property
@@ -1838,7 +1841,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
                 vtkappend = _vtk.vtkAppendFilter()
                 vtkappend.AddInputData(args[0])
-                vtkappend.Update()
+                _update_alg(vtkappend)
                 self.shallow_copy(vtkappend.GetOutput())
 
             else:
@@ -2453,7 +2456,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
         alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
-        alg.Update()
+        _update_alg(alg)
         grid = _get_output(alg)
         grid.cell_data.remove('ConnectivityFlags')  # unrequired
         return grid
@@ -3154,7 +3157,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid.copy_structure(self)
         alg = _vtk.vtkExplicitStructuredGridToUnstructuredGrid()
         alg.SetInputDataObject(grid)
-        alg.Update()
+        _update_alg(alg)
         ugrid = _get_output(alg)
         ugrid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
