@@ -69,7 +69,7 @@ class Transform(
         By default, the transform is initialized as the identity matrix.
 
     point : VectorLike[float], optional
-        Point to use when composing some transformations such as scale, rotation, etc.
+        Point to use when composing transformations.
         If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
@@ -1347,7 +1347,7 @@ class Transform(
                [ 0.   ,  0.   ,  1.   ,  1.5  ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
-        Define a second transformation and use ``+`` to compose it.
+        Define a second transformation and use ``*`` to compose it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
         >>> transform = transform * array
@@ -1356,6 +1356,25 @@ class Transform(
                [ 0.   ,  0.   , -1.   , -1.5  ],
                [-0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
+
+        Compose the transform about a point. Check the :attr:`matrix_list` to see that a
+        translation is added before and after the transform.
+
+        >>> transform = pv.Transform().compose(transform, point=(1, 2, 3))
+        >>> transform.matrix_list  # doctest: +NORMALIZE_WHITESPACE
+        [array([[ 1.,  0.,  0., -1.],
+                [ 0.,  1.,  0., -2.],
+                [ 0.,  0.,  1., -3.],
+                [ 0.,  0.,  0.,  1.]]),
+         array([[ 0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   , -1.   , -1.5  ],
+                [-0.707, -0.707,  0.   ,  0.   ],
+                [ 0.   ,  0.   ,  0.   ,  2.   ]]),
+         array([[1., 0., 0., 1.],
+                [0., 1., 0., 2.],
+                [0., 0., 1., 3.],
+                [0., 0., 0., 1.]])]
+
 
         """
         return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
