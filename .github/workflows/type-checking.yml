@@ -1,0 +1,44 @@
+name: Static Type Checking
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MYPY_FORCE_COLOR: 1
+  TERM: xterm-color
+
+jobs:
+  mypy:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+          cache: "pip"
+
+      - name: Install PyVista test requirements
+        run: |
+          pip install --upgrade pip
+          pip install . --group typing
+
+      - name: Run Mypy
+        run: mypy
+
+      - name: Software Report
+        run: |
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
