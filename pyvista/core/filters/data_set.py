@@ -143,7 +143,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         ...     scalars=dist,
         ...     scalar_bar_args={
         ...         'title': 'Distance to Source',
-        ...         'fmt': '%.1E',
+        ...         'fmt': '{:.1E}',
         ...     },
         ... )
         >>> pl.show()

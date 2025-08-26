@@ -1960,7 +1960,8 @@ class Renderer(
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.1f'  # fallback
+            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+            fmt = '%.1f' if pyvista.vtk_version_info < (9, 5, 99) else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')

@@ -5948,7 +5948,8 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.6e'  # type: ignore[unreachable]
+            # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+            fmt = '%.6e' if pyvista.vtk_version_info < (9, 5, 99) else '{:.6e}'  # type: ignore[unreachable]
         if isinstance(points, np.ndarray):
             scalars = labels
         elif is_pyvista_dataset(points):
