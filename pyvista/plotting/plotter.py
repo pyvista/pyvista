@@ -5955,7 +5955,12 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         elif is_pyvista_dataset(points):
             scalars = points.point_data[labels]  # type: ignore[assignment, index]
         phrase = f'{preamble} {fmt}'
-        labels = [phrase % val for val in scalars]
+
+        # TODO: Change this to (9, 6, 0) when VTK 9.6 is released
+        if pyvista.vtk_version_info < (9, 5, 99):
+            labels = [phrase % val for val in scalars]
+        else:
+            labels = [phrase.format(val) for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
     def add_points(
