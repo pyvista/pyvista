@@ -1578,14 +1578,9 @@ def test_transform_with_point(transform, multiply_mode, method, args):
     transform.point = vector
     func(transform, *args)
 
-    if method == 'compose':
-        expected_transform = Transform().translate(-vector)
-        func(expected_transform, ROTATION)
-        expected_transform.translate(vector + vector)
-    else:
-        expected_transform = Transform().translate(-vector)
-        func(expected_transform, *args)
-        expected_transform.translate(vector)
+    expected_transform = Transform().translate(-vector)
+    func(expected_transform, *args)
+    expected_transform.translate(vector)
 
     assert np.array_equal(transform.matrix, expected_transform.matrix)
     assert transform.n_transformations == 3
@@ -1595,16 +1590,11 @@ def test_transform_with_point(transform, multiply_mode, method, args):
     transform.identity()  # reset
     func(transform, *args, point=vector2)  # override point
 
-    if method == 'compose':
-        expected_transform = Transform().translate(-vector2)
-        func(expected_transform, ROTATION)
-        expected_transform.translate(vector2 + vector)
-    else:
-        expected_transform = Transform().translate(-vector2)
-        func(expected_transform, *args)
-        expected_transform.translate(vector2)
+    expected_transform = Transform().translate(-vector2)
+    func(expected_transform, *args)
+    expected_transform.translate(vector2)
 
-    assert np.allclose(transform.matrix, expected_transform.matrix)
+    assert np.array_equal(transform.matrix, expected_transform.matrix)
     assert transform.n_transformations == 3
 
 

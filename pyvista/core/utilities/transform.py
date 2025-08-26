@@ -1312,14 +1312,11 @@ class Transform(
         point : VectorLike[float], optional
             Point to transform about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, additional transformations are composed and added to the :attr:`matrix_list`.
-            The input transform is first decomposed into its linear components ``L`` (i.e. the
-            upper-left 3x3 sub-matrix) and its translation component ``T``.
-            Three transformations are then applied:
+            If set, two additional transformations are composed and added to
+            the :attr:`matrix_list`:
 
-                - :meth:`translate` to ``point``
-                - :meth:`compose` ``L``
-                - :meth:`translate` away from ``point`` and by ``T``.
+                - :meth:`translate` to ``point`` before the transformation
+                - :meth:`translate` away from ``point`` after the transformation
 
             .. versionadded:: 0.47
 
@@ -1361,19 +1358,7 @@ class Transform(
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
         """
-        if point is not None or self.point is not None:
-            array = _validation.validate_transform4x4(
-                transform, must_be_finite=self.check_finite, name='matrix'
-            )
-            translation = array[:3, 3]
-            linear = array[:3, :3]
-            return self._compose_with_translations(
-                linear,
-                point=point,
-                multiply_mode=multiply_mode,
-                additional_translation=translation,
-            )
-        return self._compose(transform, multiply_mode=multiply_mode)
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
     def _compose(
         self: Transform,
@@ -2306,15 +2291,11 @@ class Transform(
     def _compose_with_translations(
         self: Transform,
         transform: TransformLike,
-        *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
-        additional_translation: VectorLike[float] | None = None,
     ) -> Transform:
         translate_before, translate_after = self._get_point_translations(
-            point=point if point is not None else self.point,
-            multiply_mode=multiply_mode,
-            additional_translation=additional_translation,
+            point=point, multiply_mode=multiply_mode
         )
         if translate_before:
             self._compose(translate_before, multiply_mode=multiply_mode)
@@ -2330,15 +2311,12 @@ class Transform(
         self: Transform,
         point: VectorLike[float] | None,
         multiply_mode: Literal['pre', 'post'] | None,
-        additional_translation: VectorLike[float] | None = None,
     ) -> tuple[None | Transform, None | Transform]:
+        point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
             translate_away = Transform().translate(-point_array)
-            toward_array = point_array
-            if additional_translation is not None:
-                toward_array += additional_translation
-            translate_toward = Transform().translate(toward_array)
+            translate_toward = Transform().translate(point_array)
             if multiply_mode == 'post' or self._multiply_mode == 'post':
                 return translate_away, translate_toward
             else:
