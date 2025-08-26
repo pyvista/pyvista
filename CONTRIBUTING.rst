@@ -1495,7 +1495,7 @@ PyVista Hosts and Runners
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Apple Silicon - 2024 Mac mini M4
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - CPU: 10-core CPU ARM64 (Apple Silicon)
 - GPU: 10-core GPU
 - Storage: 256 GB SSD
