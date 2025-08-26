@@ -12,11 +12,6 @@ from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
 
-# skip all tests if concrete pointset unavailable
-pytestmark = pytest.mark.needs_vtk_version(
-    9, 1, 0, reason='Requires VTK>=9.1.0 for a concrete PointSet class'
-)
-
 
 def test_pointset_basic():
     # create empty pointset
