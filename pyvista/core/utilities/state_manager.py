@@ -331,15 +331,16 @@ class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
 
     Parameters
     ----------
-    mode : 'private' | 'any' | 'none'
+    mode : 'private' | bool
         Control if setting new attributes is allowed.
 
-        - 'private': Allow setting private attributes, but do not allow setting public attributes.
-        - 'any': Allow setting any new attribute, either private or public.
-        - 'none': Do not allow setting new attributes, regardless if they are private or public.
+        - ``'private'``: Allow setting private attributes, but do not allow setting public
+          attributes.
+        - ``True``: Allow setting any new attribute, either private or public.
+        - ``False``: Do not allow setting new attributes, regardless if they are private or public.
 
-        ``'private'`` is used by default, ``'any'`` removes all restrictions, and ``'none'``
-         is most strict.
+        ``'private'`` is used by default, ``True`` removes all restrictions, and ``False``
+        is most strict.
 
         .. note::
 
