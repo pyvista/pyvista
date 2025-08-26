@@ -310,23 +310,25 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
-        # Check if this class froze itself. Any frozen state already set by parent classes, e.g.
-        # by calling super().__init__(), will be ignored. This allows subclasses to set attributes
-        # during init without being affect by a parent class init.
-        frozen = self.__dict__.get('__frozen', False)
-        frozen_by = self.__dict__.get('__frozen_by_class', None)
-        if (
-            frozen
-            and frozen_by is type(self)
-            and not (key in type(self).__dict__ or hasattr(self, key))
-        ):
-            from pyvista import PyVistaAttributeError  # noqa: PLC0415
+        if not key.startswith('_'):
+            # Check if this class froze itself. Any frozen state already set by parent classes,
+            # e.g. by calling super().__init__(), will be ignored. This allows subclasses to set
+            # attributes during init without being affect by a parent class init.
+            frozen = self.__dict__.get('__frozen', False)
+            frozen_by = self.__dict__.get('__frozen_by_class', None)
+            if (
+                frozen
+                and frozen_by is type(self)
+                and not (key in type(self).__dict__ or hasattr(self, key))
+            ):
+                from pyvista import PyVistaAttributeError  # noqa: PLC0415
 
-            msg = (
-                f'Attribute {key!r} does not exist and cannot be added to class '
-                f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new attributes.'
-            )
-            raise PyVistaAttributeError(msg)
+                msg = (
+                    f'Attribute {key!r} does not exist and cannot be added to class '
+                    f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new '
+                    f'attributes or consider setting a private variable (with `_` prefix) instead.'
+                )
+                raise PyVistaAttributeError(msg)
         object.__setattr__(self, key, value)
 
 

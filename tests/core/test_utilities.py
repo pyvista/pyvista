@@ -1329,9 +1329,10 @@ def test_no_new_attr_mixin(no_new_attributes_mixin_subclass):
 
     match = (
         "Attribute 'ham' does not exist and cannot be added to class 'A'\n"
-        'Use `pv.set_new_attribute` to set new attributes.'
+        'Use `pv.set_new_attribute` to set new attributes or consider setting a private variable '
+        '(with `_` prefix) instead.'
     )
-    with pytest.raises(pv.PyVistaAttributeError, match=match):
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
         setattr(a, ham, eggs)
 
     match = "Attribute 'ham' does not exist and cannot be added to class 'B'"
@@ -2346,6 +2347,17 @@ def test_vtk_snake_case():
     with pv.vtk_snake_case('warning'):
         with pytest.warns(RuntimeWarning, match=match):
             _ = pv.PolyData().information
+
+
+def test_allow_new_attributes():
+    match = (
+        "Attribute 'foo' does not exist and cannot be added to class 'PolyData'\n"
+        'Use `pv.set_new_attribute` to set new attributes or consider setting a private '
+        'variable (with `_` prefix) instead.'
+    )
+    _ = pv.PolyData()._foo = 42
+    with pytest.raises(pv.PyVistaAttributeError, match=re.escape(match)):
+        _ = pv.PolyData().foo = 42
 
 
 T = TypeVar('T')
