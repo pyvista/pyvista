@@ -35,7 +35,11 @@ vol
 #
 
 # A nice camera position
-cpos = [(-381.74, -46.02, 216.54), (74.8305, 89.2905, 100.0), (0.23, 0.072, 0.97)]
+cpos = pv.CameraPosition(
+    position=(-381.74, -46.02, 216.54),
+    focal_point=(74.8305, 89.2905, 100.0),
+    viewup=(0.23, 0.072, 0.97),
+)
 
 vol.plot(volume=True, cmap='bone', cpos=cpos)
 
@@ -89,7 +93,9 @@ head = examples.download_head()
 
 pl = pv.Plotter()
 pl.add_volume(head, cmap='cool', opacity='sigmoid_6', show_scalar_bar=False)
-pl.camera_position = [(-228.0, -418.0, -158.0), (94.0, 122.0, 82.0), (-0.2, -0.3, 0.9)]
+pl.camera_position = pv.CameraPosition(
+    position=(-228.0, -418.0, -158.0), focal_point=(94.0, 122.0, 82.0), viewup=(-0.2, -0.3, 0.9)
+)
 pl.camera.zoom(1.5)
 pl.show()
 
@@ -109,7 +115,9 @@ pl = pv.Plotter()
 actors = pl.add_volume(bolt_nut, cmap='coolwarm', opacity='sigmoid_5', show_scalar_bar=False)
 actors[0].prop.interpolation_type = 'linear'
 actors[1].prop.interpolation_type = 'linear'
-pl.camera_position = [(127.4, -68.3, 88.2), (30.3, 54.3, 26.0), (-0.25, 0.28, 0.93)]
+pl.camera_position = pv.CameraPosition(
+    position=(127.4, -68.3, 88.2), focal_point=(30.3, 54.3, 26.0), viewup=(-0.25, 0.28, 0.93)
+)
 cpos = pl.show(return_cpos=True)
 
 
@@ -121,7 +129,11 @@ frog = examples.download_frog()
 
 pl = pv.Plotter()
 pl.add_volume(frog, cmap='viridis', opacity='sigmoid_6', show_scalar_bar=False)
-pl.camera_position = [(929.0, 1067.0, -278.9), (249.5, 234.5, 101.25), (-0.2048, -0.2632, -0.9427)]
+pl.camera_position = pv.CameraPosition(
+    position=(929.0, 1067.0, -278.9),
+    focal_point=(249.5, 234.5, 101.25),
+    viewup=(-0.2048, -0.2632, -0.9427),
+)
 pl.camera.zoom(1.5)
 pl.show()
 
@@ -174,11 +186,11 @@ pl.show()
 
 pl = pv.Plotter()
 pl.add_volume(voi, cmap='magma', clim=clim, opacity=opacity, opacity_unit_distance=2000)
-pl.camera_position = [
-    (531554.5542909054, 3944331.800171338, 26563.04809259223),
-    (599088.1433822059, 3982089.287834022, -11965.14728669936),
-    (0.3738545892415734, 0.244312810377319, 0.8947312427698892),
-]
+pl.camera_position = pv.CameraPosition(
+    position=(531554.5542909054, 3944331.800171338, 26563.04809259223),
+    focal_point=(599088.1433822059, 3982089.287834022, -11965.14728669936),
+    viewup=(0.3738545892415734, 0.244312810377319, 0.8947312427698892),
+)
 pl.show()
 
 

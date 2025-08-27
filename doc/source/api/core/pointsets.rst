@@ -346,9 +346,9 @@ A simple plot can be created by using:
 
     # Camera position.
     # it's hard-coded in this example
-    cpos = [(11.9151, 6.1139, 3.61249),
-            (0.0, 0.375, 2.0),
-            (-0.4254, 0.9024, -0.0678)]
+    cpos = pv.CameraPosition(position=(11.9151, 6.1139, 3.61249),
+                             focal_point=(0.0, 0.375, 2.0),
+                             viewup=(-0.4254, 0.9024, -0.0678))
 
     grid.plot(scalars=d[:, 1], scalar_bar_args={'title': 'Y Displacement'}, cpos=cpos)
 
@@ -387,9 +387,9 @@ scalars of the grid copied to the plotting object. Here is a full example:
     grid['Y Displacement'] = d[:, 1]
 
     # use hardcoded camera position
-    cpos = [(11.915, 6.114, 3.612),
-            (0.0, 0.375, 2.0),
-            (-0.425, 0.902, -0.0679)]
+    cpos = pv.CameraPosition(position=(11.915, 6.114, 3.612),
+                             focal_point=(0.0, 0.375, 2.0),
+                             viewup=(-0.425, 0.902, -0.0679))
 
     plotter = pv.Plotter(window_size=(800, 600))
     plotter.add_mesh(grid, scalars='Y Displacement',
@@ -470,10 +470,11 @@ item in the list to a string.
     mask = points[:, 0] == 0
     plotter.add_point_labels(points[mask], points[mask].tolist())
 
-    plotter.camera_position = [
-                    (-1.4643015810492384, 1.5603923627830638, 3.16318236536270),
-                    (0.05268120500967251, 0.639442034364944, 1.204095304165153),
-                    (0.2364061044392675, 0.9369426029156169, -0.25739213784721)]
+    plotter.camera_position = pv.CameraPosition(
+        position=(-1.4643015810492384, 1.5603923627830638, 3.16318236536270),
+        focal_point=(0.05268120500967251, 0.639442034364944, 1.204095304165153),
+        viewup=(0.2364061044392675, 0.9369426029156169, -0.25739213784721)
+    )
 
     plotter.show()
 
