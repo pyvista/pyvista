@@ -230,7 +230,7 @@ jobs:
             runner-labels: "ubuntu-22.04-self-hosted"
             repeat: "4"
 
-    name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }}, run #${{ matrix.repeat }})
+    name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }}, run ${{ matrix.repeat }})
     runs-on: ${{ matrix.runner-labels }}
     steps:
       - uses: actions/checkout@v4

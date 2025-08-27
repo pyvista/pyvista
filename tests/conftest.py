@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import faulthandler
 import functools
 from importlib import metadata
 from inspect import BoundArguments
@@ -25,6 +26,8 @@ NUMPY_VERSION_INFO = VersionInfo(
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
 )
+
+faulthandler.enable()
 
 
 def flaky_test(
