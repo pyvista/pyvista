@@ -180,7 +180,7 @@ def test_font_label_size(default_theme):
 
 
 def test_font_fmt(default_theme):
-    fmt = '%.6e'
+    fmt = '{:.6e}'
     default_theme.font.fmt = fmt
     assert default_theme.font.fmt == fmt
 
