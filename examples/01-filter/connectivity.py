@@ -102,7 +102,7 @@ conn = mesh.connectivity('all')
 
 # Format scalar bar text for integer values.
 scalar_bar_args = dict(
-    fmt='%.f',
+    fmt='{0:.1f}',
 )
 
 cpos = [(10.5, 12.2, 18.3), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]

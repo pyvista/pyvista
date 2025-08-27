@@ -996,9 +996,9 @@ class _Font(_ThemeConfig):
 
     >>> pv.global_theme.font.color = 'grey'
 
-    Set the string formatter used to format numerical data to '%.6e'
+    Set the string formatter used to format numerical data to '{:.6e}'
 
-    >>> pv.global_theme.font.fmt = '%.6e'
+    >>> pv.global_theme.font.fmt = '{:.6e}'
 
     """
 
@@ -1133,10 +1133,10 @@ class _Font(_ThemeConfig):
 
         Examples
         --------
-        Set the string formatter used to format numerical data to '%.6e'.
+        Set the string formatter used to format numerical data to '{:.6e}'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
         return self._fmt  # type: ignore[return-value]
@@ -2315,9 +2315,9 @@ class Theme(_ThemeConfig):
 
         >>> pv.global_theme.font.color = 'grey'
 
-        String formatter used to format numerical data to '%.6e'.
+        String formatter used to format numerical data to '{:.6e}'.
 
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
         return self._font
