@@ -58,11 +58,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_main --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev --colored=yes
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_main --colored=yes
+        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_dev --colored=yes
 
       - name: Upload Generated Images
         if: always()

@@ -543,7 +543,7 @@ or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and repr
 
             .. code-block:: bash
 
-                tox run -e py3.11-vtk_main
+                tox run -e py3.11-vtk_dev
 
             Note that several dependencies versions are already predefined in the ``tox.ini`` configuration
             and can be specified with ``tox`` factors such that:
@@ -628,7 +628,7 @@ such that:
             .. code-block:: bash
 
                 tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
-                tox run -e py3.11-vtk_main-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
+                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
