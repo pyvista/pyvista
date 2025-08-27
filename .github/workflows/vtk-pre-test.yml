@@ -17,6 +17,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  TOX_COLORED: "yes"
 
 jobs:
   VTK-master:
@@ -58,11 +59,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_dev --colored=yes
+        run: xvfb-run -a tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
 
       - name: Upload Generated Images
         if: always()

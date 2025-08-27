@@ -20,6 +20,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  TOX_COLORED: "yes"
   USE_CACHE: ${{
     (
     (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') ||
@@ -122,11 +123,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: tox run -e py${{ matrix.python-version }}-plotting --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -197,11 +198,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e ${{env.TOX_FACTOR}}-cov-core --colored=yes # zizmor: ignore[template-injection]
+        run: tox run -e ${{env.TOX_FACTOR}}-cov-core # zizmor: ignore[template-injection]
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting --colored=yes # zizmor: ignore[template-injection]
+        run: xvfb-run tox run -e ${{env.TOX_FACTOR}}-cov-plotting # zizmor: ignore[template-injection]
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -279,11 +280,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_dev
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev --colored=yes
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_dev
 
       - name: Upload Generated Images
         if: always()
@@ -328,11 +329,11 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-core
 
       - name: Plotting Testing (uses GL)
         if: always()
-        run: tox run -e py${{ matrix.python-version }}-plotting --colored=yes
+        run: tox run -e py${{ matrix.python-version }}-plotting
 
       - name: Upload Images for Failed Tests
         if: always()
