@@ -43,7 +43,6 @@ jobs:
           cache: "pip"
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
-        if: always()
         with:
           packages: xvfb
           version: 3.0
