@@ -1494,8 +1494,8 @@ applicable) to ensure the runner restarts should it be interrupted.
 PyVista Hosts and Runners
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Apple 2024 Mac mini M4
-^^^^^^^^^^^^^^^^^^^^^^
+Apple Silicon - 2024 Mac mini M4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - CPU: 10-core CPU ARM64 (Apple Silicon)
 - GPU: 10-core GPU
 - Storage: 256 GB SSD
@@ -1514,3 +1514,14 @@ Testing showed peak memory usage of ~2GB per runner for the
 ``testing-and-deployment.yml`` workflow. With 16GB of memory and ~4 GB used by
 the OS, there's room to spare. Should we encounter memory issues we can disable
 runners.
+
+
+Linux Runners
+^^^^^^^^^^^^^
+PyVista uses a high availability Linux cluster running [k3s](https://k3s.io/) and deployed
+using [Ansible](https://docs.ansible.com/). See
+[pyvista/arc-runners](https://github.com/pyvista/arc-runners) for more details.
+
+GPU enabled runs should use the ``ubuntu-24.04-self-hosted-gpu`` labels. Runners
+using this label will receive a minimum of 2 CPUs and at maximum 8 CPUs along
+with access to either an NVIDIA Quadro P2000 or a NVIDIA T400 (4GB VRAM).
