@@ -230,6 +230,35 @@ jobs:
             runner-labels: "ubuntu-22.04-self-hosted"
             repeat: "4"
 
+          ###############################################################################
+          # repeated set "5"
+          # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
+          - python-version: "3.10"
+            vtk-version: "9.2.2"
+            numpy-version: "1.26"
+            runner-labels: "ubuntu-22.04-self-hosted"
+            repeat: "5"
+          - python-version: "3.11"
+            vtk-version: "9.2.6"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+            repeat: "5"
+          - python-version: "3.12"
+            vtk-version: "9.3.1"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+            repeat: "5"
+          - python-version: "3.13"
+            vtk-version: "9.4.2"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+            repeat: "5"
+          - python-version: "3.13"
+            vtk-version: "latest"
+            numpy-version: "nightly"
+            runner-labels: "ubuntu-22.04-self-hosted"
+            repeat: "5"
+
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }}, run ${{ matrix.repeat }})
     runs-on: ${{ matrix.runner-labels }}
     steps:
