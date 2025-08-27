@@ -47,7 +47,6 @@ jobs:
       matrix:
         include:
           - runner-labels: "ubuntu-22.04"
-          - runner-labels: "ubuntu-22.04-self-hosted"
 
     runs-on: ${{ matrix.runner-labels }}
     outputs:
@@ -97,18 +96,18 @@ jobs:
             vtk-version: "9.2.6"
             numpy-version: "latest"
             runner-labels: "ubuntu-22.04-self-hosted"
-          # - python-version: "3.12"
-          #   vtk-version: "9.3.1"
-          #   numpy-version: "latest"
-          #   runner-labels: "ubuntu-22.04"
-          # - python-version: "3.13"
-          #   vtk-version: "9.4.2"
-          #   numpy-version: "latest"
-          #   runner-labels: "ubuntu-22.04"
-          # - python-version: "3.13"
-          #   vtk-version: "latest"
-          #   numpy-version: "nightly"
-          #   runner-labels: "ubuntu-22.04"
+          - python-version: "3.12"
+            vtk-version: "9.3.1"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.13"
+            vtk-version: "9.4.2"
+            numpy-version: "latest"
+            runner-labels: "ubuntu-22.04-self-hosted"
+          - python-version: "3.13"
+            vtk-version: "latest"
+            numpy-version: "nightly"
+            runner-labels: "ubuntu-22.04-self-hosted"
 
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
@@ -162,7 +161,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads
+        run: python -m pytest --cov=pyvista --cov-branch -v --ignore=tests/plotting --test_downloads -j2
 
       - uses: awalsh128/cache-apt-pkgs-action@4c82c3ccdc1344ee11e9775dbdbdf43aa8a5614e
         if: always()
