@@ -526,10 +526,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOImport import vtkGLTFImporter  # noqa: PLC0415
 
         importer = vtkGLTFImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)  # type: ignore[arg-type]
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -566,10 +563,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkVRMLImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)  # type: ignore[arg-type]
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -602,10 +596,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtk3DSImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)  # type: ignore[arg-type]
+        importer.SetFileName(filename)  # type: ignore[arg-type]
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -649,22 +640,14 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(str(filename) if pyvista.vtk_version_info < (9, 2, 2) else filename)  # type:ignore[arg-type]
+        importer.SetFileName(filename)  # type:ignore[arg-type]
         if filename_mtl is None:
             filename_mtl_path = filename.with_suffix('.mtl')
         else:
             filename_mtl_path = Path(filename_mtl).expanduser().resolve()
         if filename_mtl_path.is_file():
-            importer.SetFileNameMTL(
-                str(filename_mtl_path)
-                if pyvista.vtk_version_info < (9, 2, 2)
-                else filename_mtl_path  # type: ignore[arg-type]
-            )
-            importer.SetTexturePath(
-                str(filename_mtl_path.parents[0])  # type: ignore[arg-type]
-                if pyvista.vtk_version_info < (9, 2, 2)
-                else filename_mtl_path.parents[0]
-            )
+            importer.SetFileNameMTL(str(filename_mtl_path))
+            importer.SetTexturePath(str(filename_mtl_path.parents[0]))
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -2369,11 +2352,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args) -> None:  # noqa: ARG002
         """Register the event for a left button down click."""
-        attr = (
-            'GetOffScreenFramebuffer'
-            if pyvista.vtk_version_info < (9, 1)
-            else 'GetRenderFramebuffer'
-        )
+        attr = 'GetRenderFramebuffer'
         if (
             hasattr(renwin := self.render_window, attr)
             and not getattr(renwin, attr)().GetFBOIndex()
@@ -3160,6 +3139,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
         backface_params: BackfaceArgs | Property | None = None,
         show_vertices: bool | None = None,  # noqa: FBT001
         edge_opacity: float | None = None,
+        remove_existing_actor: bool | None = None,  # noqa: FBT001
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -3508,6 +3488,13 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
                 available, `edge_opacity` is set to 1.
 
+        remove_existing_actor : bool, optional
+            Remove any existing actor in the renderer with the same name before adding
+            this actor. By default, this is ``True`` when ``name`` is provided, and
+            ``False`` when ``name`` is ``None``. Set to ``False`` to improve performance
+            when adding multiple named actors, particularly during initial scene setup
+            where no actors exist yet.
+
         **kwargs : dict, optional
             Optional keyword arguments.
 
@@ -3699,6 +3686,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
                 render=render,
                 show_vertices=show_vertices,
                 edge_opacity=edge_opacity,
+                remove_existing_actor=remove_existing_actor,
                 **kwargs,
             )
             return actor
@@ -3748,6 +3736,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             texture=texture,
             rgb=rgb,
             style=style,
+            remove_existing_actor=remove_existing_actor,
             **kwargs,
         )
 
@@ -5804,11 +5793,6 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             raise TypeError(msg)
         points, algo = algorithm_to_mesh_handler(points)
         if algo is not None:
-            if pyvista.vtk_version_info < (9, 1):  # pragma: no cover
-                from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
-                msg = 'To use vtkAlgorithms with `add_point_labels` requires VTK 9.1 or later.'
-                raise VTKVersionError(msg)
             # Extract points filter
             pc_algo = _vtk.vtkConvertToPointCloud()
             set_algorithm_input(pc_algo, algo)
@@ -6213,10 +6197,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
             )
             raise ValueError(msg)
         writer.CompressOff()
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            writer.SetFilePrefix(str(filepath.with_suffix('')))
-        else:
-            writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
+        writer.SetFilePrefix(filepath.with_suffix(''))  # type: ignore[arg-type]
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -6549,10 +6530,7 @@ class BasePlotter(_BoundsSizeMixin, PickingHelper, WidgetHelper):
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
-        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
-            exporter.SetFilePrefix(str(filename.with_suffix('')))
-        else:
-            exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
+        exporter.SetFilePrefix(filename.with_suffix(''))  # type: ignore[arg-type]
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 

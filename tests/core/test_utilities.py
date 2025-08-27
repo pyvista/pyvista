@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 import contextlib
 import json
+import operator
 import os
 from pathlib import Path
 import pickle
@@ -79,6 +80,8 @@ with contextlib.suppress(ImportError):
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+IS_ARM_MAC = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
 
 @pytest.fixture
@@ -159,7 +162,7 @@ def test_raise_not_matching_raises():
         raise_not_matching(scalars=np.array([0.0]), dataset=pv.Table())
 
 
-def test_version():
+def test_vtk_version_info():
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -171,7 +174,44 @@ def test_version():
     )
     assert str(ver_tup) == str(pv.vtk_version_info)
     assert ver_tup == pv.vtk_version_info
-    assert pv.vtk_version_info >= (0, 0, 0)
+    assert pv.vtk_version_info >= pv._MIN_SUPPORTED_VTK_VERSION
+
+
+@pytest.mark.parametrize('operation', [operator.le, operator.lt, operator.gt, operator.ge])
+def test_vtk_version_info_raises(operation):
+    version_str = '.'.join(map(str, pv._MIN_SUPPORTED_VTK_VERSION))
+    match = f'Comparing against unsupported VTK version 1.2.3. Minimum supported is {version_str}'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        operation(pv.vtk_version_info, (1, 2, 3))
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 11) or sys.platform == 'darwin',
+    reason='Requires Python 3.11+, path issues on macOS',
+)
+def test_min_supported_vtk_version_matches_pyproject():
+    def get_min_vtk_version_from_pyproject():
+        # locate pyproject.toml relative to package
+        pyproject_path = Path(pv.__file__).parents[1] / 'pyproject.toml'
+        with pyproject_path.open('rb') as f:
+            pyproject_data = tomllib.load(f)
+
+        # dependencies live under [project]
+        dependencies = pyproject_data.get('project', {}).get('dependencies', [])
+
+        # find the first vtk>= spec
+        min_vtk = next(dep.split('>=')[1] for dep in dependencies if 'vtk>=' in dep)
+        assert isinstance(min_vtk, str)
+        assert len(min_vtk) > 0
+        return tuple(map(int, min_vtk.split('.')))
+
+    from_pyproject = get_min_vtk_version_from_pyproject()
+    from_code = pv._MIN_SUPPORTED_VTK_VERSION
+    msg = (
+        f"Min VTK version specified in 'pyproject.toml' should match the "
+        f'min version specified in {_vtk.__name__!r}'
+    )
+    assert from_pyproject == from_code, msg
 
 
 def test_createvectorpolydata_error():
@@ -709,6 +749,10 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
+@pytest.mark.skipif(
+    NUMPY_VERSION_INFO < (2, 3) and IS_ARM_MAC,
+    reason='Specific to Mac M4. See https://github.com/numpy/numpy/issues/28687',
+)
 def test_apply_transformation_to_points():
     mesh = ex.load_airplane()
     points = mesh.points
@@ -1229,11 +1273,9 @@ CASE_3 = (  # non-coplanar points
     ],
 )
 
-is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
-
 
 @pytest.mark.skipif(
-    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac,
+    NUMPY_VERSION_INFO < (1, 26) or IS_ARM_MAC,
     reason='Different results for some tests.',
 )
 @pytest.mark.parametrize(
@@ -2431,7 +2473,6 @@ def _compute_unit_cell_quality(
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
@@ -2460,7 +2501,6 @@ def xfail_distortion_returns_one(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_unit_cell_value(info):
     """Test that the actual computed measure for a unit cell matches the reported value."""
     xfail_wedge_negative_volume(info)
@@ -2471,7 +2511,6 @@ def test_cell_quality_info_unit_cell_value(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_acceptable_range(info):
     """Test that the unit cell value is within the acceptable range."""
     # Some cells / measures have bugs and return invalid values and are expected to fail
@@ -2495,7 +2534,6 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_normal_range(info):
     """Test that the normal range is broader than the acceptable range."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
@@ -2506,7 +2544,6 @@ def test_cell_quality_info_normal_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_full_range(info):
     """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
@@ -2517,7 +2554,6 @@ def test_cell_quality_info_full_range(info):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_degenerate_cell(info):
     # Some cells / measures have bugs and return invalid values and are expected to fail
     xfail_distortion_returns_one(info)
@@ -2533,7 +2569,6 @@ def test_cell_quality_info_degenerate_cell(info):
     )
 
 
-@pytest.mark.needs_vtk_version(9, 2)
 def test_cell_quality_info_raises():
     match = re.escape(
         "Cell quality info is not available for cell type 'QUADRATIC_EDGE'. Valid options are:\n"

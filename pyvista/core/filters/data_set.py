@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
@@ -9,7 +10,6 @@ import functools
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -2105,9 +2105,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
                     ids_to_keep |= set(extracted['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
                 if len(ids_to_remove) != 0:
-                    if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-                        msg = '`connectivity` with PolyData requires vtk>=9.1.0'
-                        raise VTKVersionError(msg)
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
@@ -6044,8 +6041,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         Area or volume is also provided in point data.
 
-        This filter uses the VTK :vtk:`vtkIntegrateAttributes`
-        and requires VTK v9.1.0 or newer.
+        This filter uses :vtk:`vtkIntegrateAttributes`.
 
         Parameters
         ----------
@@ -6078,10 +6074,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         See the :ref:`integrate_data_example` for more examples using this filter.
 
         """
-        if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
-            msg = '`integrate_data` requires VTK 9.1.0 or newer.'
-            raise VTKVersionError(msg)
-
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
@@ -6152,11 +6144,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
-        # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
-        # work correctly, returning the wrong number of partitions.
-        if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
-            msg = '`partition` requires vtk>=9.1.0'
-            raise VTKVersionError(msg)
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
@@ -7788,30 +7775,19 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             poly_ijk = _preprocess_polydata(surface)
 
             if spacing is None:
-                less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
-                if (
-                    cell_length_percentile is not None or cell_length_sample_size is not None
-                ) and less_than_vtk92:
-                    msg = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
-                    raise TypeError(msg)
-
-                if less_than_vtk92:
-                    # Compute spacing from mesh length
-                    spacing = surface.length / 100
-                else:
-                    # Estimate spacing from cell length percentile
-                    cell_length_percentile = (
-                        0.1 if cell_length_percentile is None else cell_length_percentile
-                    )
-                    cell_length_sample_size = (
-                        100_000 if cell_length_sample_size is None else cell_length_sample_size
-                    )
-                    spacing = _length_distribution_percentile(
-                        poly_ijk,
-                        cell_length_percentile,
-                        cell_length_sample_size,
-                        progress_bar=progress_bar,
-                    )
+                # Estimate spacing from cell length percentile
+                cell_length_percentile = (
+                    0.1 if cell_length_percentile is None else cell_length_percentile
+                )
+                cell_length_sample_size = (
+                    100_000 if cell_length_sample_size is None else cell_length_sample_size
+                )
+                spacing = _length_distribution_percentile(
+                    poly_ijk,
+                    cell_length_percentile,
+                    cell_length_sample_size,
+                    progress_bar=progress_bar,
+                )
             # Spacing is specified directly. Make sure other params are not set.
             elif cell_length_percentile is not None or cell_length_sample_size is not None:
                 msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
@@ -8134,8 +8110,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         mesh fits the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         .. versionadded:: 0.46
 
@@ -8188,9 +8163,6 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` is specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -8313,29 +8285,17 @@ def _set_threshold_limit(alg, *, value, method, invert):
         raise TypeError(msg)
     alg.SetInvert(invert)
     # Set values and function
-    if pyvista.vtk_version_info >= (9, 1):
-        if isinstance(value, (np.ndarray, Sequence)):
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
-            alg.SetLowerThreshold(value[0])
-            alg.SetUpperThreshold(value[1])
-        # Single value
-        elif method.lower() == 'lower':
-            alg.SetLowerThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-        elif method.lower() == 'upper':
-            alg.SetUpperThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
-        else:
-            msg = 'Invalid method choice. Either `lower` or `upper`'
-            raise ValueError(msg)
-    # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-    elif isinstance(value, (np.ndarray, Sequence)):
-        alg.ThresholdBetween(value[0], value[1])
+    if isinstance(value, (np.ndarray, Sequence)):
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
+        alg.SetLowerThreshold(value[0])
+        alg.SetUpperThreshold(value[1])
     # Single value
     elif method.lower() == 'lower':
-        alg.ThresholdByLower(value)
+        alg.SetLowerThreshold(value)
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
     elif method.lower() == 'upper':
-        alg.ThresholdByUpper(value)
+        alg.SetUpperThreshold(value)
+        alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
     else:
         msg = 'Invalid method choice. Either `lower` or `upper`'
         raise ValueError(msg)

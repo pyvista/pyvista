@@ -41,7 +41,13 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
     assert None not in multi
     assert None in multi.recursive_iterator()
 
+    # Center datasets at origin so that clip actually removes part of the mesh
+    for block in multi.recursive_iterator(skip_none=True):
+        center = np.array(block.center)
+        block.translate(-center, inplace=True)
+
     for dataset in multi:
+        bounds_before_clip = dataset.bounds
         clips = dataset.clip(
             normal='x', invert=True, return_clipped=return_clipped, crinkle=crinkle
         )
@@ -64,13 +70,17 @@ def test_clip_filter(multiblock_all_with_nested_and_none, return_clipped, crinkl
             else:
                 assert isinstance(clip, pv.UnstructuredGrid)
 
+            bounds_after_clip = clip.bounds
+            assert not np.allclose(bounds_before_clip, bounds_after_clip)
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
+
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     n_points_in = pointset.n_points
     mesh = pv.MultiBlock([pointset]) if as_composite else pointset
     # Make sure we clip such that none of the points are removed
+    # This ensures output bounds == input bounds which hits a branch where
+    # remove_unused_points may be called
     bounds = pointset.bounds
     clipped = mesh.clip(origin=(bounds.x_max + 1, bounds.y_max, bounds.z_max))
     pointset_out = clipped[0] if as_composite else clipped
@@ -206,6 +216,22 @@ def test_clip_empty(crinkle):
     assert out.is_empty
 
 
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_clip_box_no_unused_points(as_composite):
+    mesh = pv.Cube()
+    mesh = pv.MultiBlock([mesh]) if as_composite else mesh
+    new_bounds = (
+        mesh.bounds.x_min,
+        mesh.bounds.x_max,
+        mesh.bounds.y_min,
+        mesh.bounds.y_max,
+        mesh.bounds.z_min + (mesh.bounds.z_max - mesh.bounds.z_min) * 7 / 10,
+        mesh.bounds.z_min + (mesh.bounds.z_max - mesh.bounds.z_min) * 8 / 10,
+    )
+    clipped = mesh.clip_box(bounds=new_bounds, invert=False)
+    assert np.allclose(clipped.bounds, new_bounds)
+
+
 def test_clip_box_composite(multiblock_all):
     # Now test composite data structures
     output = multiblock_all.clip_box(invert=False, progress_bar=True)
@@ -277,12 +303,8 @@ def test_extract_all_edges(datasets):
         assert edges is not None
         assert isinstance(edges, pv.PolyData)
 
-    if pv.vtk_version_info < (9, 1):
-        with pytest.raises(VTKVersionError):
-            datasets[0].extract_all_edges(use_all_points=True)
-    else:
-        edges = datasets[0].extract_all_edges(use_all_points=True)
-        assert edges.n_lines
+    edges = datasets[0].extract_all_edges(use_all_points=True)
+    assert edges.n_lines
 
 
 def test_extract_all_edges_no_data():
@@ -378,7 +400,6 @@ def test_cell_centers_no_cell_data(cube):
     assert not cube.cell_centers(pass_cell_data=False).cell_data
 
 
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_cell_center_pointset(airplane):
     pointset = airplane.cast_to_pointset()
     result = pointset.cell_centers(progress_bar=True)
@@ -585,9 +606,6 @@ def test_cell_quality():
 def test_cell_quality_measures(ant):
     # Get quality measures from type hints
     hinted_measures = list(get_args(_CellQualityLiteral))
-    if pv.vtk_version_info < (9, 2):
-        # This measure was removed from VTK's API
-        hinted_measures.insert(1, 'aspect_beta')
 
     # Get quality measures from the VTK class
     actual_measures = list(_get_cell_quality_measures().keys())
