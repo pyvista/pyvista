@@ -59,8 +59,8 @@ htmlcov
 
 # Testing output
 tests/ERROR_OUTPUT.txt
-_doc_debug_images
-_doc_debug_images_failed
+_doc_failed_test_images
+_doc_generated_test_images
 _failed_test_images
 _generated_test_images
 

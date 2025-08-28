@@ -127,7 +127,7 @@ docs = [
   'numpydoc==1.9.0',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
-  'pytest-pyvista==0.2.0',
+  'pytest-pyvista @ git+https://github.com/pyvista/pytest-pyvista.git@feat/doc',
   'pytest-sphinx==0.6.3',
   'scipy==1.16.0',
   'sphinx-autobuild==2024.10.3',
@@ -236,9 +236,14 @@ filterwarnings = [
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
+  'always:(?s).*This test has multiple cached images.*:UserWarning',
   'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
 
+doc_failed_image_dir = '_doc_failed_test_images'
+doc_generated_image_dir = '_doc_generated_test_images'
+doc_image_cache_dir = 'tests/doc/doc_image_cache'
+doc_images_dir = 'doc/build/html/_images'
 failed_image_dir = '_failed_test_images'
 generated_image_dir = '_generated_test_images'
 image_cache_dir = 'tests/plotting/image_cache'

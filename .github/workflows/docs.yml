@@ -124,19 +124,23 @@ jobs:
         if: always()
         run: pytest tests/doc/tst_doc_build.py
 
+      - name: Test Documentation2
+        if: always()
+        run: pytest --doc_mode
+
       - name: Upload Images for Failed Tests
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: doc-debug-images-failed
-          path: _doc_debug_images_failed
+          name: doc-failed-test-images
+          path: _doc_failed_test_images
 
-      - name: Upload Test Debug Images
+      - name: Upload Generated Test Images
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: doc-debug-images
-          path: _doc_debug_images
+          name: doc-generated-test-images
+          path: _doc_generated_test_images
 
       - uses: actions/checkout@v4
         if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v')
