@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 
 # flaky tests need to capture RegressionError as well
 try:
-    from pytest_pyvista import RegressionError
+    from pytest_pyvista.pytest_pyvista import RegressionError
 
     flaky_error_types = (AssertionError, RegressionError)
 except ImportError:
