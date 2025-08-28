@@ -8,6 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
+from typing import Literal
 import warnings
 
 import numpy as np
@@ -123,6 +124,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
+        compression: Literal["zlib", "lz4", "lzma", None]="zlib",
     ) -> None:
         """Save this vtk object to file.
 
@@ -156,6 +158,13 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
             .. note::
                This feature is only available when saving PLY files.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
 
         Notes
         -----
@@ -226,7 +235,7 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
 
         def _write_vtk(mesh_: DataObject) -> None:
             writer = mesh_._WRITERS[file_ext]()
-            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary, compression=compression)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
             if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]

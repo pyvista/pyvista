@@ -691,17 +691,18 @@ def test_invalid_curvature(sphere):
         sphere.curvature('not valid')
 
 
+@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
-def test_save(sphere, extension, binary, tmpdir):
+def test_save(sphere, extension, binary, compression, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
 
     if extension == '.vtkhdf' and not binary:
         with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
-            sphere.save(filename, binary=binary)
+            sphere.save(filename, binary=binary, compression=compression)
         return
 
-    sphere.save(filename, binary=binary)
+    sphere.save(filename, binary=binary, compression=compression)
     if binary:
         if extension == '.vtp':
             with Path(filename).open() as f:

@@ -133,7 +133,11 @@ def get_ext(filename: str | Path) -> str:
 
 
 @_deprecate_positional_args(allowed=['vtk_writer'])
-def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:  # noqa: FBT001, FBT002
+def set_vtkwriter_mode(
+    vtk_writer: _VTKWriterType,
+    use_binary: bool = True, # noqa: FBT001, FBT002
+    compression: Literal["zlib", "lz4", "lzma", None]="zlib"
+) -> _VTKWriterType:
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -144,6 +148,11 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
         ``False``, the writer is set to write files in ASCII format.
+    compression : str or None, default: 'zlib'
+        The compression type to use when ``use_binary`` is ``True`` and ``vtk_writer``
+        is of type :vtk:`vtkXMLWriter`. This argument has no effect otherwise.
+        Acceptable values are ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``.
+        ``None`` indicates no compression.
 
     Returns
     -------
@@ -163,6 +172,23 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
     elif isinstance(vtk_writer, _vtk.vtkXMLWriter):
         if use_binary:
             vtk_writer.SetDataModeToBinary()
+            if compression is None:
+                vtk_writer.SetCompressorTypeToNone()
+            else:
+                supported = {'zlib', 'lz4', 'lzma'}
+                compression_ = cast('Literal["zlib", "lz4", "lzma"]', compression.lower())
+                if compression_ not in supported:
+                    msg = (
+                        f'Unsupported compression format `{compression_}`. '
+                        f'Valid options are `{"`, `".join(supported)}` and ``None``.'
+                    )
+                    raise ValueError(msg)
+                if compression_ == "zlib":
+                    vtk_writer.SetCompressorTypeToZLib()
+                elif compression_ == "lz4":
+                    vtk_writer.SetCompressorTypeToLZ4()
+                elif compression_ == "lzma":
+                    vtk_writer.SetCompressorTypeToLZMA()
         else:
             vtk_writer.SetDataModeToAscii()
     return vtk_writer

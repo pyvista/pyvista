@@ -384,16 +384,17 @@ def test_triangulate_inplace(hexbeam):
     assert (hexbeam.celltypes == CellType.TETRA).all()
 
 
+@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
-def test_save(extension, binary, tmpdir, hexbeam):
+def test_save(extension, binary, compression, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if extension == '.vtkhdf' and not binary:
         with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
-            hexbeam.save(filename, binary=binary)
+            hexbeam.save(filename, binary=binary, compression=compression)
         return
 
-    hexbeam.save(filename, binary=binary)
+    hexbeam.save(filename, binary=binary, compression=compression)
 
     grid = pv.UnstructuredGrid(filename)
     assert grid.cells.shape == hexbeam.cells.shape
@@ -764,11 +765,12 @@ def test_invalid_init_structured():
         pv.StructuredGrid(x, y, z)
 
 
+@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.StructuredGrid._WRITERS)
-def test_save_structured(extension, binary, tmpdir, struct_grid):
+def test_save_structured(extension, binary, compression, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
-    struct_grid.save(filename, binary=binary)
+    struct_grid.save(filename, binary=binary, compression=compression)
 
     grid = pv.StructuredGrid(filename)
     assert grid.x.shape == struct_grid.y.shape
@@ -1159,12 +1161,13 @@ def test_fft_high_pass(noise_2d):
     assert not np.allclose(out[name], 0)
 
 
+@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
-def test_save_rectilinear(extension, binary, tmpdir):
+def test_save_rectilinear(extension, binary, compression, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
-    ogrid.save(filename, binary=binary)
+    ogrid.save(filename, binary=binary, compression=compression)
     grid = pv.RectilinearGrid(filename)
     assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
@@ -1180,11 +1183,12 @@ def test_save_rectilinear(extension, binary, tmpdir):
     assert grid.dimensions == ogrid.dimensions
 
 
+@pytest.mark.parametrize('compression', ['zlib', 'lz4', 'lzma', None])
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vti'])
 @pytest.mark.parametrize('reader', [pv.ImageData, pv.read])
 @pytest.mark.parametrize('direction_matrix', [np.eye(3), np.diag((-1, 1, -1))])
-def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matrix):
+def test_save_uniform(extension, binary, compression, tmpdir, uniform, reader, direction_matrix):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     is_identity_matrix = np.allclose(direction_matrix, np.eye(3))
     uniform.direction_matrix = direction_matrix
@@ -1196,9 +1200,9 @@ def test_save_uniform(extension, binary, tmpdir, uniform, reader, direction_matr
             '\nUse the `.vti` extension instead (XML format).'
         )
         with pytest.warns(UserWarning, match=match):
-            uniform.save(filename, binary=binary)
+            uniform.save(filename, binary=binary, compression=compression)
     else:
-        uniform.save(filename, binary=binary)
+        uniform.save(filename, binary=binary, compression=compression)
 
     grid = reader(filename)
 
