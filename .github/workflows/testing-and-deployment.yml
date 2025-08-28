@@ -58,7 +58,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-1
+          key: vtk-data-2
           lookup-only: true
 
       - name: Clone vtk-data if the cache does not exists # zizmor: ignore[artipacked]
@@ -74,5 +74,5 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: vtk-data-1
+          key: vtk-data-2
           enableCrossOsArchive: true
