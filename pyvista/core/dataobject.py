@@ -7,8 +7,8 @@ from collections import UserDict
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import cast
 from typing import Literal
+from typing import cast
 import warnings
 
 import numpy as np
@@ -119,12 +119,12 @@ class DataObject(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverr
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     @_deprecate_positional_args(allowed=['filename'])
-    def save(
+    def save(  # noqa: PLR0917
         self: Self,
         filename: Path | str,
         binary: bool = True,  # noqa: FBT001, FBT002
         texture: NumpyArray[np.uint8] | str | None = None,
-        compression: Literal["zlib", "lz4", "lzma", None]="zlib",
+        compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
     ) -> None:
         """Save this vtk object to file.
 

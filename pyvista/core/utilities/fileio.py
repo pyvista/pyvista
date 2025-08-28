@@ -135,8 +135,8 @@ def get_ext(filename: str | Path) -> str:
 @_deprecate_positional_args(allowed=['vtk_writer'])
 def set_vtkwriter_mode(
     vtk_writer: _VTKWriterType,
-    use_binary: bool = True, # noqa: FBT001, FBT002
-    compression: Literal["zlib", "lz4", "lzma", None]="zlib"
+    use_binary: bool = True,  # noqa: FBT001, FBT002
+    compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
 ) -> _VTKWriterType:
     """Set any vtk writer to write as binary or ascii.
 
@@ -183,11 +183,11 @@ def set_vtkwriter_mode(
                         f'Valid options are `{"`, `".join(supported)}` and ``None``.'
                     )
                     raise ValueError(msg)
-                if compression_ == "zlib":
+                if compression_ == 'zlib':
                     vtk_writer.SetCompressorTypeToZLib()
-                elif compression_ == "lz4":
+                elif compression_ == 'lz4':
                     vtk_writer.SetCompressorTypeToLZ4()
-                elif compression_ == "lzma":
+                elif compression_ == 'lzma':
                     vtk_writer.SetCompressorTypeToLZMA()
         else:
             vtk_writer.SetDataModeToAscii()
