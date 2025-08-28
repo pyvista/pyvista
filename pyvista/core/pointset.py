@@ -11,6 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -1419,6 +1420,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         binary: bool = True,  # noqa: FBT001, FBT002
         texture=None,
         recompute_normals: bool = True,  # noqa: FBT001, FBT002
+        compression: Literal['zlib', 'lz4', 'lzma', None] = 'zlib',
     ):
         """Write a surface mesh to disk.
 
@@ -1458,6 +1460,13 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             are computed in place to ensure the mesh is properly saved.
             Set this to ``False`` to save instead the already existing normal
             array in the PolyData.
+
+        compression : str or None, default: 'zlib'
+            The compression type to use when ``binary`` is ``True``
+            and VTK writer is of type :vtk:`vtkXMLWriter`. This
+            argument has no effect otherwise. Acceptable values are
+            ``'zlib'``, ``'lz4'``, ``'lzma'``, and ``None``. ``None``
+            indicates no compression.
 
         Notes
         -----
@@ -1527,7 +1536,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 )
                 raise TypeError(msg)
 
-        super().save(filename, binary=binary, texture=texture)
+        super().save(filename, binary=binary, texture=texture, compression=compression)
 
     @property
     def volume(self) -> float:  # numpydoc ignore=RT01
