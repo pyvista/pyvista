@@ -500,31 +500,135 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install PyVista with all
-test dependencies:
-
-.. code-block:: bash
-
-   pip install -e . --group test
-
-Then, if you have everything installed, you can run the various test
-suites.
+To run our comprehensive suite of unit tests, please refer to the `Unit Testing`_
+section.
 
 Unit Testing
 ~~~~~~~~~~~~
-Run the primary test suite and generate coverage report:
+Unit testing can be run either directly using `pytest <https://docs.pytest.org/en/stable/>`_
+or `tox <https://tox.wiki/en/stable/>`_ to ensure environment isolation and reproducibility with CI.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -v --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pip install -e . --group=test # installing testing dependencies
+            pytest # alternatively: python -m pytest
+
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            pip install tox
+            tox run -e py3.11 # change to the python version targeted
+
+        .. admonition:: tox usage
+            :class: hint dropdown
+
+            When using ``tox``, specific test environments can be used to test against various
+            dependencies versions (mostly ``numpy`` and ``vtk``). The full list is available by running:
+
+            .. code-block:: bash
+
+                tox list
+
+            For example, to run tests on ``python 3.11`` against the wheels produced by the ``vtk`` CI
+            on the main branch, simply run:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-vtk_dev
+
+            Note that several dependencies versions are already predefined in the ``tox.ini`` configuration
+            and can be specified with ``tox`` factors such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
+                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+
+            If you need to tests dependencies that are not predefined in the configuration, you can always override them such
+            that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 # run tests for vtk==9.2.5
+                tox run -e py3.11 --override testenv.deps+=vtk==9.2.5 --override testenv.deps+=numpy==2.0 # run tests for vtk==9.2.5 and numpy==2.0
+
+            By default, all tests (ie. plotting and core modules) are executed if nothing is specified.
+            To only run core or plotting tests, add ``core`` or ``plotting`` factors to the environment name such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11-core # run core tests (no need for graphics library)
+                tox run -e py3.11-plotting # run plotting tests (requires graphics library)
+                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+
+            To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
+            ``tox`` arguments from ``pytest`` ones such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.11 -- -k "filters" # run all tests whose name match `filters`
+                tox run -e py3.11 -- -n 4 # run all tests in parallel with 4 processes
+
+            For a more detailed description of ``tox`` usage, please refer to the following `cheat sheet <https://tox.wiki/en/stable/user_guide.html#cheat-sheet>`_.
 
 Unit testing can take some time, if you wish to speed it up, set the
 number of processors with the ``-n`` flag. This uses ``pytest-xdist`` to
 leverage multiple processes. Example usage:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   python -m pytest -n <NUMCORE> --cov pyvista
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest -n <NUMCORE>
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- -n <NUMCORE>
+
+Code coverage (ie. the amount of tested code in the codebase) can be measured by modifying the previous commands
+such that:
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest --cov pyvista
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11-cov
+
+        .. note::
+
+            The ``-cov`` factor can be added to any existing environment to enable test coverage, such that:
+
+            .. code-block:: bash
+
+                tox run -e py3.9-numpy_1.23-vtk_9.0.3-cov
+                tox run -e py3.11-vtk_dev-cov # to test with coverage against the wheels produced by the VTK CI on the main branch
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
 This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
@@ -676,9 +780,22 @@ There are two mechanisms within ``pytest`` to control image regression
 testing, ``--reset_image_cache`` and ``--ignore_image_cache``. For
 example:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-       pytest tests/plotting --reset_image_cache
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/plotting --reset_image_cache
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/plotting --reset_image_cache
 
 Running ``--reset_image_cache`` creates a new image for each test in
 ``tests/plotting/test_plotting.py`` and is not recommended except for
@@ -722,9 +839,22 @@ For example, the following writes all images generated by ``pytest`` to
 ``debug_images/`` for any tests in ``tests/plotting`` whose function name has
 ``volume`` in it.
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/plotting/ -k volume --generated_image_dir debug_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/plotting/ -k volume --generated_image_dir debug_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/plotting/ -k volume --generated_image_dir debug_images
 
 See `pytest-pyvista`_ for more details.
 
@@ -792,9 +922,23 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-    pytest tests/core/typing
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/core/typing
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/core/typing
+
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
@@ -888,9 +1032,23 @@ The regression testing compares these generated images to those stored in
 
 To test all the images, run ``pytest`` with:
 
-.. code-block:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_static_images
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/doc/tst_doc_build.py::test_static_images
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_static_images
+
 
 The tests must be executed explicitly with this command. The name of the test
 file is prefixed with ``tst``, and not ``test`` specifically to avoid being
@@ -980,9 +1138,23 @@ To ensure that the interactive plots do not unnecessarily inflate the size
 of the documentation build, a limit is placed on the size of ``.vtksz`` files.
 To test that interactive plots do not exceed this limit, run:
 
-.. code:: bash
+.. tab-set::
+    :sync-group: category
 
-   pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/doc/tst_doc_build.py::test_interactive_plot_file_size
+
 
 If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
