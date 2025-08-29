@@ -152,7 +152,7 @@ jobs:
           path: _generated_test_images
 
   Linux:
-    name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }}
+    name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
     runs-on: ${{ matrix.runner-labels }}
     needs: cache-vtk-data
     strategy:
