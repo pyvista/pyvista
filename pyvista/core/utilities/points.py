@@ -333,16 +333,18 @@ def fit_plane_to_points(  # noqa: PLR0917
 
     Note that it is pointing in the positive z-direction.
 
-    >>> np.round(normal, decimals=5) + 0.0
-    array([0., 0., 1.], dtype=float32)
+    >>> normal
+    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
+                    dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
 
     >>> _, _, normal = pv.fit_plane_to_points(
     ...     mesh.points, return_meta=True, init_normal='-z'
     ... )
-    >>> np.round(normal, decimals=5) + 0.0
-    array([ 0.,  0., -1.], dtype=float32)
+    >>> normal
+    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
+                    dtype=float32)
 
     """
     valid_resolution = _validation.validate_array(
@@ -456,7 +458,7 @@ def fit_line_to_points(
     Show the length of the line.
 
     >>> length
-    167.6145...
+    167.6145387467733
 
     Plot the line as an arrow to show its direction.
 
@@ -780,10 +782,11 @@ def principal_axes(
     Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
-    >>> np.round(axes, decimals=5) + 0.0
-    array([[-1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0., -1.]], dtype=float32)
+    >>> axes
+    pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
+                     [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
+                     [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
+                    dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
@@ -796,7 +799,7 @@ def principal_axes(
     Show the standard deviation along each axis.
 
     >>> std
-    array([3.014... , 1.507... , 0.7035...], dtype=float32)
+    array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
 
     Compare this to using :meth:`numpy.std` for the computation.
 
@@ -811,7 +814,7 @@ def principal_axes(
     Convert the values to proportions for analysis.
 
     >>> std / sum(std)
-    array([0.576..., 0.288..., 0.134...], dtype=float32)
+    array([0.5769149 , 0.28845742, 0.1346276 ], dtype=float32)
 
     From this result, we can determine that the axes explain approximately
     58%, 29%, and 13% of the total variance in the points, respectively.
